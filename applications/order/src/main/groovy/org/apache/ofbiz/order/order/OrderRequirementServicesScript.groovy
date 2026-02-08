@@ -95,7 +95,7 @@ Map checkCreateStockRequirement(String methodId) {
     String productId
     String facilityId
     GenericValue inventoryItem
-    BigDecimal quantity = parameters.quantity ?: 0
+    BigDecimal quantity = parameters.quantity ? (parameters.quantity as BigDecimal) : BigDecimal.ZERO
 
     // If the service is triggered by the updateItemIssuance service, get the ItemIssuance by the passed itemIssuanceId
     Map inventoryItemAndRequirementMethodId = getStockRequirementMethod()
@@ -141,7 +141,7 @@ Map checkCreateStockRequirement(String methodId) {
                     break
             }
             if (createRequirement) {
-                BigDecimal reqQuantity = productFacility.reorderQuantity ?: (quantity ?: 0)
+                BigDecimal reqQuantity = productFacility.reorderQuantity ? (productFacility.reorderQuantity as BigDecimal) : quantity
                 Map inputMap = [
                         productId: productId,
                         facilityId: facilityId,
@@ -171,10 +171,12 @@ Map checkCreateProductRequirementForFacility() {
         requirementMethodId = requirementMethodId ?: parameters.defaultRequirementMethodId
         if (requirementMethodId) {
             Map result = getProductFacilityAndQuantities(productFacility.productId, productFacility.facilityId)
-            BigDecimal currentQuantity = requirementMethodId == 'PRODRQM_STOCK' ? result.quantityOnHandTotal : result.availableToPromiseTotal
+            BigDecimal currentQuantity = requirementMethodId == 'PRODRQM_STOCK'
+                    ? (result.quantityOnHandTotal as BigDecimal)
+                    : (result.availableToPromiseTotal as BigDecimal)
             BigDecimal minimumStock = productFacility.getBigDecimal('minimumStock')
             if (minimumStock && currentQuantity < minimumStock) {
-                BigDecimal reqQuantity = productFacility.reorderQuantity ?:0
+                BigDecimal reqQuantity = productFacility.reorderQuantity ? (productFacility.reorderQuantity as BigDecimal) : BigDecimal.ZERO
                 BigDecimal quantityShortfall = minimumStock.subtract(currentQuantity)
                 if (reqQuantity < quantityShortfall) {
                     reqQuantity = quantityShortfall
