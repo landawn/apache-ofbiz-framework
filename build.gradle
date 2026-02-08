@@ -128,6 +128,17 @@ application {
             ]
 }
 
+task runSpringBoot(type: JavaExec, dependsOn: classes) {
+    group = 'OFBiz Server'
+    description = 'Run OFBiz with Spring Boot + Spring Web entry point'
+    mainClass = 'org.apache.ofbiz.spring.OfbizSpringBootApplication'
+    classpath = sourceSets.main.runtimeClasspath
+    jvmArgs application.applicationDefaultJvmArgs
+    if (project.hasProperty('springArgs')) {
+        args springArgs.tokenize()
+    }
+}
+
 distributions.main.contents.from(rootDir) {
     include 'framework/**', 'applications/**', 'themes/**', 'plugins/**'
 }

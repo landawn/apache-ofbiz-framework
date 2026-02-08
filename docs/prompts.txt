@@ -9,6 +9,8 @@ Dependencies to include:
 Requirements:
 1. Rewrite the project using Spring Boot with Spring Web.
 2. Replace all existing persistence / data-access code with abacus-jdbc.
+	2.1) Create a DAO class for each entity/table
+	2.2) Rewrite the entity class with Lombok.
 3. Do NOT introduce other ORM frameworks (e.g., JPA, Hibernate, MyBatis).
 4. Keep existing business logic unchanged unless required for integration.
 5. Ensure the application remains functionally equivalent after refactoring.

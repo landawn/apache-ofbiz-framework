@@ -36,6 +36,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.landawn.abacus.jdbc.JdbcUtil;
+import com.landawn.abacus.jdbc.PreparedQuery;
+
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericDataSourceException;
@@ -71,6 +74,9 @@ public class SQLProcessor implements AutoCloseable {
 
     // / The database resources to be used
     private PreparedStatement ps = null;
+
+    // / Abacus wrapper over the active prepared statement
+    private PreparedQuery preparedQuery = null;
 
     // / The database resources to be used
     private ResultSet resultSet = null;
@@ -225,6 +231,7 @@ public class SQLProcessor implements AutoCloseable {
         }
 
         sql = null;
+        resultSetMetaData = null;
 
         if (resultSet != null) {
             try {
@@ -239,7 +246,19 @@ public class SQLProcessor implements AutoCloseable {
             resultSet = null;
         }
 
-        if (ps != null) {
+        if (preparedQuery != null) {
+            try {
+                preparedQuery.close();
+                if (Debug.verboseOn()) {
+                    Debug.logVerbose("SQLProcessor:close() abacus query close : manualTx=" + manualTx, MODULE);
+                }
+            } catch (Exception e) {
+                Debug.logWarning(e.getMessage(), MODULE);
+            }
+
+            preparedQuery = null;
+            ps = null;
+        } else if (ps != null) {
             try {
                 ps.close();
                 if (Debug.verboseOn()) {
@@ -370,6 +389,7 @@ public class SQLProcessor implements AutoCloseable {
         }
 
         this.sql = sql;
+        this.resultSetMetaData = null;
 
         if (connection == null) {
             getConnection();
@@ -377,26 +397,31 @@ public class SQLProcessor implements AutoCloseable {
 
         try {
             ind = 1;
+            final PreparedStatement stmt;
             if (specifyTypeAndConcur) {
-                ps = connection.prepareStatement(sql, resultSetType, resultSetConcurrency);
+                stmt = connection.prepareStatement(sql, resultSetType, resultSetConcurrency);
                 if (Debug.verboseOn()) {
-                    Debug.logVerbose("[SQLProcessor.prepareStatement] ps=" + ps, MODULE);
+                    Debug.logVerbose("[SQLProcessor.prepareStatement] ps=" + stmt, MODULE);
                 }
             } else {
-                ps = connection.prepareStatement(sql);
+                stmt = connection.prepareStatement(sql);
                 if (Debug.verboseOn()) {
-                    Debug.logVerbose("[SQLProcessor.prepareStatement] (def) ps=" + ps, MODULE);
+                    Debug.logVerbose("[SQLProcessor.prepareStatement] (def) ps=" + stmt, MODULE);
                 }
             }
             if (maxRows > 0) {
-                ps.setMaxRows(maxRows);
+                stmt.setMaxRows(maxRows);
                 if (Debug.verboseOn()) {
                     Debug.logVerbose("[SQLProcessor.prepareStatement] max rows set : " + maxRows, MODULE);
                 }
             }
-            this.setFetchSize(ps, fetchSize);
-        } catch (SQLException sqle) {
-            throw new GenericDataSourceException("SQL Exception while executing the following:" + this.sql, sqle);
+            this.setFetchSize(stmt, fetchSize);
+
+            ps = stmt;
+            preparedQuery = JdbcUtil.prepareQuery(connection, sql, (conn, querySql) -> stmt).closeAfterExecution(false);
+        } catch (SQLException | IllegalStateException e) {
+            preparedQuery = null;
+            throw new GenericDataSourceException("SQL Exception while executing the following:" + this.sql, e);
         }
     }
 
@@ -407,8 +432,17 @@ public class SQLProcessor implements AutoCloseable {
      */
     public ResultSet executeQuery() throws GenericDataSourceException {
         try {
-            // if (Debug.verboseOn()) Debug.logVerbose("[SQLProcessor.executeQuery] ps=" + ps.toString(), MODULE);
-            resultSet = ps.executeQuery();
+            if (preparedQuery != null) {
+                resultSet = preparedQuery.executeThenApply((stmt, hasResultSet) -> {
+                    if (!hasResultSet) {
+                        throw new SQLException("No ResultSet returned by statement execution.");
+                    }
+                    return stmt.getResultSet();
+                });
+            } else {
+                // if (Debug.verboseOn()) Debug.logVerbose("[SQLProcessor.executeQuery] ps=" + ps.toString(), MODULE);
+                resultSet = ps.executeQuery();
+            }
         } catch (SQLException sqle) {
             this.checkLockWaitInfo(sqle);
             throw new GenericDataSourceException("SQL Exception while executing the following:" + this.sql, sqle);
@@ -436,6 +470,10 @@ public class SQLProcessor implements AutoCloseable {
      */
     public int executeUpdate() throws GenericDataSourceException {
         try {
+            if (preparedQuery != null) {
+                return preparedQuery.update();
+            }
+
             // if (Debug.verboseOn()) Debug.logVerbose("[SQLProcessor.executeUpdate] ps=" + ps.toString(), MODULE);
             //TransactionUtil.printAllThreadsTransactionBeginStacks();
             return ps.executeUpdate();
@@ -454,8 +492,8 @@ public class SQLProcessor implements AutoCloseable {
      */
     public int executeUpdate(String sql) throws GenericDataSourceException {
 
-        try (Statement stmt = connection.createStatement()) {
-            return stmt.executeUpdate(sql);
+        try {
+            return JdbcUtil.executeUpdate(connection, sql);
         } catch (SQLException sqle) {
             // passing on this exception as nested, no need to log it here:
             // Debug.logError(sqle, "SQLProcessor.executeUpdate(sql) : ERROR : ", MODULE);
@@ -867,6 +905,10 @@ public class SQLProcessor implements AutoCloseable {
      */
     public int executeBatch() throws GenericDataSourceException {
         try {
+            if (preparedQuery != null) {
+                return Arrays.stream(preparedQuery.batchUpdate()).sum();
+            }
+
             return Arrays.stream(ps.executeBatch()).sum();
         } catch (SQLException sqle) {
             this.checkLockWaitInfo(sqle);
@@ -880,6 +922,10 @@ public class SQLProcessor implements AutoCloseable {
      */
     public void addBatch() throws SQLException {
         this.ind = 1;
-        this.getPreparedStatement().addBatch();
+        if (preparedQuery != null) {
+            preparedQuery.addBatch();
+        } else {
+            this.getPreparedStatement().addBatch();
+        }
     }
 }
