@@ -243,6 +243,35 @@ tasks.register('generateAbacusPersistenceFromMysqlDdl') {
         def daoPackageName = 'org.apache.ofbiz.persistence.dao'
         def entityOutputDir = new File(generatedDdlJavaDir, entityPackageName.replace('.', '/'))
         def daoOutputDir = new File(generatedDdlJavaDir, daoPackageName.replace('.', '/'))
+        def manualAddedFieldsMarker = '// === Manually added fields ==='
+        def preservedXJavaManualLines = [] as List<String>
+
+        // Preserve manual section in x.java before generated package cleanup.
+        def existingXJavaFile = fileTree(generatedDdlJavaDir) {
+            include '**/x.java'
+        }.files
+                .findAll { it.path.replace('\\', '/').contains('/org/apache/ofbiz/persistence/') }
+                .sort { it.path }
+                .find { true }
+
+        if (existingXJavaFile != null && existingXJavaFile.exists()) {
+            def existingXJavaLines = existingXJavaFile.readLines(StandardCharsets.UTF_8.name())
+            int markerIndex = existingXJavaLines.findIndexOf { line ->
+                line != null && line.trim().startsWith(manualAddedFieldsMarker)
+            }
+
+            if (markerIndex >= 0) {
+                preservedXJavaManualLines = new ArrayList<>(existingXJavaLines.subList(markerIndex, existingXJavaLines.size()))
+
+                while (!preservedXJavaManualLines.isEmpty() && preservedXJavaManualLines[preservedXJavaManualLines.size() - 1].trim().isEmpty()) {
+                    preservedXJavaManualLines.remove(preservedXJavaManualLines.size() - 1)
+                }
+
+                if (!preservedXJavaManualLines.isEmpty() && preservedXJavaManualLines[preservedXJavaManualLines.size() - 1].trim() == '}') {
+                    preservedXJavaManualLines.remove(preservedXJavaManualLines.size() - 1)
+                }
+            }
+        }
 
         // Only clear generated persistence package folders, never the whole source tree.
         delete(entityOutputDir)
@@ -498,6 +527,40 @@ public final class PropNameTableGeneratorRunner {
             classpath = files(runnerClassDir, tempClassDir) + files(minimalClasspathFiles)
             mainClass = runnerClassName
             args generatedDdlJavaDir.absolutePath, classListFile.absolutePath, 'x'
+        }
+
+        if (!preservedXJavaManualLines.isEmpty()) {
+            def generatedXJavaFile = fileTree(generatedDdlJavaDir) {
+                include '**/x.java'
+            }.files
+                    .findAll { it.path.replace('\\', '/').contains('/org/apache/ofbiz/persistence/') }
+                    .sort { it.path }
+                    .find { true }
+
+            if (generatedXJavaFile != null && generatedXJavaFile.exists()) {
+                def generatedXJavaLines = generatedXJavaFile.readLines(StandardCharsets.UTF_8.name())
+                int finalClosingBraceIndex = -1
+
+                for (int i = generatedXJavaLines.size() - 1; i >= 0; i--) {
+                    if (generatedXJavaLines[i].trim() == '}') {
+                        finalClosingBraceIndex = i
+                        break
+                    }
+                }
+
+                if (finalClosingBraceIndex >= 0) {
+                    def mergedXJavaLines = []
+                    mergedXJavaLines.addAll(generatedXJavaLines.subList(0, finalClosingBraceIndex))
+
+                    if (!mergedXJavaLines.isEmpty() && !mergedXJavaLines[mergedXJavaLines.size() - 1].trim().isEmpty()) {
+                        mergedXJavaLines << ''
+                    }
+
+                    mergedXJavaLines.addAll(preservedXJavaManualLines)
+                    mergedXJavaLines.addAll(generatedXJavaLines.subList(finalClosingBraceIndex, generatedXJavaLines.size()))
+                    generatedXJavaFile.setText(mergedXJavaLines.join(System.lineSeparator()) + System.lineSeparator(), StandardCharsets.UTF_8.name())
+                }
+            }
         }
 
         logger.lifecycle("Generated ${entityCount} Lombok entities and ${daoCount} DAO interfaces from ${ddlFile} into ${generatedDdlJavaDir}")

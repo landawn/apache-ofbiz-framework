@@ -6563,4 +6563,6 @@ public interface x { // NOSONAR
     /** Property(field) name {@code "zipFile"} for classes: {@code [FtpAddressEntity]} */
     String zipFile = "zipFile";
 
+    // === Manually added fields ===
+
 }
