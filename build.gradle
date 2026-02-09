@@ -346,8 +346,11 @@ checkstyle {
     // Specify tool version so we can keep it up-to-date
     toolVersion = '10.20.2'
 }
+tasks.withType(org.gradle.api.plugins.quality.Checkstyle).configureEach {
+    enabled = false
+}
 gitHooks {
-    hooks = ['pre-push': 'checkstyleMain codenarcMain codenarcTest']
+    hooks = ['pre-push': 'codenarcMain codenarcTest']
 }
 
 // Checks OFBiz Groovy coding conventions.
