@@ -1,0 +1,262 @@
+import groovy.xml.XmlSlurper
+import java.nio.charset.StandardCharsets
+
+def generatedAbacusJavaDir = file("${buildDir}/generated/sources/abacus/main/java")
+
+def javaKeywords = [
+    'abstract', 'assert', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const',
+    'continue', 'default', 'do', 'double', 'else', 'enum', 'extends', 'final', 'finally', 'float',
+    'for', 'goto', 'if', 'implements', 'import', 'instanceof', 'int', 'interface', 'long', 'native',
+    'new', 'package', 'private', 'protected', 'public', 'return', 'short', 'static', 'strictfp',
+    'super', 'switch', 'synchronized', 'this', 'throw', 'throws', 'transient', 'try', 'void',
+    'volatile', 'while'
+] as Set
+
+def wrapperTypeByPrimitive = [
+    'boolean': 'Boolean',
+    'byte'   : 'Byte',
+    'short'  : 'Short',
+    'int'    : 'Integer',
+    'long'   : 'Long',
+    'float'  : 'Float',
+    'double' : 'Double',
+    'char'   : 'Character'
+]
+
+def sanitizeFieldName = { String fieldName ->
+    if (!fieldName) {
+        return 'field'
+    }
+
+    def cleaned = fieldName.replaceAll(/[^A-Za-z0-9_]/, '_')
+    if (!(cleaned[0] in (('a'..'z') + ('A'..'Z') + ['_']))) {
+        cleaned = "_${cleaned}"
+    }
+
+    if (javaKeywords.contains(cleaned)) {
+        cleaned = "${cleaned}_"
+    }
+
+    return cleaned
+}
+
+def sanitizeTypeName = { String rawName ->
+    if (!rawName) {
+        return 'GeneratedType'
+    }
+
+    def tokens = rawName.replaceAll(/[^A-Za-z0-9]+/, ' ').trim().split(/\s+/).findAll { it }
+    def merged = tokens.collect { token -> token[0].toUpperCase() + token.substring(1) }.join('')
+    if (!merged) {
+        merged = 'GeneratedType'
+    }
+    if (!(merged[0] in (('a'..'z') + ('A'..'Z') + ['_']))) {
+        merged = "_${merged}"
+    }
+
+    return merged
+}
+
+def normalizeJavaType = { String javaType ->
+    if (!javaType?.trim()) {
+        return 'Object'
+    }
+
+    def trimmed = javaType.trim()
+    if (trimmed.endsWith('[]')) {
+        def baseType = trimmed.substring(0, trimmed.length() - 2)
+        return "${wrapperTypeByPrimitive.getOrDefault(baseType, baseType)}[]"
+    }
+
+    return wrapperTypeByPrimitive.getOrDefault(trimmed, trimmed)
+}
+
+def shortTypeName = { String canonicalType ->
+    if (canonicalType.endsWith('[]')) {
+        def baseType = canonicalType.substring(0, canonicalType.length() - 2)
+        def shortBaseType = baseType.contains('.') ? baseType.substring(baseType.lastIndexOf('.') + 1) : baseType
+        return "${shortBaseType}[]"
+    }
+
+    if (canonicalType.contains('.')) {
+        return canonicalType.substring(canonicalType.lastIndexOf('.') + 1)
+    }
+
+    return canonicalType
+}
+
+def maybeImportType = { Set<String> imports, String canonicalType ->
+    if (!canonicalType) {
+        return
+    }
+
+    def typeToCheck = canonicalType.endsWith('[]') ? canonicalType.substring(0, canonicalType.length() - 2) : canonicalType
+    if (typeToCheck.contains('.') && !typeToCheck.startsWith('java.lang.')) {
+        imports.add(typeToCheck)
+    }
+}
+
+def toJavaLiteral = { String text ->
+    return text.replace('\\', '\\\\').replace('"', '\\"')
+}
+
+def writeUtf8 = { File file, String content ->
+    file.parentFile.mkdirs()
+    file.setText(content, StandardCharsets.UTF_8.name())
+}
+
+tasks.register('generateAbacusPersistenceLayer') {
+    group = 'build'
+    description = 'Generates Lombok entity classes and abacus-jdbc DAO interfaces from OFBiz entity model files'
+    outputs.dir(generatedAbacusJavaDir)
+
+    doLast {
+        delete(generatedAbacusJavaDir)
+        generatedAbacusJavaDir.mkdirs()
+
+        def derbyFieldTypes = file("${rootDir}/framework/entity/fieldtype/fieldtypederby.xml")
+        def fieldTypeModel = new XmlSlurper(false, false).parse(derbyFieldTypes)
+        def fieldJavaTypeByOfbizType = [:]
+        fieldTypeModel.'field-type-def'.each { node ->
+            def ofbizType = node.@type?.text()
+            def javaType = normalizeJavaType(node.@'java-type'?.text())
+            if (ofbizType) {
+                fieldJavaTypeByOfbizType[ofbizType] = javaType
+            }
+        }
+
+        def entityModelFiles = fileTree(rootDir) {
+            include 'framework/**/entitydef/entitymodel*.xml'
+            include 'applications/**/entitydef/entitymodel*.xml'
+        }.files.sort { it.path }
+
+        int generatedEntityCount = 0
+        int generatedDaoCount = 0
+
+        entityModelFiles.each { entityModelFile ->
+            def model = new XmlSlurper(false, false).parse(entityModelFile)
+            model.entity.each { entityNode ->
+                def entityName = entityNode.@'entity-name'.text()
+                if (!entityName) {
+                    return
+                }
+
+                def fields = []
+                entityNode.field.each { fieldNode ->
+                    def fieldName = fieldNode.@name.text()
+                    def fieldType = fieldNode.@type.text()
+                    def colName = fieldNode.@'col-name'.text()
+                    if (!fieldName) {
+                        return
+                    }
+
+                    def resolvedJavaType = fieldJavaTypeByOfbizType.getOrDefault(fieldType, 'Object')
+                    fields << [
+                        name    : fieldName,
+                        javaName: sanitizeFieldName(fieldName),
+                        javaType: normalizeJavaType(resolvedJavaType),
+                        colName  : colName ?: fieldName
+                    ]
+                }
+
+                if (fields.isEmpty()) {
+                    return
+                }
+
+                def pkNames = entityNode.'prim-key'.collect { it.@field.text() }.findAll { it } as Set
+                def tableName = entityNode.@'table-name'.text()
+                if (!tableName) {
+                    tableName = entityName
+                }
+
+                def baseTypeName = sanitizeTypeName(entityName)
+                def entityClassName = "${baseTypeName}Entity"
+                def daoClassName = "${baseTypeName}Dao"
+
+                def entityPackageName = 'org.apache.ofbiz.persistence.entity'
+                def daoPackageName = 'org.apache.ofbiz.persistence.dao'
+
+                def entityImports = new TreeSet<String>()
+                entityImports.add('com.landawn.abacus.annotation.Column')
+                entityImports.add('com.landawn.abacus.annotation.Entity')
+                entityImports.add('com.landawn.abacus.annotation.Id')
+                entityImports.add('com.landawn.abacus.annotation.Table')
+                entityImports.add('lombok.AllArgsConstructor')
+                entityImports.add('lombok.Builder')
+                entityImports.add('lombok.Data')
+                entityImports.add('lombok.NoArgsConstructor')
+
+                fields.each { field ->
+                    maybeImportType(entityImports, field.javaType as String)
+                }
+
+                def entityLines = []
+                entityLines << "package ${entityPackageName};"
+                entityLines << ''
+                entityImports.each { entityLines << "import ${it};" }
+                entityLines << ''
+                entityLines << '@Data'
+                entityLines << '@Builder(toBuilder = true)'
+                entityLines << '@NoArgsConstructor'
+                entityLines << '@AllArgsConstructor'
+                entityLines << "@Entity(name = \"${toJavaLiteral(entityName)}\")"
+                entityLines << "@Table(name = \"${toJavaLiteral(tableName)}\")"
+                entityLines << "public class ${entityClassName} {"
+
+                fields.each { field ->
+                    if (pkNames.contains(field.name)) {
+                        entityLines << '    @Id'
+                    }
+                    entityLines << "    @Column(name = \"${toJavaLiteral(field.colName as String)}\")"
+                    entityLines << "    private ${shortTypeName(field.javaType as String)} ${field.javaName};"
+                    entityLines << ''
+                }
+
+                if (entityLines.last() == '') {
+                    entityLines.remove(entityLines.size() - 1)
+                }
+                entityLines << '}'
+                entityLines << ''
+
+                def entityFile = new File(generatedAbacusJavaDir, "${entityPackageName.replace('.', '/')}/${entityClassName}.java")
+                writeUtf8(entityFile, entityLines.join(System.lineSeparator()))
+                generatedEntityCount++
+
+                def daoImports = new TreeSet<String>()
+                daoImports.add('com.landawn.abacus.jdbc.dao.CrudDao')
+                daoImports.add("${entityPackageName}.${entityClassName}")
+
+                def daoLines = []
+                daoLines << "package ${daoPackageName};"
+                daoLines << ''
+                daoImports.each { daoLines << "import ${it};" }
+                daoLines << ''
+                daoLines << "public interface ${daoClassName} extends CrudDao {"
+                daoLines << ''
+                daoLines << "    default Class<${entityClassName}> entityType() {"
+                daoLines << "        return ${entityClassName}.class;"
+                daoLines << '    }'
+                daoLines << '}'
+                daoLines << ''
+
+                def daoFile = new File(generatedAbacusJavaDir, "${daoPackageName.replace('.', '/')}/${daoClassName}.java")
+                writeUtf8(daoFile, daoLines.join(System.lineSeparator()))
+                generatedDaoCount++
+            }
+        }
+
+        logger.lifecycle("Generated ${generatedEntityCount} Lombok entities and ${generatedDaoCount} DAO interfaces in ${generatedAbacusJavaDir}")
+    }
+}
+
+sourceSets.main.java.srcDir(generatedAbacusJavaDir)
+
+tasks.named('compileJava') {
+    dependsOn(tasks.named('generateAbacusPersistenceLayer'))
+}
+
+tasks.matching { it.name == 'checkstyleMain' }.configureEach {
+    exclude('**/generated/sources/abacus/**')
+}
+
+apply from: "${rootDir}/tools/generate-mysql-ddl.gradle"

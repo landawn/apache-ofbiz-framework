@@ -1,0 +1,27 @@
+Task:
+Generate MySQL DDL from the OFBiz entity definitions.
+
+Input:
+- All entity/table definitions under: ./entitydef/*.xml (including any nested directories if applicable)
+
+Requirements:
+1. Parse the entity definition XML files and extract:
+   - tables (entities)
+   - columns (fields)
+   - primary keys
+   - indexes/constraints (if defined)
+   - foreign keys/relations (if defined and applicable)
+2. Convert the extracted schema into valid MySQL DDL:
+   - CREATE TABLE statements
+   - PRIMARY KEY / UNIQUE / INDEX definitions
+   - FOREIGN KEY constraints (only if the XML defines them)
+3. Use consistent naming rules (OFBiz entity/field → MySQL table/column) and apply them uniformly.
+4. Output must be deterministic and stable (same input → same DDL ordering).
+5. Write the generated DDL to: ./docs/mysql_ddl.sql
+
+Constraints:
+- Do not invent schema elements not present in the XML.
+- If any XML is invalid or ambiguous, report the exact file and line/element and stop.
+
+Output:
+- A single SQL file at ./docs/mysql_ddl.sql containing the full MySQL schema DDL.

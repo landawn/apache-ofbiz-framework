@@ -1,0 +1,8 @@
+Generate Java entity classes annotated with Lombok and corresponding DAO classes based on the table definitions in mysql_ddl.sql.
+
+References and examples: 	
+	Abacus-jdbc APIs: ./docs/abacus-jdbc
+
+Sample DAO implementations:
+	C:\Users\haiyangl\Landawn\abacus-jdbc\samples
+	C:\Users\haiyangl\Landawn\abacus-jdbc\src\test\java

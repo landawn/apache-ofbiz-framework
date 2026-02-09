@@ -323,6 +323,8 @@ sourceSets {
     }
 }
 
+apply from: 'abacus-migration.gradle'
+
 jar.manifest.attributes(
     'Implementation-Title': project.name,
     'Main-Class': application.mainClass,
