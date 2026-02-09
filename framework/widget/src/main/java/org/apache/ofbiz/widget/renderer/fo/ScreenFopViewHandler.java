@@ -129,21 +129,21 @@ public class ScreenFopViewHandler extends AbstractViewHandler {
         }
         // get encryption related parameters
         FOUserAgent foUserAgent = null;
-        String userPassword = (String) context.get("userPassword");
-        String ownerPassword = (String) context.get("ownerPassword");
-        boolean allowPrint = Boolean.parseBoolean(UtilValidate.isEmpty(context.get("allowPrint"))
-                ? ApacheFopWorker.getAllowPrintDefault() : (String) context.get("allowPrint"));
-        boolean allowCopyContent = Boolean.parseBoolean(UtilValidate.isEmpty(context.get("allowCopyContent"))
-                ? ApacheFopWorker.getAllowCopyContentDefault() : (String) context.get("allowCopyContent"));
-        boolean allowEditContent = Boolean.parseBoolean(UtilValidate.isEmpty(context.get("allowEditContent"))
-                ? ApacheFopWorker.getAllowEditContentDefault() : (String) context.get("allowEditContent"));
-        boolean allowEditAnnotations = Boolean.parseBoolean(UtilValidate.isEmpty(context.get("allowEditAnnotations"))
-                ? ApacheFopWorker.getAllowEditAnnotationsDefault() : (String) context.get("allowEditAnnotations"));
+        String userPassword = (String) context.get(org.apache.ofbiz.persistence.entity.x.userPassword);
+        String ownerPassword = (String) context.get(org.apache.ofbiz.persistence.entity.x.ownerPassword);
+        boolean allowPrint = Boolean.parseBoolean(UtilValidate.isEmpty(context.get(org.apache.ofbiz.persistence.entity.x.allowPrint))
+                ? ApacheFopWorker.getAllowPrintDefault() : (String) context.get(org.apache.ofbiz.persistence.entity.x.allowPrint));
+        boolean allowCopyContent = Boolean.parseBoolean(UtilValidate.isEmpty(context.get(org.apache.ofbiz.persistence.entity.x.allowCopyContent))
+                ? ApacheFopWorker.getAllowCopyContentDefault() : (String) context.get(org.apache.ofbiz.persistence.entity.x.allowCopyContent));
+        boolean allowEditContent = Boolean.parseBoolean(UtilValidate.isEmpty(context.get(org.apache.ofbiz.persistence.entity.x.allowEditContent))
+                ? ApacheFopWorker.getAllowEditContentDefault() : (String) context.get(org.apache.ofbiz.persistence.entity.x.allowEditContent));
+        boolean allowEditAnnotations = Boolean.parseBoolean(UtilValidate.isEmpty(context.get(org.apache.ofbiz.persistence.entity.x.allowEditAnnotations))
+                ? ApacheFopWorker.getAllowEditAnnotationsDefault() : (String) context.get(org.apache.ofbiz.persistence.entity.x.allowEditAnnotations));
         if (UtilValidate.isNotEmpty(userPassword) || UtilValidate.isNotEmpty(ownerPassword) || !allowPrint || !allowCopyContent || !allowEditContent
                 || !allowEditAnnotations) {
             int encryptionLength = 128;
             try {
-                encryptionLength = Integer.parseInt((String) context.get("encryption-length"));
+                encryptionLength = Integer.parseInt((String) context.get(org.apache.ofbiz.persistence.entity.x.encryption_length));
             } catch (NumberFormatException e) {
                 try {
                     encryptionLength = Integer.parseInt(ApacheFopWorker.getEncryptionLengthDefault());
@@ -152,16 +152,16 @@ public class ScreenFopViewHandler extends AbstractViewHandler {
                 }
             }
 
-            boolean encryptMetadata = Boolean.parseBoolean(UtilValidate.isEmpty(context.get("encrypt-metadata"))
-                    ? ApacheFopWorker.getEncryptMetadataDefault() : (String) context.get("encrypt-metadata"));
-            boolean allowFillInForms = Boolean.parseBoolean(UtilValidate.isEmpty(context.get("allowFillInForms"))
-                    ? ApacheFopWorker.getAllowFillInFormsDefault() : (String) context.get("allowFillInForms"));
-            boolean allowAccessContent = Boolean.parseBoolean(UtilValidate.isEmpty(context.get("allowAccessContent"))
-                    ? ApacheFopWorker.getAllowAccessContentDefault() : (String) context.get("allowAccessContent"));
-            boolean allowAssembleDocument = Boolean.parseBoolean(UtilValidate.isEmpty(context.get("allowAssembleDocument"))
-                    ? ApacheFopWorker.getAllowAssembleDocumentDefault() : (String) context.get("allowAssembleDocument"));
-            boolean allowPrintHq = Boolean.parseBoolean(UtilValidate.isEmpty(context.get("allowPrintHq"))
-                    ? ApacheFopWorker.getAllowPrintHqDefault() : (String) context.get("allowPrintHq"));
+            boolean encryptMetadata = Boolean.parseBoolean(UtilValidate.isEmpty(context.get(org.apache.ofbiz.persistence.entity.x.encrypt_metadata))
+                    ? ApacheFopWorker.getEncryptMetadataDefault() : (String) context.get(org.apache.ofbiz.persistence.entity.x.encrypt_metadata));
+            boolean allowFillInForms = Boolean.parseBoolean(UtilValidate.isEmpty(context.get(org.apache.ofbiz.persistence.entity.x.allowFillInForms))
+                    ? ApacheFopWorker.getAllowFillInFormsDefault() : (String) context.get(org.apache.ofbiz.persistence.entity.x.allowFillInForms));
+            boolean allowAccessContent = Boolean.parseBoolean(UtilValidate.isEmpty(context.get(org.apache.ofbiz.persistence.entity.x.allowAccessContent))
+                    ? ApacheFopWorker.getAllowAccessContentDefault() : (String) context.get(org.apache.ofbiz.persistence.entity.x.allowAccessContent));
+            boolean allowAssembleDocument = Boolean.parseBoolean(UtilValidate.isEmpty(context.get(org.apache.ofbiz.persistence.entity.x.allowAssembleDocument))
+                    ? ApacheFopWorker.getAllowAssembleDocumentDefault() : (String) context.get(org.apache.ofbiz.persistence.entity.x.allowAssembleDocument));
+            boolean allowPrintHq = Boolean.parseBoolean(UtilValidate.isEmpty(context.get(org.apache.ofbiz.persistence.entity.x.allowPrintHq))
+                    ? ApacheFopWorker.getAllowPrintHqDefault() : (String) context.get(org.apache.ofbiz.persistence.entity.x.allowPrintHq));
             FopFactory fopFactory = ApacheFopWorker.getFactoryInstance();
             foUserAgent = fopFactory.newFOUserAgent();
             PDFEncryptionParams pdfEncryptionParams = new PDFEncryptionParams(userPassword, ownerPassword, allowPrint, allowCopyContent,

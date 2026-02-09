@@ -118,7 +118,7 @@ public class EntityPermissionChecker {
             entityIdList = new LinkedList<>();
         }
         String entityName = entityNameExdr.expandString(context);
-        HttpServletRequest request = (HttpServletRequest) context.get("request");
+        HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
         GenericValue userLogin = null;
         String partyId = null;
         Delegator delegator = null;
@@ -126,7 +126,7 @@ public class EntityPermissionChecker {
             HttpSession session = request.getSession();
             userLogin = (GenericValue) session.getAttribute("userLogin");
             if (userLogin != null) {
-                partyId = userLogin.getString("partyId");
+                partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
             }
             delegator = (Delegator) request.getAttribute("delegator");
         }
@@ -140,7 +140,7 @@ public class EntityPermissionChecker {
             if (!passed && displayFailCond) {
                 String errMsg = "Permission is denied. \nThese are the conditions of which one must be met:\n"
                         + permissionConditionGetter.dumpAsText();
-                List<Object> errorMessageList = UtilGenerics.cast(context.get("errorMessageList"));
+                List<Object> errorMessageList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.errorMessageList));
                 errorMessageList.add(errMsg);
             }
         } catch (GenericEntityException e) {
@@ -227,8 +227,8 @@ public class EntityPermissionChecker {
         String userLoginId = null;
         String partyId = null;
         if (userLogin != null) {
-            userLoginId = userLogin.getString("userLoginId");
-            partyId = userLogin.getString("partyId");
+            userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
+            partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
         }
         boolean hasRoleOperation = false;
         if (!(targetOperationList == null) && userLoginId != null) {
@@ -347,11 +347,11 @@ public class EntityPermissionChecker {
 
             String statusId = null;
             if (hasStatusOp && hasStatusField) {
-                statusId = entity.getString("statusId");
+                statusId = entity.getString(org.apache.ofbiz.persistence.entity.x.statusId);
             }
 
             if (hasPrivilegeOp && hasPrivilegeField) {
-                privilegeEnumId = entity.getString("privilegeEnumId");
+                privilegeEnumId = entity.getString(org.apache.ofbiz.persistence.entity.x.privilegeEnumId);
                 getPrivilegeEnumSeq(delegator, privilegeEnumId);
             }
 
@@ -375,7 +375,7 @@ public class EntityPermissionChecker {
                 purposeList = getRelatedPurposes(entity, null);
                 String statusId = null;
                 if (hasStatusOp && hasStatusField) {
-                    statusId = entity.getString("statusId");
+                    statusId = entity.getString(org.apache.ofbiz.persistence.entity.x.statusId);
                 }
 
                 if (!purposeList.isEmpty()) {
@@ -417,7 +417,7 @@ public class EntityPermissionChecker {
 
             String statusId = null;
             if (hasStatusOp && hasStatusField) {
-                statusId = entity.getString("statusId");
+                statusId = entity.getString(org.apache.ofbiz.persistence.entity.x.statusId);
             }
 
             passed = hasMatch(entityName, targetOperationEntityList, roleList, hasPurposeOp, purposeList, hasStatusOp, statusId);
@@ -445,7 +445,7 @@ public class EntityPermissionChecker {
                         "partyId", "roleTypeId", "ContentRole");
                 String statusId = null;
                 if (hasStatusOp && hasStatusField) {
-                    statusId = entity.getString("statusId");
+                    statusId = entity.getString(org.apache.ofbiz.persistence.entity.x.statusId);
                 }
 
                 purposeList = purposes.get(entityId);
@@ -656,7 +656,7 @@ public class EntityPermissionChecker {
                 if (UtilValidate.isNotEmpty(partyId)) {
                     List<GenericValue> partyRoleList = EntityQuery.use(delegator).from("PartyRole").where("partyId", partyId).cache(true).queryList();
                     for (GenericValue partyRole: partyRoleList) {
-                        String roleTypeId = partyRole.getString("roleTypeId");
+                        String roleTypeId = partyRole.getString(org.apache.ofbiz.persistence.entity.x.roleTypeId);
                         for (String thisRole: newHasRoleList) {
                             if (roleTypeId.indexOf(thisRole) >= 0) {
                                 hasRoleOperation = true;
@@ -686,14 +686,14 @@ public class EntityPermissionChecker {
     //    }
         String lcEntityName = entityName.toLowerCase();
         for (GenericValue targetOp: targetOperations) {
-            String testRoleTypeId = (String) targetOp.get("roleTypeId");
+            String testRoleTypeId = (String) targetOp.get(org.apache.ofbiz.persistence.entity.x.roleTypeId);
             String testContentPurposeTypeId = null;
             if (hasPurposeOp) {
                 testContentPurposeTypeId = (String) targetOp.get(lcEntityName + "PurposeTypeId");
             }
             String testStatusId = null;
             if (hasStatusOp) {
-                testStatusId = (String) targetOp.get("statusId");
+                testStatusId = (String) targetOp.get(org.apache.ofbiz.persistence.entity.x.statusId);
             }
             //String testPrivilegeEnumId = null;
             //if (hasPrivilegeOp)
@@ -759,7 +759,7 @@ public class EntityPermissionChecker {
 
         String targStatusId = null;
         if (modelEntity.getField("statusId") != null) {
-            targStatusId = entity.getString("statusId");
+            targStatusId = entity.getString(org.apache.ofbiz.persistence.entity.x.statusId);
         }
         if (Debug.verboseOn()) {
             Debug.logVerbose("STATUS:" + targStatusId, MODULE);
@@ -837,9 +837,9 @@ public class EntityPermissionChecker {
 
 
         roles.remove("OWNER"); // always test with the owner of the current content
-        if (entity.get("createdByUserLogin") != null) {
-            String userLoginId = (String) userLogin.get("userLoginId");
-            String userLoginIdCB = (String) entity.get("createdByUserLogin");
+        if (entity.get(org.apache.ofbiz.persistence.entity.x.createdByUserLogin) != null) {
+            String userLoginId = (String) userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+            String userLoginIdCB = (String) entity.get(org.apache.ofbiz.persistence.entity.x.createdByUserLogin);
             //if (Debug.infoOn()) Debug.logInfo("userLoginId:" + userLoginId + ": userLoginIdCB:" + userLoginIdCB + ":", null);
             if (userLoginIdCB.equals(userLoginId)) {
                 roles.add("OWNER");
@@ -847,14 +847,14 @@ public class EntityPermissionChecker {
             }
         }
 
-        String partyId = (String) userLogin.get("partyId");
+        String partyId = (String) userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId);
         List<GenericValue> relatedRoles = null;
         List<GenericValue> tmpRelatedRoles = entity.getRelated(entityName + "Role", null, null, true);
         relatedRoles = EntityUtil.filterByDate(tmpRelatedRoles);
         if (relatedRoles != null) {
             for (GenericValue contentRole: relatedRoles) {
-                String roleTypeId = (String) contentRole.get("roleTypeId");
-                String targPartyId = (String) contentRole.get("partyId");
+                String roleTypeId = (String) contentRole.get(org.apache.ofbiz.persistence.entity.x.roleTypeId);
+                String targPartyId = (String) contentRole.get(org.apache.ofbiz.persistence.entity.x.partyId);
                 if (targPartyId.equals(partyId)) {
                     if (!roles.contains(roleTypeId)) {
                         roles.add(roleTypeId);
@@ -866,8 +866,8 @@ public class EntityPermissionChecker {
                     GenericValue party = null;
                     String partyTypeId = null;
                     try {
-                        party = contentRole.getRelatedOne("Party", false);
-                        partyTypeId = (String) party.get("partyTypeId");
+                        party = contentRole.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Party, false);
+                        partyTypeId = (String) party.get(org.apache.ofbiz.persistence.entity.x.partyTypeId);
                         if (partyTypeId != null && "PARTY_GROUP".equals(partyTypeId)) {
                             Map<String, Object> map = new HashMap<>();
 
@@ -1035,7 +1035,7 @@ public class EntityPermissionChecker {
             if (UtilValidate.isNotEmpty(privilegeEnumId)) {
                 GenericValue privEnum = EntityQuery.use(delegator).from("Enumeration").where("enumId", privilegeEnumId).cache().queryOne();
                 if (privEnum != null) {
-                    String sequenceId = privEnum.getString("sequenceId");
+                    String sequenceId = privEnum.getString(org.apache.ofbiz.persistence.entity.x.sequenceId);
                     try {
                         privilegeEnumSeq = Integer.parseInt(sequenceId);
                     } catch (NumberFormatException e) {
@@ -1347,12 +1347,12 @@ public class EntityPermissionChecker {
             if (modelEntity.getField("createdByUserLogin") == null) {
                 return false;
             }
-            if (entity.get("createdByUserLogin") != null) {
-                String userLoginIdCB = (String) entity.get("createdByUserLogin");
+            if (entity.get(org.apache.ofbiz.persistence.entity.x.createdByUserLogin) != null) {
+                String userLoginIdCB = (String) entity.get(org.apache.ofbiz.persistence.entity.x.createdByUserLogin);
                 try {
                     GenericValue userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", userLoginIdCB).cache().queryOne();
                     if (userLogin != null) {
-                        String partyIdCB = userLogin.getString("partyId");
+                        String partyIdCB = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                         if (partyIdCB != null) {
                             if (partyIdCB.equals(targetPartyId)) {
                                 isOwner = true;
@@ -1422,7 +1422,7 @@ public class EntityPermissionChecker {
         if (UtilValidate.isNotEmpty(privilegeEnumId)) {
             GenericValue privEnum = EntityQuery.use(delegator).from("Enumeration").where("enumId", privilegeEnumId).cache().queryOne();
             if (privEnum != null) {
-                String sequenceId = privEnum.getString("sequenceId");
+                String sequenceId = privEnum.getString(org.apache.ofbiz.persistence.entity.x.sequenceId);
                 try {
                     privilegeEnumSeq = Integer.parseInt(sequenceId);
                 } catch (NumberFormatException e) {

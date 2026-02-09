@@ -113,16 +113,16 @@ public class MenuWrapTransform implements TemplateTransformModel {
 
         String dataResourceId = null;
         try {
-            dataResourceId = (String) view.get("drDataResourceId");
+            dataResourceId = (String) view.get(org.apache.ofbiz.persistence.entity.x.drDataResourceId);
         } catch (IllegalArgumentException e) {
-            dataResourceId = (String) view.get("dataResourceId");
+            dataResourceId = (String) view.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
         }
-        String subContentIdSub = (String) view.get("contentId");
+        String subContentIdSub = (String) view.get(org.apache.ofbiz.persistence.entity.x.contentId);
         // This order is taken so that the dataResourceType can be overridden in the transform arguments.
         String subDataResourceTypeId = (String) templateCtx.get("subDataResourceTypeId");
         if (UtilValidate.isEmpty(subDataResourceTypeId)) {
             try {
-                subDataResourceTypeId = (String) view.get("drDataResourceTypeId");
+                subDataResourceTypeId = (String) view.get(org.apache.ofbiz.persistence.entity.x.drDataResourceTypeId);
             } catch (IllegalArgumentException e) {
                 // view may be "Content"
             }

@@ -98,7 +98,7 @@ public class OrderContentWrapper implements ContentWrapper {
         if (order == null) {
             return null;
         }
-        String orderItemSeqId = ("OrderItem".equals(order.getEntityName()) ? order.getString("orderItemSeqId")
+        String orderItemSeqId = ("OrderItem".equals(order.getEntityName()) ? order.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)
                 : "_NA_");
 
         /* Look for a previously cached entry (may also be an entry with null value if
@@ -109,7 +109,7 @@ public class OrderContentWrapper implements ContentWrapper {
          */
 
         String cacheKey = orderContentTypeId + CACHE_KEY_SEPARATOR + locale + CACHE_KEY_SEPARATOR + mimeTypeId + CACHE_KEY_SEPARATOR + order.get(
-                "orderId") + CACHE_KEY_SEPARATOR + orderItemSeqId + CACHE_KEY_SEPARATOR + encoderType + CACHE_KEY_SEPARATOR + delegator;
+                org.apache.ofbiz.persistence.entity.x.orderId) + CACHE_KEY_SEPARATOR + orderItemSeqId + CACHE_KEY_SEPARATOR + encoderType + CACHE_KEY_SEPARATOR + delegator;
         String cachedValue = ORDER_CONTENT_CACHE.get(cacheKey);
         if (cachedValue != null || ORDER_CONTENT_CACHE.containsKey(cacheKey)) {
             return cachedValue;
@@ -140,10 +140,10 @@ public class OrderContentWrapper implements ContentWrapper {
             String mimeTypeId, Delegator delegator, LocalDispatcher dispatcher, Writer outWriter, boolean cache)
             throws GeneralException, IOException {
         if (orderId == null && order != null) {
-            orderId = order.getString("orderId");
+            orderId = order.getString(org.apache.ofbiz.persistence.entity.x.orderId);
         }
         if (orderItemSeqId == null && order != null) {
-            orderItemSeqId = ("OrderItem".equals(order.getEntityName()) ? order.getString("orderItemSeqId") : "_NA_");
+            orderItemSeqId = ("OrderItem".equals(order.getEntityName()) ? order.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId) : "_NA_");
         }
 
         if (delegator == null && order != null) {
@@ -165,7 +165,7 @@ public class OrderContentWrapper implements ContentWrapper {
             Map<String, Object> inContext = new HashMap<>();
             inContext.put("order", order);
             inContext.put("orderContent", orderContent);
-            ContentWorker.renderContentAsText(dispatcher, orderContent.getString("contentId"), outWriter, inContext, locale,
+            ContentWorker.renderContentAsText(dispatcher, orderContent.getString(org.apache.ofbiz.persistence.entity.x.contentId), outWriter, inContext, locale,
                     mimeTypeId, null, null, cache);
         }
     }

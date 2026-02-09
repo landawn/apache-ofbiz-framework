@@ -118,7 +118,7 @@ public class ProductPromoContentWrapper implements ContentWrapper {
          * contentTypeId::locale::mimeType::productPromoId, or whatever the CACHE_KEY_SEPARATOR is defined above to be.
          */
         String cacheKey = productPromoContentTypeId + CACHE_KEY_SEPARATOR + locale + CACHE_KEY_SEPARATOR + mimeTypeId
-                + CACHE_KEY_SEPARATOR + productPromo.get("productPromoId")
+                + CACHE_KEY_SEPARATOR + productPromo.get(org.apache.ofbiz.persistence.entity.x.productPromoId)
                 + CACHE_KEY_SEPARATOR + encoderType + CACHE_KEY_SEPARATOR + delegator;
         String cachedValue = PRODUCT_PROMO_CONTENT_CACHE.get(cacheKey);
         if (cachedValue != null || PRODUCT_PROMO_CONTENT_CACHE.containsKey(cacheKey)) {
@@ -166,7 +166,7 @@ public class ProductPromoContentWrapper implements ContentWrapper {
             Locale locale, String mimeTypeId, String partyId, String roleTypeId, Delegator delegator, LocalDispatcher dispatcher, Writer outWriter,
                                                     boolean cache) throws GeneralException, IOException {
         if (UtilValidate.isEmpty(productPromoId) && productPromo != null) {
-            productPromoId = productPromo.getString("productPromoId");
+            productPromoId = productPromo.getString(org.apache.ofbiz.persistence.entity.x.productPromoId);
         }
 
         if (UtilValidate.isEmpty(delegator) && productPromo != null) {
@@ -197,7 +197,7 @@ public class ProductPromoContentWrapper implements ContentWrapper {
             Map<String, Object> inContext = new HashMap<>();
             inContext.put("productPromo", productPromo);
             inContext.put("productPromoContent", productPromoContent);
-            ContentWorker.renderContentAsText(dispatcher, productPromoContent.getString("contentId"), outWriter,
+            ContentWorker.renderContentAsText(dispatcher, productPromoContent.getString(org.apache.ofbiz.persistence.entity.x.contentId), outWriter,
                     inContext, locale, mimeTypeId, partyId, roleTypeId, cache);
         } else {
             String candidateValue = null;

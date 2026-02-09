@@ -214,14 +214,14 @@ public class GenericDelegator implements Delegator {
             if (tenant == null) {
                 throw new GenericEntityException("No Tenant record found for delegator [" + this.delegatorFullName + "] with tenantId ["
                         + this.delegatorTenantId + "]");
-            } else if ("Y".equals(tenant.getString("disabled"))) {
+            } else if ("Y".equals(tenant.getString(org.apache.ofbiz.persistence.entity.x.disabled))) {
                 throw new GenericEntityException("No Tenant record found for delegator [" + this.delegatorFullName + "] with tenantId ["
                         + this.delegatorTenantId + "]");
             }
             GenericValue kekValue = EntityQuery.use(baseDelegator).from("TenantKeyEncryptingKey").where("tenantId", getDelegatorTenantId())
                     .cache(true).queryOne();
             if (kekValue != null) {
-                kekText = kekValue.getString("kekText");
+                kekText = kekValue.getString(org.apache.ofbiz.persistence.entity.x.kekText);
             } else {
                 kekText = this.delegatorInfo.getKeyEncryptingKey();
             }
@@ -521,9 +521,9 @@ public class GenericDelegator implements Delegator {
                         "entityGroupName", entityGroupName).cache(true).queryOne();
                 if (tenantDataSource != null) {
                     helperInfo.setTenantId(this.delegatorTenantId);
-                    helperInfo.setOverrideJdbcUri(tenantDataSource.getString("jdbcUri"));
-                    helperInfo.setOverrideUsername(tenantDataSource.getString("jdbcUsername"));
-                    helperInfo.setOverridePassword(tenantDataSource.getString("jdbcPassword"));
+                    helperInfo.setOverrideJdbcUri(tenantDataSource.getString(org.apache.ofbiz.persistence.entity.x.jdbcUri));
+                    helperInfo.setOverrideUsername(tenantDataSource.getString(org.apache.ofbiz.persistence.entity.x.jdbcUsername));
+                    helperInfo.setOverridePassword(tenantDataSource.getString(org.apache.ofbiz.persistence.entity.x.jdbcPassword));
                 } else {
                     return null;
                 }
@@ -1030,7 +1030,7 @@ public class GenericDelegator implements Delegator {
 
         if (serializedPK != null) {
             GenericValue entitySyncRemove = this.makeValue("EntitySyncRemove");
-            entitySyncRemove.set("primaryKeyRemoved", serializedPK);
+            entitySyncRemove.set(org.apache.ofbiz.persistence.entity.x.primaryKeyRemoved, serializedPK);
             this.createSetNextSeqId(entitySyncRemove);
         }
     }
@@ -2655,21 +2655,21 @@ public class GenericDelegator implements Delegator {
         if (!(newValueText == null ? "" : newValueText).equals((oldValueText == null ? "" : oldValueText))) {
             // only save changed values
             GenericValue entityAuditLog = this.makeValue("EntityAuditLog");
-            entityAuditLog.set("auditHistorySeqId", this.getNextSeqId("EntityAuditLog"));
-            entityAuditLog.set("changedEntityName", value.getEntityName());
-            entityAuditLog.set("changedFieldName", mf.getName());
+            entityAuditLog.set(org.apache.ofbiz.persistence.entity.x.auditHistorySeqId, this.getNextSeqId("EntityAuditLog"));
+            entityAuditLog.set(org.apache.ofbiz.persistence.entity.x.changedEntityName, value.getEntityName());
+            entityAuditLog.set(org.apache.ofbiz.persistence.entity.x.changedFieldName, mf.getName());
 
             String pkCombinedValueText = value.getPkShortValueString();
             if (pkCombinedValueText.length() > 250) {
                 // uh-oh, the string is too long!
                 pkCombinedValueText = pkCombinedValueText.substring(0, 250);
             }
-            entityAuditLog.set("pkCombinedValueText", pkCombinedValueText);
-            entityAuditLog.set("newValueText", newValueText);
-            entityAuditLog.set("oldValueText", oldValueText);
-            entityAuditLog.set("changedDate", nowTimestamp);
-            entityAuditLog.set("changedByInfo", getCurrentUserIdentifier());
-            entityAuditLog.set("changedSessionInfo", getCurrentSessionIdentifier());
+            entityAuditLog.set(org.apache.ofbiz.persistence.entity.x.pkCombinedValueText, pkCombinedValueText);
+            entityAuditLog.set(org.apache.ofbiz.persistence.entity.x.newValueText, newValueText);
+            entityAuditLog.set(org.apache.ofbiz.persistence.entity.x.oldValueText, oldValueText);
+            entityAuditLog.set(org.apache.ofbiz.persistence.entity.x.changedDate, nowTimestamp);
+            entityAuditLog.set(org.apache.ofbiz.persistence.entity.x.changedByInfo, getCurrentUserIdentifier());
+            entityAuditLog.set(org.apache.ofbiz.persistence.entity.x.changedSessionInfo, getCurrentSessionIdentifier());
             this.create(entityAuditLog);
         }
     }

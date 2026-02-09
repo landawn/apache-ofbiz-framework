@@ -64,7 +64,7 @@ public class IcsPaymentServices {
 
     public static Map<String, Object> ccAuth(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         // generate the request/properties
         Properties props = buildCsProperties(context, delegator);
         if (props == null) {
@@ -101,10 +101,10 @@ public class IcsPaymentServices {
 
     public static Map<String, Object> ccCapture(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
         //lets see if there is a auth transaction already in context
-        GenericValue authTransaction = (GenericValue) context.get("authTrans");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue authTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (authTransaction == null) {
             authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         }
@@ -143,8 +143,8 @@ public class IcsPaymentServices {
 
     public static Map<String, Object> ccRelease(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -182,8 +182,8 @@ public class IcsPaymentServices {
 
     public static Map<String, Object> ccRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -222,7 +222,7 @@ public class IcsPaymentServices {
 
     public static Map<String, Object> ccCredit(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         // generate the request/properties
         Properties props = buildCsProperties(context, delegator);
         if (props == null) {
@@ -254,8 +254,8 @@ public class IcsPaymentServices {
     }
 
     private static Properties buildCsProperties(Map<String, ? extends Object> context, Delegator delegator) {
-        String paymentGatewayConfigId = (String) context.get("paymentGatewayConfigId");
-        String configString = (String) context.get("paymentConfig");
+        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        String configString = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
         if (configString == null) {
             configString = "payment.properties";
         }
@@ -295,15 +295,15 @@ public class IcsPaymentServices {
     }
 
     private static Map<String, Object> buildAuthRequest(Map<String, ? extends Object> context, Delegator delegator) {
-        String paymentGatewayConfigId = (String) context.get("paymentGatewayConfigId");
-        String configString = (String) context.get("paymentConfig");
-        String currency = (String) context.get("currency");
+        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        String configString = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
         if (configString == null) {
             configString = "payment.properties";
         }
         // make the request map
         String capture = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "autoBill", configString, "payment.cybersource.autoBill", "false");
-        String orderId = (String) context.get("orderId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
         Map<String, Object> request = new HashMap<>();
         request.put("ccAuthService_run", "true");              // run auth service
         request.put("ccCaptureService_run", capture);          // run capture service (i.e. sale)
@@ -316,10 +316,10 @@ public class IcsPaymentServices {
     }
 
     private static Map<String, Object> buildCaptureRequest(Map<String, ? extends Object> context, GenericValue authTransaction, Delegator delegator) {
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
-        String paymentGatewayConfigId = (String) context.get("paymentGatewayConfigId");
-        String configString = (String) context.get("paymentConfig");
-        String currency = (String) context.get("currency");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        String configString = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
         if (configString == null) {
             configString = "payment.properties";
         }
@@ -327,9 +327,9 @@ public class IcsPaymentServices {
         String merchantCont = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "merchantContact", configString, "payment.cybersource.merchantContact", null);
         Map<String, Object> request = new HashMap<>();
         request.put("ccCaptureService_run", "true");
-        request.put("ccCaptureService_authRequestID", authTransaction.getString("referenceNum"));
+        request.put("ccCaptureService_authRequestID", authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
         request.put("item_0_unitPrice", getAmountString(context, "captureAmount"));
-        request.put("merchantReferenceCode", orderPaymentPreference.getString("orderId"));
+        request.put("merchantReferenceCode", orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId));
         request.put("purchaseTotals_currency", currency);
 
         // TODO: add support for verbal authorizations
@@ -344,31 +344,31 @@ public class IcsPaymentServices {
 
     private static Map<String, Object> buildReleaseRequest(Map<String, ? extends Object> context, GenericValue authTransaction) {
         Map<String, Object> request = new HashMap<>();
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
-        String currency = (String) context.get("currency");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
         request.put("ccAuthReversalService_run", "true");
-        request.put("ccAuthReversalService_authRequestID", authTransaction.getString("referenceNum"));
+        request.put("ccAuthReversalService_authRequestID", authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
         request.put("item_0_unitPrice", getAmountString(context, "releaseAmount"));
-        request.put("merchantReferenceCode", orderPaymentPreference.getString("orderId"));
+        request.put("merchantReferenceCode", orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId));
         request.put("purchaseTotals_currency", currency);
         return request;
     }
 
     private static Map<String, Object> buildRefundRequest(Map<String, ? extends Object> context, GenericValue authTransaction, Delegator delegator) {
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
-        String paymentGatewayConfigId = (String) context.get("paymentGatewayConfigId");
-        String configString = (String) context.get("paymentConfig");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        String configString = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
         if (configString == null) {
             configString = "payment.properties";
         }
-        String currency = (String) context.get("currency");
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
         String merchantDesc = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "merchantDescr", configString, "payment.cybersource.merchantDescr", null);
         String merchantCont = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "merchantContact", configString, "payment.cybersource.merchantContact", null);
         Map<String, Object> request = new HashMap<>();
         request.put("ccCreditService_run", "true");
-        request.put("ccCreditService_captureRequestID", authTransaction.getString("referenceNum"));
+        request.put("ccCreditService_captureRequestID", authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
         request.put("item_0_unitPrice", getAmountString(context, "refundAmount"));
-        request.put("merchantReferenceCode", orderPaymentPreference.getString("orderId"));
+        request.put("merchantReferenceCode", orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId));
         request.put("purchaseTotals_currency", currency);
         if (merchantDesc != null) {
             request.put("invoiceHeader_merchantDescriptor", merchantDesc);        // merchant description
@@ -380,7 +380,7 @@ public class IcsPaymentServices {
     }
 
     private static Map<String, Object> buildCreditRequest(Map<String, ? extends Object> context) {
-        String refCode = (String) context.get("referenceCode");
+        String refCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.referenceCode);
         Map<String, Object> request = new HashMap<>();
         request.put("ccCreditService_run", "true");            // run credit service
         request.put("merchantReferenceCode", refCode);         // set the ref number could be order id
@@ -390,23 +390,23 @@ public class IcsPaymentServices {
     }
 
     private static void appendAvsRules(Map<String, Object> request, Map<String, ? extends Object> context, Delegator delegator) {
-        String paymentGatewayConfigId = (String) context.get("paymentGatewayConfigId");
-        String configString = (String) context.get("paymentConfig");
+        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        String configString = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
         if (configString == null) {
             configString = "payment.properties";
         }
         String avsCodes = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "avsDeclineCodes", configString, "payment.cybersource.avsDeclineCodes", null);
-        GenericValue party = (GenericValue) context.get("billToParty");
+        GenericValue party = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.billToParty);
         if (party != null) {
             GenericValue avsOverride = null;
             try {
                 avsOverride = party.getDelegator().findOne("PartyIcsAvsOverride",
-                        UtilMisc.toMap("partyId", party.getString("partyId")), false);
+                        UtilMisc.toMap("partyId", party.getString(org.apache.ofbiz.persistence.entity.x.partyId)), false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
-            if (avsOverride != null && avsOverride.get("avsDeclineString") != null) {
-                String overrideString = avsOverride.getString("avsDeclineString");
+            if (avsOverride != null && avsOverride.get(org.apache.ofbiz.persistence.entity.x.avsDeclineString) != null) {
+                String overrideString = avsOverride.getString(org.apache.ofbiz.persistence.entity.x.avsDeclineString);
                 if (UtilValidate.isNotEmpty(overrideString)) {
                     avsCodes = overrideString;
                 }
@@ -421,101 +421,101 @@ public class IcsPaymentServices {
 
     private static void appendFullBillingInfo(Map<String, Object> request, Map<String, ? extends Object> context) {
         // contact info
-        GenericValue email = (GenericValue) context.get("billToEmail");
+        GenericValue email = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.billToEmail);
         if (email != null) {
-            request.put("billTo_email", email.getString("infoString"));
+            request.put("billTo_email", email.getString(org.apache.ofbiz.persistence.entity.x.infoString));
         } else {
             Debug.logWarning("Email not defined; Cybersource will fail.", MODULE);
         }
         // phone number seems to not be used; possibly only for reporting.
 
         // CC payment info
-        GenericValue creditCard = (GenericValue) context.get("creditCard");
+        GenericValue creditCard = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.creditCard);
         if (creditCard != null) {
-            List<String> expDateList = StringUtil.split(creditCard.getString("expireDate"), "/");
-            request.put("billTo_firstName", creditCard.getString("firstNameOnCard"));
-            request.put("billTo_lastName", creditCard.getString("lastNameOnCard"));
-            request.put("card_accountNumber", creditCard.getString("cardNumber"));
+            List<String> expDateList = StringUtil.split(creditCard.getString(org.apache.ofbiz.persistence.entity.x.expireDate), "/");
+            request.put("billTo_firstName", creditCard.getString(org.apache.ofbiz.persistence.entity.x.firstNameOnCard));
+            request.put("billTo_lastName", creditCard.getString(org.apache.ofbiz.persistence.entity.x.lastNameOnCard));
+            request.put("card_accountNumber", creditCard.getString(org.apache.ofbiz.persistence.entity.x.cardNumber));
             request.put("card_expirationMonth", expDateList.get(0));
             request.put("card_expirationYear", expDateList.get(1));
         } else {
             Debug.logWarning("CreditCard not defined; Cybersource will fail.", MODULE);
         }
         // CCV info
-        String cvNum = (String) context.get("cardSecurityCode");
+        String cvNum = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardSecurityCode);
         String cvSet = UtilValidate.isEmpty(cvNum) ? "1" : "0";
         request.put("card_cvIndicator", cvSet);
         if ("1".equals(cvNum)) {
             request.put("card_cvNumber", cvNum);
         }
         // payment contact info
-        GenericValue billingAddress = (GenericValue) context.get("billingAddress");
+        GenericValue billingAddress = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.billingAddress);
 
         if (billingAddress != null) {
-            request.put("billTo_street1", billingAddress.getString("address1"));
-            if (billingAddress.get("address2") != null) {
-                request.put("billTo_street2", billingAddress.getString("address2"));
+            request.put("billTo_street1", billingAddress.getString(org.apache.ofbiz.persistence.entity.x.address1));
+            if (billingAddress.get(org.apache.ofbiz.persistence.entity.x.address2) != null) {
+                request.put("billTo_street2", billingAddress.getString(org.apache.ofbiz.persistence.entity.x.address2));
             }
-            request.put("billTo_city", billingAddress.getString("city"));
-            String bCountry = billingAddress.get("countryGeoId") != null ? billingAddress.getString("countryGeoId") : "USA";
+            request.put("billTo_city", billingAddress.getString(org.apache.ofbiz.persistence.entity.x.city));
+            String bCountry = billingAddress.get(org.apache.ofbiz.persistence.entity.x.countryGeoId) != null ? billingAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId) : "USA";
             request.put("billTo_country", bCountry);
-            request.put("billTo_postalCode", billingAddress.getString("postalCode"));
-            if (billingAddress.get("stateProvinceGeoId") != null) {
-                request.put("billTo_state", billingAddress.getString("stateProvinceGeoId"));
+            request.put("billTo_postalCode", billingAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode));
+            if (billingAddress.get(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId) != null) {
+                request.put("billTo_state", billingAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId));
             }
         } else {
             Debug.logWarning("BillingAddress not defined; Cybersource will fail.", MODULE);
         }
         // order shipping information
-        GenericValue shippingAddress = (GenericValue) context.get("shippingAddress");
+        GenericValue shippingAddress = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.shippingAddress);
         if (shippingAddress != null) {
             if (creditCard != null) {
                 // TODO: this is just a kludge since we don't have a firstName and lastName on the PostalAddress entity, that needs to be done
-                request.put("shipTo_firstName", creditCard.getString("firstNameOnCard"));
-                request.put("shipTo_lastName", creditCard.getString("lastNameOnCard"));
+                request.put("shipTo_firstName", creditCard.getString(org.apache.ofbiz.persistence.entity.x.firstNameOnCard));
+                request.put("shipTo_lastName", creditCard.getString(org.apache.ofbiz.persistence.entity.x.lastNameOnCard));
             }
-            request.put("shipTo_street1", shippingAddress.getString("address1"));
-            if (shippingAddress.get("address2") != null) {
-                request.put("shipTo_street2", shippingAddress.getString("address2"));
+            request.put("shipTo_street1", shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.address1));
+            if (shippingAddress.get(org.apache.ofbiz.persistence.entity.x.address2) != null) {
+                request.put("shipTo_street2", shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.address2));
             }
-            request.put("shipTo_city", shippingAddress.getString("city"));
-            String sCountry = shippingAddress.get("countryGeoId") != null ? shippingAddress.getString("countryGeoId") : "USA";
+            request.put("shipTo_city", shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.city));
+            String sCountry = shippingAddress.get(org.apache.ofbiz.persistence.entity.x.countryGeoId) != null ? shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId) : "USA";
             request.put("shipTo_country", sCountry);
-            request.put("shipTo_postalCode", shippingAddress.getString("postalCode"));
-            if (shippingAddress.get("stateProvinceGeoId") != null) {
-                request.put("shipTo_state", shippingAddress.getString("stateProvinceGeoId"));
+            request.put("shipTo_postalCode", shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode));
+            if (shippingAddress.get(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId) != null) {
+                request.put("shipTo_state", shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId));
             }
         }
     }
 
     private static void appendItemLineInfo(Map<String, Object> request, Map<String, ? extends Object> context, String amountField) {
         // send over a line item total offer w/ the total for billing; don't trust CyberSource for calc
-        String currency = (String) context.get("currency");
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
         int lineNumber = 0;
         request.put("item_" + lineNumber + "_unitPrice", getAmountString(context, amountField));
         // the currency
         request.put("purchaseTotals_currency", currency);
         // create the offers (one for each line item)
-        List<GenericValue> orderItems = UtilGenerics.cast(context.get("orderItems"));
+        List<GenericValue> orderItems = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderItems));
         if (orderItems != null) {
             for (Object orderItem : orderItems) {
                 lineNumber++;
                 GenericValue item = (GenericValue) orderItem;
                 GenericValue product = null;
                 try {
-                    product = item.getRelatedOne("Product", false);
+                    product = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "ERROR: Unable to get Product from OrderItem, not passing info to CyberSource");
                 }
                 if (product != null) {
-                    request.put("item_" + lineNumber + "_productName", product.getString("productName"));
-                    request.put("item_" + lineNumber + "_productSKU", product.getString("productId"));
+                    request.put("item_" + lineNumber + "_productName", product.getString(org.apache.ofbiz.persistence.entity.x.productName));
+                    request.put("item_" + lineNumber + "_productSKU", product.getString(org.apache.ofbiz.persistence.entity.x.productId));
                 } else {
                     // no product; just send the item description -- non product items
-                    request.put("item_" + lineNumber + "_productName", item.getString("description"));
+                    request.put("item_" + lineNumber + "_productName", item.getString(org.apache.ofbiz.persistence.entity.x.description));
                 }
                 // get the quantity..
-                BigDecimal quantity = item.getBigDecimal("quantity");
+                BigDecimal quantity = item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                 // test quantity if INT pass as is; if not pass as 1
                 if (quantity.scale() > 0) {
                     request.put("item_" + lineNumber + "_quantity", "1");

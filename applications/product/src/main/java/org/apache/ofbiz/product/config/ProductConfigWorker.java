@@ -228,10 +228,10 @@ public final class ProductConfigWorker {
                     for (GenericValue productConfigConfig: configs) {
                         for (ConfigOption oneOption: selectedOptions) {
                             String configOptionId = oneOption.getConfigOption().getString("configOptionId");
-                            if (productConfigConfig.getString("configOptionId").equals(configOptionId)) {
+                            if (productConfigConfig.getString(org.apache.ofbiz.persistence.entity.x.configOptionId).equals(configOptionId)) {
                                 String comments = oneOption.getComments() != null ? oneOption.getComments() : "";
-                                if ((UtilValidate.isEmpty(comments) && UtilValidate.isEmpty(productConfigConfig.getString("description")))
-                                        || comments.equals(productConfigConfig.getString("description"))) {
+                                if ((UtilValidate.isEmpty(comments) && UtilValidate.isEmpty(productConfigConfig.getString(org.apache.ofbiz.persistence.entity.x.description)))
+                                        || comments.equals(productConfigConfig.getString(org.apache.ofbiz.persistence.entity.x.description))) {
                                     configsToCheck.add(productConfigConfig);
                                 }
                             }
@@ -246,7 +246,7 @@ public final class ProductConfigWorker {
         }
         if (UtilValidate.isNotEmpty(configsToCheck)) {
             for (GenericValue productConfigConfig: configsToCheck) {
-                String tempConfigId = productConfigConfig.getString("configId");
+                String tempConfigId = productConfigConfig.getString(org.apache.ofbiz.persistence.entity.x.configId);
                 try {
                     List<GenericValue> tempResult = EntityQuery.use(delegator).from("ProductConfigConfig").where("configId", tempConfigId)
                             .queryList();
@@ -278,7 +278,7 @@ public final class ProductConfigWorker {
                                         for (GenericValue aComponent : components) {
                                             if (anOption.isVirtualComponent(aComponent)) {
                                                 Map<String, String> componentOptions = anOption.getComponentOptions();
-                                                String optionProductId = aComponent.getString("productId");
+                                                String optionProductId = aComponent.getString(org.apache.ofbiz.persistence.entity.x.productId);
                                                 String optionProductOptionId = null;
                                                 if (UtilValidate.isNotEmpty(componentOptions)) {
                                                     optionProductOptionId = componentOptions.get(optionProductId);
@@ -288,12 +288,12 @@ public final class ProductConfigWorker {
                                                 sequenceNum = ci.getConfigItemAssoc().getLong("sequenceNum");
 
                                                 GenericValue configOptionProductOption = delegator.makeValue("ConfigOptionProductOption");
-                                                configOptionProductOption.set("configId", tempConfigId);
-                                                configOptionProductOption.set("configItemId", configItemId);
-                                                configOptionProductOption.set("sequenceNum", sequenceNum);
-                                                configOptionProductOption.set("configOptionId", configOptionId);
-                                                configOptionProductOption.set("productId", optionProductId);
-                                                configOptionProductOption.set("productOptionId", optionProductOptionId);
+                                                configOptionProductOption.set(org.apache.ofbiz.persistence.entity.x.configId, tempConfigId);
+                                                configOptionProductOption.set(org.apache.ofbiz.persistence.entity.x.configItemId, configItemId);
+                                                configOptionProductOption.set(org.apache.ofbiz.persistence.entity.x.sequenceNum, sequenceNum);
+                                                configOptionProductOption.set(org.apache.ofbiz.persistence.entity.x.configOptionId, configOptionId);
+                                                configOptionProductOption.set(org.apache.ofbiz.persistence.entity.x.productId, optionProductId);
+                                                configOptionProductOption.set(org.apache.ofbiz.persistence.entity.x.productOptionId, optionProductOptionId);
                                                 if (!configOptionProductOptions.remove(configOptionProductOption)) {
                                                     match = false;
                                                     break;
@@ -365,13 +365,13 @@ public final class ProductConfigWorker {
                         List<GenericValue> components = oneOption.getComponents();
                         for (GenericValue component: components) {
                             if (oneOption.isVirtualComponent(component) && UtilValidate.isNotEmpty(componentOptions)) {
-                                String componentOption = componentOptions.get(component.getString("productId"));
+                                String componentOption = componentOptions.get(component.getString(org.apache.ofbiz.persistence.entity.x.productId));
                                 GenericValue configOptionProductOption = delegator.makeValue("ConfigOptionProductOption");
                                 configOptionProductOption.put("configId", configId);
                                 configOptionProductOption.put("configItemId", configItemId);
                                 configOptionProductOption.put("sequenceNum", sequenceNum);
                                 configOptionProductOption.put("configOptionId", configOptionId);
-                                configOptionProductOption.put("productId", component.getString("productId"));
+                                configOptionProductOption.put("productId", component.getString(org.apache.ofbiz.persistence.entity.x.productId));
                                 configOptionProductOption.put("productOptionId", componentOption);
                                 toBeStored.add(configOptionProductOption);
                             }

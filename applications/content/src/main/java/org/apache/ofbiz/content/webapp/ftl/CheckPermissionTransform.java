@@ -135,7 +135,7 @@ public class CheckPermissionTransform implements TemplateTransformModel {
                     security = (Security) request.getAttribute("security");
                 }
 
-                String statusId = (String) currentContent.get("statusId");
+                String statusId = (String) currentContent.get(org.apache.ofbiz.persistence.entity.x.statusId);
                 String passedStatusId = (String) templateCtx.get("statusId");
                 List<String> statusList = StringUtil.split(passedStatusId, "|");
                 if (statusList == null) {
@@ -159,7 +159,7 @@ public class CheckPermissionTransform implements TemplateTransformModel {
                 }
                 List<String> roleList = new LinkedList<>();
 
-                String privilegeEnumId = (String) currentContent.get("privilegeEnumId");
+                String privilegeEnumId = (String) currentContent.get(org.apache.ofbiz.persistence.entity.x.privilegeEnumId);
                 Map<String, Object> results = EntityPermissionChecker.checkPermission(currentContent, statusList, userLogin, purposeList,
                         targetOperationList, roleList, delegator, security, entityOperation, privilegeEnumId, quickCheckContentId);
 

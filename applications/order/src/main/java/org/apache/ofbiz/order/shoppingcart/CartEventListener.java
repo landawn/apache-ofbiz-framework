@@ -79,23 +79,23 @@ public class CartEventListener implements HttpSessionListener {
             for (ShoppingCartItem cartItem : cart) {
                 GenericValue cartAbandonedLine = delegator.makeValue("CartAbandonedLine");
 
-                cartAbandonedLine.set("visitId", visit.get("visitId"));
-                cartAbandonedLine.set("cartAbandonedLineSeqId", Integer.toString(seqId));
-                cartAbandonedLine.set("productId", cartItem.getProductId());
-                cartAbandonedLine.set("prodCatalogId", cartItem.getProdCatalogId());
-                cartAbandonedLine.set("quantity", cartItem.getQuantity());
-                cartAbandonedLine.set("reservStart", cartItem.getReservStart());
-                cartAbandonedLine.set("reservLength", cartItem.getReservLength());
-                cartAbandonedLine.set("reservPersons", cartItem.getReservPersons());
-                cartAbandonedLine.set("unitPrice", cartItem.getBasePrice());
-                cartAbandonedLine.set("reserv2ndPPPerc", cartItem.getReserv2ndPPPerc());
-                cartAbandonedLine.set("reservNthPPPerc", cartItem.getReservNthPPPerc());
+                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.visitId, visit.get(org.apache.ofbiz.persistence.entity.x.visitId));
+                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.cartAbandonedLineSeqId, Integer.toString(seqId));
+                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.productId, cartItem.getProductId());
+                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.prodCatalogId, cartItem.getProdCatalogId());
+                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.quantity, cartItem.getQuantity());
+                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.reservStart, cartItem.getReservStart());
+                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.reservLength, cartItem.getReservLength());
+                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.reservPersons, cartItem.getReservPersons());
+                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.unitPrice, cartItem.getBasePrice());
+                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.reserv2ndPPPerc, cartItem.getReserv2ndPPPerc());
+                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.reservNthPPPerc, cartItem.getReservNthPPPerc());
                 if (cartItem.getConfigWrapper() != null) {
-                    cartAbandonedLine.set("configId", cartItem.getConfigWrapper().getConfigId());
+                    cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.configId, cartItem.getConfigWrapper().getConfigId());
                 }
-                cartAbandonedLine.set("totalWithAdjustments", cartItem.getItemSubTotal());
+                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.totalWithAdjustments, cartItem.getItemSubTotal());
                 //not doing pre-reservations now, so this is always N
-                cartAbandonedLine.set("wasReserved", "N");
+                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.wasReserved, "N");
                 cartAbandonedLine.create();
 
                 seqId++;

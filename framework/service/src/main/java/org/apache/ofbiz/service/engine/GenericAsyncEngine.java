@@ -86,14 +86,14 @@ public abstract class GenericAsyncEngine extends AbstractEngine {
 
                 GenericValue runtimeData = getDispatcher().getDelegator().makeValue("RuntimeData", "runtimeDataId", dataId);
 
-                runtimeData.set("runtimeInfo", XmlSerializer.serialize(context));
+                runtimeData.set(org.apache.ofbiz.persistence.entity.x.runtimeInfo, XmlSerializer.serialize(context));
                 runtimeData.create();
 
                 // Get the userLoginId out of the context
                 String authUserLoginId = null;
-                if (context.get("userLogin") != null) {
-                    GenericValue userLogin = (GenericValue) context.get("userLogin");
-                    authUserLoginId = userLogin.getString("userLoginId");
+                if (context.get(org.apache.ofbiz.persistence.entity.x.userLogin) != null) {
+                    GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+                    authUserLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
                 }
 
                 // Create the job info
@@ -122,7 +122,7 @@ public abstract class GenericAsyncEngine extends AbstractEngine {
                 throw new GenericServiceException("Problem serializing service attributes", e);
             }
 
-            Debug.logInfo("Persisted job queued : " + jobV.getString("jobName"), MODULE);
+            Debug.logInfo("Persisted job queued : " + jobV.getString(org.apache.ofbiz.persistence.entity.x.jobName), MODULE);
         } else {
             JobManager jMgr = getDispatcher().getJobManager();
             if (jMgr != null) {

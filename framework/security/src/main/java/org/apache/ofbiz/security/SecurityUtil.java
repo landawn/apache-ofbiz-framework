@@ -141,9 +141,9 @@ public final class SecurityUtil {
     public static String generateJwtToAuthenticateUserLogin(Delegator delegator, String userLoginId)
             throws GenericEntityException {
         GenericValue userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", userLoginId).queryOne();
-        Map<String, String> claims = UtilMisc.toMap("userLoginId", userLogin.getString("userLoginId"));
+        Map<String, String> claims = UtilMisc.toMap("userLoginId", userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
         return JWTManager.createJwt(delegator, claims,
-                userLogin.getString("userLoginId") + userLogin.getString("currentPassword"), -1);
+                userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId) + userLogin.getString(org.apache.ofbiz.persistence.entity.x.currentPassword), -1);
     }
 
     /**
@@ -155,7 +155,7 @@ public final class SecurityUtil {
                 GenericValue userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", userLoginId).queryOne();
                 if (userLoginId != null) {
                     Map<String, Object> claims = JWTManager.validateToken(delegator, jwtToken,
-                            userLogin.getString("userLoginId") + userLogin.getString("currentPassword"));
+                            userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId) + userLogin.getString(org.apache.ofbiz.persistence.entity.x.currentPassword));
                     return (!ServiceUtil.isError(claims)) && userLoginId.equals(claims.get("userLoginId"));
                 }
             } catch (GenericEntityException e) {

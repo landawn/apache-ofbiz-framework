@@ -66,16 +66,16 @@ public class ParametricSearch {
             if (productFeatureCategoryAppls != null) {
                 for (GenericValue productFeatureCategoryAppl: productFeatureCategoryAppls) {
                     List<GenericValue> productFeatures = EntityQuery.use(delegator).from("ProductFeature").where("productFeatureCategoryId",
-                            productFeatureCategoryAppl.get("productFeatureCategoryId")).cache(true).queryList();
+                            productFeatureCategoryAppl.get(org.apache.ofbiz.persistence.entity.x.productFeatureCategoryId)).cache(true).queryList();
                     for (GenericValue productFeature: productFeatures) {
-                        String productFeatureTypeId = productFeature.getString("productFeatureTypeId");
+                        String productFeatureTypeId = productFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId);
                         Map<String, GenericValue> featuresByType = productFeaturesByTypeMap.get(productFeatureTypeId);
                         if (featuresByType == null) {
                             featuresByType = new HashMap<>();
                             productFeaturesByTypeMap.put(productFeatureTypeId, featuresByType);
                         }
                         if (featuresByType.size() < perTypeMaxSize) {
-                            featuresByType.put(productFeature.getString("productFeatureId"), productFeature);
+                            featuresByType.put(productFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId), productFeature);
                         }
                     }
                 }
@@ -91,19 +91,19 @@ public class ParametricSearch {
             if (productFeatureCatGrpAppls != null) {
                 for (GenericValue productFeatureCatGrpAppl: productFeatureCatGrpAppls) {
                     List<GenericValue> productFeatureGroupAppls = EntityQuery.use(delegator).from("ProductFeatureGroupAppl")
-                            .where("productFeatureGroupId", productFeatureCatGrpAppl.get("productFeatureGroupId")).cache(true).queryList();
+                            .where("productFeatureGroupId", productFeatureCatGrpAppl.get(org.apache.ofbiz.persistence.entity.x.productFeatureGroupId)).cache(true).queryList();
                     for (GenericValue productFeatureGroupAppl: productFeatureGroupAppls) {
                         GenericValue productFeature = EntityQuery.use(delegator).from("ProductFeature").where("productFeatureId",
-                                productFeatureGroupAppl.get("productFeatureId")).cache().queryOne();
+                                productFeatureGroupAppl.get(org.apache.ofbiz.persistence.entity.x.productFeatureId)).cache().queryOne();
 
-                        String productFeatureTypeId = productFeature.getString("productFeatureTypeId");
+                        String productFeatureTypeId = productFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId);
                         Map<String, GenericValue> featuresByType = productFeaturesByTypeMap.get(productFeatureTypeId);
                         if (featuresByType == null) {
                             featuresByType = new HashMap<>();
                             productFeaturesByTypeMap.put(productFeatureTypeId, featuresByType);
                         }
                         if (featuresByType.size() < perTypeMaxSize) {
-                            featuresByType.put(productFeature.getString("productFeatureId"), productFeature);
+                            featuresByType.put(productFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId), productFeature);
                         }
                     }
                 }
@@ -131,7 +131,7 @@ public class ParametricSearch {
         try (EntityListIterator productFeatureEli = EntityQuery.use(delegator).from("ProductFeature").orderBy("description").queryIterator()) {
             GenericValue productFeature = null;
             while ((productFeature = productFeatureEli.next()) != null) {
-                String productFeatureTypeId = productFeature.getString("productFeatureTypeId");
+                String productFeatureTypeId = productFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId);
                 List<GenericValue> featuresByType = productFeaturesByTypeMap.get(productFeatureTypeId);
                 if (featuresByType == null) {
                     featuresByType = new LinkedList<>();

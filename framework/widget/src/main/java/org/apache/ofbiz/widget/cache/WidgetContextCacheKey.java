@@ -141,7 +141,7 @@ public final class WidgetContextCacheKey {
                 printableMap.put(fieldName.getKey(), fieldName.getValue());
             }
         }
-        Map<String, Object> parameters = UtilGenerics.cast(this.context.get("parameters"));
+        Map<String, Object> parameters = UtilGenerics.cast(this.context.get(org.apache.ofbiz.persistence.entity.x.parameters));
         return printMap(printableMap) + "\n" + printMap(parameters);
     }
 

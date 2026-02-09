@@ -2001,8 +2001,8 @@ public class ModelEntity implements Comparable<ModelEntity>, Serializable {
         }
         String fieldJavaType = modelFieldTypeReader.getModelFieldType(modelField.getType()).getJavaType();
         try {
-            return ObjectType.simpleTypeOrObjectConvert(value, fieldJavaType, null, (TimeZone) context.get("timeZone"), (Locale)
-                    context.get("locale"), true);
+            return ObjectType.simpleTypeOrObjectConvert(value, fieldJavaType, null, (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone), (Locale)
+                    context.get(org.apache.ofbiz.persistence.entity.x.locale), true);
         } catch (GeneralException e) {
             String errMsg = "Could not convert field value for the field: [" + modelField.getName() + "] on the [" + this.getEntityName()
                     + "] entity to the [" + fieldJavaType + "] type for the value [" + value + "]: " + e.toString();

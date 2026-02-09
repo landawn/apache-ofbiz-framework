@@ -254,7 +254,7 @@ public final class ThemeFactory {
                                 UtilMisc.toMap("userLogin", userLogin, "userPrefTypeId", "VISUAL_THEME"));
                         visualThemeId = (String) userPreferencesResult.get("userPrefValue");
                     } catch (GenericServiceException e) {
-                        Debug.logError("Impossible to resolve the theme from user prefrence for " + userLogin.get("userLoginId"), MODULE);
+                        Debug.logError("Impossible to resolve the theme from user prefrence for " + userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId), MODULE);
                     }
                 }
             }

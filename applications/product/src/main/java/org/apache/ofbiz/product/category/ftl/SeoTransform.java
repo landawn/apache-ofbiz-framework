@@ -104,7 +104,7 @@ public class SeoTransform implements TemplateTransformModel {
                         GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
 
                         // anonymous shoppers are not logged in
-                        if (userLogin != null && "anonymous".equals(userLogin.getString("userLoginId"))) {
+                        if (userLogin != null && "anonymous".equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId))) {
                             userLogin = null;
                         }
 

@@ -35,11 +35,11 @@ public class ModelActionUtil {
         if (!resultMapNameAcsr.isEmpty()) {
             resultMapNameAcsr.put(context, result);
             String queryString = (String) result.get("queryString");
-            context.put("queryString", queryString);
-            context.put("queryStringMap", result.get("queryStringMap"));
+            context.put(org.apache.ofbiz.persistence.entity.x.queryString, queryString);
+            context.put(org.apache.ofbiz.persistence.entity.x.queryStringMap, result.get("queryStringMap"));
             if (UtilValidate.isNotEmpty(queryString)) {
                 String queryStringEncoded = queryString.replace("&", "%26");
-                context.put("queryStringEncoded", queryStringEncoded);
+                context.put(org.apache.ofbiz.persistence.entity.x.queryStringEncoded, queryStringEncoded);
             }
         } else {
             context.putAll(result);

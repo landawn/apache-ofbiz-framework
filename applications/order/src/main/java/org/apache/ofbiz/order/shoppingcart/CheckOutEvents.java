@@ -550,8 +550,8 @@ public class CheckOutEvents {
             return false;
         }
         GenericValue productStore = ProductStoreWorker.getProductStore(cart.getProductStoreId(), delegator);
-        return !(productStore == null || productStore.get("explodeOrderItems") == null)
-                && productStore.getBoolean("explodeOrderItems");
+        return !(productStore == null || productStore.get(org.apache.ofbiz.persistence.entity.x.explodeOrderItems) == null)
+                && productStore.getBoolean(org.apache.ofbiz.persistence.entity.x.explodeOrderItems);
     }
 
     public static String checkShipmentNeeded(HttpServletRequest request, HttpServletResponse response) {
@@ -560,12 +560,12 @@ public class CheckOutEvents {
         GenericValue productStore = null;
         try {
             productStore = EntityQuery.use(delegator).from("ProductStore").where("productStoreId", cart.getProductStoreId()).cache().queryOne();
-            Debug.logInfo("checkShipmentNeeded: reqShipAddrForDigItems=" + productStore.getString("reqShipAddrForDigItems"), MODULE);
+            Debug.logInfo("checkShipmentNeeded: reqShipAddrForDigItems=" + productStore.getString(org.apache.ofbiz.persistence.entity.x.reqShipAddrForDigItems), MODULE);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Error getting ProductStore: " + e.toString(), MODULE);
         }
 
-        if (productStore != null && "N".equals(productStore.getString("reqShipAddrForDigItems"))) {
+        if (productStore != null && "N".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.reqShipAddrForDigItems))) {
             Debug.logInfo("checkShipmentNeeded: cart.containOnlyDigitalGoods()=" + cart.containOnlyDigitalGoods(), MODULE);
             // don't require shipping for all digital items
             if (cart.containOnlyDigitalGoods()) {
@@ -679,8 +679,8 @@ public class CheckOutEvents {
         ServiceUtil.getMessages(request, callResult, null);
 
         // wipe the session
-        if (("anonymous".equals(currentUser.getString("userLoginId"))) || (currentUser.getString("userLoginId"))
-                .equals(userLogin.getString("userLoginId"))) {
+        if (("anonymous".equals(currentUser.getString(org.apache.ofbiz.persistence.entity.x.userLoginId))) || (currentUser.getString(org.apache.ofbiz.persistence.entity.x.userLoginId))
+                .equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId))) {
             session.invalidate();
         }
         //Determine whether it was a success or not
@@ -704,10 +704,10 @@ public class CheckOutEvents {
         if ("EXT_PAYPAL".equals(paymentMethodTypeId) || cart.getPaymentMethodTypeIds().contains("EXT_PAYPAL")) {
             try {
                 GenericValue payPalProdStorePaySetting = EntityQuery.use(delegator).from("ProductStorePaymentSetting").where("productStoreId",
-                        productStore.getString("productStoreId"), "paymentMethodTypeId", "EXT_PAYPAL").queryFirst();
+                        productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId), "paymentMethodTypeId", "EXT_PAYPAL").queryFirst();
                 if (payPalProdStorePaySetting != null) {
-                    GenericValue gatewayConfig = payPalProdStorePaySetting.getRelatedOne("PaymentGatewayConfig", false);
-                    if (gatewayConfig != null && "PAY_GATWY_PAYFLOWPRO".equals(gatewayConfig.getString("paymentGatewayConfigTypeId"))) {
+                    GenericValue gatewayConfig = payPalProdStorePaySetting.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PaymentGatewayConfig, false);
+                    if (gatewayConfig != null && "PAY_GATWY_PAYFLOWPRO".equals(gatewayConfig.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigTypeId))) {
                         return "paypal";
                     }
                 }
@@ -817,7 +817,7 @@ public class CheckOutEvents {
                         Debug.logError(e, MODULE);
                     }
                     if (userLogin != null) {
-                        userLogin.set("partyId", partyId);
+                        userLogin.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
                     }
                     request.getSession().setAttribute("userLogin", userLogin);
                     try {
@@ -1012,7 +1012,7 @@ public class CheckOutEvents {
         ShoppingCart cart = (ShoppingCart) request.getSession().getAttribute("shoppingCart");
         // flag anoymous checkout to bypass additional party settings
         boolean isAnonymousCheckout = false;
-        if (userLogin != null && "anonymous".equals(userLogin.getString("userLoginId"))) {
+        if (userLogin != null && "anonymous".equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId))) {
             isAnonymousCheckout = true;
         }
 
@@ -1028,7 +1028,7 @@ public class CheckOutEvents {
         boolean requireAdditionalParty = isAnonymousCheckout;
         boolean isSingleUsePayment = true;
         // these options are not available to anonymous shoppers (security)
-        if (userLogin != null && !"anonymous".equals(userLogin.getString("userLoginId"))) {
+        if (userLogin != null && !"anonymous".equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId))) {
             String requireCustomerStr = request.getParameter("finalizeReqCustInfo");
             String requireNewShippingAddressStr = request.getParameter("finalizeReqNewShipAddress");
             String requireShippingStr = request.getParameter("finalizeReqShipInfo");
@@ -1202,17 +1202,17 @@ public class CheckOutEvents {
         String originalOrderId = request.getParameter("orderId");
 
         // create the replacement order adjustment
-        List<GenericValue> orderAdjustments = UtilGenerics.cast(context.get("orderAdjustments"));
-        List<GenericValue> orderItems = UtilGenerics.cast(context.get("orderItems"));
+        List<GenericValue> orderAdjustments = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderAdjustments));
+        List<GenericValue> orderItems = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderItems));
         OrderReadHelper orderReadHelper = new OrderReadHelper(orderAdjustments, orderItems);
         BigDecimal grandTotal = orderReadHelper.getOrderGrandTotal();
         if (grandTotal.compareTo(new BigDecimal(0)) != 0) {
             GenericValue adjustment = delegator.makeValue("OrderAdjustment");
-            adjustment.set("orderAdjustmentTypeId", "REPLACE_ADJUSTMENT");
-            adjustment.set("amount", grandTotal.negate());
-            adjustment.set("comments", "ReShip Order for Order #" + originalOrderId);
-            adjustment.set("createdDate", UtilDateTime.nowTimestamp());
-            adjustment.set("createdByUserLogin", userLogin.getString("userLoginId"));
+            adjustment.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId, "REPLACE_ADJUSTMENT");
+            adjustment.set(org.apache.ofbiz.persistence.entity.x.amount, grandTotal.negate());
+            adjustment.set(org.apache.ofbiz.persistence.entity.x.comments, "ReShip Order for Order #" + originalOrderId);
+            adjustment.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
+            adjustment.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
             cart.addAdjustment(adjustment);
         }
         // create the order association
@@ -1225,8 +1225,8 @@ public class CheckOutEvents {
                                 "productId", sci.getProductId(), "orderItemTypeId", sci.getItemType())
                         .queryFirst();
                 if (orderItem != null) {
-                    sci.setAssociatedOrderId(orderItem.getString("orderId"));
-                    sci.setAssociatedOrderItemSeqId(orderItem.getString("orderItemSeqId"));
+                    sci.setAssociatedOrderId(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                    sci.setAssociatedOrderItemSeqId(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                     sci.setOrderItemAssocTypeId("REPLACEMENT");
                     cart.addItem(index, sci);
                 }

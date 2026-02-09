@@ -126,13 +126,13 @@ public class OrderServices {
             orderParty = orh.getPlacingParty();
         }
         if (orderParty != null) {
-            partyId = orderParty.getString("partyId");
+            partyId = orderParty.getString(org.apache.ofbiz.persistence.entity.x.partyId);
         }
         boolean hasPermission = hasPermission(orderTypeId, partyId, userLogin, action, security);
         if (!hasPermission) {
             GenericValue placingCustomer = null;
             try {
-                placingCustomer = EntityQuery.use(delegator).from("OrderRole").where("orderId", orderId, "partyId", userLogin.getString("partyId"),
+                placingCustomer = EntityQuery.use(delegator).from("OrderRole").where("orderId", orderId, "partyId", userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId),
                         "roleTypeId", "PLACING_CUSTOMER").queryOne();
             } catch (GenericEntityException e) {
                 Debug.logError("Could not select OrderRoles for order " + orderId + " due to " + e.getMessage(), MODULE);
@@ -152,10 +152,10 @@ public class OrderServices {
                     // check sales agent/customer relationship
                     List<GenericValue> repsCustomers = new LinkedList<>();
                     try {
-                        repsCustomers = EntityUtil.filterByDate(userLogin.getRelatedOne("Party", false).getRelated("FromPartyRelationship",
+                        repsCustomers = EntityUtil.filterByDate(userLogin.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Party, false).getRelated("FromPartyRelationship",
                                 UtilMisc.toMap("roleTypeIdFrom", "AGENT", "roleTypeIdTo", "CUSTOMER", "partyIdTo", partyId), null, false));
                     } catch (GenericEntityException ex) {
-                        Debug.logError("Could not determine if " + partyId + " is a customer of user " + userLogin.getString("userLoginId") + " due"
+                        Debug.logError("Could not determine if " + partyId + " is a customer of user " + userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId) + " due"
                                 + " to " + ex.getMessage(), MODULE);
                     }
                     if ((repsCustomers != null) && (!repsCustomers.isEmpty()) && (security.hasEntityPermission("ORDERMGR", "_ROLE_" + action,
@@ -165,10 +165,10 @@ public class OrderServices {
                     if (!hasPermission) {
                         // check sales sales rep/customer relationship
                         try {
-                            repsCustomers = EntityUtil.filterByDate(userLogin.getRelatedOne("Party", false).getRelated("FromPartyRelationship",
+                            repsCustomers = EntityUtil.filterByDate(userLogin.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Party, false).getRelated("FromPartyRelationship",
                                     UtilMisc.toMap("roleTypeIdFrom", "SALES_REP", "roleTypeIdTo", "CUSTOMER", "partyIdTo", partyId), null, false));
                         } catch (GenericEntityException ex) {
-                            Debug.logError("Could not determine if " + partyId + " is a customer of user " + userLogin.getString("userLoginId")
+                            Debug.logError("Could not determine if " + partyId + " is a customer of user " + userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId)
                                     + " due to " + ex.getMessage(), MODULE);
                         }
                         if ((repsCustomers != null) && (!repsCustomers.isEmpty()) && (security.hasEntityPermission("ORDERMGR", "_ROLE_" + action,
@@ -192,14 +192,14 @@ public class OrderServices {
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Security security = ctx.getSecurity();
         List<GenericValue> toBeStored = new LinkedList<>();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> successResult = ServiceUtil.returnSuccess();
 
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         // get the order type
-        String orderTypeId = (String) context.get("orderTypeId");
-        String partyId = (String) context.get("partyId");
-        String billFromVendorPartyId = (String) context.get("billFromVendorPartyId");
+        String orderTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderTypeId);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String billFromVendorPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.billFromVendorPartyId);
 
         // check security permissions for order:
         //  SALES ORDERS - if userLogin has ORDERMGR_SALES_CREATE or ORDERMGR_CREATE permission, or if it is same party as the partyId, or
@@ -217,7 +217,7 @@ public class OrderServices {
         }
 
         // get the product store for the order, but it is required only for sales orders
-        String productStoreId = (String) context.get("productStoreId");
+        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
         GenericValue productStore = null;
         if (("SALES_ORDER".equals(orderTypeId)) && (UtilValidate.isNotEmpty(productStoreId))) {
             try {
@@ -231,7 +231,7 @@ public class OrderServices {
         // figure out if the order is immediately fulfilled based on product store settings
         boolean isImmediatelyFulfilled = false;
         if (productStore != null) {
-            isImmediatelyFulfilled = "Y".equals(productStore.getString("isImmediatelyFulfilled"));
+            isImmediatelyFulfilled = "Y".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.isImmediatelyFulfilled));
         }
 
         successResult.put("orderTypeId", orderTypeId);
@@ -252,16 +252,16 @@ public class OrderServices {
         }
 
         // check to make sure we have something to order
-        List<GenericValue> orderItems = UtilGenerics.cast(context.get("orderItems"));
+        List<GenericValue> orderItems = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderItems));
         if (orderItems.size() < 1) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "items.none", locale));
         }
 
         // all this marketing pkg auto stuff is deprecated in favor of MARKETING_PKG_AUTO productTypeId and a BOM of MANUF_COMPONENT assocs
         // these need to be retrieved now because they might be needed for exploding MARKETING_PKG_AUTO
-        List<GenericValue> orderAdjustments = UtilGenerics.cast(context.get("orderAdjustments"));
-        List<GenericValue> orderItemShipGroupInfo = UtilGenerics.cast(context.get("orderItemShipGroupInfo"));
-        List<GenericValue> orderItemPriceInfo = UtilGenerics.cast(context.get("orderItemPriceInfos"));
+        List<GenericValue> orderAdjustments = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderAdjustments));
+        List<GenericValue> orderItemShipGroupInfo = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderItemShipGroupInfo));
+        List<GenericValue> orderItemPriceInfo = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderItemPriceInfos));
 
         // check inventory and other things for each item
         List<String> errorMessages = new LinkedList<>();
@@ -275,24 +275,24 @@ public class OrderServices {
         // also count quantities ordered while going through the loop
         for (GenericValue orderItem : orderItems) {
             // start by putting it in the itemValuesById Map
-            itemValuesBySeqId.put(orderItem.getString("orderItemSeqId"), orderItem);
+            itemValuesBySeqId.put(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), orderItem);
 
-            String currentProductId = orderItem.getString("productId");
+            String currentProductId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
             if (currentProductId != null) {
                 // only normalize items with a product associated (ignore non-product items)
                 if (normalizedItemQuantities.get(currentProductId) == null) {
-                    normalizedItemQuantities.put(currentProductId, orderItem.getBigDecimal("quantity"));
-                    normalizedItemNames.put(currentProductId, orderItem.getString("itemDescription"));
+                    normalizedItemQuantities.put(currentProductId, orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
+                    normalizedItemNames.put(currentProductId, orderItem.getString(org.apache.ofbiz.persistence.entity.x.itemDescription));
                 } else {
                     BigDecimal currentQuantity = normalizedItemQuantities.get(currentProductId);
-                    normalizedItemQuantities.put(currentProductId, currentQuantity.add(orderItem.getBigDecimal("quantity")));
+                    normalizedItemQuantities.put(currentProductId, currentQuantity.add(orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity)));
                 }
 
                 try {
                     // count product ordered quantities
                     // run this synchronously so it will run in the same transaction
                     Map<String, Object> result = dispatcher.runSync("countProductQuantityOrdered", UtilMisc.<String, Object>toMap("productId",
-                            currentProductId, "quantity", orderItem.getBigDecimal("quantity"), "userLogin", userLogin));
+                            currentProductId, "quantity", orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity), "userLogin", userLogin));
                     if (ServiceUtil.isError(result)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
                     }
@@ -309,7 +309,7 @@ public class OrderServices {
                     "OrderErrorTheProductStoreIdCanOnlyBeNullForPurchaseOrders", locale));
         }
 
-        Timestamp orderDate = (Timestamp) context.get("orderDate");
+        Timestamp orderDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.orderDate);
 
         for (String currentProductId : normalizedItemQuantities.keySet()) {
             // lookup the product entity for each normalized item; error on products not found
@@ -335,9 +335,9 @@ public class OrderServices {
 
             if ("SALES_ORDER".equals(orderTypeId)) {
                 // check to see if introductionDate hasn't passed yet
-                if (product.get("introductionDate") != null && nowTimestamp.before(product.getTimestamp("introductionDate"))) {
+                if (product.get(org.apache.ofbiz.persistence.entity.x.introductionDate) != null && nowTimestamp.before(product.getTimestamp(org.apache.ofbiz.persistence.entity.x.introductionDate))) {
                     String excMsg = UtilProperties.getMessage(RES_ERROR, "product.not_yet_for_sale",
-                            new Object[]{getProductName(product, itemName), product.getString("productId")}, locale);
+                            new Object[]{getProductName(product, itemName), product.getString(org.apache.ofbiz.persistence.entity.x.productId)}, locale);
                     Debug.logWarning(excMsg, MODULE);
                     errorMessages.add(excMsg);
                     continue;
@@ -348,17 +348,17 @@ public class OrderServices {
                 boolean salesDiscontinuationFlag = false;
                 // When past orders are imported, they should be imported even if sales discontinuation date is in the past but if the order date
                 // was before it
-                if (orderDate != null && product.get("salesDiscontinuationDate") != null) {
+                if (orderDate != null && product.get(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate) != null) {
                     salesDiscontinuationFlag =
-                            orderDate.after(product.getTimestamp("salesDiscontinuationDate")) && nowTimestamp.after(product.getTimestamp(
-                             "salesDiscontinuationDate"));
-                } else if (product.get("salesDiscontinuationDate") != null) {
-                    salesDiscontinuationFlag = nowTimestamp.after(product.getTimestamp("salesDiscontinuationDate"));
+                            orderDate.after(product.getTimestamp(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate)) && nowTimestamp.after(product.getTimestamp(
+                             org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate));
+                } else if (product.get(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate) != null) {
+                    salesDiscontinuationFlag = nowTimestamp.after(product.getTimestamp(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate));
                 }
                 // check to see if salesDiscontinuationDate has passed
                 if (salesDiscontinuationFlag) {
                     String excMsg = UtilProperties.getMessage(RES_ERROR, "product.no_longer_for_sale",
-                            new Object[]{getProductName(product, itemName), product.getString("productId")}, locale);
+                            new Object[]{getProductName(product, itemName), product.getString(org.apache.ofbiz.persistence.entity.x.productId)}, locale);
                     Debug.logWarning(excMsg, MODULE);
                     errorMessages.add(excMsg);
                     continue;
@@ -369,7 +369,7 @@ public class OrderServices {
                 // check to see if we have inventory available
                 try {
                     Map<String, Object> invReqResult = dispatcher.runSync("isStoreInventoryAvailableOrNotRequired", UtilMisc.toMap("productStoreId",
-                            productStoreId, "productId", product.get("productId"), "product", product, "quantity", currentQuantity));
+                            productStoreId, "productId", product.get(org.apache.ofbiz.persistence.entity.x.productId), "product", product, "quantity", currentQuantity));
                     if (ServiceUtil.isError(invReqResult)) {
                         errorMessages.add(ServiceUtil.getErrorMessage(invReqResult));
                         List<String> errMsgList = UtilGenerics.cast(invReqResult.get(ModelService.ERROR_MESSAGE_LIST));
@@ -390,13 +390,13 @@ public class OrderServices {
         }
 
         // add the fixedAsset id to the workefforts map by obtaining the fixed Asset number from the FixedAssetProduct table
-        List<GenericValue> workEfforts = UtilGenerics.cast(context.get("workEfforts")); // is an optional parameter from this service but mandatory
+        List<GenericValue> workEfforts = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.workEfforts)); // is an optional parameter from this service but mandatory
         // for rental items
         for (GenericValue orderItem : orderItems) {
-            if ("RENTAL_ORDER_ITEM".equals(orderItem.getString("orderItemTypeId"))) {
+            if ("RENTAL_ORDER_ITEM".equals(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemTypeId))) {
                 // check to see if workefforts are available for this order type.
                 if (UtilValidate.isEmpty(workEfforts)) {
-                    String errMsg = "Work Efforts missing for ordertype RENTAL_ORDER_ITEM " + "Product: " + orderItem.getString("productId");
+                    String errMsg = "Work Efforts missing for ordertype RENTAL_ORDER_ITEM " + "Product: " + orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
                     Debug.logError(errMsg, MODULE);
                     errorMessages.add(errMsg);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -405,19 +405,19 @@ public class OrderServices {
                 for (GenericValue workEffort : workEfforts) {
                     // find the related workEffortItem (workEffortId = orderSeqId)
                     // create the entity maps required.
-                    if (workEffort.getString("workEffortId").equals(orderItem.getString("orderItemSeqId"))) {
+                    if (workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId).equals(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId))) {
                         List<GenericValue> selFixedAssetProduct = null;
                         try {
                             selFixedAssetProduct = EntityQuery.use(delegator).from("FixedAssetProduct").where("productId", orderItem.getString(
-                                    "productId"), "fixedAssetProductTypeId", "FAPT_USE").filterByDate(nowTimestamp, "fromDate",
+                                    org.apache.ofbiz.persistence.entity.x.productId), "fixedAssetProductTypeId", "FAPT_USE").filterByDate(nowTimestamp, "fromDate",
                                     "thruDate").queryList();
                         } catch (GenericEntityException e) {
-                            String excMsg = "Could not find related Fixed Asset for the product: " + orderItem.getString("productId");
+                            String excMsg = "Could not find related Fixed Asset for the product: " + orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
                             Debug.logError(excMsg, MODULE);
                             errorMessages.add(excMsg);
                             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                                     "OrderCouldNotFindRelatedFixedAssetForTheProduct", UtilMisc.toMap("productId",
-                                     orderItem.getString("productId")), locale));
+                                     orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId)), locale));
                         }
 
                         if (UtilValidate.isNotEmpty(selFixedAssetProduct)) {
@@ -425,9 +425,9 @@ public class OrderServices {
                             if (firstOne.hasNext()) {
                                 GenericValue fixedAssetProduct = delegator.makeValue("FixedAssetProduct");
                                 fixedAssetProduct = firstOne.next();
-                                workEffort.set("fixedAssetId", fixedAssetProduct.get("fixedAssetId"));
-                                workEffort.set("quantityToProduce", orderItem.get("quantity")); // have quantity easy available later...
-                                workEffort.set("createdByUserLogin", userLogin.get("userLoginId"));
+                                workEffort.set(org.apache.ofbiz.persistence.entity.x.fixedAssetId, fixedAssetProduct.get(org.apache.ofbiz.persistence.entity.x.fixedAssetId));
+                                workEffort.set(org.apache.ofbiz.persistence.entity.x.quantityToProduce, orderItem.get(org.apache.ofbiz.persistence.entity.x.quantity)); // have quantity easy available later...
+                                workEffort.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
                             }
                         }
                         break;  // item found, so go to next orderitem.
@@ -445,10 +445,10 @@ public class OrderServices {
         successResult.put("statusId", initialStatus);
 
         // create the order object
-        String orderId = (String) context.get("orderId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
         String orgPartyId = null;
         if (productStore != null) {
-            orgPartyId = productStore.getString("payToPartyId");
+            orgPartyId = productStore.getString(org.apache.ofbiz.persistence.entity.x.payToPartyId);
         } else if (billFromVendorPartyId != null) {
             orgPartyId = billFromVendorPartyId;
         }
@@ -486,7 +486,7 @@ public class OrderServices {
             orderId = delegator.getNextSeqId("OrderHeader");
         }
 
-        String billingAccountId = (String) context.get("billingAccountId");
+        String billingAccountId = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingAccountId);
         if (orderDate == null) {
             orderDate = nowTimestamp;
         }
@@ -494,8 +494,8 @@ public class OrderServices {
         Map<String, Object> orderHeaderMap = UtilMisc.<String, Object>toMap("orderId", orderId, "orderTypeId", orderTypeId,
                 "orderDate", orderDate, "entryDate", nowTimestamp,
                 "statusId", initialStatus, "billingAccountId", billingAccountId);
-        orderHeaderMap.put("orderName", context.get("orderName"));
-        orderHeaderMap.put("agreementId", context.get("agreementId"));
+        orderHeaderMap.put("orderName", context.get(org.apache.ofbiz.persistence.entity.x.orderName));
+        orderHeaderMap.put("agreementId", context.get(org.apache.ofbiz.persistence.entity.x.agreementId));
         if (isImmediatelyFulfilled) {
             // also flag this order as needing inventory issuance so that when it is set to complete it will be issued immediately
             // (needsInventoryIssuance = Y)
@@ -504,80 +504,80 @@ public class OrderServices {
         GenericValue orderHeader = delegator.makeValue("OrderHeader", orderHeaderMap);
 
         // determine the sales channel
-        String salesChannelEnumId = (String) context.get("salesChannelEnumId");
+        String salesChannelEnumId = (String) context.get(org.apache.ofbiz.persistence.entity.x.salesChannelEnumId);
         if ((salesChannelEnumId == null) || "UNKNWN_SALES_CHANNEL".equals(salesChannelEnumId)) {
             // try the default store sales channel
             if ("SALES_ORDER".equals(orderTypeId) && (productStore != null)) {
-                salesChannelEnumId = productStore.getString("defaultSalesChannelEnumId");
+                salesChannelEnumId = productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultSalesChannelEnumId);
             }
             // if there's still no channel, set to unknown channel
             if (salesChannelEnumId == null) {
                 salesChannelEnumId = "UNKNWN_SALES_CHANNEL";
             }
         }
-        orderHeader.set("salesChannelEnumId", salesChannelEnumId);
+        orderHeader.set(org.apache.ofbiz.persistence.entity.x.salesChannelEnumId, salesChannelEnumId);
 
-        if (context.get("currencyUom") != null) {
-            orderHeader.set("currencyUom", context.get("currencyUom"));
-        }
-
-        if (context.get("firstAttemptOrderId") != null) {
-            orderHeader.set("firstAttemptOrderId", context.get("firstAttemptOrderId"));
+        if (context.get(org.apache.ofbiz.persistence.entity.x.currencyUom) != null) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.currencyUom, context.get(org.apache.ofbiz.persistence.entity.x.currencyUom));
         }
 
-        if (context.get("grandTotal") != null) {
-            orderHeader.set("grandTotal", context.get("grandTotal"));
+        if (context.get(org.apache.ofbiz.persistence.entity.x.firstAttemptOrderId) != null) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.firstAttemptOrderId, context.get(org.apache.ofbiz.persistence.entity.x.firstAttemptOrderId));
         }
 
-        if (UtilValidate.isNotEmpty(context.get("visitId"))) {
-            orderHeader.set("visitId", context.get("visitId"));
+        if (context.get(org.apache.ofbiz.persistence.entity.x.grandTotal) != null) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.grandTotal, context.get(org.apache.ofbiz.persistence.entity.x.grandTotal));
         }
 
-        if (UtilValidate.isNotEmpty(context.get("internalCode"))) {
-            orderHeader.set("internalCode", context.get("internalCode"));
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.visitId))) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.visitId, context.get(org.apache.ofbiz.persistence.entity.x.visitId));
         }
 
-        if (UtilValidate.isNotEmpty(context.get("externalId"))) {
-            orderHeader.set("externalId", context.get("externalId"));
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.internalCode))) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.internalCode, context.get(org.apache.ofbiz.persistence.entity.x.internalCode));
         }
 
-        if (UtilValidate.isNotEmpty(context.get("originFacilityId"))) {
-            orderHeader.set("originFacilityId", context.get("originFacilityId"));
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.externalId))) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.externalId, context.get(org.apache.ofbiz.persistence.entity.x.externalId));
         }
 
-        if (UtilValidate.isNotEmpty(context.get("productStoreId"))) {
-            orderHeader.set("productStoreId", context.get("productStoreId"));
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.originFacilityId))) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.originFacilityId, context.get(org.apache.ofbiz.persistence.entity.x.originFacilityId));
         }
 
-        if (UtilValidate.isNotEmpty(context.get("transactionId"))) {
-            orderHeader.set("transactionId", context.get("transactionId"));
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.productStoreId))) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.productStoreId, context.get(org.apache.ofbiz.persistence.entity.x.productStoreId));
         }
 
-        if (UtilValidate.isNotEmpty(context.get("terminalId"))) {
-            orderHeader.set("terminalId", context.get("terminalId"));
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.transactionId))) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.transactionId, context.get(org.apache.ofbiz.persistence.entity.x.transactionId));
         }
 
-        if (UtilValidate.isNotEmpty(context.get("autoOrderShoppingListId"))) {
-            orderHeader.set("autoOrderShoppingListId", context.get("autoOrderShoppingListId"));
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.terminalId))) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.terminalId, context.get(org.apache.ofbiz.persistence.entity.x.terminalId));
         }
 
-        if (UtilValidate.isNotEmpty(context.get("webSiteId"))) {
-            orderHeader.set("webSiteId", context.get("webSiteId"));
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.autoOrderShoppingListId))) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.autoOrderShoppingListId, context.get(org.apache.ofbiz.persistence.entity.x.autoOrderShoppingListId));
         }
 
-        if (userLogin != null && userLogin.get("userLoginId") != null) {
-            orderHeader.set("createdBy", userLogin.getString("userLoginId"));
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.webSiteId))) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.webSiteId, context.get(org.apache.ofbiz.persistence.entity.x.webSiteId));
         }
-        if (UtilValidate.isNotEmpty(context.get("isRushOrder"))) {
-            orderHeader.set("isRushOrder", context.get("isRushOrder"));
+
+        if (userLogin != null && userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId) != null) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.createdBy, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
         }
-        if (UtilValidate.isNotEmpty(context.get("priority"))) {
-            orderHeader.set("priority", context.get("priority"));
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.isRushOrder))) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.isRushOrder, context.get(org.apache.ofbiz.persistence.entity.x.isRushOrder));
+        }
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.priority))) {
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.priority, context.get(org.apache.ofbiz.persistence.entity.x.priority));
         }
 
         String invoicePerShipment = EntityUtilProperties.getPropertyValue("accounting", "create.invoice.per.shipment", delegator);
         if (UtilValidate.isNotEmpty(invoicePerShipment)) {
-            orderHeader.set("invoicePerShipment", invoicePerShipment);
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.invoicePerShipment, invoicePerShipment);
         }
 
         // first try to create the OrderHeader; if this does not fail, continue.
@@ -592,57 +592,57 @@ public class OrderServices {
         // create the order status record
         String orderStatusSeqId = delegator.getNextSeqId("OrderStatus");
         GenericValue orderStatus = delegator.makeValue("OrderStatus", UtilMisc.toMap("orderStatusId", orderStatusSeqId));
-        orderStatus.set("orderId", orderId);
-        orderStatus.set("statusId", orderHeader.getString("statusId"));
-        orderStatus.set("statusDatetime", nowTimestamp);
-        orderStatus.set("statusUserLogin", userLogin.getString("userLoginId"));
+        orderStatus.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
+        orderStatus.set(org.apache.ofbiz.persistence.entity.x.statusId, orderHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId));
+        orderStatus.set(org.apache.ofbiz.persistence.entity.x.statusDatetime, nowTimestamp);
+        orderStatus.set(org.apache.ofbiz.persistence.entity.x.statusUserLogin, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
         toBeStored.add(orderStatus);
 
         // before processing orderItems process orderItemGroups so that they'll be in place for the foreign keys and what not
-        List<GenericValue> orderItemGroups = UtilGenerics.cast(context.get("orderItemGroups"));
+        List<GenericValue> orderItemGroups = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderItemGroups));
         if (UtilValidate.isNotEmpty(orderItemGroups)) {
             for (GenericValue orderItemGroup : orderItemGroups) {
-                orderItemGroup.set("orderId", orderId);
+                orderItemGroup.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
                 toBeStored.add(orderItemGroup);
             }
         }
 
         // set the order items
         for (GenericValue orderItem : orderItems) {
-            orderItem.set("orderId", orderId);
+            orderItem.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
             toBeStored.add(orderItem);
 
             // create the item status record
             String itemStatusId = delegator.getNextSeqId("OrderStatus");
             GenericValue itemStatus = delegator.makeValue("OrderStatus", UtilMisc.toMap("orderStatusId", itemStatusId));
-            itemStatus.put("statusId", orderItem.get("statusId"));
+            itemStatus.put("statusId", orderItem.get(org.apache.ofbiz.persistence.entity.x.statusId));
             itemStatus.put("orderId", orderId);
-            itemStatus.put("orderItemSeqId", orderItem.get("orderItemSeqId"));
+            itemStatus.put("orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
             itemStatus.put("statusDatetime", nowTimestamp);
-            itemStatus.set("statusUserLogin", userLogin.getString("userLoginId"));
+            itemStatus.set(org.apache.ofbiz.persistence.entity.x.statusUserLogin, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
             toBeStored.add(itemStatus);
         }
 
         // set the order attributes
-        List<GenericValue> orderAttributes = UtilGenerics.cast(context.get("orderAttributes"));
+        List<GenericValue> orderAttributes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderAttributes));
         if (UtilValidate.isNotEmpty(orderAttributes)) {
             for (GenericValue oatt : orderAttributes) {
-                oatt.set("orderId", orderId);
+                oatt.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
                 toBeStored.add(oatt);
             }
         }
 
         // set the order item attributes
-        List<GenericValue> orderItemAttributes = UtilGenerics.cast(context.get("orderItemAttributes"));
+        List<GenericValue> orderItemAttributes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderItemAttributes));
         if (UtilValidate.isNotEmpty(orderItemAttributes)) {
             for (GenericValue oiatt : orderItemAttributes) {
-                oiatt.set("orderId", orderId);
+                oiatt.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
                 toBeStored.add(oiatt);
             }
         }
 
         // create the order internal notes
-        List<String> orderInternalNotes = UtilGenerics.cast(context.get("orderInternalNotes"));
+        List<String> orderInternalNotes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderInternalNotes));
         if (UtilValidate.isNotEmpty(orderInternalNotes)) {
             for (String orderInternalNote : orderInternalNotes) {
                 try {
@@ -664,7 +664,7 @@ public class OrderServices {
         }
 
         // create the order public notes
-        List<String> orderNotes = UtilGenerics.cast(context.get("orderNotes"));
+        List<String> orderNotes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderNotes));
         if (UtilValidate.isNotEmpty(orderNotes)) {
             for (String orderNote : orderNotes) {
                 try {
@@ -697,36 +697,36 @@ public class OrderServices {
                 GenericValue fixedAsset = null;
                 Debug.logInfo("find the fixedAsset", MODULE);
                 try {
-                    fixedAsset = EntityQuery.use(delegator).from("FixedAsset").where("fixedAssetId", workEffort.get("fixedAssetId")).queryOne();
+                    fixedAsset = EntityQuery.use(delegator).from("FixedAsset").where("fixedAssetId", workEffort.get(org.apache.ofbiz.persistence.entity.x.fixedAssetId)).queryOne();
                 } catch (GenericEntityException e) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "OrderFixedAssetNotFoundFixedAssetId",
-                            UtilMisc.toMap("fixedAssetId", workEffort.get("fixedAssetId")), locale));
+                            UtilMisc.toMap("fixedAssetId", workEffort.get(org.apache.ofbiz.persistence.entity.x.fixedAssetId)), locale));
                 }
                 if (fixedAsset == null) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "OrderFixedAssetNotFoundFixedAssetId",
-                            UtilMisc.toMap("fixedAssetId", workEffort.get("fixedAssetId")), locale));
+                            UtilMisc.toMap("fixedAssetId", workEffort.get(org.apache.ofbiz.persistence.entity.x.fixedAssetId)), locale));
                 }
                 // see if this fixed asset has a calendar, when no create one and attach to fixed asset
                 Debug.logInfo("find the techdatacalendar", MODULE);
                 GenericValue techDataCalendar = null;
                 try {
-                    techDataCalendar = fixedAsset.getRelatedOne("TechDataCalendar", false);
+                    techDataCalendar = fixedAsset.getRelatedOne(org.apache.ofbiz.persistence.entity.x.TechDataCalendar, false);
                 } catch (GenericEntityException e) {
-                    Debug.logInfo("TechData calendar does not exist yet so create for fixedAsset: " + fixedAsset.get("fixedAssetId"), MODULE);
+                    Debug.logInfo("TechData calendar does not exist yet so create for fixedAsset: " + fixedAsset.get(org.apache.ofbiz.persistence.entity.x.fixedAssetId), MODULE);
                 }
                 if (techDataCalendar == null) {
                     for (GenericValue currentValue : tempList) {
-                        if ("FixedAsset".equals(currentValue.getEntityName()) && currentValue.getString("fixedAssetId")
-                                .equals(workEffort.getString("fixedAssetId"))) {
+                        if ("FixedAsset".equals(currentValue.getEntityName()) && currentValue.getString(org.apache.ofbiz.persistence.entity.x.fixedAssetId)
+                                .equals(workEffort.getString(org.apache.ofbiz.persistence.entity.x.fixedAssetId))) {
                             fixedAsset = currentValue;
                             break;
                         }
                     }
                     for (GenericValue currentValue : tempList) {
-                        if ("TechDataCalendar".equals(currentValue.getEntityName()) && currentValue.getString("calendarId")
-                                .equals(fixedAsset.getString("calendarId"))) {
+                        if ("TechDataCalendar".equals(currentValue.getEntityName()) && currentValue.getString(org.apache.ofbiz.persistence.entity.x.calendarId)
+                                .equals(fixedAsset.getString(org.apache.ofbiz.persistence.entity.x.calendarId))) {
                             techDataCalendar = currentValue;
                             break;
                         }
@@ -736,30 +736,30 @@ public class OrderServices {
                     techDataCalendar = delegator.makeValue("TechDataCalendar");
                     Debug.logInfo("create techdata calendar because it does not exist", MODULE);
                     String calendarId = delegator.getNextSeqId("TechDataCalendar");
-                    techDataCalendar.set("calendarId", calendarId);
+                    techDataCalendar.set(org.apache.ofbiz.persistence.entity.x.calendarId, calendarId);
                     tempList.add(techDataCalendar);
                     Debug.logInfo("update fixed Asset", MODULE);
-                    fixedAsset.set("calendarId", calendarId);
+                    fixedAsset.set(org.apache.ofbiz.persistence.entity.x.calendarId, calendarId);
                     tempList.add(fixedAsset);
                 }
                 // then create the workEffort and the workOrderItemFulfillment to connect to the order and orderItem
-                workOrderItemFulfillment.set("orderItemSeqId", workEffort.get("workEffortId").toString()); // orderItemSeqNo is stored here so save
+                workOrderItemFulfillment.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, workEffort.get(org.apache.ofbiz.persistence.entity.x.workEffortId).toString()); // orderItemSeqNo is stored here so save
                 // first
                 // workeffort
                 String workEffortId = delegator.getNextSeqId("WorkEffort"); // find next available workEffortId
-                workEffort.set("workEffortId", workEffortId);
-                workEffort.set("workEffortTypeId", "ASSET_USAGE");
-                workEffort.set("currentStatusId", "_NA_"); // a lot of workefforts selection services expect a value here....
+                workEffort.set(org.apache.ofbiz.persistence.entity.x.workEffortId, workEffortId);
+                workEffort.set(org.apache.ofbiz.persistence.entity.x.workEffortTypeId, "ASSET_USAGE");
+                workEffort.set(org.apache.ofbiz.persistence.entity.x.currentStatusId, "_NA_"); // a lot of workefforts selection services expect a value here....
                 toBeStored.add(workEffort);  // store workeffort before workOrderItemFulfillment because of workEffortId key constraint
                 // workOrderItemFulfillment
-                workOrderItemFulfillment.set("workEffortId", workEffortId);
-                workOrderItemFulfillment.set("orderId", orderId);
+                workOrderItemFulfillment.set(org.apache.ofbiz.persistence.entity.x.workEffortId, workEffortId);
+                workOrderItemFulfillment.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
                 toBeStored.add(workOrderItemFulfillment);
 
                 // now create the TechDataExcDay, when they do not exist, create otherwise update the capacity values
                 // please note that calendarId is the same for (TechData)Calendar, CalendarExcDay and CalendarExWeek
-                Timestamp estimatedStartDate = workEffort.getTimestamp("estimatedStartDate");
-                Timestamp estimatedCompletionDate = workEffort.getTimestamp("estimatedCompletionDate");
+                Timestamp estimatedStartDate = workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedStartDate);
+                Timestamp estimatedCompletionDate = workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate);
                 long dayCount = (estimatedCompletionDate.getTime() - estimatedStartDate.getTime()) / 86400000;
                 while (--dayCount >= 0) {
                     GenericValue techDataCalendarExcDay = null;
@@ -767,15 +767,15 @@ public class OrderServices {
                     Timestamp exceptionDateStartTime = UtilDateTime.getDayStart(new Timestamp(estimatedStartDate.getTime()), (int) dayCount);
                     try {
                         techDataCalendarExcDay = EntityQuery.use(delegator).from("TechDataCalendarExcDay").where("calendarId", fixedAsset.get(
-                                "calendarId"), "exceptionDateStartTime", exceptionDateStartTime).queryOne();
+                                org.apache.ofbiz.persistence.entity.x.calendarId), "exceptionDateStartTime", exceptionDateStartTime).queryOne();
                     } catch (GenericEntityException e) {
                         Debug.logInfo(" techData excday record not found so creating........", MODULE);
                     }
                     if (techDataCalendarExcDay == null) {
                         for (GenericValue currentValue : tempList) {
                             if ("TechDataCalendarExcDay".equals(currentValue.getEntityName())
-                                    && currentValue.getString("calendarId").equals(fixedAsset.getString("calendarId"))
-                                    && currentValue.getTimestamp("exceptionDateStartTime").equals(exceptionDateStartTime)) {
+                                    && currentValue.getString(org.apache.ofbiz.persistence.entity.x.calendarId).equals(fixedAsset.getString(org.apache.ofbiz.persistence.entity.x.calendarId))
+                                    && currentValue.getTimestamp(org.apache.ofbiz.persistence.entity.x.exceptionDateStartTime).equals(exceptionDateStartTime)) {
                                 techDataCalendarExcDay = currentValue;
                                 break;
                             }
@@ -783,27 +783,27 @@ public class OrderServices {
                     }
                     if (techDataCalendarExcDay == null) {
                         techDataCalendarExcDay = delegator.makeValue("TechDataCalendarExcDay");
-                        techDataCalendarExcDay.set("calendarId", fixedAsset.get("calendarId"));
-                        techDataCalendarExcDay.set("exceptionDateStartTime", exceptionDateStartTime);
-                        techDataCalendarExcDay.set("usedCapacity", BigDecimal.ZERO);  // initialise to zero
-                        techDataCalendarExcDay.set("exceptionCapacity", fixedAsset.getBigDecimal("productionCapacity"));
+                        techDataCalendarExcDay.set(org.apache.ofbiz.persistence.entity.x.calendarId, fixedAsset.get(org.apache.ofbiz.persistence.entity.x.calendarId));
+                        techDataCalendarExcDay.set(org.apache.ofbiz.persistence.entity.x.exceptionDateStartTime, exceptionDateStartTime);
+                        techDataCalendarExcDay.set(org.apache.ofbiz.persistence.entity.x.usedCapacity, BigDecimal.ZERO);  // initialise to zero
+                        techDataCalendarExcDay.set(org.apache.ofbiz.persistence.entity.x.exceptionCapacity, fixedAsset.getBigDecimal(org.apache.ofbiz.persistence.entity.x.productionCapacity));
                     }
                     // add the quantity to the quantity on the date record
-                    BigDecimal newUsedCapacity = techDataCalendarExcDay.getBigDecimal("usedCapacity").add(workEffort.getBigDecimal(
-                            "quantityToProduce"));
+                    BigDecimal newUsedCapacity = techDataCalendarExcDay.getBigDecimal(org.apache.ofbiz.persistence.entity.x.usedCapacity).add(workEffort.getBigDecimal(
+                            org.apache.ofbiz.persistence.entity.x.quantityToProduce));
                     // check to see if the requested quantity is available on the requested day but only when the maximum capacity is set on the
                     // fixed asset
-                    if (fixedAsset.get("productionCapacity") != null) {
-                        if (newUsedCapacity.compareTo(techDataCalendarExcDay.getBigDecimal("exceptionCapacity")) > 0) {
+                    if (fixedAsset.get(org.apache.ofbiz.persistence.entity.x.productionCapacity) != null) {
+                        if (newUsedCapacity.compareTo(techDataCalendarExcDay.getBigDecimal(org.apache.ofbiz.persistence.entity.x.exceptionCapacity)) > 0) {
                             String errMsg = UtilProperties.getMessage(RES_ERROR, "OrderFixedAssetSoldOut", UtilMisc.toMap("fixedAssetId",
-                                    workEffort.get("fixedAssetId"), "exceptionDateStartTime",
-                                    techDataCalendarExcDay.getString("exceptionDateStartTime")), locale);
+                                    workEffort.get(org.apache.ofbiz.persistence.entity.x.fixedAssetId), "exceptionDateStartTime",
+                                    techDataCalendarExcDay.getString(org.apache.ofbiz.persistence.entity.x.exceptionDateStartTime)), locale);
                             Debug.logError(errMsg, MODULE);
                             errorMessages.add(errMsg);
                             continue;
                         }
                     }
-                    techDataCalendarExcDay.set("usedCapacity", newUsedCapacity);
+                    techDataCalendarExcDay.set(org.apache.ofbiz.persistence.entity.x.usedCapacity, newUsedCapacity);
                     tempList.add(techDataCalendarExcDay);
                 }
             }
@@ -820,40 +820,40 @@ public class OrderServices {
         if (UtilValidate.isNotEmpty(orderAdjustments)) {
             for (GenericValue orderAdjustment : orderAdjustments) {
                 try {
-                    orderAdjustment.set("orderAdjustmentId", delegator.getNextSeqId("OrderAdjustment"));
+                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId, delegator.getNextSeqId("OrderAdjustment"));
                 } catch (IllegalArgumentException e) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "OrderErrorCouldNotGetNextSequenceIdForOrderAdjustmentCannotCreateOrder", locale));
                 }
 
-                orderAdjustment.set("orderId", orderId);
-                orderAdjustment.set("createdDate", UtilDateTime.nowTimestamp());
-                orderAdjustment.set("createdByUserLogin", userLogin.getString("userLoginId"));
+                orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
+                orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
+                orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
 
-                if (UtilValidate.isEmpty(orderAdjustment.get("orderItemSeqId"))) {
-                    orderAdjustment.set("orderItemSeqId", DataModelConstants.SEQ_ID_NA);
+                if (UtilValidate.isEmpty(orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId))) {
+                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, DataModelConstants.SEQ_ID_NA);
                 }
-                if (UtilValidate.isEmpty(orderAdjustment.get("shipGroupSeqId"))) {
-                    orderAdjustment.set("shipGroupSeqId", DataModelConstants.SEQ_ID_NA);
+                if (UtilValidate.isEmpty(orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId))) {
+                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId, DataModelConstants.SEQ_ID_NA);
                 }
                 toBeStored.add(orderAdjustment);
             }
         }
 
         // set the order contact mechs
-        List<GenericValue> orderContactMechs = UtilGenerics.cast(context.get("orderContactMechs"));
+        List<GenericValue> orderContactMechs = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderContactMechs));
         if (UtilValidate.isNotEmpty(orderContactMechs)) {
             for (GenericValue ocm : orderContactMechs) {
-                ocm.set("orderId", orderId);
+                ocm.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
                 toBeStored.add(ocm);
             }
         }
 
         // set the order item contact mechs
-        List<GenericValue> orderItemContactMechs = UtilGenerics.cast(context.get("orderItemContactMechs"));
+        List<GenericValue> orderItemContactMechs = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderItemContactMechs));
         if (UtilValidate.isNotEmpty(orderItemContactMechs)) {
             for (GenericValue oicm : orderItemContactMechs) {
-                oicm.set("orderId", orderId);
+                oicm.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
                 toBeStored.add(oicm);
             }
         }
@@ -863,30 +863,30 @@ public class OrderServices {
         // reservations)
         if (UtilValidate.isNotEmpty(orderItemShipGroupInfo)) {
             for (GenericValue valueObj : orderItemShipGroupInfo) {
-                valueObj.set("orderId", orderId);
+                valueObj.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
                 if ("OrderItemShipGroup".equals(valueObj.getEntityName())) {
                     // ship group
-                    if (valueObj.get("carrierRoleTypeId") == null) {
-                        valueObj.set("carrierRoleTypeId", "CARRIER");
+                    if (valueObj.get(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId) == null) {
+                        valueObj.set(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId, "CARRIER");
                     }
-                    if (UtilValidate.isNotEmpty(valueObj.getString("supplierPartyId"))) {
-                        dropShipGroupIds.add(valueObj.getString("shipGroupSeqId"));
+                    if (UtilValidate.isNotEmpty(valueObj.getString(org.apache.ofbiz.persistence.entity.x.supplierPartyId))) {
+                        dropShipGroupIds.add(valueObj.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
                     }
                 } else if ("OrderAdjustment".equals(valueObj.getEntityName())) {
                     // shipping / tax adjustment(s)
-                    if (UtilValidate.isEmpty(valueObj.get("orderItemSeqId"))) {
-                        valueObj.set("orderItemSeqId", DataModelConstants.SEQ_ID_NA);
+                    if (UtilValidate.isEmpty(valueObj.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId))) {
+                        valueObj.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, DataModelConstants.SEQ_ID_NA);
                     }
-                    valueObj.set("orderAdjustmentId", delegator.getNextSeqId("OrderAdjustment"));
-                    valueObj.set("createdDate", UtilDateTime.nowTimestamp());
-                    valueObj.set("createdByUserLogin", userLogin.getString("userLoginId"));
+                    valueObj.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId, delegator.getNextSeqId("OrderAdjustment"));
+                    valueObj.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
+                    valueObj.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
                 }
                 toBeStored.add(valueObj);
             }
         }
 
         // set the additional party roles
-        Map<String, List<String>> additionalPartyRole = UtilGenerics.cast(context.get("orderAdditionalPartyRoleMap"));
+        Map<String, List<String>> additionalPartyRole = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderAdditionalPartyRoleMap));
         if (additionalPartyRole != null) {
             for (Map.Entry<String, List<String>> entry : additionalPartyRole.entrySet()) {
                 String additionalRoleTypeId = entry.getKey();
@@ -903,10 +903,10 @@ public class OrderServices {
         }
 
         // set the item survey responses
-        List<GenericValue> surveyResponses = UtilGenerics.cast(context.get("orderItemSurveyResponses"));
+        List<GenericValue> surveyResponses = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderItemSurveyResponses));
         if (UtilValidate.isNotEmpty(surveyResponses)) {
             for (GenericValue surveyResponse : surveyResponses) {
-                surveyResponse.set("orderId", orderId);
+                surveyResponse.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
                 toBeStored.add(surveyResponse);
             }
         }
@@ -915,46 +915,46 @@ public class OrderServices {
         if (UtilValidate.isNotEmpty(orderItemPriceInfo)) {
             for (GenericValue oipi : orderItemPriceInfo) {
                 try {
-                    oipi.set("orderItemPriceInfoId", delegator.getNextSeqId("OrderItemPriceInfo"));
+                    oipi.set(org.apache.ofbiz.persistence.entity.x.orderItemPriceInfoId, delegator.getNextSeqId("OrderItemPriceInfo"));
                 } catch (IllegalArgumentException e) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "OrderErrorCouldNotGetNextSequenceIdForOrderItemPriceInfoCannotCreateOrder", locale));
                 }
 
-                oipi.set("orderId", orderId);
+                oipi.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
                 toBeStored.add(oipi);
             }
         }
 
         // set the item associations
-        List<GenericValue> orderItemAssociations = UtilGenerics.cast(context.get("orderItemAssociations"));
+        List<GenericValue> orderItemAssociations = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderItemAssociations));
         if (UtilValidate.isNotEmpty(orderItemAssociations)) {
             for (GenericValue orderItemAssociation : orderItemAssociations) {
-                if (orderItemAssociation.get("toOrderId") == null) {
-                    orderItemAssociation.set("toOrderId", orderId);
-                } else if (orderItemAssociation.get("orderId") == null) {
-                    orderItemAssociation.set("orderId", orderId);
+                if (orderItemAssociation.get(org.apache.ofbiz.persistence.entity.x.toOrderId) == null) {
+                    orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.toOrderId, orderId);
+                } else if (orderItemAssociation.get(org.apache.ofbiz.persistence.entity.x.orderId) == null) {
+                    orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
                 }
                 toBeStored.add(orderItemAssociation);
             }
         }
 
         // store the orderProductPromoUseInfos
-        List<GenericValue> orderProductPromoUses = UtilGenerics.cast(context.get("orderProductPromoUses"));
+        List<GenericValue> orderProductPromoUses = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderProductPromoUses));
         if (UtilValidate.isNotEmpty(orderProductPromoUses)) {
             for (GenericValue productPromoUse : orderProductPromoUses) {
-                productPromoUse.set("orderId", orderId);
+                productPromoUse.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
                 toBeStored.add(productPromoUse);
             }
         }
 
         // store the orderProductPromoCodes
-        Set<String> orderProductPromoCodes = UtilGenerics.cast(context.get("orderProductPromoCodes"));
+        Set<String> orderProductPromoCodes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderProductPromoCodes));
         if (UtilValidate.isNotEmpty(orderProductPromoCodes)) {
             for (String productPromoCodeId : orderProductPromoCodes) {
                 GenericValue orderProductPromoCode = delegator.makeValue("OrderProductPromoCode");
-                orderProductPromoCode.set("orderId", orderId);
-                orderProductPromoCode.set("productPromoCodeId", productPromoCodeId);
+                orderProductPromoCode.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
+                orderProductPromoCode.set(org.apache.ofbiz.persistence.entity.x.productPromoCodeId, productPromoCodeId);
                 toBeStored.add(orderProductPromoCode);
             }
         }
@@ -976,14 +976,14 @@ public class OrderServices {
 
 
         // set the affiliate -- This is going to be removed...
-        String affiliateId = (String) context.get("affiliateId");
+        String affiliateId = (String) context.get(org.apache.ofbiz.persistence.entity.x.affiliateId);
         if (UtilValidate.isNotEmpty(affiliateId)) {
             toBeStored.add(delegator.makeValue("OrderRole",
                     UtilMisc.toMap("orderId", orderId, "partyId", affiliateId, "roleTypeId", "AFFILIATE")));
         }
 
         // set the distributor
-        String distributorId = (String) context.get("distributorId");
+        String distributorId = (String) context.get(org.apache.ofbiz.persistence.entity.x.distributorId);
         if (UtilValidate.isNotEmpty(distributorId)) {
             toBeStored.add(delegator.makeValue("OrderRole",
                     UtilMisc.toMap("orderId", orderId, "partyId", distributorId, "roleTypeId", "DISTRIBUTOR")));
@@ -991,29 +991,29 @@ public class OrderServices {
 
         // find all parties in role VENDOR associated with WebSite OR ProductStore (where WebSite overrides, if specified), associated first valid
         // with the Order
-        if (UtilValidate.isNotEmpty(context.get("productStoreId"))) {
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.productStoreId))) {
             try {
                 GenericValue productStoreRole = EntityQuery.use(delegator).from("ProductStoreRole")
-                        .where("roleTypeId", "VENDOR", "productStoreId", context.get("productStoreId"))
+                        .where("roleTypeId", "VENDOR", "productStoreId", context.get(org.apache.ofbiz.persistence.entity.x.productStoreId))
                         .orderBy("-fromDate")
                         .filterByDate()
                         .queryFirst();
                 if (productStoreRole != null) {
                     toBeStored.add(delegator.makeValue("OrderRole",
-                            UtilMisc.toMap("orderId", orderId, "partyId", productStoreRole.get("partyId"), "roleTypeId", "VENDOR")));
+                            UtilMisc.toMap("orderId", orderId, "partyId", productStoreRole.get(org.apache.ofbiz.persistence.entity.x.partyId), "roleTypeId", "VENDOR")));
                 }
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Error looking up Vendor for the current Product Store", MODULE);
             }
 
         }
-        if (UtilValidate.isNotEmpty(context.get("webSiteId"))) {
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.webSiteId))) {
             try {
                 GenericValue webSiteRole = EntityQuery.use(delegator).from("WebSiteRole").where("roleTypeId", "VENDOR", "webSiteId", context.get(
-                        "webSiteId")).orderBy("-fromDate").filterByDate().queryFirst();
+                        org.apache.ofbiz.persistence.entity.x.webSiteId)).orderBy("-fromDate").filterByDate().queryFirst();
                 if (webSiteRole != null) {
                     toBeStored.add(delegator.makeValue("OrderRole",
-                            UtilMisc.toMap("orderId", orderId, "partyId", webSiteRole.get("partyId"), "roleTypeId", "VENDOR")));
+                            UtilMisc.toMap("orderId", orderId, "partyId", webSiteRole.get(org.apache.ofbiz.persistence.entity.x.partyId), "roleTypeId", "VENDOR")));
                 }
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Error looking up Vendor for the current Web Site", MODULE);
@@ -1022,18 +1022,18 @@ public class OrderServices {
         }
 
         // set the order payment info
-        List<GenericValue> orderPaymentInfos = UtilGenerics.cast(context.get("orderPaymentInfo"));
+        List<GenericValue> orderPaymentInfos = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentInfo));
         if (UtilValidate.isNotEmpty(orderPaymentInfos)) {
             for (GenericValue valueObj : orderPaymentInfos) {
-                valueObj.set("orderId", orderId);
+                valueObj.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
                 if ("OrderPaymentPreference".equals(valueObj.getEntityName())) {
-                    if (valueObj.get("orderPaymentPreferenceId") == null) {
-                        valueObj.set("orderPaymentPreferenceId", delegator.getNextSeqId("OrderPaymentPreference"));
-                        valueObj.set("createdDate", UtilDateTime.nowTimestamp());
-                        valueObj.set("createdByUserLogin", userLogin.getString("userLoginId"));
+                    if (valueObj.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId) == null) {
+                        valueObj.set(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId, delegator.getNextSeqId("OrderPaymentPreference"));
+                        valueObj.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
+                        valueObj.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
                     }
-                    if (valueObj.get("statusId") == null) {
-                        valueObj.set("statusId", "PAYMENT_NOT_RECEIVED");
+                    if (valueObj.get(org.apache.ofbiz.persistence.entity.x.statusId) == null) {
+                        valueObj.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_NOT_RECEIVED");
                     }
                 }
                 toBeStored.add(valueObj);
@@ -1041,33 +1041,33 @@ public class OrderServices {
         }
 
         // store the trackingCodeOrder entities
-        List<GenericValue> trackingCodeOrders = UtilGenerics.cast(context.get("trackingCodeOrders"));
+        List<GenericValue> trackingCodeOrders = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.trackingCodeOrders));
         if (UtilValidate.isNotEmpty(trackingCodeOrders)) {
             for (GenericValue trackingCodeOrder : trackingCodeOrders) {
-                trackingCodeOrder.set("orderId", orderId);
+                trackingCodeOrder.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
                 toBeStored.add(trackingCodeOrder);
             }
         }
 
         // store the OrderTerm entities
 
-        List<GenericValue> orderTerms = UtilGenerics.cast(context.get("orderTerms"));
+        List<GenericValue> orderTerms = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderTerms));
         if (UtilValidate.isNotEmpty(orderTerms)) {
             for (GenericValue orderTerm : orderTerms) {
-                orderTerm.set("orderId", orderId);
-                if (orderTerm.get("orderItemSeqId") == null) {
-                    orderTerm.set("orderItemSeqId", "_NA_");
+                orderTerm.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
+                if (orderTerm.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId) == null) {
+                    orderTerm.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, "_NA_");
                 }
                 toBeStored.add(orderTerm);
             }
         }
 
         // if a workEffortId is passed, then prepare a OrderHeaderWorkEffort value
-        String workEffortId = (String) context.get("workEffortId");
+        String workEffortId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortId);
         if (UtilValidate.isNotEmpty(workEffortId)) {
             GenericValue orderHeaderWorkEffort = delegator.makeValue("OrderHeaderWorkEffort");
-            orderHeaderWorkEffort.set("orderId", orderId);
-            orderHeaderWorkEffort.set("workEffortId", workEffortId);
+            orderHeaderWorkEffort.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
+            orderHeaderWorkEffort.set(org.apache.ofbiz.persistence.entity.x.workEffortId, workEffortId);
             toBeStored.add(orderHeaderWorkEffort);
         }
 
@@ -1081,14 +1081,14 @@ public class OrderServices {
             // add a product service to inventory
             if (UtilValidate.isNotEmpty(orderItems)) {
                 for (GenericValue orderItem : orderItems) {
-                    String productId = (String) orderItem.get("productId");
+                    String productId = (String) orderItem.get(org.apache.ofbiz.persistence.entity.x.productId);
                     GenericValue product = delegator.getRelatedOne("Product", orderItem, false);
 
-                    if (product != null && ("SERVICE_PRODUCT".equals(product.get("productTypeId")) || "AGGREGATEDSERV_CONF".equals(product.get(
-                            "productTypeId")))) {
+                    if (product != null && ("SERVICE_PRODUCT".equals(product.get(org.apache.ofbiz.persistence.entity.x.productTypeId)) || "AGGREGATEDSERV_CONF".equals(product.get(
+                            org.apache.ofbiz.persistence.entity.x.productTypeId)))) {
                         String inventoryFacilityId = null;
-                        if ("Y".equals(productStore.getString("oneInventoryFacility"))) {
-                            inventoryFacilityId = productStore.getString("inventoryFacilityId");
+                        if ("Y".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.oneInventoryFacility))) {
+                            inventoryFacilityId = productStore.getString(org.apache.ofbiz.persistence.entity.x.inventoryFacilityId);
 
                             if (UtilValidate.isEmpty(inventoryFacilityId)) {
                                 Debug.logWarning("ProductStore with id " + productStoreId + " has Y for oneInventoryFacility but "
@@ -1099,25 +1099,25 @@ public class OrderServices {
                             GenericValue productFacility = null;
 
                             try {
-                                productFacilities = product.getRelated("ProductFacility", null, null, true);
+                                productFacilities = product.getRelated(org.apache.ofbiz.persistence.entity.x.ProductFacility, null, null, true);
                             } catch (GenericEntityException e) {
                                 Debug.logWarning(e, "Error invoking getRelated in isCatalogInventoryAvailable", MODULE);
                             }
 
                             if (UtilValidate.isNotEmpty(productFacilities)) {
                                 productFacility = EntityUtil.getFirst(productFacilities);
-                                inventoryFacilityId = (String) productFacility.get("facilityId");
+                                inventoryFacilityId = (String) productFacility.get(org.apache.ofbiz.persistence.entity.x.facilityId);
                             }
                         }
 
                         Map<String, Object> ripCtx = new HashMap<>();
-                        if (UtilValidate.isNotEmpty(inventoryFacilityId) && UtilValidate.isNotEmpty(productId) && orderItem.getBigDecimal("quantity")
+                        if (UtilValidate.isNotEmpty(inventoryFacilityId) && UtilValidate.isNotEmpty(productId) && orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity)
                                 .compareTo(BigDecimal.ZERO) > 0) {
                             ripCtx.put("productId", productId);
                             ripCtx.put("facilityId", inventoryFacilityId);
                             ripCtx.put("inventoryItemTypeId", "SERIALIZED_INV_ITEM");
                             ripCtx.put("statusId", "INV_AVAILABLE");
-                            ripCtx.put("quantityAccepted", orderItem.getBigDecimal("quantity"));
+                            ripCtx.put("quantityAccepted", orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
                             ripCtx.put("quantityRejected", 0.0);
                             // do something tricky here: run as the "system" user
                             ripCtx.put("userLogin", permUserLogin);
@@ -1163,25 +1163,25 @@ public class OrderServices {
 
     public static Map<String, Object> countProductQuantityOrdered(DispatchContext ctx, Map<String, Object> context) {
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         List<GenericValue> productCalculatedInfoList = null;
         GenericValue productCalculatedInfo = null;
-        String productId = (String) context.get("productId");
-        BigDecimal quantity = (BigDecimal) context.get("quantity");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
         try {
             productCalculatedInfoList = EntityQuery.use(delegator).from("ProductCalculatedInfo").where("productId", productId).queryList();
             if (UtilValidate.isEmpty(productCalculatedInfoList)) {
                 productCalculatedInfo = delegator.makeValue("ProductCalculatedInfo");
-                productCalculatedInfo.set("productId", productId);
-                productCalculatedInfo.set("totalQuantityOrdered", quantity);
+                productCalculatedInfo.set(org.apache.ofbiz.persistence.entity.x.productId, productId);
+                productCalculatedInfo.set(org.apache.ofbiz.persistence.entity.x.totalQuantityOrdered, quantity);
                 productCalculatedInfo.create();
             } else {
                 productCalculatedInfo = productCalculatedInfoList.get(0);
-                BigDecimal totalQuantityOrdered = productCalculatedInfo.getBigDecimal("totalQuantityOrdered");
+                BigDecimal totalQuantityOrdered = productCalculatedInfo.getBigDecimal(org.apache.ofbiz.persistence.entity.x.totalQuantityOrdered);
                 if (totalQuantityOrdered == null) {
-                    productCalculatedInfo.set("totalQuantityOrdered", quantity);
+                    productCalculatedInfo.set(org.apache.ofbiz.persistence.entity.x.totalQuantityOrdered, quantity);
                 } else {
-                    productCalculatedInfo.set("totalQuantityOrdered", totalQuantityOrdered.add(quantity));
+                    productCalculatedInfo.set(org.apache.ofbiz.persistence.entity.x.totalQuantityOrdered, totalQuantityOrdered.add(quantity));
                 }
             }
             productCalculatedInfo.store();
@@ -1203,7 +1203,7 @@ public class OrderServices {
         }
 
         if (UtilValidate.isNotEmpty(virtualProductId)) {
-            context.put("productId", virtualProductId);
+            context.put(org.apache.ofbiz.persistence.entity.x.productId, virtualProductId);
             countProductQuantityOrdered(ctx, context);
         }
         return ServiceUtil.returnSuccess();
@@ -1224,7 +1224,7 @@ public class OrderServices {
             }
         }
         if (productStore != null) {
-            isImmediatelyFulfilled = "Y".equals(productStore.getString("isImmediatelyFulfilled"));
+            isImmediatelyFulfilled = "Y".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.isImmediatelyFulfilled));
         }
 
         boolean reserveInventory = ("SALES_ORDER".equals(orderTypeId));
@@ -1238,14 +1238,14 @@ public class OrderServices {
         if (UtilValidate.isNotEmpty(orderItemShipGroupInfo)) {
             for (GenericValue orderItemShipGroupAssoc : orderItemShipGroupInfo) {
                 if ("OrderItemShipGroupAssoc".equals(orderItemShipGroupAssoc.getEntityName())) {
-                    if (dropShipGroupIds != null && dropShipGroupIds.contains(orderItemShipGroupAssoc.getString("shipGroupSeqId"))) {
+                    if (dropShipGroupIds != null && dropShipGroupIds.contains(orderItemShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId))) {
                         // the items in the drop ship groups are not reserved
                         continue;
                     }
-                    GenericValue orderItem = itemValuesBySeqId.get(orderItemShipGroupAssoc.get("orderItemSeqId"));
+                    GenericValue orderItem = itemValuesBySeqId.get(orderItemShipGroupAssoc.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                     if (orderItem != null) {
                         if ("SALES_ORDER".equals(orderTypeId) && productStore != null && "Y".equals(productStore.getString(
-                                "allocateInventory"))) {
+                                org.apache.ofbiz.persistence.entity.x.allocateInventory))) {
                             //If the 'autoReserve' flag is not set for the order item, don't reserve the inventory
                             String autoReserve = OrderReadHelper.getOrderItemAttribute(orderItem, "autoReserve");
                             if (autoReserve == null || !"true".equals(autoReserve)) {
@@ -1254,28 +1254,28 @@ public class OrderServices {
                         }
                         if ("SALES_ORDER".equals(orderTypeId)) {
                             //If the 'reserveAfterDate' is not yet come don't reserve the inventory
-                            Timestamp reserveAfterDate = orderItem.getTimestamp("reserveAfterDate");
+                            Timestamp reserveAfterDate = orderItem.getTimestamp(org.apache.ofbiz.persistence.entity.x.reserveAfterDate);
                             if (UtilValidate.isNotEmpty(reserveAfterDate) && reserveAfterDate.after(UtilDateTime.nowTimestamp())) {
                                 continue;
                             }
                         }
-                        GenericValue orderItemShipGroup = orderItemShipGroupAssoc.getRelatedOne("OrderItemShipGroup", false);
-                        String shipGroupFacilityId = orderItemShipGroup.getString("facilityId");
+                        GenericValue orderItemShipGroup = orderItemShipGroupAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItemShipGroup, false);
+                        String shipGroupFacilityId = orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.facilityId);
                         String itemStatus = null;
-                        itemStatus = orderItem.getString("statusId");
+                        itemStatus = orderItem.getString(org.apache.ofbiz.persistence.entity.x.statusId);
                         if ("ITEM_REJECTED".equals(itemStatus)
                                 || "ITEM_CANCELLED".equals(itemStatus)
                                 || "ITEM_COMPLETED".equals(itemStatus)) {
-                            Debug.logInfo("Order item [" + orderItem.getString("orderId") + " / " + orderItem.getString("orderItemSeqId")
+                            Debug.logInfo("Order item [" + orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId) + " / " + orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)
                                     + "] is not in a proper status for reservation", MODULE);
                             continue;
                         }
-                        if (UtilValidate.isNotEmpty(orderItem.getString("productId"))
+                        if (UtilValidate.isNotEmpty(orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId))
                                 // only reserve product items, ignore non-product items
-                                && !"RENTAL_ORDER_ITEM".equals(orderItem.getString("orderItemTypeId"))) {  // ignore for rental
+                                && !"RENTAL_ORDER_ITEM".equals(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemTypeId))) {  // ignore for rental
                             try {
                                 // get the product of the order item
-                                GenericValue product = orderItem.getRelatedOne("Product", false);
+                                GenericValue product = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                                 if (product == null) {
                                     Debug.logError("Error when looking up product in reserveInventory service", MODULE);
                                     resErrorMessages.add("Error when looking up product in reserveInventory service");
@@ -1283,25 +1283,25 @@ public class OrderServices {
                                 }
                                 if (reserveInventory) {
                                     // for MARKETING_PKG_PICK reserve the components
-                                    if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", product.getString("productTypeId"),
+                                    if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId),
                                             "parentTypeId", "MARKETING_PKG_PICK")) {
                                         Map<String, Object> componentsRes = dispatcher.runSync("getAssociatedProducts", UtilMisc.toMap("productId",
-                                                orderItem.getString("productId"), "type", "PRODUCT_COMPONENT"));
+                                                orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId), "type", "PRODUCT_COMPONENT"));
                                         if (ServiceUtil.isError(componentsRes)) {
                                             resErrorMessages.add(ServiceUtil.getErrorMessage(componentsRes));
                                             continue;
                                         }
                                         List<GenericValue> assocProducts = UtilGenerics.cast(componentsRes.get("assocProducts"));
                                         for (GenericValue productAssoc : assocProducts) {
-                                            BigDecimal quantityOrd = productAssoc.getBigDecimal("quantity");
-                                            BigDecimal quantityKit = orderItemShipGroupAssoc.getBigDecimal("quantity");
+                                            BigDecimal quantityOrd = productAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                                            BigDecimal quantityKit = orderItemShipGroupAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                                             BigDecimal quantity = quantityOrd.multiply(quantityKit);
                                             Map<String, Object> reserveInput = new HashMap<>();
                                             reserveInput.put("productStoreId", productStoreId);
-                                            reserveInput.put("productId", productAssoc.getString("productIdTo"));
-                                            reserveInput.put("orderId", orderItem.getString("orderId"));
-                                            reserveInput.put("orderItemSeqId", orderItem.getString("orderItemSeqId"));
-                                            reserveInput.put("shipGroupSeqId", orderItemShipGroupAssoc.getString("shipGroupSeqId"));
+                                            reserveInput.put("productId", productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo));
+                                            reserveInput.put("orderId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                                            reserveInput.put("orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                                            reserveInput.put("shipGroupSeqId", orderItemShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
                                             reserveInput.put("quantity", quantity);
                                             reserveInput.put("userLogin", userLogin);
                                             reserveInput.put("facilityId", shipGroupFacilityId);
@@ -1309,7 +1309,7 @@ public class OrderServices {
                                             if (ServiceUtil.isError(reserveResult)) {
                                                 String invErrMsg = "The product ";
                                                 invErrMsg += getProductName(product, orderItem);
-                                                invErrMsg += " with ID " + orderItem.getString("productId") + " is no longer in stock. Please try "
+                                                invErrMsg += " with ID " + orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId) + " is no longer in stock. Please try "
                                                         + "reducing the quantity or removing the product from this order.";
                                                 resErrorMessages.add(invErrMsg);
                                             }
@@ -1318,20 +1318,20 @@ public class OrderServices {
                                         // reserve the product
                                         Map<String, Object> reserveInput = new HashMap<>();
                                         reserveInput.put("productStoreId", productStoreId);
-                                        reserveInput.put("productId", orderItem.getString("productId"));
-                                        reserveInput.put("orderId", orderItem.getString("orderId"));
-                                        reserveInput.put("orderItemSeqId", orderItem.getString("orderItemSeqId"));
-                                        reserveInput.put("shipGroupSeqId", orderItemShipGroupAssoc.getString("shipGroupSeqId"));
+                                        reserveInput.put("productId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId));
+                                        reserveInput.put("orderId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                                        reserveInput.put("orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                                        reserveInput.put("shipGroupSeqId", orderItemShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
                                         reserveInput.put("facilityId", shipGroupFacilityId);
                                         // use the qty from the orderItemShipGroupAssoc, NOT the orderItem, these are reserved by item-group assoc
-                                        reserveInput.put("quantity", orderItemShipGroupAssoc.getBigDecimal("quantity"));
+                                        reserveInput.put("quantity", orderItemShipGroupAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
                                         reserveInput.put("userLogin", userLogin);
                                         Map<String, Object> reserveResult = dispatcher.runSync("reserveStoreInventory", reserveInput);
 
                                         if (ServiceUtil.isError(reserveResult)) {
                                             String invErrMsg = "The product ";
                                             invErrMsg += getProductName(product, orderItem);
-                                            invErrMsg += " with ID " + orderItem.getString("productId")
+                                            invErrMsg += " with ID " + orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId)
                                                     + " is no longer in stock. Please try reducing "
                                                     + "the quantity or removing the product from this order.";
                                             resErrorMessages.add(invErrMsg);
@@ -1341,7 +1341,7 @@ public class OrderServices {
                                 // Reserving inventory or not we still need to create a marketing package
                                 // If the product is a marketing package auto, attempt to create enough packages to bring ATP back to 0, won't
                                 // necessarily create enough to cover this order.
-                                if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", product.getString("productTypeId"),
+                                if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId),
                                         "parentTypeId", "MARKETING_PKG_AUTO")) {
                                     // do something tricky here: run as the "system" user
                                     // that can actually create and run a production run
@@ -1351,10 +1351,10 @@ public class OrderServices {
                                     if (UtilValidate.isNotEmpty(shipGroupFacilityId)) {
                                         inputMap.put("facilityId", shipGroupFacilityId);
                                     } else {
-                                        inputMap.put("facilityId", productStore.getString("inventoryFacilityId"));
+                                        inputMap.put("facilityId", productStore.getString(org.apache.ofbiz.persistence.entity.x.inventoryFacilityId));
                                     }
-                                    inputMap.put("orderId", orderItem.getString("orderId"));
-                                    inputMap.put("orderItemSeqId", orderItem.getString("orderItemSeqId"));
+                                    inputMap.put("orderId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                                    inputMap.put("orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                                     inputMap.put("userLogin", permUserLogin);
                                     Map<String, Object> prunResult = dispatcher.runSync("createProductionRunForMktgPkg", inputMap);
                                     if (ServiceUtil.isError(prunResult)) {
@@ -1369,11 +1369,11 @@ public class OrderServices {
                         }
 
                         // rent item
-                        if (UtilValidate.isNotEmpty(orderItem.getString("productId"))
-                                && "RENTAL_ORDER_ITEM".equals(orderItem.getString("orderItemTypeId"))) {
+                        if (UtilValidate.isNotEmpty(orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId))
+                                && "RENTAL_ORDER_ITEM".equals(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemTypeId))) {
                             try {
                                 // get the product of the order item
-                                GenericValue product = orderItem.getRelatedOne("Product", false);
+                                GenericValue product = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                                 if (product == null) {
                                     Debug.logError("Error when looking up product in reserveInventory service", MODULE);
                                     resErrorMessages.add("Error when looking up product in reserveInventory service");
@@ -1381,14 +1381,14 @@ public class OrderServices {
                                 }
 
                                 // check product type for rent
-                                String productType = (String) product.get("productTypeId");
+                                String productType = (String) product.get(org.apache.ofbiz.persistence.entity.x.productTypeId);
                                 if ("ASSET_USAGE_OUT_IN".equals(productType)) {
                                     if (reserveInventory) {
                                         // for MARKETING_PKG_PICK reserve the components
                                         if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId",
-                                                product.getString("productTypeId"), "parentTypeId", "MARKETING_PKG_PICK")) {
+                                                product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId), "parentTypeId", "MARKETING_PKG_PICK")) {
                                             Map<String, Object> componentsRes = dispatcher.runSync("getAssociatedProducts",
-                                                    UtilMisc.toMap("productId", orderItem.getString("productId"),
+                                                    UtilMisc.toMap("productId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId),
                                                             "type", "PRODUCT_COMPONENT"));
                                             if (ServiceUtil.isError(componentsRes)) {
                                                 resErrorMessages.add((String) componentsRes.get(ModelService.ERROR_MESSAGE));
@@ -1396,15 +1396,15 @@ public class OrderServices {
                                             }
                                             List<GenericValue> assocProducts = UtilGenerics.cast(componentsRes.get("assocProducts"));
                                             for (GenericValue productAssoc : assocProducts) {
-                                                BigDecimal quantityOrd = productAssoc.getBigDecimal("quantity");
-                                                BigDecimal quantityKit = orderItemShipGroupAssoc.getBigDecimal("quantity");
+                                                BigDecimal quantityOrd = productAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                                                BigDecimal quantityKit = orderItemShipGroupAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                                                 BigDecimal quantity = quantityOrd.multiply(quantityKit);
                                                 Map<String, Object> reserveInput = new HashMap<>();
                                                 reserveInput.put("productStoreId", productStoreId);
-                                                reserveInput.put("productId", productAssoc.getString("productIdTo"));
-                                                reserveInput.put("orderId", orderItem.getString("orderId"));
-                                                reserveInput.put("orderItemSeqId", orderItem.getString("orderItemSeqId"));
-                                                reserveInput.put("shipGroupSeqId", orderItemShipGroupAssoc.getString("shipGroupSeqId"));
+                                                reserveInput.put("productId", productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo));
+                                                reserveInput.put("orderId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                                                reserveInput.put("orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                                                reserveInput.put("shipGroupSeqId", orderItemShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
                                                 reserveInput.put("quantity", quantity);
                                                 reserveInput.put("userLogin", userLogin);
                                                 reserveInput.put("facilityId", shipGroupFacilityId);
@@ -1413,7 +1413,7 @@ public class OrderServices {
                                                 if (ServiceUtil.isError(reserveResult)) {
                                                     String invErrMsg = "The product ";
                                                     invErrMsg += getProductName(product, orderItem);
-                                                    invErrMsg += " with ID " + orderItem.getString("productId")
+                                                    invErrMsg += " with ID " + orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId)
                                                             + " is no longer in stock. Please try "
                                                             + "reducing the quantity or removing the product from this order.";
                                                     resErrorMessages.add(invErrMsg);
@@ -1423,21 +1423,21 @@ public class OrderServices {
                                             // reserve the product
                                             Map<String, Object> reserveInput = new HashMap<>();
                                             reserveInput.put("productStoreId", productStoreId);
-                                            reserveInput.put("productId", orderItem.getString("productId"));
-                                            reserveInput.put("orderId", orderItem.getString("orderId"));
-                                            reserveInput.put("orderItemSeqId", orderItem.getString("orderItemSeqId"));
-                                            reserveInput.put("shipGroupSeqId", orderItemShipGroupAssoc.getString("shipGroupSeqId"));
+                                            reserveInput.put("productId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId));
+                                            reserveInput.put("orderId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                                            reserveInput.put("orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                                            reserveInput.put("shipGroupSeqId", orderItemShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
                                             reserveInput.put("facilityId", shipGroupFacilityId);
                                             // use the quantity from the orderItemShipGroupAssoc, NOT the orderItem, these are reserved by item-group
                                             // assoc
-                                            reserveInput.put("quantity", orderItemShipGroupAssoc.getBigDecimal("quantity"));
+                                            reserveInput.put("quantity", orderItemShipGroupAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
                                             reserveInput.put("userLogin", userLogin);
                                             Map<String, Object> reserveResult = dispatcher.runSync("reserveStoreInventory", reserveInput);
 
                                             if (ServiceUtil.isError(reserveResult)) {
                                                 String invErrMsg = "The product ";
                                                 invErrMsg += getProductName(product, orderItem);
-                                                invErrMsg += " with ID " + orderItem.getString("productId") + " is no longer in stock. Please try "
+                                                invErrMsg += " with ID " + orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId) + " is no longer in stock. Please try "
                                                         + "reducing the quantity or removing the product from this order.";
                                                 resErrorMessages.add(invErrMsg);
                                             }
@@ -1445,17 +1445,17 @@ public class OrderServices {
                                     }
 
                                     if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId",
-                                            product.getString("productTypeId"), "parentTypeId", "MARKETING_PKG_AUTO")) {
+                                            product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId), "parentTypeId", "MARKETING_PKG_AUTO")) {
                                         GenericValue permUserLogin =
                                                 EntityQuery.use(delegator).from("UserLogin").where("userLoginId", "system").cache().queryOne();
                                         Map<String, Object> inputMap = new HashMap<>();
                                         if (UtilValidate.isNotEmpty(shipGroupFacilityId)) {
                                             inputMap.put("facilityId", shipGroupFacilityId);
                                         } else {
-                                            inputMap.put("facilityId", productStore.getString("inventoryFacilityId"));
+                                            inputMap.put("facilityId", productStore.getString(org.apache.ofbiz.persistence.entity.x.inventoryFacilityId));
                                         }
-                                        inputMap.put("orderId", orderItem.getString("orderId"));
-                                        inputMap.put("orderItemSeqId", orderItem.getString("orderItemSeqId"));
+                                        inputMap.put("orderId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                                        inputMap.put("orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                                         inputMap.put("userLogin", permUserLogin);
                                         Map<String, Object> prunResult = dispatcher.runSync("createProductionRunForMktgPkg", inputMap);
                                         if (ServiceUtil.isError(prunResult)) {
@@ -1476,22 +1476,22 @@ public class OrderServices {
     }
 
     public static String getProductName(GenericValue product, GenericValue orderItem) {
-        if (UtilValidate.isNotEmpty(product.getString("productName"))) {
-            return product.getString("productName");
+        if (UtilValidate.isNotEmpty(product.getString(org.apache.ofbiz.persistence.entity.x.productName))) {
+            return product.getString(org.apache.ofbiz.persistence.entity.x.productName);
         }
-        return orderItem.getString("itemDescription");
+        return orderItem.getString(org.apache.ofbiz.persistence.entity.x.itemDescription);
     }
 
     public static String getProductName(GenericValue product, String orderItemName) {
-        if (UtilValidate.isNotEmpty(product.getString("productName"))) {
-            return product.getString("productName");
+        if (UtilValidate.isNotEmpty(product.getString(org.apache.ofbiz.persistence.entity.x.productName))) {
+            return product.getString(org.apache.ofbiz.persistence.entity.x.productName);
         }
         return orderItemName;
     }
 
     public static String determineSingleFacilityFromOrder(GenericValue orderHeader) {
         if (orderHeader != null) {
-            String productStoreId = orderHeader.getString("productStoreId");
+            String productStoreId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
             if (productStoreId != null) {
                 return ProductStoreWorker.determineSingleFacilityForStore(orderHeader.getDelegator(), productStoreId);
             }
@@ -1504,8 +1504,8 @@ public class OrderServices {
      */
     public static Map<String, Object> resetGrandTotal(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        String orderId = (String) context.get("orderId");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
 
         GenericValue orderHeader = null;
         try {
@@ -1519,13 +1519,13 @@ public class OrderServices {
 
         if (orderHeader != null) {
             OrderReadHelper orh = new OrderReadHelper(orderHeader);
-            BigDecimal currentTotal = orderHeader.getBigDecimal("grandTotal");
-            BigDecimal currentSubTotal = orderHeader.getBigDecimal("remainingSubTotal");
+            BigDecimal currentTotal = orderHeader.getBigDecimal(org.apache.ofbiz.persistence.entity.x.grandTotal);
+            BigDecimal currentSubTotal = orderHeader.getBigDecimal(org.apache.ofbiz.persistence.entity.x.remainingSubTotal);
 
             // get the new grand total
             BigDecimal updatedTotal = orh.getOrderGrandTotal();
 
-            String productStoreId = orderHeader.getString("productStoreId");
+            String productStoreId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
             String showPricesWithVatTax = null;
             if (UtilValidate.isNotEmpty(productStoreId)) {
                 GenericValue productStore = null;
@@ -1534,11 +1534,11 @@ public class OrderServices {
                 } catch (GenericEntityException e) {
                     String errorMessage = UtilProperties.getMessage(RES_ERROR,
                             "OrderErrorCouldNotFindProductStoreWithID",
-                            UtilMisc.toMap("productStoreId", productStoreId), (Locale) context.get("locale")) + e.toString();
+                            UtilMisc.toMap("productStoreId", productStoreId), (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale)) + e.toString();
                     Debug.logError(e, errorMessage, MODULE);
                     return ServiceUtil.returnError(errorMessage + e.getMessage() + ").");
                 }
-                showPricesWithVatTax = productStore.getString("showPricesWithVatTax");
+                showPricesWithVatTax = productStore.getString(org.apache.ofbiz.persistence.entity.x.showPricesWithVatTax);
             }
             BigDecimal remainingSubTotal = ZERO;
             if (UtilValidate.isNotEmpty(productStoreId) && "Y".equalsIgnoreCase(showPricesWithVatTax)) {
@@ -1551,8 +1551,8 @@ public class OrderServices {
 
             if (currentTotal == null || currentSubTotal == null || updatedTotal.compareTo(currentTotal) != 0
                     || remainingSubTotal.compareTo(currentSubTotal) != 0) {
-                orderHeader.set("grandTotal", updatedTotal);
-                orderHeader.set("remainingSubTotal", remainingSubTotal);
+                orderHeader.set(org.apache.ofbiz.persistence.entity.x.grandTotal, updatedTotal);
+                orderHeader.set(org.apache.ofbiz.persistence.entity.x.remainingSubTotal, remainingSubTotal);
                 try {
                     orderHeader.store();
                 } catch (GenericEntityException e) {
@@ -1573,9 +1573,9 @@ public class OrderServices {
     public static Map<String, Object> setEmptyGrandTotals(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Boolean forceAll = (Boolean) context.get("forceAll");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Boolean forceAll = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.forceAll);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (forceAll == null) {
             forceAll = Boolean.FALSE;
         }
@@ -1592,7 +1592,7 @@ public class OrderServices {
                 // reset each order
                 GenericValue orderHeader = null;
                 while ((orderHeader = eli.next()) != null) {
-                    String orderId = orderHeader.getString("orderId");
+                    String orderId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId);
                     Map<String, Object> resetResult = null;
                     try {
                         resetResult = dispatcher.runSync("resetGrandTotal", UtilMisc.<String, Object>toMap("orderId", orderId, "userLogin",
@@ -1625,10 +1625,10 @@ public class OrderServices {
     public static Map<String, Object> recalcOrderTax(DispatchContext ctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Delegator delegator = ctx.getDelegator();
-        String orderId = (String) context.get("orderId");
-        String orderItemSeqId = (String) context.get("orderItemSeqId");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // check and make sure we have permission to change the order
         Security security = ctx.getSecurity();
@@ -1666,16 +1666,16 @@ public class OrderServices {
         // Accumulate the total existing tax adjustment
         BigDecimal totalExistingOrderTax = ZERO;
         for (GenericValue orderTaxAdjustment : orderTaxAdjustments) {
-            if (orderTaxAdjustment.get("amount") != null) {
-                totalExistingOrderTax = totalExistingOrderTax.add(orderTaxAdjustment.getBigDecimal("amount").setScale(TAX_SCALE, TAX_ROUNDING));
+            if (orderTaxAdjustment.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
+                totalExistingOrderTax = totalExistingOrderTax.add(orderTaxAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(TAX_SCALE, TAX_ROUNDING));
             }
         }
 
         // Accumulate the total manually added tax adjustment
         BigDecimal totalManuallyAddedOrderTax = ZERO;
         for (GenericValue orderTaxAdjustment : orderTaxAdjustments) {
-            if (orderTaxAdjustment.get("amount") != null && "Y".equals(orderTaxAdjustment.getString("isManual"))) {
-                totalManuallyAddedOrderTax = totalManuallyAddedOrderTax.add(orderTaxAdjustment.getBigDecimal("amount").setScale(TAX_SCALE,
+            if (orderTaxAdjustment.get(org.apache.ofbiz.persistence.entity.x.amount) != null && "Y".equals(orderTaxAdjustment.getString(org.apache.ofbiz.persistence.entity.x.isManual))) {
+                totalManuallyAddedOrderTax = totalManuallyAddedOrderTax.add(orderTaxAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(TAX_SCALE,
                         TAX_ROUNDING));
             }
         }
@@ -1686,7 +1686,7 @@ public class OrderServices {
         List<GenericValue> shipGroups = orh.getOrderItemShipGroups();
         if (shipGroups != null) {
             for (GenericValue shipGroup : shipGroups) {
-                String shipGroupSeqId = shipGroup.getString("shipGroupSeqId");
+                String shipGroupSeqId = shipGroup.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
 
                 List<GenericValue> validOrderItems = orh.getValidOrderItems(shipGroupSeqId);
                 if (validOrderItems != null) {
@@ -1711,15 +1711,15 @@ public class OrderServices {
                     // build up the list of tax calc service parameters
                     for (int i = 0; i < validOrderItems.size(); i++) {
                         GenericValue orderItem = validOrderItems.get(i);
-                        String productId = orderItem.getString("productId");
+                        String productId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
                         try {
                             products.add(i, EntityQuery.use(delegator).from("Product").where("productId", productId).queryOne());  // get the
                             // product entity
                             amounts.add(i, OrderReadHelper.getOrderItemSubTotal(orderItem, allAdjustments, true, false)); // get the item amount
                             shipAmts.add(i, OrderReadHelper.getOrderItemAdjustmentsTotal(orderItem, allAdjustments, false, false, true)); // get
                             // the shipping amount
-                            itPrices.add(i, orderItem.getBigDecimal("unitPrice"));
-                            itQuantities.add(i, orderItem.getBigDecimal("quantity"));
+                            itPrices.add(i, orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice));
+                            itQuantities.add(i, orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
                         } catch (GenericEntityException e) {
                             Debug.logError(e, "Cannot read order item entity : " + orderItem, MODULE);
                             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -1740,14 +1740,14 @@ public class OrderServices {
                     //this should be made consistent with the CheckOutHelper.makeTaxContext(int shipGroup, GenericValue shipAddress) method
                     if (shippingAddress == null) {
                         // face-to-face order; use the facility address
-                        String facilityId = orderHeader.getString("originFacilityId");
+                        String facilityId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.originFacilityId);
                         if (facilityId != null) {
                             GenericValue facilityContactMech = ContactMechWorker.getFacilityContactMechByPurpose(delegator, facilityId,
                                     UtilMisc.toList("SHIP_ORIG_LOCATION", "PRIMARY_LOCATION"));
                             if (facilityContactMech != null) {
                                 try {
                                     shippingAddress = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId",
-                                     facilityContactMech.getString("contactMechId")).queryOne();
+                                     facilityContactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechId)).queryOne();
                                 } catch (GenericEntityException e) {
                                     Debug.logError(e, MODULE);
                                 }
@@ -1759,7 +1759,7 @@ public class OrderServices {
                     // bad and we don't have a way to find an address to check tax for
                     if (shippingAddress == null) {
                         Debug.logWarning("Not calculating tax for Order [" + orderId + "] because there is no shippingAddress, and no address on "
-                                + "the origin facility [" + orderHeader.getString("originFacilityId") + "]", MODULE);
+                                + "the origin facility [" + orderHeader.getString(org.apache.ofbiz.persistence.entity.x.originFacilityId) + "]", MODULE);
                         continue;
                     }
 
@@ -1798,8 +1798,8 @@ public class OrderServices {
                     // Accumulate the new tax total from the recalculated header adjustments
                     if (UtilValidate.isNotEmpty(orderAdj)) {
                         for (GenericValue oa : orderAdj) {
-                            if (oa.get("amount") != null) {
-                                totalNewOrderTax = totalNewOrderTax.add(oa.getBigDecimal("amount").setScale(TAX_SCALE, TAX_ROUNDING));
+                            if (oa.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
+                                totalNewOrderTax = totalNewOrderTax.add(oa.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(TAX_SCALE, TAX_ROUNDING));
                             }
                         }
                     }
@@ -1809,8 +1809,8 @@ public class OrderServices {
                         for (int i = 0; i < itemAdj.size(); i++) {
                             List<GenericValue> itemAdjustments = itemAdj.get(i);
                             for (GenericValue ia : itemAdjustments) {
-                                if (ia.get("amount") != null) {
-                                    totalNewOrderTax = totalNewOrderTax.add(ia.getBigDecimal("amount").setScale(TAX_SCALE, TAX_ROUNDING));
+                                if (ia.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
+                                    totalNewOrderTax = totalNewOrderTax.add(ia.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(TAX_SCALE, TAX_ROUNDING));
                                 }
                             }
                         }
@@ -1865,9 +1865,9 @@ public class OrderServices {
     public static Map<String, Object> recalcOrderShipping(DispatchContext ctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Delegator delegator = ctx.getDelegator();
-        String orderId = (String) context.get("orderId");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // check and make sure we have permission to change the order
         Security security = ctx.getSecurity();
@@ -1895,9 +1895,9 @@ public class OrderServices {
         List<GenericValue> shipGroups = orh.getOrderItemShipGroups();
         if (shipGroups != null) {
             for (GenericValue shipGroup : shipGroups) {
-                String shipGroupSeqId = shipGroup.getString("shipGroupSeqId");
+                String shipGroupSeqId = shipGroup.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
 
-                if (shipGroup.get("contactMechId") == null || shipGroup.get("shipmentMethodTypeId") == null) {
+                if (shipGroup.get(org.apache.ofbiz.persistence.entity.x.contactMechId) == null || shipGroup.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId) == null) {
                     // not shipped (face-to-face order)
                     continue;
                 }
@@ -1938,13 +1938,13 @@ public class OrderServices {
                     BigDecimal adjustmentAmount = shippingTotal.subtract(currentShipping);
                     String adjSeqId = delegator.getNextSeqId("OrderAdjustment");
                     GenericValue orderAdjustment = delegator.makeValue("OrderAdjustment", UtilMisc.toMap("orderAdjustmentId", adjSeqId));
-                    orderAdjustment.set("orderAdjustmentTypeId", "SHIPPING_CHARGES");
-                    orderAdjustment.set("amount", adjustmentAmount);
-                    orderAdjustment.set("orderId", orh.getOrderId());
-                    orderAdjustment.set("shipGroupSeqId", shipGroupSeqId);
-                    orderAdjustment.set("orderItemSeqId", DataModelConstants.SEQ_ID_NA);
-                    orderAdjustment.set("createdDate", UtilDateTime.nowTimestamp());
-                    orderAdjustment.set("createdByUserLogin", userLogin.getString("userLoginId"));
+                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId, "SHIPPING_CHARGES");
+                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.amount, adjustmentAmount);
+                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.orderId, orh.getOrderId());
+                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId, shipGroupSeqId);
+                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, DataModelConstants.SEQ_ID_NA);
+                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
+                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
                     try {
                         orderAdjustment.create();
                     } catch (GenericEntityException e) {
@@ -1968,10 +1968,10 @@ public class OrderServices {
     public static Map<String, Object> checkItemStatus(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
 
         // check and make sure we have permission to change the order
         Security security = ctx.getSecurity();
@@ -2004,15 +2004,15 @@ public class OrderServices {
                     "OrderProblemGettingOrderItemRecords", locale));
         }
 
-        String orderHeaderStatusId = orderHeader.getString("statusId");
-        String orderTypeId = orderHeader.getString("orderTypeId");
+        String orderHeaderStatusId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId);
+        String orderTypeId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderTypeId);
 
         boolean allCanceled = true;
         boolean allComplete = true;
         boolean allApproved = true;
         if (orderItems != null) {
             for (GenericValue item : orderItems) {
-                String statusId = item.getString("statusId");
+                String statusId = item.getString(org.apache.ofbiz.persistence.entity.x.statusId);
                 if (!"ITEM_CANCELLED".equals(statusId)) {
                     allCanceled = false;
                     if (!"ITEM_COMPLETED".equals(statusId)) {
@@ -2040,12 +2040,12 @@ public class OrderServices {
                 // changing that to be less weird and more direct
                 // this is a bit of a pain: if the current statusId = ProductStore.headerApprovedStatus and we don't have that status in the
                 // history then we don't want to change it on approving the items
-                if (UtilValidate.isNotEmpty(orderHeader.getString("productStoreId"))) {
+                if (UtilValidate.isNotEmpty(orderHeader.getString(org.apache.ofbiz.persistence.entity.x.productStoreId))) {
                     try {
                         GenericValue productStore = EntityQuery.use(delegator).from("ProductStore").where("productStoreId", orderHeader.getString(
-                                "productStoreId")).queryOne();
+                                org.apache.ofbiz.persistence.entity.x.productStoreId)).queryOne();
                         if (productStore != null) {
-                            String headerApprovedStatus = productStore.getString("headerApprovedStatus");
+                            String headerApprovedStatus = productStore.getString(org.apache.ofbiz.persistence.entity.x.headerApprovedStatus);
                             if (UtilValidate.isNotEmpty(headerApprovedStatus)) {
                                 if (headerApprovedStatus.equals(orderHeaderStatusId)) {
                                     List<GenericValue> orderStatusList = EntityQuery.use(delegator).from("OrderStatus").where("orderId", orderId,
@@ -2114,16 +2114,16 @@ public class OrderServices {
     public static Map<String, Object> cancelOrderItem(DispatchContext ctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> resp = new HashMap<>();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        BigDecimal cancelQuantity = (BigDecimal) context.get("cancelQuantity");
-        String orderId = (String) context.get("orderId");
-        String orderItemSeqId = (String) context.get("orderItemSeqId");
-        String shipGroupSeqId = (String) context.get("shipGroupSeqId");
-        Map<String, String> itemReasonMap = UtilGenerics.cast(context.get("itemReasonMap"));
-        Map<String, String> itemCommentMap = UtilGenerics.cast(context.get("itemCommentMap"));
-        Map<String, String> itemQuantityMap = UtilGenerics.cast(context.get("itemQtyMap"));
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        BigDecimal cancelQuantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
+        Map<String, String> itemReasonMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemReasonMap));
+        Map<String, String> itemCommentMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemCommentMap));
+        Map<String, String> itemQuantityMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemQtyMap));
         if ((cancelQuantity == null) && UtilValidate.isNotEmpty(itemQuantityMap)) {
             String key = orderItemSeqId + ":" + shipGroupSeqId;
             if (UtilValidate.isNotEmpty(itemQuantityMap.get(key))) {
@@ -2164,18 +2164,18 @@ public class OrderServices {
         if (orderItemShipGroupAssocs != null) {
             Map<String, List<BigDecimal>> itemQuantitiesMap = new HashMap<>();
             for (GenericValue orderItemShipGroupAssoc : orderItemShipGroupAssocs) {
-                BigDecimal aisgaCancelQuantity = orderItemShipGroupAssoc.getBigDecimal("cancelQuantity");
+                BigDecimal aisgaCancelQuantity = orderItemShipGroupAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
                 if (aisgaCancelQuantity == null) {
                     aisgaCancelQuantity = BigDecimal.ZERO;
                 }
-                BigDecimal availableQuantity = orderItemShipGroupAssoc.getBigDecimal("quantity").subtract(aisgaCancelQuantity);
+                BigDecimal availableQuantity = orderItemShipGroupAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity).subtract(aisgaCancelQuantity);
                 if (availableQuantity == null) {
                     availableQuantity = BigDecimal.ZERO;
                 }
 
                 GenericValue orderItem = null;
                 try {
-                    orderItem = orderItemShipGroupAssoc.getRelatedOne("OrderItem", false);
+                    orderItem = orderItemShipGroupAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItem, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                 }
@@ -2188,12 +2188,12 @@ public class OrderServices {
                 BigDecimal itemQuantity = null;
                 BigDecimal itemCancelQuantity = null;
                 BigDecimal thisCancelQty = null;
-                if (!itemQuantitiesMap.containsKey(orderItem.getString("orderItemSeqId"))) {
-                    itemCancelQuantity = orderItem.getBigDecimal("cancelQuantity");
+                if (!itemQuantitiesMap.containsKey(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId))) {
+                    itemCancelQuantity = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
                     if (itemCancelQuantity == null) {
                         itemCancelQuantity = BigDecimal.ZERO;
                     }
-                    itemQuantity = orderItem.getBigDecimal("quantity").subtract(itemCancelQuantity);
+                    itemQuantity = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity).subtract(itemCancelQuantity);
                     if (itemQuantity == null) {
                         itemQuantity = BigDecimal.ZERO;
                     }
@@ -2215,31 +2215,31 @@ public class OrderServices {
                     itemQuantitiesList.add(itemQuantity);
                     itemQuantitiesList.add(itemCancelQuantity);
                     itemQuantitiesList.add(thisCancelQty);
-                    itemQuantitiesMap.put(orderItem.getString("orderItemSeqId"), itemQuantitiesList);
+                    itemQuantitiesMap.put(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), itemQuantitiesList);
                 }
-                itemQuantity = itemQuantitiesMap.get(orderItem.getString("orderItemSeqId")).get(0);
-                itemCancelQuantity = itemQuantitiesMap.get(orderItem.getString("orderItemSeqId")).get(1);
-                thisCancelQty = itemQuantitiesMap.get(orderItem.getString("orderItemSeqId")).get(2);
+                itemQuantity = itemQuantitiesMap.get(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).get(0);
+                itemCancelQuantity = itemQuantitiesMap.get(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).get(1);
+                thisCancelQty = itemQuantitiesMap.get(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).get(2);
 
-                fields.put("orderItemSeqId", orderItemShipGroupAssoc.getString("orderItemSeqId"));
-                fields.put("shipGroupSeqId", orderItemShipGroupAssoc.getString("shipGroupSeqId"));
+                fields.put("orderItemSeqId", orderItemShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                fields.put("shipGroupSeqId", orderItemShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
                 BigDecimal totReceivedQuantity = BigDecimal.ZERO;
                 try {
                     List<GenericValue> orderShipments = EntityQuery.use(delegator).from("OrderShipment").where(fields).queryList();
                     Map<String, String> shipmentReceiptCondition = UtilMisc.<String, String>toMap("orderId", orderId);
-                    shipmentReceiptCondition.put("orderItemSeqId", orderItemShipGroupAssoc.getString("orderItemSeqId"));
+                    shipmentReceiptCondition.put("orderItemSeqId", orderItemShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                     for (GenericValue orderShipment : orderShipments) {
-                        shipmentReceiptCondition.put("shipmentId", orderShipment.getString("shipmentId"));
-                        shipmentReceiptCondition.put("shipmentItemSeqId", orderShipment.getString("shipmentItemSeqId"));
+                        shipmentReceiptCondition.put("shipmentId", orderShipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentId));
+                        shipmentReceiptCondition.put("shipmentItemSeqId", orderShipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentItemSeqId));
                         List<GenericValue> shipmentReceipts = EntityQuery.use(delegator)
                                                                          .from("ShipmentReceipt")
                                                                          .where(shipmentReceiptCondition).queryList();
                         for (GenericValue shipmentReceipt : shipmentReceipts) {
-                            BigDecimal quantityAccepted = shipmentReceipt.getBigDecimal("quantityAccepted");
+                            BigDecimal quantityAccepted = shipmentReceipt.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityAccepted);
                             if (quantityAccepted != null) {
                                 totReceivedQuantity = totReceivedQuantity.add(quantityAccepted);
                             }
-                            BigDecimal quantityRejected = shipmentReceipt.getBigDecimal("quantityRejected");
+                            BigDecimal quantityRejected = shipmentReceipt.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityRejected);
                             if (quantityRejected != null) {
                                 totReceivedQuantity = totReceivedQuantity.add(quantityRejected);
                             }
@@ -2255,15 +2255,15 @@ public class OrderServices {
                 if (itemQuantity.compareTo(thisCancelQty) >= 0) {
                     BigDecimal cancelQty = thisCancelQty;
                     thisCancelQty = thisCancelQty.min(availableQuantity);
-                    itemQuantitiesMap.get(orderItem.getString("orderItemSeqId")).set(0, itemQuantity.subtract(thisCancelQty));
-                    itemQuantitiesMap.get(orderItem.getString("orderItemSeqId")).set(1, itemCancelQuantity.add(thisCancelQty));
-                    itemQuantitiesMap.get(orderItem.getString("orderItemSeqId")).set(2, cancelQty.subtract(thisCancelQty));
+                    itemQuantitiesMap.get(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).set(0, itemQuantity.subtract(thisCancelQty));
+                    itemQuantitiesMap.get(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).set(1, itemCancelQuantity.add(thisCancelQty));
+                    itemQuantitiesMap.get(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).set(2, cancelQty.subtract(thisCancelQty));
 
                     if (availableQuantity.compareTo(BigDecimal.ZERO) == 0) {
                         continue;  //OrderItemShipGroupAssoc already cancelled
                     }
-                    orderItem.set("cancelQuantity", itemCancelQuantity.add(thisCancelQty));
-                    orderItemShipGroupAssoc.set("cancelQuantity", aisgaCancelQuantity.add(thisCancelQty));
+                    orderItem.set(org.apache.ofbiz.persistence.entity.x.cancelQuantity, itemCancelQuantity.add(thisCancelQty));
+                    orderItemShipGroupAssoc.set(org.apache.ofbiz.persistence.entity.x.cancelQuantity, aisgaCancelQuantity.add(thisCancelQty));
 
                     try {
                         List<GenericValue> toStore = UtilMisc.toList(orderItem, orderItemShipGroupAssoc);
@@ -2275,10 +2275,10 @@ public class OrderServices {
                     }
 
                     Map<String, Object> localCtx = UtilMisc.toMap("userLogin", userLogin,
-                            "orderId", orderItem.getString("orderId"),
-                            "orderItemSeqId", orderItem.getString("orderItemSeqId"),
-                            "shipGroupSeqId", orderItemShipGroupAssoc.getString("shipGroupSeqId"));
-                    if (orderItemShipGroupAssoc.getBigDecimal("quantity").compareTo(orderItemShipGroupAssoc.getBigDecimal("cancelQuantity")) == 0) {
+                            "orderId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId),
+                            "orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId),
+                            "shipGroupSeqId", orderItemShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
+                    if (orderItemShipGroupAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity).compareTo(orderItemShipGroupAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity)) == 0) {
                         try {
                             resp = dispatcher.runSync("deleteOrderItemShipGroupAssoc", localCtx);
                             if (ServiceUtil.isError(resp)) {
@@ -2291,19 +2291,19 @@ public class OrderServices {
                     }
                     String reasonEnumId = null;
                     if (UtilValidate.isNotEmpty(itemReasonMap)) {
-                        reasonEnumId = itemReasonMap.get(orderItem.getString("orderItemSeqId"));
+                        reasonEnumId = itemReasonMap.get(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                     }
 
                     //  create order item change record
-                    if (!"Y".equals(orderItem.getString("isPromo"))) {
+                    if (!"Y".equals(orderItem.getString(org.apache.ofbiz.persistence.entity.x.isPromo))) {
                         String changeComments = null;
                         if (UtilValidate.isNotEmpty(itemCommentMap)) {
-                            changeComments = itemCommentMap.get(orderItem.getString("orderItemSeqId"));
+                            changeComments = itemCommentMap.get(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                         }
 
                         Map<String, Object> serviceCtx = new HashMap<>();
-                        serviceCtx.put("orderId", orderItem.getString("orderId"));
-                        serviceCtx.put("orderItemSeqId", orderItem.getString("orderItemSeqId"));
+                        serviceCtx.put("orderId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                        serviceCtx.put("orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                         serviceCtx.put("cancelQuantity", thisCancelQty);
                         serviceCtx.put("changeTypeEnumId", "ODR_ITM_CANCEL");
                         serviceCtx.put("reasonEnumId", reasonEnumId);
@@ -2325,7 +2325,7 @@ public class OrderServices {
                         BigDecimal quantity = thisCancelQty.setScale(1, ROUNDING);
                         String cancelledItemToOrder = UtilProperties.getMessage(RESOURCE, "OrderCancelledItemToOrder", locale);
                         resp = dispatcher.runSync("createOrderNote", UtilMisc.<String, Object>toMap("orderId", orderId, "note", cancelledItemToOrder
-                                + orderItem.getString("productId") + " (" + quantity + ")", "internalNote", "Y", "userLogin", userLogin));
+                                + orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId) + " (" + quantity + ")", "internalNote", "Y", "userLogin", userLogin));
                         if (ServiceUtil.isError(resp)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(resp));
                         }
@@ -2333,9 +2333,9 @@ public class OrderServices {
                         Debug.logError(e, MODULE);
                     }
 
-                    if (itemQuantitiesMap.get(orderItem.getString("orderItemSeqId")).get(0).compareTo(BigDecimal.ZERO) == 0) {
+                    if (itemQuantitiesMap.get(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).get(0).compareTo(BigDecimal.ZERO) == 0) {
                         String itemStatus = null;
-                        if (orderItem.getBigDecimal("quantity").compareTo(orderItem.getBigDecimal("cancelQuantity")) == 0) {
+                        if (orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity).compareTo(orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity)) == 0) {
                             itemStatus = "ITEM_CANCELLED";
                         } else {
                             itemStatus = "ITEM_COMPLETED";
@@ -2343,7 +2343,7 @@ public class OrderServices {
                         if ("ITEM_COMPLETED".equals(itemStatus) && "SALES_ORDER".equals(orh.getOrderTypeId())) {
                             //If partial item shipped then release remaining inventory of SO item and marked SO item as completed.
                             Map<String, Object> cancelOrderItemInvResCtx = UtilMisc.toMap("orderId", orderId, "orderItemSeqId",
-                                    orderItem.getString("orderItemSeqId"), "shipGroupSeqId",
+                                    orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "shipGroupSeqId",
                                     shipGroupSeqId, "cancelQuantity", thisCancelQty, "userLogin", userLogin);
                             try {
                                 dispatcher.runSyncIgnore("cancelOrderItemInvResQty", cancelOrderItemInvResCtx);
@@ -2355,7 +2355,7 @@ public class OrderServices {
                         }
                         // all item's units are cancelled -- mark the item as cancelled
                         Map<String, Object> statusCtx = UtilMisc.<String, Object>toMap("orderId", orderId, "orderItemSeqId", orderItem.getString(
-                                "orderItemSeqId"), "statusId", itemStatus, "changeReason", reasonEnumId, "userLogin", userLogin);
+                                org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "statusId", itemStatus, "changeReason", reasonEnumId, "userLogin", userLogin);
                         try {
                             dispatcher.runSyncIgnore("changeOrderItemStatus", statusCtx);
                         } catch (GenericServiceException e) {
@@ -2366,7 +2366,7 @@ public class OrderServices {
                     } else {
                         // reverse the inventory reservation
                         Map<String, Object> invCtx = UtilMisc.<String, Object>toMap("orderId", orderId, "orderItemSeqId", orderItem.getString(
-                                "orderItemSeqId"), "shipGroupSeqId",
+                                org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "shipGroupSeqId",
                                 shipGroupSeqId, "cancelQuantity", thisCancelQty, "userLogin", userLogin);
                         try {
                             dispatcher.runSyncIgnore("cancelOrderItemInvResQty", invCtx);
@@ -2395,14 +2395,14 @@ public class OrderServices {
     public static Map<String, Object> setItemStatus(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
 
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
-        String orderItemSeqId = (String) context.get("orderItemSeqId");
-        String fromStatusId = (String) context.get("fromStatusId");
-        String statusId = (String) context.get("statusId");
-        String changeReason = (String) context.get("changeReason");
-        Timestamp statusDateTime = (Timestamp) context.get("statusDateTime");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+        String fromStatusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromStatusId);
+        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
+        String changeReason = (String) context.get(org.apache.ofbiz.persistence.entity.x.changeReason);
+        Timestamp statusDateTime = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.statusDateTime);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // check and make sure we have permission to change the order
         Security security = ctx.getSecurity();
@@ -2439,27 +2439,27 @@ public class OrderServices {
                             "OrderErrorCannotChangeItemStatusItemNotFound", locale));
                 }
                 if (Debug.verboseOn()) {
-                    Debug.logVerbose("[OrderServices.setItemStatus] : Status Change: [" + orderId + "] (" + orderItem.getString("orderItemSeqId"),
+                    Debug.logVerbose("[OrderServices.setItemStatus] : Status Change: [" + orderId + "] (" + orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId),
                             MODULE);
                 }
                 if (Debug.verboseOn()) {
-                    Debug.logVerbose("[OrderServices.setItemStatus] : From Status : " + orderItem.getString("statusId"), MODULE);
+                    Debug.logVerbose("[OrderServices.setItemStatus] : From Status : " + orderItem.getString(org.apache.ofbiz.persistence.entity.x.statusId), MODULE);
                 }
                 if (Debug.verboseOn()) {
                     Debug.logVerbose("[OrderServices.setOrderStatus] : To Status : " + statusId, MODULE);
                 }
 
-                if (orderItem.getString("statusId").equals(statusId)) {
+                if (orderItem.getString(org.apache.ofbiz.persistence.entity.x.statusId).equals(statusId)) {
                     continue;
                 }
 
                 try {
                     GenericValue statusChange = EntityQuery.use(delegator).from("StatusValidChange").where("statusId", orderItem.getString(
-                            "statusId"), "statusIdTo", statusId).queryOne();
+                            org.apache.ofbiz.persistence.entity.x.statusId), "statusIdTo", statusId).queryOne();
 
                     if (statusChange == null) {
                         Debug.logWarning(UtilProperties.getMessage(RES_ERROR,
-                                "OrderItemStatusNotChangedIsNotAValidChange", UtilMisc.toMap("orderStatusId", orderItem.getString("statusId"),
+                                "OrderItemStatusNotChangedIsNotAValidChange", UtilMisc.toMap("orderStatusId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.statusId),
                                 "statusId", statusId), locale), MODULE);
                         continue;
                     }
@@ -2468,7 +2468,7 @@ public class OrderServices {
                             "OrderErrorCouldNotChangeItemStatus", locale) + e.getMessage());
                 }
 
-                orderItem.set("statusId", statusId);
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.statusId, statusId);
                 toBeStored.add(orderItem);
                 if (statusDateTime == null) {
                     statusDateTime = UtilDateTime.nowTimestamp();
@@ -2478,10 +2478,10 @@ public class OrderServices {
                 changeFields.put("orderStatusId", delegator.getNextSeqId("OrderStatus"));
                 changeFields.put("statusId", statusId);
                 changeFields.put("orderId", orderId);
-                changeFields.put("orderItemSeqId", orderItem.getString("orderItemSeqId"));
+                changeFields.put("orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                 changeFields.put("changeReason", changeReason);
                 changeFields.put("statusDatetime", statusDateTime);
-                changeFields.put("statusUserLogin", userLogin.getString("userLoginId"));
+                changeFields.put("statusUserLogin", userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
                 GenericValue orderStatus = delegator.makeValue("OrderStatus", changeFields);
                 toBeStored.add(orderStatus);
             }
@@ -2507,12 +2507,12 @@ public class OrderServices {
     public static Map<String, Object> setOrderStatus(DispatchContext ctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Delegator delegator = ctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
-        String statusId = (String) context.get("statusId");
-        String changeReason = (String) context.get("changeReason");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
+        String changeReason = (String) context.get(org.apache.ofbiz.persistence.entity.x.changeReason);
         Map<String, Object> successResult = ServiceUtil.returnSuccess();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // check and make sure we have permission to change the order
         Security security = ctx.getSecurity();
@@ -2530,17 +2530,17 @@ public class OrderServices {
                         "OrderErrorCouldNotChangeOrderStatusOrderCannotBeFound", locale));
             }
             // first save off the old status
-            successResult.put("oldStatusId", orderHeader.get("statusId"));
-            successResult.put("orderTypeId", orderHeader.get("orderTypeId"));
+            successResult.put("oldStatusId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.statusId));
+            successResult.put("orderTypeId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.orderTypeId));
 
             if (Debug.verboseOn()) {
-                Debug.logVerbose("[OrderServices.setOrderStatus] : From Status : " + orderHeader.getString("statusId"), MODULE);
+                Debug.logVerbose("[OrderServices.setOrderStatus] : From Status : " + orderHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId), MODULE);
             }
             if (Debug.verboseOn()) {
                 Debug.logVerbose("[OrderServices.setOrderStatus] : To Status : " + statusId, MODULE);
             }
 
-            if (orderHeader.getString("statusId").equals(statusId)) {
+            if (orderHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId).equals(statusId)) {
                 Debug.logWarning(UtilProperties.getMessage(RES_ERROR,
                         "OrderTriedToSetOrderStatusWithTheSameStatusIdforOrderWithId", UtilMisc.toMap("statusId", statusId, "orderId", orderId),
                          locale), MODULE);
@@ -2548,10 +2548,10 @@ public class OrderServices {
             }
             try {
                 GenericValue statusChange = EntityQuery.use(delegator).from("StatusValidChange").where("statusId",
-                        orderHeader.getString("statusId"), "statusIdTo", statusId).cache(true).queryOne();
+                        orderHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId), "statusIdTo", statusId).cache(true).queryOne();
                 if (statusChange == null) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "OrderErrorCouldNotChangeOrderStatusStatusIsNotAValidChange", locale) + ": [" + orderHeader.getString("statusId") + "] "
+                            "OrderErrorCouldNotChangeOrderStatusStatusIsNotAValidChange", locale) + ": [" + orderHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId) + "] "
                              + "-> [" + statusId + "]");
                 }
             } catch (GenericEntityException e) {
@@ -2560,7 +2560,7 @@ public class OrderServices {
             }
 
             // update the current status
-            orderHeader.set("statusId", statusId);
+            orderHeader.set(org.apache.ofbiz.persistence.entity.x.statusId, statusId);
 
             // now create a status change
             GenericValue orderStatus = delegator.makeValue("OrderStatus");
@@ -2568,20 +2568,20 @@ public class OrderServices {
             orderStatus.put("statusId", statusId);
             orderStatus.put("orderId", orderId);
             orderStatus.put("statusDatetime", UtilDateTime.nowTimestamp());
-            orderStatus.put("statusUserLogin", userLogin.getString("userLoginId"));
+            orderStatus.put("statusUserLogin", userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
             orderStatus.put("changeReason", changeReason);
 
             orderHeader.store();
             orderStatus.create();
 
-            successResult.put("needsInventoryIssuance", orderHeader.get("needsInventoryIssuance"));
-            successResult.put("grandTotal", orderHeader.get("grandTotal"));
+            successResult.put("needsInventoryIssuance", orderHeader.get(org.apache.ofbiz.persistence.entity.x.needsInventoryIssuance));
+            successResult.put("grandTotal", orderHeader.get(org.apache.ofbiz.persistence.entity.x.grandTotal));
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "OrderErrorCouldNotChangeOrderStatus", locale) + e.getMessage() + ").");
         }
 
-        if ("Y".equals(context.get("setItemStatus"))) {
+        if ("Y".equals(context.get(org.apache.ofbiz.persistence.entity.x.setItemStatus))) {
             String newItemStatusId = null;
             if ("ORDER_APPROVED".equals(statusId)) {
                 newItemStatusId = "ITEM_APPROVED";
@@ -2617,9 +2617,9 @@ public class OrderServices {
     public static Map<String, Object> updateTrackingNumber(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        String orderId = (String) context.get("orderId");
-        String shipGroupSeqId = (String) context.get("shipGroupSeqId");
-        String trackingNumber = (String) context.get("trackingNumber");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
+        String trackingNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.trackingNumber);
 
         try {
             GenericValue shipGroup = EntityQuery.use(delegator).from("OrderItemShipGroup").where("orderId", orderId, "shipGroupSeqId",
@@ -2629,7 +2629,7 @@ public class OrderServices {
                 result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
                 result.put(ModelService.ERROR_MESSAGE, "ERROR: No order shipment preference found!");
             } else {
-                shipGroup.set("trackingNumber", trackingNumber);
+                shipGroup.set(org.apache.ofbiz.persistence.entity.x.trackingNumber, trackingNumber);
                 shipGroup.store();
                 result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
             }
@@ -2647,10 +2647,10 @@ public class OrderServices {
     public static Map<String, Object> addRoleType(DispatchContext ctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
-        String orderId = (String) context.get("orderId");
-        String partyId = (String) context.get("partyId");
-        String roleTypeId = (String) context.get("roleTypeId");
-        Boolean removeOld = (Boolean) context.get("removeOld");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String roleTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.roleTypeId);
+        Boolean removeOld = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.removeOld);
 
         if (removeOld != null && removeOld) {
             try {
@@ -2688,9 +2688,9 @@ public class OrderServices {
     public static Map<String, Object> removeRoleType(DispatchContext ctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
-        String orderId = (String) context.get("orderId");
-        String partyId = (String) context.get("partyId");
-        String roleTypeId = (String) context.get("roleTypeId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String roleTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.roleTypeId);
         GenericValue testValue = null;
 
         try {
@@ -2759,17 +2759,17 @@ public class OrderServices {
     protected static Map<String, Object> sendOrderNotificationScreen(DispatchContext dctx, Map<String, ? extends Object> context, String emailType) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
-        String orderItemSeqId = (String) context.get("orderItemSeqId");
-        String shipGroupSeqId = (String) context.get("shipGroupSeqId");
-        String sendTo = (String) context.get("sendTo");
-        String sendCc = (String) context.get("sendCc");
-        String sendBcc = (String) context.get("sendBcc");
-        String note = (String) context.get("note");
-        String screenUri = (String) context.get("screenUri");
-        GenericValue temporaryAnonymousUserLogin = (GenericValue) context.get("temporaryAnonymousUserLogin");
-        Locale localePar = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
+        String sendTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.sendTo);
+        String sendCc = (String) context.get(org.apache.ofbiz.persistence.entity.x.sendCc);
+        String sendBcc = (String) context.get(org.apache.ofbiz.persistence.entity.x.sendBcc);
+        String note = (String) context.get(org.apache.ofbiz.persistence.entity.x.note);
+        String screenUri = (String) context.get(org.apache.ofbiz.persistence.entity.x.screenUri);
+        GenericValue temporaryAnonymousUserLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.temporaryAnonymousUserLogin);
+        Locale localePar = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (userLogin == null) {
             // this may happen during anonymous checkout, try to the special case user
             userLogin = temporaryAnonymousUserLogin;
@@ -2791,7 +2791,7 @@ public class OrderServices {
                     "OrderOrderNotFound", UtilMisc.toMap("orderId", orderId), localePar));
         }
 
-        if (orderHeader.get("webSiteId") == null) {
+        if (orderHeader.get(org.apache.ofbiz.persistence.entity.x.webSiteId) == null) {
             return ServiceUtil.returnFailure(UtilProperties.getMessage(RESOURCE,
                     "OrderOrderWithoutWebSite", UtilMisc.toMap("orderId", orderId), localePar));
         }
@@ -2799,23 +2799,23 @@ public class OrderServices {
         GenericValue productStoreEmail = null;
         try {
             productStoreEmail = EntityQuery.use(delegator).from("ProductStoreEmailSetting").where("productStoreId",
-                    orderHeader.get("productStoreId"), "emailType", emailType).queryOne();
+                    orderHeader.get(org.apache.ofbiz.persistence.entity.x.productStoreId), "emailType", emailType).queryOne();
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Problem getting the ProductStoreEmailSetting for productStoreId=" + orderHeader.get("productStoreId") + " and "
+            Debug.logError(e, "Problem getting the ProductStoreEmailSetting for productStoreId=" + orderHeader.get(org.apache.ofbiz.persistence.entity.x.productStoreId) + " and "
                     + "emailType=" + emailType, MODULE);
         }
         if (productStoreEmail == null) {
             return ServiceUtil.returnFailure(UtilProperties.getMessage(RES_PRODUCT,
                     "ProductProductStoreEmailSettingsNotValid",
-                    UtilMisc.toMap("productStoreId", orderHeader.get("productStoreId"),
+                    UtilMisc.toMap("productStoreId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.productStoreId),
                             "emailType", emailType), localePar));
         }
 
         // the override screenUri
         if (UtilValidate.isEmpty(screenUri)) {
-            sendMap.put("bodyScreenUri", productStoreEmail.getString("bodyScreenLocation"));
+            sendMap.put("bodyScreenUri", productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.bodyScreenLocation));
 
-            String xslfoAttachScreenLocation = productStoreEmail.getString("xslfoAttachScreenLocation");
+            String xslfoAttachScreenLocation = productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.xslfoAttachScreenLocation);
             sendMap.put("xslfoAttachScreenLocation", xslfoAttachScreenLocation);
             // add attachmentName param to get an attachment namend "[oderId].pdf" instead of default "Details.pdf"
             sendMap.put("attachmentName", (UtilValidate.isNotEmpty(shipGroupSeqId) ? orderId + "-" + StringUtils.stripStart(shipGroupSeqId, "0")
@@ -2826,13 +2826,13 @@ public class OrderServices {
         }
 
         if (context.containsKey("xslfoAttachScreenLocationList")) {
-            sendMap.put("xslfoAttachScreenLocationList", context.get("xslfoAttachScreenLocationList"));
-            sendMap.put("attachmentNameList", context.get("attachmentNameList"));
-            sendMap.put("attachmentTypeList", context.get("attachmentTypeList"));
+            sendMap.put("xslfoAttachScreenLocationList", context.get(org.apache.ofbiz.persistence.entity.x.xslfoAttachScreenLocationList));
+            sendMap.put("attachmentNameList", context.get(org.apache.ofbiz.persistence.entity.x.attachmentNameList));
+            sendMap.put("attachmentTypeList", context.get(org.apache.ofbiz.persistence.entity.x.attachmentTypeList));
         }
 
         // website
-        sendMap.put("webSiteId", orderHeader.get("webSiteId"));
+        sendMap.put("webSiteId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.webSiteId));
 
         OrderReadHelper orh = new OrderReadHelper(orderHeader);
         String emailString = orh.getOrderEmailString();
@@ -2847,10 +2847,10 @@ public class OrderServices {
         // or if not available then the system Locale
         Locale locale = null;
         GenericValue placingParty = orh.getPlacingParty();
-        GenericValue placingUserLogin = placingParty == null ? null : PartyWorker.findPartyLatestUserLogin(placingParty.getString("partyId"),
+        GenericValue placingUserLogin = placingParty == null ? null : PartyWorker.findPartyLatestUserLogin(placingParty.getString(org.apache.ofbiz.persistence.entity.x.partyId),
                 delegator);
         if (placingParty != null) {
-            locale = PartyWorker.findPartyLastLocale(placingParty.getString("partyId"), delegator);
+            locale = PartyWorker.findPartyLastLocale(placingParty.getString(org.apache.ofbiz.persistence.entity.x.partyId), delegator);
         }
 
         // for anonymous orders, use the temporaryAnonymousUserLogin as the placingUserLogin will be null
@@ -2860,7 +2860,7 @@ public class OrderServices {
 
         GenericValue productStore = OrderReadHelper.getProductStoreFromOrder(orderHeader);
         if (locale == null && productStore != null) {
-            String localeString = productStore.getString("defaultLocaleString");
+            String localeString = productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultLocaleString);
             if (UtilValidate.isNotEmpty(localeString)) {
                 locale = UtilMisc.parseLocale(localeString);
             }
@@ -2872,20 +2872,20 @@ public class OrderServices {
         Map<String, Object> bodyParameters = UtilMisc.<String, Object>toMap("orderId", orderId, "orderItemSeqId", orderItemSeqId, "userLogin",
                 placingUserLogin, "locale", locale);
         if (placingParty != null) {
-            bodyParameters.put("partyId", placingParty.get("partyId"));
+            bodyParameters.put("partyId", placingParty.get(org.apache.ofbiz.persistence.entity.x.partyId));
         }
         bodyParameters.put("note", note);
         bodyParameters.put("shipGroupSeqId", shipGroupSeqId);
         sendMap.put("bodyParameters", bodyParameters);
         sendMap.put("userLogin", userLogin);
 
-        String subjectString = productStoreEmail.getString("subject");
+        String subjectString = productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.subject);
         sendMap.put("subject", subjectString);
 
-        sendMap.put("contentType", productStoreEmail.get("contentType"));
-        sendMap.put("sendFrom", productStoreEmail.get("fromAddress"));
-        sendMap.put("sendCc", productStoreEmail.get("ccAddress"));
-        sendMap.put("sendBcc", productStoreEmail.get("bccAddress"));
+        sendMap.put("contentType", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.contentType));
+        sendMap.put("sendFrom", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.fromAddress));
+        sendMap.put("sendCc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.ccAddress));
+        sendMap.put("sendBcc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.bccAddress));
         if ((sendTo != null) && UtilValidate.isEmail(sendTo)) {
             sendMap.put("sendTo", sendTo);
         } else {
@@ -2894,7 +2894,7 @@ public class OrderServices {
         if ((sendCc != null) && UtilValidate.isEmail(sendCc)) {
             sendMap.put("sendCc", sendCc);
         } else {
-            sendMap.put("sendCc", productStoreEmail.get("ccAddress"));
+            sendMap.put("sendCc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.ccAddress));
         }
 
         if ((sendBcc != null) && UtilValidate.isEmailList(sendBcc)) {
@@ -2930,10 +2930,10 @@ public class OrderServices {
     public static Map<String, Object> sendProcessNotification(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        String adminEmailList = (String) context.get("adminEmailList");
-        String assignedToUser = (String) context.get("assignedPartyId");
-        String workEffortId = (String) context.get("workEffortId");
-        Locale locale = (Locale) context.get("locale");
+        String adminEmailList = (String) context.get(org.apache.ofbiz.persistence.entity.x.adminEmailList);
+        String assignedToUser = (String) context.get(org.apache.ofbiz.persistence.entity.x.assignedPartyId);
+        String workEffortId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         GenericValue workEffort = null;
         GenericValue orderHeader = null;
@@ -2941,7 +2941,7 @@ public class OrderServices {
         // get the order/workflow info
         try {
             workEffort = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", workEffortId).queryOne();
-            String sourceReferenceId = workEffort.getString("sourceReferenceId");
+            String sourceReferenceId = workEffort.getString(org.apache.ofbiz.persistence.entity.x.sourceReferenceId);
             if (sourceReferenceId != null) {
                 orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", sourceReferenceId)
                         .queryOne();
@@ -2970,12 +2970,12 @@ public class OrderServices {
         }
         templateData.putAll(workEffort);
 
-        templateData.put("omgStatusId", workEffort.getString("currentStatusId"));
+        templateData.put("omgStatusId", workEffort.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId));
 
         // get the assignments
         List<GenericValue> assignments = null;
         try {
-            assignments = workEffort.getRelated("WorkEffortPartyAssignment", null, null, false);
+            assignments = workEffort.getRelated(org.apache.ofbiz.persistence.entity.x.WorkEffortPartyAssignment, null, null, false);
         } catch (GenericEntityException e1) {
             Debug.logError(e1, "Problems getting assignements", MODULE);
         }
@@ -2984,11 +2984,11 @@ public class OrderServices {
         StringBuilder emailList = new StringBuilder();
         if (assignedToEmails != null) {
             for (GenericValue ct : assignedToEmails) {
-                if (ct != null && ct.get("infoString") != null) {
+                if (ct != null && ct.get(org.apache.ofbiz.persistence.entity.x.infoString) != null) {
                     if (emailList.length() > 1) {
                         emailList.append(",");
                     }
-                    emailList.append(ct.getString("infoString"));
+                    emailList.append(ct.getString(org.apache.ofbiz.persistence.entity.x.infoString));
                 }
             }
         }
@@ -3023,8 +3023,8 @@ public class OrderServices {
      */
     public static Map<String, Object> getOrderHeaderInformation(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String orderId = (String) context.get("orderId");
-        Locale locale = (Locale) context.get("locale");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         GenericValue orderHeader = null;
         try {
@@ -3048,8 +3048,8 @@ public class OrderServices {
      */
     public static Map<String, Object> getOrderShippingAmount(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String orderId = (String) context.get("orderId");
-        Locale locale = (Locale) context.get("locale");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         GenericValue orderHeader = null;
         try {
@@ -3084,8 +3084,8 @@ public class OrderServices {
     public static Map<String, Object> getOrderAddress(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        String orderId = (String) context.get("orderId");
-        Locale locale = (Locale) context.get("locale");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         //appears to not be used: GenericValue v = null;
         String purpose[] = {"BILLING_LOCATION", "SHIPPING_LOCATION"};
         String outKey[] = {"billingAddress", "shippingAddress"};
@@ -3110,12 +3110,12 @@ public class OrderServices {
         }
         for (int i = 0; i < purpose.length; i++) {
             try {
-                GenericValue orderContactMech = EntityUtil.getFirst(orderHeader.getRelated("OrderContactMech", UtilMisc.toMap(
+                GenericValue orderContactMech = EntityUtil.getFirst(orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderContactMech, UtilMisc.toMap(
                         "contactMechPurposeTypeId", purpose[i]), null, false));
-                GenericValue contactMech = orderContactMech.getRelatedOne("ContactMech", false);
+                GenericValue contactMech = orderContactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ContactMech, false);
 
                 if (contactMech != null) {
-                    result.put(outKey[i], contactMech.getRelatedOne("PostalAddress", false));
+                    result.put(outKey[i], contactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false));
                 }
             } catch (GenericEntityException e) {
                 result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
@@ -3133,13 +3133,13 @@ public class OrderServices {
     public static Map<String, Object> createOrderNote(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String noteString = (String) context.get("note");
-        String noteName = (String) context.get("noteName");
-        String orderId = (String) context.get("orderId");
-        String internalNote = (String) context.get("internalNote");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String noteString = (String) context.get(org.apache.ofbiz.persistence.entity.x.note);
+        String noteName = (String) context.get(org.apache.ofbiz.persistence.entity.x.noteName);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String internalNote = (String) context.get(org.apache.ofbiz.persistence.entity.x.internalNote);
         Map<String, Object> noteCtx = UtilMisc.<String, Object>toMap("note", noteString, "userLogin", userLogin, "noteName", noteName);
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         try {
             // Store the note.
@@ -3171,17 +3171,17 @@ public class OrderServices {
 
     public static Map<String, Object> allowOrderSplit(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
-        String shipGroupSeqId = (String) context.get("shipGroupSeqId");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // check and make sure we have permission to change the order
         Security security = ctx.getSecurity();
         if (!security.hasEntityPermission("ORDERMGR", "_UPDATE", userLogin)) {
             GenericValue placingCustomer = null;
             try {
-                placingCustomer = EntityQuery.use(delegator).from("OrderRole").where("orderId", orderId, "partyId", userLogin.getString("partyId"),
+                placingCustomer = EntityQuery.use(delegator).from("OrderRole").where("orderId", orderId, "partyId", userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId),
                         "roleTypeId", "PLACING_CUSTOMER").queryOne();
             } catch (GenericEntityException e) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -3203,7 +3203,7 @@ public class OrderServices {
         }
 
         if (shipGroup != null) {
-            shipGroup.set("maySplit", "Y");
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.maySplit, "Y");
             try {
                 shipGroup.store();
             } catch (GenericEntityException e) {
@@ -3222,7 +3222,7 @@ public class OrderServices {
     public static Map<String, Object> cancelFlaggedSalesOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         List<GenericValue> ordersToCheck = null;
 
         // create the query expressions
@@ -3246,17 +3246,17 @@ public class OrderServices {
 
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
         for (GenericValue orderHeader : ordersToCheck) {
-            String orderId = orderHeader.getString("orderId");
-            String orderStatus = orderHeader.getString("statusId");
+            String orderId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+            String orderStatus = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId);
 
             if ("ORDER_CREATED".equals(orderStatus)) {
                 // first check for un-paid orders
-                Timestamp orderDate = orderHeader.getTimestamp("entryDate");
+                Timestamp orderDate = orderHeader.getTimestamp(org.apache.ofbiz.persistence.entity.x.entryDate);
 
                 // need the store for the order
                 GenericValue productStore = null;
                 try {
-                    productStore = orderHeader.getRelatedOne("ProductStore", false);
+                    productStore = orderHeader.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductStore, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Unable to get ProductStore from OrderHeader", MODULE);
                 }
@@ -3265,8 +3265,8 @@ public class OrderServices {
                 int daysTillCancel = 30;
 
                 // get the value from the store
-                if (productStore != null && productStore.get("daysToCancelNonPay") != null) {
-                    daysTillCancel = productStore.getLong("daysToCancelNonPay").intValue();
+                if (productStore != null && productStore.get(org.apache.ofbiz.persistence.entity.x.daysToCancelNonPay) != null) {
+                    daysTillCancel = productStore.getLong(org.apache.ofbiz.persistence.entity.x.daysToCancelNonPay).intValue();
                 }
 
                 if (daysTillCancel > 0) {
@@ -3312,8 +3312,8 @@ public class OrderServices {
                 }
                 if (UtilValidate.isNotEmpty(orderItems)) {
                     for (GenericValue orderItem : orderItems) {
-                        String orderItemSeqId = orderItem.getString("orderItemSeqId");
-                        Timestamp autoCancelDate = orderItem.getTimestamp("autoCancelDate");
+                        String orderItemSeqId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+                        Timestamp autoCancelDate = orderItem.getTimestamp(org.apache.ofbiz.persistence.entity.x.autoCancelDate);
 
                         if (autoCancelDate != null) {
                             if (nowTimestamp.equals(autoCancelDate) || nowTimestamp.after(autoCancelDate)) {
@@ -3341,9 +3341,9 @@ public class OrderServices {
     public static Map<String, Object> checkDigitalItemFulfillment(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // need the order header
         GenericValue orderHeader = null;
@@ -3359,7 +3359,7 @@ public class OrderServices {
         List<GenericValue> orderItems = null;
         if (orderHeader != null) {
             try {
-                orderItems = orderHeader.getRelated("OrderItem", null, null, false);
+                orderItems = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItem, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "ERROR: Unable to get OrderItem list for orderId : " + orderId, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -3376,26 +3376,26 @@ public class OrderServices {
             for (GenericValue item : orderItems) {
                 GenericValue product = null;
                 try {
-                    product = item.getRelatedOne("Product", false);
+                    product = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "ERROR: Unable to get Product from OrderItem", MODULE);
                 }
                 if (product != null) {
                     GenericValue productType = null;
                     try {
-                        productType = product.getRelatedOne("ProductType", false);
+                        productType = product.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductType, false);
                     } catch (GenericEntityException e) {
                         Debug.logError(e, "ERROR: Unable to get ProductType from Product", MODULE);
                     }
 
                     if (productType != null) {
-                        String isPhysical = productType.getString("isPhysical");
-                        String isDigital = productType.getString("isDigital");
+                        String isPhysical = productType.getString(org.apache.ofbiz.persistence.entity.x.isPhysical);
+                        String isDigital = productType.getString(org.apache.ofbiz.persistence.entity.x.isDigital);
 
                         // check for digital and finished/digital goods
                         if (isDigital != null && "Y".equalsIgnoreCase(isDigital)) {
                             // we only invoice APPROVED items
-                            if ("ITEM_APPROVED".equals(item.getString("statusId"))) {
+                            if ("ITEM_APPROVED".equals(item.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                                 digitalItems.add(item);
                             }
                             if (isPhysical == null || !"Y".equalsIgnoreCase(isPhysical)) {
@@ -3405,7 +3405,7 @@ public class OrderServices {
                         }
                     }
                 } else {
-                    String itemType = item.getString("orderItemTypeId");
+                    String itemType = item.getString(org.apache.ofbiz.persistence.entity.x.orderItemTypeId);
                     if (!"PRODUCT_ORDER_ITEM".equals(itemType)) {
                         nonProductItems.add(item);
                     }
@@ -3417,8 +3417,8 @@ public class OrderServices {
         if (!digitalItems.isEmpty() || !nonProductItems.isEmpty()) {
             GenericValue productStore = OrderReadHelper.getProductStoreFromOrder(dispatcher.getDelegator(), orderId);
             boolean invoiceItems = true;
-            if (productStore != null && productStore.get("autoInvoiceDigitalItems") != null) {
-                invoiceItems = "Y".equalsIgnoreCase(productStore.getString("autoInvoiceDigitalItems"));
+            if (productStore != null && productStore.get(org.apache.ofbiz.persistence.entity.x.autoInvoiceDigitalItems) != null) {
+                invoiceItems = "Y".equalsIgnoreCase(productStore.getString(org.apache.ofbiz.persistence.entity.x.autoInvoiceDigitalItems));
             }
 
             // single list with all invoice items
@@ -3452,20 +3452,20 @@ public class OrderServices {
 
                     if (product != null) {
                         try {
-                            productType = product.getRelatedOne("ProductType", false);
+                            productType = product.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductType, false);
                         } catch (GenericEntityException e) {
                             Debug.logError(e, "ERROR: Unable to get ProductType from Product", MODULE);
                         }
                     } else {
-                        String itemType = item.getString("orderItemTypeId");
+                        String itemType = item.getString(org.apache.ofbiz.persistence.entity.x.orderItemTypeId);
                         if (!"PRODUCT_ORDER_ITEM".equals(itemType)) {
                             markComplete = true;
                         }
                     }
 
                     if (product != null && productType != null) {
-                        String isPhysical = productType.getString("isPhysical");
-                        String isDigital = productType.getString("isDigital");
+                        String isPhysical = productType.getString(org.apache.ofbiz.persistence.entity.x.isPhysical);
+                        String isDigital = productType.getString(org.apache.ofbiz.persistence.entity.x.isDigital);
 
                         // we were set as a digital good; one more check and change status
                         if ((isDigital != null && "Y".equalsIgnoreCase(isDigital))
@@ -3476,8 +3476,8 @@ public class OrderServices {
 
                     if (markComplete) {
                         Map<String, Object> statusCtx = new HashMap<>();
-                        statusCtx.put("orderId", item.getString("orderId"));
-                        statusCtx.put("orderItemSeqId", item.getString("orderItemSeqId"));
+                        statusCtx.put("orderId", item.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                        statusCtx.put("orderItemSeqId", item.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                         statusCtx.put("statusId", "ITEM_COMPLETED");
                         statusCtx.put("userLogin", userLogin);
                         try {
@@ -3514,9 +3514,9 @@ public class OrderServices {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         //appears to not be used: String orderId = (String) context.get("orderId");
-        List<GenericValue> orderItems = UtilGenerics.cast(context.get("orderItems"));
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        List<GenericValue> orderItems = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderItems));
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (UtilValidate.isNotEmpty(orderItems)) {
             // loop through the digital items to fulfill
             for (GenericValue orderItem : orderItems) {
@@ -3530,7 +3530,7 @@ public class OrderServices {
                 GenericValue product = null;
                 List<GenericValue> productContent = null;
                 try {
-                    product = orderItem.getRelatedOne("Product", false);
+                    product = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                     if (product == null) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                                 "OrderErrorCannotCheckForFulfillmentProductNotFound", locale));
@@ -3539,17 +3539,17 @@ public class OrderServices {
 
                     exprs.add(EntityCondition.makeCondition("productContentTypeId", EntityOperator.IN, UtilMisc.toList("FULFILLMENT_EXTASYNC",
                             "FULFILLMENT_EXTSYNC", "FULFILLMENT_EMAIL", "DIGITAL_DOWNLOAD")));
-                    exprs.add(EntityCondition.makeCondition("productId", EntityOperator.EQUALS, product.getString("productId")));
+                    exprs.add(EntityCondition.makeCondition("productId", EntityOperator.EQUALS, product.getString(org.apache.ofbiz.persistence.entity.x.productId)));
 
                     // try looking up the parent product if the product has no content and is a variant
                     List<GenericValue> allProductContent = EntityQuery.use(delegator).from("ProductContent").where(exprs).queryList();
-                    if (UtilValidate.isEmpty(allProductContent) && ("Y".equals(product.getString("isVariant")))) {
-                        GenericValue parentProduct = ProductWorker.getParentProduct(product.getString("productId"), delegator);
+                    if (UtilValidate.isEmpty(allProductContent) && ("Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.isVariant)))) {
+                        GenericValue parentProduct = ProductWorker.getParentProduct(product.getString(org.apache.ofbiz.persistence.entity.x.productId), delegator);
                         if (allProductContent == null) {
                             allProductContent = new LinkedList<>();
                         }
                         if (parentProduct != null) {
-                            allProductContent.addAll(parentProduct.getRelated("ProductContent", null, null, false));
+                            allProductContent.addAll(parentProduct.getRelated(org.apache.ofbiz.persistence.entity.x.ProductContent, null, null, false));
                         }
                     }
 
@@ -3568,28 +3568,28 @@ public class OrderServices {
                     for (GenericValue productContentItem : productContent) {
                         GenericValue content = null;
                         try {
-                            content = productContentItem.getRelatedOne("Content", false);
+                            content = productContentItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Content, false);
                         } catch (GenericEntityException e) {
                             Debug.logError(e, "ERROR: Cannot get Content entity: " + e.getMessage(), MODULE);
                             continue;
                         }
 
-                        String fulfillmentType = productContentItem.getString("productContentTypeId");
+                        String fulfillmentType = productContentItem.getString(org.apache.ofbiz.persistence.entity.x.productContentTypeId);
                         if ("FULFILLMENT_EXTASYNC".equals(fulfillmentType) || "FULFILLMENT_EXTSYNC".equals(fulfillmentType)) {
                             // external service fulfillment
-                            String fulfillmentService = (String) content.get("serviceName"); // Kept for backward compatibility
+                            String fulfillmentService = (String) content.get(org.apache.ofbiz.persistence.entity.x.serviceName); // Kept for backward compatibility
                             GenericValue custMethod = null;
-                            if (UtilValidate.isNotEmpty(content.getString("customMethodId"))) {
+                            if (UtilValidate.isNotEmpty(content.getString(org.apache.ofbiz.persistence.entity.x.customMethodId))) {
                                 try {
                                     custMethod = EntityQuery.use(delegator).from("CustomMethod").where("customMethodId", content.get(
-                                            "customMethodId")).cache().queryOne();
+                                            org.apache.ofbiz.persistence.entity.x.customMethodId)).cache().queryOne();
                                 } catch (GenericEntityException e) {
                                     Debug.logError(e, "ERROR: Cannot get CustomMethod associate to Content entity: " + e.getMessage(), MODULE);
                                     continue;
                                 }
                             }
                             if (custMethod != null) {
-                                fulfillmentService = custMethod.getString("customMethodName");
+                                fulfillmentService = custMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName);
                             }
                             if (fulfillmentService == null) {
                                 Debug.logError("ProductContent of type FULFILLMENT_EXTERNAL had Content with empty serviceName, can not run "
@@ -3636,9 +3636,9 @@ public class OrderServices {
     public static Map<String, Object> invoiceServiceItems(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         OrderReadHelper orh = null;
         try {
@@ -3659,13 +3659,13 @@ public class OrderServices {
             for (GenericValue item : orderItems) {
                 GenericValue product = null;
                 try {
-                    product = item.getRelatedOne("Product", false);
+                    product = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "ERROR: Unable to get Product from OrderItem", MODULE);
                 }
                 if (product != null) {
                     // check for service goods
-                    if ("SERVICE".equals(product.get("productTypeId"))) {
+                    if ("SERVICE".equals(product.get(org.apache.ofbiz.persistence.entity.x.productTypeId))) {
                         serviceItems.add(item);
                     }
                 }
@@ -3701,8 +3701,8 @@ public class OrderServices {
             // update the status of service goods to COMPLETED;
             for (GenericValue item : serviceItems) {
                 Map<String, Object> statusCtx = new HashMap<>();
-                statusCtx.put("orderId", item.getString("orderId"));
-                statusCtx.put("orderItemSeqId", item.getString("orderItemSeqId"));
+                statusCtx.put("orderId", item.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                statusCtx.put("orderItemSeqId", item.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                 statusCtx.put("statusId", "ITEM_COMPLETED");
                 statusCtx.put("userLogin", userLogin);
                 try {
@@ -3719,21 +3719,21 @@ public class OrderServices {
     public static Map<String, Object> addItemToApprovedOrder(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
-        String shipGroupSeqId = (String) context.get("shipGroupSeqId");
-        String orderId = (String) context.get("orderId");
-        String productId = (String) context.get("productId");
-        String prodCatalogId = (String) context.get("prodCatalogId");
-        BigDecimal basePrice = (BigDecimal) context.get("basePrice");
-        BigDecimal quantity = (BigDecimal) context.get("quantity");
-        Timestamp itemDesiredDeliveryDate = (Timestamp) context.get("itemDesiredDeliveryDate");
-        String overridePrice = (String) context.get("overridePrice");
-        String reasonEnumId = (String) context.get("reasonEnumId");
-        String orderItemTypeId = (String) context.get("orderItemTypeId");
-        String changeComments = (String) context.get("changeComments");
-        Boolean calcTax = (Boolean) context.get("calcTax");
-        Map<String, String> itemAttributesMap = UtilGenerics.cast(context.get("itemAttributesMap"));
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String prodCatalogId = (String) context.get(org.apache.ofbiz.persistence.entity.x.prodCatalogId);
+        BigDecimal basePrice = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.basePrice);
+        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
+        Timestamp itemDesiredDeliveryDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.itemDesiredDeliveryDate);
+        String overridePrice = (String) context.get(org.apache.ofbiz.persistence.entity.x.overridePrice);
+        String reasonEnumId = (String) context.get(org.apache.ofbiz.persistence.entity.x.reasonEnumId);
+        String orderItemTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemTypeId);
+        String changeComments = (String) context.get(org.apache.ofbiz.persistence.entity.x.changeComments);
+        Boolean calcTax = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.calcTax);
+        Map<String, String> itemAttributesMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemAttributesMap));
 
         if (calcTax == null) {
             calcTax = Boolean.TRUE;
@@ -3878,20 +3878,20 @@ public class OrderServices {
     public static Map<String, Object> updateApprovedOrderItems(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
-        String orderId = (String) context.get("orderId");
-        Map<String, String> overridePriceMap = UtilGenerics.cast(context.get("overridePriceMap"));
-        Map<String, String> itemDescriptionMap = UtilGenerics.cast(context.get("itemDescriptionMap"));
-        Map<String, String> itemPriceMap = UtilGenerics.cast(context.get("itemPriceMap"));
-        Map<String, String> itemQtyMap = UtilGenerics.cast(context.get("itemQtyMap"));
-        Map<String, String> itemReasonMap = UtilGenerics.cast(context.get("itemReasonMap"));
-        Map<String, String> itemCommentMap = UtilGenerics.cast(context.get("itemCommentMap"));
-        Map<String, String> itemAttributesMap = UtilGenerics.cast(context.get("itemAttributesMap"));
-        Map<String, String> itemEstimatedShipDateMap = UtilGenerics.cast(context.get("itemShipDateMap"));
-        Map<String, String> itemEstimatedDeliveryDateMap = UtilGenerics.cast(context.get("itemDeliveryDateMap"));
-        Map<String, String> itemReserveAfterDateMap = UtilGenerics.cast(context.get("itemReserveAfterDateMap"));
-        Boolean calcTax = (Boolean) context.get("calcTax");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        Map<String, String> overridePriceMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.overridePriceMap));
+        Map<String, String> itemDescriptionMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemDescriptionMap));
+        Map<String, String> itemPriceMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemPriceMap));
+        Map<String, String> itemQtyMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemQtyMap));
+        Map<String, String> itemReasonMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemReasonMap));
+        Map<String, String> itemCommentMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemCommentMap));
+        Map<String, String> itemAttributesMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemAttributesMap));
+        Map<String, String> itemEstimatedShipDateMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemShipDateMap));
+        Map<String, String> itemEstimatedDeliveryDateMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemDeliveryDateMap));
+        Map<String, String> itemReserveAfterDateMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemReserveAfterDateMap));
+        Boolean calcTax = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.calcTax);
         if (calcTax == null) {
             calcTax = Boolean.TRUE;
         }
@@ -4167,8 +4167,8 @@ public class OrderServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
-        String orderId = (String) context.get("orderId");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
 
         ShoppingCart cart = null;
         Map<String, Object> result = null;
@@ -4237,8 +4237,8 @@ public class OrderServices {
         // cancel existing inventory reservations
         if (shipGroupAssocs != null) {
             for (GenericValue shipGroupAssoc : shipGroupAssocs) {
-                String orderItemSeqId = shipGroupAssoc.getString("orderItemSeqId");
-                String shipGroupSeqId = shipGroupAssoc.getString("shipGroupSeqId");
+                String orderItemSeqId = shipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+                String shipGroupSeqId = shipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
 
                 Map<String, Object> cancelCtx = UtilMisc.<String, Object>toMap("userLogin", userLogin, "orderId", orderId);
                 cancelCtx.put("orderItemSeqId", orderItemSeqId);
@@ -4268,11 +4268,11 @@ public class OrderServices {
         if (promoItems != null) {
             for (GenericValue promoItem : promoItems) {
                 // Skip if the promo is already cancelled
-                if ("ITEM_CANCELLED".equals(promoItem.get("statusId"))) {
+                if ("ITEM_CANCELLED".equals(promoItem.get(org.apache.ofbiz.persistence.entity.x.statusId))) {
                     continue;
                 }
                 Map<String, Object> cancelPromoCtx = UtilMisc.<String, Object>toMap("orderId", orderId);
-                cancelPromoCtx.put("orderItemSeqId", promoItem.getString("orderItemSeqId"));
+                cancelPromoCtx.put("orderItemSeqId", promoItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                 cancelPromoCtx.put("userLogin", userLogin);
                 Map<String, Object> cancelResp = null;
                 try {
@@ -4316,7 +4316,7 @@ public class OrderServices {
         if (paymentPrefsToCancel != null) {
             for (GenericValue opp : paymentPrefsToCancel) {
                 try {
-                    opp.set("statusId", "PAYMENT_CANCELLED");
+                    opp.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_CANCELLED");
                     opp.store();
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
@@ -4343,10 +4343,10 @@ public class OrderServices {
             if (UtilValidate.isNotEmpty(orderAdjustmentsToDelete)) {
                 for (GenericValue orderAdjustment : orderAdjustmentsToDelete) {
                     //check if the adjustment has a related entry in entity OrderAdjustmentBilling
-                    List<GenericValue> oaBilling = orderAdjustment.getRelated("OrderAdjustmentBilling", null, null, false);
+                    List<GenericValue> oaBilling = orderAdjustment.getRelated(org.apache.ofbiz.persistence.entity.x.OrderAdjustmentBilling, null, null, false);
                     if (UtilValidate.isNotEmpty(oaBilling)) {
                         orderAdjustmentsToRemove.add(orderAdjustment);
-                        if ("SALES_TAX".equals(orderAdjustment.get("orderAdjustmentTypeId"))) {
+                        if ("SALES_TAX".equals(orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
                             //if the orderAdjustment is  a sale tax, set the amount to 0 to avoid amount addition
                             orderAdjustmentsToStore.add(orderAdjustment);
                         }
@@ -4360,7 +4360,7 @@ public class OrderServices {
             }
             if (UtilValidate.isNotEmpty(orderAdjustmentsToStore)) {
                 for (GenericValue orderAdjustment : orderAdjustmentsToStore) {
-                    orderAdjustment.set("amount", BigDecimal.ZERO);
+                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.amount, BigDecimal.ZERO);
                 }
                 delegator.storeAll(orderAdjustmentsToStore);
             }
@@ -4377,13 +4377,13 @@ public class OrderServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
-        String orderId = (String) context.get("orderId");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        ShoppingCart cart = (ShoppingCart) context.get("shoppingCart");
-        Map<String, Object> changeMap = UtilGenerics.cast(context.get("changeMap"));
-        Locale locale = (Locale) context.get("locale");
-        Boolean deleteItems = (Boolean) context.get("deleteItems");
-        Boolean calcTax = (Boolean) context.get("calcTax");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        ShoppingCart cart = (ShoppingCart) context.get(org.apache.ofbiz.persistence.entity.x.shoppingCart);
+        Map<String, Object> changeMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.changeMap));
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Boolean deleteItems = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.deleteItems);
+        Boolean calcTax = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.calcTax);
         if (calcTax == null) {
             calcTax = Boolean.TRUE;
         }
@@ -4459,7 +4459,7 @@ public class OrderServices {
         if (UtilValidate.isNotEmpty(billingAccountId)) {
             try {
                 GenericValue orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
-                orderHeader.set("billingAccountId", billingAccountId);
+                orderHeader.set(org.apache.ofbiz.persistence.entity.x.billingAccountId, billingAccountId);
                 toStore.add(orderHeader);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
@@ -4476,13 +4476,13 @@ public class OrderServices {
                 List<GenericValue> removeList = new ArrayList<>();
                 for (GenericValue stored : toStore) {
                     if ("OrderAdjustment".equals(stored.getEntityName())) {
-                        if (("SHIPPING_CHARGES".equals(stored.get("orderAdjustmentTypeId"))
-                                || "SALES_TAX".equals(stored.get("orderAdjustmentTypeId")))
-                                && stored.get("orderId").equals(orderId)) {
+                        if (("SHIPPING_CHARGES".equals(stored.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))
+                                || "SALES_TAX".equals(stored.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId)))
+                                && stored.get(org.apache.ofbiz.persistence.entity.x.orderId).equals(orderId)) {
                             // Removing objects from toStore list for old Shipping and Handling Charges Adjustment and Sales Tax Adjustment.
                             removeList.add(stored);
                         }
-                        if ("Y".equals(stored.getString("isManual"))) {
+                        if ("Y".equals(stored.getString(org.apache.ofbiz.persistence.entity.x.isManual))) {
                             // Removing objects from toStore list for Manually added Adjustment.
                             removeList.add(stored);
                         }
@@ -4492,9 +4492,9 @@ public class OrderServices {
             }
             for (GenericValue toAdd : toAddList) {
                 if ("OrderAdjustment".equals(toAdd.getEntityName())) {
-                    if ("Y".equals(toAdd.getString("isManual")) && (("PROMOTION_ADJUSTMENT".equals(toAdd.get("orderAdjustmentTypeId")))
-                            || ("SHIPPING_CHARGES".equals(toAdd.get("orderAdjustmentTypeId"))) || ("SALES_TAX".equals(toAdd.get(
-                                    "orderAdjustmentTypeId"))))) {
+                    if ("Y".equals(toAdd.getString(org.apache.ofbiz.persistence.entity.x.isManual)) && (("PROMOTION_ADJUSTMENT".equals(toAdd.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId)))
+                            || ("SHIPPING_CHARGES".equals(toAdd.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) || ("SALES_TAX".equals(toAdd.get(
+                                    org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))))) {
                         toStore.add(toAdd);
                     }
                 }
@@ -4532,12 +4532,12 @@ public class OrderServices {
         // get the promo uses and codes
         for (String promoCodeEntered : cart.getProductPromoCodesEntered()) {
             GenericValue orderProductPromoCode = delegator.makeValue("OrderProductPromoCode");
-            orderProductPromoCode.set("orderId", orderId);
-            orderProductPromoCode.set("productPromoCodeId", promoCodeEntered);
+            orderProductPromoCode.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
+            orderProductPromoCode.set(org.apache.ofbiz.persistence.entity.x.productPromoCodeId, promoCodeEntered);
             toStore.add(orderProductPromoCode);
         }
         for (GenericValue promoUse : cart.makeProductPromoUses()) {
-            promoUse.set("orderId", orderId);
+            promoUse.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
             toStore.add(promoUse);
         }
 
@@ -4556,51 +4556,51 @@ public class OrderServices {
         // this list will contain the ids of all the ship groups for drop shipments (no reservations)
         List<String> dropShipGroupIds = new LinkedList<>();
         for (GenericValue valueObj : toStore) {
-            valueObj.set("orderId", orderId);
+            valueObj.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
             if ("OrderItemShipGroup".equals(valueObj.getEntityName())) {
                 // ship group
-                if (valueObj.get("carrierRoleTypeId") == null) {
-                    valueObj.set("carrierRoleTypeId", "CARRIER");
+                if (valueObj.get(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId) == null) {
+                    valueObj.set(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId, "CARRIER");
                 }
-                if (UtilValidate.isNotEmpty(valueObj.get("supplierPartyId"))) {
-                    dropShipGroupIds.add(valueObj.getString("shipGroupSeqId"));
+                if (UtilValidate.isNotEmpty(valueObj.get(org.apache.ofbiz.persistence.entity.x.supplierPartyId))) {
+                    dropShipGroupIds.add(valueObj.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
                 }
             } else if ("OrderAdjustment".equals(valueObj.getEntityName())) {
                 // shipping / tax adjustment(s)
-                if (UtilValidate.isEmpty(valueObj.get("orderItemSeqId"))) {
-                    valueObj.set("orderItemSeqId", DataModelConstants.SEQ_ID_NA);
+                if (UtilValidate.isEmpty(valueObj.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId))) {
+                    valueObj.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, DataModelConstants.SEQ_ID_NA);
                 }
                 // in order to avoid duplicate adjustments don't set orderAdjustmentId (which is the pk) if there is already one
-                if (UtilValidate.isEmpty(valueObj.getString("orderAdjustmentId"))) {
-                    valueObj.set("orderAdjustmentId", delegator.getNextSeqId("OrderAdjustment"));
+                if (UtilValidate.isEmpty(valueObj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId))) {
+                    valueObj.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId, delegator.getNextSeqId("OrderAdjustment"));
                 }
-                valueObj.set("createdDate", UtilDateTime.nowTimestamp());
-                valueObj.set("createdByUserLogin", userLogin.getString("userLoginId"));
+                valueObj.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
+                valueObj.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
             } else if ("OrderPaymentPreference".equals(valueObj.getEntityName())) {
-                if (valueObj.get("orderPaymentPreferenceId") == null) {
-                    valueObj.set("orderPaymentPreferenceId", delegator.getNextSeqId("OrderPaymentPreference"));
-                    valueObj.set("createdDate", UtilDateTime.nowTimestamp());
-                    valueObj.set("createdByUserLogin", userLogin.getString("userLoginId"));
+                if (valueObj.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId) == null) {
+                    valueObj.set(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId, delegator.getNextSeqId("OrderPaymentPreference"));
+                    valueObj.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
+                    valueObj.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
                 }
-                if (valueObj.get("statusId") == null) {
-                    valueObj.set("statusId", "PAYMENT_NOT_RECEIVED");
+                if (valueObj.get(org.apache.ofbiz.persistence.entity.x.statusId) == null) {
+                    valueObj.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_NOT_RECEIVED");
                 }
             } else if ("OrderItem".equals(valueObj.getEntityName()) && !deleteItems) {
 
                 //  ignore promotion items. They are added/canceled automatically
-                if ("Y".equals(valueObj.getString("isPromo"))) {
+                if ("Y".equals(valueObj.getString(org.apache.ofbiz.persistence.entity.x.isPromo))) {
                     //Fetching the new promo items and adding it to list so that we can create OrderStatus record for that items.
                     Map<String, Object> promoItem = new HashMap<>();
-                    promoItem.put("orderId", valueObj.getString("orderId"));
-                    promoItem.put("orderItemSeqId", valueObj.getString("orderItemSeqId"));
-                    promoItem.put("quantity", valueObj.getBigDecimal("quantity"));
+                    promoItem.put("orderId", valueObj.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                    promoItem.put("orderItemSeqId", valueObj.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                    promoItem.put("quantity", valueObj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
                     newItems.add(promoItem);
                     continue;
                 }
                 GenericValue oldOrderItem = null;
                 try {
-                    oldOrderItem = EntityQuery.use(delegator).from("OrderItem").where("orderId", valueObj.getString("orderId"), "orderItemSeqId",
-                            valueObj.getString("orderItemSeqId")).queryOne();
+                    oldOrderItem = EntityQuery.use(delegator).from("OrderItem").where("orderId", valueObj.getString(org.apache.ofbiz.persistence.entity.x.orderId), "orderItemSeqId",
+                            valueObj.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).queryOne();
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                     throw new GeneralException(e.getMessage());
@@ -4608,27 +4608,27 @@ public class OrderServices {
                 if (oldOrderItem != null) {
 
                     //  Existing order item found. Check for modifications and store if any
-                    String oldItemDescription = oldOrderItem.getString("itemDescription") != null ? oldOrderItem.getString("itemDescription") : "";
-                    BigDecimal oldQuantity = oldOrderItem.getBigDecimal("quantity") != null ? oldOrderItem.getBigDecimal("quantity")
+                    String oldItemDescription = oldOrderItem.getString(org.apache.ofbiz.persistence.entity.x.itemDescription) != null ? oldOrderItem.getString(org.apache.ofbiz.persistence.entity.x.itemDescription) : "";
+                    BigDecimal oldQuantity = oldOrderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity) != null ? oldOrderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity)
                             : BigDecimal.ZERO;
-                    BigDecimal oldUnitPrice = oldOrderItem.getBigDecimal("unitPrice") != null ? oldOrderItem.getBigDecimal("unitPrice")
+                    BigDecimal oldUnitPrice = oldOrderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice) != null ? oldOrderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice)
                             : BigDecimal.ZERO;
-                    String oldItemComment = oldOrderItem.getString("comments") != null ? oldOrderItem.getString("comments") : "";
+                    String oldItemComment = oldOrderItem.getString(org.apache.ofbiz.persistence.entity.x.comments) != null ? oldOrderItem.getString(org.apache.ofbiz.persistence.entity.x.comments) : "";
 
                     boolean changeFound = false;
                     Map<String, Object> modifiedItem = new HashMap<>();
-                    if (!oldItemDescription.equals(valueObj.getString("itemDescription"))) {
+                    if (!oldItemDescription.equals(valueObj.getString(org.apache.ofbiz.persistence.entity.x.itemDescription))) {
                         modifiedItem.put("itemDescription", oldItemDescription);
                         changeFound = true;
                     }
 
-                    if (!oldItemComment.equals(valueObj.getString("comments"))) {
-                        modifiedItem.put("changeComments", valueObj.getString("comments"));
+                    if (!oldItemComment.equals(valueObj.getString(org.apache.ofbiz.persistence.entity.x.comments))) {
+                        modifiedItem.put("changeComments", valueObj.getString(org.apache.ofbiz.persistence.entity.x.comments));
                         changeFound = true;
                     }
 
-                    BigDecimal quantityDif = valueObj.getBigDecimal("quantity").subtract(oldQuantity);
-                    BigDecimal unitPriceDif = valueObj.getBigDecimal("unitPrice").subtract(oldUnitPrice);
+                    BigDecimal quantityDif = valueObj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity).subtract(oldQuantity);
+                    BigDecimal unitPriceDif = valueObj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice).subtract(oldUnitPrice);
                     if (quantityDif.compareTo(BigDecimal.ZERO) != 0) {
                         modifiedItem.put("quantity", quantityDif);
                         changeFound = true;
@@ -4642,12 +4642,12 @@ public class OrderServices {
                         //  found changes to store
                         Map<String, String> itemReasonMap = UtilGenerics.cast(changeMap.get("itemReasonMap"));
                         if (UtilValidate.isNotEmpty(itemReasonMap)) {
-                            String changeReasonId = itemReasonMap.get(valueObj.getString("orderItemSeqId"));
+                            String changeReasonId = itemReasonMap.get(valueObj.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                             modifiedItem.put("reasonEnumId", changeReasonId);
                         }
 
-                        modifiedItem.put("orderId", valueObj.getString("orderId"));
-                        modifiedItem.put("orderItemSeqId", valueObj.getString("orderItemSeqId"));
+                        modifiedItem.put("orderId", valueObj.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                        modifiedItem.put("orderItemSeqId", valueObj.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                         modifiedItem.put("changeTypeEnumId", "ODR_ITM_UPDATE");
                         modifiedItems.add(modifiedItem);
                     }
@@ -4666,9 +4666,9 @@ public class OrderServices {
                         appendedItem.put("changeComments", changeComments);
                     }
 
-                    appendedItem.put("orderId", valueObj.getString("orderId"));
-                    appendedItem.put("orderItemSeqId", valueObj.getString("orderItemSeqId"));
-                    appendedItem.put("quantity", valueObj.getBigDecimal("quantity"));
+                    appendedItem.put("orderId", valueObj.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                    appendedItem.put("orderItemSeqId", valueObj.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                    appendedItem.put("quantity", valueObj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
                     appendedItem.put("changeTypeEnumId", "ODR_ITM_APPEND");
                     modifiedItems.add(appendedItem);
                     newItems.add(appendedItem);
@@ -4731,7 +4731,7 @@ public class OrderServices {
                 itemStatus.put("orderId", newItem.get("orderId"));
                 itemStatus.put("orderItemSeqId", newItem.get("orderItemSeqId"));
                 itemStatus.put("statusDatetime", UtilDateTime.nowTimestamp());
-                itemStatus.set("statusUserLogin", userLogin.get("userLoginId"));
+                itemStatus.set(org.apache.ofbiz.persistence.entity.x.statusUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
                 delegator.create(itemStatus);
             }
         }
@@ -4741,7 +4741,7 @@ public class OrderServices {
         Map<String, GenericValue> itemValuesBySeqId = new HashMap<>();
         for (GenericValue v : toStore) {
             if ("OrderItem".equals(v.getEntityName())) {
-                itemValuesBySeqId.put(v.getString("orderItemSeqId"), v);
+                itemValuesBySeqId.put(v.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), v);
             } else if ("OrderItemShipGroupAssoc".equals(v.getEntityName())) {
                 orderItemShipGroupAssoc.add(v);
             }
@@ -4768,16 +4768,16 @@ public class OrderServices {
     public static Map<String, Object> processOrderPayments(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         OrderReadHelper orh = new OrderReadHelper(delegator, orderId);
         String productStoreId = orh.getProductStoreId();
 
         // check if order was already cancelled / rejected
         GenericValue orderHeader = orh.getOrderHeader();
-        String orderStatus = orderHeader.getString("statusId");
+        String orderStatus = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId);
         if ("ORDER_CANCELLED".equals(orderStatus) || "ORDER_REJECTED".equals(orderStatus)) {
             return ServiceUtil.returnFailure(UtilProperties.getMessage(RESOURCE,
                     "OrderProcessOrderPaymentsStatusInvalid", locale) + orderStatus);
@@ -4806,7 +4806,7 @@ public class OrderServices {
 
     // sample test services
     public static Map<String, Object> shoppingCartTest(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         ShoppingCart cart = new ShoppingCart(dctx.getDelegator(), "9000", "webStore", locale, "USD");
         try {
             cart.addOrIncreaseItem("GZ-1005", null, BigDecimal.ONE, null, null, null, null, null, null, null, "DemoCatalog", null, null, null, null,
@@ -4825,7 +4825,7 @@ public class OrderServices {
     }
 
     public static Map<String, Object> shoppingCartRemoteTest(DispatchContext dctx, Map<String, ? extends Object> context) {
-        ShoppingCart cart = (ShoppingCart) context.get("cart");
+        ShoppingCart cart = (ShoppingCart) context.get(org.apache.ofbiz.persistence.entity.x.cart);
         Debug.logInfo("Product ID : " + cart.findCartItem(0).getProductId(), MODULE);
         return ServiceUtil.returnSuccess();
     }
@@ -4837,13 +4837,13 @@ public class OrderServices {
     public static Map<String, Object> createPaymentFromPreference(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderPaymentPreferenceId = (String) context.get("orderPaymentPreferenceId");
-        String paymentRefNum = (String) context.get("paymentRefNum");
-        String paymentFromId = (String) context.get("paymentFromId");
-        String comments = (String) context.get("comments");
-        Timestamp eventDate = (Timestamp) context.get("eventDate");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderPaymentPreferenceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId);
+        String paymentRefNum = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentRefNum);
+        String paymentFromId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentFromId);
+        String comments = (String) context.get(org.apache.ofbiz.persistence.entity.x.comments);
+        Timestamp eventDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.eventDate);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (UtilValidate.isEmpty(eventDate)) {
             eventDate = UtilDateTime.nowTimestamp();
         }
@@ -4858,14 +4858,14 @@ public class OrderServices {
             }
 
             // get the order header
-            GenericValue orderHeader = orderPaymentPreference.getRelatedOne("OrderHeader", false);
+            GenericValue orderHeader = orderPaymentPreference.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
             if (orderHeader == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "OrderOrderPaymentCannotBeCreatedWithRelatedOrderHeader", locale));
             }
 
             // get the store for the order.  It will be used to set the currency
-            GenericValue productStore = orderHeader.getRelatedOne("ProductStore", false);
+            GenericValue productStore = orderHeader.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductStore, false);
             if (productStore == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "OrderOrderPaymentCannotBeCreatedWithRelatedProductStore", locale));
@@ -4876,14 +4876,14 @@ public class OrderServices {
                 OrderReadHelper orh = new OrderReadHelper(orderHeader);
                 GenericValue billToParty = orh.getBillToParty();
                 if (billToParty != null) {
-                    paymentFromId = billToParty.getString("partyId");
+                    paymentFromId = billToParty.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                 } else {
                     paymentFromId = "_NA_";
                 }
             }
 
             // set the payToPartyId
-            String payToPartyId = productStore.getString("payToPartyId");
+            String payToPartyId = productStore.getString(org.apache.ofbiz.persistence.entity.x.payToPartyId);
             if (payToPartyId == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "OrderOrderPaymentCannotBeCreatedPayToPartyIdNotSet", locale));
@@ -4891,15 +4891,15 @@ public class OrderServices {
 
             // create the payment
             Map<String, Object> paymentParams = new HashMap<>();
-            BigDecimal maxAmount = orderPaymentPreference.getBigDecimal("maxAmount");
+            BigDecimal maxAmount = orderPaymentPreference.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount);
             paymentParams.put("paymentTypeId", "CUSTOMER_PAYMENT");
-            paymentParams.put("paymentMethodTypeId", orderPaymentPreference.getString("paymentMethodTypeId"));
-            paymentParams.put("paymentPreferenceId", orderPaymentPreference.getString("orderPaymentPreferenceId"));
+            paymentParams.put("paymentMethodTypeId", orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
+            paymentParams.put("paymentPreferenceId", orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
             paymentParams.put("amount", maxAmount);
             paymentParams.put("statusId", "PMNT_RECEIVED");
             paymentParams.put("effectiveDate", eventDate);
             paymentParams.put("partyIdFrom", paymentFromId);
-            paymentParams.put("currencyUomId", productStore.getString("defaultCurrencyUomId"));
+            paymentParams.put("currencyUomId", productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultCurrencyUomId));
             paymentParams.put("partyIdTo", payToPartyId);
             if (paymentRefNum != null) {
                 paymentParams.put("paymentRefNum", paymentRefNum);
@@ -4944,9 +4944,9 @@ public class OrderServices {
     public static Map<String, Object> massChangeOrderStatus(DispatchContext dctx, Map<String, ? extends Object> context, String statusId) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        List<String> orderIds = UtilGenerics.cast(context.get("orderIdList"));
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        List<String> orderIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderIdList));
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         for (String orderId : orderIds) {
             if (UtilValidate.isEmpty(orderId)) {
                 continue;
@@ -4986,9 +4986,9 @@ public class OrderServices {
     public static Map<String, Object> massChangeItemStatus(DispatchContext dctx, Map<String, ? extends Object> context, String statusId) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        List<String> orderIds = UtilGenerics.cast(context.get("orderIdList"));
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        List<String> orderIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderIdList));
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         for (String orderId : orderIds) {
             if (UtilValidate.isEmpty(orderId)) {
                 continue;
@@ -5026,9 +5026,9 @@ public class OrderServices {
 
     public static Map<String, Object> massQuickShipOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        List<String> orderIds = UtilGenerics.cast(context.get("orderIdList"));
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        List<String> orderIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderIdList));
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         for (Object orderId : orderIds) {
             if (UtilValidate.isEmpty(orderId)) {
                 continue;
@@ -5055,13 +5055,13 @@ public class OrderServices {
     public static Map<String, Object> massPickOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         // grouped by facility
         Map<String, List<String>> facilityOrdersMap = new HashMap<>();
 
         // make the list per facility
-        List<String> orderIds = UtilGenerics.cast(context.get("orderIdList"));
+        List<String> orderIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderIdList));
         for (String orderId : orderIds) {
             if (UtilValidate.isEmpty(orderId)) {
                 continue;
@@ -5076,7 +5076,7 @@ public class OrderServices {
             }
             if (invInfo != null) {
                 for (GenericValue inv : invInfo) {
-                    String facilityId = inv.getString("facilityId");
+                    String facilityId = inv.getString(org.apache.ofbiz.persistence.entity.x.facilityId);
                     List<String> orderIdsByFacility = facilityOrdersMap.get(facilityId);
                     if (orderIdsByFacility == null) {
                         orderIdsByFacility = new ArrayList<>();
@@ -5114,12 +5114,12 @@ public class OrderServices {
 
     public static Map<String, Object> massPrintOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String screenLocation = (String) context.get("screenLocation");
-        String printerName = (String) context.get("printerName");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String screenLocation = (String) context.get(org.apache.ofbiz.persistence.entity.x.screenLocation);
+        String printerName = (String) context.get(org.apache.ofbiz.persistence.entity.x.printerName);
 
         // make the list per facility
-        List<String> orderIds = UtilGenerics.cast(context.get("orderIdList"));
+        List<String> orderIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderIdList));
         for (String orderId : orderIds) {
             if (UtilValidate.isEmpty(orderId)) {
                 continue;
@@ -5143,11 +5143,11 @@ public class OrderServices {
 
     public static Map<String, Object> massCreateFileForOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String screenLocation = (String) context.get("screenLocation");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String screenLocation = (String) context.get(org.apache.ofbiz.persistence.entity.x.screenLocation);
 
         // make the list per facility
-        List<String> orderIds = UtilGenerics.cast(context.get("orderIdList"));
+        List<String> orderIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderIdList));
         for (String orderId : orderIds) {
             if (UtilValidate.isEmpty(orderId)) {
                 continue;
@@ -5169,9 +5169,9 @@ public class OrderServices {
 
     public static Map<String, Object> massCancelRemainingPurchaseOrderItems(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        List<String> orderIds = UtilGenerics.cast(context.get("orderIdList"));
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        List<String> orderIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderIdList));
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         for (Object orderId : orderIds) {
             if (UtilValidate.isEmpty(orderId)) {
@@ -5210,9 +5210,9 @@ public class OrderServices {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         // TODO (use the "system" user)
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         OrderReadHelper orh = new OrderReadHelper(delegator, orderId);
         // TODO: skip this if there is already a purchase order associated with the sales order (ship group)
 
@@ -5221,12 +5221,12 @@ public class OrderServices {
             if ("SALES_ORDER".equals(orh.getOrderTypeId())) {
                 // get the order's ship groups
                 for (GenericValue shipGroup : orh.getOrderItemShipGroups()) {
-                    if (UtilValidate.isNotEmpty(shipGroup.getString("supplierPartyId"))) {
+                    if (UtilValidate.isNotEmpty(shipGroup.getString(org.apache.ofbiz.persistence.entity.x.supplierPartyId))) {
                         // This ship group is a drop shipment: we create a purchase order for it
-                        String supplierPartyId = shipGroup.getString("supplierPartyId");
+                        String supplierPartyId = shipGroup.getString(org.apache.ofbiz.persistence.entity.x.supplierPartyId);
                         // Set supplier preferred currency for drop-ship (PO) order to support multi currency
                         GenericValue supplierParty = EntityQuery.use(delegator).from("Party").where("partyId", supplierPartyId).queryOne();
-                        String currencyUomId = supplierParty.getString("preferredCurrencyUomId");
+                        String currencyUomId = supplierParty.getString(org.apache.ofbiz.persistence.entity.x.preferredCurrencyUomId);
                         // If supplier currency not found then set currency of sales order
                         if (UtilValidate.isEmpty(currencyUomId)) {
                             currencyUomId = orh.getCurrency();
@@ -5237,24 +5237,24 @@ public class OrderServices {
                         cart.setBillToCustomerPartyId(cart.getBillFromVendorPartyId()); //Company
                         cart.setBillFromVendorPartyId(supplierPartyId);
                         cart.setOrderPartyId(supplierPartyId);
-                        cart.setAgreementId(shipGroup.getString("supplierAgreementId"));
+                        cart.setAgreementId(shipGroup.getString(org.apache.ofbiz.persistence.entity.x.supplierAgreementId));
                         // Get the items associated to it and create po
-                        List<GenericValue> items = orh.getValidOrderItems(shipGroup.getString("shipGroupSeqId"));
+                        List<GenericValue> items = orh.getValidOrderItems(shipGroup.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
                         if (UtilValidate.isNotEmpty(items)) {
                             for (GenericValue item : items) {
                                 try {
-                                    int itemIndex = cart.addOrIncreaseItem(item.getString("productId"),
+                                    int itemIndex = cart.addOrIncreaseItem(item.getString(org.apache.ofbiz.persistence.entity.x.productId),
                                             null, // amount
-                                            item.getBigDecimal("quantity"),
+                                            item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity),
                                             null, null, null, // reserv
-                                            item.getTimestamp("shipBeforeDate"),
-                                            item.getTimestamp("shipAfterDate"),
+                                            item.getTimestamp(org.apache.ofbiz.persistence.entity.x.shipBeforeDate),
+                                            item.getTimestamp(org.apache.ofbiz.persistence.entity.x.shipAfterDate),
                                             null, null, null,
                                             null, null, null,
                                             null, dispatcher);
                                     ShoppingCartItem sci = cart.findCartItem(itemIndex);
                                     sci.setAssociatedOrderId(orderId);
-                                    sci.setAssociatedOrderItemSeqId(item.getString("orderItemSeqId"));
+                                    sci.setAssociatedOrderItemSeqId(item.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                                     sci.setOrderItemAssocTypeId("DROP_SHIPMENT");
                                 } catch (CartItemModifyException | ItemNotFoundException e) {
                                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -5272,19 +5272,19 @@ public class OrderServices {
                             // set checkout options
                             cart.setDefaultCheckoutOptions(dispatcher);
                             // the shipping address is the one of the customer
-                            cart.setAllShippingContactMechId(shipGroup.getString("contactMechId"));
+                            cart.setAllShippingContactMechId(shipGroup.getString(org.apache.ofbiz.persistence.entity.x.contactMechId));
                             // associate ship groups of sales and purchase orders
                             ShoppingCart.CartShipInfo cartShipInfo = cart.getShipGroups().get(0);
-                            cartShipInfo.setAssociatedShipGroupSeqId(shipGroup.getString("shipGroupSeqId"));
+                            cartShipInfo.setAssociatedShipGroupSeqId(shipGroup.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
                             // create the order
                             CheckOutHelper coh = new CheckOutHelper(dispatcher, delegator, cart);
                             coh.createOrder(userLogin);
                         } else {
                             // if there are no items to drop ship, then clear out the supplier partyId
-                            Debug.logWarning("No drop ship items found for order [" + shipGroup.getString("orderId") + "] and ship group ["
-                                    + shipGroup.getString("shipGroupSeqId") + "] and supplier party [" + shipGroup.getString("supplierPartyId")
+                            Debug.logWarning("No drop ship items found for order [" + shipGroup.getString(org.apache.ofbiz.persistence.entity.x.orderId) + "] and ship group ["
+                                    + shipGroup.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId) + "] and supplier party [" + shipGroup.getString(org.apache.ofbiz.persistence.entity.x.supplierPartyId)
                                     + "].  Supplier party information will be cleared for this ship group", MODULE);
-                            shipGroup.set("supplierPartyId", null);
+                            shipGroup.set(org.apache.ofbiz.persistence.entity.x.supplierPartyId, null);
                             shipGroup.store();
 
                         }
@@ -5304,9 +5304,9 @@ public class OrderServices {
 
     public static Map<String, Object> updateOrderPaymentPreference(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String orderPaymentPreferenceId = (String) context.get("orderPaymentPreferenceId");
-        String checkOutPaymentId = (String) context.get("checkOutPaymentId");
-        String statusId = (String) context.get("statusId");
+        String orderPaymentPreferenceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId);
+        String checkOutPaymentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.checkOutPaymentId);
+        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
 
         try {
             GenericValue opp = EntityQuery.use(delegator).from("OrderPaymentPreference").where("orderPaymentPreferenceId", orderPaymentPreferenceId)
@@ -5319,8 +5319,8 @@ public class OrderServices {
             if (checkOutPaymentId != null) {
                 List<GenericValue> paymentMethodTypes = EntityQuery.use(delegator).from("PaymentMethodType").cache(true).queryList();
                 for (GenericValue type : paymentMethodTypes) {
-                    if (type.get("paymentMethodTypeId").equals(checkOutPaymentId)) {
-                        paymentMethodTypeId = (String) type.get("paymentMethodTypeId");
+                    if (type.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId).equals(checkOutPaymentId)) {
+                        paymentMethodTypeId = (String) type.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
                         break;
                     }
                 }
@@ -5328,26 +5328,26 @@ public class OrderServices {
                     GenericValue method = EntityQuery.use(delegator).from("PaymentMethod").where("paymentMethodTypeId", paymentMethodTypeId)
                             .queryOne();
                     paymentMethodId = checkOutPaymentId;
-                    paymentMethodTypeId = (String) method.get("paymentMethodTypeId");
+                    paymentMethodTypeId = (String) method.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
                 }
             }
 
             Map<String, Object> results = ServiceUtil.returnSuccess();
             if (UtilValidate.isNotEmpty(statusId) && "PAYMENT_CANCELLED".equalsIgnoreCase(statusId)) {
-                opp.set("statusId", "PAYMENT_CANCELLED");
+                opp.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_CANCELLED");
                 opp.store();
-                results.put("orderPaymentPreferenceId", opp.get("orderPaymentPreferenceId"));
+                results.put("orderPaymentPreferenceId", opp.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
             } else {
                 GenericValue newOpp = (GenericValue) opp.clone();
-                opp.set("statusId", "PAYMENT_CANCELLED");
+                opp.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_CANCELLED");
                 opp.store();
 
-                newOpp.set("orderPaymentPreferenceId", delegator.getNextSeqId("OrderPaymentPreference"));
-                newOpp.set("paymentMethodId", paymentMethodId);
-                newOpp.set("paymentMethodTypeId", paymentMethodTypeId);
+                newOpp.set(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId, delegator.getNextSeqId("OrderPaymentPreference"));
+                newOpp.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, paymentMethodId);
+                newOpp.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, paymentMethodTypeId);
                 newOpp.setNonPKFields(context);
                 newOpp.create();
-                results.put("orderPaymentPreferenceId", newOpp.get("orderPaymentPreferenceId"));
+                results.put("orderPaymentPreferenceId", newOpp.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
             }
 
             return results;
@@ -5366,11 +5366,11 @@ public class OrderServices {
     public static Map<String, Object> generateReqsFromCancelledPOItems(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        String orderId = (String) context.get("orderId");
-        String facilityId = (String) context.get("facilityId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId);
 
         try {
 
@@ -5383,7 +5383,7 @@ public class OrderServices {
                 return ServiceUtil.returnError(errorMessage);
             }
 
-            if (!"PURCHASE_ORDER".equals(orderHeader.getString("orderTypeId"))) {
+            if (!"PURCHASE_ORDER".equals(orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderTypeId))) {
                 String errorMessage = UtilProperties.getMessage(RES_ERROR,
                         "ProductErrorOrderNotPurchaseOrder", UtilMisc.toMap("orderId", orderId), locale);
                 Debug.logError(errorMessage, MODULE);
@@ -5392,23 +5392,23 @@ public class OrderServices {
 
             // Build a map of productId -> quantity cancelled over all order items
             Map<String, Object> productRequirementQuantities = new HashMap<>();
-            List<GenericValue> orderItems = orderHeader.getRelated("OrderItem", null, null, false);
+            List<GenericValue> orderItems = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItem, null, null, false);
             for (GenericValue orderItem : orderItems) {
-                if (!"PRODUCT_ORDER_ITEM".equals(orderItem.getString("orderItemTypeId"))) {
+                if (!"PRODUCT_ORDER_ITEM".equals(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemTypeId))) {
                     continue;
                 }
 
                 // Get the cancelled quantity for the item
                 BigDecimal orderItemCancelQuantity = BigDecimal.ZERO;
-                if (!UtilValidate.isEmpty(orderItem.get("cancelQuantity"))) {
-                    orderItemCancelQuantity = orderItem.getBigDecimal("cancelQuantity");
+                if (!UtilValidate.isEmpty(orderItem.get(org.apache.ofbiz.persistence.entity.x.cancelQuantity))) {
+                    orderItemCancelQuantity = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
                 }
 
                 if (orderItemCancelQuantity.compareTo(BigDecimal.ZERO) <= 0) {
                     continue;
                 }
 
-                String productId = orderItem.getString("productId");
+                String productId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
                 if (productRequirementQuantities.containsKey(productId)) {
                     orderItemCancelQuantity = orderItemCancelQuantity.add((BigDecimal) productRequirementQuantities.get(productId));
                 }
@@ -5444,10 +5444,10 @@ public class OrderServices {
     public static Map<String, Object> cancelRemainingPurchaseOrderItems(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        String orderId = (String) context.get("orderId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
 
         try {
 
@@ -5460,42 +5460,42 @@ public class OrderServices {
                 return ServiceUtil.returnError(errorMessage);
             }
 
-            if (!"PURCHASE_ORDER".equals(orderHeader.getString("orderTypeId"))) {
+            if (!"PURCHASE_ORDER".equals(orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderTypeId))) {
                 String errorMessage = UtilProperties.getMessage(RES_ERROR,
                         "OrderErrorOrderNotPurchaseOrder", UtilMisc.toMap("orderId", orderId), locale);
                 Debug.logError(errorMessage, MODULE);
                 return ServiceUtil.returnError(errorMessage);
             }
 
-            List<GenericValue> orderItems = orderHeader.getRelated("OrderItem", null, null, false);
+            List<GenericValue> orderItems = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItem, null, null, false);
             for (GenericValue orderItem : orderItems) {
-                if (!"PRODUCT_ORDER_ITEM".equals(orderItem.getString("orderItemTypeId"))) {
+                if (!"PRODUCT_ORDER_ITEM".equals(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemTypeId))) {
                     continue;
                 }
 
                 // Get the ordered quantity for the item
                 BigDecimal orderItemQuantity = BigDecimal.ZERO;
-                if (!UtilValidate.isEmpty(orderItem.get("quantity"))) {
-                    orderItemQuantity = orderItem.getBigDecimal("quantity");
+                if (!UtilValidate.isEmpty(orderItem.get(org.apache.ofbiz.persistence.entity.x.quantity))) {
+                    orderItemQuantity = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                 }
                 BigDecimal orderItemCancelQuantity = BigDecimal.ZERO;
-                if (!UtilValidate.isEmpty(orderItem.get("cancelQuantity"))) {
-                    orderItemCancelQuantity = orderItem.getBigDecimal("cancelQuantity");
+                if (!UtilValidate.isEmpty(orderItem.get(org.apache.ofbiz.persistence.entity.x.cancelQuantity))) {
+                    orderItemCancelQuantity = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
                 }
 
                 // Get the received quantity for the order item - ignore the quantityRejected, since rejected items should be reordered
-                List<GenericValue> shipmentReceipts = orderItem.getRelated("ShipmentReceipt", null, null, false);
+                List<GenericValue> shipmentReceipts = orderItem.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentReceipt, null, null, false);
                 BigDecimal receivedQuantity = BigDecimal.ZERO;
                 for (GenericValue shipmentReceipt : shipmentReceipts) {
-                    if (!UtilValidate.isEmpty(shipmentReceipt.get("quantityAccepted"))) {
-                        receivedQuantity = receivedQuantity.add(shipmentReceipt.getBigDecimal("quantityAccepted"));
+                    if (!UtilValidate.isEmpty(shipmentReceipt.get(org.apache.ofbiz.persistence.entity.x.quantityAccepted))) {
+                        receivedQuantity = receivedQuantity.add(shipmentReceipt.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityAccepted));
                     }
                 }
 
                 BigDecimal quantityToCancel = orderItemQuantity.subtract(orderItemCancelQuantity).subtract(receivedQuantity);
                 if (quantityToCancel.compareTo(BigDecimal.ZERO) > 0) {
                     Map<String, Object> cancelOrderItemResult = dispatcher.runSync("cancelOrderItem", UtilMisc.toMap("orderId", orderId,
-                            "orderItemSeqId", orderItem.get("orderItemSeqId"), "cancelQuantity", quantityToCancel, "userLogin", userLogin));
+                            "orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "cancelQuantity", quantityToCancel, "userLogin", userLogin));
                     if (ServiceUtil.isError(cancelOrderItemResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(cancelOrderItemResult));
                     }
@@ -5503,9 +5503,9 @@ public class OrderServices {
 
                 // If there's nothing to cancel, the item should be set to completed, if it isn't already
                 orderItem.refresh();
-                if ("ITEM_APPROVED".equals(orderItem.getString("statusId"))) {
+                if ("ITEM_APPROVED".equals(orderItem.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                     Map<String, Object> changeOrderItemStatusResult = dispatcher.runSync("changeOrderItemStatus", UtilMisc.toMap("orderId", orderId,
-                            "orderItemSeqId", orderItem.get("orderItemSeqId"), "statusId", "ITEM_COMPLETED", "userLogin", userLogin));
+                            "orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "statusId", "ITEM_COMPLETED", "userLogin", userLogin));
                     if (ServiceUtil.isError(changeOrderItemStatusResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(changeOrderItemStatusResult));
                     }
@@ -5525,14 +5525,14 @@ public class OrderServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        String paymentMethodId = (String) context.get("paymentMethodId");
-        String productStoreId = (String) context.get("productStoreId");
-        String currency = (String) context.get("currency");
-        String partyId = (String) context.get("partyId");
-        Map<String, BigDecimal> itemMap = UtilGenerics.cast(context.get("itemMap"));
+        String paymentMethodId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
+        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        Map<String, BigDecimal> itemMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemMap));
 
         ShoppingCart cart = new ShoppingCart(delegator, productStoreId, null, locale, currency);
         try {
@@ -5595,7 +5595,7 @@ public class OrderServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
-        ShoppingCart cart = (ShoppingCart) context.get("shoppingCart");
+        ShoppingCart cart = (ShoppingCart) context.get(org.apache.ofbiz.persistence.entity.x.shoppingCart);
         GenericValue userLogin = cart.getUserLogin();
 
         CheckOutHelper coh = new CheckOutHelper(dispatcher, delegator, cart);
@@ -5615,7 +5615,7 @@ public class OrderServices {
     public static Map<String, Object> callProcessOrderPayments(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         Transaction trans = null;
         try {
@@ -5623,9 +5623,9 @@ public class OrderServices {
             trans = TransactionUtil.suspend();
 
             // get the cart
-            ShoppingCart cart = (ShoppingCart) context.get("shoppingCart");
+            ShoppingCart cart = (ShoppingCart) context.get(org.apache.ofbiz.persistence.entity.x.shoppingCart);
             GenericValue userLogin = cart.getUserLogin();
-            Boolean manualHold = (Boolean) context.get("manualHold");
+            Boolean manualHold = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.manualHold);
             if (manualHold == null) {
                 manualHold = Boolean.FALSE;
             }
@@ -5673,10 +5673,10 @@ public class OrderServices {
      */
     public static Map<String, Object> getOrderItemInvoicedAmountAndQuantity(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        String orderId = (String) context.get("orderId");
-        String orderItemSeqId = (String) context.get("orderItemSeqId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
 
         GenericValue orderHeader = null;
         GenericValue orderItemToCheck = null;
@@ -5704,14 +5704,14 @@ public class OrderServices {
             BigDecimal itemAdjustments = ZERO; // Item-level tax- and shipping-adjustments
 
             // Aggregate the order items subtotal
-            List<GenericValue> orderItems = orderHeader.getRelated("OrderItem", null, UtilMisc.toList("orderItemSeqId"), false);
+            List<GenericValue> orderItems = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItem, null, UtilMisc.toList("orderItemSeqId"), false);
             for (GenericValue orderItem : orderItems) {
                 // Look at the orderItemBillings to discover the amount and quantity ever invoiced for this order item
                 List<GenericValue> orderItemBillings = EntityQuery.use(delegator).from("OrderItemBilling").where("orderId", orderId,
-                        "orderItemSeqId", orderItem.get("orderItemSeqId")).queryList();
+                        "orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).queryList();
                 for (GenericValue orderItemBilling : orderItemBillings) {
-                    BigDecimal quantity = orderItemBilling.getBigDecimal("quantity");
-                    BigDecimal amount = orderItemBilling.getBigDecimal("amount").setScale(DECIMALS, ROUNDING);
+                    BigDecimal quantity = orderItemBilling.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                    BigDecimal amount = orderItemBilling.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(DECIMALS, ROUNDING);
                     if (UtilValidate.isEmpty(invoicedQuantity) || UtilValidate.isEmpty(amount)) {
                         continue;
                     }
@@ -5720,7 +5720,7 @@ public class OrderServices {
                     orderItemsSubtotal = orderItemsSubtotal.add(quantity.multiply(amount));
 
                     // If the item is the target order item, add the invoiced quantity and amount to their respective totals
-                    if (orderItemSeqId.equals(orderItem.get("orderItemSeqId"))) {
+                    if (orderItemSeqId.equals(orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId))) {
                         invoicedQuantity = invoicedQuantity.add(quantity);
                         invoicedTotal = invoicedTotal.add(quantity.multiply(amount));
                     }
@@ -5728,21 +5728,21 @@ public class OrderServices {
 
                 // Retrieve the adjustments for this item
                 List<GenericValue> orderAdjustments = EntityQuery.use(delegator).from("OrderAdjustment").where("orderId", orderId, "orderItemSeqId",
-                        orderItem.get("orderItemSeqId")).queryList();
+                        orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).queryList();
                 for (GenericValue orderAdjustment : orderAdjustments) {
-                    String orderAdjustmentTypeId = orderAdjustment.getString("orderAdjustmentTypeId");
+                    String orderAdjustmentTypeId = orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId);
 
                     // Look at the orderAdjustmentBillings to discove the amount ever invoiced for this order adjustment
                     List<GenericValue> orderAdjustmentBillings = EntityQuery.use(delegator).from("OrderAdjustmentBilling").where("orderAdjustmentId",
-                            orderAdjustment.get("orderAdjustmentId")).queryList();
+                            orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId)).queryList();
                     for (GenericValue orderAjustmentBilling : orderAdjustmentBillings) {
-                        BigDecimal amount = orderAjustmentBilling.getBigDecimal("amount").setScale(DECIMALS, ROUNDING);
+                        BigDecimal amount = orderAjustmentBilling.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(DECIMALS, ROUNDING);
                         if (UtilValidate.isEmpty(amount)) {
                             continue;
                         }
 
                         if ("SALES_TAX".equals(orderAdjustmentTypeId) || "SHIPPING_CHARGES".equals(orderAdjustmentTypeId)) {
-                            if (orderItemSeqId.equals(orderItem.get("orderItemSeqId"))) {
+                            if (orderItemSeqId.equals(orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId))) {
 
                                 // Add tax- and shipping-adjustment amounts to the total adjustments for the target order item
                                 itemAdjustments = itemAdjustments.add(amount);
@@ -5751,7 +5751,7 @@ public class OrderServices {
 
                             // Add non-tax and non-shipping adjustment amounts to the order items subtotal
                             orderItemsSubtotal = orderItemsSubtotal.add(amount);
-                            if (orderItemSeqId.equals(orderItem.get("orderItemSeqId"))) {
+                            if (orderItemSeqId.equals(orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId))) {
 
                                 // If the item is the target order item, add non-tax and non-shipping adjustment amounts to the invoiced total
                                 invoicedTotal = invoicedTotal.add(amount);
@@ -5767,9 +5767,9 @@ public class OrderServices {
                     "orderItemSeqId", "_NA_").queryList();
             for (GenericValue orderHeaderAdjustment : orderHeaderAdjustments) {
                 List<GenericValue> orderHeaderAdjustmentBillings = EntityQuery.use(delegator).from("OrderAdjustmentBilling").where(
-                        "orderAdjustmentId", orderHeaderAdjustment.get("orderAdjustmentId")).queryList();
+                        "orderAdjustmentId", orderHeaderAdjustment.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId)).queryList();
                 for (GenericValue orderHeaderAdjustmentBilling : orderHeaderAdjustmentBillings) {
-                    BigDecimal amount = orderHeaderAdjustmentBilling.getBigDecimal("amount").setScale(DECIMALS, ROUNDING);
+                    BigDecimal amount = orderHeaderAdjustmentBilling.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(DECIMALS, ROUNDING);
                     if (UtilValidate.isEmpty(amount)) {
                         continue;
                     }
@@ -5803,20 +5803,20 @@ public class OrderServices {
 
     public static Map<String, Object> setOrderPaymentStatus(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        String orderPaymentPreferenceId = (String) context.get("orderPaymentPreferenceId");
-        String changeReason = (String) context.get("changeReason");
-        Locale locale = (Locale) context.get("locale");
+        String orderPaymentPreferenceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId);
+        String changeReason = (String) context.get(org.apache.ofbiz.persistence.entity.x.changeReason);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             GenericValue orderPaymentPreference = EntityQuery.use(delegator).from("OrderPaymentPreference").where("orderPaymentPreferenceId",
                     orderPaymentPreferenceId).queryOne();
-            String orderId = orderPaymentPreference.getString("orderId");
-            String statusUserLogin = orderPaymentPreference.getString("createdByUserLogin");
+            String orderId = orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+            String statusUserLogin = orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.createdByUserLogin);
             GenericValue orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
             if (orderHeader == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "OrderErrorCouldNotChangeOrderStatusOrderCannotBeFound", locale));
             }
-            String statusId = orderPaymentPreference.getString("statusId");
+            String statusId = orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.statusId);
             if (Debug.verboseOn()) {
                 Debug.logVerbose("[OrderServices.setOrderPaymentStatus] : Setting Order Payment Status to : " + statusId, MODULE);
             }
@@ -5833,8 +5833,8 @@ public class OrderServices {
                     orderPaymentPreferenceId).orderBy("-statusDatetime").queryFirst();
             if (previousStatus != null) {
                 // Temporarily set some values on the new status so that we can do an equals() check
-                orderStatus.put("orderStatusId", previousStatus.get("orderStatusId"));
-                orderStatus.put("statusDatetime", previousStatus.get("statusDatetime"));
+                orderStatus.put("orderStatusId", previousStatus.get(org.apache.ofbiz.persistence.entity.x.orderStatusId));
+                orderStatus.put("statusDatetime", previousStatus.get(org.apache.ofbiz.persistence.entity.x.statusDatetime));
                 if (orderStatus.equals(previousStatus)) {
                     // Status is the same, return without creating
                     return ServiceUtil.returnSuccess();
@@ -5856,8 +5856,8 @@ public class OrderServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         int count = 0;
         Map<String, Object> result = null;
 
@@ -5881,32 +5881,32 @@ public class OrderServices {
                     endDate.setTime(UtilDateTime.nowTimestamp());
                     // Check if today date + cancel period (if provided) is earlier than the thrudate
                     int field = Calendar.MONTH;
-                    if (subscription.get("canclAutmExtTime") != null && subscription.get("canclAutmExtTimeUomId") != null) {
-                        if ("TF_day".equals(subscription.getString("canclAutmExtTimeUomId"))) {
+                    if (subscription.get(org.apache.ofbiz.persistence.entity.x.canclAutmExtTime) != null && subscription.get(org.apache.ofbiz.persistence.entity.x.canclAutmExtTimeUomId) != null) {
+                        if ("TF_day".equals(subscription.getString(org.apache.ofbiz.persistence.entity.x.canclAutmExtTimeUomId))) {
                             field = Calendar.DAY_OF_YEAR;
-                        } else if ("TF_wk".equals(subscription.getString("canclAutmExtTimeUomId"))) {
+                        } else if ("TF_wk".equals(subscription.getString(org.apache.ofbiz.persistence.entity.x.canclAutmExtTimeUomId))) {
                             field = Calendar.WEEK_OF_YEAR;
-                        } else if ("TF_mon".equals(subscription.getString("canclAutmExtTimeUomId"))) {
+                        } else if ("TF_mon".equals(subscription.getString(org.apache.ofbiz.persistence.entity.x.canclAutmExtTimeUomId))) {
                             field = Calendar.MONTH;
-                        } else if ("TF_yr".equals(subscription.getString("canclAutmExtTimeUomId"))) {
+                        } else if ("TF_yr".equals(subscription.getString(org.apache.ofbiz.persistence.entity.x.canclAutmExtTimeUomId))) {
                             field = Calendar.YEAR;
                         } else {
-                            Debug.logWarning("Don't know anything about canclAutmExtTimeUomId [" + subscription.getString("canclAutmExtTimeUomId")
+                            Debug.logWarning("Don't know anything about canclAutmExtTimeUomId [" + subscription.getString(org.apache.ofbiz.persistence.entity.x.canclAutmExtTimeUomId)
                                     + "], defaulting to month", MODULE);
                         }
 
-                        endDate.add(field, Integer.parseInt(subscription.getString("canclAutmExtTime")));
+                        endDate.add(field, Integer.parseInt(subscription.getString(org.apache.ofbiz.persistence.entity.x.canclAutmExtTime)));
                     }
 
                     Calendar endDateSubscription = Calendar.getInstance();
-                    endDateSubscription.setTime(subscription.getTimestamp("thruDate"));
+                    endDateSubscription.setTime(subscription.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate));
 
                     if (endDate.before(endDateSubscription)) {
                         // nor expired yet.....
                         continue;
                     }
 
-                    result = dispatcher.runSync("loadCartFromOrder", UtilMisc.toMap("orderId", subscription.get("orderId"), "userLogin", userLogin));
+                    result = dispatcher.runSync("loadCartFromOrder", UtilMisc.toMap("orderId", subscription.get(org.apache.ofbiz.persistence.entity.x.orderId), "userLogin", userLogin));
                     if (ServiceUtil.isError(result)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
                     }
@@ -5919,7 +5919,7 @@ public class OrderServices {
                     // only keep the orderitem with the related product.
                     List<ShoppingCartItem> cartItems = cart.items();
                     for (ShoppingCartItem shoppingCartItem : cartItems) {
-                        if (!subscription.get("productId").equals(shoppingCartItem.getProductId())) {
+                        if (!subscription.get(org.apache.ofbiz.persistence.entity.x.productId).equals(shoppingCartItem.getProductId())) {
                             cart.removeCartItem(shoppingCartItem, dispatcher);
                         }
                     }
@@ -5995,8 +5995,8 @@ public class OrderServices {
     public static Map<String, Object> addOrderItemShipGroup(DispatchContext dctx, Map<String, Object> context) {
         Map<String, Object> result;
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        String orderId = (String) context.get("orderId");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
 
         //main message error
         String mainErrorMessage = UtilProperties.getMessage(RES_ERROR, "OrderUnableToAddOISGToOrder", locale);
@@ -6010,7 +6010,7 @@ public class OrderServices {
 
         try {
             //test if party is a valid carrier
-            String carrierPartyId = (String) context.get("carrierPartyId");
+            String carrierPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId);
             GenericValue carrierRole = EntityQuery.use(delegator).from("PartyRole").where("partyId", carrierPartyId, "roleTypeId", "CARRIER")
                     .cache().queryOne();
             if (UtilValidate.isNotEmpty(carrierPartyId) && UtilValidate.isEmpty(carrierRole)) {
@@ -6020,7 +6020,7 @@ public class OrderServices {
             }
 
             //test if shipmentMethodTypeId is available for carrier party
-            String shipmentMethodTypeId = (String) context.get("shipmentMethodTypeId");
+            String shipmentMethodTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId);
             if (UtilValidate.isNotEmpty(shipmentMethodTypeId)) {
                 // carrierPartyId is not in shipmentMethodTypeId
                 if (shipmentMethodTypeId.indexOf("_o_") == -1) {
@@ -6038,8 +6038,8 @@ public class OrderServices {
                         shipmentMethodTypeId = carrierShipmentMethod[0];
                         carrierPartyId = carrierShipmentMethod[1];
                     }
-                    context.put("carrierPartyId", carrierPartyId);
-                    context.put("shipmentMethodTypeId", shipmentMethodTypeId);
+                    context.put(org.apache.ofbiz.persistence.entity.x.carrierPartyId, carrierPartyId);
+                    context.put(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId, shipmentMethodTypeId);
                 }
             }
 
@@ -6049,10 +6049,10 @@ public class OrderServices {
                 GenericValue oisg = EntityUtil.getFirst(oisgs);
                 // set shipmentMethodTypeId, carrierPartyId, carrierRoleTypeId, contactMechId when shipmentMethodTypeId and carrierPartyId are empty
                 if (UtilValidate.isEmpty(carrierPartyId) && UtilValidate.isEmpty(shipmentMethodTypeId)) {
-                    createOrderItemShipGroupMap.put("shipmentMethodTypeId", oisg.get("shipmentMethodTypeId"));
-                    createOrderItemShipGroupMap.put("carrierPartyId", oisg.get("carrierPartyId"));
-                    createOrderItemShipGroupMap.put("carrierRoleTypeId", oisg.get("carrierRoleTypeId"));
-                    createOrderItemShipGroupMap.put("contactMechId", oisg.get("contactMechId"));
+                    createOrderItemShipGroupMap.put("shipmentMethodTypeId", oisg.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId));
+                    createOrderItemShipGroupMap.put("carrierPartyId", oisg.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId));
+                    createOrderItemShipGroupMap.put("carrierRoleTypeId", oisg.get(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId));
+                    createOrderItemShipGroupMap.put("contactMechId", oisg.get(org.apache.ofbiz.persistence.entity.x.contactMechId));
                 }
             }
         } catch (GenericEntityException gee) {
@@ -6090,14 +6090,14 @@ public class OrderServices {
      */
     public static Map<String, Object> deleteOrderItemShipGroup(DispatchContext ctx, Map<?, ?> context) throws GenericEntityException {
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = new HashMap<>();
 
-        GenericValue orderItemShipGroup = (GenericValue) context.get("orderItemShipGroup");
+        GenericValue orderItemShipGroup = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderItemShipGroup);
         if (UtilValidate.isEmpty(orderItemShipGroup)) {
-            String orderId = (String) context.get("orderId");
+            String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
             GenericValue orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
-            String shipGroupSeqId = (String) context.get("shipGroupSeqId");
+            String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
             if (orderHeader != null && UtilValidate.isNotEmpty(shipGroupSeqId)) {
                 orderItemShipGroup = EntityQuery.use(delegator).from("OrderItemShipGroup").where("orderId", orderId, "shipGroupSeqId",
                         shipGroupSeqId).queryOne();
@@ -6124,11 +6124,11 @@ public class OrderServices {
             throws GenericEntityException {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
-        String orderId = (String) context.get("orderId");
-        String orderItemSeqId = (String) context.get("orderItemSeqId");
-        String shipGroupSeqId = (String) context.get("shipGroupSeqId");
-        BigDecimal quantity = (BigDecimal) context.get("quantity");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
+        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
 
         //main message error
         String mainErrorMessage = UtilProperties.getMessage(RES_ERROR, "OrderUnableToAddItemToOISG", locale);
@@ -6139,7 +6139,7 @@ public class OrderServices {
                     orderId, "orderItemSeqId", orderItemSeqId), locale);
             return ServiceUtil.returnError(errMsg);
         }
-        String statusId = orderItem.getString("statusId");
+        String statusId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.statusId);
         // add OISG only if orderItem is not already prepared
         if ("ITEM_CREATED".equals(statusId) || "ITEM_APPROVED".equals(statusId)) {
             //find OISG
@@ -6149,15 +6149,15 @@ public class OrderServices {
                     Map<String, Object> addOrderItemShipGroupMap = dctx.makeValidContext("addOrderItemShipGroup", ModelService.IN_PARAM, context);
                     addOrderItemShipGroupMap.remove("shipGroupSeqId");
                     //get default OrderItemShipGroup value for carrier and contact data
-                    List<GenericValue> oisgas = orderItem.getRelated("OrderItemShipGroupAssoc", null, null, false);
+                    List<GenericValue> oisgas = orderItem.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItemShipGroupAssoc, null, null, false);
                     if (UtilValidate.isNotEmpty(oisgas)) {
                         GenericValue oisga = EntityUtil.getFirst(oisgas);
-                        GenericValue oisg = oisga.getRelatedOne("OrderItemShipGroup", false);
+                        GenericValue oisg = oisga.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItemShipGroup, false);
                         if (oisg != null) {
-                            addOrderItemShipGroupMap.put("shipmentMethodTypeId", oisg.get("shipmentMethodTypeId"));
-                            addOrderItemShipGroupMap.put("carrierPartyId", oisg.get("carrierPartyId"));
-                            addOrderItemShipGroupMap.put("carrierRoleTypeId", oisg.get("carrierRoleTypeId"));
-                            addOrderItemShipGroupMap.put("contactMechId", oisg.get("contactMechId"));
+                            addOrderItemShipGroupMap.put("shipmentMethodTypeId", oisg.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId));
+                            addOrderItemShipGroupMap.put("carrierPartyId", oisg.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId));
+                            addOrderItemShipGroupMap.put("carrierRoleTypeId", oisg.get(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId));
+                            addOrderItemShipGroupMap.put("contactMechId", oisg.get(org.apache.ofbiz.persistence.entity.x.contactMechId));
                         }
                     }
                     //call  service to create new oisg
@@ -6189,15 +6189,15 @@ public class OrderServices {
             }
             //test if this association already exist if yes display error
             GenericValue oisgAssoc = EntityQuery.use(delegator).from("OrderItemShipGroupAssoc").where("orderId", orderId, "orderItemSeqId",
-                    orderItem.get("orderItemSeqId"), "shipGroupSeqId", shipGroupSeqId).queryOne();
+                    orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "shipGroupSeqId", shipGroupSeqId).queryOne();
             if (oisgAssoc != null) {
                 String errMsg = mainErrorMessage + UtilProperties.getMessage(RES_ERROR, "OrderErrorOrderItemAlreadyRelatedToShipGroup", locale);
                 return ServiceUtil.returnError(errMsg);
             }
             //no error, create OISGA
             oisgAssoc = delegator.makeValue("OrderItemShipGroupAssoc", UtilMisc.toMap("orderId", orderId, "orderItemSeqId", orderItem.get(
-                    "orderItemSeqId"), "shipGroupSeqId", shipGroupSeqId));
-            oisgAssoc.set("quantity", quantity);
+                    org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "shipGroupSeqId", shipGroupSeqId));
+            oisgAssoc.set(org.apache.ofbiz.persistence.entity.x.quantity, quantity);
             oisgAssoc.create();
             return ServiceUtil.returnSuccess();
         }
@@ -6218,25 +6218,25 @@ public class OrderServices {
         String message = null;
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
 
-        String orderId = (String) context.get("orderId");
-        String orderItemSeqId = (String) context.get("orderItemSeqId");
-        String shipGroupSeqId = (String) context.get("shipGroupSeqId");
-        BigDecimal quantity = (BigDecimal) context.get("quantity");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
+        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
         if (UtilValidate.isEmpty(quantity)) {
             quantity = BigDecimal.ZERO;
         }
-        BigDecimal totalQuantity = (BigDecimal) context.get("totalQuantity");
+        BigDecimal totalQuantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.totalQuantity);
         if (UtilValidate.isEmpty(totalQuantity)) {
             totalQuantity = BigDecimal.ZERO;
         }
 
         //main message error
         String mainErrorMessage = UtilProperties.getMessage(RES_ERROR, "OrderUnableToUpdateOrderItemFromOISG", locale);
-        Integer rowCount = (Integer) context.get("rowCount");
-        Integer rowNumber = (Integer) context.get("rowNumber"); //total row number
+        Integer rowCount = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.rowCount);
+        Integer rowNumber = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.rowNumber); //total row number
 
         if (rowNumber == null) {
             Long count = EntityQuery.use(delegator).from("OrderItemShipGroupAssoc").where("orderId", orderId, "orderItemSeqId", orderItemSeqId)
@@ -6314,11 +6314,11 @@ public class OrderServices {
             }
 
             BigDecimal actualQuantity = totalQuantity.add(quantity);
-            BigDecimal qty = (BigDecimal) orderItem.get("quantity");
+            BigDecimal qty = (BigDecimal) orderItem.get(org.apache.ofbiz.persistence.entity.x.quantity);
             if (UtilValidate.isEmpty(qty)) {
                 qty = BigDecimal.ZERO;
             }
-            BigDecimal cancelQty = (BigDecimal) orderItem.get("cancelQuantity");
+            BigDecimal cancelQty = (BigDecimal) orderItem.get(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
             if (UtilValidate.isEmpty(cancelQty)) {
                 cancelQty = BigDecimal.ZERO;
             }
@@ -6337,7 +6337,7 @@ public class OrderServices {
                 Debug.logError(errMsg, MODULE);
                 return ServiceUtil.returnError(errMsg);
             }
-            oisga.set("quantity", quantity);
+            oisga.set(org.apache.ofbiz.persistence.entity.x.quantity, quantity);
             //store new values
             oisga.store();
             // reserve the inventory
@@ -6348,8 +6348,8 @@ public class OrderServices {
                 if (ServiceUtil.isError(cancelResp)) {
                     throw new GeneralException(ServiceUtil.getErrorMessage(cancelResp));
                 }
-                String productStoreId = orderHeader.getString("productStoreId");
-                String orderTypeId = orderHeader.getString("orderTypeId");
+                String productStoreId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
+                String orderTypeId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderTypeId);
                 List<String> resErrorMessages = new LinkedList<>();
                 if (Debug.infoOn()) {
                     Debug.logInfo("Calling reserve inventory...", MODULE);
@@ -6401,11 +6401,11 @@ public class OrderServices {
             BigDecimal totalQuantity, GenericValue lastOISGAssoc, GenericValue userLogin, Locale locale)
             throws GeneralException {
         String result = null;
-        BigDecimal qty = (BigDecimal) orderItem.get("quantity");
+        BigDecimal qty = (BigDecimal) orderItem.get(org.apache.ofbiz.persistence.entity.x.quantity);
         if (UtilValidate.isEmpty(qty)) {
             qty = BigDecimal.ZERO;
         }
-        BigDecimal cancelQty = (BigDecimal) orderItem.get("cancelQuantity");
+        BigDecimal cancelQty = (BigDecimal) orderItem.get(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
         if (UtilValidate.isEmpty(cancelQty)) {
             cancelQty = BigDecimal.ZERO;
         }
@@ -6414,33 +6414,33 @@ public class OrderServices {
         if (totalQuantity.compareTo(orderItemQuantity) < 0) {
             //if quantity in orderItem is bigger than in totalQUantity then added missing quantity in ShipGroupAssoc
             BigDecimal adjustementQuantity = orderItemQuantity.subtract(totalQuantity);
-            BigDecimal lastOISGAssocQuantity = (BigDecimal) lastOISGAssoc.get("quantity");
+            BigDecimal lastOISGAssocQuantity = (BigDecimal) lastOISGAssoc.get(org.apache.ofbiz.persistence.entity.x.quantity);
             if (UtilValidate.isEmpty(lastOISGAssocQuantity)) {
                 lastOISGAssocQuantity = BigDecimal.ZERO;
             }
             BigDecimal oisgaQty = lastOISGAssocQuantity.add(adjustementQuantity);
-            lastOISGAssoc.set("quantity", oisgaQty);
+            lastOISGAssoc.set(org.apache.ofbiz.persistence.entity.x.quantity, oisgaQty);
             lastOISGAssoc.store();
 
             // reserve the inventory
-            GenericValue orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", lastOISGAssoc.get("orderId")).queryOne();
+            GenericValue orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", lastOISGAssoc.get(org.apache.ofbiz.persistence.entity.x.orderId)).queryOne();
             if (UtilValidate.isNotEmpty(orderHeader)) {
                 Map<String, Object> cancelOrderInventoryReservationMap = UtilMisc.toMap("userLogin", userLogin, "locale", locale);
-                cancelOrderInventoryReservationMap.put("orderId", lastOISGAssoc.get("orderId"));
-                cancelOrderInventoryReservationMap.put("orderItemSeqId", lastOISGAssoc.get("orderItemSeqId"));
-                cancelOrderInventoryReservationMap.put("shipGroupSeqId", lastOISGAssoc.get("shipGroupSeqId"));
+                cancelOrderInventoryReservationMap.put("orderId", lastOISGAssoc.get(org.apache.ofbiz.persistence.entity.x.orderId));
+                cancelOrderInventoryReservationMap.put("orderItemSeqId", lastOISGAssoc.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                cancelOrderInventoryReservationMap.put("shipGroupSeqId", lastOISGAssoc.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
                 Map<String, Object> cancelResp = dispatcher.runSync("cancelOrderInventoryReservation", cancelOrderInventoryReservationMap);
                 if (ServiceUtil.isError(cancelResp)) {
                     throw new GeneralException(ServiceUtil.getErrorMessage(cancelResp));
                 }
-                String productStoreId = orderHeader.getString("productStoreId");
-                String orderTypeId = orderHeader.getString("orderTypeId");
+                String productStoreId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
+                String orderTypeId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderTypeId);
                 List<String> resErrorMessages = new LinkedList<>();
                 if (Debug.infoOn()) {
                     Debug.logInfo("Calling reserve inventory...", MODULE);
                 }
                 reserveInventory(delegator, dispatcher, userLogin, locale, UtilMisc.toList(lastOISGAssoc), null,
-                        UtilMisc.<String, GenericValue>toMap(lastOISGAssoc.getString("orderItemSeqId"), orderItem), orderTypeId, productStoreId,
+                        UtilMisc.<String, GenericValue>toMap(lastOISGAssoc.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), orderItem), orderTypeId, productStoreId,
                         resErrorMessages);
             }
 
@@ -6452,13 +6452,13 @@ public class OrderServices {
 
     public static Map<String, Object> setShippingInstructions(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String orderId = (String) context.get("orderId");
-        String shipGroupSeqId = (String) context.get("shipGroupSeqId");
-        String shippingInstructions = (String) context.get("shippingInstructions");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
+        String shippingInstructions = (String) context.get(org.apache.ofbiz.persistence.entity.x.shippingInstructions);
         try {
             GenericValue orderItemShipGroup = EntityQuery.use(delegator).from("OrderItemShipGroup").where("orderId", orderId, "shipGroupSeqId",
                     shipGroupSeqId).queryFirst();
-            orderItemShipGroup.set("shippingInstructions", shippingInstructions);
+            orderItemShipGroup.set(org.apache.ofbiz.persistence.entity.x.shippingInstructions, shippingInstructions);
             orderItemShipGroup.store();
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -6468,14 +6468,14 @@ public class OrderServices {
 
     public static Map<String, Object> setGiftMessage(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String orderId = (String) context.get("orderId");
-        String shipGroupSeqId = (String) context.get("shipGroupSeqId");
-        String giftMessage = (String) context.get("giftMessage");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
+        String giftMessage = (String) context.get(org.apache.ofbiz.persistence.entity.x.giftMessage);
         try {
             GenericValue orderItemShipGroup = EntityQuery.use(delegator).from("OrderItemShipGroup").where("orderId", orderId, "shipGroupSeqId",
                     shipGroupSeqId).queryFirst();
-            orderItemShipGroup.set("giftMessage", giftMessage);
-            orderItemShipGroup.set("isGift", "Y");
+            orderItemShipGroup.set(org.apache.ofbiz.persistence.entity.x.giftMessage, giftMessage);
+            orderItemShipGroup.set(org.apache.ofbiz.persistence.entity.x.isGift, "Y");
             orderItemShipGroup.store();
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -6487,9 +6487,9 @@ public class OrderServices {
         final Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         // All orders with an entryDate > orderEntryFromDateTime will be processed
-        Timestamp orderEntryFromDateTime = (Timestamp) context.get("orderEntryFromDateTime");
+        Timestamp orderEntryFromDateTime = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.orderEntryFromDateTime);
         // If true all orders ever created will be processed and any pre-existing ALSO_BOUGHT ProductAssocs will be expired
-        boolean processAllOrders = context.get("processAllOrders") == null ? false : (Boolean) context.get("processAllOrders");
+        boolean processAllOrders = context.get(org.apache.ofbiz.persistence.entity.x.processAllOrders) == null ? false : (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.processAllOrders);
         if (orderEntryFromDateTime == null && !processAllOrders) {
             // No from date supplied, check to see when this service last ran and use the startDateTime
             // FIXME: This code is unreliable - the JobSandbox value might have been purged. Use another mechanism to persist orderEntryFromDateTime.
@@ -6501,7 +6501,7 @@ public class OrderServices {
                 GenericValue lastRunJobSandbox = EntityUtil.getFirst(delegator.findList("JobSandbox", cond, null, UtilMisc.toList("startDateTime "
                         + "DESC"), efo, false));
                 if (lastRunJobSandbox != null) {
-                    orderEntryFromDateTime = lastRunJobSandbox.getTimestamp("startDateTime");
+                    orderEntryFromDateTime = lastRunJobSandbox.getTimestamp(org.apache.ofbiz.persistence.entity.x.startDateTime);
                 }
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
@@ -6541,7 +6541,7 @@ public class OrderServices {
                 try (EntityListIterator eli = eq.queryIterator()) {
                     GenericValue orderHeader;
                     while ((orderHeader = eli.next()) != null) {
-                        oids.add(orderHeader.getString("orderId"));
+                        oids.add(orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId));
                     }
                 }
                 return oids;
@@ -6553,7 +6553,7 @@ public class OrderServices {
 
         for (String orderId : orderIds) {
             Map<String, Object> svcIn = new HashMap<>();
-            svcIn.put("userLogin", context.get("userLogin"));
+            svcIn.put("userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
             svcIn.put("orderId", orderId);
             try {
                 Map<String, Object> serviceResult = dispatcher.runSync("createAlsoBoughtProductAssocsForOrder", svcIn);
@@ -6570,7 +6570,7 @@ public class OrderServices {
     public static Map<String, Object> createAlsoBoughtProductAssocsForOrder(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        String orderId = (String) context.get("orderId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
         OrderReadHelper orh = new OrderReadHelper(delegator, orderId);
         List<GenericValue> orderItems = orh.getOrderItems();
         Map<String, Object> serviceResult = new HashMap<>();
@@ -6580,11 +6580,11 @@ public class OrderServices {
         Set<String> productIdSet = new TreeSet<>();
         if (orderItems != null) {
             for (GenericValue orderItem : orderItems) {
-                String productId = orderItem.getString("productId");
+                String productId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
                 if (productId != null) {
                     GenericValue parentProduct = ProductWorker.getParentProduct(productId, delegator);
                     if (parentProduct != null) {
-                        productId = parentProduct.getString("productId");
+                        productId = parentProduct.getString(org.apache.ofbiz.persistence.entity.x.productId);
                     }
                     productIdSet.add(productId);
                 }
@@ -6610,7 +6610,7 @@ public class OrderServices {
                 }
                 try {
                     if (existingProductAssoc != null) {
-                        BigDecimal newQuantity = existingProductAssoc.getBigDecimal("quantity");
+                        BigDecimal newQuantity = existingProductAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                         if (newQuantity == null || newQuantity.compareTo(BigDecimal.ZERO) < 0) {
                             newQuantity = BigDecimal.ZERO;
                         }
@@ -6625,7 +6625,7 @@ public class OrderServices {
                         }
                     } else {
                         Map<String, Object> createCtx = new HashMap<>();
-                        createCtx.put("userLogin", context.get("userLogin"));
+                        createCtx.put("userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
                         createCtx.put("productId", productId);
                         createCtx.put("productIdTo", productIdTo);
                         createCtx.put("productAssocTypeId", "ALSO_BOUGHT");
@@ -6651,13 +6651,13 @@ public class OrderServices {
     public static Map<String, Object> updateShipGroupShipInfo(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
-        String shipGroupSeqId = (String) context.get("shipGroupSeqId");
-        String contactMechId = (String) context.get("contactMechId");
-        String oldContactMechId = (String) context.get("oldContactMechId");
-        String shipmentMethod = (String) context.get("shipmentMethod");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
+        String contactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechId);
+        String oldContactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.oldContactMechId);
+        String shipmentMethod = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentMethod);
 
         //load cart from order to update new shipping method or address
         ShoppingCart shoppingCart = null;
@@ -6681,8 +6681,8 @@ public class OrderServices {
                 carrierPartyId = arr[1];
             } else {
                 GenericValue orderItemshipGroup = orh.getOrderItemShipGroup(shipGroupSeqId);
-                shipmentMethodTypeId = orderItemshipGroup.getString("shipmentMethodTypeId");
-                carrierPartyId = orderItemshipGroup.getString("carrierPartyId");
+                shipmentMethodTypeId = orderItemshipGroup.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId);
+                carrierPartyId = orderItemshipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId);
             }
             int groupIdx = Integer.parseInt(shipGroupSeqId);
 
@@ -6705,8 +6705,8 @@ public class OrderServices {
                 boolean isShippingMethodAvailable = false;
                 // search shipping method for ship group is applicable to new address or not.
                 for (GenericValue shippingMethod : shippingMethods) {
-                    isShippingMethodAvailable = shippingMethod.getString("partyId").equals(carrierPartyId) && shippingMethod.getString(
-                            "shipmentMethodTypeId").equals(shipmentMethodTypeId);
+                    isShippingMethodAvailable = shippingMethod.getString(org.apache.ofbiz.persistence.entity.x.partyId).equals(carrierPartyId) && shippingMethod.getString(
+                            org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId).equals(shipmentMethodTypeId);
                     if (isShippingMethodAvailable) {
                         shoppingCart.setShipmentMethodTypeId(groupIdx - 1, shipmentMethodTypeId);
                         shoppingCart.setCarrierPartyId(groupIdx - 1, carrierPartyId);
@@ -6754,26 +6754,26 @@ public class OrderServices {
     public static Map<String, Object> associateOrderWithAllocationPlans(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
         Map<String, String> productPlanMap = new HashMap<>();
         Map<String, Object> serviceResult = new HashMap<>();
         try {
             String userLoginId = null;
             if (userLogin != null) {
-                userLoginId = userLogin.getString("userLoginId");
+                userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
             }
             //Get the list of associated products
             OrderReadHelper orderReadHelper = new OrderReadHelper(delegator, orderId);
             List<GenericValue> orderItems = orderReadHelper.getOrderItems();
             Map<String, Object> serviceCtx = new HashMap<>();
             for (GenericValue orderItem : orderItems) {
-                String orderItemSeqId = orderItem.getString("orderItemSeqId");
-                String productId = orderItem.getString("productId");
+                String orderItemSeqId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+                String productId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
                 String planMethodEnumId = null;
                 GenericValue orderItemAttribute = EntityQuery.use(delegator).from("OrderItemAttribute").where("orderId", orderId, "orderItemSeqId",
                         orderItemSeqId, "attrName", "autoReserve").queryOne();
-                if (orderItemAttribute != null && "true".equals(orderItemAttribute.getString("attrValue"))) {
+                if (orderItemAttribute != null && "true".equals(orderItemAttribute.getString(org.apache.ofbiz.persistence.entity.x.attrValue))) {
                     planMethodEnumId = "AUTO";
                 } else {
                     planMethodEnumId = "MANUAL";
@@ -6800,7 +6800,7 @@ public class OrderServices {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                     }
                 } else {
-                    planId = allocationPlanHeader.getString("planId");
+                    planId = allocationPlanHeader.getString(org.apache.ofbiz.persistence.entity.x.planId);
                     serviceCtx.put("planId", planId);
                     serviceCtx.put("productId", productId);
                     //If an item added to already approved plan, it should be moved to created status
@@ -6825,7 +6825,7 @@ public class OrderServices {
                     serviceCtx.put("planId", planId);
                     serviceCtx.put("planMethodEnumId", planMethodEnumId);
                     if ("AUTO".equals(planMethodEnumId)) {
-                        serviceCtx.put("allocatedQuantity", orderItem.getBigDecimal("quantity"));
+                        serviceCtx.put("allocatedQuantity", orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
                         serviceCtx.put("statusId", "ALLOC_PLAN_ITEM_APRV");
                     } else {
                         serviceCtx.put("statusId", "ALLOC_PLAN_ITEM_CRTD");
@@ -6841,13 +6841,13 @@ public class OrderServices {
                     }
                     planItemSeqId = (String) serviceResult.get("planItemSeqId");
                 } else {
-                    planItemSeqId = allocationPlanItem.getString("planItemSeqId");
+                    planItemSeqId = allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.planItemSeqId);
                     serviceCtx.put("planId", planId);
                     serviceCtx.put("planItemSeqId", planItemSeqId);
                     serviceCtx.put("productId", productId);
                     serviceCtx.put("planMethodEnumId", planMethodEnumId);
                     if ("AUTO".equals(planMethodEnumId)) {
-                        serviceCtx.put("allocatedQuantity", orderItem.getBigDecimal("quantity"));
+                        serviceCtx.put("allocatedQuantity", orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
                         serviceCtx.put("statusId", "ALLOC_PLAN_ITEM_APRV");
                     } else {
                         serviceCtx.put("statusId", "ALLOC_PLAN_ITEM_CRTD");
@@ -6875,14 +6875,14 @@ public class OrderServices {
     public static Map<String, Object> approveAllocationPlanItems(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String planId = (String) context.get("planId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String planId = (String) context.get(org.apache.ofbiz.persistence.entity.x.planId);
         Map<String, Object> serviceCtx = new HashMap<>();
         Map<String, Object> serviceResult = new HashMap<>();
         try {
             String userLoginId = null;
             if (userLogin != null) {
-                userLoginId = userLogin.getString("userLoginId");
+                userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
             }
             //Get the list of plan items in created status
             List<EntityCondition> itemConditions = new ArrayList<>();
@@ -6893,10 +6893,10 @@ public class OrderServices {
             String facilityId = null;
             String productId = null;
             for (GenericValue allocationPlanItem : allocationPlanItems) {
-                productId = allocationPlanItem.getString("productId");
+                productId = allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
                 serviceCtx.put("planId", planId);
-                serviceCtx.put("planItemSeqId", allocationPlanItem.getString("planItemSeqId"));
-                serviceCtx.put("productId", allocationPlanItem.getString("productId"));
+                serviceCtx.put("planItemSeqId", allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.planItemSeqId));
+                serviceCtx.put("productId", allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.productId));
                 serviceCtx.put("statusId", "ALLOC_PLAN_ITEM_APRV");
                 serviceCtx.put("lastModifiedByUserLogin", userLoginId);
                 serviceCtx.put("userLogin", userLogin);
@@ -6905,11 +6905,11 @@ public class OrderServices {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                 }
                 serviceCtx.clear();
-                GenericValue orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", allocationPlanItem.getString("orderId"))
+                GenericValue orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.orderId))
                         .queryOne();
                 if (orderHeader != null) {
                     //For now considering single facility case only
-                    facilityId = orderHeader.getString("originFacilityId");
+                    facilityId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.originFacilityId);
                 }
             }
 
@@ -6940,14 +6940,14 @@ public class OrderServices {
     public static Map<String, Object> cancelAllocationPlanItems(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String planId = (String) context.get("planId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String planId = (String) context.get(org.apache.ofbiz.persistence.entity.x.planId);
         Map<String, Object> serviceCtx = new HashMap<>();
         Map<String, Object> serviceResult = new HashMap<>();
         try {
             String userLoginId = null;
             if (userLogin != null) {
-                userLoginId = userLogin.getString("userLoginId");
+                userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
             }
             //Get the list of plan items
             List<EntityCondition> itemConditions = new ArrayList<>();
@@ -6957,8 +6957,8 @@ public class OrderServices {
 
             for (GenericValue allocationPlanItem : allocationPlanItems) {
                 serviceCtx.put("planId", planId);
-                serviceCtx.put("planItemSeqId", allocationPlanItem.getString("planItemSeqId"));
-                serviceCtx.put("productId", allocationPlanItem.getString("productId"));
+                serviceCtx.put("planItemSeqId", allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.planItemSeqId));
+                serviceCtx.put("productId", allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.productId));
                 serviceCtx.put("statusId", "ALLOC_PLAN_ITEM_CNCL");
                 serviceCtx.put("lastModifiedByUserLogin", userLoginId);
                 serviceCtx.put("userLogin", userLogin);
@@ -6977,10 +6977,10 @@ public class OrderServices {
     public static Map<String, Object> changeAllocationPlanStatus(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
-        String planId = (String) context.get("planId");
-        String statusId = (String) context.get("statusId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String planId = (String) context.get(org.apache.ofbiz.persistence.entity.x.planId);
+        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
         String oldStatusId = null;
         Map<String, Object> serviceResult = new HashMap<>();
         try {
@@ -6990,7 +6990,7 @@ public class OrderServices {
                         "OrderErrorAllocationPlanIsNotAvailable", locale) + ": [" + planId + "]");
             }
             for (GenericValue allocationPlanHeader : allocationPlanHeaders) {
-                oldStatusId = allocationPlanHeader.getString("statusId");
+                oldStatusId = allocationPlanHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId);
                 try {
                     GenericValue statusChange = EntityQuery.use(delegator).from("StatusValidChange").where("statusId", oldStatusId, "statusIdTo",
                             statusId).queryOne();
@@ -7005,11 +7005,11 @@ public class OrderServices {
                 }
                 String userLoginId = null;
                 if (userLogin != null) {
-                    userLoginId = userLogin.getString("userLoginId");
+                    userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
                 }
                 Map<String, Object> serviceCtx = new HashMap<>();
                 serviceCtx.put("planId", planId);
-                serviceCtx.put("productId", allocationPlanHeader.getString("productId"));
+                serviceCtx.put("productId", allocationPlanHeader.getString(org.apache.ofbiz.persistence.entity.x.productId));
                 serviceCtx.put("statusId", statusId);
                 serviceCtx.put("lastModifiedByUserLogin", userLoginId);
                 serviceCtx.put("userLogin", userLogin);
@@ -7030,11 +7030,11 @@ public class OrderServices {
     public static Map<String, Object> changeAllocationPlanItemStatus(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
-        String planId = (String) context.get("planId");
-        String planItemSeqId = (String) context.get("planItemSeqId");
-        String statusId = (String) context.get("statusId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String planId = (String) context.get(org.apache.ofbiz.persistence.entity.x.planId);
+        String planItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.planItemSeqId);
+        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
         String oldStatusId = null;
         Map<String, Object> serviceResult = new HashMap<>();
         try {
@@ -7044,7 +7044,7 @@ public class OrderServices {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "OrderErrorAllocationPlanIsNotAvailable", locale) + ": [" + planId + ":" + planItemSeqId + "]");
             }
-            oldStatusId = allocationPlanItem.getString("statusId");
+            oldStatusId = allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.statusId);
             try {
                 GenericValue statusChange = EntityQuery.use(delegator).from("StatusValidChange").where("statusId", oldStatusId, "statusIdTo",
                         statusId).queryOne();
@@ -7059,12 +7059,12 @@ public class OrderServices {
             }
             String userLoginId = null;
             if (userLogin != null) {
-                userLoginId = userLogin.getString("userLoginId");
+                userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
             }
             Map<String, Object> serviceCtx = new HashMap<>();
             serviceCtx.put("planId", planId);
             serviceCtx.put("planItemSeqId", planItemSeqId);
-            serviceCtx.put("productId", allocationPlanItem.getString("productId"));
+            serviceCtx.put("productId", allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.productId));
             serviceCtx.put("statusId", statusId);
             serviceCtx.put("lastModifiedByUserLogin", userLoginId);
             serviceCtx.put("userLogin", userLogin);
@@ -7083,9 +7083,9 @@ public class OrderServices {
     public static Map<String, Object> completeAllocationPlanItemByOrderItem(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
-        String orderItemSeqId = (String) context.get("orderItemSeqId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
         try {
             List<EntityExpr> exprs = new ArrayList<>();
             exprs.add(EntityCondition.makeCondition("orderId", orderId));
@@ -7104,9 +7104,9 @@ public class OrderServices {
             Map<String, Object> serviceCtx = new HashMap<>();
             Map<String, Object> serviceResult = new HashMap<>();
             for (GenericValue allocationPlanItem : allocationPlanItems) {
-                String planId = allocationPlanItem.getString("planId");
+                String planId = allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.planId);
                 serviceCtx.put("planId", planId);
-                serviceCtx.put("planItemSeqId", allocationPlanItem.getString("planItemSeqId"));
+                serviceCtx.put("planItemSeqId", allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.planItemSeqId));
                 serviceCtx.put("statusId", "ALLOC_PLAN_ITEM_CMPL");
                 serviceCtx.put("userLogin", userLogin);
                 serviceResult = dispatcher.runSync("changeAllocationPlanItemStatus", serviceCtx);
@@ -7124,7 +7124,7 @@ public class OrderServices {
                 allocationPlanItems = EntityQuery.use(delegator).from("AllocationPlanItem").where("planId", planId).queryList();
                 Boolean completeAllocationPlan = true;
                 for (GenericValue allocationPlanItem : allocationPlanItems) {
-                    if (!"ALLOC_PLAN_ITEM_CMPL".equals(allocationPlanItem.getString("statusId"))) {
+                    if (!"ALLOC_PLAN_ITEM_CMPL".equals(allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                         completeAllocationPlan = false;
                         break;
                     }
@@ -7150,9 +7150,9 @@ public class OrderServices {
     public static Map<String, Object> cancelAllocationPlanItemByOrderItem(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
-        String orderItemSeqId = (String) context.get("orderItemSeqId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
         try {
             List<EntityExpr> exprs = new ArrayList<>();
             exprs.add(EntityCondition.makeCondition("orderId", orderId));
@@ -7171,9 +7171,9 @@ public class OrderServices {
             Map<String, Object> serviceCtx = new HashMap<>();
             Map<String, Object> serviceResult = new HashMap<>();
             for (GenericValue allocationPlanItem : allocationPlanItems) {
-                String planId = allocationPlanItem.getString("planId");
+                String planId = allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.planId);
                 serviceCtx.put("planId", planId);
-                serviceCtx.put("planItemSeqId", allocationPlanItem.getString("planItemSeqId"));
+                serviceCtx.put("planItemSeqId", allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.planItemSeqId));
                 serviceCtx.put("statusId", "ALLOC_PLAN_ITEM_CNCL");
                 serviceCtx.put("userLogin", userLogin);
                 serviceResult = dispatcher.runSync("changeAllocationPlanItemStatus", serviceCtx);
@@ -7191,7 +7191,7 @@ public class OrderServices {
                 allocationPlanItems = EntityQuery.use(delegator).from("AllocationPlanItem").where("planId", planId).queryList();
                 Boolean cancelAllocationPlan = true;
                 for (GenericValue allocationPlanItem : allocationPlanItems) {
-                    if (!"ALLOC_PLAN_ITEM_CNCL".equals(allocationPlanItem.getString("statusId"))) {
+                    if (!"ALLOC_PLAN_ITEM_CNCL".equals(allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                         cancelAllocationPlan = false;
                         break;
                     }
@@ -7217,13 +7217,13 @@ public class OrderServices {
     public static Map<String, Object> updateAllocatedQuantityOnOrderItemChange(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
         try {
             OrderReadHelper orderReadHelper = new OrderReadHelper(delegator, orderId);
             List<GenericValue> orderItems = orderReadHelper.getOrderItems();
             for (GenericValue orderItem : orderItems) {
-                String orderItemSeqId = orderItem.getString("orderItemSeqId");
+                String orderItemSeqId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
                 List<EntityExpr> exprs = new ArrayList<>();
                 exprs.add(EntityCondition.makeCondition("orderId", orderId));
                 exprs.add(EntityCondition.makeCondition("orderItemSeqId", orderItemSeqId));
@@ -7232,22 +7232,22 @@ public class OrderServices {
                 GenericValue orderItemChange = EntityQuery.use(delegator).from("OrderItemChange").where(exprs).orderBy("-changeDatetime")
                         .queryFirst();
                 if (orderItemChange != null) {
-                    BigDecimal quantityChanged = orderItemChange.getBigDecimal("quantity");
+                    BigDecimal quantityChanged = orderItemChange.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                     if (quantityChanged.compareTo(BigDecimal.ZERO) < 0) {
                         GenericValue allocationPlanItem = EntityQuery.use(delegator).from("AllocationPlanItem").where("orderId", orderId,
-                                "orderItemSeqId", orderItemSeqId, "statusId", "ALLOC_PLAN_ITEM_CRTD", "productId", orderItem.getString("productId"))
+                                "orderItemSeqId", orderItemSeqId, "statusId", "ALLOC_PLAN_ITEM_CRTD", "productId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId))
                                 .queryFirst();
                         if (allocationPlanItem != null) {
-                            BigDecimal revisedQuantity = orderItem.getBigDecimal("quantity");
-                            BigDecimal allocatedQuantity = allocationPlanItem.getBigDecimal("allocatedQuantity");
+                            BigDecimal revisedQuantity = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                            BigDecimal allocatedQuantity = allocationPlanItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.allocatedQuantity);
                             if (allocatedQuantity != null && allocatedQuantity.compareTo(revisedQuantity) > 0) {
                                 //Allocated Quantity is more than the revisedQuantity quantity, reduce it and release the excess reservations
                                 Map<String, Object> serviceCtx = new HashMap<>();
-                                serviceCtx.put("planId", allocationPlanItem.getString("planId"));
-                                serviceCtx.put("planItemSeqId", allocationPlanItem.getString("planItemSeqId"));
-                                serviceCtx.put("productId", allocationPlanItem.getString("productId"));
+                                serviceCtx.put("planId", allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.planId));
+                                serviceCtx.put("planItemSeqId", allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.planItemSeqId));
+                                serviceCtx.put("productId", allocationPlanItem.getString(org.apache.ofbiz.persistence.entity.x.productId));
                                 serviceCtx.put("allocatedQuantity", revisedQuantity);
-                                serviceCtx.put("lastModifiedByUserLogin", userLogin.getString("userLoginId"));
+                                serviceCtx.put("lastModifiedByUserLogin", userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
                                 serviceCtx.put("userLogin", userLogin);
                                 Map<String, Object> serviceResult = dispatcher.runSync("updateAllocationPlanItem", serviceCtx);
                                 if (ServiceUtil.isError(serviceResult)) {
@@ -7267,20 +7267,20 @@ public class OrderServices {
     public static Map<String, Object> createAllocationPlanAndItems(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
-        String productId = (String) context.get("productId");
-        Integer itemListSize = (Integer) context.get("itemListSize");
-        Map<String, String> itemOrderIdMap = UtilGenerics.cast(context.get("itemOrderIdMap"));
-        Map<String, String> itemOrderItemSeqIdMap = UtilGenerics.cast(context.get("itemOrderItemSeqIdMap"));
-        Map<String, String> itemAllocatedQuantityMap = UtilGenerics.cast(context.get("itemAllocatedQuantityMap"));
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        Integer itemListSize = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.itemListSize);
+        Map<String, String> itemOrderIdMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemOrderIdMap));
+        Map<String, String> itemOrderItemSeqIdMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemOrderItemSeqIdMap));
+        Map<String, String> itemAllocatedQuantityMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemAllocatedQuantityMap));
         Map<String, Object> serviceResult = new HashMap<>();
         Map<String, Object> serviceCtx = new HashMap<>();
         String planId = null;
 
         try {
             if (itemListSize > 0) {
-                String userLoginId = userLogin.getString("userLoginId");
+                String userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
                 //Create Allocation Plan Header
                 serviceCtx = new HashMap<>();
                 planId = delegator.getNextSeqId("AllocationPlanHeader");
@@ -7339,12 +7339,12 @@ public class OrderServices {
     public static Map<String, Object> isInventoryAllocationRequired(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         Boolean allocateInventory = false;
-        Map<String, Object> serviceContext = UtilGenerics.cast(context.get("serviceContext"));
+        Map<String, Object> serviceContext = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.serviceContext));
         String orderId = (String) serviceContext.get("orderId");
 
         OrderReadHelper orderReadHelper = new OrderReadHelper(delegator, orderId);
         GenericValue productStore = orderReadHelper.getProductStore();
-        if (productStore != null && "Y".equals(productStore.getString("allocateInventory"))) {
+        if (productStore != null && "Y".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.allocateInventory))) {
             allocateInventory = true;
         }
         Map<String, Object> serviceResult = new HashMap<>();
@@ -7355,14 +7355,14 @@ public class OrderServices {
     public static Map<String, Object> updateAllocationPlanItems(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
-        String planId = (String) context.get("planId");
-        Map<String, String> orderIdMap = UtilGenerics.cast(context.get("orderIdMap"));
-        Map<String, String> productIdMap = UtilGenerics.cast(context.get("productIdMap"));
-        Map<String, String> allocatedQuantityMap = UtilGenerics.cast(context.get("allocatedQuantityMap"));
-        Map<String, String> prioritySeqIdMap = UtilGenerics.cast(context.get("prioritySeqIdMap"));
-        Map<String, String> rowSubmitMap = UtilGenerics.cast(context.get("rowSubmitMap"));
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String planId = (String) context.get(org.apache.ofbiz.persistence.entity.x.planId);
+        Map<String, String> orderIdMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderIdMap));
+        Map<String, String> productIdMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.productIdMap));
+        Map<String, String> allocatedQuantityMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.allocatedQuantityMap));
+        Map<String, String> prioritySeqIdMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.prioritySeqIdMap));
+        Map<String, String> rowSubmitMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.rowSubmitMap));
         Map<String, Object> serviceCtx = new HashMap<>();
         Map<String, Object> serviceResult = new HashMap<>();
         Boolean changeHeaderStatus = false;
@@ -7388,7 +7388,7 @@ public class OrderServices {
                 GenericValue allocationPlanItem = EntityQuery.use(delegator).from("AllocationPlanItem").where("planId", planId, "planItemSeqId",
                         planItemSeqId, "productId", productId).queryOne();
                 if (allocationPlanItem != null) {
-                    BigDecimal oldAllocatedQuantity = allocationPlanItem.getBigDecimal("allocatedQuantity");
+                    BigDecimal oldAllocatedQuantity = allocationPlanItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.allocatedQuantity);
                     if (oldAllocatedQuantity != null && oldAllocatedQuantity.compareTo(allocatedQuantity) > 0) {
                         reReservePlanItemSeqIdList.add(planItemSeqId);
                     }
@@ -7397,7 +7397,7 @@ public class OrderServices {
                     serviceCtx.put("prioritySeqId", prioritySeqId);
                     serviceCtx.put("planItemSeqId", planItemSeqId);
                     serviceCtx.put("productId", productId);
-                    serviceCtx.put("lastModifiedByUserLogin", userLogin.getString("userLoginId"));
+                    serviceCtx.put("lastModifiedByUserLogin", userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
                     serviceCtx.put("userLogin", userLogin);
                     if (rowSubmit != null && "Y".equals(rowSubmit)) {
                         serviceCtx.put("allocatedQuantity", allocatedQuantity);
@@ -7416,7 +7416,7 @@ public class OrderServices {
                 String orderId = orderIdMap.get(planItemSeqId);
                 GenericValue orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
                 if (orderHeader != null && facilityId == null) {
-                    facilityId = orderHeader.getString("originFacilityId");
+                    facilityId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.originFacilityId);
                 }
             }
 
@@ -7425,7 +7425,7 @@ public class OrderServices {
                 serviceCtx.put("planId", planId);
                 serviceCtx.put("productId", productId);
                 serviceCtx.put("statusId", "ALLOC_PLAN_CREATED");
-                serviceCtx.put("lastModifiedByUserLogin", userLogin.getString("userLoginId"));
+                serviceCtx.put("lastModifiedByUserLogin", userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
                 serviceCtx.put("userLogin", userLogin);
                 serviceResult = dispatcher.runSync("updateAllocationPlanHeader", serviceCtx);
                 if (ServiceUtil.isError(serviceResult)) {
@@ -7461,23 +7461,23 @@ public class OrderServices {
     public static Map<String, Object> sendPOEmail(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
-        String emailTemplateSettingId = (String) context.get("emailTemplateSettingId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String emailTemplateSettingId = (String) context.get(org.apache.ofbiz.persistence.entity.x.emailTemplateSettingId);
 
         if (orderId != null && emailTemplateSettingId != null) {
             try {
                 GenericValue orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
 
-                if (orderHeader != null && "PURCHASE_ORDER".equals(orderHeader.getString("orderTypeId"))) {
+                if (orderHeader != null && "PURCHASE_ORDER".equals(orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderTypeId))) {
                     GenericValue vendor = EntityQuery.use(delegator)
                             .from("OrderRole")
                             .where("orderId", orderId, "roleTypeId", "BILL_FROM_VENDOR")
                             .queryFirst();
                     if (vendor != null) {
-                        String partyIdTo = vendor.getString("partyId");
+                        String partyIdTo = vendor.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                         GenericValue contactMech = PartyWorker.findPartyLatestContactMech(partyIdTo, "EMAIL_ADDRESS", delegator);
-                        if (contactMech != null && contactMech.getString("infoString") != null) {
+                        if (contactMech != null && contactMech.getString(org.apache.ofbiz.persistence.entity.x.infoString) != null) {
                             GenericValue emailTemplateSetting = EntityQuery.use(delegator)
                                     .from("EmailTemplateSetting")
                                     .where("emailTemplateSettingId", emailTemplateSettingId)
@@ -7489,13 +7489,13 @@ public class OrderServices {
                                         .where("orderId", orderId, "roleTypeId", "BILL_TO_CUSTOMER")
                                         .queryFirst();
                                 if (company != null) {
-                                    partyIdFrom = company.getString("partyId");
+                                    partyIdFrom = company.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                                 }
                                 Map<String, Object> bodyParameters = UtilMisc.toMap("orderId", orderId, "partyIdTo", partyIdTo,
                                         "partyIdFrom", partyIdFrom);
 
                                 Map<String, Object> emailCtx = UtilMisc.toMap("emailTemplateSettingId", emailTemplateSettingId, "sendTo",
-                                        contactMech.getString("infoString"), "bodyParameters", bodyParameters);
+                                        contactMech.getString(org.apache.ofbiz.persistence.entity.x.infoString), "bodyParameters", bodyParameters);
                                 emailCtx.put("userLogin", userLogin);
                                 dispatcher.runAsync("sendMailFromTemplateSetting", emailCtx);
                             }

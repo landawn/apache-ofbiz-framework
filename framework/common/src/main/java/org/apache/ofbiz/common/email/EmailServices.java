@@ -101,21 +101,21 @@ public class EmailServices {
      */
     public static Map<String, Object> sendMail(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        String communicationEventId = (String) context.get("communicationEventId");
-        String orderId = (String) context.get("orderId");
-        String returnId = (String) context.get("returnId");
-        Locale locale = (Locale) context.get("locale");
+        String communicationEventId = (String) context.get(org.apache.ofbiz.persistence.entity.x.communicationEventId);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String returnId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (communicationEventId != null) {
             Debug.logInfo("SendMail Running, for communicationEventId : " + communicationEventId, MODULE);
         }
         Map<String, Object> results = ServiceUtil.returnSuccess();
-        String subject = (String) context.get("subject");
+        String subject = (String) context.get(org.apache.ofbiz.persistence.entity.x.subject);
         subject = FlexibleStringExpander.expandString(subject, context);
 
-        String partyId = (String) context.get("partyId");
-        String body = (String) context.get("body");
-        List<Map<String, Object>> bodyParts = UtilGenerics.cast(context.get("bodyParts"));
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String body = (String) context.get(org.apache.ofbiz.persistence.entity.x.body);
+        List<Map<String, Object>> bodyParts = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.bodyParts));
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
 
         results.put("communicationEventId", communicationEventId);
         results.put("partyId", partyId);
@@ -136,9 +136,9 @@ public class EmailServices {
         }
         results.put("userLogin", userLogin);
 
-        String sendTo = (String) context.get("sendTo");
-        String sendCc = (String) context.get("sendCc");
-        String sendBcc = (String) context.get("sendBcc");
+        String sendTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.sendTo);
+        String sendCc = (String) context.get(org.apache.ofbiz.persistence.entity.x.sendCc);
+        String sendBcc = (String) context.get(org.apache.ofbiz.persistence.entity.x.sendBcc);
 
         // check to see if we should redirect all mail for testing
         String redirectAddress = EntityUtilProperties.getPropertyValue("general", "mail.notifications.redirectTo", delegator);
@@ -161,22 +161,22 @@ public class EmailServices {
             }
         }
 
-        String sendFrom = (String) context.get("sendFrom");
+        String sendFrom = (String) context.get(org.apache.ofbiz.persistence.entity.x.sendFrom);
         if (UtilValidate.isEmpty(sendFrom)) {
             sendFrom = EntityUtilProperties.getPropertyValue("general", "defaultFromEmailAddress", delegator);
         }
-        String sendType = (String) context.get("sendType");
-        String port = (String) context.get("port");
-        String socketFactoryClass = (String) context.get("socketFactoryClass");
-        String socketFactoryPort = (String) context.get("socketFactoryPort");
-        String socketFactoryFallback = (String) context.get("socketFactoryFallback");
-        String sendVia = (String) context.get("sendVia");
-        String authUser = (String) context.get("authUser");
-        String authPass = (String) context.get("authPass");
-        String messageId = (String) context.get("messageId");
-        String contentType = (String) context.get("contentType");
-        Boolean sendPartial = (Boolean) context.get("sendPartial");
-        Boolean isStartTLSEnabled = (Boolean) context.get("startTLSEnabled");
+        String sendType = (String) context.get(org.apache.ofbiz.persistence.entity.x.sendType);
+        String port = (String) context.get(org.apache.ofbiz.persistence.entity.x.port);
+        String socketFactoryClass = (String) context.get(org.apache.ofbiz.persistence.entity.x.socketFactoryClass);
+        String socketFactoryPort = (String) context.get(org.apache.ofbiz.persistence.entity.x.socketFactoryPort);
+        String socketFactoryFallback = (String) context.get(org.apache.ofbiz.persistence.entity.x.socketFactoryFallback);
+        String sendVia = (String) context.get(org.apache.ofbiz.persistence.entity.x.sendVia);
+        String authUser = (String) context.get(org.apache.ofbiz.persistence.entity.x.authUser);
+        String authPass = (String) context.get(org.apache.ofbiz.persistence.entity.x.authPass);
+        String messageId = (String) context.get(org.apache.ofbiz.persistence.entity.x.messageId);
+        String contentType = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentType);
+        Boolean sendPartial = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.sendPartial);
+        Boolean isStartTLSEnabled = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.startTLSEnabled);
 
         boolean useSmtpAuth = false;
 
@@ -362,7 +362,7 @@ public class EmailServices {
                     break;
                 }
             }
-            Boolean sendFailureNotification = (Boolean) context.get("sendFailureNotification");
+            Boolean sendFailureNotification = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.sendFailureNotification);
             if (sendFailureNotification == null || sendFailureNotification) {
                 sendFailureNotification(ctx, context, mail, failedAddresses);
                 results.put("messageWrapper", new MimeMessageWrapper(session, mail));
@@ -690,12 +690,12 @@ public class EmailServices {
     }
     public static void sendFailureNotification(DispatchContext dctx, Map<String, ? extends Object> context, MimeMessage message,
                                                List<SMTPAddressFailedException> failures) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> newContext = new LinkedHashMap<>();
-        newContext.put("userLogin", context.get("userLogin"));
+        newContext.put("userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
         newContext.put("sendFailureNotification", false);
-        newContext.put("sendFrom", context.get("sendFrom"));
-        newContext.put("sendTo", context.get("sendFrom"));
+        newContext.put("sendFrom", context.get(org.apache.ofbiz.persistence.entity.x.sendFrom));
+        newContext.put("sendTo", context.get(org.apache.ofbiz.persistence.entity.x.sendFrom));
         newContext.put("subject", UtilProperties.getMessage(RESOURCE, "CommonEmailSendUndeliveredMail", locale));
         StringBuilder sb = new StringBuilder();
         sb.append(UtilProperties.getMessage(RESOURCE, "CommonEmailDeliveryFailed", locale));

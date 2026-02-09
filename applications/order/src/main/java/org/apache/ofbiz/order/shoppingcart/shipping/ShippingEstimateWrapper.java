@@ -85,8 +85,8 @@ public class ShippingEstimateWrapper {
                 for (ShoppingCartItem item : cart.getShipGroupItems(shipGroup).keySet()) {
                     GenericValue allowanceProductPrice = EntityQuery.use(delegator).from("ProductPrice").where("productPriceTypeId",
                             "SHIPPING_ALLOWANCE", "productId", item.getProductId()).filterByDate().queryFirst();
-                    if (allowanceProductPrice != null && UtilValidate.isNotEmpty(allowanceProductPrice.get("price"))) {
-                        totalAllowance = totalAllowance.add(allowanceProductPrice.getBigDecimal("price")).multiply(item.getQuantity());
+                    if (allowanceProductPrice != null && UtilValidate.isNotEmpty(allowanceProductPrice.get(org.apache.ofbiz.persistence.entity.x.price))) {
+                        totalAllowance = totalAllowance.add(allowanceProductPrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price)).multiply(item.getQuantity());
                     }
                 }
             } catch (GenericEntityException gee) {
@@ -118,11 +118,11 @@ public class ShippingEstimateWrapper {
         this.shippingEstimates = new HashMap<>();
         if (shippingMethods != null) {
             for (GenericValue shipMethod : shippingMethods) {
-                String shippingMethodTypeId = shipMethod.getString("shipmentMethodTypeId");
-                String carrierRoleTypeId = shipMethod.getString("roleTypeId");
-                String carrierPartyId = shipMethod.getString("partyId");
-                String productStoreShipMethId = shipMethod.getString("productStoreShipMethId");
-                String shippingCmId = shippingAddress != null ? shippingAddress.getString("contactMechId") : null;
+                String shippingMethodTypeId = shipMethod.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId);
+                String carrierRoleTypeId = shipMethod.getString(org.apache.ofbiz.persistence.entity.x.roleTypeId);
+                String carrierPartyId = shipMethod.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+                String productStoreShipMethId = shipMethod.getString(org.apache.ofbiz.persistence.entity.x.productStoreShipMethId);
+                String shippingCmId = shippingAddress != null ? shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.contactMechId) : null;
 
                 Map<String, Object> estimateMap = ShippingEvents.getShipGroupEstimate(dispatcher, delegator, "SALES_ORDER",
                         shippingMethodTypeId, carrierPartyId, carrierRoleTypeId, shippingCmId, productStoreId,
@@ -145,9 +145,9 @@ public class ShippingEstimateWrapper {
 
         if (shippingMethods != null) {
             for (GenericValue shipMethod : shippingMethods) {
-                String shipmentMethodTypeId = shipMethod.getString("shipmentMethodTypeId");
-                String carrierRoleTypeId = shipMethod.getString("roleTypeId");
-                String carrierPartyId = shipMethod.getString("partyId");
+                String shipmentMethodTypeId = shipMethod.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId);
+                String carrierRoleTypeId = shipMethod.getString(org.apache.ofbiz.persistence.entity.x.roleTypeId);
+                String carrierPartyId = shipMethod.getString(org.apache.ofbiz.persistence.entity.x.partyId);
 
                 shippingTimeEstimates.addAll(ShippingEvents.getShipmentTimeEstimates(delegator, shipmentMethodTypeId, carrierPartyId,
                         carrierRoleTypeId, shippingAddress, originAddress));

@@ -83,7 +83,7 @@ public final class WorkEffortWorker {
         Set<String> keys = new HashSet<>();
         Set<GenericValue> exclusions = new HashSet<>();
         for (GenericValue workEffort : workEfforts) {
-            String workEffortId = workEffort.getString("workEffortId");
+            String workEffortId = workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
             if (keys.contains(workEffortId)) {
                 exclusions.add(workEffort);
             } else {

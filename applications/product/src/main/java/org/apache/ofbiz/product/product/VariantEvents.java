@@ -100,17 +100,17 @@ public class VariantEvents {
                 if (variantProduct == null) {
                     //if product does not exist
                     variantProduct = GenericValue.create(product);
-                    variantProduct.set("productId", variantProductId);
-                    variantProduct.set("isVirtual", "N");
-                    variantProduct.set("isVariant", "Y");
-                    variantProduct.set("primaryProductCategoryId", null);
+                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.productId, variantProductId);
+                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.isVirtual, "N");
+                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.isVariant, "Y");
+                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.primaryProductCategoryId, null);
                     //create new
                     variantProduct.create();
                 } else {
                     //if product does exist
-                    variantProduct.set("isVirtual", "N");
-                    variantProduct.set("isVariant", "Y");
-                    variantProduct.set("primaryProductCategoryId", null);
+                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.isVirtual, "N");
+                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.isVariant, "Y");
+                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.primaryProductCategoryId, null);
                     //update entry
                     variantProduct.store();
                 }
@@ -142,7 +142,7 @@ public class VariantEvents {
 
                     // set the default seq num if it's there...
                     if (productFeature != null) {
-                        productFeatureAppl.set("sequenceNum", productFeature.get("defaultSequenceNum"));
+                        productFeatureAppl.set(org.apache.ofbiz.persistence.entity.x.sequenceNum, productFeature.get(org.apache.ofbiz.persistence.entity.x.defaultSequenceNum));
                     }
 
                     productFeatureAppl.create();

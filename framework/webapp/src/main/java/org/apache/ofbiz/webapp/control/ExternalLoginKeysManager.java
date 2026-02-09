@@ -127,7 +127,7 @@ public class ExternalLoginKeysManager {
             HttpSession session = request.getSession();
             GenericValue currentUserLogin = (GenericValue) session.getAttribute("userLogin");
             if (currentUserLogin != null) {
-                if (currentUserLogin.getString("userLoginId").equals(userLogin.getString("userLoginId"))) {
+                if (currentUserLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId).equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId))) {
                     // same user, just make sure the autoUserLogin is set to the same and that the client cookie has the correct userLoginId
                     LoginWorker.autoLoginSet(request, response);
                     // Same for the SecuredLoginId cookie

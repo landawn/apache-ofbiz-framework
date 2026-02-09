@@ -100,7 +100,7 @@ public class WorkEffortContentWrapper implements ContentWrapper {
     public String getContentId(String contentTypeId) {
         GenericValue workEffortContent = getFirstWorkEffortContentByType(null, workEffort, contentTypeId, workEffort.getDelegator(), true);
         if (workEffortContent != null) {
-            return workEffortContent.getString("contentId");
+            return workEffortContent.getString(org.apache.ofbiz.persistence.entity.x.contentId);
         } else {
             return null;
         }
@@ -116,14 +116,14 @@ public class WorkEffortContentWrapper implements ContentWrapper {
         if (workEffortContent != null) {
             GenericValue content;
             try {
-                content = workEffortContent.getRelatedOne("Content", false);
+                content = workEffortContent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Content, false);
             } catch (GeneralException e) {
                 Debug.logError(e, MODULE);
                 return null;
             }
 
             if (content != null) {
-                return content.getString("contentName");
+                return content.getString(org.apache.ofbiz.persistence.entity.x.contentName);
             }
         }
 
@@ -138,7 +138,7 @@ public class WorkEffortContentWrapper implements ContentWrapper {
     public Timestamp getFromDate(String contentTypeId) {
         GenericValue workEffortContent = getFirstWorkEffortContentByType(null, workEffort, contentTypeId, workEffort.getDelegator(), true);
         if (workEffortContent != null) {
-            return workEffortContent.getTimestamp("fromDate");
+            return workEffortContent.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate);
         } else {
             return null;
         }
@@ -154,7 +154,7 @@ public class WorkEffortContentWrapper implements ContentWrapper {
         if (workEffortContent != null) {
             GenericValue content;
             try {
-                content = workEffortContent.getRelatedOne("Content", false);
+                content = workEffortContent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Content, false);
             } catch (GeneralException e) {
                 Debug.logError(e, MODULE);
                 return null;
@@ -162,13 +162,13 @@ public class WorkEffortContentWrapper implements ContentWrapper {
             if (content != null) {
                 GenericValue dataResource;
                 try {
-                    dataResource = content.getRelatedOne("DataResource", false);
+                    dataResource = content.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DataResource, false);
                 } catch (GeneralException e) {
                     Debug.logError(e, MODULE);
                     return null;
                 }
                 if (dataResource != null) {
-                    return dataResource.getString("dataResourceId");
+                    return dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
                 }
             }
         }
@@ -211,7 +211,7 @@ public class WorkEffortContentWrapper implements ContentWrapper {
             }
 
             if (contentType != null) {
-                return contentType.getString("description");
+                return contentType.getString(org.apache.ofbiz.persistence.entity.x.description);
             }
         }
 
@@ -272,10 +272,10 @@ public class WorkEffortContentWrapper implements ContentWrapper {
         String cacheKey;
         if (contentId != null) {
             cacheKey = contentId + CACHE_KEY_SEPARATOR + locale + CACHE_KEY_SEPARATOR + mimeTypeId
-                    + CACHE_KEY_SEPARATOR + workEffort.get("workEffortId");
+                    + CACHE_KEY_SEPARATOR + workEffort.get(org.apache.ofbiz.persistence.entity.x.workEffortId);
         } else {
             cacheKey = workEffortContentTypeId + CACHE_KEY_SEPARATOR + locale + CACHE_KEY_SEPARATOR + mimeTypeId
-                    + CACHE_KEY_SEPARATOR + workEffort.get("workEffortId");
+                    + CACHE_KEY_SEPARATOR + workEffort.get(org.apache.ofbiz.persistence.entity.x.workEffortId);
         }
 
         try {
@@ -318,7 +318,7 @@ public class WorkEffortContentWrapper implements ContentWrapper {
             Locale locale, String mimeTypeId, Delegator delegator, LocalDispatcher dispatcher, Writer outWriter, boolean cache)
             throws GeneralException, IOException {
         if (workEffortId == null && workEffort != null) {
-            workEffortId = workEffort.getString("workEffortId");
+            workEffortId = workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
         }
 
         if (delegator == null && workEffort != null) {
@@ -346,7 +346,7 @@ public class WorkEffortContentWrapper implements ContentWrapper {
             Map<String, Object> inContext = new HashMap<>();
             inContext.put("workEffort", workEffort);
             inContext.put("workEffortContent", workEffortContent);
-            ContentWorker.renderContentAsText(dispatcher, workEffortContent.getString("contentId"), outWriter, inContext, locale, mimeTypeId,
+            ContentWorker.renderContentAsText(dispatcher, workEffortContent.getString(org.apache.ofbiz.persistence.entity.x.contentId), outWriter, inContext, locale, mimeTypeId,
                     null, null, false);
             return;
         }
@@ -369,7 +369,7 @@ public class WorkEffortContentWrapper implements ContentWrapper {
     public static List<String> getWorkEffortContentTextList(GenericValue workEffort, String workEffortContentTypeId, Locale locale,
             String mimeTypeId, Delegator delegator, LocalDispatcher dispatcher) throws GeneralException, IOException {
         List<GenericValue> partyContentList = EntityQuery.use(delegator).from("WorkEffortContent")
-                .where("workEffortId", workEffort.getString("partyId"), "workEffortContentTypeId", workEffortContentTypeId)
+                .where("workEffortId", workEffort.getString(org.apache.ofbiz.persistence.entity.x.partyId), "workEffortContentTypeId", workEffortContentTypeId)
                 .orderBy("-fromDate")
                 .cache(true)
                 .filterByDate()
@@ -382,7 +382,7 @@ public class WorkEffortContentWrapper implements ContentWrapper {
                 Map<String, Object> inContext = new HashMap<>();
                 inContext.put("workEffort", workEffort);
                 inContext.put("workEffortContent", workEffortContent);
-                ContentWorker.renderContentAsText(dispatcher, workEffortContent.getString("contentId"), outWriter, inContext, locale,
+                ContentWorker.renderContentAsText(dispatcher, workEffortContent.getString(org.apache.ofbiz.persistence.entity.x.contentId), outWriter, inContext, locale,
                         mimeTypeId, null, null, false);
                 contentList.add(outWriter.toString());
             }
@@ -394,7 +394,7 @@ public class WorkEffortContentWrapper implements ContentWrapper {
     public static GenericValue getFirstWorkEffortContentByType(String workEffortId, GenericValue workEffort, String workEffortContentTypeId,
                                                                Delegator delegator, boolean cache) {
         if (workEffortId == null && workEffort != null) {
-            workEffortId = workEffort.getString("workEffortId");
+            workEffortId = workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
         }
 
         if (delegator == null && workEffort != null) {

@@ -745,14 +745,14 @@ public class ValueLinkApi {
         }
 
         // merchant timestamp
-        String merchTime = (String) context.get("MerchTime");
+        String merchTime = (String) context.get(org.apache.ofbiz.persistence.entity.x.MerchTime);
         if (merchTime == null) {
             merchTime = this.getDateString();
         }
         request.put("MerchTime", merchTime);
 
         // transaction number
-        String termTxNo = (String) context.get("TermTxnNo");
+        String termTxNo = (String) context.get(org.apache.ofbiz.persistence.entity.x.TermTxnNo);
         if (termTxNo == null) {
             termTxNo = delegator.getNextSeqId("ValueLinkKey");
         }

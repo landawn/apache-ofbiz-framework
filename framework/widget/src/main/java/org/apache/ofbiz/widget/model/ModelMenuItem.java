@@ -202,7 +202,7 @@ public class ModelMenuItem extends ModelWidget {
 
     // Portal constructor
     private ModelMenuItem(GenericValue portalPage, ModelMenuItem parentMenuItem, Locale locale) {
-        super(portalPage.getString("portalPageId"));
+        super(portalPage.getString(org.apache.ofbiz.persistence.entity.x.portalPageId));
         this.actions = Collections.emptyList();
         this.align = "";
         this.alignStyle = "";
@@ -216,11 +216,11 @@ public class ModelMenuItem extends ModelWidget {
         this.menuItemList = Collections.emptyList();
         this.overrideName = "";
         this.parentMenuItem = null;
-        this.parentPortalPageId = FlexibleStringExpander.getInstance(portalPage.getString("parentPortalPageId"));
+        this.parentPortalPageId = FlexibleStringExpander.getInstance(portalPage.getString(org.apache.ofbiz.persistence.entity.x.parentPortalPageId));
         this.position = null;
         this.selectedStyle = "";
         this.subMenu = "";
-        this.title = FlexibleStringExpander.getInstance((String) portalPage.get("portalPageName", locale));
+        this.title = FlexibleStringExpander.getInstance((String) portalPage.get(org.apache.ofbiz.persistence.entity.x.portalPageName, locale));
         this.titleStyle = "";
         this.tooltip = FlexibleStringExpander.getInstance("");
         this.tooltipStyle = "";
@@ -651,9 +651,9 @@ public class ModelMenuItem extends ModelWidget {
             if (UtilValidate.isNotEmpty(parentPortalPageId)) {
                 List<GenericValue> portalPages = PortalPageWorker.getPortalPages(parentPortalPageId, context);
                 if (UtilValidate.isNotEmpty(portalPages)) {
-                    Locale locale = (Locale) context.get("locale");
+                    Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
                     for (GenericValue portalPage : portalPages) {
-                        if (UtilValidate.isNotEmpty(portalPage.getString("portalPageName"))) {
+                        if (UtilValidate.isNotEmpty(portalPage.getString(org.apache.ofbiz.persistence.entity.x.portalPageName))) {
                             ModelMenuItem localItem = new ModelMenuItem(portalPage, this, locale);
                             menuStringRenderer.renderMenuItem(writer, context, localItem);
                         }
@@ -702,8 +702,8 @@ public class ModelMenuItem extends ModelWidget {
             if (parentMenuItem.link != null) {
                 parameterList.addAll(parentMenuItem.link.getParameterList());
             }
-            parameterList.add(new Parameter("portalPageId", portalPage.getString("portalPageId"), false));
-            parameterList.add(new Parameter("parentPortalPageId", portalPage.getString("parentPortalPageId"), false));
+            parameterList.add(new Parameter("portalPageId", portalPage.getString(org.apache.ofbiz.persistence.entity.x.portalPageId), false));
+            parameterList.add(new Parameter("parentPortalPageId", portalPage.getString(org.apache.ofbiz.persistence.entity.x.parentPortalPageId), false));
             String target = "showPortalPage";
             if (parentMenuItem.link != null) {
                 target = parentMenuItem.link.getTargetExdr().getOriginal();

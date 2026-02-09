@@ -66,7 +66,7 @@ public class ProposedOrder {
     public ProposedOrder(GenericValue product, String facilityId, String manufacturingFacilityId, boolean isBuilt, Timestamp requiredByDate,
                          BigDecimal quantity) {
         this.product = product;
-        this.productId = product.getString("productId");
+        this.productId = product.getString(org.apache.ofbiz.persistence.entity.x.productId);
         this.facilityId = facilityId;
         this.manufacturingFacilityId = manufacturingFacilityId;
         this.isBuilt = isBuilt;
@@ -116,7 +116,7 @@ public class ProposedOrder {
             List<GenericValue> listRoutingTaskAssoc = null;
             if (routing == null) {
                 try {
-                    Map<String, Object> routingInMap = UtilMisc.<String, Object>toMap("productId", product.getString("productId"),
+                    Map<String, Object> routingInMap = UtilMisc.<String, Object>toMap("productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId),
                             "ignoreDefaultRouting", "Y", "userLogin", userLogin);
                     Map<String, Object> routingOutMap = dispatcher.runSync("getProductRouting", routingInMap);
                     if (ServiceUtil.isError(routingOutMap)) {
@@ -130,7 +130,7 @@ public class ProposedOrder {
                         BOMTree tree = null;
                         List<BOMNode> components = new LinkedList<>();
                         try {
-                            tree = new BOMTree(product.getString("productId"), "MANUF_COMPONENT", requiredByDate,
+                            tree = new BOMTree(product.getString(org.apache.ofbiz.persistence.entity.x.productId), "MANUF_COMPONENT", requiredByDate,
                                     BOMTree.EXPLOSION_SINGLE_LEVEL, delegator, dispatcher, userLogin);
                             tree.setRootQuantity(quantity);
                             tree.print(components, true);
@@ -159,7 +159,7 @@ public class ProposedOrder {
                 //Looks for all the routingTask (ordered by inversed (begin from the end) sequence number)
                 if (listRoutingTaskAssoc == null) {
                     try {
-                        Map<String, Object> routingTasksInMap = UtilMisc.<String, Object>toMap("workEffortId", routing.getString("workEffortId"),
+                        Map<String, Object> routingTasksInMap = UtilMisc.<String, Object>toMap("workEffortId", routing.getString(org.apache.ofbiz.persistence.entity.x.workEffortId),
                                 "userLogin", userLogin);
                         Map<String, Object> routingTasksOutMap = dispatcher.runSync("getRoutingTaskAssocs", routingTasksInMap);
                         if (ServiceUtil.isError(routingTasksOutMap)) {
@@ -178,7 +178,7 @@ public class ProposedOrder {
                     if (EntityUtil.isValueActive(routingTaskAssoc, endDate)) {
                         GenericValue routingTask = null;
                         try {
-                            routingTask = routingTaskAssoc.getRelatedOne("ToWorkEffort", true);
+                            routingTask = routingTaskAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ToWorkEffort, true);
                         } catch (GenericEntityException e) {
                             Debug.logError(e.getMessage(), MODULE);
                         }
@@ -190,13 +190,13 @@ public class ProposedOrder {
                         }
                         startDate = TechDataServices.addBackward(TechDataServices.getTechDataCalendar(routingTask), endDate, totalTime);
                         // record the routingTask with the startDate associated
-                        result.put(routingTask.getString("workEffortId"), startDate);
+                        result.put(routingTask.getString(org.apache.ofbiz.persistence.entity.x.workEffortId), startDate);
                         endDate = startDate;
                     }
                 }
             } else {
                 // routing is null
-                Debug.logError("No routing found for product = " + product.getString("productId"), MODULE);
+                Debug.logError("No routing found for product = " + product.getString(org.apache.ofbiz.persistence.entity.x.productId), MODULE);
             }
         } else {
             // the product is purchased
@@ -233,7 +233,7 @@ public class ProposedOrder {
      * @return String the requirementId
      **/
     public String create(DispatchContext ctx, GenericValue userLogin) {
-        if ("WIP".equals(product.getString("productTypeId"))) {
+        if ("WIP".equals(product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId))) {
             // No requirements for Work In Process products
             return null;
         }

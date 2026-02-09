@@ -488,7 +488,7 @@ public final class RequestHandler {
                     if (webSiteId != null) {
                         try {
                             GenericValue webSite = EntityQuery.use(delegator).from("WebSite").where("webSiteId", webSiteId).cache().queryOne();
-                            if (webSite != null) enableHttps = webSite.getBoolean("enableHttps");
+                            if (webSite != null) enableHttps = webSite.getBoolean(org.apache.ofbiz.persistence.entity.x.enableHttps);
                         } catch (GenericEntityException e) {
                             Debug.logWarning(e, "Problems with WebSite entity; using global defaults", MODULE);
                         }
@@ -1449,10 +1449,10 @@ public final class RequestHandler {
                 if (webSiteValue != null) {
                     ServletContext application = (request.getServletContext());
                     String domainName = request.getLocalName();
-                    if (application.getAttribute("MULTI_SITE_ENABLED") != null && UtilValidate.isNotEmpty(webSiteValue.getString("hostedPathAlias"))
-                            && !domainName.equals(webSiteValue.getString("httpHost"))) {
+                    if (application.getAttribute("MULTI_SITE_ENABLED") != null && UtilValidate.isNotEmpty(webSiteValue.getString(org.apache.ofbiz.persistence.entity.x.hostedPathAlias))
+                            && !domainName.equals(webSiteValue.getString(org.apache.ofbiz.persistence.entity.x.httpHost))) {
                         newURL.append('/');
-                        newURL.append(webSiteValue.getString("hostedPathAlias"));
+                        newURL.append(webSiteValue.getString(org.apache.ofbiz.persistence.entity.x.hostedPathAlias));
                     }
                 }
             } catch (GenericEntityException e) {

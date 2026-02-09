@@ -61,7 +61,7 @@ public class HtmlTreeRenderer extends HtmlWidgetRenderer implements TreeStringRe
     @Override
     public void renderNodeBegin(Appendable writer, Map<String, Object> context, ModelTree.ModelNode node, int depth) throws IOException {
         String currentNodeTrailPiped = null;
-        Object obj = context.get("currentNodeTrail");
+        Object obj = context.get(org.apache.ofbiz.persistence.entity.x.currentNodeTrail);
         List<String> currentNodeTrail = (obj instanceof List) ? UtilGenerics.cast(obj) : null;
         if (node.isRootNode()) {
             appendWhitespace(writer);
@@ -85,7 +85,7 @@ public class HtmlTreeRenderer extends HtmlWidgetRenderer implements TreeStringRe
         // check to see if this node needs to be expanded.
         if (hasChildren && node.isExpandCollapse()) {
             String targetEntityId = null;
-            Object obj1 = context.get("targetNodeTrail");
+            Object obj1 = context.get(org.apache.ofbiz.persistence.entity.x.targetNodeTrail);
             List<String> targetNodeTrail = (obj1 instanceof List) ? UtilGenerics.cast(obj1) : null;
             if (targetNodeTrail != null && depth < targetNodeTrail.size()) {
                 targetEntityId = targetNodeTrail.get(depth);
@@ -96,7 +96,7 @@ public class HtmlTreeRenderer extends HtmlWidgetRenderer implements TreeStringRe
             if (depth >= openDepth && (targetEntityId == null || !targetEntityId.equals(entityId))) {
                 // Not on the trail
                 if (node.showPeers(depth, context)) {
-                    context.put("processChildren", Boolean.FALSE);
+                    context.put(org.apache.ofbiz.persistence.entity.x.processChildren, Boolean.FALSE);
                     currentNodeTrailPiped = StringUtil.join(currentNodeTrail, "|");
                     StringBuilder target = new StringBuilder(node.getModelTree().getExpandCollapseRequest(context));
                     String trailName = node.getModelTree().getTrailName(context);
@@ -109,7 +109,7 @@ public class HtmlTreeRenderer extends HtmlWidgetRenderer implements TreeStringRe
                     expandCollapseLink = new ModelTree.ModelNode.Link("collapsed", target.toString(), " ");
                 }
             } else {
-                context.put("processChildren", Boolean.TRUE);
+                context.put(org.apache.ofbiz.persistence.entity.x.processChildren, Boolean.TRUE);
                 String lastContentId = currentNodeTrail.remove(currentNodeTrail.size() - 1);
                 currentNodeTrailPiped = StringUtil.join(currentNodeTrail, "|");
                 if (currentNodeTrailPiped == null) {
@@ -131,7 +131,7 @@ public class HtmlTreeRenderer extends HtmlWidgetRenderer implements TreeStringRe
                 renderLink(writer, context, expandCollapseLink);
             }
         } else if (!hasChildren) {
-            context.put("processChildren", Boolean.FALSE);
+            context.put(org.apache.ofbiz.persistence.entity.x.processChildren, Boolean.FALSE);
             ModelTree.ModelNode.Link expandCollapseLink = new ModelTree.ModelNode.Link("leafnode", "", " ");
             renderLink(writer, context, expandCollapseLink);
         }
@@ -139,7 +139,7 @@ public class HtmlTreeRenderer extends HtmlWidgetRenderer implements TreeStringRe
 
     @Override
     public void renderNodeEnd(Appendable writer, Map<String, Object> context, ModelTree.ModelNode node) throws IOException {
-        Boolean processChildren = (Boolean) context.get("processChildren");
+        Boolean processChildren = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.processChildren);
         if (processChildren) {
             appendWhitespace(writer);
             writer.append("</ul>");
@@ -156,7 +156,7 @@ public class HtmlTreeRenderer extends HtmlWidgetRenderer implements TreeStringRe
 
     @Override
     public void renderLastElement(Appendable writer, Map<String, Object> context, ModelTree.ModelNode node) throws IOException {
-        Boolean processChildren = (Boolean) context.get("processChildren");
+        Boolean processChildren = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.processChildren);
         if (processChildren) {
             appendWhitespace(writer);
             writer.append("<ul class=\"basic-tree\">");
@@ -230,8 +230,8 @@ public class HtmlTreeRenderer extends HtmlWidgetRenderer implements TreeStringRe
             writer.append(" href=\"");
             String urlMode = link.getUrlMode();
             String prefix = link.getPrefix(context);
-            HttpServletResponse res = (HttpServletResponse) context.get("response");
-            HttpServletRequest req = (HttpServletRequest) context.get("request");
+            HttpServletResponse res = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
+            HttpServletRequest req = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
             if (urlMode != null && "intra-app".equalsIgnoreCase(urlMode)) {
                 if (req != null && res != null) {
                     final URI uri = WidgetWorker.buildHyperlinkUri(target, link.getUrlMode(),
@@ -318,8 +318,8 @@ public class HtmlTreeRenderer extends HtmlWidgetRenderer implements TreeStringRe
             boolean fullPath = false;
             boolean secure = false;
             boolean encode = false;
-            HttpServletResponse response = (HttpServletResponse) context.get("response");
-            HttpServletRequest request = (HttpServletRequest) context.get("request");
+            HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
+            HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
             if (urlMode != null && "intra-app".equalsIgnoreCase(urlMode)) {
                 if (request != null && response != null) {
                     RequestHandler rh = RequestHandler.from(request);
@@ -346,9 +346,9 @@ public class HtmlTreeRenderer extends HtmlWidgetRenderer implements TreeStringRe
 
     @Override
     public ScreenStringRenderer getScreenStringRenderer(Map<String, Object> context) {
-        VisualTheme visualTheme = (VisualTheme) context.get("visualTheme");
+        VisualTheme visualTheme = (VisualTheme) context.get(org.apache.ofbiz.persistence.entity.x.visualTheme);
         ModelTheme modelTheme = visualTheme.getModelTheme();
-        ScreenRenderer screenRenderer = (ScreenRenderer) context.get("screens");
+        ScreenRenderer screenRenderer = (ScreenRenderer) context.get(org.apache.ofbiz.persistence.entity.x.screens);
         if (screenRenderer != null) {
             screenStringRenderer = screenRenderer.getScreenStringRenderer();
         } else {

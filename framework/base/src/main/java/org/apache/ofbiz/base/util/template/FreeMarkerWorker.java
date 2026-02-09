@@ -249,13 +249,13 @@ public final class FreeMarkerWorker {
      * @param context The context Map containing the user settings
      */
     private static void applyUserSettings(Environment env, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (locale == null) {
             locale = Locale.getDefault();
         }
         env.setLocale(locale);
 
-        TimeZone timeZone = (TimeZone) context.get("timeZone");
+        TimeZone timeZone = (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone);
         if (timeZone == null) {
             timeZone = TimeZone.getDefault();
         }

@@ -183,10 +183,10 @@ public final class ServiceUtil {
     public static String getPartyIdCheckSecurity(GenericValue userLogin, Security security, Map<String, ? extends Object> context,
                                                  Map<String, Object> result, String secEntity, String secOperation, String adminSecEntity,
                                                  String adminSecOperation) {
-        String partyId = (String) context.get("partyId");
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
         Locale locale = getLocale(context);
         if (UtilValidate.isEmpty(partyId)) {
-            partyId = userLogin.getString("partyId");
+            partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
         }
 
         // partyId might be null, so check it
@@ -198,7 +198,7 @@ public final class ServiceUtil {
         }
 
         // <b>security check</b>: userLogin partyId must equal partyId, or must have either of the two permissions
-        if (!partyId.equals(userLogin.getString("partyId"))) {
+        if (!partyId.equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId))) {
             if (!security.hasEntityPermission(secEntity, secOperation, userLogin) && !(adminSecEntity != null && adminSecOperation != null
                     && security.hasEntityPermission(adminSecEntity, adminSecOperation, userLogin))) {
                 result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
@@ -392,8 +392,8 @@ public final class ServiceUtil {
     }
 
     public static Map<String, Object> genericDateCondition(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Timestamp fromDate = (Timestamp) context.get("fromDate");
-        Timestamp thruDate = (Timestamp) context.get("thruDate");
+        Timestamp fromDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
+        Timestamp thruDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.thruDate);
         Timestamp now = UtilDateTime.nowTimestamp();
         boolean reply = true;
 
@@ -410,7 +410,7 @@ public final class ServiceUtil {
     }
 
     public static GenericValue getUserLogin(DispatchContext dctx, Map<String, ? extends Object> context, String runAsUser) {
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         Delegator delegator = dctx.getDelegator();
         if (UtilValidate.isNotEmpty(runAsUser)) {
             try {
@@ -426,7 +426,7 @@ public final class ServiceUtil {
     }
 
     public static Locale getLocale(Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (locale == null) {
             locale = Locale.getDefault();
         }

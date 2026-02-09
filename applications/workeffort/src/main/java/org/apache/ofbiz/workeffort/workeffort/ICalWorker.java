@@ -79,8 +79,8 @@ public final class ICalWorker {
             String attributeName = attributeEnum.nextElement();
             context.put(attributeName, request.getAttribute(attributeName));
         }
-        context.put("parameters", request.getParameterMap());
-        context.put("locale", UtilHttp.getLocale(request));
+        context.put(org.apache.ofbiz.persistence.entity.x.parameters, request.getParameterMap());
+        context.put(org.apache.ofbiz.persistence.entity.x.locale, UtilHttp.getLocale(request));
         return context;
     }
 
@@ -130,11 +130,11 @@ public final class ICalWorker {
         String workEffortId = (String) request.getAttribute("workEffortId");
         Delegator delegator = (Delegator) request.getAttribute("delegator");
         GenericValue publishProperties = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", workEffortId).queryOne();
-        GenericValue iCalData = publishProperties.getRelatedOne("WorkEffortIcalData", false);
+        GenericValue iCalData = publishProperties.getRelatedOne(org.apache.ofbiz.persistence.entity.x.WorkEffortIcalData, false);
         if (iCalData != null) {
-            return iCalData.getTimestamp("lastUpdatedStamp");
+            return iCalData.getTimestamp(org.apache.ofbiz.persistence.entity.x.lastUpdatedStamp);
         }
-        return publishProperties.getTimestamp("lastUpdatedStamp");
+        return publishProperties.getTimestamp(org.apache.ofbiz.persistence.entity.x.lastUpdatedStamp);
     }
 
     public static void handleGetRequest(HttpServletRequest request, HttpServletResponse response, ServletContext context) throws IOException {
@@ -275,11 +275,11 @@ public final class ICalWorker {
         request.setAttribute("userLogin", userLogin);
         session.setAttribute("userLogin", userLogin);
         VisitHandler.getVisitor(request, response);
-        GenericValue person = userLogin.getRelatedOne("Person", false);
+        GenericValue person = userLogin.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Person, false);
         if (person != null) {
             request.setAttribute("person", person);
         } else {
-            GenericValue partyGroup = userLogin.getRelatedOne("PartyGroup", false);
+            GenericValue partyGroup = userLogin.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PartyGroup, false);
             if (partyGroup != null) {
                 request.setAttribute("partyGroup", partyGroup);
             }

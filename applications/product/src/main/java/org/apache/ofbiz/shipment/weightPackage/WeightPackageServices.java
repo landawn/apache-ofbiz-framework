@@ -38,15 +38,15 @@ public class WeightPackageServices {
 
     public static Map<String, Object> setPackageInfo(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        WeightPackageSession weightPackageSession = (WeightPackageSession) context.get("weightPackageSession");
-        Locale locale = (Locale) context.get("locale");
+        WeightPackageSession weightPackageSession = (WeightPackageSession) context.get(org.apache.ofbiz.persistence.entity.x.weightPackageSession);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        String orderId = (String) context.get("orderId");
-        BigDecimal packageWeight = (BigDecimal) context.get("packageWeight");
-        BigDecimal packageLength = (BigDecimal) context.get("packageLength");
-        BigDecimal packageWidth = (BigDecimal) context.get("packageWidth");
-        BigDecimal packageHeight = (BigDecimal) context.get("packageHeight");
-        String shipmentBoxTypeId = (String) context.get("shipmentBoxTypeId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        BigDecimal packageWeight = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.packageWeight);
+        BigDecimal packageLength = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.packageLength);
+        BigDecimal packageWidth = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.packageWidth);
+        BigDecimal packageHeight = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.packageHeight);
+        String shipmentBoxTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentBoxTypeId);
 
         // User can either enter all the dimensions or shipment box type, but not both
         if (UtilValidate.isNotEmpty(packageLength) || UtilValidate.isNotEmpty(packageWidth) || UtilValidate.isNotEmpty(packageHeight)) {
@@ -71,7 +71,7 @@ public class WeightPackageServices {
                     "statusId", "ITEM_APPROVED").queryList();
             BigDecimal orderedItemQty = BigDecimal.ZERO;
             for (GenericValue orderItem : orderItems) {
-                orderedItemQty = orderedItemQty.add(orderItem.getBigDecimal("quantity"));
+                orderedItemQty = orderedItemQty.add(orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
             }
             int packageQuantity = weightPackageSession.getPackedLines(orderId).size();
             if ((orderedItemQty.intValue() - packageQuantity) > 0) {
@@ -87,15 +87,15 @@ public class WeightPackageServices {
     }
 
     public static Map<String, Object> updatePackedLine(DispatchContext dctx, Map<String, ? extends Object> context) {
-        WeightPackageSession weightPackageSession = (WeightPackageSession) context.get("weightPackageSession");
-        Locale locale = (Locale) context.get("locale");
+        WeightPackageSession weightPackageSession = (WeightPackageSession) context.get(org.apache.ofbiz.persistence.entity.x.weightPackageSession);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        BigDecimal packageWeight = (BigDecimal) context.get("packageWeight");
-        BigDecimal packageLength = (BigDecimal) context.get("packageLength");
-        BigDecimal packageWidth = (BigDecimal) context.get("packageWidth");
-        BigDecimal packageHeight = (BigDecimal) context.get("packageHeight");
-        String shipmentBoxTypeId = (String) context.get("shipmentBoxTypeId");
-        Integer weightPackageSeqId = (Integer) context.get("weightPackageSeqId");
+        BigDecimal packageWeight = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.packageWeight);
+        BigDecimal packageLength = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.packageLength);
+        BigDecimal packageWidth = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.packageWidth);
+        BigDecimal packageHeight = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.packageHeight);
+        String shipmentBoxTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentBoxTypeId);
+        Integer weightPackageSeqId = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.weightPackageSeqId);
 
         // User can either enter all the dimensions or shipment box type, but not both
         if (UtilValidate.isNotEmpty(packageLength) || UtilValidate.isNotEmpty(packageWidth) || UtilValidate.isNotEmpty(packageHeight)) {
@@ -128,25 +128,25 @@ public class WeightPackageServices {
     }
 
     public static Map<String, Object> deletePackedLine(DispatchContext dctx, Map<String, ? extends Object> context) {
-        WeightPackageSession weightPackageSession = (WeightPackageSession) context.get("weightPackageSession");
-        Integer weightPackageSeqId = (Integer) context.get("weightPackageSeqId");
+        WeightPackageSession weightPackageSession = (WeightPackageSession) context.get(org.apache.ofbiz.persistence.entity.x.weightPackageSession);
+        Integer weightPackageSeqId = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.weightPackageSeqId);
 
         weightPackageSession.deletePackedLine(weightPackageSeqId);
         return ServiceUtil.returnSuccess();
     }
 
     public static Map<String, Object> completePackage(DispatchContext dctx, Map<String, ? extends Object> context) {
-        WeightPackageSession weightPackageSession = (WeightPackageSession) context.get("weightPackageSession");
-        Locale locale = (Locale) context.get("locale");
+        WeightPackageSession weightPackageSession = (WeightPackageSession) context.get(org.apache.ofbiz.persistence.entity.x.weightPackageSession);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         Delegator delegator = dctx.getDelegator();
-        String orderId = (String) context.get("orderId");
-        String shipmentId = (String) context.get("shipmentId");
-        String invoiceId = (String) context.get("invoiceId");
-        String dimensionUomId = (String) context.get("dimensionUomId");
-        String weightUomId = (String) context.get("weightUomId");
-        BigDecimal estimatedShippingCost = (BigDecimal) context.get("estimatedShippingCost");
-        BigDecimal newEstimatedShippingCost = (BigDecimal) context.get("newEstimatedShippingCost");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
+        String invoiceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.invoiceId);
+        String dimensionUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dimensionUomId);
+        String weightUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.weightUomId);
+        BigDecimal estimatedShippingCost = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.estimatedShippingCost);
+        BigDecimal newEstimatedShippingCost = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.newEstimatedShippingCost);
 
         if (UtilValidate.isEmpty(newEstimatedShippingCost)) {
             newEstimatedShippingCost = BigDecimal.ZERO;
@@ -178,12 +178,12 @@ public class WeightPackageServices {
     }
 
     public static Map<String, Object> completeShipment(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
-        WeightPackageSession weightPackageSession = (WeightPackageSession) context.get("weightPackageSession");
+        WeightPackageSession weightPackageSession = (WeightPackageSession) context.get(org.apache.ofbiz.persistence.entity.x.weightPackageSession);
 
-        String shipmentId = (String) context.get("shipmentId");
-        String orderId = (String) context.get("orderId");
+        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
 
         Map<String, Object> response = new HashMap<>();
         try {
@@ -201,11 +201,11 @@ public class WeightPackageServices {
     }
 
     public static Map<String, Object> savePackagesInfo(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
-        WeightPackageSession weightPackageSession = (WeightPackageSession) context.get("weightPackageSession");
+        WeightPackageSession weightPackageSession = (WeightPackageSession) context.get(org.apache.ofbiz.persistence.entity.x.weightPackageSession);
 
-        String orderId = (String) context.get("orderId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
 
         String getActualShippingQuoteFromUps = EntityUtilProperties.getPropertyValue("shipment", "shipment.ups.shipping", "N", delegator);
         try {

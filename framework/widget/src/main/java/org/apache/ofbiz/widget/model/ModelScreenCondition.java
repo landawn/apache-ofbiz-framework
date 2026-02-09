@@ -62,7 +62,7 @@ public final class ModelScreenCondition {
 
         @Override
         public boolean eval(Map<String, Object> context) {
-            Object obj = context.get("sections");
+            Object obj = context.get(org.apache.ofbiz.persistence.entity.x.sections);
             Map<String, Object> sectionsMap = (obj instanceof Map) ? UtilGenerics.cast(obj) : null;
             if (sectionsMap != null) {
                 return !sectionsMap.containsKey(this.sectionExdr.expandString(context));

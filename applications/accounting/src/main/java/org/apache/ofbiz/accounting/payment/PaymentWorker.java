@@ -73,33 +73,33 @@ public final class PaymentWorker {
 
                 paymentMethodValueMaps.add(valueMap);
                 valueMap.put("paymentMethod", paymentMethod);
-                if ("CREDIT_CARD".equals(paymentMethod.getString("paymentMethodTypeId"))) {
-                    GenericValue creditCard = paymentMethod.getRelatedOne("CreditCard", false);
+                if ("CREDIT_CARD".equals(paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+                    GenericValue creditCard = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CreditCard, false);
                     if (creditCard != null) {
                         valueMap.put("creditCard", creditCard);
                     }
-                } else if ("GIFT_CARD".equals(paymentMethod.getString("paymentMethodTypeId"))) {
-                    GenericValue giftCard = paymentMethod.getRelatedOne("GiftCard", false);
+                } else if ("GIFT_CARD".equals(paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+                    GenericValue giftCard = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.GiftCard, false);
                     if (giftCard != null) {
                         valueMap.put("giftCard", giftCard);
                     }
-                } else if ("EFT_ACCOUNT".equals(paymentMethod.getString("paymentMethodTypeId"))) {
-                    GenericValue eftAccount = paymentMethod.getRelatedOne("EftAccount", false);
+                } else if ("EFT_ACCOUNT".equals(paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+                    GenericValue eftAccount = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.EftAccount, false);
                     if (eftAccount != null) {
                         valueMap.put("eftAccount", eftAccount);
                     }
-                } else if ("COMPANY_CHECK".equals(paymentMethod.getString("paymentMethodTypeId"))) {
-                    GenericValue companyCheckAccount = paymentMethod.getRelatedOne("CheckAccount", false);
+                } else if ("COMPANY_CHECK".equals(paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+                    GenericValue companyCheckAccount = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CheckAccount, false);
                     if (companyCheckAccount != null) {
                         valueMap.put("companyCheckAccount", companyCheckAccount);
                     }
-                } else if ("PERSONAL_CHECK".equals(paymentMethod.getString("paymentMethodTypeId"))) {
-                    GenericValue personalCheckAccount = paymentMethod.getRelatedOne("CheckAccount", false);
+                } else if ("PERSONAL_CHECK".equals(paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+                    GenericValue personalCheckAccount = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CheckAccount, false);
                     if (personalCheckAccount != null) {
                         valueMap.put("personalCheckAccount", personalCheckAccount);
                     }
-                } else if ("CERTIFIED_CHECK".equals(paymentMethod.getString("paymentMethodTypeId"))) {
-                    GenericValue certifiedCheckAccount = paymentMethod.getRelatedOne("CheckAccount", false);
+                } else if ("CERTIFIED_CHECK".equals(paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+                    GenericValue certifiedCheckAccount = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CheckAccount, false);
                     if (certifiedCheckAccount != null) {
                         valueMap.put("certifiedCheckAccount", certifiedCheckAccount);
                     }
@@ -174,13 +174,13 @@ public final class PaymentWorker {
         String curContactMechId = null;
 
         if (creditCard != null) {
-            curContactMechId = UtilFormatOut.checkNull(tryEntity ? creditCard.getString("contactMechId") : request.getParameter("contactMechId"));
+            curContactMechId = UtilFormatOut.checkNull(tryEntity ? creditCard.getString(org.apache.ofbiz.persistence.entity.x.contactMechId) : request.getParameter("contactMechId"));
         } else if (giftCard != null) {
-            curContactMechId = UtilFormatOut.checkNull(tryEntity ? giftCard.getString("contactMechId") : request.getParameter("contactMechId"));
+            curContactMechId = UtilFormatOut.checkNull(tryEntity ? giftCard.getString(org.apache.ofbiz.persistence.entity.x.contactMechId) : request.getParameter("contactMechId"));
         } else if (eftAccount != null) {
-            curContactMechId = UtilFormatOut.checkNull(tryEntity ? eftAccount.getString("contactMechId") : request.getParameter("contactMechId"));
+            curContactMechId = UtilFormatOut.checkNull(tryEntity ? eftAccount.getString(org.apache.ofbiz.persistence.entity.x.contactMechId) : request.getParameter("contactMechId"));
         } else if (checkAccount != null) {
-            curContactMechId = UtilFormatOut.checkNull(tryEntity ? checkAccount.getString("contactMechId") : request.getParameter("contactMechId"));
+            curContactMechId = UtilFormatOut.checkNull(tryEntity ? checkAccount.getString(org.apache.ofbiz.persistence.entity.x.contactMechId) : request.getParameter("contactMechId"));
         }
         if (curContactMechId != null) {
             results.put("curContactMechId", curContactMechId);
@@ -207,9 +207,9 @@ public final class PaymentWorker {
         if (purpose != null) {
             try {
                 postalAddress = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId",
-                        purpose.getString("contactMechId")).queryOne();
+                        purpose.getString(org.apache.ofbiz.persistence.entity.x.contactMechId)).queryOne();
             } catch (GenericEntityException e) {
-                Debug.logError(e, "Trouble getting PostalAddress record for contactMechId: " + purpose.getString("contactMechId"), MODULE);
+                Debug.logError(e, "Trouble getting PostalAddress record for contactMechId: " + purpose.getString(org.apache.ofbiz.persistence.entity.x.contactMechId), MODULE);
             }
         }
 
@@ -229,7 +229,7 @@ public final class PaymentWorker {
 
         BigDecimal paymentsTotal = BigDecimal.ZERO;
         for (GenericValue payment : payments) {
-            paymentsTotal = paymentsTotal.add(payment.getBigDecimal("amount")).setScale(DECIMALS, ROUNDING_MODE);
+            paymentsTotal = paymentsTotal.add(payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount)).setScale(DECIMALS, ROUNDING_MODE);
         }
         return paymentsTotal;
     }
@@ -272,15 +272,15 @@ public final class PaymentWorker {
         BigDecimal appliedAmount = BigDecimal.ZERO;
         try {
             paymentApplication = EntityQuery.use(delegator).from("PaymentApplication").where("paymentApplicationId", paymentApplicationId).queryOne();
-            appliedAmount = paymentApplication.getBigDecimal("amountApplied");
-            if (paymentApplication.get("paymentId") != null) {
-                GenericValue payment = paymentApplication.getRelatedOne("Payment", false);
-                if (paymentApplication.get("invoiceId") != null && payment.get("actualCurrencyAmount") != null
-                        && payment.get("actualCurrencyUomId") != null) {
-                    GenericValue invoice = paymentApplication.getRelatedOne("Invoice", false);
-                    if (payment.getString("actualCurrencyUomId").equals(invoice.getString("currencyUomId"))) {
-                        appliedAmount = appliedAmount.multiply(payment.getBigDecimal("amount"))
-                                .divide(payment.getBigDecimal("actualCurrencyAmount"), new MathContext(100));
+            appliedAmount = paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied);
+            if (paymentApplication.get(org.apache.ofbiz.persistence.entity.x.paymentId) != null) {
+                GenericValue payment = paymentApplication.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Payment, false);
+                if (paymentApplication.get(org.apache.ofbiz.persistence.entity.x.invoiceId) != null && payment.get(org.apache.ofbiz.persistence.entity.x.actualCurrencyAmount) != null
+                        && payment.get(org.apache.ofbiz.persistence.entity.x.actualCurrencyUomId) != null) {
+                    GenericValue invoice = paymentApplication.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Invoice, false);
+                    if (payment.getString(org.apache.ofbiz.persistence.entity.x.actualCurrencyUomId).equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId))) {
+                        appliedAmount = appliedAmount.multiply(payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount))
+                                .divide(payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualCurrencyAmount), new MathContext(100));
                     }
                 }
             }
@@ -310,21 +310,21 @@ public final class PaymentWorker {
         List<GenericValue> paymentApplications = null;
         try {
             List<EntityExpr> cond = UtilMisc.toList(
-                    EntityCondition.makeCondition("paymentId", EntityOperator.EQUALS, payment.getString("paymentId")),
-                    EntityCondition.makeCondition("toPaymentId", EntityOperator.EQUALS, payment.getString("paymentId")));
+                    EntityCondition.makeCondition("paymentId", EntityOperator.EQUALS, payment.getString(org.apache.ofbiz.persistence.entity.x.paymentId)),
+                    EntityCondition.makeCondition("toPaymentId", EntityOperator.EQUALS, payment.getString(org.apache.ofbiz.persistence.entity.x.paymentId)));
             EntityCondition partyCond = EntityCondition.makeCondition(cond, EntityOperator.OR);
             paymentApplications = payment.getDelegator().findList("PaymentApplication", partyCond, null,
                     UtilMisc.toList("invoiceId", "billingAccountId"), null, false);
             if (UtilValidate.isNotEmpty(paymentApplications)) {
                 for (GenericValue paymentApplication : paymentApplications) {
-                    BigDecimal amountApplied = paymentApplication.getBigDecimal("amountApplied");
+                    BigDecimal amountApplied = paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied);
                     // check currency invoice and if different convert amount applied for display
-                    if (actual.equals(Boolean.FALSE) && paymentApplication.get("invoiceId") != null && payment.get("actualCurrencyAmount") != null
-                            && payment.get("actualCurrencyUomId") != null) {
-                        GenericValue invoice = paymentApplication.getRelatedOne("Invoice", false);
-                        if (payment.getString("actualCurrencyUomId").equals(invoice.getString("currencyUomId"))) {
-                            amountApplied = amountApplied.multiply(payment.getBigDecimal("amount"))
-                                    .divide(payment.getBigDecimal("actualCurrencyAmount"), new MathContext(100));
+                    if (actual.equals(Boolean.FALSE) && paymentApplication.get(org.apache.ofbiz.persistence.entity.x.invoiceId) != null && payment.get(org.apache.ofbiz.persistence.entity.x.actualCurrencyAmount) != null
+                            && payment.get(org.apache.ofbiz.persistence.entity.x.actualCurrencyUomId) != null) {
+                        GenericValue invoice = paymentApplication.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Invoice, false);
+                        if (payment.getString(org.apache.ofbiz.persistence.entity.x.actualCurrencyUomId).equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId))) {
+                            amountApplied = amountApplied.multiply(payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount))
+                                    .divide(payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualCurrencyAmount), new MathContext(100));
                         }
                     }
                     paymentApplied = paymentApplied.add(amountApplied).setScale(DECIMALS, ROUNDING_MODE);
@@ -338,16 +338,16 @@ public final class PaymentWorker {
 
     public static BigDecimal getPaymentNotApplied(GenericValue payment) {
         if (payment != null) {
-            return payment.getBigDecimal("amount").subtract(getPaymentApplied(payment)).setScale(DECIMALS, ROUNDING_MODE);
+            return payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).subtract(getPaymentApplied(payment)).setScale(DECIMALS, ROUNDING_MODE);
         }
         return BigDecimal.ZERO;
     }
 
     public static BigDecimal getPaymentNotApplied(GenericValue payment, Boolean actual) {
-        if (actual.equals(Boolean.TRUE) && UtilValidate.isNotEmpty(payment.getBigDecimal("actualCurrencyAmount"))) {
-            return payment.getBigDecimal("actualCurrencyAmount").subtract(getPaymentApplied(payment, actual)).setScale(DECIMALS, ROUNDING_MODE);
+        if (actual.equals(Boolean.TRUE) && UtilValidate.isNotEmpty(payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualCurrencyAmount))) {
+            return payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualCurrencyAmount).subtract(getPaymentApplied(payment, actual)).setScale(DECIMALS, ROUNDING_MODE);
         }
-        return payment.getBigDecimal("amount").subtract(getPaymentApplied(payment)).setScale(DECIMALS, ROUNDING_MODE);
+        return payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).subtract(getPaymentApplied(payment)).setScale(DECIMALS, ROUNDING_MODE);
     }
 
     public static BigDecimal getPaymentNotApplied(Delegator delegator, String paymentId) {
@@ -369,6 +369,6 @@ public final class PaymentWorker {
         if (payment == null) {
             throw new IllegalArgumentException("The paymentId passed does not match an existing payment");
         }
-        return payment.getBigDecimal("amount").subtract(getPaymentApplied(delegator, paymentId, actual)).setScale(DECIMALS, ROUNDING_MODE);
+        return payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).subtract(getPaymentApplied(delegator, paymentId, actual)).setScale(DECIMALS, ROUNDING_MODE);
     }
 }

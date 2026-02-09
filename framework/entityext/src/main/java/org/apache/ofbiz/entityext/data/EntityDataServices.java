@@ -68,30 +68,30 @@ public class EntityDataServices {
     private static final String RESOURCE = "EntityExtUiLabels";
 
     public static Map<String, Object> exportDelimitedToDirectory(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtThisServiceIsNotYetImplemented", locale));
     }
 
     public static Map<String, Object> importDelimitedFromDirectory(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Security security = dctx.getSecurity();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // check permission
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         if (!security.hasPermission("ENTITY_MAINT", userLogin)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale));
         }
 
         // get the directory & delimiter
-        String rootDirectory = (String) context.get("rootDirectory");
+        String rootDirectory = (String) context.get(org.apache.ofbiz.persistence.entity.x.rootDirectory);
         URL rootDirectoryUrl = UtilURL.fromResource(rootDirectory);
         if (rootDirectoryUrl == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtUnableToLocateRootDirectory",
                     UtilMisc.toMap("rootDirectory", rootDirectory), locale));
         }
 
-        String delimiter = (String) context.get("delimiter");
+        String delimiter = (String) context.get(org.apache.ofbiz.persistence.entity.x.delimiter);
         if (delimiter == null) {
             // default delimiter is tab
             delimiter = "\t";
@@ -130,15 +130,15 @@ public class EntityDataServices {
     public static Map<String, Object> importDelimitedFile(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // check permission
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         if (!security.hasPermission("ENTITY_MAINT", userLogin)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale));
         }
 
-        String delimiter = (String) context.get("delimiter");
+        String delimiter = (String) context.get(org.apache.ofbiz.persistence.entity.x.delimiter);
         if (delimiter == null) {
             // default delimiter is tab
             delimiter = "\t";
@@ -146,7 +146,7 @@ public class EntityDataServices {
 
         long startTime = System.currentTimeMillis();
 
-        File file = (File) context.get("file");
+        File file = (File) context.get(org.apache.ofbiz.persistence.entity.x.file);
         int records = 0;
         try {
             records = readEntityFile(file, delimiter, delegator);
@@ -330,16 +330,16 @@ public class EntityDataServices {
     public static Map<String, Object> rebuildAllIndexesAndKeys(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // check permission
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         if (!security.hasPermission("ENTITY_MAINT", userLogin)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale));
         }
 
-        String groupName = (String) context.get("groupName");
-        Boolean fixSizes = (Boolean) context.get("fixColSizes");
+        String groupName = (String) context.get(org.apache.ofbiz.persistence.entity.x.groupName);
+        Boolean fixSizes = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.fixColSizes);
         if (fixSizes == null) fixSizes = Boolean.FALSE;
         List<String> messages = new LinkedList<>();
 
@@ -427,9 +427,9 @@ public class EntityDataServices {
 
     public static Map<String, Object> unwrapByteWrappers(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String entityName = (String) context.get("entityName");
-        String fieldName = (String) context.get("fieldName");
-        Locale locale = (Locale) context.get("locale");
+        String entityName = (String) context.get(org.apache.ofbiz.persistence.entity.x.entityName);
+        String fieldName = (String) context.get(org.apache.ofbiz.persistence.entity.x.fieldName);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         try (EntityListIterator eli = EntityQuery.use(delegator)
                 .from(entityName)
@@ -455,21 +455,21 @@ public class EntityDataServices {
     public static Map<String, Object> reencryptPrivateKeys(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // check permission
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         if (!security.hasPermission("ENTITY_MAINT", userLogin)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale));
         }
-        String oldKey = (String) context.get("oldKey");
-        String newKey = (String) context.get("newKey");
+        String oldKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.oldKey);
+        String newKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.newKey);
         AesCipherService cipherService = new AesCipherService();
         try {
             List<GenericValue> rows = EntityQuery.use(delegator).from("EntityKeyStore").queryList();
             for (GenericValue row: rows) {
-                byte[] keyBytes = Base64.decodeBase64(row.getString("keyText"));
-                Debug.logInfo("Processing entry " + row.getString("keyName") + " with key: " + row.getString("keyText"), MODULE);
+                byte[] keyBytes = Base64.decodeBase64(row.getString(org.apache.ofbiz.persistence.entity.x.keyText));
+                Debug.logInfo("Processing entry " + row.getString(org.apache.ofbiz.persistence.entity.x.keyName) + " with key: " + row.getString(org.apache.ofbiz.persistence.entity.x.keyText), MODULE);
                 if (oldKey != null) {
                     Debug.logInfo("Decrypting with old key: " + oldKey, MODULE);
                     try {
@@ -492,7 +492,7 @@ public class EntityDataServices {
                     newKeyText = Base64.encodeBase64String(keyBytes);
                 }
                 Debug.logInfo("Storing new encrypted value: " + newKeyText, MODULE);
-                row.setString("keyText", newKeyText);
+                row.setString(org.apache.ofbiz.persistence.entity.x.keyText, newKeyText);
                 row.store();
             }
         } catch (GenericEntityException gee) {
@@ -506,15 +506,15 @@ public class EntityDataServices {
     public static Map<String, Object> reencryptFields(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // check permission
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         if (!security.hasPermission("ENTITY_MAINT", userLogin)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale));
         }
 
-        String groupName = (String) context.get("groupName");
+        String groupName = (String) context.get(org.apache.ofbiz.persistence.entity.x.groupName);
 
         Map<String, ModelEntity> modelEntities;
         try {

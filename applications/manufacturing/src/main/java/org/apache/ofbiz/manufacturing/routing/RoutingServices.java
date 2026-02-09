@@ -53,14 +53,14 @@ public class RoutingServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // The mandatory IN parameters
-        String taskId = (String) context.get("taskId");
-        BigDecimal quantity = (BigDecimal) context.get("quantity");
+        String taskId = (String) context.get(org.apache.ofbiz.persistence.entity.x.taskId);
+        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
         // The optional IN parameters
-        String productId = (String) context.get("productId");
-        String routingId = (String) context.get("routingId");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String routingId = (String) context.get(org.apache.ofbiz.persistence.entity.x.routingId);
 
         if (quantity == null) {
             quantity = BigDecimal.ONE;
@@ -77,11 +77,11 @@ public class RoutingServices {
         // its logic will be implemented inside this method.
         long estimatedTaskTime = ProductionRun.getEstimatedTaskTime(task, quantity, productId, routingId, dispatcher);
         result.put("estimatedTaskTime", estimatedTaskTime);
-        if (task != null && task.get("estimatedSetupMillis") != null) {
-            result.put("setupTime", task.getBigDecimal("estimatedSetupMillis"));
+        if (task != null && task.get(org.apache.ofbiz.persistence.entity.x.estimatedSetupMillis) != null) {
+            result.put("setupTime", task.getBigDecimal(org.apache.ofbiz.persistence.entity.x.estimatedSetupMillis));
         }
-        if (task != null && task.get("estimatedMilliSeconds") != null) {
-            result.put("taskUnitTime", task.getBigDecimal("estimatedMilliSeconds"));
+        if (task != null && task.get(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds) != null) {
+            result.put("taskUnitTime", task.getBigDecimal(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds));
         }
         return result;
     }

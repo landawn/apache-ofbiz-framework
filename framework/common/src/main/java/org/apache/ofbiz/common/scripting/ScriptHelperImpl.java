@@ -58,7 +58,7 @@ public final class ScriptHelperImpl implements ScriptHelper {
         Map<String, Object> context = ctxHelper.getBindings();
         if (autoFieldMap) {
             GenericValue tempVal = delegator.makeValue(modelEntity.getEntityName());
-            Object parametersObj = context.get("parameters");
+            Object parametersObj = context.get(org.apache.ofbiz.persistence.entity.x.parameters);
             if (parametersObj != null && parametersObj instanceof Map<?, ?>) {
                 tempVal.setAllFields(UtilGenerics.cast(parametersObj), true, null, Boolean.TRUE);
             }
@@ -68,8 +68,8 @@ public final class ScriptHelperImpl implements ScriptHelper {
         if (fieldMap != null) {
             entityContext.putAll(fieldMap);
         }
-        entityContext.put("locale", context.get("locale"));
-        entityContext.put("timeZone", context.get("timeZone"));
+        entityContext.put("locale", context.get(org.apache.ofbiz.persistence.entity.x.locale));
+        entityContext.put("timeZone", context.get(org.apache.ofbiz.persistence.entity.x.timeZone));
         modelEntity.convertFieldMapInPlace(entityContext, delegator);
         entityContext.remove("locale");
         entityContext.remove("timeZone");

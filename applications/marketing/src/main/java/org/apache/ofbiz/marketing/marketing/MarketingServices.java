@@ -52,12 +52,12 @@ public class MarketingServices {
     public static Map<String, Object> signUpForContactList(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         Timestamp fromDate = UtilDateTime.nowTimestamp();
-        String contactListId = (String) context.get("contactListId");
-        String email = (String) context.get("email");
-        String partyId = (String) context.get("partyId");
+        String contactListId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactListId);
+        String email = (String) context.get(org.apache.ofbiz.persistence.entity.x.email);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
         String successMessage = UtilProperties.getMessage(RESOURCE, "MarketingNewsletterSubscriptionRequestSuccessMessage", locale);
 
         if (!UtilValidate.isEmail(email)) {
@@ -88,7 +88,7 @@ public class MarketingServices {
                         .filterByDate("fromDate", "thruDate", "purposeFromDate", "purposeThruDate")
                         .queryFirst();
                 if (contact != null) {
-                    partyId = contact.getString("partyId");
+                    partyId = contact.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                 } else {
                     partyId = "_NA_";
                 }
@@ -102,7 +102,7 @@ public class MarketingServices {
             String contactMechId = (String) serviceResults.get("contactMechId");
 
             //checks if user is already subscribed to newsletter
-            input = UtilMisc.toMap("contactListId", contactList.get("contactListId"), "partyId", partyId, "preferredContactMechId", contactMechId);
+            input = UtilMisc.toMap("contactListId", contactList.get(org.apache.ofbiz.persistence.entity.x.contactListId), "partyId", partyId, "preferredContactMechId", contactMechId);
             List<GenericValue> contactListPartyList = EntityQuery.use(delegator).from("ContactListParty").where(input).filterByDate().queryList();
 
             List<GenericValue> acceptedContactListPartyList = EntityUtil.filterByAnd(contactListPartyList,
@@ -122,8 +122,8 @@ public class MarketingServices {
                 int count = 0;
                 for (GenericValue pendingCLP : pendingContactListPartyList) {
                     Map<String, Object> deletePendingCLPInput = UtilMisc.toMap("userLogin", userLogin,
-                            "contactListId", pendingCLP.get("contactListId"), "fromDate", pendingCLP.get("fromDate"),
-                            "partyId", pendingCLP.get("partyId"));
+                            "contactListId", pendingCLP.get(org.apache.ofbiz.persistence.entity.x.contactListId), "fromDate", pendingCLP.get(org.apache.ofbiz.persistence.entity.x.fromDate),
+                            "partyId", pendingCLP.get(org.apache.ofbiz.persistence.entity.x.partyId));
 
                     Map<String, Object> deletePendingCLPResults = dispatcher.runSync("deleteContactListParty", deletePendingCLPInput);
                     if (ServiceUtil.isSuccess(deletePendingCLPResults)) {
@@ -136,9 +136,9 @@ public class MarketingServices {
             }
 
             // create a new association at this fromDate to the anonymous party with status pending
-            input = UtilMisc.toMap("userLogin", userLogin, "contactListId", contactList.get("contactListId"),
+            input = UtilMisc.toMap("userLogin", userLogin, "contactListId", contactList.get(org.apache.ofbiz.persistence.entity.x.contactListId),
                 "partyId", partyId, "fromDate", fromDate, "statusId", "CLPT_PENDING", "preferredContactMechId", contactMechId, "baseLocation",
-                context.get("baseLocation"));
+                context.get(org.apache.ofbiz.persistence.entity.x.baseLocation));
             serviceResults = dispatcher.runSync("createContactListParty", input);
             if (ServiceUtil.isError(serviceResults)) {
                 throw new GenericServiceException(ServiceUtil.getErrorMessage(serviceResults));
@@ -157,11 +157,11 @@ public class MarketingServices {
 
     public static Map<String, Object> deleteContactListParty(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        String contactListId = (String) context.get("contactListId");
-        String partyId = (String) context.get("partyId");
-        Timestamp fromDate = (Timestamp) context.get("fromDate");
+        String contactListId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactListId);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        Timestamp fromDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
         String successMessage = UtilProperties.getMessage(RESOURCE, "MarketingNewsletterSubscriptionPendingRequestDeletedMessage", locale);
 
         Map<String, Object> input = UtilMisc.toMap("contactListId", contactListId, "partyId", partyId,
@@ -170,7 +170,7 @@ public class MarketingServices {
         try {
             GenericValue contactListParty = EntityQuery.use(delegator).from("ContactListParty").where(input).filterByDate().queryOne();
             if (contactListParty != null) {
-                List<GenericValue> relContactListPartyStatusList = contactListParty.getRelated("ContactListPartyStatus", null, null, true);
+                List<GenericValue> relContactListPartyStatusList = contactListParty.getRelated(org.apache.ofbiz.persistence.entity.x.ContactListPartyStatus, null, null, true);
                 int cntLstPrtStatusRemoved = 0;
                 if (relContactListPartyStatusList != null && relContactListPartyStatusList.size() > 0) {
                     cntLstPrtStatusRemoved = delegator.removeAll(relContactListPartyStatusList);
@@ -182,7 +182,7 @@ public class MarketingServices {
             if (cntListPartyRemoved > 0) {
                 successMessage = successMessage + "[contactListId: " + contactListId
                         + ", partyId: " + partyId + ", fromDate: "
-                        + fromDate + ", Status: " + contactListParty.getString("statusId") + "]";
+                        + fromDate + ", Status: " + contactListParty.getString(org.apache.ofbiz.persistence.entity.x.statusId) + "]";
                 Debug.logInfo(successMessage, MODULE);
             }
         } catch (GenericEntityException e) {

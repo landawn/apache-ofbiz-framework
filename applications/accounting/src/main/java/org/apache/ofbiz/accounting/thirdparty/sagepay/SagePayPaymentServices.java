@@ -66,36 +66,36 @@ public class SagePayPaymentServices {
 
         try {
 
-            GenericValue opp = (GenericValue) context.get("orderPaymentPreference");
+            GenericValue opp = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
             if (opp != null) {
-                if ("CREDIT_CARD".equals(opp.getString("paymentMethodTypeId"))) {
+                if ("CREDIT_CARD".equals(opp.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
 
-                    GenericValue creditCard = (GenericValue) context.get("creditCard");
-                    if (creditCard == null || !(opp.get("paymentMethodId").equals(creditCard.get("paymentMethodId")))) {
-                        creditCard = opp.getRelatedOne("CreditCard", false);
+                    GenericValue creditCard = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.creditCard);
+                    if (creditCard == null || !(opp.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId).equals(creditCard.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId)))) {
+                        creditCard = opp.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CreditCard, false);
                     }
 
-                    securityCode = opp.getString("securityCode");
+                    securityCode = opp.getString(org.apache.ofbiz.persistence.entity.x.securityCode);
 
                     //getting billing address
-                    GenericValue billingAddress = (GenericValue) context.get("billingAddress");
-                    postalCode = billingAddress.getString("postalCode");
-                    String address2 = billingAddress.getString("address2");
+                    GenericValue billingAddress = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.billingAddress);
+                    postalCode = billingAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode);
+                    String address2 = billingAddress.getString(org.apache.ofbiz.persistence.entity.x.address2);
                     if (address2 == null) {
                         address2 = "";
                     }
-                    address = billingAddress.getString("address1") + " " + address2;
+                    address = billingAddress.getString(org.apache.ofbiz.persistence.entity.x.address1) + " " + address2;
 
                     //getting card details
-                    cardNumber = creditCard.getString("cardNumber");
-                    String firstName = creditCard.getString("firstNameOnCard");
-                    String middleName = creditCard.getString("middleNameOnCard");
-                    String lastName = creditCard.getString("lastNameOnCard");
+                    cardNumber = creditCard.getString(org.apache.ofbiz.persistence.entity.x.cardNumber);
+                    String firstName = creditCard.getString(org.apache.ofbiz.persistence.entity.x.firstNameOnCard);
+                    String middleName = creditCard.getString(org.apache.ofbiz.persistence.entity.x.middleNameOnCard);
+                    String lastName = creditCard.getString(org.apache.ofbiz.persistence.entity.x.lastNameOnCard);
                     if (middleName == null) {
                         middleName = "";
                     }
                     nameOnCard = firstName + " " + middleName + " " + lastName;
-                    cardType = creditCard.getString("cardType");
+                    cardType = creditCard.getString(org.apache.ofbiz.persistence.entity.x.cardType);
                     if (cardType != null) {
                         if ("CCT_MASTERCARD".equals(cardType)) {
                             cardType = "MC";
@@ -110,15 +110,15 @@ public class SagePayPaymentServices {
                             cardType = "MAESTRO";
                         }
                     }
-                    expireDate = creditCard.getString("expireDate");
+                    expireDate = creditCard.getString(org.apache.ofbiz.persistence.entity.x.expireDate);
                     String month = expireDate.substring(0, 2);
                     String year = expireDate.substring(5);
                     expireDate = month + year;
 
                     //getting order details
-                    orderId = UtilFormatOut.checkNull((String) context.get("orderId"));
-                    processAmount = (BigDecimal) context.get("processAmount");
-                    currency = (String) context.get("currency");
+                    orderId = UtilFormatOut.checkNull((String) context.get(org.apache.ofbiz.persistence.entity.x.orderId));
+                    processAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
+                    currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
 
                 } else {
                     Debug.logWarning("Payment preference " + opp + " is not a credit card", MODULE);
@@ -155,9 +155,9 @@ public class SagePayPaymentServices {
         Debug.logInfo("SagePay - Entered ccAuth", MODULE);
         Debug.logInfo("SagePay ccAuth context : " + context, MODULE);
         Map<String, Object> response = null;
-        String orderId = (String) context.get("orderId");
-        Locale locale = (Locale) context.get("locale");
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
         if (orderPaymentPreference == null) {
             response = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayOrderPaymenPreferenceIsNull",
                     UtilMisc.toMap("orderId", orderId, "orderPaymentPreference", null), locale));
@@ -171,9 +171,9 @@ public class SagePayPaymentServices {
     private static Map<String, Object> processCardAuthorisationPayment(DispatchContext ctx, Map<String, Object> context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, String> billingInfo = buildCustomerBillingInfo(context);
-        String paymentGatewayConfigId = (String) context.get("paymentGatewayConfigId");
+        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
         try {
             Map<String, Object> paymentResult = dispatcher.runSync("SagePayPaymentAuthentication",
                     UtilMisc.toMap(
@@ -242,9 +242,9 @@ public class SagePayPaymentServices {
     public static Map<String, Object> ccCapture(DispatchContext ctx, Map<String, Object> context) {
         Debug.logInfo("SagePay - Entered ccCapture", MODULE);
         Debug.logInfo("SagePay ccCapture context : " + context, MODULE);
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
-        context.put("authTransaction", authTransaction);
+        context.put(org.apache.ofbiz.persistence.entity.x.authTransaction, authTransaction);
         Map<String, Object> response = processCardCapturePayment(ctx, context);
 
         Debug.logInfo("SagePay ccCapture response : " + response, MODULE);
@@ -256,14 +256,14 @@ public class SagePayPaymentServices {
     private static Map<String, Object> processCardCapturePayment(DispatchContext ctx, Map<String, Object> context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
-        String paymentGatewayConfigId = (String) context.get("paymentGatewayConfigId");
-        GenericValue authTransaction = (GenericValue) context.get("authTransaction");
-        BigDecimal amount = (BigDecimal) context.get("captureAmount");
-        String vendorTxCode = (String) authTransaction.get("altReference");
-        String vpsTxId = (String) authTransaction.get("referenceNum");
-        String securityKey = (String) authTransaction.get("gatewayFlag");
-        String txAuthCode = (String) authTransaction.get("gatewayCode");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        GenericValue authTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTransaction);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.captureAmount);
+        String vendorTxCode = (String) authTransaction.get(org.apache.ofbiz.persistence.entity.x.altReference);
+        String vpsTxId = (String) authTransaction.get(org.apache.ofbiz.persistence.entity.x.referenceNum);
+        String securityKey = (String) authTransaction.get(org.apache.ofbiz.persistence.entity.x.gatewayFlag);
+        String txAuthCode = (String) authTransaction.get(org.apache.ofbiz.persistence.entity.x.gatewayCode);
 
         try {
 
@@ -298,8 +298,8 @@ public class SagePayPaymentServices {
     public static Map<String, Object> ccRefund(DispatchContext ctx, Map<String, Object> context) {
         Debug.logInfo("SagePay - Entered ccRefund", MODULE);
         Debug.logInfo("SagePay ccRefund context : " + context, MODULE);
-        Locale locale = (Locale) context.get("locale");
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
         GenericValue captureTransaction = PaymentGatewayServices.getCaptureTransaction(orderPaymentPreference);
         if (captureTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingPaymentTransactionAuthorizationNotFoundCannotRefund",
@@ -308,14 +308,14 @@ public class SagePayPaymentServices {
         Debug.logInfo("SagePay ccRefund captureTransaction : " + captureTransaction, MODULE);
         GenericValue creditCard = null;
         try {
-            creditCard = orderPaymentPreference.getRelatedOne("CreditCard", false);
+            creditCard = orderPaymentPreference.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CreditCard, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Error getting CreditCard for OrderPaymentPreference : " + orderPaymentPreference, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingPaymentUnableToGetCCInfo", locale)
                     + " " + orderPaymentPreference);
         }
-        context.put("creditCard", creditCard);
-        context.put("captureTransaction", captureTransaction);
+        context.put(org.apache.ofbiz.persistence.entity.x.creditCard, creditCard);
+        context.put(org.apache.ofbiz.persistence.entity.x.captureTransaction, captureTransaction);
 
         List<GenericValue> authTransactions = PaymentGatewayServices.getAuthTransactions(orderPaymentPreference);
 
@@ -324,7 +324,7 @@ public class SagePayPaymentServices {
 
         GenericValue authTransaction = EntityUtil.getFirst(authTransactions1);
 
-        Timestamp authTime = authTransaction.getTimestamp("transactionDate");
+        Timestamp authTime = authTransaction.getTimestamp(org.apache.ofbiz.persistence.entity.x.transactionDate);
         Calendar authCal = Calendar.getInstance();
         authCal.setTimeInMillis(authTime.getTime());
 
@@ -362,12 +362,12 @@ public class SagePayPaymentServices {
     private static Map<String, Object> processCardRefundPayment(DispatchContext ctx, Map<String, Object> context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
-        String paymentGatewayConfigId = (String) context.get("paymentGatewayConfigId");
-        GenericValue captureTransaction = (GenericValue) context.get("captureTransaction");
-        BigDecimal amount = (BigDecimal) context.get("refundAmount");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        GenericValue captureTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.captureTransaction);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.refundAmount);
 
-        String orderId = (String) captureTransaction.get("altReference");
+        String orderId = (String) captureTransaction.get(org.apache.ofbiz.persistence.entity.x.altReference);
         orderId = "R" + orderId;
 
         try {
@@ -379,10 +379,10 @@ public class SagePayPaymentServices {
                             "amount", amount.toString(),
                             "currency", "GBP",
                             "description", orderId,
-                            "relatedVPSTxId", captureTransaction.get("referenceNum"),
-                            "relatedVendorTxCode", captureTransaction.get("altReference"),
-                            "relatedSecurityKey", captureTransaction.get("gatewayFlag"),
-                            "relatedTxAuthNo", captureTransaction.get("gatewayCode")));
+                            "relatedVPSTxId", captureTransaction.get(org.apache.ofbiz.persistence.entity.x.referenceNum),
+                            "relatedVendorTxCode", captureTransaction.get(org.apache.ofbiz.persistence.entity.x.altReference),
+                            "relatedSecurityKey", captureTransaction.get(org.apache.ofbiz.persistence.entity.x.gatewayFlag),
+                            "relatedTxAuthNo", captureTransaction.get(org.apache.ofbiz.persistence.entity.x.gatewayCode)));
             Debug.logInfo("SagePay - SagePayPaymentRefund result : " + paymentResult, MODULE);
 
             String status = (String) paymentResult.get("status");
@@ -410,20 +410,20 @@ public class SagePayPaymentServices {
     private static Map<String, Object> processCardVoidPayment(DispatchContext ctx, Map<String, Object> context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
-        String paymentGatewayConfigId = (String) context.get("paymentGatewayConfigId");
-        GenericValue captureTransaction = (GenericValue) context.get("captureTransaction");
-        BigDecimal amount = (BigDecimal) context.get("refundAmount");
-        String orderId = (String) captureTransaction.get("altReference");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        GenericValue captureTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.captureTransaction);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.refundAmount);
+        String orderId = (String) captureTransaction.get(org.apache.ofbiz.persistence.entity.x.altReference);
 
         try {
             Map<String, Object> paymentResult = dispatcher.runSync("SagePayPaymentVoid",
                     UtilMisc.toMap(
                             "paymentGatewayConfigId", paymentGatewayConfigId,
-                            "vendorTxCode", captureTransaction.get("altReference"),
-                            "vpsTxId", captureTransaction.get("referenceNum"),
-                            "securityKey", captureTransaction.get("gatewayFlag"),
-                            "txAuthNo", captureTransaction.get("gatewayCode")));
+                            "vendorTxCode", captureTransaction.get(org.apache.ofbiz.persistence.entity.x.altReference),
+                            "vpsTxId", captureTransaction.get(org.apache.ofbiz.persistence.entity.x.referenceNum),
+                            "securityKey", captureTransaction.get(org.apache.ofbiz.persistence.entity.x.gatewayFlag),
+                            "txAuthNo", captureTransaction.get(org.apache.ofbiz.persistence.entity.x.gatewayCode)));
 
             Debug.logInfo("SagePay - SagePayPaymentVoid result : " + paymentResult, MODULE);
 
@@ -455,15 +455,15 @@ public class SagePayPaymentServices {
     public static Map<String, Object> ccRelease(DispatchContext ctx, Map<String, Object> context) {
         Debug.logInfo("SagePay - Entered ccRelease", MODULE);
         Debug.logInfo("SagePay ccRelease context : " + context, MODULE);
-        Locale locale = (Locale) context.get("locale");
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
 
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingPaymentTransactionAuthorizationNotFoundCannotRelease",
                     locale));
         }
-        context.put("authTransaction", authTransaction);
+        context.put(org.apache.ofbiz.persistence.entity.x.authTransaction, authTransaction);
 
         Map<String, Object> response = processCardReleasePayment(ctx, context);
         Debug.logInfo("SagePay ccRelease response : " + response, MODULE);
@@ -472,15 +472,15 @@ public class SagePayPaymentServices {
 
     private static Map<String, Object> processCardReleasePayment(DispatchContext ctx, Map<String, Object> context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         LocalDispatcher dispatcher = ctx.getDispatcher();
 
-        String paymentGatewayConfigId = (String) context.get("paymentGatewayConfigId");
-        BigDecimal amount = (BigDecimal) context.get("releaseAmount");
+        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.releaseAmount);
 
-        GenericValue authTransaction = (GenericValue) context.get("authTransaction");
-        String orderId = (String) authTransaction.get("altReference");
-        String refNum = (String) authTransaction.get("referenceNum");
+        GenericValue authTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTransaction);
+        String orderId = (String) authTransaction.get(org.apache.ofbiz.persistence.entity.x.altReference);
+        String refNum = (String) authTransaction.get(org.apache.ofbiz.persistence.entity.x.referenceNum);
 
         try {
             Map<String, Object> paymentResult = dispatcher.runSync("SagePayPaymentRelease",
@@ -489,8 +489,8 @@ public class SagePayPaymentServices {
                             "vendorTxCode", orderId,
                             "releaseAmount", amount.toString(),
                             "vpsTxId", refNum,
-                            "securityKey", authTransaction.get("gatewayFlag"),
-                            "txAuthNo", authTransaction.get("gatewayCode")));
+                            "securityKey", authTransaction.get(org.apache.ofbiz.persistence.entity.x.gatewayFlag),
+                            "txAuthNo", authTransaction.get(org.apache.ofbiz.persistence.entity.x.gatewayCode)));
 
             Debug.logInfo("SagePay - SagePayPaymentRelease result : " + paymentResult, MODULE);
 

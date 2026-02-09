@@ -58,25 +58,25 @@ public class FinAccountProductServices {
         // this service should always be called via FULFILLMENT_EXTASYNC
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        GenericValue orderItem = (GenericValue) context.get("orderItem");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue orderItem = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderItem);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
 
         // order ID for tracking
-        String orderId = orderItem.getString("orderId");
-        String orderItemSeqId = orderItem.getString("orderItemSeqId");
+        String orderId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderItemSeqId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
 
         // the order header for store info
         GenericValue orderHeader;
         try {
-            orderHeader = orderItem.getRelatedOne("OrderHeader", false);
+            orderHeader = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Unable to get OrderHeader from OrderItem", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER_ERROR,
                     "OrderCannotGetOrderHeader", UtilMisc.toMap("orderId", orderId), locale));
         }
 
-        String productId = orderItem.getString("productId");
+        String productId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
         GenericValue featureAndAppl;
         try {
             List<GenericValue> featureAndAppls = EntityQuery.use(delegator).from("ProductFeatureAndAppl")
@@ -93,11 +93,11 @@ public class FinAccountProductServices {
         String finAccountTypeId = "BALANCE_ACCOUNT"; // default
         String finAccountName = "Customer Financial Account";
         if (featureAndAppl != null) {
-            if (UtilValidate.isNotEmpty(featureAndAppl.getString("idCode"))) {
-                finAccountTypeId = featureAndAppl.getString("idCode");
+            if (UtilValidate.isNotEmpty(featureAndAppl.getString(org.apache.ofbiz.persistence.entity.x.idCode))) {
+                finAccountTypeId = featureAndAppl.getString(org.apache.ofbiz.persistence.entity.x.idCode);
             }
-            if (UtilValidate.isNotEmpty(featureAndAppl.getString("description"))) {
-                finAccountName = featureAndAppl.getString("description");
+            if (UtilValidate.isNotEmpty(featureAndAppl.getString(org.apache.ofbiz.persistence.entity.x.description))) {
+                finAccountName = featureAndAppl.getString(org.apache.ofbiz.persistence.entity.x.description);
             }
         }
 
@@ -109,7 +109,7 @@ public class FinAccountProductServices {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
-        String replenishEnumId = finAccountType.getString("replenishEnumId");
+        String replenishEnumId = finAccountType.getString(org.apache.ofbiz.persistence.entity.x.replenishEnumId);
 
         // get the order read helper
         OrderReadHelper orh = new OrderReadHelper(orderHeader);
@@ -138,7 +138,7 @@ public class FinAccountProductServices {
         GenericValue billToParty = orh.getBillToParty();
         String partyId = null;
         if (billToParty != null) {
-            partyId = billToParty.getString("partyId");
+            partyId = billToParty.getString(org.apache.ofbiz.persistence.entity.x.partyId);
         }
 
         // payment method info
@@ -147,9 +147,9 @@ public class FinAccountProductServices {
         if (payPrefs != null) {
             for (GenericValue pref : payPrefs) {
                 // needs to be a CC or EFT account
-                String type = pref.getString("paymentMethodTypeId");
+                String type = pref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
                 if ("CREDIT_CARD".equals(type) || "EFT_ACCOUNT".equals(type)) {
-                    paymentMethodId = pref.getString("paymentMethodId");
+                    paymentMethodId = pref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
                 }
             }
         }
@@ -160,12 +160,12 @@ public class FinAccountProductServices {
 
         if (billToParty != null) {
             try {
-                party = billToParty.getRelatedOne("Party", false);
+                party = billToParty.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Party, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
             if (party != null) {
-                String partyTypeId = party.getString("partyTypeId");
+                String partyTypeId = party.getString(org.apache.ofbiz.persistence.entity.x.partyTypeId);
                 if ("PARTY_GROUP".equals(partyTypeId)) {
                     partyGroup = billToParty;
                 } else if ("PERSON".equals(partyTypeId)) {
@@ -187,8 +187,8 @@ public class FinAccountProductServices {
         finAccountName = exp.expandString(expContext);
 
         // price/amount/quantity to create initial deposit amount
-        BigDecimal quantity = orderItem.getBigDecimal("quantity");
-        BigDecimal price = orderItem.getBigDecimal("unitPrice");
+        BigDecimal quantity = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+        BigDecimal price = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice);
         BigDecimal deposit = price.multiply(quantity).setScale(FinAccountHelper.getDecimals(), FinAccountHelper.getRounding());
 
         // create the financial account

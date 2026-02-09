@@ -1745,7 +1745,7 @@ public class ModelService extends AbstractMap<String, Object> implements Seriali
         } else {
             Map<String, Object> result = ServiceUtil.returnSuccess();
             result.put("hasPermission", Boolean.FALSE);
-            result.put("failMessage", UtilProperties.getMessage(RESOURCE, "ServicePermissionErrorDefinitionProblem", (Locale) context.get("locale")));
+            result.put("failMessage", UtilProperties.getMessage(RESOURCE, "ServicePermissionErrorDefinitionProblem", (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale)));
             return result;
         }
     }

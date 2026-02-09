@@ -52,8 +52,8 @@ public class CdyneServices {
      *@return Map with the result of the service, the output parameters
      */
     public static Map<String, Object> cdyneReturnCityState(DispatchContext dctx, Map<String, ?> context) {
-        String zipcode = (String) context.get("zipcode");
-        Locale locale = (Locale) context.get("locale");
+        String zipcode = (String) context.get(org.apache.ofbiz.persistence.entity.x.zipcode);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String serviceUrl = "http://ws.cdyne.com/psaddress/addresslookup.asmx/ReturnCityState?zipcode=" + zipcode + "&LicenseKey=" + LICENSE_KEY;
         try {
             String httpResponse = HttpClient.getUrlContent(serviceUrl);

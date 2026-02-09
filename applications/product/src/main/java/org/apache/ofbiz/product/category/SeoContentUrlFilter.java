@@ -71,10 +71,10 @@ public class SeoContentUrlFilter implements Filter {
                         contentDataResourceViews = EntityUtil.orderBy(contentDataResourceViews, UtilMisc.toList("createdDate DESC"));
                         GenericValue contentDataResourceView = EntityUtil.getFirst(contentDataResourceViews);
                         List<GenericValue> contents = EntityQuery.use(delegator).from("ContentAssoc").where("contentAssocTypeId",
-                                "ALTERNATIVE_URL", "contentIdTo", contentDataResourceView.getString("contentId")).filterByDate().queryList();
+                                "ALTERNATIVE_URL", "contentIdTo", contentDataResourceView.getString(org.apache.ofbiz.persistence.entity.x.contentId)).filterByDate().queryList();
                         if (!contents.isEmpty()) {
                             GenericValue content = EntityUtil.getFirst(contents);
-                            urlContentId = content.getString("contentId");
+                            urlContentId = content.getString(org.apache.ofbiz.persistence.entity.x.contentId);
                         }
                     }
                 } catch (Exception e) {

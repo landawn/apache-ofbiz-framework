@@ -77,9 +77,9 @@ public final class ScriptEngine extends GenericAsyncEngine {
         params.putAll(context);
         context.put(ScriptUtil.PARAMETERS_KEY, params);
         DispatchContext dctx = getDispatcher().getLocalContext(localName);
-        context.put("dctx", dctx);
-        context.put("dispatcher", dctx.getDispatcher());
-        context.put("delegator", getDispatcher().getDelegator());
+        context.put(org.apache.ofbiz.persistence.entity.x.dctx, dctx);
+        context.put(org.apache.ofbiz.persistence.entity.x.dispatcher, dctx.getDispatcher());
+        context.put(org.apache.ofbiz.persistence.entity.x.delegator, getDispatcher().getDelegator());
         try {
             ScriptContext scriptContext = ScriptUtil.createScriptContext(context, PROTECTED_KEYS);
             Object resultObj = ScriptUtil.executeScript(getLocation(modelService), modelService.getInvoke(), scriptContext, null);

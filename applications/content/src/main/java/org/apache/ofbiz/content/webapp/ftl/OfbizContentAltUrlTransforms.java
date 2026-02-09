@@ -129,7 +129,7 @@ public class OfbizContentAltUrlTransforms implements TemplateTransformModel {
                     .orderBy("-caFromDate")
                     .queryFirst();
             if (contentAssocDataResource != null) {
-                url = contentAssocDataResource.getString("drObjectInfo");
+                url = contentAssocDataResource.getString(org.apache.ofbiz.persistence.entity.x.drObjectInfo);
                 url = UtilCodec.getDecoder("url").decode(url);
                 String mountPoint = request.getContextPath();
                 if (!("/".equals(mountPoint)) && !("".equals(mountPoint))) {

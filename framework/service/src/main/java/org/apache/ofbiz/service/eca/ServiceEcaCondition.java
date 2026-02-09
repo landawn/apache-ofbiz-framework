@@ -134,7 +134,7 @@ public class ServiceEcaCondition implements java.io.Serializable {
             LocalDispatcher dispatcher = dctx.getDispatcher();
             Map<String, Object> conditionServiceResult = dispatcher.runSync(conditionService,
                     UtilMisc.<String, Object>toMap("serviceContext", context, "serviceName", serviceName,
-                            "userLogin", context.get("userLogin")));
+                            "userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin)));
 
             Boolean conditionReply = Boolean.FALSE;
             if (ServiceUtil.isError(conditionServiceResult)) {

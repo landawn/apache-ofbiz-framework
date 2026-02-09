@@ -77,14 +77,14 @@ public class ImageManagementServices {
         Map<String, Object> result = new HashMap<>();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String productId = (String) context.get("productId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
         productId = productId.trim();
-        String productContentTypeId = (String) context.get("productContentTypeId");
-        ByteBuffer imageData = (ByteBuffer) context.get("uploadedFile");
-        String uploadFileName = (String) context.get("_uploadedFile_fileName");
-        String imageResize = (String) context.get("imageResize");
-        Locale locale = (Locale) context.get("locale");
+        String productContentTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productContentTypeId);
+        ByteBuffer imageData = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.uploadedFile);
+        String uploadFileName = (String) context.get(org.apache.ofbiz.persistence.entity.x._uploadedFile_fileName);
+        String imageResize = (String) context.get(org.apache.ofbiz.persistence.entity.x.imageResize);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         if (UtilValidate.isNotEmpty(uploadFileName)) {
             Debug.logInfo("================== This is about file: " + uploadFileName + " ==================", MODULE);
@@ -126,7 +126,7 @@ public class ImageManagementServices {
             result.put("contentFrameId", contentId);
             result.put("contentId", contentId);
 
-            String fileContentType = (String) context.get("_uploadedFile_contentType");
+            String fileContentType = (String) context.get(org.apache.ofbiz.persistence.entity.x._uploadedFile_contentType);
             if ("image/pjpeg".equals(fileContentType)) {
                 fileContentType = "image/jpeg";
             } else if ("image/x-png".equals(fileContentType)) {
@@ -302,9 +302,9 @@ public class ImageManagementServices {
     }
 
     public static Map<String, Object> removeImageFileForImageManagement(DispatchContext dctx, Map<String, ? extends Object> context) {
-        String productId = (String) context.get("productId");
-        String contentId = (String) context.get("contentId");
-        String dataResourceName = (String) context.get("dataResourceName");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String dataResourceName = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceName);
         Delegator delegator = dctx.getDelegator();
 
         try {
@@ -327,7 +327,7 @@ public class ImageManagementServices {
         throws IllegalArgumentException, ImagingOpException, IOException, JDOMException {
 
         /* VARIABLES */
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         List<String> sizeTypeList = null;
         if (UtilValidate.isNotEmpty(resizeType)) {
             sizeTypeList = UtilMisc.toList(resizeType);
@@ -504,14 +504,14 @@ public class ImageManagementServices {
         if (content != null) {
             GenericValue dataResource = null;
             try {
-                dataResource = content.getRelatedOne("DataResource", false);
+                dataResource = content.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DataResource, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
             }
 
             if (dataResource != null) {
-                dataResourceCtx.put("dataResourceId", dataResource.getString("dataResourceId"));
+                dataResourceCtx.put("dataResourceId", dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId));
                 try {
                     Map<String, Object> serviceResult = dispatcher.runSync("updateDataResource", dataResourceCtx);
                     if (ServiceUtil.isError(serviceResult)) {
@@ -531,7 +531,7 @@ public class ImageManagementServices {
         Map<String, Object> result = new HashMap<>();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
                 "image.management.path", delegator), context);
         String nameOfThumb = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
@@ -555,7 +555,7 @@ public class ImageManagementServices {
         String contentIdThumb = (String) contentThumbResult.get("contentId");
         result.put("contentIdThumb", contentIdThumb);
         String filenameToUseThumb = imageName.substring(0, imageName.indexOf('.')) + nameOfThumb;
-        String fileContentType = (String) context.get("_uploadedFile_contentType");
+        String fileContentType = (String) context.get(org.apache.ofbiz.persistence.entity.x._uploadedFile_contentType);
         if ("image/pjpeg".equals(fileContentType)) {
             fileContentType = "image/jpeg";
         } else if ("image/x-png".equals(fileContentType)) {
@@ -572,7 +572,7 @@ public class ImageManagementServices {
 
         GenericValue extensionThumb = EntityUtil.getFirst(fileExtensionThumb);
         if (extensionThumb != null) {
-            filenameToUseThumb += "." + extensionThumb.getString("fileExtensionId");
+            filenameToUseThumb += "." + extensionThumb.getString(org.apache.ofbiz.persistence.entity.x.fileExtensionId);
         }
         result.put("filenameToUseThumb", filenameToUseThumb);
         // Create image file thumbnail to folder product id.
@@ -718,16 +718,16 @@ public class ImageManagementServices {
     public static Map<String, Object> createNewImageThumbnail(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dispatcher.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
                 "image.management.path", delegator), context);
         String imageServerUrl = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
                 "image.management.url", delegator), context);
-        String productId = (String) context.get("productId");
-        String contentId = (String) context.get("contentId");
-        String dataResourceName = (String) context.get("dataResourceName");
-        String width = (String) context.get("sizeWidth");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String dataResourceName = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceName);
+        String width = (String) context.get(org.apache.ofbiz.persistence.entity.x.sizeWidth);
         String imageType = ".jpg";
         int resizeWidth = Integer.parseInt(width);
         int resizeHeight = resizeWidth;
@@ -792,12 +792,12 @@ public class ImageManagementServices {
 
     public static Map<String, Object> resizeImageOfProduct(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
                 "image.management.path", delegator), context);
-        String productId = (String) context.get("productId");
-        String dataResourceName = (String) context.get("dataResourceName");
-        String width = (String) context.get("resizeWidth");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String dataResourceName = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceName);
+        String width = (String) context.get(org.apache.ofbiz.persistence.entity.x.resizeWidth);
         int resizeWidth = Integer.parseInt(width);
         int resizeHeight = resizeWidth;
 
@@ -821,15 +821,15 @@ public class ImageManagementServices {
     public static Map<String, Object> renameImage(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
                 "image.management.path", delegator), context);
         String imageServerUrl = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
                 "image.management.url", delegator), context);
-        String productId = (String) context.get("productId");
-        String contentId = (String) context.get("contentId");
-        String filenameToUse = (String) context.get("drDataResourceName");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String filenameToUse = (String) context.get(org.apache.ofbiz.persistence.entity.x.drDataResourceName);
         String imageType = filenameToUse.substring(filenameToUse.lastIndexOf('.'));
         String imgExtension = filenameToUse.substring(filenameToUse.length() - 3, filenameToUse.length());
         String imageUrl = imageServerUrl + "/" + productId + "/" + filenameToUse;
@@ -837,7 +837,7 @@ public class ImageManagementServices {
         try {
             GenericValue productContent = EntityQuery.use(delegator).from("ProductContentAndInfo").where("productId", productId, "contentId",
                     contentId, "productContentTypeId", "IMAGE").queryFirst();
-            String dataResourceName = (String) productContent.get("drDataResourceName");
+            String dataResourceName = (String) productContent.get(org.apache.ofbiz.persistence.entity.x.drDataResourceName);
             String mimeType = filenameToUse.substring(filenameToUse.lastIndexOf('.'));
 
             if (imageType.equals(mimeType)) {
@@ -872,7 +872,7 @@ public class ImageManagementServices {
                 if (content != null) {
                     GenericValue dataResource = null;
                     try {
-                        dataResource = content.getRelatedOne("DataResource", false);
+                        dataResource = content.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DataResource, false);
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
                         return ServiceUtil.returnError(e.getMessage());
@@ -880,7 +880,7 @@ public class ImageManagementServices {
 
                     if (dataResource != null) {
                         Map<String, Object> dataResourceCtx = new HashMap<>();
-                        dataResourceCtx.put("dataResourceId", dataResource.getString("dataResourceId"));
+                        dataResourceCtx.put("dataResourceId", dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId));
                         dataResourceCtx.put("objectInfo", imageUrl);
                         dataResourceCtx.put("dataResourceName", filenameToUse);
                         dataResourceCtx.put("userLogin", userLogin);
@@ -903,11 +903,11 @@ public class ImageManagementServices {
                         GenericValue contentAssoc = contentAssocList.get(i);
 
                         List<GenericValue> dataResourceAssocList = EntityQuery.use(delegator).from("ContentDataResourceView")
-                                .where("contentId", contentAssoc.get("contentIdTo")).queryList();
+                                .where("contentId", contentAssoc.get(org.apache.ofbiz.persistence.entity.x.contentIdTo)).queryList();
                         GenericValue dataResourceAssoc = EntityUtil.getFirst(dataResourceAssocList);
 
-                        String drDataResourceNameAssoc = (String) dataResourceAssoc.get("drDataResourceName");
-                        String filenameToUseAssoc = filenameToUse.substring(0, filenameToUse.length() - 4) + "-" + contentAssoc.get("mapKey")
+                        String drDataResourceNameAssoc = (String) dataResourceAssoc.get(org.apache.ofbiz.persistence.entity.x.drDataResourceName);
+                        String filenameToUseAssoc = filenameToUse.substring(0, filenameToUse.length() - 4) + "-" + contentAssoc.get(org.apache.ofbiz.persistence.entity.x.mapKey)
                                 + imageType;
                         String imageUrlAssoc = imageServerUrl + "/" + productId + "/" + filenameToUseAssoc;
 
@@ -920,7 +920,7 @@ public class ImageManagementServices {
                         }
 
                         Map<String, Object> contentAssocMap = new HashMap<>();
-                        contentAssocMap.put("contentId", contentAssoc.get("contentIdTo"));
+                        contentAssocMap.put("contentId", contentAssoc.get(org.apache.ofbiz.persistence.entity.x.contentIdTo));
                         contentAssocMap.put("contentName", filenameToUseAssoc);
                         contentAssocMap.put("userLogin", userLogin);
                         try {
@@ -934,7 +934,7 @@ public class ImageManagementServices {
                         }
                         GenericValue contentAssocUp = null;
                         try {
-                            contentAssocUp = EntityQuery.use(delegator).from("Content").where("contentId", contentAssoc.get("contentIdTo"))
+                            contentAssocUp = EntityQuery.use(delegator).from("Content").where("contentId", contentAssoc.get(org.apache.ofbiz.persistence.entity.x.contentIdTo))
                                     .queryOne();
                         } catch (GenericEntityException e) {
                             Debug.logError(e, MODULE);
@@ -943,7 +943,7 @@ public class ImageManagementServices {
                         if (contentAssocUp != null) {
                             GenericValue dataResourceAssocUp = null;
                             try {
-                                dataResourceAssocUp = contentAssocUp.getRelatedOne("DataResource", false);
+                                dataResourceAssocUp = contentAssocUp.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DataResource, false);
                             } catch (GenericEntityException e) {
                                 Debug.logError(e, MODULE);
                                 return ServiceUtil.returnError(e.getMessage());
@@ -951,7 +951,7 @@ public class ImageManagementServices {
 
                             if (dataResourceAssocUp != null) {
                                 Map<String, Object> dataResourceAssocMap = new HashMap<>();
-                                dataResourceAssocMap.put("dataResourceId", dataResourceAssocUp.getString("dataResourceId"));
+                                dataResourceAssocMap.put("dataResourceId", dataResourceAssocUp.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId));
                                 dataResourceAssocMap.put("objectInfo", imageUrlAssoc);
                                 dataResourceAssocMap.put("dataResourceName", filenameToUseAssoc);
                                 dataResourceAssocMap.put("userLogin", userLogin);

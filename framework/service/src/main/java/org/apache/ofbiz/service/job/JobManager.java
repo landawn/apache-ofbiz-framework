@@ -239,7 +239,7 @@ public final class JobManager {
                 while (jobValue != null) {
                     // Claim ownership of this value. Using storeByCondition to avoid a race condition.
                     List<EntityExpr> updateExpression = UtilMisc.toList(EntityCondition.makeCondition("jobId", EntityOperator.EQUALS,
-                            jobValue.get("jobId")), EntityCondition.makeCondition("runByInstanceId", EntityOperator.EQUALS, null));
+                            jobValue.get(org.apache.ofbiz.persistence.entity.x.jobId)), EntityCondition.makeCondition("runByInstanceId", EntityOperator.EQUALS, null));
                     int rowsUpdated = delegator.storeByCondition("JobSandbox", UtilMisc.toMap("runByInstanceId", INSTANCE_ID),
                             EntityCondition.makeCondition(updateExpression));
                     if (rowsUpdated == 1) {
@@ -347,32 +347,32 @@ public final class JobManager {
                     if (Debug.infoOn()) {
                         Debug.logInfo("Scheduling Job : " + job, MODULE);
                     }
-                    String pJobId = job.getString("parentJobId");
+                    String pJobId = job.getString(org.apache.ofbiz.persistence.entity.x.parentJobId);
                     if (pJobId == null) {
-                        pJobId = job.getString("jobId");
+                        pJobId = job.getString(org.apache.ofbiz.persistence.entity.x.jobId);
                     }
                     GenericValue newJob = GenericValue.create(job);
-                    newJob.set("statusId", "SERVICE_PENDING");
-                    newJob.set("runTime", now);
-                    newJob.set("previousJobId", job.getString("jobId"));
-                    newJob.set("parentJobId", pJobId);
-                    newJob.set("startDateTime", null);
-                    newJob.set("runByInstanceId", null);
+                    newJob.set(org.apache.ofbiz.persistence.entity.x.statusId, "SERVICE_PENDING");
+                    newJob.set(org.apache.ofbiz.persistence.entity.x.runTime, now);
+                    newJob.set(org.apache.ofbiz.persistence.entity.x.previousJobId, job.getString(org.apache.ofbiz.persistence.entity.x.jobId));
+                    newJob.set(org.apache.ofbiz.persistence.entity.x.parentJobId, pJobId);
+                    newJob.set(org.apache.ofbiz.persistence.entity.x.startDateTime, null);
+                    newJob.set(org.apache.ofbiz.persistence.entity.x.runByInstanceId, null);
 
                     // if Queued Job is crashed then its corresponding new Job should have TempExprId and
                     // recurrenceInfoId to continue further scheduling.
-                    if ("SERVICE_QUEUED".equals(job.getString("statusId"))) {
-                        newJob.set("tempExprId", job.getString("tempExprId"));
-                        newJob.set("recurrenceInfoId", job.getString("recurrenceInfoId"));
+                    if ("SERVICE_QUEUED".equals(job.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
+                        newJob.set(org.apache.ofbiz.persistence.entity.x.tempExprId, job.getString(org.apache.ofbiz.persistence.entity.x.tempExprId));
+                        newJob.set(org.apache.ofbiz.persistence.entity.x.recurrenceInfoId, job.getString(org.apache.ofbiz.persistence.entity.x.recurrenceInfoId));
                     } else {
                         //don't set a recurrent schedule on the new job, run it just one time
-                        newJob.set("tempExprId", null);
-                        newJob.set("recurrenceInfoId", null);
+                        newJob.set(org.apache.ofbiz.persistence.entity.x.tempExprId, null);
+                        newJob.set(org.apache.ofbiz.persistence.entity.x.recurrenceInfoId, null);
                     }
                     delegator.createSetNextSeqId(newJob);
                     // set the cancel time on the old job to the same as the re-schedule time
-                    job.set("statusId", "SERVICE_CRASHED");
-                    job.set("cancelDateTime", now);
+                    job.set(org.apache.ofbiz.persistence.entity.x.statusId, "SERVICE_CRASHED");
+                    job.set(org.apache.ofbiz.persistence.entity.x.cancelDateTime, now);
                     delegator.store(job);
                     rescheduled++;
                 } catch (GenericEntityException e) {
@@ -495,9 +495,9 @@ public final class JobManager {
         String dataId = null;
         try {
             GenericValue runtimeData = delegator.makeValue("RuntimeData");
-            runtimeData.set("runtimeInfo", XmlSerializer.serialize(context));
+            runtimeData.set(org.apache.ofbiz.persistence.entity.x.runtimeInfo, XmlSerializer.serialize(context));
             runtimeData = delegator.createSetNextSeqId(runtimeData);
-            dataId = runtimeData.getString("runtimeDataId");
+            dataId = runtimeData.getString(org.apache.ofbiz.persistence.entity.x.runtimeDataId);
         } catch (GenericEntityException | SerializeException | IOException e) {
             throw new JobManagerException(e.getMessage(), e);
         }

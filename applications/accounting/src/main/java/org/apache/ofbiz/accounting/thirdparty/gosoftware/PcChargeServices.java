@@ -48,7 +48,7 @@ public class PcChargeServices {
     private static final RoundingMode ROUNDING_MODE = UtilNumber.getRoundingMode("invoice.rounding");
 
     public static Map<String, Object> ccAuth(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
         // setup the PCCharge Interface
         Properties props = buildPccProperties(context, delegator);
@@ -66,7 +66,7 @@ public class PcChargeServices {
 
         // basic tx info
         api.set(PcChargeApi.TRANS_AMOUNT, getAmountString(context, "processAmount"));
-        api.set(PcChargeApi.TICKET_NUM, context.get("orderId"));
+        api.set(PcChargeApi.TICKET_NUM, context.get(org.apache.ofbiz.persistence.entity.x.orderId));
         api.set(PcChargeApi.MANUAL_FLAG, "0");
         api.set(PcChargeApi.PRESENT_FLAG, "1");
 
@@ -106,7 +106,7 @@ public class PcChargeServices {
         }
 
         result.put("authRefNum", out.get(PcChargeApi.TROUTD) != null ? out.get(PcChargeApi.TROUTD) : "");
-        result.put("processAmount", context.get("processAmount"));
+        result.put("processAmount", context.get(org.apache.ofbiz.persistence.entity.x.processAmount));
         result.put("authCode", out.get(PcChargeApi.AUTH_CODE));
         result.put("authFlag", out.get(PcChargeApi.REFERENCE));
         result.put("authMessage", out.get(PcChargeApi.RESULT));
@@ -131,11 +131,11 @@ public class PcChargeServices {
     }
 
     public static Map<String, Object> ccCapture(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
         // lets see if there is a auth transaction already in context
-        GenericValue authTransaction = (GenericValue) context.get("authTrans");
+        GenericValue authTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
 
         if (authTransaction == null) {
             authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
@@ -154,7 +154,7 @@ public class PcChargeServices {
                     "AccountingPcChargeErrorGettingPaymentGatewayConfig", locale));
         }
 
-        api.set(PcChargeApi.TROUTD, authTransaction.getString("referenceNum"));
+        api.set(PcChargeApi.TROUTD, authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
         api.set(PcChargeApi.COMMAND, "5");
 
         // send the transaction
@@ -173,7 +173,7 @@ public class PcChargeServices {
         } else {
             result.put("captureResult", Boolean.FALSE);
         }
-        result.put("captureAmount", context.get("captureAmount"));
+        result.put("captureAmount", context.get(org.apache.ofbiz.persistence.entity.x.captureAmount));
         result.put("captureRefNum", out.get(PcChargeApi.TROUTD) != null ? out.get(PcChargeApi.TROUTD) : "");
         result.put("captureCode", out.get(PcChargeApi.AUTH_CODE));
         result.put("captureFlag", out.get(PcChargeApi.REFERENCE));
@@ -183,11 +183,11 @@ public class PcChargeServices {
     }
 
     public static Map<String, Object> ccRelease(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
         Delegator delegator = dctx.getDelegator();
         // lets see if there is a auth transaction already in context
-        GenericValue authTransaction = (GenericValue) context.get("authTrans");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue authTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         if (authTransaction == null) {
             authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
@@ -206,7 +206,7 @@ public class PcChargeServices {
                     "AccountingPcChargeErrorGettingPaymentGatewayConfig", locale));
         }
 
-        api.set(PcChargeApi.TROUTD, authTransaction.getString("referenceNum"));
+        api.set(PcChargeApi.TROUTD, authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
         api.set(PcChargeApi.COMMAND, "3");
 
         // check to make sure we are configured for SALE mode
@@ -231,7 +231,7 @@ public class PcChargeServices {
         } else {
             result.put("releaseResult", Boolean.FALSE);
         }
-        result.put("releaseAmount", context.get("releaseAmount"));
+        result.put("releaseAmount", context.get(org.apache.ofbiz.persistence.entity.x.releaseAmount));
         result.put("releaseRefNum", out.get(PcChargeApi.TROUTD) != null ? out.get(PcChargeApi.TROUTD) : "");
         result.put("releaseCode", out.get(PcChargeApi.AUTH_CODE));
         result.put("releaseFlag", out.get(PcChargeApi.REFERENCE));
@@ -241,11 +241,11 @@ public class PcChargeServices {
     }
 
     public static Map<String, Object> ccRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
         Delegator delegator = dctx.getDelegator();
         // lets see if there is a auth transaction already in context
-        GenericValue authTransaction = (GenericValue) context.get("authTrans");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue authTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         if (authTransaction == null) {
             authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
@@ -264,7 +264,7 @@ public class PcChargeServices {
                     "AccountingPcChargeErrorGettingPaymentGatewayConfig", locale));
         }
 
-        api.set(PcChargeApi.TROUTD, authTransaction.getString("referenceNum"));
+        api.set(PcChargeApi.TROUTD, authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
         api.set(PcChargeApi.COMMAND, "2");
 
         // send the transaction
@@ -283,7 +283,7 @@ public class PcChargeServices {
         } else {
             result.put("refundResult", Boolean.FALSE);
         }
-        result.put("refundAmount", context.get("releaseAmount"));
+        result.put("refundAmount", context.get(org.apache.ofbiz.persistence.entity.x.releaseAmount));
         result.put("refundRefNum", out.get(PcChargeApi.TROUTD) != null ? out.get(PcChargeApi.TROUTD) : "");
         result.put("refundCode", out.get(PcChargeApi.AUTH_CODE));
         result.put("refundFlag", out.get(PcChargeApi.REFERENCE));
@@ -293,20 +293,20 @@ public class PcChargeServices {
     }
 
     private static void setCreditCardInfo(PcChargeApi api, Map<String, ? extends Object> context) throws GeneralException {
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
-        GenericValue creditCard = (GenericValue) context.get("creditCard");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        GenericValue creditCard = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.creditCard);
         if (creditCard != null) {
-            List<String> expDateList = StringUtil.split(creditCard.getString("expireDate"), "/");
+            List<String> expDateList = StringUtil.split(creditCard.getString(org.apache.ofbiz.persistence.entity.x.expireDate), "/");
             String month = expDateList.get(0);
             String year = expDateList.get(1);
             String y2d = year.substring(2);
             String expDate = month + y2d;
 
-            String title = creditCard.getString("titleOnCard");
-            String fname = creditCard.getString("firstNameOnCard");
-            String mname = creditCard.getString("middleNameOnCard");
-            String lname = creditCard.getString("lastNameOnCard");
-            String sufix = creditCard.getString("suffixOnCard");
+            String title = creditCard.getString(org.apache.ofbiz.persistence.entity.x.titleOnCard);
+            String fname = creditCard.getString(org.apache.ofbiz.persistence.entity.x.firstNameOnCard);
+            String mname = creditCard.getString(org.apache.ofbiz.persistence.entity.x.middleNameOnCard);
+            String lname = creditCard.getString(org.apache.ofbiz.persistence.entity.x.lastNameOnCard);
+            String sufix = creditCard.getString(org.apache.ofbiz.persistence.entity.x.suffixOnCard);
             StringBuilder name = new StringBuilder();
             if (UtilValidate.isNotEmpty(title)) {
                 name.append(title).append(" ");
@@ -324,8 +324,8 @@ public class PcChargeServices {
                 name.append(sufix);
             }
             String nameOnCard = name.toString().trim();
-            String acctNumber = "F" + creditCard.getString("cardNumber");
-            String cvNum = (String) context.get("cardSecurityCode");
+            String acctNumber = "F" + creditCard.getString(org.apache.ofbiz.persistence.entity.x.cardNumber);
+            String cvNum = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardSecurityCode);
 
             api.set(PcChargeApi.ACCT_NUM, acctNumber);
             api.set(PcChargeApi.EXP_DATE, expDate);
@@ -335,12 +335,12 @@ public class PcChargeServices {
             }
 
             // billing address information
-            GenericValue billingAddress = (GenericValue) context.get("billingAddress");
+            GenericValue billingAddress = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.billingAddress);
             if (billingAddress != null) {
-                api.set(PcChargeApi.STREET, billingAddress.getString("address1"));
-                api.set(PcChargeApi.ZIP_CODE, billingAddress.getString("postalCode"));
+                api.set(PcChargeApi.STREET, billingAddress.getString(org.apache.ofbiz.persistence.entity.x.address1));
+                api.set(PcChargeApi.ZIP_CODE, billingAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode));
             } else {
-                String zipCode = orderPaymentPreference.getString("billingPostalCode");
+                String zipCode = orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.billingPostalCode);
                 if (UtilValidate.isNotEmpty(zipCode)) {
                     api.set(PcChargeApi.ZIP_CODE, zipCode);
                 }
@@ -376,7 +376,7 @@ public class PcChargeServices {
     }
 
     private static Properties buildPccProperties(Map<String, ? extends Object> context, Delegator delegator) {
-        String configString = (String) context.get("paymentConfig");
+        String configString = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
         if (configString == null) {
             configString = "payment.properties";
         }

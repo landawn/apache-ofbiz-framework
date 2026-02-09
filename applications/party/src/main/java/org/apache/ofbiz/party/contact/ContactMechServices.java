@@ -74,8 +74,8 @@ public class ContactMechServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Timestamp now = UtilDateTime.nowTimestamp();
         List<GenericValue> toBeStored = new LinkedList<>();
 
@@ -85,7 +85,7 @@ public class ContactMechServices {
             return result;
         }
 
-        String contactMechTypeId = (String) context.get("contactMechTypeId");
+        String contactMechTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechTypeId);
 
         String newCmId = null;
         try {
@@ -101,8 +101,8 @@ public class ContactMechServices {
 
         if (!"_NA_".equals(partyId)) {
             toBeStored.add(delegator.makeValue("PartyContactMech", UtilMisc.toMap("partyId", partyId, "contactMechId", newCmId,
-                    "fromDate", now, "roleTypeId", context.get("roleTypeId"), "allowSolicitation", context.get("allowSolicitation"),
-                    "extension", context.get("extension"))));
+                    "fromDate", now, "roleTypeId", context.get(org.apache.ofbiz.persistence.entity.x.roleTypeId), "allowSolicitation", context.get(org.apache.ofbiz.persistence.entity.x.allowSolicitation),
+                    "extension", context.get(org.apache.ofbiz.persistence.entity.x.extension))));
         }
 
         if ("POSTAL_ADDRESS".equals(contactMechTypeId)) {
@@ -112,7 +112,7 @@ public class ContactMechServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "contactmechservices.service_createContactMech_not_be_used_for_TELECOM_NUMBER", locale));
         } else {
-            tempContactMech.set("infoString", context.get("infoString"));
+            tempContactMech.set(org.apache.ofbiz.persistence.entity.x.infoString, context.get(org.apache.ofbiz.persistence.entity.x.infoString));
         }
 
         try {
@@ -140,8 +140,8 @@ public class ContactMechServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Timestamp now = UtilDateTime.nowTimestamp();
         List<GenericValue> toBeStored = new LinkedList<>();
         boolean isModified = false;
@@ -160,7 +160,7 @@ public class ContactMechServices {
                     "contactmechservices.could_not_change_contact_info_id_generation_failure", locale));
         }
 
-        String contactMechId = (String) context.get("contactMechId");
+        String contactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechId);
         GenericValue contactMech;
         GenericValue partyContactMech = null;
 
@@ -194,7 +194,7 @@ public class ContactMechServices {
                     "contactmechservices.could_not_find_specified_contact_info_read", locale));
         }
 
-        String contactMechTypeId = contactMech.getString("contactMechTypeId");
+        String contactMechTypeId = contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechTypeId);
 
         // never change a contact mech, just create a new one with the changes
         GenericValue newContactMech = GenericValue.create(contactMech);
@@ -207,11 +207,11 @@ public class ContactMechServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "contactmechservices.service_updateContactMech_not_be_used_for_TELECOM_NUMBER", locale));
         } else {
-            newContactMech.set("infoString", context.get("infoString"));
+            newContactMech.set(org.apache.ofbiz.persistence.entity.x.infoString, context.get(org.apache.ofbiz.persistence.entity.x.infoString));
         }
 
-        newPartyContactMech.set("roleTypeId", context.get("roleTypeId"));
-        newPartyContactMech.set("allowSolicitation", context.get("allowSolicitation"));
+        newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.roleTypeId, context.get(org.apache.ofbiz.persistence.entity.x.roleTypeId));
+        newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.allowSolicitation, context.get(org.apache.ofbiz.persistence.entity.x.allowSolicitation));
 
         if (!newContactMech.equals(contactMech)) {
             isModified = true;
@@ -224,19 +224,19 @@ public class ContactMechServices {
         toBeStored.add(newPartyContactMech);
 
         if (isModified) {
-            newContactMech.set("contactMechId", newCmId);
-            newPartyContactMech.set("contactMechId", newCmId);
-            newPartyContactMech.set("fromDate", now);
-            newPartyContactMech.set("thruDate", null);
+            newContactMech.set(org.apache.ofbiz.persistence.entity.x.contactMechId, newCmId);
+            newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.contactMechId, newCmId);
+            newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.fromDate, now);
+            newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.thruDate, null);
 
             try {
-                Iterator<GenericValue> partyContactMechPurposes = UtilMisc.toIterator(partyContactMech.getRelated("PartyContactMechPurpose",
+                Iterator<GenericValue> partyContactMechPurposes = UtilMisc.toIterator(partyContactMech.getRelated(org.apache.ofbiz.persistence.entity.x.PartyContactMechPurpose,
                         null, null, false));
 
                 while (partyContactMechPurposes != null && partyContactMechPurposes.hasNext()) {
                     GenericValue tempVal = GenericValue.create(partyContactMechPurposes.next());
 
-                    tempVal.set("contactMechId", newCmId);
+                    tempVal.set(org.apache.ofbiz.persistence.entity.x.contactMechId, newCmId);
                     toBeStored.add(tempVal);
                 }
             } catch (GenericEntityException e) {
@@ -246,7 +246,7 @@ public class ContactMechServices {
                         UtilMisc.toMap("errMessage", e.getMessage()), locale));
             }
 
-            partyContactMech.set("thruDate", now);
+            partyContactMech.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
             try {
                 delegator.storeAll(toBeStored);
             } catch (GenericEntityException e) {
@@ -279,8 +279,8 @@ public class ContactMechServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, "PARTYMGR", "_PCM_DELETE");
 
@@ -289,7 +289,7 @@ public class ContactMechServices {
         }
 
         // never delete a contact mechanism, just put a to date on the link to the party
-        String contactMechId = (String) context.get("contactMechId");
+        String contactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechId);
         GenericValue partyContactMech = null;
 
         try {
@@ -311,7 +311,7 @@ public class ContactMechServices {
                     "contactmechservices.could_not_delete_contact_info_no_contact_found", locale));
         }
 
-        partyContactMech.set("thruDate", UtilDateTime.nowTimestamp());
+        partyContactMech.set(org.apache.ofbiz.persistence.entity.x.thruDate, UtilDateTime.nowTimestamp());
         try {
             partyContactMech.store();
         } catch (GenericEntityException e) {
@@ -338,8 +338,8 @@ public class ContactMechServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Timestamp now = UtilDateTime.nowTimestamp();
         List<GenericValue> toBeStored = new LinkedList<>();
 
@@ -367,24 +367,24 @@ public class ContactMechServices {
         if (!"_NA_".equals(partyId)) {
             toBeStored.add(delegator.makeValue("PartyContactMech",
                     UtilMisc.toMap("partyId", partyId, "contactMechId", newCmId,
-                        "fromDate", now, "roleTypeId", context.get("roleTypeId"), "allowSolicitation",
-                        context.get("allowSolicitation"), "extension", context.get("extension"))));
+                        "fromDate", now, "roleTypeId", context.get(org.apache.ofbiz.persistence.entity.x.roleTypeId), "allowSolicitation",
+                        context.get(org.apache.ofbiz.persistence.entity.x.allowSolicitation), "extension", context.get(org.apache.ofbiz.persistence.entity.x.extension))));
         }
 
         GenericValue newAddr = delegator.makeValue("PostalAddress");
 
-        newAddr.set("contactMechId", newCmId);
-        newAddr.set("toName", context.get("toName"));
-        newAddr.set("attnName", context.get("attnName"));
-        newAddr.set("address1", context.get("address1"));
-        newAddr.set("address2", context.get("address2"));
-        newAddr.set("directions", context.get("directions"));
-        newAddr.set("city", context.get("city"));
-        newAddr.set("postalCode", context.get("postalCode"));
-        newAddr.set("postalCodeExt", context.get("postalCodeExt"));
-        newAddr.set("stateProvinceGeoId", context.get("stateProvinceGeoId"));
-        newAddr.set("countryGeoId", context.get("countryGeoId"));
-        newAddr.set("postalCodeGeoId", context.get("postalCodeGeoId"));
+        newAddr.set(org.apache.ofbiz.persistence.entity.x.contactMechId, newCmId);
+        newAddr.set(org.apache.ofbiz.persistence.entity.x.toName, context.get(org.apache.ofbiz.persistence.entity.x.toName));
+        newAddr.set(org.apache.ofbiz.persistence.entity.x.attnName, context.get(org.apache.ofbiz.persistence.entity.x.attnName));
+        newAddr.set(org.apache.ofbiz.persistence.entity.x.address1, context.get(org.apache.ofbiz.persistence.entity.x.address1));
+        newAddr.set(org.apache.ofbiz.persistence.entity.x.address2, context.get(org.apache.ofbiz.persistence.entity.x.address2));
+        newAddr.set(org.apache.ofbiz.persistence.entity.x.directions, context.get(org.apache.ofbiz.persistence.entity.x.directions));
+        newAddr.set(org.apache.ofbiz.persistence.entity.x.city, context.get(org.apache.ofbiz.persistence.entity.x.city));
+        newAddr.set(org.apache.ofbiz.persistence.entity.x.postalCode, context.get(org.apache.ofbiz.persistence.entity.x.postalCode));
+        newAddr.set(org.apache.ofbiz.persistence.entity.x.postalCodeExt, context.get(org.apache.ofbiz.persistence.entity.x.postalCodeExt));
+        newAddr.set(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId, context.get(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId));
+        newAddr.set(org.apache.ofbiz.persistence.entity.x.countryGeoId, context.get(org.apache.ofbiz.persistence.entity.x.countryGeoId));
+        newAddr.set(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId, context.get(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId));
         toBeStored.add(newAddr);
 
         try {
@@ -412,8 +412,8 @@ public class ContactMechServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Timestamp now = UtilDateTime.nowTimestamp();
         List<GenericValue> toBeStored = new LinkedList<>();
         boolean isModified = false;
@@ -432,7 +432,7 @@ public class ContactMechServices {
                     "contactmechservices.could_not_change_contact_info_id_generation_failure", locale));
         }
 
-        String contactMechId = (String) context.get("contactMechId");
+        String contactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechId);
         GenericValue contactMech;
         GenericValue partyContactMech = null;
 
@@ -474,7 +474,7 @@ public class ContactMechServices {
         }
         GenericValue relatedEntityToSet = null;
 
-        if ("POSTAL_ADDRESS".equals(contactMech.getString("contactMechTypeId"))) {
+        if ("POSTAL_ADDRESS".equals(contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechTypeId))) {
             GenericValue addr;
             try {
                 addr = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId", contactMechId).queryOne();
@@ -483,30 +483,30 @@ public class ContactMechServices {
                 addr = null;
             }
             relatedEntityToSet = GenericValue.create(addr);
-            relatedEntityToSet.set("toName", context.get("toName"));
-            relatedEntityToSet.set("attnName", context.get("attnName"));
-            relatedEntityToSet.set("address1", context.get("address1"));
-            relatedEntityToSet.set("address2", context.get("address2"));
-            relatedEntityToSet.set("directions", context.get("directions"));
-            relatedEntityToSet.set("city", context.get("city"));
-            relatedEntityToSet.set("postalCode", context.get("postalCode"));
-            relatedEntityToSet.set("postalCodeExt", context.get("postalCodeExt"));
-            relatedEntityToSet.set("stateProvinceGeoId", context.get("stateProvinceGeoId"));
-            relatedEntityToSet.set("countryGeoId", context.get("countryGeoId"));
-            relatedEntityToSet.set("postalCodeGeoId", context.get("postalCodeGeoId"));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.toName, context.get(org.apache.ofbiz.persistence.entity.x.toName));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.attnName, context.get(org.apache.ofbiz.persistence.entity.x.attnName));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.address1, context.get(org.apache.ofbiz.persistence.entity.x.address1));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.address2, context.get(org.apache.ofbiz.persistence.entity.x.address2));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.directions, context.get(org.apache.ofbiz.persistence.entity.x.directions));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.city, context.get(org.apache.ofbiz.persistence.entity.x.city));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.postalCode, context.get(org.apache.ofbiz.persistence.entity.x.postalCode));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.postalCodeExt, context.get(org.apache.ofbiz.persistence.entity.x.postalCodeExt));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId, context.get(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.countryGeoId, context.get(org.apache.ofbiz.persistence.entity.x.countryGeoId));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId, context.get(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId));
             if (addr == null || !relatedEntityToSet.equals(addr)) {
                 isModified = true;
             }
-            relatedEntityToSet.set("contactMechId", newCmId);
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.contactMechId, newCmId);
         } else {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "contactmechservices.could_not_update_contact_as_POSTAL_ADDRESS_specified",
-                    UtilMisc.toMap("contactMechTypeId", contactMech.getString("contactMechTypeId")), locale));
+                    UtilMisc.toMap("contactMechTypeId", contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechTypeId)), locale));
         }
 
         if (newPartyContactMech != null) {
-            newPartyContactMech.set("roleTypeId", context.get("roleTypeId"));
-            newPartyContactMech.set("allowSolicitation", context.get("allowSolicitation"));
+            newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.roleTypeId, context.get(org.apache.ofbiz.persistence.entity.x.roleTypeId));
+            newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.allowSolicitation, context.get(org.apache.ofbiz.persistence.entity.x.allowSolicitation));
         }
 
         if (!newContactMech.equals(contactMech)) {
@@ -524,20 +524,20 @@ public class ContactMechServices {
         if (isModified) {
             toBeStored.add(relatedEntityToSet);
 
-            newContactMech.set("contactMechId", newCmId);
+            newContactMech.set(org.apache.ofbiz.persistence.entity.x.contactMechId, newCmId);
             if (newPartyContactMech != null) {
-                newPartyContactMech.set("contactMechId", newCmId);
-                newPartyContactMech.set("fromDate", now);
-                newPartyContactMech.set("thruDate", null);
+                newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.contactMechId, newCmId);
+                newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.fromDate, now);
+                newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.thruDate, null);
 
                 try {
-                    Iterator<GenericValue> partyContactMechPurposes = UtilMisc.toIterator(partyContactMech.getRelated("PartyContactMechPurpose",
+                    Iterator<GenericValue> partyContactMechPurposes = UtilMisc.toIterator(partyContactMech.getRelated(org.apache.ofbiz.persistence.entity.x.PartyContactMechPurpose,
                             null, null, false));
 
                     while (partyContactMechPurposes != null && partyContactMechPurposes.hasNext()) {
                         GenericValue tempVal = GenericValue.create(partyContactMechPurposes.next());
 
-                        tempVal.set("contactMechId", newCmId);
+                        tempVal.set(org.apache.ofbiz.persistence.entity.x.contactMechId, newCmId);
                         toBeStored.add(tempVal);
                     }
                 } catch (GenericEntityException e) {
@@ -547,7 +547,7 @@ public class ContactMechServices {
                             UtilMisc.toMap("errMessage", e.getMessage()), locale));
                 }
 
-                partyContactMech.set("thruDate", now);
+                partyContactMech.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
             }
 
             try {
@@ -585,8 +585,8 @@ public class ContactMechServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Timestamp now = UtilDateTime.nowTimestamp();
         List<GenericValue> toBeStored = new LinkedList<>();
 
@@ -611,11 +611,11 @@ public class ContactMechServices {
         toBeStored.add(tempContactMech);
 
         toBeStored.add(delegator.makeValue("PartyContactMech", UtilMisc.toMap("partyId", partyId, "contactMechId", newCmId,
-                    "fromDate", now, "roleTypeId", context.get("roleTypeId"), "allowSolicitation", context.get("allowSolicitation"),
-                "extension", context.get("extension"))));
+                    "fromDate", now, "roleTypeId", context.get(org.apache.ofbiz.persistence.entity.x.roleTypeId), "allowSolicitation", context.get(org.apache.ofbiz.persistence.entity.x.allowSolicitation),
+                "extension", context.get(org.apache.ofbiz.persistence.entity.x.extension))));
 
         toBeStored.add(delegator.makeValue("TelecomNumber", UtilMisc.toMap("contactMechId", newCmId,
-                    "countryCode", context.get("countryCode"), "areaCode", context.get("areaCode"), "contactNumber", context.get("contactNumber"))));
+                    "countryCode", context.get(org.apache.ofbiz.persistence.entity.x.countryCode), "areaCode", context.get(org.apache.ofbiz.persistence.entity.x.areaCode), "contactNumber", context.get(org.apache.ofbiz.persistence.entity.x.contactNumber))));
 
         try {
             delegator.storeAll(toBeStored);
@@ -642,8 +642,8 @@ public class ContactMechServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Timestamp now = UtilDateTime.nowTimestamp();
         List<GenericValue> toBeStored = new LinkedList<>();
         boolean isModified = false;
@@ -662,7 +662,7 @@ public class ContactMechServices {
                     "contactmechservices.could_not_change_contact_info_id_generation_failure", locale));
         }
 
-        String contactMechId = (String) context.get("contactMechId");
+        String contactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechId);
         GenericValue contactMech = null;
         GenericValue partyContactMech = null;
 
@@ -693,7 +693,7 @@ public class ContactMechServices {
         GenericValue newPartyContactMech = GenericValue.create(partyContactMech);
         GenericValue relatedEntityToSet = null;
 
-        if ("TELECOM_NUMBER".equals(contactMech.getString("contactMechTypeId"))) {
+        if ("TELECOM_NUMBER".equals(contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechTypeId))) {
             GenericValue telNum;
             try {
                 telNum = EntityQuery.use(delegator).from("TelecomNumber").where("contactMechId", contactMechId).queryOne();
@@ -702,23 +702,23 @@ public class ContactMechServices {
                 telNum = null;
             }
             relatedEntityToSet = GenericValue.create(telNum);
-            relatedEntityToSet.set("countryCode", context.get("countryCode"));
-            relatedEntityToSet.set("areaCode", context.get("areaCode"));
-            relatedEntityToSet.set("contactNumber", context.get("contactNumber"));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.countryCode, context.get(org.apache.ofbiz.persistence.entity.x.countryCode));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.areaCode, context.get(org.apache.ofbiz.persistence.entity.x.areaCode));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.contactNumber, context.get(org.apache.ofbiz.persistence.entity.x.contactNumber));
 
             if (telNum == null || !relatedEntityToSet.equals(telNum)) {
                 isModified = true;
             }
-            relatedEntityToSet.set("contactMechId", newCmId);
-            newPartyContactMech.set("extension", context.get("extension"));
+            relatedEntityToSet.set(org.apache.ofbiz.persistence.entity.x.contactMechId, newCmId);
+            newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.extension, context.get(org.apache.ofbiz.persistence.entity.x.extension));
         } else {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "contactmechservices.could_not_update_contact_as_TELECOM_NUMBER_specified",
-                    UtilMisc.toMap("contactMechTypeId", contactMech.getString("contactMechTypeId")), locale));
+                    UtilMisc.toMap("contactMechTypeId", contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechTypeId)), locale));
         }
 
-        newPartyContactMech.set("roleTypeId", context.get("roleTypeId"));
-        newPartyContactMech.set("allowSolicitation", context.get("allowSolicitation"));
+        newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.roleTypeId, context.get(org.apache.ofbiz.persistence.entity.x.roleTypeId));
+        newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.allowSolicitation, context.get(org.apache.ofbiz.persistence.entity.x.allowSolicitation));
 
         if (!newContactMech.equals(contactMech)) {
             isModified = true;
@@ -733,19 +733,19 @@ public class ContactMechServices {
         if (isModified) {
             toBeStored.add(relatedEntityToSet);
 
-            newContactMech.set("contactMechId", newCmId);
-            newPartyContactMech.set("contactMechId", newCmId);
-            newPartyContactMech.set("fromDate", now);
-            newPartyContactMech.set("thruDate", null);
+            newContactMech.set(org.apache.ofbiz.persistence.entity.x.contactMechId, newCmId);
+            newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.contactMechId, newCmId);
+            newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.fromDate, now);
+            newPartyContactMech.set(org.apache.ofbiz.persistence.entity.x.thruDate, null);
 
             try {
-                Iterator<GenericValue> partyContactMechPurposes = UtilMisc.toIterator(partyContactMech.getRelated("PartyContactMechPurpose",
+                Iterator<GenericValue> partyContactMechPurposes = UtilMisc.toIterator(partyContactMech.getRelated(org.apache.ofbiz.persistence.entity.x.PartyContactMechPurpose,
                         null, null, false));
 
                 while (partyContactMechPurposes != null && partyContactMechPurposes.hasNext()) {
                     GenericValue tempVal = GenericValue.create(partyContactMechPurposes.next());
 
-                    tempVal.set("contactMechId", newCmId);
+                    tempVal.set(org.apache.ofbiz.persistence.entity.x.contactMechId, newCmId);
                     toBeStored.add(tempVal);
                 }
             } catch (GenericEntityException e) {
@@ -755,7 +755,7 @@ public class ContactMechServices {
                         UtilMisc.toMap("errMessage", e.getMessage()), locale));
             }
 
-            partyContactMech.set("thruDate", now);
+            partyContactMech.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
             try {
                 delegator.storeAll(toBeStored);
             } catch (GenericEntityException e) {
@@ -826,20 +826,20 @@ public class ContactMechServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
 
         String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, "PARTYMGR", "_PCM_CREATE");
         String errMsg = null;
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         if (!result.isEmpty()) {
             return result;
         }
 
         // required parameters
-        String contactMechId = (String) context.get("contactMechId");
-        String contactMechPurposeTypeId = (String) context.get("contactMechPurposeTypeId");
-        Timestamp fromDate = (Timestamp) context.get("fromDate");
+        String contactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechId);
+        String contactMechPurposeTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechPurposeTypeId);
+        Timestamp fromDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
 
         GenericValue tempVal;
         try {
@@ -891,20 +891,20 @@ public class ContactMechServices {
     public static Map<String, Object> getPartyContactMechValueMaps(DispatchContext ctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = ctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String partyId = (String) context.get("partyId");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (UtilValidate.isEmpty(partyId)) {
             if (userLogin != null) {
-                partyId = userLogin.getString("partyId");
+                partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
             } else {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "PartyCannotGetPartyContactMech", locale));
             }
         }
-        Boolean bShowOld = (Boolean) context.get("showOld");
+        Boolean bShowOld = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.showOld);
         boolean showOld = Boolean.TRUE.equals(bShowOld);
-        String contactMechTypeId = (String) context.get("contactMechTypeId");
+        String contactMechTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechTypeId);
         List<Map<String, Object>> valueMaps = ContactMechWorker.getPartyContactMechValueMaps(delegator, partyId, showOld, contactMechTypeId);
         result.put("valueMaps", valueMaps);
         return result;
@@ -916,11 +916,11 @@ public class ContactMechServices {
     public static Map<String, Object> copyPartyContactMechs(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
 
-        String partyIdFrom = (String) context.get("partyIdFrom");
-        String partyIdTo = (String) context.get("partyIdTo");
-        Locale locale = (Locale) context.get("locale");
+        String partyIdFrom = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyIdFrom);
+        String partyIdTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyIdTo);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         try {
             // grab all of the non-expired contact mechs using this party worker method
@@ -933,13 +933,13 @@ public class ContactMechServices {
                 List<GenericValue> partyContactMechPurposes = UtilGenerics.cast(thisMap.get("partyContactMechPurposes"));
 
                 // get the contactMechId
-                String contactMechId = contactMech.getString("contactMechId");
+                String contactMechId = contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechId);
 
                 // create a new party contact mech for the partyIdTo
                 Map<String, Object> serviceResults = dispatcher.runSync("createPartyContactMech", UtilMisc.<String, Object>toMap("partyId",
                         partyIdTo, "userLogin", userLogin, "contactMechId", contactMechId, "contactMechTypeId",
-                        contactMech.getString("contactMechTypeId"), "fromDate", UtilDateTime.nowTimestamp(), "allowSolicitation",
-                        partyContactMech.getString("allowSolicitation"), "extension", partyContactMech.getString("extension")));
+                        contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechTypeId), "fromDate", UtilDateTime.nowTimestamp(), "allowSolicitation",
+                        partyContactMech.getString(org.apache.ofbiz.persistence.entity.x.allowSolicitation), "extension", partyContactMech.getString(org.apache.ofbiz.persistence.entity.x.extension)));
                 if (ServiceUtil.isError(serviceResults)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResults));
                 }
@@ -947,7 +947,7 @@ public class ContactMechServices {
                 // loop through purposes and copy each as a new purpose for the partyIdTo
                 for (GenericValue purpose: partyContactMechPurposes) {
                     Map<String, Object> input = UtilMisc.toMap("partyId", partyIdTo, "contactMechId", contactMechId, "userLogin", userLogin);
-                    input.put("contactMechPurposeTypeId", purpose.getString("contactMechPurposeTypeId"));
+                    input.put("contactMechPurposeTypeId", purpose.getString(org.apache.ofbiz.persistence.entity.x.contactMechPurposeTypeId));
                     serviceResults = dispatcher.runSync("createPartyContactMechPurpose", input);
                     if (ServiceUtil.isError(serviceResults)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResults));
@@ -968,7 +968,7 @@ public class ContactMechServices {
      */
     public static Map<String, Object> createEmailAddressVerification(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String emailAddress = (String) context.get("emailAddress");
+        String emailAddress = (String) context.get(org.apache.ofbiz.persistence.entity.x.emailAddress);
         String verifyHash = null;
 
         String expireTime = EntityUtilProperties.getPropertyValue("security", "email_verification.expire.hours", delegator);
@@ -991,9 +991,9 @@ public class ContactMechServices {
                 }
                 if (UtilValidate.isEmpty(emailAddVerifications)) {
                     GenericValue emailAddressVerification = delegator.makeValue("EmailAddressVerification");
-                    emailAddressVerification.set("emailAddress", emailAddress);
-                    emailAddressVerification.set("verifyHash", verifyHash);
-                    emailAddressVerification.set("expireDate", expireDate);
+                    emailAddressVerification.set(org.apache.ofbiz.persistence.entity.x.emailAddress, emailAddress);
+                    emailAddressVerification.set(org.apache.ofbiz.persistence.entity.x.verifyHash, verifyHash);
+                    emailAddressVerification.set(org.apache.ofbiz.persistence.entity.x.expireDate, expireDate);
                     try {
                         delegator.create(emailAddressVerification);
                     } catch (GenericEntityException e) {

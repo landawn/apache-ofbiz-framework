@@ -99,10 +99,10 @@ public class UpsServices {
     public static Map<String, Object> upsShipmentConfirm(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
-        String shipmentId = (String) context.get("shipmentId");
-        String shipmentRouteSegmentId = (String) context.get("shipmentRouteSegmentId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
+        String shipmentRouteSegmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId);
 
         Map<String, Object> shipmentGatewayConfig = ShipmentServices.getShipmentGatewayConfigFromShipment(delegator, shipmentId, locale);
         String shipmentGatewayConfigId = (String) shipmentGatewayConfig.get("shipmentGatewayConfigId");
@@ -136,53 +136,53 @@ public class UpsServices {
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
-            if (!"UPS".equals(shipmentRouteSegment.getString("carrierPartyId"))) {
+            if (!"UPS".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsNotRouteSegmentCarrier",
                         UtilMisc.toMap("shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId), locale));
             }
 
             // add ShipmentRouteSegment carrierServiceStatusId, check before all UPS services
-            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString("carrierServiceStatusId"))
-                    && !"SHRSCS_NOT_STARTED".equals(shipmentRouteSegment.getString("carrierServiceStatusId"))) {
+            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId))
+                    && !"SHRSCS_NOT_STARTED".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentStatusNotStarted",
                         UtilMisc.toMap("shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId, "shipmentRouteSegmentStatus",
-                                shipmentRouteSegment.getString("carrierServiceStatusId")), locale));
+                                shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId)), locale));
             }
 
             // Get Origin Info
-            GenericValue originPostalAddress = shipmentRouteSegment.getRelatedOne("OriginPostalAddress", false);
+            GenericValue originPostalAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginPostalAddress, false);
             if (originPostalAddress == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentRouteSegmentOriginPostalAddressNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            GenericValue originTelecomNumber = shipmentRouteSegment.getRelatedOne("OriginTelecomNumber", false);
+            GenericValue originTelecomNumber = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginTelecomNumber, false);
             if (originTelecomNumber == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentRouteSegmentOriginTelecomNumberNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            String originPhoneNumber = originTelecomNumber.getString("areaCode") + originTelecomNumber.getString("contactNumber");
+            String originPhoneNumber = originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.areaCode) + originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.contactNumber);
             // don't put on country code if not specified or is the US country code (UPS wants it this way)
-            if (UtilValidate.isNotEmpty(originTelecomNumber.getString("countryCode"))
-                    && !"001".equals(originTelecomNumber.getString("countryCode"))) {
-                originPhoneNumber = originTelecomNumber.getString("countryCode") + originPhoneNumber;
+            if (UtilValidate.isNotEmpty(originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))
+                    && !"001".equals(originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))) {
+                originPhoneNumber = originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode) + originPhoneNumber;
             }
             originPhoneNumber = StringUtil.replaceString(originPhoneNumber, "-", "");
             originPhoneNumber = StringUtil.replaceString(originPhoneNumber, " ", "");
             // lookup the two letter country code (in the geoCode field)
-            GenericValue originCountryGeo = originPostalAddress.getRelatedOne("CountryGeo", false);
+            GenericValue originCountryGeo = originPostalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
             if (originCountryGeo == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentRouteSegmentOriginCountryGeoNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
             // Get Dest Info
-            GenericValue destPostalAddress = shipmentRouteSegment.getRelatedOne("DestPostalAddress", false);
+            GenericValue destPostalAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestPostalAddress, false);
             if (destPostalAddress == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentRouteSegmentDestPostalAddressNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
-            GenericValue destTelecomNumber = shipmentRouteSegment.getRelatedOne("DestTelecomNumber", false);
+            GenericValue destTelecomNumber = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestTelecomNumber, false);
             if (destTelecomNumber == null) {
                 String missingErrMsg = "DestTelecomNumber not found for ShipmentRouteSegment with shipmentId " + shipmentId + " and "
                         + "shipmentRouteSegmentId " + shipmentRouteSegmentId;
@@ -191,44 +191,44 @@ public class UpsServices {
             }
             String destPhoneNumber = null;
             if (destTelecomNumber != null) {
-                destPhoneNumber = destTelecomNumber.getString("areaCode") + destTelecomNumber.getString("contactNumber");
+                destPhoneNumber = destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.areaCode) + destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.contactNumber);
                 // don't put on country code if not specified or is the US country code (UPS wants it this way)
-                if (UtilValidate.isNotEmpty(destTelecomNumber.getString("countryCode"))
-                        && !"001".equals(destTelecomNumber.getString("countryCode"))) {
-                    destPhoneNumber = destTelecomNumber.getString("countryCode") + destPhoneNumber;
+                if (UtilValidate.isNotEmpty(destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))
+                        && !"001".equals(destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))) {
+                    destPhoneNumber = destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode) + destPhoneNumber;
                 }
                 destPhoneNumber = StringUtil.replaceString(destPhoneNumber, "-", "");
                 destPhoneNumber = StringUtil.replaceString(destPhoneNumber, " ", "");
             }
 
             // lookup the two letter country code (in the geoCode field)
-            GenericValue destCountryGeo = destPostalAddress.getRelatedOne("CountryGeo", false);
+            GenericValue destCountryGeo = destPostalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
             if (destCountryGeo == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentRouteSegmentDestCountryGeoNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
             GenericValue carrierShipmentMethod = EntityQuery.use(delegator).from("CarrierShipmentMethod").where("partyId",
-                    shipmentRouteSegment.get("carrierPartyId"), "roleTypeId", "CARRIER", "shipmentMethodTypeId", shipmentRouteSegment.get(
-                     "shipmentMethodTypeId")).queryOne();
+                    shipmentRouteSegment.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId), "roleTypeId", "CARRIER", "shipmentMethodTypeId", shipmentRouteSegment.get(
+                     org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId)).queryOne();
             if (carrierShipmentMethod == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentCarrierShipmentMethodNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId, "carrierPartyId",
-                                shipmentRouteSegment.get("carrierPartyId"), "shipmentMethodTypeId", shipmentRouteSegment.get("shipmentMethodTypeId")),
+                                shipmentRouteSegment.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId), "shipmentMethodTypeId", shipmentRouteSegment.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId)),
                         locale));
             }
 
-            List<GenericValue> shipmentPackageRouteSegs = shipmentRouteSegment.getRelated("ShipmentPackageRouteSeg", null, UtilMisc.toList(
+            List<GenericValue> shipmentPackageRouteSegs = shipmentRouteSegment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentPackageRouteSeg, null, UtilMisc.toList(
                     "+shipmentPackageSeqId"), false);
             if (UtilValidate.isEmpty(shipmentPackageRouteSegs)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentPackageRouteSegsNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
-            List<GenericValue> itemIssuances = shipment.getRelated("ItemIssuance", null, null, false);
+            List<GenericValue> itemIssuances = shipment.getRelated(org.apache.ofbiz.persistence.entity.x.ItemIssuance, null, null, false);
             Set<String> orderIdSet = new TreeSet<>();
             for (GenericValue itemIssuance : itemIssuances) {
-                orderIdSet.add(itemIssuance.getString("orderId"));
+                orderIdSet.add(itemIssuance.getString(org.apache.ofbiz.persistence.entity.x.orderId));
             }
             String ordersDescription = "";
             if (orderIdSet.size() > 1) {
@@ -314,7 +314,7 @@ public class UpsServices {
                     Debug.logInfo("Voice notification service will not be requested for COD shipmentId " + shipmentId + ", shipmentRouteSegmentId "
                             + shipmentRouteSegmentId + " - missing destination phone number", MODULE);
                 }
-                if (UtilValidate.isEmpty(shipmentRouteSegment.get("homeDeliveryType"))) {
+                if (UtilValidate.isEmpty(shipmentRouteSegment.get(org.apache.ofbiz.persistence.entity.x.homeDeliveryType))) {
                     Debug.logInfo("Voice notification service will not be requested for COD shipmentId " + shipmentId + ", shipmentRouteSegmentId "
                             + shipmentRouteSegmentId + " - destination address is not residential", MODULE);
                 }
@@ -323,10 +323,10 @@ public class UpsServices {
             // Determine the currency by trying the shipmentRouteSegment, then the Shipment, then the framework's default currency, and finally
             // default to USD
             String currencyCode = null;
-            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString("currencyUomId"))) {
-                currencyCode = shipmentRouteSegment.getString("currencyUomId");
-            } else if (UtilValidate.isNotEmpty(shipment.getString("currencyUomId"))) {
-                currencyCode = shipment.getString("currencyUomId");
+            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId))) {
+                currencyCode = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId);
+            } else if (UtilValidate.isNotEmpty(shipment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId))) {
+                currencyCode = shipment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId);
             } else {
                 currencyCode = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
             }
@@ -361,101 +361,101 @@ public class UpsServices {
             // Top Level Element: Shipment
             Element shipmentElement = UtilXml.addChildElement(shipmentConfirmRequestElement, "Shipment", shipmentConfirmRequestDoc);
             UtilXml.addChildElementValue(shipmentElement, "Description",
-                    "Goods for Shipment " + shipment.get("shipmentId") + " from " + ordersDescription, shipmentConfirmRequestDoc);
+                    "Goods for Shipment " + shipment.get(org.apache.ofbiz.persistence.entity.x.shipmentId) + " from " + ordersDescription, shipmentConfirmRequestDoc);
 
             // Child of Shipment: Shipper
             String shipperNumber = getShipmentGatewayConfigValue(delegator, shipmentGatewayConfigId, "shipperNumber", resource, "shipment.ups"
                     + ".shipper.number", "");
             Element shipperElement = UtilXml.addChildElement(shipmentElement, "Shipper", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipperElement, "Name", UtilValidate.isNotEmpty(originPostalAddress.getString("toName"))
-                    ? originPostalAddress.getString("toName") : "", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipperElement, "AttentionName", UtilValidate.isNotEmpty(originPostalAddress.getString("attnName"))
-                    ? originPostalAddress.getString("attnName") : "", shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipperElement, "Name", UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName))
+                    ? originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName) : "", shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipperElement, "AttentionName", UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName))
+                    ? originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName) : "", shipmentConfirmRequestDoc);
             UtilXml.addChildElementValue(shipperElement, "PhoneNumber", originPhoneNumber, shipmentConfirmRequestDoc);
             UtilXml.addChildElementValue(shipperElement, "ShipperNumber", shipperNumber, shipmentConfirmRequestDoc);
 
             Element shipperAddressElement = UtilXml.addChildElement(shipperElement, "Address", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipperAddressElement, "AddressLine1", originPostalAddress.getString("address1"), shipmentConfirmRequestDoc);
-            if (UtilValidate.isNotEmpty(originPostalAddress.getString("address2"))) {
-                UtilXml.addChildElementValue(shipperAddressElement, "AddressLine2", originPostalAddress.getString("address2"),
+            UtilXml.addChildElementValue(shipperAddressElement, "AddressLine1", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1), shipmentConfirmRequestDoc);
+            if (UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2))) {
+                UtilXml.addChildElementValue(shipperAddressElement, "AddressLine2", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2),
                         shipmentConfirmRequestDoc);
             }
-            UtilXml.addChildElementValue(shipperAddressElement, "City", originPostalAddress.getString("city"), shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipperAddressElement, "StateProvinceCode", originPostalAddress.getString("stateProvinceGeoId"),
+            UtilXml.addChildElementValue(shipperAddressElement, "City", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipperAddressElement, "StateProvinceCode", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId),
                     shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipperAddressElement, "PostalCode", originPostalAddress.getString("postalCode"), shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipperAddressElement, "CountryCode", originCountryGeo.getString("geoCode"), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipperAddressElement, "PostalCode", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipperAddressElement, "CountryCode", originCountryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode), shipmentConfirmRequestDoc);
             // How to determine this? Add to data model...? UtilXml.addChildElement(shipperAddressElement, "ResidentialAddress",
             // shipmentConfirmRequestDoc);
 
             // Child of Shipment: ShipTo
             Element shipToElement = UtilXml.addChildElement(shipmentElement, "ShipTo", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipToElement, "CompanyName", UtilValidate.isNotEmpty(destPostalAddress.getString("toName"))
-                    ? destPostalAddress.getString("toName") : "", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipToElement, "AttentionName", UtilValidate.isNotEmpty(destPostalAddress.getString("attnName"))
-                    ? destPostalAddress.getString("attnName") : "", shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipToElement, "CompanyName", UtilValidate.isNotEmpty(destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName))
+                    ? destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName) : "", shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipToElement, "AttentionName", UtilValidate.isNotEmpty(destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName))
+                    ? destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName) : "", shipmentConfirmRequestDoc);
             if (UtilValidate.isNotEmpty(destPhoneNumber)) {
                 UtilXml.addChildElementValue(shipToElement, "PhoneNumber", destPhoneNumber, shipmentConfirmRequestDoc);
             }
             Element shipToAddressElement = UtilXml.addChildElement(shipToElement, "Address", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipToAddressElement, "AddressLine1", destPostalAddress.getString("address1"), shipmentConfirmRequestDoc);
-            if (UtilValidate.isNotEmpty(destPostalAddress.getString("address2"))) {
-                UtilXml.addChildElementValue(shipToAddressElement, "AddressLine2", destPostalAddress.getString("address2"),
+            UtilXml.addChildElementValue(shipToAddressElement, "AddressLine1", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1), shipmentConfirmRequestDoc);
+            if (UtilValidate.isNotEmpty(destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2))) {
+                UtilXml.addChildElementValue(shipToAddressElement, "AddressLine2", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2),
                         shipmentConfirmRequestDoc);
             }
-            UtilXml.addChildElementValue(shipToAddressElement, "City", destPostalAddress.getString("city"), shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipToAddressElement, "StateProvinceCode", destPostalAddress.getString("stateProvinceGeoId"),
+            UtilXml.addChildElementValue(shipToAddressElement, "City", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipToAddressElement, "StateProvinceCode", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId),
                     shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipToAddressElement, "PostalCode", destPostalAddress.getString("postalCode"), shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipToAddressElement, "CountryCode", destCountryGeo.getString("geoCode"), shipmentConfirmRequestDoc);
-            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString("homeDeliveryType"))) {
+            UtilXml.addChildElementValue(shipToAddressElement, "PostalCode", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipToAddressElement, "CountryCode", destCountryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode), shipmentConfirmRequestDoc);
+            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.homeDeliveryType))) {
                 UtilXml.addChildElement(shipToAddressElement, "ResidentialAddress", shipmentConfirmRequestDoc);
             }
 
             // Child of Shipment: ShipFrom
             Element shipFromElement = UtilXml.addChildElement(shipmentElement, "ShipFrom", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipFromElement, "CompanyName", originPostalAddress.getString("toName"), shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipFromElement, "AttentionName", originPostalAddress.getString("attnName"), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipFromElement, "CompanyName", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipFromElement, "AttentionName", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName), shipmentConfirmRequestDoc);
             UtilXml.addChildElementValue(shipFromElement, "PhoneNumber", originPhoneNumber, shipmentConfirmRequestDoc);
             Element shipFromAddressElement = UtilXml.addChildElement(shipFromElement, "Address", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipFromAddressElement, "AddressLine1", originPostalAddress.getString("address1"),
+            UtilXml.addChildElementValue(shipFromAddressElement, "AddressLine1", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1),
                     shipmentConfirmRequestDoc);
-            if (UtilValidate.isNotEmpty(originPostalAddress.getString("address2"))) {
-                UtilXml.addChildElementValue(shipFromAddressElement, "AddressLine2", originPostalAddress.getString("address2"),
+            if (UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2))) {
+                UtilXml.addChildElementValue(shipFromAddressElement, "AddressLine2", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2),
                         shipmentConfirmRequestDoc);
             }
-            UtilXml.addChildElementValue(shipFromAddressElement, "City", originPostalAddress.getString("city"), shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipFromAddressElement, "StateProvinceCode", originPostalAddress.getString("stateProvinceGeoId"),
+            UtilXml.addChildElementValue(shipFromAddressElement, "City", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipFromAddressElement, "StateProvinceCode", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId),
                     shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipFromAddressElement, "PostalCode", originPostalAddress.getString("postalCode"),
+            UtilXml.addChildElementValue(shipFromAddressElement, "PostalCode", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode),
                     shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipFromAddressElement, "CountryCode", originCountryGeo.getString("geoCode"), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipFromAddressElement, "CountryCode", originCountryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode), shipmentConfirmRequestDoc);
 
             // Child of Shipment: SoldTo
             Element soldToElement = UtilXml.addChildElement(shipmentElement, "SoldTo", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(soldToElement, "CompanyName", UtilValidate.isNotEmpty(destPostalAddress.getString("toName"))
-                    ? destPostalAddress.getString("toName") : "", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(soldToElement, "AttentionName", UtilValidate.isNotEmpty(destPostalAddress.getString("attnName"))
-                    ? destPostalAddress.getString("attnName") : "", shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(soldToElement, "CompanyName", UtilValidate.isNotEmpty(destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName))
+                    ? destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName) : "", shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(soldToElement, "AttentionName", UtilValidate.isNotEmpty(destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName))
+                    ? destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName) : "", shipmentConfirmRequestDoc);
             if (UtilValidate.isNotEmpty(destPhoneNumber)) {
                 UtilXml.addChildElementValue(soldToElement, "PhoneNumber", destPhoneNumber, shipmentConfirmRequestDoc);
             }
             Element soldToAddressElement = UtilXml.addChildElement(soldToElement, "Address", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(soldToAddressElement, "AddressLine1", destPostalAddress.getString("address1"), shipmentConfirmRequestDoc);
-            if (UtilValidate.isNotEmpty(destPostalAddress.getString("address2"))) {
-                UtilXml.addChildElementValue(soldToAddressElement, "AddressLine2", destPostalAddress.getString("address2"),
+            UtilXml.addChildElementValue(soldToAddressElement, "AddressLine1", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1), shipmentConfirmRequestDoc);
+            if (UtilValidate.isNotEmpty(destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2))) {
+                UtilXml.addChildElementValue(soldToAddressElement, "AddressLine2", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2),
                         shipmentConfirmRequestDoc);
             }
-            UtilXml.addChildElementValue(soldToAddressElement, "City", destPostalAddress.getString("city"), shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(soldToAddressElement, "StateProvinceCode", destPostalAddress.getString("stateProvinceGeoId"),
+            UtilXml.addChildElementValue(soldToAddressElement, "City", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(soldToAddressElement, "StateProvinceCode", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId),
                     shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(soldToAddressElement, "PostalCode", destPostalAddress.getString("postalCode"), shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(soldToAddressElement, "CountryCode", destCountryGeo.getString("geoCode"), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(soldToAddressElement, "PostalCode", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(soldToAddressElement, "CountryCode", destCountryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode), shipmentConfirmRequestDoc);
 
             // Child of Shipment: PaymentInformation
             Element paymentInformationElement = UtilXml.addChildElement(shipmentElement, "PaymentInformation", shipmentConfirmRequestDoc);
 
-            String thirdPartyAccountNumber = shipmentRouteSegment.getString("thirdPartyAccountNumber");
+            String thirdPartyAccountNumber = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.thirdPartyAccountNumber);
 
             if (UtilValidate.isEmpty(thirdPartyAccountNumber)) {
 
@@ -472,12 +472,12 @@ public class UpsServices {
                 // Paid by another shipper (may be receiver or not)
 
                 // UPS requires the postal code and country code of the third party
-                String thirdPartyPostalCode = shipmentRouteSegment.getString("thirdPartyPostalCode");
+                String thirdPartyPostalCode = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.thirdPartyPostalCode);
                 if (UtilValidate.isEmpty(thirdPartyPostalCode)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentThirdPartyPostalCodeNotFound",
                             UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
                 }
-                String thirdPartyCountryGeoCode = shipmentRouteSegment.getString("thirdPartyCountryGeoCode");
+                String thirdPartyCountryGeoCode = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.thirdPartyCountryGeoCode);
                 if (UtilValidate.isEmpty(thirdPartyCountryGeoCode)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentThirdPartyCountryNotFound",
                             UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
@@ -495,7 +495,7 @@ public class UpsServices {
 
             // Child of Shipment: Service
             Element serviceElement = UtilXml.addChildElement(shipmentElement, "Service", shipmentConfirmRequestDoc);
-            String carrierServiceCode = carrierShipmentMethod.getString("carrierServiceCode");
+            String carrierServiceCode = carrierShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceCode);
             UtilXml.addChildElementValue(serviceElement, "Code", carrierServiceCode, shipmentConfirmRequestDoc);
 
             // Child of Shipment: ShipmentServiceOptions
@@ -505,22 +505,22 @@ public class UpsServices {
                 Element internationalFormsElement = UtilXml.addChildElement(shipmentServiceOptionsElement, "InternationalForms",
                         shipmentConfirmRequestDoc);
                 UtilXml.addChildElementValue(internationalFormsElement, "FormType", "01", shipmentConfirmRequestDoc);
-                List<GenericValue> shipmentItems = shipment.getRelated("ShipmentItem", null, null, false);
+                List<GenericValue> shipmentItems = shipment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentItem, null, null, false);
                 for (GenericValue shipmentItem : shipmentItems) {
                     Element productElement = UtilXml.addChildElement(internationalFormsElement, "Product", shipmentConfirmRequestDoc);
                     UtilXml.addChildElementValue(productElement, "Description", "Product Description", shipmentConfirmRequestDoc);
                     Element unitElement = UtilXml.addChildElement(productElement, "Unit", shipmentConfirmRequestDoc);
-                    BigDecimal productQuantity = shipmentItem.getBigDecimal("quantity").setScale(DECIMALS, ROUNDING);
+                    BigDecimal productQuantity = shipmentItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity).setScale(DECIMALS, ROUNDING);
                     UtilXml.addChildElementValue(unitElement, "Number", String.valueOf(productQuantity.intValue()), shipmentConfirmRequestDoc);
-                    List<GenericValue> shipmentItemIssuances = shipmentItem.getRelated("ItemIssuance", null, null, false);
+                    List<GenericValue> shipmentItemIssuances = shipmentItem.getRelated(org.apache.ofbiz.persistence.entity.x.ItemIssuance, null, null, false);
                     GenericValue orderItem = EntityUtil.getFirst(shipmentItemIssuances).getRelatedOne("OrderItem", false);
-                    UtilXml.addChildElementValue(unitElement, "Value", orderItem.getBigDecimal("unitPrice").toString(), shipmentConfirmRequestDoc);
+                    UtilXml.addChildElementValue(unitElement, "Value", orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice).toString(), shipmentConfirmRequestDoc);
                     Element unitOfMeasurElement = UtilXml.addChildElement(unitElement, "UnitOfMeasurement", shipmentConfirmRequestDoc);
                     UtilXml.addChildElementValue(unitOfMeasurElement, "Code", "EA", shipmentConfirmRequestDoc);
                     UtilXml.addChildElementValue(productElement, "OriginCountryCode", "US", shipmentConfirmRequestDoc);
                 }
                 SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
-                String invoiceDate = formatter.format(shipment.getTimestamp("createdDate"));
+                String invoiceDate = formatter.format(shipment.getTimestamp(org.apache.ofbiz.persistence.entity.x.createdDate));
                 UtilXml.addChildElementValue(internationalFormsElement, "InvoiceDate", invoiceDate, shipmentConfirmRequestDoc);
                 UtilXml.addChildElementValue(internationalFormsElement, "ReasonForExport", "SALE", shipmentConfirmRequestDoc);
                 UtilXml.addChildElementValue(internationalFormsElement, "CurrencyCode", currencyCode, shipmentConfirmRequestDoc);
@@ -530,9 +530,9 @@ public class UpsServices {
             ListIterator<GenericValue> shipmentPackageRouteSegIter = shipmentPackageRouteSegs.listIterator();
             while (shipmentPackageRouteSegIter.hasNext()) {
                 GenericValue shipmentPackageRouteSeg = shipmentPackageRouteSegIter.next();
-                GenericValue shipmentPackage = shipmentPackageRouteSeg.getRelatedOne("ShipmentPackage", false);
-                GenericValue shipmentBoxType = shipmentPackage.getRelatedOne("ShipmentBoxType", false);
-                List<GenericValue> carrierShipmentBoxTypes = shipmentPackage.getRelated("CarrierShipmentBoxType", UtilMisc.toMap("partyId", "UPS"),
+                GenericValue shipmentPackage = shipmentPackageRouteSeg.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentPackage, false);
+                GenericValue shipmentBoxType = shipmentPackage.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentBoxType, false);
+                List<GenericValue> carrierShipmentBoxTypes = shipmentPackage.getRelated(org.apache.ofbiz.persistence.entity.x.CarrierShipmentBoxType, UtilMisc.toMap("partyId", "UPS"),
                         null, false);
                 GenericValue carrierShipmentBoxType = null;
                 if (!carrierShipmentBoxTypes.isEmpty()) {
@@ -541,8 +541,8 @@ public class UpsServices {
 
                 Element packageElement = UtilXml.addChildElement(shipmentElement, "Package", shipmentConfirmRequestDoc);
                 Element packagingTypeElement = UtilXml.addChildElement(packageElement, "PackagingType", shipmentConfirmRequestDoc);
-                if (carrierShipmentBoxType != null && carrierShipmentBoxType.get("packagingTypeCode") != null) {
-                    UtilXml.addChildElementValue(packagingTypeElement, "Code", carrierShipmentBoxType.getString("packagingTypeCode"),
+                if (carrierShipmentBoxType != null && carrierShipmentBoxType.get(org.apache.ofbiz.persistence.entity.x.packagingTypeCode) != null) {
+                    UtilXml.addChildElementValue(packagingTypeElement, "Code", carrierShipmentBoxType.getString(org.apache.ofbiz.persistence.entity.x.packagingTypeCode),
                             shipmentConfirmRequestDoc);
                 } else {
                     // default to "02", plain old Package
@@ -551,40 +551,40 @@ public class UpsServices {
                 if (shipmentBoxType != null) {
                     Element dimensionsElement = UtilXml.addChildElement(packageElement, "Dimensions", shipmentConfirmRequestDoc);
                     Element unitOfMeasurementElement = UtilXml.addChildElement(dimensionsElement, "UnitOfMeasurement", shipmentConfirmRequestDoc);
-                    GenericValue dimensionUom = shipmentBoxType.getRelatedOne("DimensionUom", false);
+                    GenericValue dimensionUom = shipmentBoxType.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DimensionUom, false);
                     if (dimensionUom != null) {
                         UtilXml.addChildElementValue(unitOfMeasurementElement, "Code",
-                                dimensionUom.getString("abbreviation").toUpperCase(Locale.getDefault()), shipmentConfirmRequestDoc);
+                                dimensionUom.getString(org.apache.ofbiz.persistence.entity.x.abbreviation).toUpperCase(Locale.getDefault()), shipmentConfirmRequestDoc);
                     } else {
                         // I guess we'll default to inches...
                         UtilXml.addChildElementValue(unitOfMeasurementElement, "Code", ModelService.IN_PARAM, shipmentConfirmRequestDoc);
                     }
-                    BigDecimal boxLength = shipmentBoxType.getBigDecimal("boxLength");
-                    BigDecimal boxWidth = shipmentBoxType.getBigDecimal("boxWidth");
-                    BigDecimal boxHeight = shipmentBoxType.getBigDecimal("boxHeight");
+                    BigDecimal boxLength = shipmentBoxType.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxLength);
+                    BigDecimal boxWidth = shipmentBoxType.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxWidth);
+                    BigDecimal boxHeight = shipmentBoxType.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxHeight);
                     UtilXml.addChildElementValue(dimensionsElement, "Length", UtilValidate.isNotEmpty(boxLength) ? "" + boxLength.intValue() : "",
                             shipmentConfirmRequestDoc);
                     UtilXml.addChildElementValue(dimensionsElement, "Width", UtilValidate.isNotEmpty(boxWidth) ? "" + boxWidth.intValue() : "",
                             shipmentConfirmRequestDoc);
                     UtilXml.addChildElementValue(dimensionsElement, "Height", UtilValidate.isNotEmpty(boxHeight) ? "" + boxHeight.intValue() : "",
                             shipmentConfirmRequestDoc);
-                } else if (UtilValidate.isNotEmpty(shipmentPackage.getBigDecimal("boxLength"))
-                        && UtilValidate.isNotEmpty(shipmentPackage.getBigDecimal("boxWidth"))
-                        && UtilValidate.isNotEmpty(shipmentPackage.getBigDecimal("boxHeight"))) {
+                } else if (UtilValidate.isNotEmpty(shipmentPackage.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxLength))
+                        && UtilValidate.isNotEmpty(shipmentPackage.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxWidth))
+                        && UtilValidate.isNotEmpty(shipmentPackage.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxHeight))) {
                     Element dimensionsElement = UtilXml.addChildElement(packageElement, "Dimensions", shipmentConfirmRequestDoc);
                     Element unitOfMeasurementElement = UtilXml.addChildElement(dimensionsElement, "UnitOfMeasurement", shipmentConfirmRequestDoc);
-                    GenericValue dimensionUom = shipmentPackage.getRelatedOne("DimensionUom", false);
+                    GenericValue dimensionUom = shipmentPackage.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DimensionUom, false);
                     if (dimensionUom != null) {
                         UtilXml.addChildElementValue(unitOfMeasurementElement, "Code",
-                                dimensionUom.getString("abbreviation").toUpperCase(Locale.getDefault()), shipmentConfirmRequestDoc);
+                                dimensionUom.getString(org.apache.ofbiz.persistence.entity.x.abbreviation).toUpperCase(Locale.getDefault()), shipmentConfirmRequestDoc);
                     } else {
                         UtilXml.addChildElementValue(unitOfMeasurementElement, "Code", ModelService.IN_PARAM, shipmentConfirmRequestDoc);
                     }
-                    UtilXml.addChildElementValue(dimensionsElement, "Length", "" + shipmentPackage.getBigDecimal("boxLength").intValue(),
+                    UtilXml.addChildElementValue(dimensionsElement, "Length", "" + shipmentPackage.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxLength).intValue(),
                             shipmentConfirmRequestDoc);
-                    UtilXml.addChildElementValue(dimensionsElement, "Width", "" + shipmentPackage.getBigDecimal("boxWidth").intValue(),
+                    UtilXml.addChildElementValue(dimensionsElement, "Width", "" + shipmentPackage.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxWidth).intValue(),
                             shipmentConfirmRequestDoc);
-                    UtilXml.addChildElementValue(dimensionsElement, "Height", "" + shipmentPackage.getBigDecimal("boxHeight").intValue(),
+                    UtilXml.addChildElementValue(dimensionsElement, "Height", "" + shipmentPackage.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxHeight).intValue(),
                             shipmentConfirmRequestDoc);
                 }
 
@@ -592,8 +592,8 @@ public class UpsServices {
                 Element packageWeightUnitOfMeasurementElement = UtilXml.addChildElement(packageElement, "UnitOfMeasurement",
                         shipmentConfirmRequestDoc);
                 String weightUomUps = null;
-                if (shipmentPackage.get("weightUomId") != null) {
-                    weightUomUps = OFBIZ_TO_UPS.get(shipmentPackage.get("weightUomId"));
+                if (shipmentPackage.get(org.apache.ofbiz.persistence.entity.x.weightUomId) != null) {
+                    weightUomUps = OFBIZ_TO_UPS.get(shipmentPackage.get(org.apache.ofbiz.persistence.entity.x.weightUomId));
                 }
                 if (weightUomUps != null) {
                     UtilXml.addChildElementValue(packageWeightUnitOfMeasurementElement, "Code", weightUomUps, shipmentConfirmRequestDoc);
@@ -602,30 +602,30 @@ public class UpsServices {
                     UtilXml.addChildElementValue(packageWeightUnitOfMeasurementElement, "Code", "LBS", shipmentConfirmRequestDoc);
                 }
 
-                if (shipmentPackage.getString("weight") == null) {
+                if (shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.weight) == null) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsWeightValueNotFound",
                             UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentPackageSeqId",
-                                    shipmentPackage.getString("shipmentPackageSeqId")), locale));
+                                    shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId)), locale));
                 }
-                BigDecimal boxWeight = shipmentPackage.getBigDecimal("weight");
+                BigDecimal boxWeight = shipmentPackage.getBigDecimal(org.apache.ofbiz.persistence.entity.x.weight);
                 UtilXml.addChildElementValue(packageWeightElement, "Weight", UtilValidate.isNotEmpty(boxWeight) ? "" + boxWeight.setScale(0,
                         RoundingMode.CEILING) : "", shipmentConfirmRequestDoc);
                 // Adding only when order is not an international order
                 if (!internationalServiceCodes.contains(carrierServiceCode)) {
                     Element referenceNumberElement = UtilXml.addChildElement(packageElement, "ReferenceNumber", shipmentConfirmRequestDoc);
                     UtilXml.addChildElementValue(referenceNumberElement, "Code", "MK", shipmentConfirmRequestDoc);
-                    UtilXml.addChildElementValue(referenceNumberElement, "Value", shipmentPackage.getString("shipmentPackageSeqId"),
+                    UtilXml.addChildElementValue(referenceNumberElement, "Value", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId),
                             shipmentConfirmRequestDoc);
                 }
-                if (carrierShipmentBoxType != null && carrierShipmentBoxType.get("oversizeCode") != null) {
-                    UtilXml.addChildElementValue(packageElement, "OversizePackage", carrierShipmentBoxType.getString("oversizeCode"),
+                if (carrierShipmentBoxType != null && carrierShipmentBoxType.get(org.apache.ofbiz.persistence.entity.x.oversizeCode) != null) {
+                    UtilXml.addChildElementValue(packageElement, "OversizePackage", carrierShipmentBoxType.getString(org.apache.ofbiz.persistence.entity.x.oversizeCode),
                             shipmentConfirmRequestDoc);
                 }
 
                 Element packageServiceOptionsElement = UtilXml.addChildElement(packageElement, "PackageServiceOptions", shipmentConfirmRequestDoc);
 
                 // Package insured value
-                BigDecimal insuredValue = shipmentPackage.getBigDecimal("insuredValue");
+                BigDecimal insuredValue = shipmentPackage.getBigDecimal(org.apache.ofbiz.persistence.entity.x.insuredValue);
                 if (!UtilValidate.isEmpty(insuredValue)) {
 
                     Element insuredValueElement = UtilXml.addChildElement(packageServiceOptionsElement, "InsuredValue", shipmentConfirmRequestDoc);
@@ -644,7 +644,7 @@ public class UpsServices {
 
                     // Get the value of the package by going back to the orderItems
                     Map<String, Object> getPackageValueResult = dispatcher.runSync("getShipmentPackageValueFromOrders", UtilMisc.toMap("shipmentId",
-                            shipmentId, "shipmentPackageSeqId", shipmentPackage.get("shipmentPackageSeqId"), "currencyUomId", currencyCode,
+                            shipmentId, "shipmentPackageSeqId", shipmentPackage.get(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId), "currencyUomId", currencyCode,
                             "userLogin", userLogin, "locale", locale));
                     if (ServiceUtil.isError(getPackageValueResult)) return getPackageValueResult;
                     BigDecimal packageValue = (BigDecimal) getPackageValueResult.get("packageValue");
@@ -701,7 +701,7 @@ public class UpsServices {
             if (shipmentUpsSaveCertificationInfo) {
                 String outFileName =
                         shipmentUpsSaveCertificationPath + "/UpsShipmentConfirmRequest" + shipmentId + "_" + shipmentRouteSegment.getString(
-                         "shipmentRouteSegmentId") + ".xml";
+                         org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId) + ".xml";
                 try (FileOutputStream fileOut = new FileOutputStream(outFileName)) {
                     fileOut.write(xmlString.toString().getBytes(StandardCharsets.UTF_8));
                     fileOut.flush();
@@ -723,7 +723,7 @@ public class UpsServices {
             if (shipmentUpsSaveCertificationInfo) {
                 String outFileName =
                         shipmentUpsSaveCertificationPath + "/UpsShipmentConfirmResponse" + shipmentId + "_" + shipmentRouteSegment.getString(
-                         "shipmentRouteSegmentId") + ".xml";
+                         org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId) + ".xml";
                 try (FileOutputStream fileOut = new FileOutputStream(outFileName)) {
                     fileOut.write(shipmentConfirmResponseString.getBytes(StandardCharsets.UTF_8));
                     fileOut.flush();
@@ -789,17 +789,17 @@ public class UpsServices {
             String totalMonetaryValue = UtilXml.childElementValue(totalChargesElement, "MonetaryValue");
 
             if (UtilValidate.isNotEmpty(totalCurrencyCode)) {
-                if (UtilValidate.isEmpty(shipmentRouteSegment.getString("currencyUomId"))) {
-                    shipmentRouteSegment.set("currencyUomId", totalCurrencyCode);
-                } else if (!totalCurrencyCode.equals(shipmentRouteSegment.getString("currencyUomId"))) {
-                    shipmentRouteSegment.set("currencyUomId", totalCurrencyCode);
+                if (UtilValidate.isEmpty(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId))) {
+                    shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.currencyUomId, totalCurrencyCode);
+                } else if (!totalCurrencyCode.equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId))) {
+                    shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.currencyUomId, totalCurrencyCode);
                     errorList.add(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsCurrencyDoesNotMatch",
-                            UtilMisc.toMap("currency1", totalCurrencyCode, "currency2", shipmentRouteSegment.getString("currencyUomId")), locale));
+                            UtilMisc.toMap("currency1", totalCurrencyCode, "currency2", shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId)), locale));
                 }
             }
 
             try {
-                shipmentRouteSegment.set("actualTransportCost", new BigDecimal(transportationMonetaryValue));
+                shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.actualTransportCost, new BigDecimal(transportationMonetaryValue));
             } catch (NumberFormatException e) {
                 String excErrMsg = "Error parsing the transportationMonetaryValue [" + transportationMonetaryValue + "]: " + e.toString();
                 Debug.logError(e, excErrMsg, MODULE);
@@ -807,7 +807,7 @@ public class UpsServices {
                         UtilMisc.toMap("transportationMonetaryValue", transportationMonetaryValue, "errorString", e.toString()), locale));
             }
             try {
-                shipmentRouteSegment.set("actualServiceCost", new BigDecimal(serviceOptionsMonetaryValue));
+                shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.actualServiceCost, new BigDecimal(serviceOptionsMonetaryValue));
             } catch (NumberFormatException e) {
                 String excErrMsg = "Error parsing the serviceOptionsMonetaryValue [" + serviceOptionsMonetaryValue + "]: " + e.toString();
                 Debug.logError(e, excErrMsg, MODULE);
@@ -815,7 +815,7 @@ public class UpsServices {
                         UtilMisc.toMap("serviceOptionsMonetaryValue", serviceOptionsMonetaryValue, "errorString", e.toString()), locale));
             }
             try {
-                shipmentRouteSegment.set("actualCost", new BigDecimal(totalMonetaryValue));
+                shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.actualCost, new BigDecimal(totalMonetaryValue));
             } catch (NumberFormatException e) {
                 String excErrMsg = "Error parsing the totalMonetaryValue [" + totalMonetaryValue + "]: " + e.toString();
                 Debug.logError(e, excErrMsg, MODULE);
@@ -829,20 +829,20 @@ public class UpsServices {
             String billingWeightUnitOfMeasurement = UtilXml.childElementValue(billingWeightUnitOfMeasurementElement, "Code");
             String billingWeight = UtilXml.childElementValue(billingWeightElement, "Weight");
             try {
-                shipmentRouteSegment.set("billingWeight", new BigDecimal(billingWeight));
+                shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.billingWeight, new BigDecimal(billingWeight));
             } catch (NumberFormatException e) {
                 String excErrMsg = "Error parsing the billingWeight [" + billingWeight + "]: " + e.toString();
                 Debug.logError(e, excErrMsg, MODULE);
                 errorList.add(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsErrorParsingBillingWeight",
                         UtilMisc.toMap("billingWeight", billingWeight, "errorString", e.toString()), locale));
             }
-            shipmentRouteSegment.set("billingWeightUomId", UPS_TO_OFBIZ.get(billingWeightUnitOfMeasurement));
+            shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.billingWeightUomId, UPS_TO_OFBIZ.get(billingWeightUnitOfMeasurement));
 
             // store the ShipmentIdentificationNumber and ShipmentDigest
             String shipmentIdentificationNumber = UtilXml.childElementValue(shipmentConfirmResponseElement, "ShipmentIdentificationNumber");
             String shipmentDigest = UtilXml.childElementValue(shipmentConfirmResponseElement, "ShipmentDigest");
-            shipmentRouteSegment.set("trackingIdNumber", shipmentIdentificationNumber);
-            shipmentRouteSegment.set("trackingDigest", shipmentDigest);
+            shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.trackingIdNumber, shipmentIdentificationNumber);
+            shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.trackingDigest, shipmentDigest);
 
             // set ShipmentRouteSegment carrierServiceStatusId after each UPS service applicable
             shipmentRouteSegment.put("carrierServiceStatusId", "SHRSCS_CONFIRMED");
@@ -874,9 +874,9 @@ public class UpsServices {
 
     public static Map<String, Object> upsShipmentAccept(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentId = (String) context.get("shipmentId");
-        String shipmentRouteSegmentId = (String) context.get("shipmentRouteSegmentId");
-        Locale locale = (Locale) context.get("locale");
+        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
+        String shipmentRouteSegmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         Map<String, Object> shipmentGatewayConfig = ShipmentServices.getShipmentGatewayConfigFromShipment(delegator, shipmentId, locale);
         String shipmentGatewayConfigId = (String) shipmentGatewayConfig.get("shipmentGatewayConfigId");
@@ -902,26 +902,26 @@ public class UpsServices {
             GenericValue shipmentRouteSegment = EntityQuery.use(delegator).from("ShipmentRouteSegment").where("shipmentId", shipmentId,
                     "shipmentRouteSegmentId", shipmentRouteSegmentId).queryOne();
 
-            if (!"UPS".equals(shipmentRouteSegment.getString("carrierPartyId"))) {
+            if (!"UPS".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsNotRouteSegmentCarrier", UtilMisc.toMap(
                         "shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId), locale));
             }
 
             // add ShipmentRouteSegment carrierServiceStatusId, check before all UPS services
-            if (!"SHRSCS_CONFIRMED".equals(shipmentRouteSegment.getString("carrierServiceStatusId"))) {
+            if (!"SHRSCS_CONFIRMED".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentStatusNotConfirmed",
                         UtilMisc.toMap("shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId, "shipmentRouteSegmentStatus",
-                                shipmentRouteSegment.getString("carrierServiceStatusId")), locale));
+                                shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId)), locale));
             }
 
-            List<GenericValue> shipmentPackageRouteSegs = shipmentRouteSegment.getRelated("ShipmentPackageRouteSeg", null, UtilMisc.toList(
+            List<GenericValue> shipmentPackageRouteSegs = shipmentRouteSegment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentPackageRouteSeg, null, UtilMisc.toList(
                     "+shipmentPackageSeqId"), false);
             if (UtilValidate.isEmpty(shipmentPackageRouteSegs)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsPackageRouteSegsNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
-            if (UtilValidate.isEmpty(shipmentRouteSegment.getString("trackingDigest"))) {
+            if (UtilValidate.isEmpty(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.trackingDigest))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentUpsTrackingDigestWasNotSet", locale));
             }
@@ -940,7 +940,7 @@ public class UpsServices {
             UtilXml.addChildElementValue(requestElement, "RequestAction", "ShipAccept", shipmentAcceptRequestDoc);
             UtilXml.addChildElementValue(requestElement, "RequestOption", "01", shipmentAcceptRequestDoc);
 
-            UtilXml.addChildElementValue(shipmentAcceptRequestElement, "ShipmentDigest", shipmentRouteSegment.getString("trackingDigest"),
+            UtilXml.addChildElementValue(shipmentAcceptRequestElement, "ShipmentDigest", shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.trackingDigest),
                     shipmentAcceptRequestDoc);
 
 
@@ -977,7 +977,7 @@ public class UpsServices {
             if (shipmentUpsSaveCertificationInfo) {
                 String outFileName =
                         shipmentUpsSaveCertificationPath + "/UpsShipmentAcceptRequest" + shipmentId + "_" + shipmentRouteSegment.getString(
-                         "shipmentRouteSegmentId") + ".xml";
+                         org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId) + ".xml";
                 try (FileOutputStream fileOut = new FileOutputStream(outFileName)) {
                     fileOut.write(xmlString.toString().getBytes(StandardCharsets.UTF_8));
                     fileOut.flush();
@@ -999,7 +999,7 @@ public class UpsServices {
             if (shipmentUpsSaveCertificationInfo) {
                 String outFileName =
                         shipmentUpsSaveCertificationPath + "/UpsShipmentAcceptResponse" + shipmentId + "_" + shipmentRouteSegment.getString(
-                         "shipmentRouteSegmentId") + ".xml";
+                         org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId) + ".xml";
                 try (FileOutputStream fileOut = new FileOutputStream(outFileName)) {
                     fileOut.write(shipmentAcceptResponseString.getBytes(StandardCharsets.UTF_8));
                     fileOut.flush();
@@ -1075,17 +1075,17 @@ public class UpsServices {
             String totalMonetaryValue = UtilXml.childElementValue(totalChargesElement, "MonetaryValue");
 
             if (UtilValidate.isNotEmpty(totalCurrencyCode)) {
-                if (UtilValidate.isEmpty(shipmentRouteSegment.getString("currencyUomId"))) {
-                    shipmentRouteSegment.set("currencyUomId", totalCurrencyCode);
-                } else if (!totalCurrencyCode.equals(shipmentRouteSegment.getString("currencyUomId"))) {
-                    shipmentRouteSegment.set("currencyUomId", totalCurrencyCode);
+                if (UtilValidate.isEmpty(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId))) {
+                    shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.currencyUomId, totalCurrencyCode);
+                } else if (!totalCurrencyCode.equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId))) {
+                    shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.currencyUomId, totalCurrencyCode);
                     errorList.add(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsCurrencyDoesNotMatch",
-                            UtilMisc.toMap("currency1", totalCurrencyCode, "currency2", shipmentRouteSegment.getString("currencyUomId")), locale));
+                            UtilMisc.toMap("currency1", totalCurrencyCode, "currency2", shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId)), locale));
                 }
             }
 
             try {
-                shipmentRouteSegment.set("actualTransportCost", new BigDecimal(transportationMonetaryValue));
+                shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.actualTransportCost, new BigDecimal(transportationMonetaryValue));
             } catch (NumberFormatException e) {
                 String excErrMsg = "Error parsing the transportationMonetaryValue [" + transportationMonetaryValue + "]: " + e.toString();
                 Debug.logError(e, excErrMsg, MODULE);
@@ -1093,7 +1093,7 @@ public class UpsServices {
                         UtilMisc.toMap("transportationMonetaryValue", transportationMonetaryValue, "errorString", e.toString()), locale));
             }
             try {
-                shipmentRouteSegment.set("actualServiceCost", new BigDecimal(serviceOptionsMonetaryValue));
+                shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.actualServiceCost, new BigDecimal(serviceOptionsMonetaryValue));
             } catch (NumberFormatException e) {
                 String excErrMsg = "Error parsing the serviceOptionsMonetaryValue [" + serviceOptionsMonetaryValue + "]: " + e.toString();
                 Debug.logError(e, excErrMsg, MODULE);
@@ -1101,7 +1101,7 @@ public class UpsServices {
                         UtilMisc.toMap("serviceOptionsMonetaryValue", serviceOptionsMonetaryValue, "errorString", e.toString()), locale));
             }
             try {
-                shipmentRouteSegment.set("actualCost", new BigDecimal(totalMonetaryValue));
+                shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.actualCost, new BigDecimal(totalMonetaryValue));
             } catch (NumberFormatException e) {
                 String excErrMsg = "Error parsing the totalMonetaryValue [" + totalMonetaryValue + "]: " + e.toString();
                 Debug.logError(e, excErrMsg, MODULE);
@@ -1115,19 +1115,19 @@ public class UpsServices {
             String billingWeightUnitOfMeasurement = UtilXml.childElementValue(billingWeightUnitOfMeasurementElement, "Code");
             String billingWeight = UtilXml.childElementValue(billingWeightElement, "Weight");
             try {
-                shipmentRouteSegment.set("billingWeight", new BigDecimal(billingWeight));
+                shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.billingWeight, new BigDecimal(billingWeight));
             } catch (NumberFormatException e) {
                 String excErrMsg = "Error parsing the billingWeight [" + billingWeight + "]: " + e.toString();
                 Debug.logError(e, excErrMsg, MODULE);
                 errorList.add(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsErrorParsingBillingWeight",
                         UtilMisc.toMap("billingWeight", billingWeight, "errorString", e.toString()), locale));
             }
-            shipmentRouteSegment.set("billingWeightUomId", UPS_TO_OFBIZ.get(billingWeightUnitOfMeasurement));
+            shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.billingWeightUomId, UPS_TO_OFBIZ.get(billingWeightUnitOfMeasurement));
 
             // store the ShipmentIdentificationNumber and ShipmentDigest
             String shipmentIdentificationNumber = UtilXml.childElementValue(shipmentResultsElement, "ShipmentIdentificationNumber");
             // should compare to trackingIdNumber, should always be the same right?
-            shipmentRouteSegment.set("trackingIdNumber", shipmentIdentificationNumber);
+            shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.trackingIdNumber, shipmentIdentificationNumber);
 
             // set ShipmentRouteSegment carrierServiceStatusId after each UPS service applicable
             shipmentRouteSegment.put("carrierServiceStatusId", "SHRSCS_ACCEPTED");
@@ -1163,14 +1163,14 @@ public class UpsServices {
 
                 //NOTE: I guess they come back in the same order we sent them, so we'll get the packages in order and off we go...
                 GenericValue shipmentPackageRouteSeg = shipmentPackageRouteSegIter.next();
-                shipmentPackageRouteSeg.set("trackingCode", trackingNumber);
-                shipmentPackageRouteSeg.set("boxNumber", "");
-                shipmentPackageRouteSeg.set("currencyUomId", packageServiceOptionsCurrencyCode);
+                shipmentPackageRouteSeg.set(org.apache.ofbiz.persistence.entity.x.trackingCode, trackingNumber);
+                shipmentPackageRouteSeg.set(org.apache.ofbiz.persistence.entity.x.boxNumber, "");
+                shipmentPackageRouteSeg.set(org.apache.ofbiz.persistence.entity.x.currencyUomId, packageServiceOptionsCurrencyCode);
                 try {
-                    shipmentPackageRouteSeg.set("packageServiceCost", new BigDecimal(packageServiceOptionsMonetaryValue));
+                    shipmentPackageRouteSeg.set(org.apache.ofbiz.persistence.entity.x.packageServiceCost, new BigDecimal(packageServiceOptionsMonetaryValue));
                 } catch (NumberFormatException e) {
                     String excErrMsg = "Error parsing the packageServiceOptionsMonetaryValue [" + packageServiceOptionsMonetaryValue + "] for "
-                            + "Package [" + shipmentPackageRouteSeg.getString("shipmentPackageSeqId") + "]: " + e.toString();
+                            + "Package [" + shipmentPackageRouteSeg.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId) + "]: " + e.toString();
                     Debug.logError(e, excErrMsg, MODULE);
                     errorList.add(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsErrorParsingServiceOptionsMonetaryValue",
                             UtilMisc.toMap("serviceOptionsMonetaryValue", serviceOptionsMonetaryValue, "errorString", e.toString()), locale));
@@ -1178,17 +1178,17 @@ public class UpsServices {
                 byte[] labelImageBytes = null;
                 if (packageLabelGraphicImageString != null) {
                     labelImageBytes = Base64.getMimeDecoder().decode(packageLabelGraphicImageString.getBytes(StandardCharsets.UTF_8));
-                    shipmentPackageRouteSeg.setBytes("labelImage", labelImageBytes);
+                    shipmentPackageRouteSeg.setBytes(org.apache.ofbiz.persistence.entity.x.labelImage, labelImageBytes);
                 }
                 byte[] labelInternationalSignatureGraphicImageBytes = null;
                 if (packageLabelInternationalSignatureGraphicImageString != null) {
                     labelInternationalSignatureGraphicImageBytes =
                             Base64.getMimeDecoder().decode(packageLabelInternationalSignatureGraphicImageString.getBytes(StandardCharsets.UTF_8));
-                    shipmentPackageRouteSeg.set("labelIntlSignImage", labelInternationalSignatureGraphicImageBytes);
+                    shipmentPackageRouteSeg.set(org.apache.ofbiz.persistence.entity.x.labelIntlSignImage, labelInternationalSignatureGraphicImageBytes);
                 }
                 String packageLabelHTMLImageStringDecoded =
                         Arrays.toString(Base64.getMimeDecoder().decode(packageLabelHTMLImageString.getBytes(StandardCharsets.UTF_8)));
-                shipmentPackageRouteSeg.set("labelHtml", packageLabelHTMLImageStringDecoded);
+                shipmentPackageRouteSeg.set(org.apache.ofbiz.persistence.entity.x.labelHtml, packageLabelHTMLImageStringDecoded);
 
                 if (shipmentUpsSaveCertificationInfo) {
                     if (labelImageBytes != null) {
@@ -1215,8 +1215,8 @@ public class UpsServices {
                     }
                     if (packageLabelHTMLImageStringDecoded != null) {
                         String outFileName = shipmentUpsSaveCertificationPath + "/UpsShipmentLabelHTMLImage" + shipmentRouteSegment.getString(
-                                "shipmentId") + "_" + shipmentRouteSegment.getString("shipmentRouteSegmentId") + "_"
-                                + shipmentPackageRouteSeg.getString("shipmentPackageSeqId") + ".html";
+                                org.apache.ofbiz.persistence.entity.x.shipmentId) + "_" + shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId) + "_"
+                                + shipmentPackageRouteSeg.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId) + ".html";
                         try (FileOutputStream fileOut = new FileOutputStream(outFileName)) {
                             fileOut.write(packageLabelHTMLImageStringDecoded.getBytes(StandardCharsets.UTF_8));
                             fileOut.flush();
@@ -1236,7 +1236,7 @@ public class UpsServices {
                 while (shipmentPackageRouteSegIter.hasNext()) {
                     GenericValue shipmentPackageRouteSeg = shipmentPackageRouteSegIter.next();
                     errorList.add(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsErrorNoPackageResultsWereReturned",
-                            UtilMisc.toMap("shipmentPackageSeqId", shipmentPackageRouteSeg.getString("shipmentPackageSeqId")), locale));
+                            UtilMisc.toMap("shipmentPackageSeqId", shipmentPackageRouteSeg.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId)), locale));
                 }
             }
 
@@ -1246,11 +1246,11 @@ public class UpsServices {
                 String fileString = UtilXml.childElementValue(controlLogReceiptElement, "GraphicImage");
                 String fileStringDecoded = Arrays.toString(Base64.getMimeDecoder().decode(fileString.getBytes(StandardCharsets.UTF_8)));
                 if (fileStringDecoded != null) {
-                    shipmentRouteSegment.set("upsHighValueReport", fileStringDecoded);
+                    shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.upsHighValueReport, fileStringDecoded);
                     shipmentRouteSegment.store();
                     String outFileName =
-                            shipmentUpsSaveCertificationPath + "/HighValueReport" + shipmentRouteSegment.getString("shipmentId")
-                                    + "_" + shipmentRouteSegment.getString("shipmentRouteSegmentId") + ".html";
+                            shipmentUpsSaveCertificationPath + "/HighValueReport" + shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.shipmentId)
+                                    + "_" + shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId) + ".html";
                     try (FileOutputStream fileOut = new FileOutputStream(outFileName)) {
                         fileOut.write(fileStringDecoded.getBytes(StandardCharsets.UTF_8));
                         fileOut.flush();
@@ -1285,9 +1285,9 @@ public class UpsServices {
 
     public static Map<String, Object> upsVoidShipment(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentId = (String) context.get("shipmentId");
-        String shipmentRouteSegmentId = (String) context.get("shipmentRouteSegmentId");
-        Locale locale = (Locale) context.get("locale");
+        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
+        String shipmentRouteSegmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         Map<String, Object> shipmentGatewayConfig = ShipmentServices.getShipmentGatewayConfigFromShipment(delegator, shipmentId, locale);
         String shipmentGatewayConfigId = (String) shipmentGatewayConfig.get("shipmentGatewayConfigId");
@@ -1313,20 +1313,20 @@ public class UpsServices {
             GenericValue shipmentRouteSegment = EntityQuery.use(delegator).from("ShipmentRouteSegment").where("shipmentId", shipmentId,
                     "shipmentRouteSegmentId", shipmentRouteSegmentId).queryOne();
 
-            if (!"UPS".equals(shipmentRouteSegment.getString("carrierPartyId"))) {
+            if (!"UPS".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsNotRouteSegmentCarrier", UtilMisc.toMap(
                         "shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId), locale));
             }
 
             // add ShipmentRouteSegment carrierServiceStatusId, check before all UPS services
-            if (!"SHRSCS_CONFIRMED".equals(shipmentRouteSegment.getString("carrierServiceStatusId"))
-                    && !"SHRSCS_ACCEPTED".equals(shipmentRouteSegment.getString("carrierServiceStatusId"))) {
+            if (!"SHRSCS_CONFIRMED".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId))
+                    && !"SHRSCS_ACCEPTED".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentStatusMustBeConfirmedOrAccepted",
                         UtilMisc.toMap("shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId, "shipmentRouteSegmentStatus",
-                                shipmentRouteSegment.getString("carrierServiceStatusId")), locale));
+                                shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId)), locale));
             }
 
-            if (UtilValidate.isEmpty(shipmentRouteSegment.getString("trackingIdNumber"))) {
+            if (UtilValidate.isEmpty(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.trackingIdNumber))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsTrackingIdNumberWasNotSet", locale));
             }
 
@@ -1345,7 +1345,7 @@ public class UpsServices {
             UtilXml.addChildElementValue(requestElement, "RequestOption", "1", voidShipmentRequestDoc);
 
             UtilXml.addChildElementValue(voidShipmentRequestElement, "ShipmentIdentificationNumber", shipmentRouteSegment.getString(
-                    "trackingIdNumber"), voidShipmentRequestDoc);
+                    org.apache.ofbiz.persistence.entity.x.trackingIdNumber), voidShipmentRequestDoc);
 
             String voidShipmentRequestString = null;
             try {
@@ -1379,7 +1379,7 @@ public class UpsServices {
             if (shipmentUpsSaveCertificationInfo) {
                 String outFileName =
                         shipmentUpsSaveCertificationPath + "/UpsVoidShipmentRequest" + shipmentId + "_" + shipmentRouteSegment.getString(
-                         "shipmentRouteSegmentId") + ".xml";
+                         org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId) + ".xml";
                 try (FileOutputStream fileOut = new FileOutputStream(outFileName)) {
                     fileOut.write(xmlString.toString().getBytes(StandardCharsets.UTF_8));
                     fileOut.flush();
@@ -1400,7 +1400,7 @@ public class UpsServices {
             if (shipmentUpsSaveCertificationInfo) {
                 String outFileName =
                         shipmentUpsSaveCertificationPath + "/UpsVoidShipmentResponse" + shipmentId + "_" + shipmentRouteSegment.getString(
-                         "shipmentRouteSegmentId") + ".xml";
+                         org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId) + ".xml";
                 try (FileOutputStream fileOut = new FileOutputStream(outFileName)) {
                     fileOut.write(voidShipmentResponseString.getBytes(StandardCharsets.UTF_8));
                     fileOut.flush();
@@ -1480,9 +1480,9 @@ public class UpsServices {
 
     public static Map<String, Object> upsTrackShipment(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentId = (String) context.get("shipmentId");
-        String shipmentRouteSegmentId = (String) context.get("shipmentRouteSegmentId");
-        Locale locale = (Locale) context.get("locale");
+        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
+        String shipmentRouteSegmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         Map<String, Object> shipmentGatewayConfig = ShipmentServices.getShipmentGatewayConfigFromShipment(delegator, shipmentId, locale);
         String shipmentGatewayConfigId = (String) shipmentGatewayConfig.get("shipmentGatewayConfigId");
@@ -1508,26 +1508,26 @@ public class UpsServices {
             GenericValue shipmentRouteSegment = EntityQuery.use(delegator).from("ShipmentRouteSegment").where("shipmentId", shipmentId,
                     "shipmentRouteSegmentId", shipmentRouteSegmentId).queryOne();
 
-            if (!"UPS".equals(shipmentRouteSegment.getString("carrierPartyId"))) {
+            if (!"UPS".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsNotRouteSegmentCarrier", UtilMisc.toMap(
                         "shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId), locale));
             }
 
             // add ShipmentRouteSegment carrierServiceStatusId, check before all UPS services
-            if (!"SHRSCS_ACCEPTED".equals(shipmentRouteSegment.getString("carrierServiceStatusId"))) {
+            if (!"SHRSCS_ACCEPTED".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentStatusNotAccepted",
                         UtilMisc.toMap("shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId, "shipmentRouteSegmentStatus",
-                                shipmentRouteSegment.getString("carrierServiceStatusId")), locale));
+                                shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId)), locale));
             }
 
-            List<GenericValue> shipmentPackageRouteSegs = shipmentRouteSegment.getRelated("ShipmentPackageRouteSeg", null, UtilMisc.toList(
+            List<GenericValue> shipmentPackageRouteSegs = shipmentRouteSegment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentPackageRouteSeg, null, UtilMisc.toList(
                     "+shipmentPackageSeqId"), false);
             if (UtilValidate.isEmpty(shipmentPackageRouteSegs)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsPackageRouteSegsNotFound", UtilMisc.toMap(
                         "shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
-            if (UtilValidate.isEmpty(shipmentRouteSegment.getString("trackingIdNumber"))) {
+            if (UtilValidate.isEmpty(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.trackingIdNumber))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsTrackingIdNumberWasNotSet", locale));
             }
 
@@ -1544,7 +1544,7 @@ public class UpsServices {
 
             UtilXml.addChildElementValue(requestElement, "RequestAction", "Track", trackRequestDoc);
 
-            UtilXml.addChildElementValue(trackRequestElement, "ShipmentIdentificationNumber", shipmentRouteSegment.getString("trackingIdNumber"),
+            UtilXml.addChildElementValue(trackRequestElement, "ShipmentIdentificationNumber", shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.trackingIdNumber),
                     trackRequestDoc);
 
             String trackRequestString = null;
@@ -1578,7 +1578,7 @@ public class UpsServices {
 
             if (shipmentUpsSaveCertificationInfo) {
                 String outFileName = shipmentUpsSaveCertificationPath + "/UpsTrackRequest" + shipmentId + "_" + shipmentRouteSegment.getString(
-                        "shipmentRouteSegmentId") + ".xml";
+                        org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId) + ".xml";
                 try (FileOutputStream fileOut = new FileOutputStream(outFileName)) {
                     fileOut.write(xmlString.toString().getBytes(StandardCharsets.UTF_8));
                     fileOut.flush();
@@ -1599,7 +1599,7 @@ public class UpsServices {
             if (shipmentUpsSaveCertificationInfo) {
                 String outFileName =
                         shipmentUpsSaveCertificationPath + "/UpsTrackResponseString" + shipmentId + "_" + shipmentRouteSegment.getString(
-                         "shipmentRouteSegmentId") + ".xml";
+                         org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId) + ".xml";
                 try (FileOutputStream fileOut = new FileOutputStream(outFileName)) {
                     fileOut.write(trackResponseString.getBytes(StandardCharsets.UTF_8));
                     fileOut.flush();
@@ -1697,10 +1697,10 @@ public class UpsServices {
 
     public static Map<String, Object> upsRateInquire(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         // prepare the data
-        String shippingContactMechId = (String) context.get("shippingContactMechId");
-        String shippingOriginContactMechId = (String) context.get("shippingOriginContactMechId");
+        String shippingContactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shippingContactMechId);
+        String shippingOriginContactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shippingOriginContactMechId);
         // obtain the ship-to address
         GenericValue shipToAddress = null;
         if (shippingContactMechId != null) {
@@ -1728,7 +1728,7 @@ public class UpsServices {
 
         GenericValue destCountryGeo = null;
         try {
-            destCountryGeo = shipToAddress.getRelatedOne("CountryGeo", false);
+            destCountryGeo = shipToAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -1736,21 +1736,21 @@ public class UpsServices {
         if (UtilValidate.isEmpty(destCountryGeo)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsShipToAddresssNoDestionationCountry", locale));
         }
-        Map<String, Object> cxt = UtilMisc.toMap("serviceConfigProps", context.get("serviceConfigProps"), "upsRateInquireMode", context.get(
-                "upsRateInquireMode"),
-                "productStoreId", context.get("productStoreId"), "carrierRoleTypeId", context.get("carrierRoleTypeId"));
-        cxt.put("carrierPartyId", context.get("carrierPartyId"));
-        cxt.put("shipmentMethodTypeId", context.get("shipmentMethodTypeId"));
-        cxt.put("shippingPostalCode", shipToAddress.getString("postalCode"));
-        cxt.put("shippingCountryCode", destCountryGeo.getString("geoCode"));
-        cxt.put("packageWeights", context.get("packageWeights"));
-        cxt.put("shippableItemInfo", context.get("shippableItemInfo"));
-        cxt.put("shippableTotal", context.get("shippableTotal"));
-        cxt.put("shippableQuantity", context.get("shippableQuantity"));
-        cxt.put("shippableWeight", context.get("shippableWeight"));
-        cxt.put("isResidentialAddress", context.get("isResidentialAddress"));
+        Map<String, Object> cxt = UtilMisc.toMap("serviceConfigProps", context.get(org.apache.ofbiz.persistence.entity.x.serviceConfigProps), "upsRateInquireMode", context.get(
+                org.apache.ofbiz.persistence.entity.x.upsRateInquireMode),
+                "productStoreId", context.get(org.apache.ofbiz.persistence.entity.x.productStoreId), "carrierRoleTypeId", context.get(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId));
+        cxt.put("carrierPartyId", context.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId));
+        cxt.put("shipmentMethodTypeId", context.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId));
+        cxt.put("shippingPostalCode", shipToAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode));
+        cxt.put("shippingCountryCode", destCountryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode));
+        cxt.put("packageWeights", context.get(org.apache.ofbiz.persistence.entity.x.packageWeights));
+        cxt.put("shippableItemInfo", context.get(org.apache.ofbiz.persistence.entity.x.shippableItemInfo));
+        cxt.put("shippableTotal", context.get(org.apache.ofbiz.persistence.entity.x.shippableTotal));
+        cxt.put("shippableQuantity", context.get(org.apache.ofbiz.persistence.entity.x.shippableQuantity));
+        cxt.put("shippableWeight", context.get(org.apache.ofbiz.persistence.entity.x.shippableWeight));
+        cxt.put("isResidentialAddress", context.get(org.apache.ofbiz.persistence.entity.x.isResidentialAddress));
         cxt.put("shipFromAddress", shipFromAddress);
-        cxt.put("shipmentGatewayConfigId", context.get("shipmentGatewayConfigId"));
+        cxt.put("shipmentGatewayConfigId", context.get(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId));
         try {
             Map<String, Object> serviceResult = dctx.getDispatcher().runSync("upsRateEstimateByPostalCode", cxt);
             if (ServiceUtil.isError(serviceResult)) {
@@ -2002,20 +2002,20 @@ public class UpsServices {
 
     public static Map<String, Object> upsRateInquireByPostalCode(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         // prepare the data
-        String serviceConfigProps = (String) context.get("serviceConfigProps");
-        String shipmentGatewayConfigId = (String) context.get("shipmentGatewayConfigId");
-        String upsRateInquireMode = (String) context.get("upsRateInquireMode");
-        String productStoreId = (String) context.get("productStoreId");
-        String carrierRoleTypeId = (String) context.get("carrierRoleTypeId");
-        String carrierPartyId = (String) context.get("carrierPartyId");
-        String shipmentMethodTypeId = (String) context.get("shipmentMethodTypeId");
-        String shippingPostalCode = (String) context.get("shippingPostalCode");
-        String shippingCountryCode = (String) context.get("shippingCountryCode");
-        List<BigDecimal> packageWeights = UtilGenerics.cast(context.get("packageWeights"));
-        List<Map<String, Object>> shippableItemInfo = UtilGenerics.cast(context.get("shippableItemInfo"));
-        String isResidentialAddress = (String) context.get("isResidentialAddress");
+        String serviceConfigProps = (String) context.get(org.apache.ofbiz.persistence.entity.x.serviceConfigProps);
+        String shipmentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId);
+        String upsRateInquireMode = (String) context.get(org.apache.ofbiz.persistence.entity.x.upsRateInquireMode);
+        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
+        String carrierRoleTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId);
+        String carrierPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId);
+        String shipmentMethodTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId);
+        String shippingPostalCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.shippingPostalCode);
+        String shippingCountryCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.shippingCountryCode);
+        List<BigDecimal> packageWeights = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.packageWeights));
+        List<Map<String, Object>> shippableItemInfo = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.shippableItemInfo));
+        String isResidentialAddress = (String) context.get(org.apache.ofbiz.persistence.entity.x.isResidentialAddress);
 
         // Important: DO NOT returnError here or you could trigger a transaction rollback and break other services.
         if (UtilValidate.isEmpty(shippingPostalCode)) {
@@ -2036,18 +2036,18 @@ public class UpsServices {
                 + ".ups.shipper.pickup.type", "01");
 
         // if we're drop shipping from a supplier, then the address is given to us
-        GenericValue shipFromAddress = (GenericValue) context.get("shipFromAddress");
+        GenericValue shipFromAddress = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.shipFromAddress);
         if (shipFromAddress == null) {
 
             // locate the ship-from address based on the product store's default facility
             GenericValue productStore = ProductStoreWorker.getProductStore(productStoreId, delegator);
-            if (productStore != null && productStore.get("inventoryFacilityId") != null) {
+            if (productStore != null && productStore.get(org.apache.ofbiz.persistence.entity.x.inventoryFacilityId) != null) {
                 GenericValue facilityContactMech = ContactMechWorker.getFacilityContactMechByPurpose(delegator, productStore.getString(
-                        "inventoryFacilityId"), UtilMisc.toList("SHIP_ORIG_LOCATION", "PRIMARY_LOCATION"));
+                        org.apache.ofbiz.persistence.entity.x.inventoryFacilityId), UtilMisc.toList("SHIP_ORIG_LOCATION", "PRIMARY_LOCATION"));
                 if (facilityContactMech != null) {
                     try {
                         shipFromAddress = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId", facilityContactMech.getString(
-                                "contactMechId")).queryOne();
+                                org.apache.ofbiz.persistence.entity.x.contactMechId)).queryOne();
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
                     }
@@ -2076,7 +2076,7 @@ public class UpsServices {
             }
 
             // service code is 'carrierServiceCode'
-            serviceCode = carrierShipmentMethod.getString("carrierServiceCode");
+            serviceCode = carrierShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceCode);
 
         }
 
@@ -2105,10 +2105,10 @@ public class UpsServices {
         // shipper info - (sub of shipment)
         Element shipperElement = UtilXml.addChildElement(shipmentElement, "Shipper", rateRequestDoc);
         Element shipperAddrElement = UtilXml.addChildElement(shipperElement, "Address", rateRequestDoc);
-        UtilXml.addChildElementValue(shipperAddrElement, "PostalCode", shipFromAddress.getString("postalCode"), rateRequestDoc);
+        UtilXml.addChildElementValue(shipperAddrElement, "PostalCode", shipFromAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode), rateRequestDoc);
         try {
             //If the warehouse you are shipping from its located in a country other than US, you need to supply its country code to UPS
-            UtilXml.addChildElementValue(shipperAddrElement, "CountryCode", shipFromAddress.getRelatedOne("CountryGeo", true).getString("geoCode"),
+            UtilXml.addChildElementValue(shipperAddrElement, "CountryCode", shipFromAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, true).getString("geoCode"),
                     rateRequestDoc);
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(e.getMessage());
@@ -2218,13 +2218,13 @@ public class UpsServices {
 
     public static Map<String, Object> upsAddressValidation(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        String city = (String) context.get("city");
-        String stateProvinceGeoId = (String) context.get("stateProvinceGeoId");
-        String postalCode = (String) context.get("postalCode");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String city = (String) context.get(org.apache.ofbiz.persistence.entity.x.city);
+        String stateProvinceGeoId = (String) context.get(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId);
+        String postalCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.postalCode);
 
-        String shipmentGatewayConfigId = (String) context.get("shipmentGatewayConfigId");
-        String resource = (String) context.get("serviceConfigProps");
+        String shipmentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId);
+        String resource = (String) context.get(org.apache.ofbiz.persistence.entity.x.serviceConfigProps);
 
         if (UtilValidate.isEmpty(city) && UtilValidate.isEmpty(postalCode)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -2359,10 +2359,10 @@ public class UpsServices {
     public static Map<String, Object> upsEmailReturnLabel(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String shipmentId = (String) context.get("shipmentId");
-        String shipmentRouteSegmentId = (String) context.get("shipmentRouteSegmentId");
-        Locale locale = (Locale) context.get("locale");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
+        String shipmentRouteSegmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
 
         Map<String, Object> shipmentGatewayConfig = ShipmentServices.getShipmentGatewayConfigFromShipment(delegator, shipmentId, locale);
         String shipmentGatewayConfigId = (String) shipmentGatewayConfig.get("shipmentGatewayConfigId");
@@ -2397,45 +2397,45 @@ public class UpsServices {
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
-            if (!"UPS".equals(shipmentRouteSegment.getString("carrierPartyId"))) {
+            if (!"UPS".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsNotRouteSegmentCarrier", UtilMisc.toMap(
                         "shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId), locale));
             }
 
             // Get Origin Info
-            GenericValue originPostalAddress = shipmentRouteSegment.getRelatedOne("OriginPostalAddress", false);
+            GenericValue originPostalAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginPostalAddress, false);
             if (originPostalAddress == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentOriginPostalAddressNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            GenericValue originTelecomNumber = shipmentRouteSegment.getRelatedOne("OriginTelecomNumber", false);
+            GenericValue originTelecomNumber = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginTelecomNumber, false);
             if (originTelecomNumber == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentOriginTelecomNumberNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            String originPhoneNumber = originTelecomNumber.getString("areaCode") + originTelecomNumber.getString("contactNumber");
+            String originPhoneNumber = originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.areaCode) + originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.contactNumber);
             // don't put on country code if not specified or is the US country code (UPS wants it this way)
-            if (UtilValidate.isNotEmpty(originTelecomNumber.getString("countryCode"))
-                    && !"001".equals(originTelecomNumber.getString("countryCode"))) {
-                originPhoneNumber = originTelecomNumber.getString("countryCode") + originPhoneNumber;
+            if (UtilValidate.isNotEmpty(originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))
+                    && !"001".equals(originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))) {
+                originPhoneNumber = originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode) + originPhoneNumber;
             }
             originPhoneNumber = StringUtil.replaceString(originPhoneNumber, "-", "");
             originPhoneNumber = StringUtil.replaceString(originPhoneNumber, " ", "");
             // lookup the two letter country code (in the geoCode field)
-            GenericValue originCountryGeo = originPostalAddress.getRelatedOne("CountryGeo", false);
+            GenericValue originCountryGeo = originPostalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
             if (originCountryGeo == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentOriginCountryGeoNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
             // Get Dest Info
-            GenericValue destPostalAddress = shipmentRouteSegment.getRelatedOne("DestPostalAddress", false);
+            GenericValue destPostalAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestPostalAddress, false);
             if (destPostalAddress == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentDestPostalAddressNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
-            GenericValue destTelecomNumber = shipmentRouteSegment.getRelatedOne("DestTelecomNumber", false);
+            GenericValue destTelecomNumber = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestTelecomNumber, false);
             if (destTelecomNumber == null) {
                 String missingErrMsg = "DestTelecomNumber not found for ShipmentRouteSegment with shipmentId " + shipmentId + " and "
                         + "shipmentRouteSegmentId " + shipmentRouteSegmentId;
@@ -2443,35 +2443,35 @@ public class UpsServices {
             }
             String destPhoneNumber = null;
             if (destTelecomNumber != null) {
-                destPhoneNumber = destTelecomNumber.getString("areaCode") + destTelecomNumber.getString("contactNumber");
+                destPhoneNumber = destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.areaCode) + destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.contactNumber);
                 // don't put on country code if not specified or is the US country code (UPS wants it this way)
-                if (UtilValidate.isNotEmpty(destTelecomNumber.getString("countryCode"))
-                        && !"001".equals(destTelecomNumber.getString("countryCode"))) {
-                    destPhoneNumber = destTelecomNumber.getString("countryCode") + destPhoneNumber;
+                if (UtilValidate.isNotEmpty(destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))
+                        && !"001".equals(destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))) {
+                    destPhoneNumber = destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode) + destPhoneNumber;
                 }
                 destPhoneNumber = StringUtil.replaceString(destPhoneNumber, "-", "");
                 destPhoneNumber = StringUtil.replaceString(destPhoneNumber, " ", "");
             }
 
             // lookup the two letter country code (in the geoCode field)
-            GenericValue destCountryGeo = destPostalAddress.getRelatedOne("CountryGeo", false);
+            GenericValue destCountryGeo = destPostalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
             if (destCountryGeo == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentDestCountryGeoNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
             GenericValue carrierShipmentMethod = EntityQuery.use(delegator).from("CarrierShipmentMethod")
-                    .where("partyId", shipmentRouteSegment.get("carrierPartyId"), "roleTypeId", "CARRIER", "shipmentMethodTypeId",
-                            shipmentRouteSegment.get("shipmentMethodTypeId"))
+                    .where("partyId", shipmentRouteSegment.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId), "roleTypeId", "CARRIER", "shipmentMethodTypeId",
+                            shipmentRouteSegment.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId))
                     .queryOne();
             if (carrierShipmentMethod == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentCarrierShipmentMethodNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId, "carrierPartyId",
-                                shipmentRouteSegment.get("carrierPartyId"), "shipmentMethodTypeId", shipmentRouteSegment.get("shipmentMethodTypeId")),
+                                shipmentRouteSegment.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId), "shipmentMethodTypeId", shipmentRouteSegment.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId)),
                         locale));
             }
 
-            Map<String, Object> destEmail = dispatcher.runSync("getPartyEmail", UtilMisc.toMap("partyId", shipment.get("partyIdTo"), "userLogin",
+            Map<String, Object> destEmail = dispatcher.runSync("getPartyEmail", UtilMisc.toMap("partyId", shipment.get(org.apache.ofbiz.persistence.entity.x.partyIdTo), "userLogin",
                     userLogin));
             if (ServiceUtil.isError(destEmail)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(destEmail));
@@ -2481,7 +2481,7 @@ public class UpsServices {
                 recipientEmail = (String) destEmail.get("emailAddress");
             }
             String senderEmail = null;
-            Map<String, Object> originEmail = dispatcher.runSync("getPartyEmail", UtilMisc.toMap("partyId", shipment.get("partyIdFrom"),
+            Map<String, Object> originEmail = dispatcher.runSync("getPartyEmail", UtilMisc.toMap("partyId", shipment.get(org.apache.ofbiz.persistence.entity.x.partyIdFrom),
                     "userLogin", userLogin));
             if (ServiceUtil.isError(originEmail)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(originEmail));
@@ -2490,7 +2490,7 @@ public class UpsServices {
                 senderEmail = (String) originEmail.get("emailAddress");
             }
 
-            List<GenericValue> shipmentPackageRouteSegs = shipmentRouteSegment.getRelated("ShipmentPackageRouteSeg", null, UtilMisc.toList(
+            List<GenericValue> shipmentPackageRouteSegs = shipmentRouteSegment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentPackageRouteSeg, null, UtilMisc.toList(
                     "+shipmentPackageSeqId"), false);
             if (UtilValidate.isEmpty(shipmentPackageRouteSegs)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsPackageRouteSegsNotFound",
@@ -2510,7 +2510,7 @@ public class UpsServices {
 
             // Top Level Element: Shipment
             Element shipmentElement = UtilXml.addChildElement(shipmentConfirmRequestElement, "Shipment", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipmentElement, "Description", "Goods for Shipment " + shipment.get("shipmentId"),
+            UtilXml.addChildElementValue(shipmentElement, "Description", "Goods for Shipment " + shipment.get(org.apache.ofbiz.persistence.entity.x.shipmentId),
                     shipmentConfirmRequestDoc);
 
             // Child of Shipment: ReturnService
@@ -2521,74 +2521,74 @@ public class UpsServices {
             String shipperNumber = getShipmentGatewayConfigValue(delegator, shipmentGatewayConfigId, "shipperNumber", resource, "shipment.ups"
                     + ".shipper.number", "");
             Element shipperElement = UtilXml.addChildElement(shipmentElement, "Shipper", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipperElement, "Name", UtilValidate.isNotEmpty(originPostalAddress.getString("toName"))
-                    ? originPostalAddress.getString("toName") : "", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipperElement, "AttentionName", UtilValidate.isNotEmpty(originPostalAddress.getString("attnName"))
-                    ? originPostalAddress.getString("attnName") : "", shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipperElement, "Name", UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName))
+                    ? originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName) : "", shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipperElement, "AttentionName", UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName))
+                    ? originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName) : "", shipmentConfirmRequestDoc);
             UtilXml.addChildElementValue(shipperElement, "PhoneNumber", originPhoneNumber, shipmentConfirmRequestDoc);
             UtilXml.addChildElementValue(shipperElement, "ShipperNumber", shipperNumber, shipmentConfirmRequestDoc);
 
             Element shipperAddressElement = UtilXml.addChildElement(shipperElement, "Address", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipperAddressElement, "AddressLine1", originPostalAddress.getString("address1"), shipmentConfirmRequestDoc);
-            if (UtilValidate.isNotEmpty(originPostalAddress.getString("address2"))) {
-                UtilXml.addChildElementValue(shipperAddressElement, "AddressLine2", originPostalAddress.getString("address2"),
+            UtilXml.addChildElementValue(shipperAddressElement, "AddressLine1", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1), shipmentConfirmRequestDoc);
+            if (UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2))) {
+                UtilXml.addChildElementValue(shipperAddressElement, "AddressLine2", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2),
                         shipmentConfirmRequestDoc);
             }
-            UtilXml.addChildElementValue(shipperAddressElement, "City", originPostalAddress.getString("city"), shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipperAddressElement, "StateProvinceCode", originPostalAddress.getString("stateProvinceGeoId"),
+            UtilXml.addChildElementValue(shipperAddressElement, "City", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipperAddressElement, "StateProvinceCode", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId),
                     shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipperAddressElement, "PostalCode", originPostalAddress.getString("postalCode"), shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipperAddressElement, "CountryCode", originCountryGeo.getString("geoCode"), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipperAddressElement, "PostalCode", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipperAddressElement, "CountryCode", originCountryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode), shipmentConfirmRequestDoc);
 
             // Child of Shipment: ShipTo
             Element shipToElement = UtilXml.addChildElement(shipmentElement, "ShipTo", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipToElement, "CompanyName", UtilValidate.isNotEmpty(destPostalAddress.getString("toName"))
-                    ? destPostalAddress.getString("toName") : "", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipToElement, "AttentionName", UtilValidate.isNotEmpty(destPostalAddress.getString("attnName"))
-                    ? destPostalAddress.getString("attnName") : "", shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipToElement, "CompanyName", UtilValidate.isNotEmpty(destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName))
+                    ? destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName) : "", shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipToElement, "AttentionName", UtilValidate.isNotEmpty(destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName))
+                    ? destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName) : "", shipmentConfirmRequestDoc);
             if (UtilValidate.isNotEmpty(destPhoneNumber)) {
                 UtilXml.addChildElementValue(shipToElement, "PhoneNumber", destPhoneNumber, shipmentConfirmRequestDoc);
             }
             Element shipToAddressElement = UtilXml.addChildElement(shipToElement, "Address", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipToAddressElement, "AddressLine1", destPostalAddress.getString("address1"), shipmentConfirmRequestDoc);
-            if (UtilValidate.isNotEmpty(destPostalAddress.getString("address2"))) {
-                UtilXml.addChildElementValue(shipToAddressElement, "AddressLine2", destPostalAddress.getString("address2"),
+            UtilXml.addChildElementValue(shipToAddressElement, "AddressLine1", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1), shipmentConfirmRequestDoc);
+            if (UtilValidate.isNotEmpty(destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2))) {
+                UtilXml.addChildElementValue(shipToAddressElement, "AddressLine2", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2),
                         shipmentConfirmRequestDoc);
             }
-            UtilXml.addChildElementValue(shipToAddressElement, "City", destPostalAddress.getString("city"), shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipToAddressElement, "StateProvinceCode", destPostalAddress.getString("stateProvinceGeoId"),
+            UtilXml.addChildElementValue(shipToAddressElement, "City", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipToAddressElement, "StateProvinceCode", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId),
                     shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipToAddressElement, "PostalCode", destPostalAddress.getString("postalCode"), shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipToAddressElement, "CountryCode", destCountryGeo.getString("geoCode"), shipmentConfirmRequestDoc);
-            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString("homeDeliveryType"))) {
+            UtilXml.addChildElementValue(shipToAddressElement, "PostalCode", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipToAddressElement, "CountryCode", destCountryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode), shipmentConfirmRequestDoc);
+            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.homeDeliveryType))) {
                 UtilXml.addChildElement(shipToAddressElement, "ResidentialAddress", shipmentConfirmRequestDoc);
             }
 
             // Child of Shipment: ShipFrom
             Element shipFromElement = UtilXml.addChildElement(shipmentElement, "ShipFrom", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipFromElement, "CompanyName", UtilValidate.isNotEmpty(originPostalAddress.getString("toName"))
-                    ? originPostalAddress.getString("toName") : "", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipFromElement, "AttentionName", UtilValidate.isNotEmpty(originPostalAddress.getString("attnName"))
-                    ? originPostalAddress.getString("attnName") : "", shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipFromElement, "CompanyName", UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName))
+                    ? originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName) : "", shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipFromElement, "AttentionName", UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName))
+                    ? originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName) : "", shipmentConfirmRequestDoc);
             UtilXml.addChildElementValue(shipFromElement, "PhoneNumber", originPhoneNumber, shipmentConfirmRequestDoc);
             Element shipFromAddressElement = UtilXml.addChildElement(shipFromElement, "Address", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipFromAddressElement, "AddressLine1", originPostalAddress.getString("address1"),
+            UtilXml.addChildElementValue(shipFromAddressElement, "AddressLine1", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1),
                     shipmentConfirmRequestDoc);
-            if (UtilValidate.isNotEmpty(originPostalAddress.getString("address2"))) {
-                UtilXml.addChildElementValue(shipFromAddressElement, "AddressLine2", originPostalAddress.getString("address2"),
+            if (UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2))) {
+                UtilXml.addChildElementValue(shipFromAddressElement, "AddressLine2", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2),
                         shipmentConfirmRequestDoc);
             }
-            UtilXml.addChildElementValue(shipFromAddressElement, "City", originPostalAddress.getString("city"), shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipFromAddressElement, "StateProvinceCode", originPostalAddress.getString("stateProvinceGeoId"),
+            UtilXml.addChildElementValue(shipFromAddressElement, "City", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipFromAddressElement, "StateProvinceCode", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId),
                     shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipFromAddressElement, "PostalCode", originPostalAddress.getString("postalCode"),
+            UtilXml.addChildElementValue(shipFromAddressElement, "PostalCode", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode),
                     shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(shipFromAddressElement, "CountryCode", originCountryGeo.getString("geoCode"), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(shipFromAddressElement, "CountryCode", originCountryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode), shipmentConfirmRequestDoc);
 
             // Child of Shipment: PaymentInformation
             Element paymentInformationElement = UtilXml.addChildElement(shipmentElement, "PaymentInformation", shipmentConfirmRequestDoc);
 
-            String thirdPartyAccountNumber = shipmentRouteSegment.getString("thirdPartyAccountNumber");
+            String thirdPartyAccountNumber = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.thirdPartyAccountNumber);
 
             if (UtilValidate.isEmpty(thirdPartyAccountNumber)) {
                 // Paid by shipper
@@ -2603,7 +2603,7 @@ public class UpsServices {
 
             // Child of Shipment: Service
             Element serviceElement = UtilXml.addChildElement(shipmentElement, "Service", shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(serviceElement, "Code", carrierShipmentMethod.getString("carrierServiceCode"), shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(serviceElement, "Code", carrierShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceCode), shipmentConfirmRequestDoc);
 
             // Child of Shipment: ShipmentServiceOptions
             String defaultReturnLabelMemo = getShipmentGatewayConfigValue(delegator, shipmentGatewayConfigId, "defaultReturnLabelMemo", resource,
@@ -2615,8 +2615,8 @@ public class UpsServices {
             Element emailMessageElement = UtilXml.addChildElement(labelDeliveryElement, "EMailMessage", shipmentConfirmRequestDoc);
             UtilXml.addChildElementValue(emailMessageElement, "EMailAddress", recipientEmail, shipmentConfirmRequestDoc);
             UtilXml.addChildElementValue(emailMessageElement, "FromEMailAddress", senderEmail, shipmentConfirmRequestDoc);
-            UtilXml.addChildElementValue(emailMessageElement, "FromName", UtilValidate.isNotEmpty(originPostalAddress.getString("attnName"))
-                    ? originPostalAddress.getString("attnName") : "", shipmentConfirmRequestDoc);
+            UtilXml.addChildElementValue(emailMessageElement, "FromName", UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName))
+                    ? originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName) : "", shipmentConfirmRequestDoc);
             UtilXml.addChildElementValue(emailMessageElement, "Memo", defaultReturnLabelMemo, shipmentConfirmRequestDoc);
             UtilXml.addChildElementValue(emailMessageElement, "Subject", defaultReturnLabelSubject, shipmentConfirmRequestDoc);
 
@@ -2690,7 +2690,7 @@ public class UpsServices {
             }
 
             //Shipment Accept Request follows
-            if (!"UPS".equals(shipmentRouteSegment.getString("carrierPartyId"))) {
+            if (!"UPS".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsNotRouteSegmentCarrier", UtilMisc.toMap(
                         "shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId), locale));
             }
@@ -2755,7 +2755,7 @@ public class UpsServices {
             if (shipmentUpsSaveCertificationInfo) {
                 String outFileName =
                         shipmentUpsSaveCertificationPath + "/UpsShipmentAcceptRequest" + shipmentId + "_" + shipmentRouteSegment.getString(
-                         "shipmentRouteSegmentId") + ".xml";
+                         org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId) + ".xml";
                 try (FileOutputStream fileOut = new FileOutputStream(outFileName)) {
                     fileOut.write(xmlString.toString().getBytes(StandardCharsets.UTF_8));
                     fileOut.flush();
@@ -2788,11 +2788,11 @@ public class UpsServices {
 
         // prepare the data
         String upsRateInquireMode;
-        String shipmentId = (String) context.get("shipmentId");
-        String shipmentRouteSegmentId = (String) context.get("shipmentRouteSegmentId");
-        Locale locale = (Locale) context.get("locale");
+        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
+        String shipmentRouteSegmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String rateResponseString = null;
-        String productStoreId = (String) context.get("productStoreId");
+        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
         List<Map<String, Object>> shippingRates = new LinkedList<>();
         GenericValue shipmentRouteSegment = null;
         Map<String, Object> shipmentGatewayConfig = ShipmentServices.getShipmentGatewayConfigFromShipment(delegator, shipmentId, locale);
@@ -2815,47 +2815,47 @@ public class UpsServices {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "ProductShipmentRouteSegmentNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            shipmentRouteSegmentId = shipmentRouteSegment.getString("shipmentRouteSegmentId");
+            shipmentRouteSegmentId = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId);
 
-            if (!"UPS".equals(shipmentRouteSegment.getString("carrierPartyId"))) {
+            if (!"UPS".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsNotRouteSegmentCarrier", UtilMisc.toMap(
                         "shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId), locale));
             }
 
             // Get Origin Info
-            GenericValue originPostalAddress = shipmentRouteSegment.getRelatedOne("OriginPostalAddress", false);
+            GenericValue originPostalAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginPostalAddress, false);
             if (originPostalAddress == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentOriginPostalAddressNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            GenericValue originTelecomNumber = shipmentRouteSegment.getRelatedOne("OriginTelecomNumber", false);
+            GenericValue originTelecomNumber = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginTelecomNumber, false);
             if (originTelecomNumber == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentOriginTelecomNumberNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            String originPhoneNumber = originTelecomNumber.getString("areaCode") + originTelecomNumber.getString("contactNumber");
+            String originPhoneNumber = originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.areaCode) + originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.contactNumber);
             // don't put on country code if not specified or is the US country code (UPS wants it this way)
-            if (UtilValidate.isNotEmpty(originTelecomNumber.getString("countryCode"))
-                    && !"001".equals(originTelecomNumber.getString("countryCode"))) {
-                originPhoneNumber = originTelecomNumber.getString("countryCode") + originPhoneNumber;
+            if (UtilValidate.isNotEmpty(originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))
+                    && !"001".equals(originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))) {
+                originPhoneNumber = originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode) + originPhoneNumber;
             }
             originPhoneNumber = StringUtil.replaceString(originPhoneNumber, "-", "");
             originPhoneNumber = StringUtil.replaceString(originPhoneNumber, " ", "");
             // lookup the two letter country code (in the geoCode field)
-            GenericValue originCountryGeo = originPostalAddress.getRelatedOne("CountryGeo", false);
+            GenericValue originCountryGeo = originPostalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
             if (originCountryGeo == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentOriginCountryGeoNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
             // Get Dest Info
-            GenericValue destPostalAddress = shipmentRouteSegment.getRelatedOne("DestPostalAddress", false);
+            GenericValue destPostalAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestPostalAddress, false);
             if (destPostalAddress == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentDestPostalAddressNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
-            GenericValue destTelecomNumber = shipmentRouteSegment.getRelatedOne("DestTelecomNumber", false);
+            GenericValue destTelecomNumber = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestTelecomNumber, false);
             if (destTelecomNumber == null) {
                 String missingErrMsg = "DestTelecomNumber not found for ShipmentRouteSegment with shipmentId " + shipmentId + " and "
                         + "shipmentRouteSegmentId " + shipmentRouteSegmentId;
@@ -2864,18 +2864,18 @@ public class UpsServices {
             }
             String destPhoneNumber = null;
             if (destTelecomNumber != null) {
-                destPhoneNumber = destTelecomNumber.getString("areaCode") + destTelecomNumber.getString("contactNumber");
+                destPhoneNumber = destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.areaCode) + destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.contactNumber);
                 // don't put on country code if not specified or is the US country code (UPS wants it this way)
-                if (UtilValidate.isNotEmpty(destTelecomNumber.getString("countryCode"))
-                        && !"001".equals(destTelecomNumber.getString("countryCode"))) {
-                    destPhoneNumber = destTelecomNumber.getString("countryCode") + destPhoneNumber;
+                if (UtilValidate.isNotEmpty(destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))
+                        && !"001".equals(destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))) {
+                    destPhoneNumber = destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode) + destPhoneNumber;
                 }
                 destPhoneNumber = StringUtil.replaceString(destPhoneNumber, "-", "");
                 destPhoneNumber = StringUtil.replaceString(destPhoneNumber, " ", "");
             }
 
             // lookup the two letter country code (in the geoCode field)
-            GenericValue destCountryGeo = destPostalAddress.getRelatedOne("CountryGeo", false);
+            GenericValue destCountryGeo = destPostalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
             if (destCountryGeo == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsRouteSegmentDestCountryGeoNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
@@ -2917,69 +2917,69 @@ public class UpsServices {
             // shipment info
             Element shipmentElement = UtilXml.addChildElement(rateRequestElement, "Shipment", rateRequestDoc);
             Element shipperElement = UtilXml.addChildElement(shipmentElement, "Shipper", rateRequestDoc);
-            UtilXml.addChildElementValue(shipperElement, "Name", UtilValidate.isNotEmpty(originPostalAddress.getString("toName"))
-                    ? originPostalAddress.getString("toName") : "", rateRequestDoc);
-            UtilXml.addChildElementValue(shipperElement, "AttentionName", UtilValidate.isNotEmpty(originPostalAddress.getString("attnName"))
-                    ? originPostalAddress.getString("attnName") : "", rateRequestDoc);
+            UtilXml.addChildElementValue(shipperElement, "Name", UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName))
+                    ? originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName) : "", rateRequestDoc);
+            UtilXml.addChildElementValue(shipperElement, "AttentionName", UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName))
+                    ? originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName) : "", rateRequestDoc);
             UtilXml.addChildElementValue(shipperElement, "PhoneNumber", originPhoneNumber, rateRequestDoc);
             UtilXml.addChildElementValue(shipperElement, "ShipperNumber", EntityUtilProperties.getPropertyValue("shipment", "shipment.ups.shipper"
                     + ".number", delegator), rateRequestDoc);
 
             Element shipperAddressElement = UtilXml.addChildElement(shipperElement, "Address", rateRequestDoc);
-            UtilXml.addChildElementValue(shipperAddressElement, "AddressLine1", originPostalAddress.getString("address1"), rateRequestDoc);
-            if (UtilValidate.isNotEmpty(originPostalAddress.getString("address2"))) {
-                UtilXml.addChildElementValue(shipperAddressElement, "AddressLine2", originPostalAddress.getString("address2"), rateRequestDoc);
+            UtilXml.addChildElementValue(shipperAddressElement, "AddressLine1", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1), rateRequestDoc);
+            if (UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2))) {
+                UtilXml.addChildElementValue(shipperAddressElement, "AddressLine2", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2), rateRequestDoc);
             }
 
-            UtilXml.addChildElementValue(shipperAddressElement, "City", originPostalAddress.getString("city"), rateRequestDoc);
-            UtilXml.addChildElementValue(shipperAddressElement, "StateProvinceCode", originPostalAddress.getString("stateProvinceGeoId"),
+            UtilXml.addChildElementValue(shipperAddressElement, "City", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city), rateRequestDoc);
+            UtilXml.addChildElementValue(shipperAddressElement, "StateProvinceCode", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId),
                     rateRequestDoc);
-            UtilXml.addChildElementValue(shipperAddressElement, "PostalCode", originPostalAddress.getString("postalCode"), rateRequestDoc);
-            UtilXml.addChildElementValue(shipperAddressElement, "CountryCode", originCountryGeo.getString("geoCode"), rateRequestDoc);
+            UtilXml.addChildElementValue(shipperAddressElement, "PostalCode", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode), rateRequestDoc);
+            UtilXml.addChildElementValue(shipperAddressElement, "CountryCode", originCountryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode), rateRequestDoc);
 
             // Child of Shipment: ShipTo
             Element shipToElement = UtilXml.addChildElement(shipmentElement, "ShipTo", rateRequestDoc);
-            UtilXml.addChildElementValue(shipToElement, "CompanyName", UtilValidate.isNotEmpty(destPostalAddress.getString("toName"))
-                    ? destPostalAddress.getString("toName") : "", rateRequestDoc);
-            UtilXml.addChildElementValue(shipToElement, "AttentionName", UtilValidate.isNotEmpty(destPostalAddress.getString("attnName"))
-                    ? destPostalAddress.getString("attnName") : "", rateRequestDoc);
+            UtilXml.addChildElementValue(shipToElement, "CompanyName", UtilValidate.isNotEmpty(destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName))
+                    ? destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName) : "", rateRequestDoc);
+            UtilXml.addChildElementValue(shipToElement, "AttentionName", UtilValidate.isNotEmpty(destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName))
+                    ? destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName) : "", rateRequestDoc);
             if (UtilValidate.isNotEmpty(destPhoneNumber)) {
                 UtilXml.addChildElementValue(shipToElement, "PhoneNumber", destPhoneNumber, rateRequestDoc);
             }
             Element shipToAddressElement = UtilXml.addChildElement(shipToElement, "Address", rateRequestDoc);
-            UtilXml.addChildElementValue(shipToAddressElement, "AddressLine1", destPostalAddress.getString("address1"), rateRequestDoc);
-            if (UtilValidate.isNotEmpty(destPostalAddress.getString("address2"))) {
-                UtilXml.addChildElementValue(shipToAddressElement, "AddressLine2", destPostalAddress.getString("address2"), rateRequestDoc);
+            UtilXml.addChildElementValue(shipToAddressElement, "AddressLine1", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1), rateRequestDoc);
+            if (UtilValidate.isNotEmpty(destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2))) {
+                UtilXml.addChildElementValue(shipToAddressElement, "AddressLine2", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2), rateRequestDoc);
             }
 
-            UtilXml.addChildElementValue(shipToAddressElement, "City", destPostalAddress.getString("city"), rateRequestDoc);
-            UtilXml.addChildElementValue(shipToAddressElement, "StateProvinceCode", destPostalAddress.getString("stateProvinceGeoId"),
+            UtilXml.addChildElementValue(shipToAddressElement, "City", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city), rateRequestDoc);
+            UtilXml.addChildElementValue(shipToAddressElement, "StateProvinceCode", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId),
                     rateRequestDoc);
-            UtilXml.addChildElementValue(shipToAddressElement, "PostalCode", destPostalAddress.getString("postalCode"), rateRequestDoc);
-            UtilXml.addChildElementValue(shipToAddressElement, "CountryCode", destCountryGeo.getString("geoCode"), rateRequestDoc);
-            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString("homeDeliveryType"))) {
+            UtilXml.addChildElementValue(shipToAddressElement, "PostalCode", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode), rateRequestDoc);
+            UtilXml.addChildElementValue(shipToAddressElement, "CountryCode", destCountryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode), rateRequestDoc);
+            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.homeDeliveryType))) {
                 UtilXml.addChildElement(shipToAddressElement, "ResidentialAddress", rateRequestDoc);
             }
 
             // Child of Shipment: ShipFrom
             Element shipFromElement = UtilXml.addChildElement(shipmentElement, "ShipFrom", rateRequestDoc);
-            UtilXml.addChildElementValue(shipFromElement, "CompanyName", UtilValidate.isNotEmpty(originPostalAddress.getString("toName"))
-                    ? originPostalAddress.getString("toName") : "", rateRequestDoc);
-            UtilXml.addChildElementValue(shipFromElement, "AttentionName", UtilValidate.isNotEmpty(originPostalAddress.getString("attnName"))
-                    ? originPostalAddress.getString("attnName") : "", rateRequestDoc);
+            UtilXml.addChildElementValue(shipFromElement, "CompanyName", UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName))
+                    ? originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName) : "", rateRequestDoc);
+            UtilXml.addChildElementValue(shipFromElement, "AttentionName", UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName))
+                    ? originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName) : "", rateRequestDoc);
             UtilXml.addChildElementValue(shipFromElement, "PhoneNumber", originPhoneNumber, rateRequestDoc);
             Element shipFromAddressElement = UtilXml.addChildElement(shipFromElement, "Address", rateRequestDoc);
-            UtilXml.addChildElementValue(shipFromAddressElement, "AddressLine1", originPostalAddress.getString("address1"), rateRequestDoc);
-            if (UtilValidate.isNotEmpty(originPostalAddress.getString("address2"))) {
-                UtilXml.addChildElementValue(shipFromAddressElement, "AddressLine2", originPostalAddress.getString("address2"), rateRequestDoc);
+            UtilXml.addChildElementValue(shipFromAddressElement, "AddressLine1", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1), rateRequestDoc);
+            if (UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2))) {
+                UtilXml.addChildElementValue(shipFromAddressElement, "AddressLine2", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2), rateRequestDoc);
             }
-            UtilXml.addChildElementValue(shipFromAddressElement, "City", originPostalAddress.getString("city"), rateRequestDoc);
-            UtilXml.addChildElementValue(shipFromAddressElement, "StateProvinceCode", originPostalAddress.getString("stateProvinceGeoId"),
+            UtilXml.addChildElementValue(shipFromAddressElement, "City", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city), rateRequestDoc);
+            UtilXml.addChildElementValue(shipFromAddressElement, "StateProvinceCode", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId),
                     rateRequestDoc);
-            UtilXml.addChildElementValue(shipFromAddressElement, "PostalCode", originPostalAddress.getString("postalCode"), rateRequestDoc);
-            UtilXml.addChildElementValue(shipFromAddressElement, "CountryCode", originCountryGeo.getString("geoCode"), rateRequestDoc);
+            UtilXml.addChildElementValue(shipFromAddressElement, "PostalCode", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode), rateRequestDoc);
+            UtilXml.addChildElementValue(shipFromAddressElement, "CountryCode", originCountryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode), rateRequestDoc);
 
-            List<GenericValue> shipmentPackageRouteSegs = shipmentRouteSegment.getRelated("ShipmentPackageRouteSeg", null, UtilMisc.toList(
+            List<GenericValue> shipmentPackageRouteSegs = shipmentRouteSegment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentPackageRouteSeg, null, UtilMisc.toList(
                     "+shipmentPackageSeqId"), false);
             if (UtilValidate.isEmpty(shipmentPackageRouteSegs)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsPackageRouteSegsNotFound",
@@ -2987,9 +2987,9 @@ public class UpsServices {
             }
             for (GenericValue shipmentPackageRouteSeg : shipmentPackageRouteSegs) {
 
-                GenericValue shipmentPackage = shipmentPackageRouteSeg.getRelatedOne("ShipmentPackage", false);
-                GenericValue shipmentBoxType = shipmentPackage.getRelatedOne("ShipmentBoxType", false);
-                List<GenericValue> carrierShipmentBoxTypes = shipmentPackage.getRelated("CarrierShipmentBoxType", UtilMisc.toMap("partyId", "UPS"),
+                GenericValue shipmentPackage = shipmentPackageRouteSeg.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentPackage, false);
+                GenericValue shipmentBoxType = shipmentPackage.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentBoxType, false);
+                List<GenericValue> carrierShipmentBoxTypes = shipmentPackage.getRelated(org.apache.ofbiz.persistence.entity.x.CarrierShipmentBoxType, UtilMisc.toMap("partyId", "UPS"),
                         null, false);
                 GenericValue carrierShipmentBoxType = null;
                 if (!carrierShipmentBoxTypes.isEmpty()) {
@@ -2998,8 +2998,8 @@ public class UpsServices {
 
                 Element packageElement = UtilXml.addChildElement(shipmentElement, "Package", rateRequestDoc);
                 Element packagingTypeElement = UtilXml.addChildElement(packageElement, "PackagingType", rateRequestDoc);
-                if (carrierShipmentBoxType != null && carrierShipmentBoxType.get("packagingTypeCode") != null) {
-                    UtilXml.addChildElementValue(packagingTypeElement, "Code", carrierShipmentBoxType.getString("packagingTypeCode"), rateRequestDoc);
+                if (carrierShipmentBoxType != null && carrierShipmentBoxType.get(org.apache.ofbiz.persistence.entity.x.packagingTypeCode) != null) {
+                    UtilXml.addChildElementValue(packagingTypeElement, "Code", carrierShipmentBoxType.getString(org.apache.ofbiz.persistence.entity.x.packagingTypeCode), rateRequestDoc);
                 } else {
                     // default to "02", plain old Package
                     UtilXml.addChildElementValue(packagingTypeElement, "Code", "02", rateRequestDoc);
@@ -3007,31 +3007,31 @@ public class UpsServices {
                 if (shipmentBoxType != null) {
                     Element dimensionsElement = UtilXml.addChildElement(packageElement, "Dimensions", rateRequestDoc);
                     Element unitOfMeasurementElement = UtilXml.addChildElement(dimensionsElement, "UnitOfMeasurement", rateRequestDoc);
-                    GenericValue dimensionUom = shipmentBoxType.getRelatedOne("DimensionUom", false);
+                    GenericValue dimensionUom = shipmentBoxType.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DimensionUom, false);
                     if (dimensionUom != null) {
                         UtilXml.addChildElementValue(unitOfMeasurementElement, "Code",
-                                dimensionUom.getString("abbreviation").toUpperCase(Locale.getDefault()), rateRequestDoc);
+                                dimensionUom.getString(org.apache.ofbiz.persistence.entity.x.abbreviation).toUpperCase(Locale.getDefault()), rateRequestDoc);
                     } else {
                         UtilXml.addChildElementValue(unitOfMeasurementElement, "Code", ModelService.IN_PARAM, rateRequestDoc);
                     }
-                    BigDecimal boxLength = shipmentBoxType.getBigDecimal("boxLength");
-                    BigDecimal boxWidth = shipmentBoxType.getBigDecimal("boxWidth");
-                    BigDecimal boxHeight = shipmentBoxType.getBigDecimal("boxHeight");
+                    BigDecimal boxLength = shipmentBoxType.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxLength);
+                    BigDecimal boxWidth = shipmentBoxType.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxWidth);
+                    BigDecimal boxHeight = shipmentBoxType.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxHeight);
                     UtilXml.addChildElementValue(dimensionsElement, "Length", UtilValidate.isNotEmpty(boxLength) ? "" + boxLength.intValue() : "",
                             rateRequestDoc);
                     UtilXml.addChildElementValue(dimensionsElement, "Width", UtilValidate.isNotEmpty(boxWidth) ? "" + boxWidth.intValue() : "",
                             rateRequestDoc);
                     UtilXml.addChildElementValue(dimensionsElement, "Height", UtilValidate.isNotEmpty(boxHeight) ? "" + boxHeight.intValue() : "",
                             rateRequestDoc);
-                } else if (UtilValidate.isNotEmpty(shipmentPackage.get("boxLength"))
-                        && UtilValidate.isNotEmpty(shipmentPackage.get("boxWidth"))
-                        && UtilValidate.isNotEmpty(shipmentPackage.get("boxHeight"))) {
+                } else if (UtilValidate.isNotEmpty(shipmentPackage.get(org.apache.ofbiz.persistence.entity.x.boxLength))
+                        && UtilValidate.isNotEmpty(shipmentPackage.get(org.apache.ofbiz.persistence.entity.x.boxWidth))
+                        && UtilValidate.isNotEmpty(shipmentPackage.get(org.apache.ofbiz.persistence.entity.x.boxHeight))) {
                     Element dimensionsElement = UtilXml.addChildElement(packageElement, "Dimensions", rateRequestDoc);
                     Element unitOfMeasurementElement = UtilXml.addChildElement(dimensionsElement, "UnitOfMeasurement", rateRequestDoc);
                     UtilXml.addChildElementValue(unitOfMeasurementElement, "Code", ModelService.IN_PARAM, rateRequestDoc);
-                    BigDecimal length = (BigDecimal) shipmentPackage.get("boxLength");
-                    BigDecimal width = (BigDecimal) shipmentPackage.get("boxWidth");
-                    BigDecimal height = (BigDecimal) shipmentPackage.get("boxHeight");
+                    BigDecimal length = (BigDecimal) shipmentPackage.get(org.apache.ofbiz.persistence.entity.x.boxLength);
+                    BigDecimal width = (BigDecimal) shipmentPackage.get(org.apache.ofbiz.persistence.entity.x.boxWidth);
+                    BigDecimal height = (BigDecimal) shipmentPackage.get(org.apache.ofbiz.persistence.entity.x.boxHeight);
                     UtilXml.addChildElementValue(dimensionsElement, "Length", length.setScale(DECIMALS, ROUNDING).toString(), rateRequestDoc);
                     UtilXml.addChildElementValue(dimensionsElement, "Width", width.setScale(DECIMALS, ROUNDING).toString(), rateRequestDoc);
                     UtilXml.addChildElementValue(dimensionsElement, "Height", height.setScale(DECIMALS, ROUNDING).toString(), rateRequestDoc);
@@ -3039,7 +3039,7 @@ public class UpsServices {
 
                 Element packageWeightElement = UtilXml.addChildElement(packageElement, "PackageWeight", rateRequestDoc);
                 Element packageWeightUnitOfMeasurementElement = UtilXml.addChildElement(packageElement, "UnitOfMeasurement", rateRequestDoc);
-                String weightUomUps = OFBIZ_TO_UPS.get(shipmentPackage.get("weightUomId"));
+                String weightUomUps = OFBIZ_TO_UPS.get(shipmentPackage.get(org.apache.ofbiz.persistence.entity.x.weightUomId));
                 if (weightUomUps != null) {
                     UtilXml.addChildElementValue(packageWeightUnitOfMeasurementElement, "Code", weightUomUps, rateRequestDoc);
                 } else {
@@ -3047,12 +3047,12 @@ public class UpsServices {
                     UtilXml.addChildElementValue(packageWeightUnitOfMeasurementElement, "Code", "LBS", rateRequestDoc);
                 }
 
-                if (shipmentPackage.getString("weight") == null) {
+                if (shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.weight) == null) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentUpsWeightValueNotFound",
                             UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentPackageSeqId",
-                                    shipmentPackage.getString("shipmentPackageSeqId")), locale));
+                                    shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId)), locale));
                 }
-                BigDecimal boxWeight = shipmentPackage.getBigDecimal("weight");
+                BigDecimal boxWeight = shipmentPackage.getBigDecimal(org.apache.ofbiz.persistence.entity.x.weight);
                 UtilXml.addChildElementValue(packageWeightElement, "Weight", UtilValidate.isNotEmpty(boxWeight) ? "" + boxWeight.intValue() : "",
                         rateRequestDoc);
             }
@@ -3117,14 +3117,14 @@ public class UpsServices {
                 List<GenericValue> productStoreShipmentMethods = EntityQuery.use(delegator).from("ProductStoreShipmentMethView").where(
                         "productStoreId", productStoreId).queryList();
                 for (GenericValue productStoreShipmentMethod : productStoreShipmentMethods) {
-                    if ("UPS".equals(productStoreShipmentMethod.get("partyId"))) {
+                    if ("UPS".equals(productStoreShipmentMethod.get(org.apache.ofbiz.persistence.entity.x.partyId))) {
                         Map<String, Object> thisUpsRateCodeMap = new HashMap<>();
                         carrierShipmentMethod = EntityQuery.use(delegator).from("CarrierShipmentMethod")
-                                .where("shipmentMethodTypeId", productStoreShipmentMethod.getString("shipmentMethodTypeId"), "partyId",
-                                        productStoreShipmentMethod.getString("partyId"), "roleTypeId",
-                                        productStoreShipmentMethod.getString("roleTypeId"))
+                                .where("shipmentMethodTypeId", productStoreShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId), "partyId",
+                                        productStoreShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.partyId), "roleTypeId",
+                                        productStoreShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.roleTypeId))
                                 .queryOne();
-                        String serviceCode = carrierShipmentMethod.getString("carrierServiceCode");
+                        String serviceCode = carrierShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceCode);
                         for (String thisServiceCode : upsRateCodeMap.keySet()) {
                             if (serviceCode.equals(thisServiceCode)) {
                                 BigDecimal newRate = upsRateCodeMap.get(serviceCode);

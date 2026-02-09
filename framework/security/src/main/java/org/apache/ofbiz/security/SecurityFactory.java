@@ -98,7 +98,7 @@ public final class SecurityFactory {
         public void clearUserData(GenericValue userLogin) {
             if (userLogin != null) {
                 delegator.getCache().remove("UserLoginSecurityGroup", EntityCondition.makeCondition("userLoginId", EntityOperator.EQUALS,
-                        userLogin.getString("userLoginId")));
+                        userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId)));
             }
         }
 
@@ -126,13 +126,13 @@ public final class SecurityFactory {
             if (userLogin == null || entity == null || action == null) return false;
             String permission = entity.concat(action);
             String adminPermission = entity.concat("_ADMIN");
-            Iterator<GenericValue> iterator = findUserLoginSecurityGroupByUserLoginId(userLogin.getString("userLoginId"));
+            Iterator<GenericValue> iterator = findUserLoginSecurityGroupByUserLoginId(userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
             while (iterator.hasNext()) {
                 GenericValue userLoginSecurityGroup = iterator.next();
-                if (securityGroupPermissionExists(userLoginSecurityGroup.getString("groupId"), permission)) {
+                if (securityGroupPermissionExists(userLoginSecurityGroup.getString(org.apache.ofbiz.persistence.entity.x.groupId), permission)) {
                     return true;
                 }
-                if (securityGroupPermissionExists(userLoginSecurityGroup.getString("groupId"), adminPermission)) {
+                if (securityGroupPermissionExists(userLoginSecurityGroup.getString(org.apache.ofbiz.persistence.entity.x.groupId), adminPermission)) {
                     return true;
                 }
             }
@@ -157,11 +157,11 @@ public final class SecurityFactory {
             if (userLogin == null) {
                 return false;
             }
-            Iterator<GenericValue> iterator = findUserLoginSecurityGroupByUserLoginId(userLogin.getString("userLoginId"));
+            Iterator<GenericValue> iterator = findUserLoginSecurityGroupByUserLoginId(userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
             GenericValue userLoginSecurityGroup = null;
             while (iterator.hasNext()) {
                 userLoginSecurityGroup = iterator.next();
-                if (securityGroupPermissionExists(userLoginSecurityGroup.getString("groupId"), permission)) return true;
+                if (securityGroupPermissionExists(userLoginSecurityGroup.getString(org.apache.ofbiz.persistence.entity.x.groupId), permission)) return true;
             }
             return false;
         }
@@ -236,7 +236,7 @@ public final class SecurityFactory {
                     }
                     EntityConditionList<EntityExpr> exprList = EntityCondition.makeCondition(expressions, EntityOperator.OR);
                     EntityExpr keyExpr = EntityCondition.makeCondition(pkey, primaryKey);
-                    EntityExpr partyExpr = EntityCondition.makeCondition("partyId", userLogin.getString("partyId"));
+                    EntityExpr partyExpr = EntityCondition.makeCondition("partyId", userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId));
                     condition = EntityCondition.makeCondition(exprList, keyExpr, partyExpr);
                 }
 

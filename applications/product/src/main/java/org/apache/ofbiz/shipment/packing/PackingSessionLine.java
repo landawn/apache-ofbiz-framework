@@ -330,7 +330,7 @@ public class PackingSessionLine implements java.io.Serializable {
                                       .queryOne();
             if (plItem != null) {
                 Debug.logInfo("Found picklist bin: " + plItem, MODULE);
-                BigDecimal itemQty = plItem.getBigDecimal("quantity");
+                BigDecimal itemQty = plItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                 if (itemQty.compareTo(quantity) == 0) {
                     // set to complete
                     itemLookup.put("itemStatusId", "PICKITEM_COMPLETED");

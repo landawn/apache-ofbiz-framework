@@ -45,16 +45,16 @@ public class WorkEffortPartyAssignmentServices {
         GenericValue workEffort = null;
 
         try {
-            workEffort = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", wepa.get("workEffortId")).queryOne();
+            workEffort = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", wepa.get(org.apache.ofbiz.persistence.entity.x.workEffortId)).queryOne();
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
         }
-        if (workEffort != null && "ACTIVITY".equals(workEffort.getString("workEffortTypeId"))) {
+        if (workEffort != null && "ACTIVITY".equals(workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortTypeId))) {
             // TODO: restrict status transitions
 
-            String statusId = (String) wepa.get("statusId");
-            Map<String, Object> context = UtilMisc.toMap("workEffortId", wepa.get("workEffortId"), "partyId", wepa.get("partyId"),
-                    "roleTypeId", wepa.get("roleTypeId"), "fromDate", wepa.get("fromDate"),
+            String statusId = (String) wepa.get(org.apache.ofbiz.persistence.entity.x.statusId);
+            Map<String, Object> context = UtilMisc.toMap("workEffortId", wepa.get(org.apache.ofbiz.persistence.entity.x.workEffortId), "partyId", wepa.get(org.apache.ofbiz.persistence.entity.x.partyId),
+                    "roleTypeId", wepa.get(org.apache.ofbiz.persistence.entity.x.roleTypeId), "fromDate", wepa.get(org.apache.ofbiz.persistence.entity.x.fromDate),
                     "userLogin", userLogin);
 
             if ("CAL_ACCEPTED".equals(statusId)) {

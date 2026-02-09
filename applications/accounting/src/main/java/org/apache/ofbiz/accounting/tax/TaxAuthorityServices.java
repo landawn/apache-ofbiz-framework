@@ -66,13 +66,13 @@ public class TaxAuthorityServices {
 
     public static Map<String, Object> rateProductTaxCalcForDisplay(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String productStoreId = (String) context.get("productStoreId");
-        String billToPartyId = (String) context.get("billToPartyId");
-        String productId = (String) context.get("productId");
-        BigDecimal quantity = (BigDecimal) context.get("quantity");
-        BigDecimal basePrice = (BigDecimal) context.get("basePrice");
-        BigDecimal shippingPrice = (BigDecimal) context.get("shippingPrice");
-        Locale locale = (Locale) context.get("locale");
+        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
+        String billToPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.billToPartyId);
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
+        BigDecimal basePrice = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.basePrice);
+        BigDecimal shippingPrice = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.shippingPrice);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         if (quantity == null) {
             quantity = ONE_BASE;
@@ -101,19 +101,19 @@ public class TaxAuthorityServices {
                 throw new IllegalArgumentException("Could not find ProductStore with ID [" + productStoreId + "] for tax calculation");
             }
 
-            if ("Y".equals(productStore.getString("showPricesWithVatTax"))) {
+            if ("Y".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.showPricesWithVatTax))) {
                 Set<GenericValue> taxAuthoritySet = new HashSet<>();
-                if (productStore.get("vatTaxAuthPartyId") == null) {
+                if (productStore.get(org.apache.ofbiz.persistence.entity.x.vatTaxAuthPartyId) == null) {
                     List<GenericValue> taxAuthorityRawList = EntityQuery.use(delegator)
                             .from("TaxAuthority")
-                            .where("taxAuthGeoId", productStore.get("vatTaxAuthGeoId"))
+                            .where("taxAuthGeoId", productStore.get(org.apache.ofbiz.persistence.entity.x.vatTaxAuthGeoId))
                             .cache()
                             .queryList();
                     taxAuthoritySet.addAll(taxAuthorityRawList);
                 } else {
                     GenericValue taxAuthority = EntityQuery.use(delegator).from("TaxAuthority").where("taxAuthGeoId",
-                            productStore.get("vatTaxAuthGeoId"), "taxAuthPartyId", productStore.get(
-                                    "vatTaxAuthPartyId")).cache().queryOne();
+                            productStore.get(org.apache.ofbiz.persistence.entity.x.vatTaxAuthGeoId), "taxAuthPartyId", productStore.get(
+                                    org.apache.ofbiz.persistence.entity.x.vatTaxAuthPartyId)).cache().queryOne();
                     taxAuthoritySet.add(taxAuthority);
                 }
 
@@ -134,15 +134,15 @@ public class TaxAuthorityServices {
 
                 // add up amounts from adjustments (amount OR exemptAmount, sourcePercentage)
                 for (GenericValue taxAdjustment : taxAdustmentList) {
-                    if ("SALES_TAX".equals(taxAdjustment.getString("orderAdjustmentTypeId"))) {
-                        taxPercentage = taxPercentage.add(taxAdjustment.getBigDecimal("sourcePercentage"));
-                        BigDecimal adjAmount = taxAdjustment.getBigDecimal("amount");
+                    if ("SALES_TAX".equals(taxAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
+                        taxPercentage = taxPercentage.add(taxAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.sourcePercentage));
+                        BigDecimal adjAmount = taxAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
                         taxTotal = taxTotal.add(adjAmount);
                         priceWithTax = priceWithTax.add(adjAmount.divide(quantity, TAX_SCALE,
                                 TAX_ROUNDING));
                         Debug.logInfo("For productId [" + productId + "] added [" + adjAmount.divide(quantity,
                                 TAX_SCALE, TAX_ROUNDING) + "] of tax to price for geoId ["
-                                + taxAdjustment.getString("taxAuthGeoId") + "], new price is [" + priceWithTax + "]",
+                                + taxAdjustment.getString(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId) + "], new price is [" + priceWithTax + "]",
                                 MODULE);
                     }
                 }
@@ -166,19 +166,19 @@ public class TaxAuthorityServices {
 
     public static Map<String, Object> rateProductTaxCalc(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String productStoreId = (String) context.get("productStoreId");
-        String facilityId = (String) context.get("facilityId");
-        String payToPartyId = (String) context.get("payToPartyId");
-        String billToPartyId = (String) context.get("billToPartyId");
-        List<GenericValue> itemProductList = UtilGenerics.cast(context.get("itemProductList"));
-        List<BigDecimal> itemAmountList = UtilGenerics.cast(context.get("itemAmountList"));
-        List<BigDecimal> itemPriceList = UtilGenerics.cast(context.get("itemPriceList"));
-        List<BigDecimal> itemQuantityList = UtilGenerics.cast(context.get("itemQuantityList"));
-        List<BigDecimal> itemShippingList = UtilGenerics.cast(context.get("itemShippingList"));
-        BigDecimal orderShippingAmount = (BigDecimal) context.get("orderShippingAmount");
-        BigDecimal orderPromotionsAmount = (BigDecimal) context.get("orderPromotionsAmount");
-        GenericValue shippingAddress = (GenericValue) context.get("shippingAddress");
-        Locale locale = (Locale) context.get("locale");
+        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
+        String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId);
+        String payToPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.payToPartyId);
+        String billToPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.billToPartyId);
+        List<GenericValue> itemProductList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemProductList));
+        List<BigDecimal> itemAmountList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemAmountList));
+        List<BigDecimal> itemPriceList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemPriceList));
+        List<BigDecimal> itemQuantityList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemQuantityList));
+        List<BigDecimal> itemShippingList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemShippingList));
+        BigDecimal orderShippingAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.orderShippingAmount);
+        BigDecimal orderPromotionsAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.orderPromotionsAmount);
+        GenericValue shippingAddress = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.shippingAddress);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         GenericValue productStore = null;
         GenericValue facility = null;
         try {
@@ -209,7 +209,7 @@ public class TaxAuthorityServices {
                         facilityId, UtilMisc.toList("SHIP_ORIG_LOCATION", "PRIMARY_LOCATION"));
                 if (facilityContactMech != null) {
                     shippingAddress = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId",
-                            facilityContactMech.get("contactMechId")).queryOne();
+                            facilityContactMech.get(org.apache.ofbiz.persistence.entity.x.contactMechId)).queryOne();
                 }
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Data error getting tax settings: " + e.toString(), MODULE);
@@ -217,15 +217,15 @@ public class TaxAuthorityServices {
                         .toMap("errorString", e.toString()), locale));
             }
         }
-        if (shippingAddress == null || (shippingAddress.get("countryGeoId") == null && shippingAddress.get(
-                "stateProvinceGeoId") == null && shippingAddress.get("postalCodeGeoId") == null)) {
+        if (shippingAddress == null || (shippingAddress.get(org.apache.ofbiz.persistence.entity.x.countryGeoId) == null && shippingAddress.get(
+                org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId) == null && shippingAddress.get(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId) == null)) {
             String errMsg = UtilProperties.getMessage(RESOURCE, "AccountingTaxNoAddressSpecified", locale);
             if (shippingAddress != null) {
                 errMsg += UtilProperties.getMessage(RESOURCE, "AccountingTaxNoAddressSpecifiedDetails", UtilMisc.toMap(
-                        "contactMechId", shippingAddress.getString("contactMechId"), "address1", shippingAddress.get(
-                                "address1"), "postalCodeGeoId", shippingAddress.get("postalCodeGeoId"),
-                        "stateProvinceGeoId", shippingAddress.get("stateProvinceGeoId"), "countryGeoId", shippingAddress
-                                .get("countryGeoId")), locale);
+                        "contactMechId", shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.contactMechId), "address1", shippingAddress.get(
+                                org.apache.ofbiz.persistence.entity.x.address1), "postalCodeGeoId", shippingAddress.get(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId),
+                        "stateProvinceGeoId", shippingAddress.get(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId), "countryGeoId", shippingAddress
+                                .get(org.apache.ofbiz.persistence.entity.x.countryGeoId)), locale);
                 Debug.logError(errMsg, MODULE);
             }
             return ServiceUtil.returnError(errMsg);
@@ -303,14 +303,14 @@ public class TaxAuthorityServices {
                                           Set<GenericValue> taxAuthoritySet) throws GenericEntityException {
         Map<String, String> geoIdByTypeMap = new HashMap<>();
         if (shippingAddress != null) {
-            if (UtilValidate.isNotEmpty(shippingAddress.getString("countryGeoId"))) {
-                geoIdByTypeMap.put("COUNTRY", shippingAddress.getString("countryGeoId"));
+            if (UtilValidate.isNotEmpty(shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId))) {
+                geoIdByTypeMap.put("COUNTRY", shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId));
             }
-            if (UtilValidate.isNotEmpty(shippingAddress.getString("stateProvinceGeoId"))) {
-                geoIdByTypeMap.put("STATE", shippingAddress.getString("stateProvinceGeoId"));
+            if (UtilValidate.isNotEmpty(shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId))) {
+                geoIdByTypeMap.put("STATE", shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId));
             }
-            if (UtilValidate.isNotEmpty(shippingAddress.getString("countyGeoId"))) {
-                geoIdByTypeMap.put("COUNTY", shippingAddress.getString("countyGeoId"));
+            if (UtilValidate.isNotEmpty(shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.countyGeoId))) {
+                geoIdByTypeMap.put("COUNTY", shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.countyGeoId));
             }
             String postalCodeGeoId = ContactMechWorker.getPostalAddressPostalCodeGeoId(shippingAddress, delegator);
             if (UtilValidate.isNotEmpty(postalCodeGeoId)) {
@@ -354,7 +354,7 @@ public class TaxAuthorityServices {
 
         if (payToPartyId == null) {
             if (productStore != null) {
-                payToPartyId = productStore.getString("payToPartyId");
+                payToPartyId = productStore.getString(org.apache.ofbiz.persistence.entity.x.payToPartyId);
             }
         }
 
@@ -363,7 +363,7 @@ public class TaxAuthorityServices {
         if (productStore != null) {
             storeCond = EntityCondition.makeCondition(
                     EntityCondition.makeCondition("productStoreId", EntityOperator.EQUALS, productStore.get(
-                            "productStoreId")),
+                            org.apache.ofbiz.persistence.entity.x.productStoreId)),
                     EntityOperator.OR,
                     EntityCondition.makeCondition("productStoreId", EntityOperator.EQUALS, null));
         } else {
@@ -381,10 +381,10 @@ public class TaxAuthorityServices {
         for (GenericValue taxAuthority : taxAuthoritySet) {
             EntityCondition taxAuthCond = EntityCondition.makeCondition(
                     EntityCondition.makeCondition("taxAuthPartyId", EntityOperator.EQUALS, taxAuthority.getString(
-                            "taxAuthPartyId")),
+                            org.apache.ofbiz.persistence.entity.x.taxAuthPartyId)),
                     EntityOperator.AND,
                     EntityCondition.makeCondition("taxAuthGeoId", EntityOperator.EQUALS, taxAuthority.getString(
-                            "taxAuthGeoId")));
+                            org.apache.ofbiz.persistence.entity.x.taxAuthGeoId)));
             taxAuthCondOrList.add(taxAuthCond);
         }
         EntityCondition taxAuthoritiesCond = EntityCondition.makeCondition(taxAuthCondOrList, EntityOperator.OR);
@@ -434,23 +434,23 @@ public class TaxAuthorityServices {
 
             // find the right entry(s) based on purchase amount
             for (GenericValue taxAuthorityRateProduct : lookupList) {
-                BigDecimal taxRate = taxAuthorityRateProduct.get("taxPercentage") != null ? taxAuthorityRateProduct
-                        .getBigDecimal("taxPercentage") : ZERO_BASE;
+                BigDecimal taxRate = taxAuthorityRateProduct.get(org.apache.ofbiz.persistence.entity.x.taxPercentage) != null ? taxAuthorityRateProduct
+                        .getBigDecimal(org.apache.ofbiz.persistence.entity.x.taxPercentage) : ZERO_BASE;
                 taxRate = taxRate.multiply(weight);
                 BigDecimal taxable = ZERO_BASE;
 
-                if (product != null && (product.get("taxable") == null || (product.get("taxable") != null && product
-                        .getBoolean("taxable")))) {
+                if (product != null && (product.get(org.apache.ofbiz.persistence.entity.x.taxable) == null || (product.get(org.apache.ofbiz.persistence.entity.x.taxable) != null && product
+                        .getBoolean(org.apache.ofbiz.persistence.entity.x.taxable)))) {
                     taxable = taxable.add(itemAmount);
                 }
-                if (shippingAmount != null && (taxAuthorityRateProduct.get("taxShipping") == null
-                        || (taxAuthorityRateProduct.get("taxShipping") != null && taxAuthorityRateProduct.getBoolean(
-                        "taxShipping")))) {
+                if (shippingAmount != null && (taxAuthorityRateProduct.get(org.apache.ofbiz.persistence.entity.x.taxShipping) == null
+                        || (taxAuthorityRateProduct.get(org.apache.ofbiz.persistence.entity.x.taxShipping) != null && taxAuthorityRateProduct.getBoolean(
+                        org.apache.ofbiz.persistence.entity.x.taxShipping)))) {
                     taxable = taxable.add(shippingAmount);
                 }
-                if (orderPromotionsAmount != null && (taxAuthorityRateProduct.get("taxPromotions") == null
-                        || (taxAuthorityRateProduct.get("taxPromotions") != null && taxAuthorityRateProduct.getBoolean(
-                        "taxPromotions")))) {
+                if (orderPromotionsAmount != null && (taxAuthorityRateProduct.get(org.apache.ofbiz.persistence.entity.x.taxPromotions) == null
+                        || (taxAuthorityRateProduct.get(org.apache.ofbiz.persistence.entity.x.taxPromotions) != null && taxAuthorityRateProduct.getBoolean(
+                        org.apache.ofbiz.persistence.entity.x.taxPromotions)))) {
                     taxable = taxable.add(orderPromotionsAmount);
                 }
 
@@ -464,8 +464,8 @@ public class TaxAuthorityServices {
                 BigDecimal taxAmount = (taxable.multiply(taxRate)).divide(PERCENT_SCALE, TAX_SCALE,
                         TAX_ROUNDING);
 
-                String taxAuthGeoId = taxAuthorityRateProduct.getString("taxAuthGeoId");
-                String taxAuthPartyId = taxAuthorityRateProduct.getString("taxAuthPartyId");
+                String taxAuthGeoId = taxAuthorityRateProduct.getString(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId);
+                String taxAuthPartyId = taxAuthorityRateProduct.getString(org.apache.ofbiz.persistence.entity.x.taxAuthPartyId);
 
                 // get glAccountId from TaxAuthorityGlAccount entity using the payToPartyId as
                 // the organizationPartyId
@@ -473,7 +473,7 @@ public class TaxAuthorityServices {
                         .where("taxAuthPartyId", taxAuthPartyId, "taxAuthGeoId", taxAuthGeoId, "organizationPartyId", payToPartyId).queryOne();
                 String taxAuthGlAccountId = null;
                 if (taxAuthorityGlAccount != null) {
-                    taxAuthGlAccountId = taxAuthorityGlAccount.getString("glAccountId");
+                    taxAuthGlAccountId = taxAuthorityGlAccount.getString(org.apache.ofbiz.persistence.entity.x.glAccountId);
                 } else {
                     // TODO: what to do if no TaxAuthorityGlAccount found? Use some default, or is that done elsewhere later on?
                     Debug.logVerbose("what to do if no TaxAuthorityGlAccount found?", MODULE);
@@ -485,7 +485,7 @@ public class TaxAuthorityServices {
                     // a priceWithTax value
                     productPrice = getProductPrice(delegator, product, productStore, taxAuthGeoId, taxAuthPartyId);
                     if (productPrice == null) {
-                        GenericValue virtualProduct = ProductWorker.getParentProduct(product.getString("productId"), delegator);
+                        GenericValue virtualProduct = ProductWorker.getParentProduct(product.getString(org.apache.ofbiz.persistence.entity.x.productId), delegator);
                         if (virtualProduct != null) {
                             productPrice = getProductPrice(delegator, virtualProduct, productStore, taxAuthGeoId, taxAuthPartyId);
                         }
@@ -494,15 +494,15 @@ public class TaxAuthorityServices {
                 GenericValue taxAdjValue = delegator.makeValue("OrderAdjustment");
 
                 BigDecimal discountedSalesTax = BigDecimal.ZERO;
-                taxAdjValue.set("orderAdjustmentTypeId", "SALES_TAX");
-                if (productPrice != null && "Y".equals(productPrice.getString("taxInPrice"))
+                taxAdjValue.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId, "SALES_TAX");
+                if (productPrice != null && "Y".equals(productPrice.getString(org.apache.ofbiz.persistence.entity.x.taxInPrice))
                         && itemQuantity != BigDecimal.ZERO) {
                     // For example product price is 43 with 20% VAT(means product actual price is
                     // 35.83).
                     // itemPrice = 43;
                     // itemQuantity = 3;
                     // taxAmountIncludedInFullPrice = (43-(43/(1+(20/100))))*3 = 21.51
-                    taxAdjValue.set("orderAdjustmentTypeId", "VAT_TAX");
+                    taxAdjValue.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId, "VAT_TAX");
                     BigDecimal taxAmountIncludedInFullPrice = itemPrice.subtract(itemPrice.divide(BigDecimal.ONE.add(
                             taxRate.divide(PERCENT_SCALE, 4, RoundingMode.HALF_UP)), 2, RoundingMode.HALF_UP)).multiply(
                                     itemQuantity);
@@ -522,27 +522,27 @@ public class TaxAuthorityServices {
                     // discountedSalesTax = 17.92 - 21.51 = −3.59 (If no discounted item quantity
                     // then discountedSalesTax will be ZERO)
                     discountedSalesTax = netTax.subtract(taxAmountIncludedInFullPrice);
-                    taxAdjValue.set("amountAlreadyIncluded", taxAmountIncludedInFullPrice);
-                    taxAdjValue.set("amount", BigDecimal.ZERO);
+                    taxAdjValue.set(org.apache.ofbiz.persistence.entity.x.amountAlreadyIncluded, taxAmountIncludedInFullPrice);
+                    taxAdjValue.set(org.apache.ofbiz.persistence.entity.x.amount, BigDecimal.ZERO);
                 } else {
-                    taxAdjValue.set("amount", taxAmount);
+                    taxAdjValue.set(org.apache.ofbiz.persistence.entity.x.amount, taxAmount);
                 }
 
-                taxAdjValue.set("sourcePercentage", taxRate);
-                taxAdjValue.set("taxAuthorityRateSeqId", taxAuthorityRateProduct.getString("taxAuthorityRateSeqId"));
+                taxAdjValue.set(org.apache.ofbiz.persistence.entity.x.sourcePercentage, taxRate);
+                taxAdjValue.set(org.apache.ofbiz.persistence.entity.x.taxAuthorityRateSeqId, taxAuthorityRateProduct.getString(org.apache.ofbiz.persistence.entity.x.taxAuthorityRateSeqId));
                 // the primary Geo should be the main jurisdiction that the tax is for, and the
                 // secondary would just be to define a parent or wrapping jurisdiction of the
                 // primary
-                taxAdjValue.set("primaryGeoId", taxAuthGeoId);
-                taxAdjValue.set("comments", taxAuthorityRateProduct.getString("description"));
+                taxAdjValue.set(org.apache.ofbiz.persistence.entity.x.primaryGeoId, taxAuthGeoId);
+                taxAdjValue.set(org.apache.ofbiz.persistence.entity.x.comments, taxAuthorityRateProduct.getString(org.apache.ofbiz.persistence.entity.x.description));
                 if (taxAuthPartyId != null) {
-                    taxAdjValue.set("taxAuthPartyId", taxAuthPartyId);
+                    taxAdjValue.set(org.apache.ofbiz.persistence.entity.x.taxAuthPartyId, taxAuthPartyId);
                 }
                 if (taxAuthGlAccountId != null) {
-                    taxAdjValue.set("overrideGlAccountId", taxAuthGlAccountId);
+                    taxAdjValue.set(org.apache.ofbiz.persistence.entity.x.overrideGlAccountId, taxAuthGlAccountId);
                 }
                 if (taxAuthGeoId != null) {
-                    taxAdjValue.set("taxAuthGeoId", taxAuthGeoId);
+                    taxAdjValue.set(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId, taxAuthGeoId);
                 }
 
                 // check to see if this party has a tax ID for this, and if the party is tax
@@ -558,7 +558,7 @@ public class TaxAuthorityServices {
                             .cache().filterByDate().queryList();
 
                     for (GenericValue partyRelationship : partyRelationshipList) {
-                        billToPartyIdSet.add(partyRelationship.getString("partyIdFrom"));
+                        billToPartyIdSet.add(partyRelationship.getString(org.apache.ofbiz.persistence.entity.x.partyIdFrom));
                     }
                     handlePartyTaxExempt(taxAdjValue, billToPartyIdSet, taxAuthGeoId, taxAuthPartyId, taxAmount,
                             nowTimestamp, delegator);
@@ -569,16 +569,16 @@ public class TaxAuthorityServices {
                 if (discountedSalesTax.compareTo(BigDecimal.ZERO) < 0) {
                     GenericValue taxAdjValueNegative = delegator.makeValue("OrderAdjustment");
                     taxAdjValueNegative.setFields(taxAdjValue);
-                    taxAdjValueNegative.set("amountAlreadyIncluded", discountedSalesTax);
+                    taxAdjValueNegative.set(org.apache.ofbiz.persistence.entity.x.amountAlreadyIncluded, discountedSalesTax);
                     adjustments.add(taxAdjValueNegative);
                 }
                 adjustments.add(taxAdjValue);
 
                 if (productPrice != null && itemQuantity != null
-                        && productPrice.getBigDecimal("priceWithTax") != null
-                        && !"Y".equals(productPrice.getString("taxInPrice"))) {
-                    BigDecimal priceWithTax = productPrice.getBigDecimal("priceWithTax");
-                    BigDecimal price = productPrice.getBigDecimal("price");
+                        && productPrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.priceWithTax) != null
+                        && !"Y".equals(productPrice.getString(org.apache.ofbiz.persistence.entity.x.taxInPrice))) {
+                    BigDecimal priceWithTax = productPrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.priceWithTax);
+                    BigDecimal price = productPrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price);
                     BigDecimal baseSubtotal = price.multiply(itemQuantity);
                     BigDecimal baseTaxAmount = (baseSubtotal.multiply(taxRate)).divide(PERCENT_SCALE,
                             TAX_SCALE, TAX_ROUNDING);
@@ -613,25 +613,25 @@ public class TaxAuthorityServices {
                         BigDecimal correctionAmount = enteredTotalPriceWithTax.subtract(calcedTotalPriceWithTax);
 
                         GenericValue correctionAdjValue = delegator.makeValue("OrderAdjustment");
-                        correctionAdjValue.set("taxAuthorityRateSeqId", taxAuthorityRateProduct.getString(
-                                "taxAuthorityRateSeqId"));
-                        correctionAdjValue.set("amount", correctionAmount);
+                        correctionAdjValue.set(org.apache.ofbiz.persistence.entity.x.taxAuthorityRateSeqId, taxAuthorityRateProduct.getString(
+                                org.apache.ofbiz.persistence.entity.x.taxAuthorityRateSeqId));
+                        correctionAdjValue.set(org.apache.ofbiz.persistence.entity.x.amount, correctionAmount);
                         // don't set this, causes a doubling of the tax rate because calling code adds
                         // up all tax rates: correctionAdjValue.set("sourcePercentage", taxRate);
-                        correctionAdjValue.set("orderAdjustmentTypeId", "VAT_PRICE_CORRECT");
+                        correctionAdjValue.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId, "VAT_PRICE_CORRECT");
                         // the primary Geo should be the main jurisdiction that the tax is for, and the
                         // secondary would just be to define a parent or wrapping jurisdiction of the
                         // primary
-                        correctionAdjValue.set("primaryGeoId", taxAuthGeoId);
-                        correctionAdjValue.set("comments", taxAuthorityRateProduct.getString("description"));
+                        correctionAdjValue.set(org.apache.ofbiz.persistence.entity.x.primaryGeoId, taxAuthGeoId);
+                        correctionAdjValue.set(org.apache.ofbiz.persistence.entity.x.comments, taxAuthorityRateProduct.getString(org.apache.ofbiz.persistence.entity.x.description));
                         if (taxAuthPartyId != null) {
-                            correctionAdjValue.set("taxAuthPartyId", taxAuthPartyId);
+                            correctionAdjValue.set(org.apache.ofbiz.persistence.entity.x.taxAuthPartyId, taxAuthPartyId);
                         }
                         if (taxAuthGlAccountId != null) {
-                            correctionAdjValue.set("overrideGlAccountId", taxAuthGlAccountId);
+                            correctionAdjValue.set(org.apache.ofbiz.persistence.entity.x.overrideGlAccountId, taxAuthGlAccountId);
                         }
                         if (taxAuthGeoId != null) {
-                            correctionAdjValue.set("taxAuthGeoId", taxAuthGeoId);
+                            correctionAdjValue.set(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId, taxAuthGeoId);
                         }
                         adjustments.add(correctionAdjValue);
                     }
@@ -656,18 +656,18 @@ public class TaxAuthorityServices {
      */
     private static GenericValue getProductPrice(Delegator delegator, GenericValue product, GenericValue productStore, String taxAuthGeoId,
             String taxAuthPartyId) throws GenericEntityException {
-        if (productStore != null && UtilValidate.isNotEmpty(productStore.getString("primaryStoreGroupId"))) {
+        if (productStore != null && UtilValidate.isNotEmpty(productStore.getString(org.apache.ofbiz.persistence.entity.x.primaryStoreGroupId))) {
             return EntityQuery.use(delegator).from("ProductPrice")
-                    .where("productId", product.get("productId"),
+                    .where("productId", product.get(org.apache.ofbiz.persistence.entity.x.productId),
                             "taxAuthPartyId", taxAuthPartyId,
                             "taxAuthGeoId", taxAuthGeoId,
                             "productPricePurposeId", "PURCHASE",
-                            "productStoreGroupId", productStore.get("primaryStoreGroupId"))
+                            "productStoreGroupId", productStore.get(org.apache.ofbiz.persistence.entity.x.primaryStoreGroupId))
                     .orderBy("-fromDate").filterByDate().queryFirst();
         } else {
             // Purchase order case
             return EntityQuery.use(delegator).from("ProductPrice")
-                    .where("productId", product.get("productId"),
+                    .where("productId", product.get(org.apache.ofbiz.persistence.entity.x.productId),
                             "taxAuthPartyId", taxAuthPartyId,
                             "taxAuthGeoId", taxAuthGeoId,
                             "productPricePurposeId", "PURCHASE")
@@ -696,25 +696,25 @@ public class TaxAuthorityServices {
         // question: get all categories, or just a special type? for now let's
         // do all categories...
         String virtualProductId = null;
-        if ("Y".equals(product.getString("isVariant"))) {
+        if ("Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.isVariant))) {
             virtualProductId = ProductWorker.getVariantVirtualId(product);
         }
         Set<String> productCategoryIdSet = new HashSet<>();
         EntityCondition productIdCond = null;
         if (virtualProductId != null) {
             productIdCond = EntityCondition.makeCondition(
-                    EntityCondition.makeCondition("productId", EntityOperator.EQUALS, product.getString("productId")),
+                    EntityCondition.makeCondition("productId", EntityOperator.EQUALS, product.getString(org.apache.ofbiz.persistence.entity.x.productId)),
                     EntityOperator.OR,
                     EntityCondition.makeCondition("productId", EntityOperator.EQUALS, virtualProductId));
 
         } else {
             productIdCond = EntityCondition.makeCondition("productId", EntityOperator.EQUALS,
-                    product.getString("productId"));
+                    product.getString(org.apache.ofbiz.persistence.entity.x.productId));
         }
         List<GenericValue> pcmList = EntityQuery.use(delegator).select("productCategoryId", "fromDate", "thruDate")
                 .from("ProductCategoryMember").where(productIdCond).cache().filterByDate().queryList();
         for (GenericValue pcm : pcmList) {
-            productCategoryIdSet.add(pcm.getString("productCategoryId"));
+            productCategoryIdSet.add(pcm.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId));
         }
 
         if (productCategoryIdSet.isEmpty()) {
@@ -748,10 +748,10 @@ public class TaxAuthorityServices {
 
         boolean foundExemption = false;
         if (partyTaxInfo != null) {
-            adjValue.set("customerReferenceId", partyTaxInfo.get("partyTaxId"));
-            if ("Y".equals(partyTaxInfo.getString("isExempt"))) {
-                adjValue.set("amount", BigDecimal.ZERO);
-                adjValue.set("exemptAmount", taxAmount);
+            adjValue.set(org.apache.ofbiz.persistence.entity.x.customerReferenceId, partyTaxInfo.get(org.apache.ofbiz.persistence.entity.x.partyTaxId));
+            if ("Y".equals(partyTaxInfo.getString(org.apache.ofbiz.persistence.entity.x.isExempt))) {
+                adjValue.set(org.apache.ofbiz.persistence.entity.x.amount, BigDecimal.ZERO);
+                adjValue.set(org.apache.ofbiz.persistence.entity.x.exemptAmount, taxAmount);
                 foundExemption = true;
             }
         }
@@ -764,8 +764,8 @@ public class TaxAuthorityServices {
                             "taxAuthorityAssocTypeId", "EXEMPT_INHER")
                     .orderBy("-fromDate").filterByDate().queryFirst();
             if (taxAuthorityAssoc != null) {
-                handlePartyTaxExempt(adjValue, billToPartyIdSet, taxAuthorityAssoc.getString("taxAuthGeoId"),
-                        taxAuthorityAssoc.getString("taxAuthPartyId"), taxAmount, nowTimestamp, delegator);
+                handlePartyTaxExempt(adjValue, billToPartyIdSet, taxAuthorityAssoc.getString(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId),
+                        taxAuthorityAssoc.getString(org.apache.ofbiz.persistence.entity.x.taxAuthPartyId), taxAmount, nowTimestamp, delegator);
             }
         }
     }

@@ -63,10 +63,10 @@ public class MrpServices {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Timestamp now = UtilDateTime.nowTimestamp();
-        Locale locale = (Locale) context.get("locale");
-        String facilityId = (String) context.get("facilityId");
-        Integer defaultYearsOffset = (Integer) context.get("defaultYearsOffset");
-        String mrpId = (String) context.get("mrpId");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId);
+        Integer defaultYearsOffset = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.defaultYearsOffset);
+        String mrpId = (String) context.get(org.apache.ofbiz.persistence.entity.x.mrpId);
 
         //Erases the old table for the moment and initializes it with the new orders,
         //Does not modify the old one now.
@@ -101,8 +101,8 @@ public class MrpServices {
         if (listResult != null) {
             try {
                 for (GenericValue tmpRequirement : listResult) {
-                    listResultRoles.addAll(tmpRequirement.getRelated("RequirementRole", null, null, false));
-                    requirementStatus.addAll(tmpRequirement.getRelated("RequirementStatus", null, null, false));
+                    listResultRoles.addAll(tmpRequirement.getRelated(org.apache.ofbiz.persistence.entity.x.RequirementRole, null, null, false));
+                    requirementStatus.addAll(tmpRequirement.getRelated(org.apache.ofbiz.persistence.entity.x.RequirementStatus, null, null, false));
                 }
                 delegator.removeAll(listResultRoles);
                 delegator.removeAll(requirementStatus);
@@ -122,7 +122,7 @@ public class MrpServices {
         if (listResult != null) {
             try {
                 for (GenericValue tempRequirement : listResult) {
-                    requirementStatus.addAll(tempRequirement.getRelated("RequirementStatus", null, null, false));
+                    requirementStatus.addAll(tempRequirement.getRelated(org.apache.ofbiz.persistence.entity.x.RequirementStatus, null, null, false));
                 }
                 delegator.removeAll(requirementStatus);
                 delegator.removeAll(listResult);
@@ -156,10 +156,10 @@ public class MrpServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpEventFindError", locale));
         }
         for (GenericValue genericResult : resultList) {
-            String productId = genericResult.getString("productId");
-            BigDecimal reservedQuantity = genericResult.getBigDecimal("reservedQuantity");
-            BigDecimal shipGroupQuantity = genericResult.getBigDecimal("quantity");
-            BigDecimal cancelledQuantity = genericResult.getBigDecimal("cancelQuantity");
+            String productId = genericResult.getString(org.apache.ofbiz.persistence.entity.x.productId);
+            BigDecimal reservedQuantity = genericResult.getBigDecimal(org.apache.ofbiz.persistence.entity.x.reservedQuantity);
+            BigDecimal shipGroupQuantity = genericResult.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+            BigDecimal cancelledQuantity = genericResult.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
             BigDecimal eventQuantityTmp = BigDecimal.ZERO;
 
             if (UtilValidate.isNotEmpty(reservedQuantity)) {
@@ -180,15 +180,15 @@ public class MrpServices {
             //   OrderItem.shipBeforeDate
             //   OrderItem.shipAfterDate
             //   OrderItem.estimatedDeliveryDate
-            Timestamp requiredByDate = genericResult.getTimestamp("shipByDate");
+            Timestamp requiredByDate = genericResult.getTimestamp(org.apache.ofbiz.persistence.entity.x.shipByDate);
             if (UtilValidate.isEmpty(requiredByDate)) {
-                requiredByDate = genericResult.getTimestamp("shipAfterDate");
+                requiredByDate = genericResult.getTimestamp(org.apache.ofbiz.persistence.entity.x.shipAfterDate);
                 if (UtilValidate.isEmpty(requiredByDate)) {
-                    requiredByDate = genericResult.getTimestamp("oiShipBeforeDate");
+                    requiredByDate = genericResult.getTimestamp(org.apache.ofbiz.persistence.entity.x.oiShipBeforeDate);
                     if (UtilValidate.isEmpty(requiredByDate)) {
-                        requiredByDate = genericResult.getTimestamp("oiShipAfterDate");
+                        requiredByDate = genericResult.getTimestamp(org.apache.ofbiz.persistence.entity.x.oiShipAfterDate);
                         if (UtilValidate.isEmpty(requiredByDate)) {
-                            requiredByDate = genericResult.getTimestamp("oiEstimatedDeliveryDate");
+                            requiredByDate = genericResult.getTimestamp(org.apache.ofbiz.persistence.entity.x.oiEstimatedDeliveryDate);
                             if (requiredByDate == null) {
                                 requiredByDate = notAssignedDate;
                             }
@@ -199,7 +199,7 @@ public class MrpServices {
             parameters = UtilMisc.toMap("mrpId", mrpId, "productId", productId, "eventDate", requiredByDate, "mrpEventTypeId", "SALES_ORDER_SHIP");
             try {
                 InventoryEventPlannedServices.createOrUpdateMrpEvent(parameters, eventQuantityTmp, null,
-                        genericResult.getString("orderId") + "-" + genericResult.getString("orderItemSeqId"), false, delegator);
+                        genericResult.getString(org.apache.ofbiz.persistence.entity.x.orderId) + "-" + genericResult.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), false, delegator);
             } catch (GenericEntityException e) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpEventProblemInitializing", UtilMisc.toMap(
                         "mrpEventTypeId", "SALES_ORDER_SHIP"), locale));
@@ -218,19 +218,19 @@ public class MrpServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpEventFindError", locale));
         }
         for (GenericValue genericResult : resultList) {
-            String productId = genericResult.getString("productId");
-            BigDecimal eventQuantityTmp = genericResult.getBigDecimal("quantity");
+            String productId = genericResult.getString(org.apache.ofbiz.persistence.entity.x.productId);
+            BigDecimal eventQuantityTmp = genericResult.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
             if (productId == null || eventQuantityTmp == null) {
                 continue;
             }
-            Timestamp estimatedShipDate = genericResult.getTimestamp("requiredByDate");
+            Timestamp estimatedShipDate = genericResult.getTimestamp(org.apache.ofbiz.persistence.entity.x.requiredByDate);
             if (estimatedShipDate == null) {
                 estimatedShipDate = now;
             }
 
             parameters = UtilMisc.toMap("mrpId", mrpId, "productId", productId, "eventDate", estimatedShipDate, "mrpEventTypeId", "PROD_REQ_RECP");
             try {
-                InventoryEventPlannedServices.createOrUpdateMrpEvent(parameters, eventQuantityTmp, null, genericResult.getString("requirementId"),
+                InventoryEventPlannedServices.createOrUpdateMrpEvent(parameters, eventQuantityTmp, null, genericResult.getString(org.apache.ofbiz.persistence.entity.x.requirementId),
                         false, delegator);
             } catch (GenericEntityException e) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpEventProblemInitializing", UtilMisc.toMap(
@@ -263,16 +263,16 @@ public class MrpServices {
         }
         for (GenericValue genericResult : resultList) {
             try {
-                String newOrderId = genericResult.getString("orderId");
+                String newOrderId = genericResult.getString(org.apache.ofbiz.persistence.entity.x.orderId);
                 if (!newOrderId.equals(orderId)) {
                     orderDeliverySchedule = null;
                     orderId = newOrderId;
                     orderDeliverySchedule = EntityQuery.use(delegator).from("OrderDeliverySchedule").where("orderId", orderId, "orderItemSeqId",
                             "_NA_").queryOne();
                 }
-                String productId = genericResult.getString("productId");
-                BigDecimal shipGroupQuantity = genericResult.getBigDecimal("quantity");
-                BigDecimal cancelledQuantity = genericResult.getBigDecimal("cancelQuantity");
+                String productId = genericResult.getString(org.apache.ofbiz.persistence.entity.x.productId);
+                BigDecimal shipGroupQuantity = genericResult.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                BigDecimal cancelledQuantity = genericResult.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
                 if (UtilValidate.isEmpty(shipGroupQuantity)) {
                     shipGroupQuantity = BigDecimal.ZERO;
                 }
@@ -282,25 +282,25 @@ public class MrpServices {
 
                 try {
                     List<GenericValue> shipmentReceipts = EntityQuery.use(delegator).select("quantityAccepted", "quantityRejected").from(
-                            "ShipmentReceipt").where("orderId", genericResult.getString("orderId"), "orderItemSeqId", genericResult.getString(
-                                    "orderItemSeqId")).queryList();
+                            "ShipmentReceipt").where("orderId", genericResult.getString(org.apache.ofbiz.persistence.entity.x.orderId), "orderItemSeqId", genericResult.getString(
+                                    org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).queryList();
                     for (GenericValue shipmentReceipt : shipmentReceipts) {
-                        shipGroupQuantity = shipGroupQuantity.subtract(shipmentReceipt.getBigDecimal("quantityAccepted"));
-                        shipGroupQuantity = shipGroupQuantity.subtract(shipmentReceipt.getBigDecimal("quantityRejected"));
+                        shipGroupQuantity = shipGroupQuantity.subtract(shipmentReceipt.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityAccepted));
+                        shipGroupQuantity = shipGroupQuantity.subtract(shipmentReceipt.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityRejected));
                     }
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e, MODULE);
                 }
                 GenericValue orderItemDeliverySchedule = null;
                 orderItemDeliverySchedule = EntityQuery.use(delegator).from("OrderDeliverySchedule").where("orderId", orderId, "orderItemSeqId",
-                        genericResult.getString("orderItemSeqId")).queryOne();
+                        genericResult.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).queryOne();
                 Timestamp estimatedShipDate = null;
-                if (orderItemDeliverySchedule != null && orderItemDeliverySchedule.get("estimatedReadyDate") != null) {
-                    estimatedShipDate = orderItemDeliverySchedule.getTimestamp("estimatedReadyDate");
-                } else if (orderDeliverySchedule != null && orderDeliverySchedule.get("estimatedReadyDate") != null) {
-                    estimatedShipDate = orderDeliverySchedule.getTimestamp("estimatedReadyDate");
+                if (orderItemDeliverySchedule != null && orderItemDeliverySchedule.get(org.apache.ofbiz.persistence.entity.x.estimatedReadyDate) != null) {
+                    estimatedShipDate = orderItemDeliverySchedule.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedReadyDate);
+                } else if (orderDeliverySchedule != null && orderDeliverySchedule.get(org.apache.ofbiz.persistence.entity.x.estimatedReadyDate) != null) {
+                    estimatedShipDate = orderDeliverySchedule.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedReadyDate);
                 } else {
-                    estimatedShipDate = genericResult.getTimestamp("oiEstimatedDeliveryDate");
+                    estimatedShipDate = genericResult.getTimestamp(org.apache.ofbiz.persistence.entity.x.oiEstimatedDeliveryDate);
                 }
                 if (estimatedShipDate == null) {
                     estimatedShipDate = now;
@@ -309,7 +309,7 @@ public class MrpServices {
                 parameters = UtilMisc.toMap("mrpId", mrpId, "productId", productId, "eventDate", estimatedShipDate, "mrpEventTypeId",
                         "PUR_ORDER_RECP");
                 InventoryEventPlannedServices.createOrUpdateMrpEvent(parameters, shipGroupQuantity, null,
-                        genericResult.getString("orderId") + "-" + genericResult.getString("orderItemSeqId"), false, delegator);
+                        genericResult.getString(org.apache.ofbiz.persistence.entity.x.orderId) + "-" + genericResult.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), false, delegator);
             } catch (GenericEntityException e) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpEventProblemInitializing", UtilMisc.toMap(
                         "mrpEventTypeId", "PUR_ORDER_RECP"), locale));
@@ -326,30 +326,30 @@ public class MrpServices {
                             "facilityId", facilityId)
                     .queryList();
             for (GenericValue genericResult : resultList) {
-                if ("PRUN_CLOSED".equals(genericResult.getString("currentStatusId"))
-                        || "PRUN_COMPLETED".equals(genericResult.getString("currentStatusId"))
-                        || "PRUN_CANCELLED".equals(genericResult.getString("currentStatusId"))) {
+                if ("PRUN_CLOSED".equals(genericResult.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))
+                        || "PRUN_COMPLETED".equals(genericResult.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))
+                        || "PRUN_CANCELLED".equals(genericResult.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))) {
                     continue;
                 }
-                String productId = genericResult.getString("productId");
+                String productId = genericResult.getString(org.apache.ofbiz.persistence.entity.x.productId);
                 // get the inventory already consumed
                 BigDecimal consumedInventoryTotal = BigDecimal.ZERO;
                 List<GenericValue> consumedInventoryItems = EntityQuery.use(delegator).from("WorkEffortAndInventoryAssign")
-                        .where("workEffortId", genericResult.get("workEffortId"), "productId", productId)
+                        .where("workEffortId", genericResult.get(org.apache.ofbiz.persistence.entity.x.workEffortId), "productId", productId)
                         .queryList();
                 for (GenericValue consumedInventoryItem : consumedInventoryItems) {
-                    consumedInventoryTotal = consumedInventoryTotal.add(consumedInventoryItem.getBigDecimal("quantity"));
+                    consumedInventoryTotal = consumedInventoryTotal.add(consumedInventoryItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
                 }
-                BigDecimal eventQuantityTmp = consumedInventoryTotal.subtract(genericResult.getBigDecimal("estimatedQuantity"));
-                Timestamp estimatedShipDate = genericResult.getTimestamp("estimatedStartDate");
+                BigDecimal eventQuantityTmp = consumedInventoryTotal.subtract(genericResult.getBigDecimal(org.apache.ofbiz.persistence.entity.x.estimatedQuantity));
+                Timestamp estimatedShipDate = genericResult.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedStartDate);
                 if (estimatedShipDate == null) {
                     estimatedShipDate = now;
                 }
 
                 parameters = UtilMisc.toMap("mrpId", mrpId, "productId", productId, "eventDate", estimatedShipDate, "mrpEventTypeId",
                         "MANUF_ORDER_REQ");
-                String eventName = (UtilValidate.isEmpty(genericResult.getString("workEffortParentId")) ? genericResult.getString("workEffortId")
-                        : genericResult.getString("workEffortParentId") + "-" + genericResult.getString("workEffortId"));
+                String eventName = (UtilValidate.isEmpty(genericResult.getString(org.apache.ofbiz.persistence.entity.x.workEffortParentId)) ? genericResult.getString(org.apache.ofbiz.persistence.entity.x.workEffortId)
+                        : genericResult.getString(org.apache.ofbiz.persistence.entity.x.workEffortParentId) + "-" + genericResult.getString(org.apache.ofbiz.persistence.entity.x.workEffortId));
                 InventoryEventPlannedServices.createOrUpdateMrpEvent(parameters, eventQuantityTmp, null, eventName, false, delegator);
             }
         } catch (GenericEntityException e) {
@@ -368,16 +368,16 @@ public class MrpServices {
                             "facilityId", facilityId)
                     .queryList();
             for (GenericValue genericResult : resultList) {
-                if ("PRUN_CLOSED".equals(genericResult.getString("currentStatusId"))
-                        || "PRUN_COMPLETED".equals(genericResult.getString("currentStatusId"))
-                        || "PRUN_CANCELLED".equals(genericResult.getString("currentStatusId"))) {
+                if ("PRUN_CLOSED".equals(genericResult.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))
+                        || "PRUN_COMPLETED".equals(genericResult.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))
+                        || "PRUN_CANCELLED".equals(genericResult.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))) {
                     continue;
                 }
-                BigDecimal qtyToProduce = genericResult.getBigDecimal("quantityToProduce");
+                BigDecimal qtyToProduce = genericResult.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityToProduce);
                 if (qtyToProduce == null) {
                     qtyToProduce = BigDecimal.ZERO;
                 }
-                BigDecimal qtyProduced = genericResult.getBigDecimal("quantityProduced");
+                BigDecimal qtyProduced = genericResult.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityProduced);
                 if (qtyProduced == null) {
                     qtyProduced = BigDecimal.ZERO;
                 }
@@ -385,16 +385,16 @@ public class MrpServices {
                     continue;
                 }
                 BigDecimal qtyDiff = qtyToProduce.subtract(qtyProduced);
-                String productId = genericResult.getString("productId");
+                String productId = genericResult.getString(org.apache.ofbiz.persistence.entity.x.productId);
                 BigDecimal eventQuantityTmp = qtyDiff;
-                Timestamp estimatedShipDate = genericResult.getTimestamp("estimatedCompletionDate");
+                Timestamp estimatedShipDate = genericResult.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate);
                 if (estimatedShipDate == null) {
                     estimatedShipDate = now;
                 }
 
                 parameters = UtilMisc.toMap("mrpId", mrpId, "productId", productId, "eventDate", estimatedShipDate, "mrpEventTypeId",
                         "MANUF_ORDER_RECP");
-                InventoryEventPlannedServices.createOrUpdateMrpEvent(parameters, eventQuantityTmp, null, genericResult.getString("workEffortId"),
+                InventoryEventPlannedServices.createOrUpdateMrpEvent(parameters, eventQuantityTmp, null, genericResult.getString(org.apache.ofbiz.persistence.entity.x.workEffortId),
                         false, delegator);
             }
         } catch (GenericEntityException e) {
@@ -414,8 +414,8 @@ public class MrpServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpCannotFindProductFacility", locale));
         }
         for (GenericValue genericResult : resultList) {
-            String productId = genericResult.getString("productId");
-            BigDecimal minimumStock = genericResult.getBigDecimal("minimumStock");
+            String productId = genericResult.getString(org.apache.ofbiz.persistence.entity.x.productId);
+            BigDecimal minimumStock = genericResult.getBigDecimal(org.apache.ofbiz.persistence.entity.x.minimumStock);
             if (minimumStock == null) {
                 minimumStock = BigDecimal.ZERO;
             }
@@ -452,7 +452,7 @@ public class MrpServices {
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpEventFindError", locale));
         }
-        String partyId = (String) facility.get("ownerPartyId");
+        String partyId = (String) facility.get(org.apache.ofbiz.persistence.entity.x.ownerPartyId);
         try {
             resultList = EntityQuery.use(delegator).from("SalesForecast")
                     .where("organizationPartyId", partyId)
@@ -461,7 +461,7 @@ public class MrpServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpCannotFindSalesForecasts", locale));
         }
         for (GenericValue genericResult : resultList) {
-            String customTimePeriodId = genericResult.getString("customTimePeriodId");
+            String customTimePeriodId = genericResult.getString(org.apache.ofbiz.persistence.entity.x.customTimePeriodId);
             GenericValue customTimePeriod = null;
             try {
                 customTimePeriod = EntityQuery.use(delegator).from("CustomTimePeriod").where("customTimePeriodId", customTimePeriodId).queryOne();
@@ -469,30 +469,30 @@ public class MrpServices {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpCannotFindCustomTimePeriod", locale));
             }
             if (customTimePeriod != null) {
-                if (UtilValidate.isNotEmpty(customTimePeriod.getTimestamp("thruDate"))
-                        && customTimePeriod.getTimestamp("thruDate").before(UtilDateTime.nowTimestamp())) {
+                if (UtilValidate.isNotEmpty(customTimePeriod.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate))
+                        && customTimePeriod.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate).before(UtilDateTime.nowTimestamp())) {
                     continue;
                 } else {
                     List<GenericValue> salesForecastDetails = null;
                     try {
                         salesForecastDetails = EntityQuery.use(delegator).from("SalesForecastDetail")
-                                .where("salesForecastId", genericResult.get("salesForecastId"))
+                                .where("salesForecastId", genericResult.get(org.apache.ofbiz.persistence.entity.x.salesForecastId))
                                 .queryList();
                     } catch (GenericEntityException e) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpCannotFindSalesForecastDetails", locale));
                     }
                     for (GenericValue sfd : salesForecastDetails) {
-                        String productId = sfd.getString("productId");
-                        BigDecimal eventQuantityTmp = sfd.getBigDecimal("quantity");
+                        String productId = sfd.getString(org.apache.ofbiz.persistence.entity.x.productId);
+                        BigDecimal eventQuantityTmp = sfd.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                         if (productId == null || eventQuantityTmp == null) {
                             continue;
                         }
                         eventQuantityTmp = eventQuantityTmp.negate();
-                        parameters = UtilMisc.toMap("mrpId", mrpId, "productId", productId, "eventDate", customTimePeriod.getTimestamp("fromDate"),
+                        parameters = UtilMisc.toMap("mrpId", mrpId, "productId", productId, "eventDate", customTimePeriod.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate),
                                 "mrpEventTypeId", "SALES_FORECAST");
                         try {
                             InventoryEventPlannedServices.createOrUpdateMrpEvent(parameters, eventQuantityTmp, null, sfd.getString(
-                                    "salesForecastDetailId"), false, delegator);
+                                    org.apache.ofbiz.persistence.entity.x.salesForecastDetailId), false, delegator);
                         } catch (GenericEntityException e) {
                             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpEventProblemInitializing",
                                     UtilMisc.toMap("mrpEventTypeId", "SALES_FORECAST"), locale));
@@ -519,7 +519,7 @@ public class MrpServices {
      */
     public static BigDecimal findProductMrpQoh(String mrpId, GenericValue product, String facilityId, LocalDispatcher dispatcher,
                                                Delegator delegator) {
-        return findProductMrpQoh(mrpId, product.getString("productId"), facilityId, dispatcher, delegator);
+        return findProductMrpQoh(mrpId, product.getString(org.apache.ofbiz.persistence.entity.x.productId), facilityId, dispatcher, delegator);
     }
 
     public static BigDecimal findProductMrpQoh(String mrpId, String productId, String facilityId, LocalDispatcher dispatcher, Delegator delegator) {
@@ -593,7 +593,7 @@ public class MrpServices {
                     BigDecimal componentEventQuantity = node.getQuantity();
                     try {
                         InventoryEventPlannedServices.createOrUpdateMrpEvent(parameters, componentEventQuantity.negate(), null, product.get(
-                                "productId") + ": " + eventDate, false, delegator);
+                                org.apache.ofbiz.persistence.entity.x.productId) + ": " + eventDate, false, delegator);
                     } catch (GenericEntityException e) {
                         Debug.logError("Error : findOne(\"MrpEvent\", parameters) =" + parameters + "--" + e.getMessage(), MODULE);
                         logMrpError(mrpId, node.getProduct().getString("productId"), "Unable to create event (processBomComponent)", delegator);
@@ -619,13 +619,13 @@ public class MrpServices {
         Debug.logInfo("executeMrp called", MODULE);
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         Timestamp now = UtilDateTime.nowTimestamp();
-        Locale locale = (Locale) context.get("locale");
-        String mrpName = (String) context.get("mrpName");
-        Integer defaultYearsOffset = (Integer) context.get("defaultYearsOffset");
-        String facilityGroupId = (String) context.get("facilityGroupId");
-        String facilityId = (String) context.get("facilityId");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String mrpName = (String) context.get(org.apache.ofbiz.persistence.entity.x.mrpName);
+        Integer defaultYearsOffset = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.defaultYearsOffset);
+        String facilityGroupId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityGroupId);
+        String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId);
         String manufacturingFacilityId = null;
         if (UtilValidate.isEmpty(facilityId) && UtilValidate.isEmpty(facilityGroupId)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpFacilityNotAvailable", locale));
@@ -637,18 +637,18 @@ public class MrpServices {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpFacilityGroupIsNotValid", UtilMisc.toMap(
                             "facilityGroupId", facilityGroupId), locale));
                 }
-                List<GenericValue> facilities = facilityGroup.getRelated("FacilityGroupMember", null, UtilMisc.toList("sequenceNum"), false);
+                List<GenericValue> facilities = facilityGroup.getRelated(org.apache.ofbiz.persistence.entity.x.FacilityGroupMember, null, UtilMisc.toList("sequenceNum"), false);
                 if (UtilValidate.isEmpty(facilities)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpFacilityGroupIsNotAssociatedToFacility",
                             UtilMisc.toMap("facilityGroupId", facilityGroupId), locale));
                 }
                 for (GenericValue facilityMember : facilities) {
-                    GenericValue facility = facilityMember.getRelatedOne("Facility", false);
-                    if ("WAREHOUSE".equals(facility.getString("facilityTypeId")) && UtilValidate.isEmpty(facilityId)) {
-                        facilityId = facility.getString("facilityId");
+                    GenericValue facility = facilityMember.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Facility, false);
+                    if ("WAREHOUSE".equals(facility.getString(org.apache.ofbiz.persistence.entity.x.facilityTypeId)) && UtilValidate.isEmpty(facilityId)) {
+                        facilityId = facility.getString(org.apache.ofbiz.persistence.entity.x.facilityId);
                     }
-                    if ("PLANT".equals(facility.getString("facilityTypeId")) && UtilValidate.isEmpty(manufacturingFacilityId)) {
-                        manufacturingFacilityId = facility.getString("facilityId");
+                    if ("PLANT".equals(facility.getString(org.apache.ofbiz.persistence.entity.x.facilityTypeId)) && UtilValidate.isEmpty(manufacturingFacilityId)) {
+                        manufacturingFacilityId = facility.getString(org.apache.ofbiz.persistence.entity.x.facilityId);
                     }
                 }
             } catch (GenericEntityException e) {
@@ -730,17 +730,17 @@ public class MrpServices {
                 for (GenericValue inventoryEventForMRP : listInventoryEventForMRP) {
                     eventCount++;
 
-                    productId = inventoryEventForMRP.getString("productId");
+                    productId = inventoryEventForMRP.getString(org.apache.ofbiz.persistence.entity.x.productId);
                     boolean isLastEvent = (eventCount == listInventoryEventForMRP.size()
                             || !productId.equals(listInventoryEventForMRP.get(eventCount).getString("productId")));
-                    eventQuantity = inventoryEventForMRP.getBigDecimal("quantity");
+                    eventQuantity = inventoryEventForMRP.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
 
                     if (!productId.equals(oldProductId)) {
                         BigDecimal positiveEventQuantity = eventQuantity.compareTo(BigDecimal.ZERO) > 0 ? eventQuantity : eventQuantity.negate();
                         // It's a new product, so it's necessary to  read the MrpQoh
                         try {
-                            product = inventoryEventForMRP.getRelatedOne("Product", true);
-                            productFacility = EntityUtil.getFirst(product.getRelated("ProductFacility", UtilMisc.toMap("facilityId", facilityId),
+                            product = inventoryEventForMRP.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, true);
+                            productFacility = EntityUtil.getFirst(product.getRelated(org.apache.ofbiz.persistence.entity.x.ProductFacility, UtilMisc.toMap("facilityId", facilityId),
                                     null, true));
                         } catch (GenericEntityException e) {
                             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpCannotFindProductForEvent", locale));
@@ -748,7 +748,7 @@ public class MrpServices {
                         stockTmp = findProductMrpQoh(mrpId, product, facilityId, dispatcher, delegator);
                         try {
                             InventoryEventPlannedServices.createOrUpdateMrpEvent(UtilMisc.<String, Object>toMap("mrpId", mrpId,
-                                    "productId", product.getString("productId"),
+                                    "productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId),
                                     "mrpEventTypeId", "INITIAL_QOH", "eventDate", now),
                                     stockTmp, facilityId, null, false, delegator);
                         } catch (GenericEntityException e) {
@@ -760,12 +760,12 @@ public class MrpServices {
                         // as well and cause problems
                         daysToShip = 0;
                         if (productFacility != null) {
-                            reorderQuantity = (productFacility.getBigDecimal("reorderQuantity") != null ? productFacility.getBigDecimal(
-                                    "reorderQuantity") : BigDecimal.ONE.negate());
-                            minimumStock = (productFacility.getBigDecimal("minimumStock") != null ? productFacility.getBigDecimal("minimumStock")
+                            reorderQuantity = (productFacility.getBigDecimal(org.apache.ofbiz.persistence.entity.x.reorderQuantity) != null ? productFacility.getBigDecimal(
+                                    org.apache.ofbiz.persistence.entity.x.reorderQuantity) : BigDecimal.ONE.negate());
+                            minimumStock = (productFacility.getBigDecimal(org.apache.ofbiz.persistence.entity.x.minimumStock) != null ? productFacility.getBigDecimal(org.apache.ofbiz.persistence.entity.x.minimumStock)
                                     : BigDecimal.ZERO);
-                            if ("SALES_ORDER_SHIP".equals(inventoryEventForMRP.getString("mrpEventTypeId"))) {
-                                daysToShip = (productFacility.getLong("daysToShip") != null ? productFacility.getLong("daysToShip").intValue() : 0);
+                            if ("SALES_ORDER_SHIP".equals(inventoryEventForMRP.getString(org.apache.ofbiz.persistence.entity.x.mrpEventTypeId))) {
+                                daysToShip = (productFacility.getLong(org.apache.ofbiz.persistence.entity.x.daysToShip) != null ? productFacility.getLong(org.apache.ofbiz.persistence.entity.x.daysToShip).intValue() : 0);
                             }
                         } else {
                             minimumStock = BigDecimal.ZERO;
@@ -776,14 +776,14 @@ public class MrpServices {
                         Map<String, Object> serviceResponse = null;
                         try {
                             serviceResponse = dispatcher.runSync("getManufacturingComponents", UtilMisc.<String, Object>toMap("productId",
-                                    product.getString("productId"), "quantity", positiveEventQuantity, "excludeWIPs", Boolean.FALSE, "userLogin",
+                                    product.getString(org.apache.ofbiz.persistence.entity.x.productId), "quantity", positiveEventQuantity, "excludeWIPs", Boolean.FALSE, "userLogin",
                                     userLogin));
                             if (ServiceUtil.isError(serviceResponse)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResponse));
                             }
                         } catch (GenericServiceException e) {
                             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpErrorExplodingProduct",
-                                    UtilMisc.toMap("productId", product.getString("productId")), locale));
+                                    UtilMisc.toMap("productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId)), locale));
                         }
                         components = UtilGenerics.cast(serviceResponse.get("components"));
                         if (UtilValidate.isNotEmpty(components)) {
@@ -802,7 +802,7 @@ public class MrpServices {
                         // create a supply event/requirement if the current event is not a demand and there are other events to process
                         BigDecimal qtyToStock = minimumStock.subtract(stockTmp);
                         //need to buy or build the product as we have not enough stock
-                        eventDate = inventoryEventForMRP.getTimestamp("eventDate");
+                        eventDate = inventoryEventForMRP.getTimestamp(org.apache.ofbiz.persistence.entity.x.eventDate);
                         // to be just before the requirement
                         eventDate.setTime(eventDate.getTime() - 1);
                         ProposedOrder proposedOrder = new ProposedOrder(product, facilityId, manufacturingFacilityId, isBuilt, eventDate, qtyToStock);
@@ -815,14 +815,14 @@ public class MrpServices {
                         Map<String, Object> serviceResponse = null;
                         try {
                             serviceResponse = dispatcher.runSync("getManufacturingComponents", UtilMisc.<String, Object>toMap("productId",
-                                    product.getString("productId"), "quantity", proposedOrder.getQuantity(), "excludeWIPs", Boolean.FALSE,
+                                    product.getString(org.apache.ofbiz.persistence.entity.x.productId), "quantity", proposedOrder.getQuantity(), "excludeWIPs", Boolean.FALSE,
                                     "userLogin", userLogin));
                             if (ServiceUtil.isError(serviceResponse)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResponse));
                             }
                         } catch (GenericServiceException e) {
                             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpErrorExplodingProduct",
-                                    UtilMisc.toMap("productId", product.getString("productId")), locale));
+                                    UtilMisc.toMap("productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId)), locale));
                         }
                         components = UtilGenerics.cast(serviceResponse.get("components"));
                         String routingId = (String) serviceResponse.get("workEffortId");
@@ -865,7 +865,7 @@ public class MrpServices {
                         if (UtilValidate.isNotEmpty(requirementId)) {
                             eventName = "*" + requirementId + " (" + proposedOrder.getRequirementStartDate() + ")*";
                         }
-                        Map<String, Object> eventMap = UtilMisc.<String, Object>toMap("productId", product.getString("productId"),
+                        Map<String, Object> eventMap = UtilMisc.<String, Object>toMap("productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId),
                                 "mrpId", mrpId,
                                 "eventDate", eventDate,
                                 "mrpEventTypeId", (isBuilt ? "PROP_MANUF_O_RECP" : "PROP_PUR_O_RECP"));

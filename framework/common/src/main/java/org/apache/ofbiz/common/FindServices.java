@@ -324,8 +324,8 @@ public class FindServices {
                                                         Delegator delegator, Map<String, ?> context) {
         EntityCondition cond = null;
         String fieldName = modelField.getName();
-        Locale locale = (Locale) context.get("locale");
-        TimeZone timeZone = (TimeZone) context.get("timeZone");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        TimeZone timeZone = (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone);
         EntityComparisonOperator<?, ?> fieldOp = null;
         if (operation != null) {
             if ("contains".equals(operation)) {
@@ -461,16 +461,16 @@ public class FindServices {
      * @return Map
      */
     public static Map<String, Object> performFindList(DispatchContext dctx, Map<String, Object> context) {
-        Integer viewSize = (Integer) context.get("viewSize");
+        Integer viewSize = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.viewSize);
         if (viewSize == null) {
             viewSize = 20;       // default
         }
-        context.put("viewSize", viewSize);
-        Integer viewIndex = (Integer) context.get("viewIndex");
+        context.put(org.apache.ofbiz.persistence.entity.x.viewSize, viewSize);
+        Integer viewIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.viewIndex);
         if (viewIndex == null) {
             viewIndex = 0;  // default
         }
-        context.put("viewIndex", viewIndex);
+        context.put(org.apache.ofbiz.persistence.entity.x.viewIndex, viewIndex);
 
         Map<String, Object> result = performFind(dctx, context);
 
@@ -496,16 +496,16 @@ public class FindServices {
      * to indicate their purpose in formulating an SQL query statement.
      */
     public static Map<String, Object> performFind(DispatchContext dctx, Map<String, ?> context) {
-        String entityName = (String) context.get("entityName");
-        DynamicViewEntity dynamicViewEntity = (DynamicViewEntity) context.get("dynamicViewEntity");
-        String orderBy = (String) context.get("orderBy");
-        String groupConditionOperator = (String) context.get("groupConditionOperator");
-        Map<String, ?> inputFields = checkMap(context.get("inputFields"), String.class, Object.class); // Input
-        String noConditionFind = (String) context.get("noConditionFind");
-        String distinct = (String) context.get("distinct");
-        List<String> fieldList = UtilGenerics.cast(context.get("fieldList"));
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        String entityName = (String) context.get(org.apache.ofbiz.persistence.entity.x.entityName);
+        DynamicViewEntity dynamicViewEntity = (DynamicViewEntity) context.get(org.apache.ofbiz.persistence.entity.x.dynamicViewEntity);
+        String orderBy = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderBy);
+        String groupConditionOperator = (String) context.get(org.apache.ofbiz.persistence.entity.x.groupConditionOperator);
+        Map<String, ?> inputFields = checkMap(context.get(org.apache.ofbiz.persistence.entity.x.inputFields), String.class, Object.class); // Input
+        String noConditionFind = (String) context.get(org.apache.ofbiz.persistence.entity.x.noConditionFind);
+        String distinct = (String) context.get(org.apache.ofbiz.persistence.entity.x.distinct);
+        List<String> fieldList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.fieldList));
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
         if (UtilValidate.isEmpty(noConditionFind)) {
             // try finding in inputFields Map
@@ -515,25 +515,25 @@ public class FindServices {
             // Use configured default
             noConditionFind = EntityUtilProperties.getPropertyValue("widget", "widget.defaultNoConditionFind", delegator);
         }
-        String filterByDate = (String) context.get("filterByDate");
+        String filterByDate = (String) context.get(org.apache.ofbiz.persistence.entity.x.filterByDate);
         if (UtilValidate.isEmpty(filterByDate)) {
             // try finding in inputFields Map
             filterByDate = (String) inputFields.get("filterByDate");
         }
-        Timestamp filterByDateValue = (Timestamp) context.get("filterByDateValue");
-        String fromDateName = (String) context.get("fromDateName");
+        Timestamp filterByDateValue = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.filterByDateValue);
+        String fromDateName = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromDateName);
         if (UtilValidate.isEmpty(fromDateName)) {
             // try finding in inputFields Map
             fromDateName = (String) inputFields.get("fromDateName");
         }
-        String thruDateName = (String) context.get("thruDateName");
+        String thruDateName = (String) context.get(org.apache.ofbiz.persistence.entity.x.thruDateName);
         if (UtilValidate.isEmpty(thruDateName)) {
             // try finding in inputFields Map
             thruDateName = (String) inputFields.get("thruDateName");
         }
 
-        Integer viewSize = (Integer) context.get("viewSize");
-        Integer viewIndex = (Integer) context.get("viewIndex");
+        Integer viewSize = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.viewSize);
+        Integer viewIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.viewIndex);
         Integer maxRows = null;
         if (viewSize != null && viewIndex != null) {
             maxRows = viewSize * (viewIndex + 1);
@@ -548,7 +548,7 @@ public class FindServices {
                                                "inputFields", inputFields, "filterByDate", filterByDate, "noConditionFind", noConditionFind,
                                                "filterByDateValue", filterByDateValue, "userLogin", userLogin, "fromDateName", fromDateName,
                     "thruDateName", thruDateName,
-                                               "locale", context.get("locale"), "timeZone", context.get("timeZone")));
+                                               "locale", context.get(org.apache.ofbiz.persistence.entity.x.locale), "timeZone", context.get(org.apache.ofbiz.persistence.entity.x.timeZone)));
         } catch (GenericServiceException gse) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonFindErrorPreparingConditions",
                     UtilMisc.toMap("errorString", gse.getMessage()), locale));
@@ -562,7 +562,7 @@ public class FindServices {
                                                                              "dynamicViewEntity", dynamicViewEntity,
                                                                              "fieldList", fieldList, "entityConditionList", exprList,
                                                                              "noConditionFind", noConditionFind, "distinct", distinct,
-                                                                             "locale", context.get("locale"), "timeZone", context.get("timeZone"),
+                                                                             "locale", context.get(org.apache.ofbiz.persistence.entity.x.locale), "timeZone", context.get(org.apache.ofbiz.persistence.entity.x.timeZone),
                                                                              "maxRows", maxRows));
         } catch (GenericServiceException gse) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonFindErrorRetrieveIterator",
@@ -589,13 +589,13 @@ public class FindServices {
      * to indicate their purpose in formulating an SQL query statement.
      */
     public static Map<String, Object> prepareFind(DispatchContext dctx, Map<String, ?> context) {
-        String entityName = (String) context.get("entityName");
-        DynamicViewEntity dynamicViewEntity = (DynamicViewEntity) context.get("dynamicViewEntity");
+        String entityName = (String) context.get(org.apache.ofbiz.persistence.entity.x.entityName);
+        DynamicViewEntity dynamicViewEntity = (DynamicViewEntity) context.get(org.apache.ofbiz.persistence.entity.x.dynamicViewEntity);
         Delegator delegator = dctx.getDelegator();
-        String orderBy = (String) context.get("orderBy");
-        String groupConditionOperator = (String) context.get("groupConditionOperator");
-        Map<String, ?> inputFields = checkMap(context.get("inputFields"), String.class, Object.class); // Input
-        String noConditionFind = (String) context.get("noConditionFind");
+        String orderBy = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderBy);
+        String groupConditionOperator = (String) context.get(org.apache.ofbiz.persistence.entity.x.groupConditionOperator);
+        Map<String, ?> inputFields = checkMap(context.get(org.apache.ofbiz.persistence.entity.x.inputFields), String.class, Object.class); // Input
+        String noConditionFind = (String) context.get(org.apache.ofbiz.persistence.entity.x.noConditionFind);
         if (UtilValidate.isEmpty(noConditionFind)) {
             // try finding in inputFields Map
             noConditionFind = (String) inputFields.get("noConditionFind");
@@ -604,14 +604,14 @@ public class FindServices {
             // Use configured default
             noConditionFind = EntityUtilProperties.getPropertyValue("widget", "widget.defaultNoConditionFind", delegator);
         }
-        String filterByDate = (String) context.get("filterByDate");
+        String filterByDate = (String) context.get(org.apache.ofbiz.persistence.entity.x.filterByDate);
         if (UtilValidate.isEmpty(filterByDate)) {
             // try finding in inputFields Map
             filterByDate = (String) inputFields.get("filterByDate");
         }
-        Timestamp filterByDateValue = (Timestamp) context.get("filterByDateValue");
-        String fromDateName = (String) context.get("fromDateName");
-        String thruDateName = (String) context.get("thruDateName");
+        Timestamp filterByDateValue = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.filterByDateValue);
+        String fromDateName = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromDateName);
+        String thruDateName = (String) context.get(org.apache.ofbiz.persistence.entity.x.thruDateName);
 
         Map<String, Object> queryStringMap = new LinkedHashMap<>();
         ModelEntity modelEntity;
@@ -680,19 +680,19 @@ public class FindServices {
      * This is a generic method that returns an EntityListIterator.
      */
     public static Map<String, Object> executeFind(DispatchContext dctx, Map<String, ?> context) {
-        String entityName = (String) context.get("entityName");
-        DynamicViewEntity dynamicViewEntity = (DynamicViewEntity) context.get("dynamicViewEntity");
-        EntityConditionList<EntityCondition> entityConditionList = UtilGenerics.cast(context.get("entityConditionList"));
-        List<String> orderByList = checkCollection(context.get("orderByList"), String.class);
-        boolean noConditionFind = "Y".equals(context.get("noConditionFind"));
-        boolean distinct = "Y".equals(context.get("distinct"));
-        List<String> fieldList = UtilGenerics.cast(context.get("fieldList"));
-        Locale locale = (Locale) context.get("locale");
+        String entityName = (String) context.get(org.apache.ofbiz.persistence.entity.x.entityName);
+        DynamicViewEntity dynamicViewEntity = (DynamicViewEntity) context.get(org.apache.ofbiz.persistence.entity.x.dynamicViewEntity);
+        EntityConditionList<EntityCondition> entityConditionList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.entityConditionList));
+        List<String> orderByList = checkCollection(context.get(org.apache.ofbiz.persistence.entity.x.orderByList), String.class);
+        boolean noConditionFind = "Y".equals(context.get(org.apache.ofbiz.persistence.entity.x.noConditionFind));
+        boolean distinct = "Y".equals(context.get(org.apache.ofbiz.persistence.entity.x.distinct));
+        List<String> fieldList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.fieldList));
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Set<String> fieldSet = null;
         if (fieldList != null) {
             fieldSet = new LinkedHashSet<>(fieldList);
         }
-        Integer maxRows = (Integer) context.get("maxRows");
+        Integer maxRows = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.maxRows);
         maxRows = maxRows != null ? maxRows : -1;
         Delegator delegator = dctx.getDelegator();
         // Retrieve entities  - an iterator over all the values
@@ -813,8 +813,8 @@ public class FindServices {
      * @return returns the first item
      */
     public static Map<String, Object> performFindItem(DispatchContext dctx, Map<String, Object> context) {
-        context.put("viewSize", 1);
-        context.put("viewIndex", 0);
+        context.put(org.apache.ofbiz.persistence.entity.x.viewSize, 1);
+        context.put(org.apache.ofbiz.persistence.entity.x.viewIndex, 0);
         Map<String, Object> result = org.apache.ofbiz.common.FindServices.performFind(dctx, context);
 
         List<GenericValue> list = null;

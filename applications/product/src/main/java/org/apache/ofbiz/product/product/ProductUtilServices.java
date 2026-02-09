@@ -70,7 +70,7 @@ public final class ProductUtilServices {
     public static Map<String, Object> discVirtualsWithDiscVariants(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String errMsg = null;
         EntityCondition conditionOne = EntityCondition.makeCondition(UtilMisc.toList(
                 EntityCondition.makeCondition("isVariant", EntityOperator.EQUALS, "Y"),
@@ -87,12 +87,12 @@ public final class ProductUtilServices {
                     continue;
                 }
                 List<GenericValue> passocList = EntityQuery.use(delegator).from("ProductAssoc")
-                        .where("productId", virtualProductId, "productIdTo", productOne.get("productId"), "productAssocTypeId", "PRODUCT_VARIANT")
+                        .where("productId", virtualProductId, "productIdTo", productOne.get(org.apache.ofbiz.persistence.entity.x.productId), "productAssocTypeId", "PRODUCT_VARIANT")
                         .filterByDate()
                         .queryList();
                 if (!passocList.isEmpty()) {
                     for (GenericValue passoc : passocList) {
-                        passoc.set("thruDate", nowTimestamp);
+                        passoc.set(org.apache.ofbiz.persistence.entity.x.thruDate, nowTimestamp);
                         passoc.store();
                     }
 
@@ -112,10 +112,10 @@ public final class ProductUtilServices {
                 GenericValue product = null;
                 int numSoFar = 0;
                 while ((product = eli.next()) != null) {
-                    List<GenericValue> passocList = EntityQuery.use(delegator).from("ProductAssoc").where("productId", product.get("productId"),
+                    List<GenericValue> passocList = EntityQuery.use(delegator).from("ProductAssoc").where("productId", product.get(org.apache.ofbiz.persistence.entity.x.productId),
                             "productAssocTypeId", "PRODUCT_VARIANT").filterByDate().queryList();
                     if (passocList.isEmpty()) {
-                        product.set("salesDiscontinuationDate", nowTimestamp);
+                        product.set(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate, nowTimestamp);
                         delegator.store(product);
 
                         numSoFar++;
@@ -148,7 +148,7 @@ public final class ProductUtilServices {
     public static Map<String, Object> removeCategoryMembersOfDiscProducts(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String errMsg = null;
         EntityCondition condition = EntityCondition.makeCondition(UtilMisc.toList(
                 EntityCondition.makeCondition("salesDiscontinuationDate", EntityOperator.NOT_EQUAL, null),
@@ -158,7 +158,7 @@ public final class ProductUtilServices {
             GenericValue product = null;
             int numSoFar = 0;
             while ((product = eli.next()) != null) {
-                String productId = product.getString("productId");
+                String productId = product.getString(org.apache.ofbiz.persistence.entity.x.productId);
                 List<GenericValue> productCategoryMemberList = EntityQuery.use(delegator).from("ProductCategoryMember").where("productId",
                         productId).queryList();
                 if (!productCategoryMemberList.isEmpty()) {
@@ -187,7 +187,7 @@ public final class ProductUtilServices {
     public static Map<String, Object> removeDuplicateOpenEndedCategoryMembers(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String errMsg = null;
         DynamicViewEntity dve = new DynamicViewEntity();
         dve.addMemberEntity("PCM", "ProductCategoryMember");
@@ -208,7 +208,7 @@ public final class ProductUtilServices {
             int numSoFar = 0;
             while ((pcm = eli.next()) != null) {
                 List<GenericValue> productCategoryMemberList = EntityQuery.use(delegator).from("ProductCategoryMember").where("productId",
-                        pcm.get("productId"), "productCategoryId", pcm.get("productCategoryId")).queryList();
+                        pcm.get(org.apache.ofbiz.persistence.entity.x.productId), "productCategoryId", pcm.get(org.apache.ofbiz.persistence.entity.x.productCategoryId)).queryList();
                 if (productCategoryMemberList.size() > 1) {
                     // remove all except the first...
                     productCategoryMemberList.remove(0);
@@ -236,9 +236,9 @@ public final class ProductUtilServices {
     public static Map<String, Object> makeStandAloneFromSingleVariantVirtuals(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String errMsg = null;
 
         Debug.logInfo("Starting makeStandAloneFromSingleVariantVirtuals", MODULE);
@@ -273,7 +273,7 @@ public final class ProductUtilServices {
             int numWithOneOnly = 0;
             for (GenericValue value : valueList) {
                 // has only one variant period, is it valid? should already be discontinued if not
-                String productId = value.getString("productId");
+                String productId = value.getString(org.apache.ofbiz.persistence.entity.x.productId);
                 List<GenericValue> paList = EntityQuery.use(delegator).from("ProductAssoc").where("productId", productId, "productAssocTypeId",
                         "PRODUCT_VARIANT").filterByDate().queryList();
                 // verify the query; tested on a bunch, looks good
@@ -307,7 +307,7 @@ public final class ProductUtilServices {
                 int numWithOneValid = 0;
                 for (GenericValue value : valueMultiList) {
                     // has only one valid variant
-                    String productId = value.getString("productId");
+                    String productId = value.getString(org.apache.ofbiz.persistence.entity.x.productId);
 
                     List<GenericValue> paList = EntityQuery.use(delegator).from("ProductAssoc").where("productId", productId, "productAssocTypeId",
                             "PRODUCT_VARIANT").filterByDate().queryList();
@@ -351,13 +351,13 @@ public final class ProductUtilServices {
         Delegator delegator = dctx.getDelegator();
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
 
-        String productId = (String) context.get("productId");
-        Boolean removeOldBool = (Boolean) context.get("removeOld");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        Boolean removeOldBool = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.removeOld);
         boolean removeOld = removeOldBool;
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String errMsg = null;
 
-        Boolean testBool = (Boolean) context.get("test");
+        Boolean testBool = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.test);
         boolean test = false;
         if (testBool != null) {
             test = testBool;
@@ -366,7 +366,7 @@ public final class ProductUtilServices {
         try {
             GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productId).queryOne();
             Debug.logInfo("Processing virtual product with one variant with ID: " + productId + " and name: "
-                    + product.getString("internalName"), MODULE);
+                    + product.getString(org.apache.ofbiz.persistence.entity.x.internalName), MODULE);
 
             List<GenericValue> paList = EntityQuery.use(delegator).from("ProductAssoc").where("productId", productId, "productAssocTypeId",
                     "PRODUCT_VARIANT").filterByDate().queryList();
@@ -396,24 +396,24 @@ public final class ProductUtilServices {
                 }
             } else {
                 // don't remove, just expire to avoid running again in the future
-                productAssoc.set("thruDate", nowTimestamp);
+                productAssoc.set(org.apache.ofbiz.persistence.entity.x.thruDate, nowTimestamp);
                 if (test) {
                     Debug.logInfo("Test mode, would store: " + productAssoc, MODULE);
                 } else {
                     productAssoc.store();
                 }
             }
-            String variantProductId = productAssoc.getString("productIdTo");
+            String variantProductId = productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo);
 
             // Product
             GenericValue variantProduct = EntityQuery.use(delegator).from("Product").where("productId", variantProductId).queryOne();
 
-            Debug.logInfo("--variant has ID: " + variantProductId + " and name: " + variantProduct.getString("internalName"), MODULE);
+            Debug.logInfo("--variant has ID: " + variantProductId + " and name: " + variantProduct.getString(org.apache.ofbiz.persistence.entity.x.internalName), MODULE);
 
             // start with the values from the virtual product, override from the variant...
             GenericValue newVariantProduct = delegator.makeValue("Product", product);
             newVariantProduct.setAllFields(variantProduct, false, "", null);
-            newVariantProduct.set("isVariant", "N");
+            newVariantProduct.set(org.apache.ofbiz.persistence.entity.x.isVariant, "N");
             if (test) {
                 Debug.logInfo("Test mode, would store: " + newVariantProduct, MODULE);
             } else {
@@ -445,7 +445,7 @@ public final class ProductUtilServices {
             if (removeOld) {
                 if (test) {
                     Debug.logInfo("Test mode, would remove related ProductKeyword with dummy key: "
-                            + product.getRelatedDummyPK("ProductKeyword"), MODULE);
+                            + product.getRelatedDummyPK(org.apache.ofbiz.persistence.entity.x.ProductKeyword), MODULE);
                     Debug.logInfo("Test mode, would remove: " + product, MODULE);
                 } else {
                     product.removeRelated("ProductKeyword");
@@ -490,7 +490,7 @@ public final class ProductUtilServices {
                     }
                     continue;
                 }
-                newRelatedValue.set("fromDate", nowTimestamp);
+                newRelatedValue.set(org.apache.ofbiz.persistence.entity.x.fromDate, nowTimestamp);
             }
 
             if (EntityQuery.use(delegator).from(relatedEntityName).where(EntityCondition.makeCondition(newRelatedValue.getPrimaryKey(),
@@ -519,8 +519,8 @@ public final class ProductUtilServices {
      */
     public static Map<String, Object> setAllProductImageNames(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String pattern = (String) context.get("pattern");
-        Locale locale = (Locale) context.get("locale");
+        String pattern = (String) context.get(org.apache.ofbiz.persistence.entity.x.pattern);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String errMsg = null;
 
         if (UtilValidate.isEmpty(pattern)) {
@@ -538,33 +538,33 @@ public final class ProductUtilServices {
             GenericValue product = null;
             int numSoFar = 0;
             while ((product = eli.next()) != null) {
-                String productId = (String) product.get("productId");
+                String productId = (String) product.get(org.apache.ofbiz.persistence.entity.x.productId);
                 Map<String, String> smallMap = UtilMisc.toMap("size", "small", "productId", productId);
                 Map<String, String> mediumMap = UtilMisc.toMap("size", "medium", "productId", productId);
                 Map<String, String> largeMap = UtilMisc.toMap("size", "large", "productId", productId);
                 Map<String, String> detailMap = UtilMisc.toMap("size", "detail", "productId", productId);
 
-                if ("Y".equals(product.getString("isVirtual"))) {
+                if ("Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.isVirtual))) {
                     // find the first variant, use it's ID for the names...
                     List<GenericValue> productAssocList = EntityQuery.use(delegator).from("ProductAssoc").where("productId",
                             productId, "productAssocTypeId", "PRODUCT_VARIANT").filterByDate().queryList();
                     if (!productAssocList.isEmpty()) {
                         GenericValue productAssoc = EntityUtil.getFirst(productAssocList);
-                        smallMap.put("productId", productAssoc.getString("productIdTo"));
-                        mediumMap.put("productId", productAssoc.getString("productIdTo"));
-                        product.set("smallImageUrl", FlexibleStringExpander.expandString(pattern, smallMap));
-                        product.set("mediumImageUrl", FlexibleStringExpander.expandString(pattern, mediumMap));
+                        smallMap.put("productId", productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo));
+                        mediumMap.put("productId", productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo));
+                        product.set(org.apache.ofbiz.persistence.entity.x.smallImageUrl, FlexibleStringExpander.expandString(pattern, smallMap));
+                        product.set(org.apache.ofbiz.persistence.entity.x.mediumImageUrl, FlexibleStringExpander.expandString(pattern, mediumMap));
                     } else {
-                        product.set("smallImageUrl", null);
-                        product.set("mediumImageUrl", null);
+                        product.set(org.apache.ofbiz.persistence.entity.x.smallImageUrl, null);
+                        product.set(org.apache.ofbiz.persistence.entity.x.mediumImageUrl, null);
                     }
-                    product.set("largeImageUrl", null);
-                    product.set("detailImageUrl", null);
+                    product.set(org.apache.ofbiz.persistence.entity.x.largeImageUrl, null);
+                    product.set(org.apache.ofbiz.persistence.entity.x.detailImageUrl, null);
                 } else {
-                    product.set("smallImageUrl", FlexibleStringExpander.expandString(pattern, smallMap));
-                    product.set("mediumImageUrl", FlexibleStringExpander.expandString(pattern, mediumMap));
-                    product.set("largeImageUrl", FlexibleStringExpander.expandString(pattern, largeMap));
-                    product.set("detailImageUrl", FlexibleStringExpander.expandString(pattern, detailMap));
+                    product.set(org.apache.ofbiz.persistence.entity.x.smallImageUrl, FlexibleStringExpander.expandString(pattern, smallMap));
+                    product.set(org.apache.ofbiz.persistence.entity.x.mediumImageUrl, FlexibleStringExpander.expandString(pattern, mediumMap));
+                    product.set(org.apache.ofbiz.persistence.entity.x.largeImageUrl, FlexibleStringExpander.expandString(pattern, largeMap));
+                    product.set(org.apache.ofbiz.persistence.entity.x.detailImageUrl, FlexibleStringExpander.expandString(pattern, detailMap));
                 }
 
                 product.store();
@@ -586,17 +586,17 @@ public final class ProductUtilServices {
 
     public static Map<String, Object> clearAllVirtualProductImageNames(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String errMsg = null;
 
         try (EntityListIterator eli = EntityQuery.use(delegator).from("Product").where("isVirtual", "Y").queryIterator()) {
             GenericValue product = null;
             int numSoFar = 0;
             while ((product = eli.next()) != null) {
-                product.set("smallImageUrl", null);
-                product.set("mediumImageUrl", null);
-                product.set("largeImageUrl", null);
-                product.set("detailImageUrl", null);
+                product.set(org.apache.ofbiz.persistence.entity.x.smallImageUrl, null);
+                product.set(org.apache.ofbiz.persistence.entity.x.mediumImageUrl, null);
+                product.set(org.apache.ofbiz.persistence.entity.x.largeImageUrl, null);
+                product.set(org.apache.ofbiz.persistence.entity.x.detailImageUrl, null);
                 product.store();
                 numSoFar++;
                 if (numSoFar % 500 == 0) {
@@ -618,9 +618,9 @@ public final class ProductUtilServices {
 
     public static Map<String, Object> attachProductFeaturesToCategory(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String productCategoryId = (String) context.get("productCategoryId");
-        String doSubCategoriesStr = (String) context.get("doSubCategories");
-        Locale locale = (Locale) context.get("locale");
+        String productCategoryId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productCategoryId);
+        String doSubCategoriesStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.doSubCategories);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String errMsg = null;
 
         // default to true
@@ -672,7 +672,7 @@ public final class ProductUtilServices {
                 productCategoryId).queryList();
         if (doSubCategories) {
             for (GenericValue productCategoryRollup : subCategoryList) {
-                attachProductFeaturesToCategory(productCategoryRollup.getString("productCategoryId"), productFeatureTypeIdsToInclude,
+                attachProductFeaturesToCategory(productCategoryRollup.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId), productFeatureTypeIdsToInclude,
                         productFeatureTypeIdsToExclude, delegator, true, nowTimestamp);
             }
         }
@@ -682,7 +682,7 @@ public final class ProductUtilServices {
         List<GenericValue> productCategoryMemberList = EntityQuery.use(delegator).from("ProductCategoryMember").where("productCategoryId",
                 productCategoryId).queryList();
         for (GenericValue productCategoryMember : productCategoryMemberList) {
-            String productId = productCategoryMember.getString("productId");
+            String productId = productCategoryMember.getString(org.apache.ofbiz.persistence.entity.x.productId);
             EntityCondition condition = EntityCondition.makeCondition(UtilMisc.toList(
                     EntityCondition.makeCondition("productId", EntityOperator.EQUALS, productId),
                     EntityCondition.makeCondition("fromDate", EntityOperator.LESS_THAN_EQUAL_TO, nowTimestamp),
@@ -694,8 +694,8 @@ public final class ProductUtilServices {
                     .where(condition).queryIterator()) {
                 GenericValue productFeatureAndAppl = null;
                 while ((productFeatureAndAppl = productFeatureAndApplEli.next()) != null) {
-                    String productFeatureId = productFeatureAndAppl.getString("productFeatureId");
-                    String productFeatureTypeId = productFeatureAndAppl.getString("productFeatureTypeId");
+                    String productFeatureId = productFeatureAndAppl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId);
+                    String productFeatureTypeId = productFeatureAndAppl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId);
                     if (UtilValidate.isNotEmpty(productFeatureTypeIdsToInclude) && !productFeatureTypeIdsToInclude.contains(productFeatureTypeId)) {
                         continue;
                     }
@@ -759,7 +759,7 @@ public final class ProductUtilServices {
 
                 // now get all feature groups associated with sub-categories and associate them with this category
                 for (GenericValue productCategoryRollup : subCategoryList) {
-                    String subProductCategoryId = productCategoryRollup.getString("productCategoryId");
+                    String subProductCategoryId = productCategoryRollup.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId);
                     condition = EntityCondition.makeCondition(UtilMisc.toList(
                             EntityCondition.makeCondition("productCategoryId", EntityOperator.EQUALS, subProductCategoryId),
                             EntityCondition.makeCondition("fromDate", EntityOperator.LESS_THAN_EQUAL_TO, nowTimestamp),
@@ -770,7 +770,7 @@ public final class ProductUtilServices {
                             .where(condition).queryIterator()) {
                         GenericValue productFeatureCatGrpAppl = null;
                         while ((productFeatureCatGrpAppl = productFeatureCatGrpApplEli.next()) != null) {
-                            String productFeatureGroupId = productFeatureCatGrpAppl.getString("productFeatureGroupId");
+                            String productFeatureGroupId = productFeatureCatGrpAppl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureGroupId);
                             EntityCondition checkCondition = EntityCondition.makeCondition(UtilMisc.toList(
                                     EntityCondition.makeCondition("productCategoryId", EntityOperator.EQUALS, productCategoryId),
                                     EntityCondition.makeCondition("productFeatureGroupId", EntityOperator.EQUALS, productFeatureGroupId),

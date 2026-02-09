@@ -60,14 +60,14 @@ public class CategoryServices {
 
     public static Map<String, Object> getCategoryMembers(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String categoryId = (String) context.get("categoryId");
-        Locale locale = (Locale) context.get("locale");
+        String categoryId = (String) context.get(org.apache.ofbiz.persistence.entity.x.categoryId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         GenericValue productCategory = null;
         List<GenericValue> members = null;
 
         try {
             productCategory = EntityQuery.use(delegator).from("ProductCategory").where("productCategoryId", categoryId).cache().queryOne();
-            members = EntityUtil.filterByDate(productCategory.getRelated("ProductCategoryMember", null,
+            members = EntityUtil.filterByDate(productCategory.getRelated(org.apache.ofbiz.persistence.entity.x.ProductCategoryMember, null,
                     UtilMisc.toList("sequenceNum"), true), true);
             if (Debug.verboseOn()) {
                 Debug.logVerbose("Category: " + productCategory + " Member Size: " + members.size() + " Members: " + members, MODULE);
@@ -86,19 +86,19 @@ public class CategoryServices {
 
     public static Map<String, Object> getPreviousNextProducts(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String categoryId = (String) context.get("categoryId");
-        String productId = (String) context.get("productId");
-        boolean activeOnly = (context.get("activeOnly") != null ? (Boolean) context.get("activeOnly") : true);
-        Integer index = (Integer) context.get("index");
-        Timestamp introductionDateLimit = (Timestamp) context.get("introductionDateLimit");
-        Timestamp releaseDateLimit = (Timestamp) context.get("releaseDateLimit");
-        Locale locale = (Locale) context.get("locale");
+        String categoryId = (String) context.get(org.apache.ofbiz.persistence.entity.x.categoryId);
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        boolean activeOnly = (context.get(org.apache.ofbiz.persistence.entity.x.activeOnly) != null ? (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.activeOnly) : true);
+        Integer index = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.index);
+        Timestamp introductionDateLimit = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.introductionDateLimit);
+        Timestamp releaseDateLimit = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.releaseDateLimit);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         if (index == null && productId == null) {
             return ServiceUtil.returnFailure(UtilProperties.getMessage(RES_ERROR, "categoryservices.problems_getting_next_products", locale));
         }
 
-        List<String> orderByFields = UtilGenerics.cast(context.get("orderByFields"));
+        List<String> orderByFields = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderByFields));
         if (orderByFields == null) orderByFields = new LinkedList<>();
         String entityName = getCategoryFindEntityName(delegator, orderByFields, introductionDateLimit, releaseDateLimit);
 
@@ -135,7 +135,7 @@ public class CategoryServices {
 
         if (productId != null && index == null) {
             for (GenericValue v: productCategoryMembers) {
-                if (v.getString("productId").equals(productId)) {
+                if (v.getString(org.apache.ofbiz.persistence.entity.x.productId).equals(productId)) {
                     index = productCategoryMembers.indexOf(v);
                 }
             }
@@ -221,24 +221,24 @@ public class CategoryServices {
     public static Map<String, Object> getProductCategoryAndLimitedMembers(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String productCategoryId = (String) context.get("productCategoryId");
-        boolean limitView = (Boolean) context.get("limitView");
-        int defaultViewSize = (Integer) context.get("defaultViewSize");
-        Timestamp introductionDateLimit = (Timestamp) context.get("introductionDateLimit");
-        Timestamp releaseDateLimit = (Timestamp) context.get("releaseDateLimit");
+        String productCategoryId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productCategoryId);
+        boolean limitView = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.limitView);
+        int defaultViewSize = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.defaultViewSize);
+        Timestamp introductionDateLimit = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.introductionDateLimit);
+        Timestamp releaseDateLimit = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.releaseDateLimit);
 
-        List<String> orderByFields = UtilGenerics.cast(context.get("orderByFields"));
+        List<String> orderByFields = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderByFields));
         if (orderByFields == null) orderByFields = new LinkedList<>();
         String entityName = getCategoryFindEntityName(delegator, orderByFields, introductionDateLimit, releaseDateLimit);
 
-        String prodCatalogId = (String) context.get("prodCatalogId");
+        String prodCatalogId = (String) context.get(org.apache.ofbiz.persistence.entity.x.prodCatalogId);
 
-        boolean useCacheForMembers = (context.get("useCacheForMembers") == null || (Boolean) context.get("useCacheForMembers"));
-        boolean activeOnly = (context.get("activeOnly") == null || (Boolean) context.get("activeOnly"));
+        boolean useCacheForMembers = (context.get(org.apache.ofbiz.persistence.entity.x.useCacheForMembers) == null || (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.useCacheForMembers));
+        boolean activeOnly = (context.get(org.apache.ofbiz.persistence.entity.x.activeOnly) == null || (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.activeOnly));
 
         // checkViewAllow defaults to false, must be set to true and pass the prodCatalogId to enable
-        boolean checkViewAllow = (prodCatalogId != null && context.get("checkViewAllow") != null
-                && (Boolean) context.get("checkViewAllow"));
+        boolean checkViewAllow = (prodCatalogId != null && context.get(org.apache.ofbiz.persistence.entity.x.checkViewAllow) != null
+                && (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.checkViewAllow));
 
         String viewProductCategoryId = null;
         if (checkViewAllow) {
@@ -249,7 +249,7 @@ public class CategoryServices {
         int viewIndex = 0;
         if (context.containsKey("viewIndexString")) {
             try {
-                viewIndex = Integer.parseInt((String) context.get("viewIndexString"));
+                viewIndex = Integer.parseInt((String) context.get(org.apache.ofbiz.persistence.entity.x.viewIndexString));
             } catch (Exception e) {
                 viewIndex = 0;
             }
@@ -258,10 +258,10 @@ public class CategoryServices {
         int viewSize = defaultViewSize;
         if (context.containsKey("viewSizeString")) {
             try {
-                viewSize = Integer.parseInt((String) context.get("viewSizeString"));
+                viewSize = Integer.parseInt((String) context.get(org.apache.ofbiz.persistence.entity.x.viewSizeString));
             } catch (NumberFormatException e) {
                 Debug.logWarning("Fail to parse viewSizeString "
-                        + context.get("viewSizeString")
+                        + context.get(org.apache.ofbiz.persistence.entity.x.viewSizeString)
                         + " " + e.getMessage(), MODULE);
             }
         }
@@ -288,10 +288,10 @@ public class CategoryServices {
         }
         boolean filterOutOfStock = false;
         try {
-            String productStoreId = (String) context.get("productStoreId");
+            String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
             if (UtilValidate.isNotEmpty(productStoreId)) {
                 GenericValue productStore = EntityQuery.use(delegator).from("ProductStore").where("productStoreId", productStoreId).queryOne();
-                if (productStore != null && "N".equals(productStore.getString("showOutOfStockProducts"))) {
+                if (productStore != null && "N".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.showOutOfStockProducts))) {
                     filterOutOfStock = true;
                 }
             }
@@ -362,7 +362,7 @@ public class CategoryServices {
                 } else {
                     List<EntityCondition> mainCondList = new LinkedList<>();
                     mainCondList.add(EntityCondition.makeCondition("productCategoryId", EntityOperator.EQUALS,
-                            productCategory.getString("productCategoryId")));
+                            productCategory.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId)));
                     if (activeOnly) {
                         mainCondList.add(EntityCondition.makeCondition("fromDate", EntityOperator.LESS_THAN_EQUAL_TO, nowTimestamp));
                         mainCondList.add(EntityCondition.makeCondition(EntityCondition.makeCondition("thruDate", EntityOperator.EQUALS, null),
@@ -398,7 +398,7 @@ public class CategoryServices {
                                 listSize = 0;
 
                                 while ((nextValue = pli.next()) != null) {
-                                    String productId = nextValue.getString("productId");
+                                    String productId = nextValue.getString(org.apache.ofbiz.persistence.entity.x.productId);
                                     if (CategoryWorker.isProductInCategory(delegator, productId, viewProductCategoryId)) {
                                         if (listSize + 1 >= lowIndex && chunkSize < viewSize) {
                                             productCategoryMembers.add(nextValue);
@@ -504,7 +504,7 @@ public class CategoryServices {
                         Object catId = null;
                         String catNameField = null;
 
-                        catId = childOfCat.get("productCategoryId");
+                        catId = childOfCat.get(org.apache.ofbiz.persistence.entity.x.productCategoryId);
                         catNameField = "CATEGORY_NAME";
 
                         Map<Object, Object> josonMap = new HashMap<>();
@@ -548,7 +548,7 @@ public class CategoryServices {
                         attrMap.put("isCatalog", false);
                         attrMap.put("rel", "CATEGORY");
                         josonMap.put("attr", attrMap);
-                        josonMap.put("sequenceNum", childOfCat.get("sequenceNum"));
+                        josonMap.put("sequenceNum", childOfCat.get(org.apache.ofbiz.persistence.entity.x.sequenceNum));
                         josonMap.put("title", title);
                         categoryList.add(josonMap);
                     }

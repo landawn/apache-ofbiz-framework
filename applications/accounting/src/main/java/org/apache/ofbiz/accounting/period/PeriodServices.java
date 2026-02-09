@@ -48,10 +48,10 @@ public class PeriodServices {
      */
     public static Map<String, Object> findLastClosedDate(DispatchContext dctx, Map<String, ?> context) {
         Delegator delegator = dctx.getDelegator();
-        String organizationPartyId = (String) context.get("organizationPartyId"); // input parameters
-        String periodTypeId = (String) context.get("periodTypeId");
-        Timestamp findDate = (Timestamp) context.get("findDate");
-        Locale locale = (Locale) context.get("locale");
+        String organizationPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.organizationPartyId); // input parameters
+        String periodTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.periodTypeId);
+        Timestamp findDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.findDate);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // default findDate to now
         if (findDate == null) {
@@ -77,9 +77,9 @@ public class PeriodServices {
                     .select("customTimePeriodId", "periodTypeId", "isClosed", "fromDate", "thruDate")
                     .where(findClosedConditions).orderBy("thruDate DESC").queryFirst();
 
-            if (UtilValidate.isNotEmpty(closedTimePeriod) && UtilValidate.isNotEmpty(closedTimePeriod.get("thruDate"))) {
+            if (UtilValidate.isNotEmpty(closedTimePeriod) && UtilValidate.isNotEmpty(closedTimePeriod.get(org.apache.ofbiz.persistence.entity.x.thruDate))) {
                 lastClosedTimePeriod = closedTimePeriod;
-                lastClosedDate = lastClosedTimePeriod.getTimestamp("thruDate");
+                lastClosedDate = lastClosedTimePeriod.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate);
             } else {
                 // uh oh, no time periods have been closed? in that case, just find the earliest
                 // beginning of a time period for this organization and optionally, for this period type
@@ -88,8 +88,8 @@ public class PeriodServices {
                     findParams.put("periodTypeId", periodTypeId);
                 }
                 GenericValue timePeriod = EntityQuery.use(delegator).from("CustomTimePeriod").where(findParams).orderBy("fromDate ASC").queryFirst();
-                if (timePeriod != null && UtilValidate.isNotEmpty(timePeriod.get("fromDate"))) {
-                    lastClosedDate = timePeriod.getTimestamp("fromDate");
+                if (timePeriod != null && UtilValidate.isNotEmpty(timePeriod.get(org.apache.ofbiz.persistence.entity.x.fromDate))) {
+                    lastClosedDate = timePeriod.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate);
                 } else {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingPeriodCannotGet", locale));
                 }

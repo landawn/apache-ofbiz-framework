@@ -333,7 +333,7 @@ public final class RenderableFtlFormElementsBuilder {
                 .stringParameter("mask", mask)
                 .stringParameter("placeholder", placeholder)
                 .stringParameter("tabindex", tabindex)
-                .stringParameter("delegatorName", ((HttpSession) context.get("session"))
+                .stringParameter("delegatorName", ((HttpSession) context.get(org.apache.ofbiz.persistence.entity.x.session))
                         .getAttribute("delegatorName").toString())
                 .build();
     }
@@ -379,7 +379,7 @@ public final class RenderableFtlFormElementsBuilder {
             builder.stringParameter("readonly", "readonly");
         }
 
-        Map<String, Object> userLogin = UtilGenerics.cast(context.get("userLogin"));
+        Map<String, Object> userLogin = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
         String language = "en";
         if (userLogin != null) {
             language = UtilValidate.isEmpty((String) userLogin.get("lastLocale")) ? "en" : (String) userLogin.get("lastLocale");
@@ -459,7 +459,7 @@ public final class RenderableFtlFormElementsBuilder {
                     .intParameter("step", step);
         }
 
-        Map<String, String> uiLabelMap = UtilGenerics.cast(context.get("uiLabelMap"));
+        Map<String, String> uiLabelMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.uiLabelMap));
         if (uiLabelMap == null) {
             Debug.logWarning("Could not find uiLabelMap in context", MODULE);
         }
@@ -580,9 +580,9 @@ public final class RenderableFtlFormElementsBuilder {
         final ModelForm modelForm = modelFormField.getModelForm();
         final String name = modelFormField.getParameterName(context);
 
-        final Locale locale = (Locale) context.get("locale");
+        final Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        final Map<String, String> uiLabelMap = UtilGenerics.cast(context.get("uiLabelMap"));
+        final Map<String, String> uiLabelMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.uiLabelMap));
         if (uiLabelMap == null) {
             Debug.logWarning("Could not find uiLabelMap in context", MODULE);
         }
@@ -654,7 +654,7 @@ public final class RenderableFtlFormElementsBuilder {
                 .stringParameter("value2", modelFormField.getEntry(context));
 
         if (context.containsKey("parameters")) {
-            final Map<String, Object> parameters = UtilGenerics.cast(context.get("parameters"));
+            final Map<String, Object> parameters = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.parameters));
             if (parameters.containsKey(name + "_fld0_value")) {
                 macroCallBuilder.stringParameter("value", (String) parameters.get(name + "_fld0_value"));
             }
@@ -674,7 +674,7 @@ public final class RenderableFtlFormElementsBuilder {
         final ModelFormField modelFormField = dateRangePickerField.getModelFormField();
         final ModelForm modelForm = modelFormField.getModelForm();
         final String name = modelFormField.getParameterName(context);
-        final Locale locale = (Locale) context.get("locale");
+        final Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String className = UtilFormatOut.checkNull(dateRangePickerField.getModelFormField().getWidgetStyle());
 
         String event = "";
@@ -684,7 +684,7 @@ public final class RenderableFtlFormElementsBuilder {
             action = modelFormField.getAction(context);
         }
 
-        final Map<String, String> uiLabelMap = UtilGenerics.cast(context.get("uiLabelMap"));
+        final Map<String, String> uiLabelMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.uiLabelMap));
         if (uiLabelMap == null) {
             Debug.logWarning("Could not find uiLabelMap in context", MODULE);
         }
@@ -757,7 +757,7 @@ public final class RenderableFtlFormElementsBuilder {
                 .stringParameter("value2", modelFormField.getEntry(context));
 
         if (context.containsKey("parameters")) {
-            final Map<String, Object> parameters = UtilGenerics.cast(context.get("parameters"));
+            final Map<String, Object> parameters = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.parameters));
             if (parameters.containsKey(name + "_fld0_value")) {
                 macroCallBuilder.stringParameter("value", (String) parameters.get(name + "_fld0_value"));
             }
@@ -975,7 +975,7 @@ public final class RenderableFtlFormElementsBuilder {
         String collapseToolTip = "";
         if (UtilValidate.isNotEmpty(style) || UtilValidate.isNotEmpty(id) || UtilValidate.isNotEmpty(title)) {
             if (fieldGroup.collapsible()) {
-                Map<String, Object> uiLabelMap = UtilGenerics.cast(context.get("uiLabelMap"));
+                Map<String, Object> uiLabelMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.uiLabelMap));
                 if (uiLabelMap != null) {
                     expandToolTip = (String) uiLabelMap.get("CommonExpand");
                     collapseToolTip = (String) uiLabelMap.get("CommonCollapse");
@@ -1200,7 +1200,7 @@ public final class RenderableFtlFormElementsBuilder {
             ajaxUrl += requestHandler.makeLink(request, response, UtilHttp.removeQueryStringFromTarget(targetUrl));
             ajaxUrl += "," + ajaxParams;
         }
-        Locale locale = UtilMisc.ensureLocale(context.get("locale"));
+        Locale locale = UtilMisc.ensureLocale(context.get(org.apache.ofbiz.persistence.entity.x.locale));
         return FlexibleStringExpander.expandString(ajaxUrl, context, locale);
     }
 
@@ -1232,7 +1232,7 @@ public final class RenderableFtlFormElementsBuilder {
     }
 
     private Map<String, Object> getWholeFormContext(final Map<String, Object> context) {
-        final Map<String, Object> wholeFormContext = UtilGenerics.cast(context.get("wholeFormContext"));
+        final Map<String, Object> wholeFormContext = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.wholeFormContext));
         if (wholeFormContext == null) {
             throw new RuntimeException("Cannot access whole form context");
         }
@@ -1268,7 +1268,7 @@ public final class RenderableFtlFormElementsBuilder {
         if (UtilValidate.isEmpty(value)) {
             return value;
         }
-        UtilCodec.SimpleEncoder encoder = (UtilCodec.SimpleEncoder) context.get("simpleEncoder");
+        UtilCodec.SimpleEncoder encoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
         if (modelFormField.getEncodeOutput() && encoder != null) {
             value = encoder.encode(value);
         } else {

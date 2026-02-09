@@ -66,13 +66,13 @@ public class OrderLookupServices {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
 
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         Integer viewIndex = Paginator.getViewIndex(context, "viewIndex", 1);
         Integer viewSize = Paginator.getViewSize(context, "viewSize");
 
-        String showAll = (String) context.get("showAll");
-        String useEntryDate = (String) context.get("useEntryDate");
-        Locale locale = (Locale) context.get("locale");
+        String showAll = (String) context.get(org.apache.ofbiz.persistence.entity.x.showAll);
+        String useEntryDate = (String) context.get(org.apache.ofbiz.persistence.entity.x.useEntryDate);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (showAll == null) {
             showAll = "N";
         }
@@ -111,14 +111,14 @@ public class OrderLookupServices {
         dve.addRelation("one-nofk", "", "StatusItem", UtilMisc.toList(new ModelKeyMap("statusId", "statusId")));
 
         // start the lookup
-        String orderId = (String) context.get("orderId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
         if (UtilValidate.isNotEmpty(orderId)) {
             paramList.add("orderId=" + orderId);
             conditions.add(makeExpr("orderId", orderId));
         }
 
         // the base order header fields
-        List<String> orderTypeList = UtilGenerics.cast(context.get("orderTypeId"));
+        List<String> orderTypeList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderTypeId));
         if (orderTypeList != null) {
             List<EntityExpr> orExprs = new LinkedList<>();
             for (String orderTypeId : orderTypeList) {
@@ -131,13 +131,13 @@ public class OrderLookupServices {
             conditions.add(EntityCondition.makeCondition(orExprs, EntityOperator.OR));
         }
 
-        String orderName = (String) context.get("orderName");
+        String orderName = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderName);
         if (UtilValidate.isNotEmpty(orderName)) {
             paramList.add("orderName=" + orderName);
             conditions.add(makeExpr("orderName", orderName, true));
         }
 
-        List<String> orderStatusList = UtilGenerics.cast(context.get("orderStatusId"));
+        List<String> orderStatusList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderStatusId));
         if (orderStatusList != null) {
             List<EntityCondition> orExprs = new LinkedList<>();
             for (String orderStatusId : orderStatusList) {
@@ -155,7 +155,7 @@ public class OrderLookupServices {
             conditions.add(EntityCondition.makeCondition(orExprs, EntityOperator.OR));
         }
 
-        List<String> productStoreList = UtilGenerics.cast(context.get("productStoreId"));
+        List<String> productStoreList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.productStoreId));
         if (productStoreList != null) {
             List<EntityExpr> orExprs = new LinkedList<>();
             for (String productStoreId : productStoreList) {
@@ -165,7 +165,7 @@ public class OrderLookupServices {
             conditions.add(EntityCondition.makeCondition(orExprs, EntityOperator.OR));
         }
 
-        List<String> webSiteList = UtilGenerics.cast(context.get("orderWebSiteId"));
+        List<String> webSiteList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderWebSiteId));
         if (webSiteList != null) {
             List<EntityExpr> orExprs = new LinkedList<>();
             for (String webSiteId : webSiteList) {
@@ -175,7 +175,7 @@ public class OrderLookupServices {
             conditions.add(EntityCondition.makeCondition(orExprs, EntityOperator.OR));
         }
 
-        List<String> saleChannelList = UtilGenerics.cast(context.get("salesChannelEnumId"));
+        List<String> saleChannelList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.salesChannelEnumId));
         if (saleChannelList != null) {
             List<EntityExpr> orExprs = new LinkedList<>();
             for (String salesChannelEnumId : saleChannelList) {
@@ -185,38 +185,38 @@ public class OrderLookupServices {
             conditions.add(EntityCondition.makeCondition(orExprs, EntityOperator.OR));
         }
 
-        String createdBy = (String) context.get("createdBy");
+        String createdBy = (String) context.get(org.apache.ofbiz.persistence.entity.x.createdBy);
         if (UtilValidate.isNotEmpty(createdBy)) {
             paramList.add("createdBy=" + createdBy);
             conditions.add(makeExpr("createdBy", createdBy));
         }
 
-        String terminalId = (String) context.get("terminalId");
+        String terminalId = (String) context.get(org.apache.ofbiz.persistence.entity.x.terminalId);
         if (UtilValidate.isNotEmpty(terminalId)) {
             paramList.add("terminalId=" + terminalId);
             conditions.add(makeExpr("terminalId", terminalId));
         }
 
-        String transactionId = (String) context.get("transactionId");
+        String transactionId = (String) context.get(org.apache.ofbiz.persistence.entity.x.transactionId);
         if (UtilValidate.isNotEmpty(transactionId)) {
             paramList.add("transactionId=" + transactionId);
             conditions.add(makeExpr("transactionId", transactionId));
         }
 
-        String externalId = (String) context.get("externalId");
+        String externalId = (String) context.get(org.apache.ofbiz.persistence.entity.x.externalId);
         if (UtilValidate.isNotEmpty(externalId)) {
             paramList.add("externalId=" + externalId);
             conditions.add(makeExpr("externalId", externalId));
         }
 
-        String internalCode = (String) context.get("internalCode");
+        String internalCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.internalCode);
         if (UtilValidate.isNotEmpty(internalCode)) {
             paramList.add("internalCode=" + internalCode);
             conditions.add(makeExpr("internalCode", internalCode));
         }
 
         String dateField = "Y".equals(useEntryDate) ? "entryDate" : "orderDate";
-        String minDate = (String) context.get("minDate");
+        String minDate = (String) context.get(org.apache.ofbiz.persistence.entity.x.minDate);
         if (UtilValidate.isNotEmpty(minDate) && minDate.length() > 8) {
             minDate = minDate.trim();
             if (minDate.length() < 14) {
@@ -234,7 +234,7 @@ public class OrderLookupServices {
             }
         }
 
-        String maxDate = (String) context.get("maxDate");
+        String maxDate = (String) context.get(org.apache.ofbiz.persistence.entity.x.maxDate);
         if (UtilValidate.isNotEmpty(maxDate) && maxDate.length() > 8) {
             maxDate = maxDate.trim();
             if (maxDate.length() < 14) {
@@ -253,9 +253,9 @@ public class OrderLookupServices {
         }
 
         // party (role) fields
-        String userLoginId = (String) context.get("userLoginId");
-        String partyId = (String) context.get("partyId");
-        List<String> roleTypeList = UtilGenerics.cast(context.get("roleTypeId"));
+        String userLoginId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        List<String> roleTypeList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.roleTypeId));
 
         if (UtilValidate.isNotEmpty(userLoginId) && UtilValidate.isEmpty(partyId)) {
             GenericValue ul = null;
@@ -265,18 +265,18 @@ public class OrderLookupServices {
                 Debug.logWarning(e.getMessage(), MODULE);
             }
             if (ul != null) {
-                partyId = ul.getString("partyId");
+                partyId = ul.getString(org.apache.ofbiz.persistence.entity.x.partyId);
             }
         }
 
-        String isViewed = (String) context.get("isViewed");
+        String isViewed = (String) context.get(org.apache.ofbiz.persistence.entity.x.isViewed);
         if (UtilValidate.isNotEmpty(isViewed)) {
             paramList.add("isViewed=" + isViewed);
             conditions.add(makeExpr("isViewed", isViewed));
         }
 
         // Shipment Method
-        String shipmentMethod = (String) context.get("shipmentMethod");
+        String shipmentMethod = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentMethod);
         if (UtilValidate.isNotEmpty(shipmentMethod)) {
             String carrierPartyId = shipmentMethod.substring(0, shipmentMethod.indexOf('@'));
             String shippingMethodTypeId = shipmentMethod.substring(shipmentMethod.indexOf('@') + 1);
@@ -296,8 +296,8 @@ public class OrderLookupServices {
             }
         }
         // PaymentGatewayResponse
-        String gatewayAvsResult = (String) context.get("gatewayAvsResult");
-        String gatewayScoreResult = (String) context.get("gatewayScoreResult");
+        String gatewayAvsResult = (String) context.get(org.apache.ofbiz.persistence.entity.x.gatewayAvsResult);
+        String gatewayScoreResult = (String) context.get(org.apache.ofbiz.persistence.entity.x.gatewayScoreResult);
         if (UtilValidate.isNotEmpty(gatewayAvsResult) || UtilValidate.isNotEmpty(gatewayScoreResult)) {
             dve.addMemberEntity("OPP", "OrderPaymentPreference");
             dve.addMemberEntity("PGR", "PaymentGatewayResponse");
@@ -343,14 +343,14 @@ public class OrderLookupServices {
         }
 
         // order item fields
-        String correspondingPoId = (String) context.get("correspondingPoId");
-        String subscriptionId = (String) context.get("subscriptionId");
-        String productId = (String) context.get("productId");
-        String budgetId = (String) context.get("budgetId");
-        String quoteId = (String) context.get("quoteId");
+        String correspondingPoId = (String) context.get(org.apache.ofbiz.persistence.entity.x.correspondingPoId);
+        String subscriptionId = (String) context.get(org.apache.ofbiz.persistence.entity.x.subscriptionId);
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String budgetId = (String) context.get(org.apache.ofbiz.persistence.entity.x.budgetId);
+        String quoteId = (String) context.get(org.apache.ofbiz.persistence.entity.x.quoteId);
 
-        String goodIdentificationTypeId = (String) context.get("goodIdentificationTypeId");
-        String goodIdentificationIdValue = (String) context.get("goodIdentificationIdValue");
+        String goodIdentificationTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.goodIdentificationTypeId);
+        String goodIdentificationIdValue = (String) context.get(org.apache.ofbiz.persistence.entity.x.goodIdentificationIdValue);
         boolean hasGoodIdentification = UtilValidate.isNotEmpty(goodIdentificationTypeId) && UtilValidate.isNotEmpty(goodIdentificationIdValue);
 
         if (correspondingPoId != null || subscriptionId != null || productId != null || budgetId != null || quoteId != null
@@ -397,7 +397,7 @@ public class OrderLookupServices {
                     Debug.logWarning(e.getMessage(), MODULE);
                 }
                 if (product != null) {
-                    String isVirtual = product.getString("isVirtual");
+                    String isVirtual = product.getString(org.apache.ofbiz.persistence.entity.x.isVirtual);
                     if (isVirtual != null && "Y".equals(isVirtual)) {
                         List<EntityExpr> orExprs = new LinkedList<>();
                         orExprs.add(EntityCondition.makeCondition("productId", EntityOperator.EQUALS, productId));
@@ -416,7 +416,7 @@ public class OrderLookupServices {
                         }
                         if (variants != null) {
                             for (GenericValue v : variants) {
-                                orExprs.add(EntityCondition.makeCondition("productId", EntityOperator.EQUALS, v.getString("productIdTo")));
+                                orExprs.add(EntityCondition.makeCondition("productId", EntityOperator.EQUALS, v.getString(org.apache.ofbiz.persistence.entity.x.productIdTo)));
                             }
                         }
                         conditions.add(EntityCondition.makeCondition(orExprs, EntityOperator.OR));
@@ -442,11 +442,11 @@ public class OrderLookupServices {
         }
 
         // payment preference fields
-        String billingAccountId = (String) context.get("billingAccountId");
-        String finAccountId = (String) context.get("finAccountId");
-        String cardNumber = (String) context.get("cardNumber");
-        String accountNumber = (String) context.get("accountNumber");
-        String paymentStatusId = (String) context.get("paymentStatusId");
+        String billingAccountId = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingAccountId);
+        String finAccountId = (String) context.get(org.apache.ofbiz.persistence.entity.x.finAccountId);
+        String cardNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber);
+        String accountNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.accountNumber);
+        String paymentStatusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentStatusId);
 
         if (UtilValidate.isNotEmpty(paymentStatusId)) {
             paramList.add("paymentStatusId=" + paymentStatusId);
@@ -493,10 +493,10 @@ public class OrderLookupServices {
         }
 
         // shipment/inventory item
-        String inventoryItemId = (String) context.get("inventoryItemId");
-        String softIdentifier = (String) context.get("softIdentifier");
-        String serialNumber = (String) context.get("serialNumber");
-        String shipmentId = (String) context.get("shipmentId");
+        String inventoryItemId = (String) context.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId);
+        String softIdentifier = (String) context.get(org.apache.ofbiz.persistence.entity.x.softIdentifier);
+        String serialNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.serialNumber);
+        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
 
         if (shipmentId != null || inventoryItemId != null || softIdentifier != null || serialNumber != null) {
             dve.addMemberEntity("II", "ItemIssuance");
@@ -533,7 +533,7 @@ public class OrderLookupServices {
         }
 
         // back order checking
-        String hasBackOrders = (String) context.get("hasBackOrders");
+        String hasBackOrders = (String) context.get(org.apache.ofbiz.persistence.entity.x.hasBackOrders);
         if (UtilValidate.isNotEmpty(hasBackOrders)) {
             dve.addMemberEntity("IR", "OrderItemShipGrpInvRes");
             dve.addAlias("IR", "quantityNotAvailable");
@@ -552,8 +552,8 @@ public class OrderLookupServices {
         }
 
         // Get all orders according to specific ship to country with "Only Include" or "Do not Include".
-        String countryGeoId = (String) context.get("countryGeoId");
-        String includeCountry = (String) context.get("includeCountry");
+        String countryGeoId = (String) context.get(org.apache.ofbiz.persistence.entity.x.countryGeoId);
+        String includeCountry = (String) context.get(org.apache.ofbiz.persistence.entity.x.includeCountry);
         if (UtilValidate.isNotEmpty(countryGeoId) && UtilValidate.isNotEmpty(includeCountry)) {
             paramList.add("countryGeoId=" + countryGeoId);
             paramList.add("includeCountry=" + includeCountry);
@@ -645,7 +645,7 @@ public class OrderLookupServices {
             orderList, List<String> paramList) {
         List<String> filterInventoryProblems = new LinkedList<>();
 
-        String doFilter = (String) context.get("filterInventoryProblems");
+        String doFilter = (String) context.get(org.apache.ofbiz.persistence.entity.x.filterInventoryProblems);
         if (doFilter == null) {
             doFilter = "N";
         }
@@ -665,9 +665,9 @@ public class OrderLookupServices {
         List<String> filterPOsWithRejectedItems = new LinkedList<>();
         List<String> filterPartiallyReceivedPOs = new LinkedList<>();
 
-        String filterPOReject = (String) context.get("filterPOsWithRejectedItems");
-        String filterPOPast = (String) context.get("filterPOsOpenPastTheirETA");
-        String filterPartRec = (String) context.get("filterPartiallyReceivedPOs");
+        String filterPOReject = (String) context.get(org.apache.ofbiz.persistence.entity.x.filterPOsWithRejectedItems);
+        String filterPOPast = (String) context.get(org.apache.ofbiz.persistence.entity.x.filterPOsOpenPastTheirETA);
+        String filterPartRec = (String) context.get(org.apache.ofbiz.persistence.entity.x.filterPartiallyReceivedPOs);
         if (filterPOReject == null) {
             filterPOReject = "N";
         }

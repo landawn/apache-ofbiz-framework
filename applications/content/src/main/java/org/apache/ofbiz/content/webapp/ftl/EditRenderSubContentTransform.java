@@ -126,19 +126,19 @@ public class EditRenderSubContentTransform implements TemplateTransformModel {
 
         String dataResourceIdTemp = null;
         String subContentIdSubTemp = null;
-        if (subContentDataResourceView != null && subContentDataResourceView.get("contentId") != null) {
-            dataResourceIdTemp = (String) subContentDataResourceView.get("drDataResourceId");
-            subContentIdSubTemp = (String) subContentDataResourceView.get("contentId");
+        if (subContentDataResourceView != null && subContentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.contentId) != null) {
+            dataResourceIdTemp = (String) subContentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.drDataResourceId);
+            subContentIdSubTemp = (String) subContentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.contentId);
             if (UtilValidate.isEmpty(subDataResourceTypeIdTemp)) {
-                subDataResourceTypeIdTemp = (String) subContentDataResourceView.get("drDataResourceTypeId");
+                subDataResourceTypeIdTemp = (String) subContentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.drDataResourceTypeId);
             }
             if (UtilValidate.isEmpty(mimeTypeIdTemp)) {
-                mimeTypeIdTemp = (String) subContentDataResourceView.get("mimeTypeId");
+                mimeTypeIdTemp = (String) subContentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
                 if (UtilValidate.isEmpty(mimeTypeIdTemp) && UtilValidate.isNotEmpty(contentId)) { // will need these below
                     try {
                         parentContent = EntityQuery.use(delegator).from("Content").where("contentId", contentId).queryOne();
                         if (parentContent != null) {
-                            mimeTypeIdTemp = (String) parentContent.get("mimeTypeId");
+                            mimeTypeIdTemp = (String) parentContent.get(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
                         }
                     } catch (GenericEntityException e) {
                         throw new RuntimeException(e.getMessage());

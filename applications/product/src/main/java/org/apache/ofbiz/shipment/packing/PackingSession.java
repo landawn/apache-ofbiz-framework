@@ -206,10 +206,10 @@ public class PackingSession implements java.io.Serializable {
         // find the inventoryItemId to use
         if (reservations.size() == 1) {
             GenericValue res = EntityUtil.getFirst(reservations);
-            int checkCode = this.checkLineForAdd(res, res.get("orderId").toString(),
-                    res.get("orderItemSeqId").toString(), res.get("shipGroupSeqId").toString(), productId, quantity, packageSeqId, update);
-            this.createPackLineItem(checkCode, res, res.get("orderId").toString(),
-                    res.get("orderItemSeqId").toString(), res.get("shipGroupSeqId").toString(), productId, quantity, weight, packageSeqId);
+            int checkCode = this.checkLineForAdd(res, res.get(org.apache.ofbiz.persistence.entity.x.orderId).toString(),
+                    res.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId).toString(), res.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId).toString(), productId, quantity, packageSeqId, update);
+            this.createPackLineItem(checkCode, res, res.get(org.apache.ofbiz.persistence.entity.x.orderId).toString(),
+                    res.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId).toString(), res.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId).toString(), productId, quantity, weight, packageSeqId);
         } else {
             // more than one reservation found
             Map<GenericValue, BigDecimal> toCreateMap = new HashMap<>();
@@ -220,16 +220,16 @@ public class PackingSession implements java.io.Serializable {
                 GenericValue res = i.next();
 
                 // Check that the inventory item product match with the current product to pack
-                if (!productId.equals(res.getRelatedOne("InventoryItem", false).getString("productId"))) {
+                if (!productId.equals(res.getRelatedOne(org.apache.ofbiz.persistence.entity.x.InventoryItem, false).getString("productId"))) {
                     continue;
                 }
 
-                BigDecimal resQty = res.getBigDecimal("quantity");
+                BigDecimal resQty = res.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                 BigDecimal resPackedQty = this.getPackedQuantity(
-                        res.get("orderId").toString(),
-                        res.get("orderItemSeqId").toString(),
-                        res.get("shipGroupSeqId").toString(),
-                        productId, res.getString("inventoryItemId"), -1);
+                        res.get(org.apache.ofbiz.persistence.entity.x.orderId).toString(),
+                        res.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId).toString(),
+                        res.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId).toString(),
+                        productId, res.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId), -1);
                 if (resPackedQty.compareTo(resQty) >= 0) {
                     continue;
                 } else if (!update) {
@@ -239,9 +239,9 @@ public class PackingSession implements java.io.Serializable {
                 BigDecimal thisQty = resQty.compareTo(qtyRemain) > 0 ? qtyRemain : resQty;
 
                 int thisCheck = this.checkLineForAdd(res,
-                        res.get("orderId").toString(),
-                        res.get("orderItemSeqId").toString(),
-                        res.get("shipGroupSeqId").toString(),
+                        res.get(org.apache.ofbiz.persistence.entity.x.orderId).toString(),
+                        res.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId).toString(),
+                        res.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId).toString(),
                         productId, thisQty, packageSeqId, update);
                 switch (thisCheck) {
                 case 2:
@@ -266,8 +266,8 @@ public class PackingSession implements java.io.Serializable {
                 for (Map.Entry<GenericValue, BigDecimal> entry: toCreateMap.entrySet()) {
                     GenericValue res = entry.getKey();
                     BigDecimal qty = entry.getValue();
-                    this.createPackLineItem(2, res, res.get("orderId").toString(), res.get("orderItemSeqId").toString(),
-                            res.get("shipGroupSeqId").toString(), productId, qty, weight, packageSeqId);
+                    this.createPackLineItem(2, res, res.get(org.apache.ofbiz.persistence.entity.x.orderId).toString(), res.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId).toString(),
+                            res.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId).toString(), productId, qty, weight, packageSeqId);
                 }
             } else {
                 throw new GeneralException("Not enough inventory reservation available; cannot pack the item! [103]");
@@ -353,7 +353,7 @@ public class PackingSession implements java.io.Serializable {
             break;
         case 2:
             // need to create a new item
-            String invItemId = res.getString("inventoryItemId");
+            String invItemId = res.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId);
             packLines.add(new PackingSessionLine(orderId, orderItemSeqId, shipGroupSeqId, productId, invItemId, quantity, weight, packageSeqId));
             break;
         default:
@@ -396,13 +396,13 @@ public class PackingSession implements java.io.Serializable {
                 // get the reservations for the item
                 Map<String, Object> invLookup = new HashMap<>();
                 invLookup.put("orderId", orderId);
-                invLookup.put("orderItemSeqId", item.getString("orderItemSeqId"));
+                invLookup.put("orderItemSeqId", item.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                 invLookup.put("shipGroupSeqId", shipGroupSeqId);
                 List<GenericValue> reservations = this.getDelegator().findByAnd("OrderItemShipGrpInvRes", invLookup, null, false);
                 for (GenericValue res: reservations) {
-                    BigDecimal qty = res.getBigDecimal("quantity");
+                    BigDecimal qty = res.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                     if (quantity.compareTo(qty) <= 0) {
-                        orderItemSeqId = item.getString("orderItemSeqId");
+                        orderItemSeqId = item.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
                         orderItemSeqIds.add(orderItemSeqId);
                     }
                 }
@@ -431,8 +431,8 @@ public class PackingSession implements java.io.Serializable {
     protected int checkLineForAdd(GenericValue res, String orderId, String orderItemSeqId, String shipGroupSeqId, String productId,
                                   BigDecimal quantity, int packageSeqId, boolean update) {
         // check to see if the reservation can hold the requested quantity amount
-        String invItemId = res.getString("inventoryItemId");
-        BigDecimal resQty = res.getBigDecimal("quantity");
+        String invItemId = res.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId);
+        BigDecimal resQty = res.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
 
         PackingSessionLine line = this.findLine(orderId, orderItemSeqId, shipGroupSeqId, productId, invItemId, packageSeqId);
         BigDecimal packedQty = this.getPackedQuantity(orderId, orderItemSeqId, shipGroupSeqId, productId);
@@ -675,7 +675,7 @@ public class PackingSession implements java.io.Serializable {
             GenericValue res = EntityUtil.getFirst(this.getDelegator().findByAnd("OrderItemAndShipGrpInvResAndItemSum",
                     UtilMisc.toMap("orderId", orderId,
                     "orderItemSeqId", orderItemSeqId, "shipGroupSeqId", shipGroupSeqId, "inventoryProductId", productId), null, false));
-            reserved = res.getBigDecimal("totQuantityAvailable");
+            reserved = res.getBigDecimal(org.apache.ofbiz.persistence.entity.x.totQuantityAvailable);
             if (reserved == null) {
                 reserved = BigDecimal.ONE.negate();
             }
@@ -697,7 +697,7 @@ public class PackingSession implements java.io.Serializable {
         List<GenericValue> issues = this.getItemIssuances(orderId, orderItemSeqId, shipGroupSeqId);
         if (issues != null) {
             for (GenericValue v: issues) {
-                BigDecimal qty = v.getBigDecimal("quantity");
+                BigDecimal qty = v.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                 if (qty == null) qty = BigDecimal.ZERO;
                 shipped = shipped.add(qty);
             }
@@ -719,7 +719,7 @@ public class PackingSession implements java.io.Serializable {
 
         if (issues != null) {
             for (GenericValue v: issues) {
-                shipmentIds.add(v.getString("shipmentId"));
+                shipmentIds.add(v.getString(org.apache.ofbiz.persistence.entity.x.shipmentId));
             }
         }
 
@@ -1090,36 +1090,36 @@ public class PackingSession implements java.io.Serializable {
         GenericValue orderRoleShipTo = EntityQuery.use(delegator).from("OrderRole").where("orderId", primaryOrderId, "roleTypeId",
                 "SHIP_TO_CUSTOMER").queryFirst();
         if (UtilValidate.isNotEmpty(orderRoleShipTo)) {
-            newShipment.put("partyIdTo", orderRoleShipTo.getString("partyId"));
+            newShipment.put("partyIdTo", orderRoleShipTo.getString(org.apache.ofbiz.persistence.entity.x.partyId));
         }
         String partyIdFrom = null;
         if (primaryOrderId != null) {
             GenericValue orderItemShipGroup = EntityQuery.use(delegator).from("OrderItemShipGroup").where("orderId", primaryOrderId,
                     "shipGroupSeqId", primaryShipGrp).queryFirst();
-            if (UtilValidate.isNotEmpty(orderItemShipGroup.getString("vendorPartyId"))) {
-                partyIdFrom = orderItemShipGroup.getString("vendorPartyId");
-            } else if (UtilValidate.isNotEmpty(orderItemShipGroup.getString("facilityId"))) {
+            if (UtilValidate.isNotEmpty(orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.vendorPartyId))) {
+                partyIdFrom = orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.vendorPartyId);
+            } else if (UtilValidate.isNotEmpty(orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.facilityId))) {
                 GenericValue facility = EntityQuery.use(delegator).from("Facility").where("facilityId",
-                        orderItemShipGroup.getString("facilityId")).queryOne();
-                if (UtilValidate.isNotEmpty(facility.getString("ownerPartyId"))) {
-                    partyIdFrom = facility.getString("ownerPartyId");
+                        orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.facilityId)).queryOne();
+                if (UtilValidate.isNotEmpty(facility.getString(org.apache.ofbiz.persistence.entity.x.ownerPartyId))) {
+                    partyIdFrom = facility.getString(org.apache.ofbiz.persistence.entity.x.ownerPartyId);
                 }
             }
             if (UtilValidate.isEmpty(partyIdFrom)) {
                 GenericValue orderRoleShipFrom = EntityQuery.use(delegator).from("OrderRole").where("orderId", primaryOrderId,
                         "roleTypeId", "SHIP_FROM_VENDOR").queryFirst();
                 if (UtilValidate.isNotEmpty(orderRoleShipFrom)) {
-                    partyIdFrom = orderRoleShipFrom.getString("partyId");
+                    partyIdFrom = orderRoleShipFrom.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                 } else {
                     orderRoleShipFrom = EntityQuery.use(delegator).from("OrderRole").where("orderId", primaryOrderId, "roleTypeId",
                             "BILL_FROM_VENDOR").queryFirst();
-                    partyIdFrom = orderRoleShipFrom.getString("partyId");
+                    partyIdFrom = orderRoleShipFrom.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                 }
             }
         } else if (this.facilityId != null) {
             GenericValue facility = EntityQuery.use(delegator).from("Facility").where("facilityId", this.facilityId).queryOne();
-            if (UtilValidate.isNotEmpty(facility.getString("ownerPartyId"))) {
-                partyIdFrom = facility.getString("ownerPartyId");
+            if (UtilValidate.isNotEmpty(facility.getString(org.apache.ofbiz.persistence.entity.x.ownerPartyId))) {
+                partyIdFrom = facility.getString(org.apache.ofbiz.persistence.entity.x.ownerPartyId);
             }
         }
 
@@ -1211,8 +1211,8 @@ public class PackingSession implements java.io.Serializable {
                 this.getShipmentId()), null, false);
         if (!UtilValidate.isEmpty(shipmentRouteSegments)) {
             for (GenericValue shipmentRouteSegment: shipmentRouteSegments) {
-                shipmentRouteSegment.set("billingWeight", shipmentWeight);
-                shipmentRouteSegment.set("billingWeightUomId", getWeightUomId());
+                shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.billingWeight, shipmentWeight);
+                shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.billingWeightUomId, getWeightUomId());
             }
             getDelegator().storeAll(shipmentRouteSegments);
         }
@@ -1242,11 +1242,11 @@ public class PackingSession implements java.io.Serializable {
                     .where("picklistBinId", picklistBinId)
                     .queryFirst();
             if (picklist != null) {
-                if (!"PICKLIST_PICKED".equals(picklist.getString("statusId"))
-                        && !"PICKLIST_COMPLETED".equals(picklist.getString("statusId"))
-                        && !"PICKLIST_CANCELLED".equals(picklist.getString("statusId"))) {
+                if (!"PICKLIST_PICKED".equals(picklist.getString(org.apache.ofbiz.persistence.entity.x.statusId))
+                        && !"PICKLIST_COMPLETED".equals(picklist.getString(org.apache.ofbiz.persistence.entity.x.statusId))
+                        && !"PICKLIST_CANCELLED".equals(picklist.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                     Map<String, Object> serviceResult = this.getDispatcher().runSync("updatePicklist", UtilMisc.toMap("picklistId",
-                            picklist.getString("picklistId"), "statusId", "PICKLIST_PICKED", "userLogin", userLogin));
+                            picklist.getString(org.apache.ofbiz.persistence.entity.x.picklistId), "statusId", "PICKLIST_PICKED", "userLogin", userLogin));
                     if (!ServiceUtil.isSuccess(serviceResult)) {
                         throw new GeneralException(ServiceUtil.getErrorMessage(serviceResult));
                     }
@@ -1259,11 +1259,11 @@ public class PackingSession implements java.io.Serializable {
                     .queryList();
             if (UtilValidate.isNotEmpty(picklistBins)) {
                 for (GenericValue picklistBin : picklistBins) {
-                    if (!"PICKLIST_PICKED".equals(picklistBin.getString("statusId"))
-                            && !"PICKLIST_COMPLETED".equals(picklistBin.getString("statusId"))
-                            && !"PICKLIST_CANCELLED".equals(picklistBin.getString("statusId"))) {
+                    if (!"PICKLIST_PICKED".equals(picklistBin.getString(org.apache.ofbiz.persistence.entity.x.statusId))
+                            && !"PICKLIST_COMPLETED".equals(picklistBin.getString(org.apache.ofbiz.persistence.entity.x.statusId))
+                            && !"PICKLIST_CANCELLED".equals(picklistBin.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                         Map<String, Object> serviceResult = this.getDispatcher().runSync("updatePicklist", UtilMisc.toMap("picklistId",
-                                picklistBin.getString("picklistId"), "statusId", "PICKLIST_PICKED", "userLogin", userLogin));
+                                picklistBin.getString(org.apache.ofbiz.persistence.entity.x.picklistId), "statusId", "PICKLIST_PICKED", "userLogin", userLogin));
                         if (!ServiceUtil.isSuccess(serviceResult)) {
                             throw new GeneralException(ServiceUtil.getErrorMessage(serviceResult));
                         }
@@ -1283,7 +1283,7 @@ public class PackingSession implements java.io.Serializable {
             GenericValue bin = this.getDelegator().findOne("PicklistBin", UtilMisc.toMap("picklistBinId", picklistBinId), false);
             if (bin != null) {
                 Map<String, Object> ctx = new HashMap<>();
-                ctx.put("picklistId", bin.getString("picklistId"));
+                ctx.put("picklistId", bin.getString(org.apache.ofbiz.persistence.entity.x.picklistId));
                 ctx.put("partyId", pickerPartyId);
                 ctx.put("roleTypeId", "PICKER");
 
@@ -1346,8 +1346,8 @@ public class PackingSession implements java.io.Serializable {
      */
     public BigDecimal getShipmentCostEstimate(GenericValue orderItemShipGroup, String productStoreId, List<GenericValue> shippableItemInfo,
                                               BigDecimal shippableTotal, BigDecimal shippableWeight, BigDecimal shippableQuantity) {
-        return getShipmentCostEstimate(orderItemShipGroup.getString("contactMechId"), orderItemShipGroup.getString("shipmentMethodTypeId"),
-                                       orderItemShipGroup.getString("carrierPartyId"), orderItemShipGroup.getString("carrierRoleTypeId"),
+        return getShipmentCostEstimate(orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.contactMechId), orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId),
+                                       orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId), orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId),
                                        productStoreId, shippableItemInfo, shippableTotal, shippableWeight, shippableQuantity);
     }
 
@@ -1358,8 +1358,8 @@ public class PackingSession implements java.io.Serializable {
      * @return the shipment cost estimate
      */
     public BigDecimal getShipmentCostEstimate(GenericValue orderItemShipGroup, String productStoreId) {
-        return getShipmentCostEstimate(orderItemShipGroup.getString("contactMechId"), orderItemShipGroup.getString("shipmentMethodTypeId"),
-                                       orderItemShipGroup.getString("carrierPartyId"), orderItemShipGroup.getString("carrierRoleTypeId"),
+        return getShipmentCostEstimate(orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.contactMechId), orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId),
+                                       orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId), orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId),
                                        productStoreId, null, null, null, null);
     }
 
@@ -1548,18 +1548,18 @@ public class PackingSession implements java.io.Serializable {
          */
         ItemDisplay(GenericValue v) {
             if ("PicklistItem".equals(v.getEntityName())) {
-                quantity = v.getBigDecimal("quantity").setScale(2, RoundingMode.HALF_UP);
+                quantity = v.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity).setScale(2, RoundingMode.HALF_UP);
                 try {
-                    orderItem = v.getRelatedOne("OrderItem", false);
-                    productId = v.getRelatedOne("InventoryItem", false).getString("productId");
+                    orderItem = v.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItem, false);
+                    productId = v.getRelatedOne(org.apache.ofbiz.persistence.entity.x.InventoryItem, false).getString("productId");
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                 }
             } else {
                 // this is an OrderItemAndShipGrpInvResAndItemSum
                 orderItem = v;
-                productId = v.getString("inventoryProductId");
-                quantity = v.getBigDecimal("totQuantityReserved").setScale(2, RoundingMode.HALF_UP);
+                productId = v.getString(org.apache.ofbiz.persistence.entity.x.inventoryProductId);
+                quantity = v.getBigDecimal(org.apache.ofbiz.persistence.entity.x.totQuantityReserved).setScale(2, RoundingMode.HALF_UP);
             }
             Debug.logInfo("created item display object quantity: " + quantity + " (" + productId + ")", MODULE);
         }
@@ -1602,13 +1602,13 @@ public class PackingSession implements java.io.Serializable {
             if (o instanceof ItemDisplay) {
                 ItemDisplay d = (ItemDisplay) o;
                 boolean sameOrderItemProduct = true;
-                if (d.getOrderItem().getString("productId") != null && orderItem.getString("productId") != null) {
-                    sameOrderItemProduct = d.getOrderItem().getString("productId").equals(orderItem.getString("productId"));
-                } else if (d.getOrderItem().getString("productId") != null || orderItem.getString("productId") != null) {
+                if (d.getOrderItem().getString("productId") != null && orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId) != null) {
+                    sameOrderItemProduct = d.getOrderItem().getString("productId").equals(orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId));
+                } else if (d.getOrderItem().getString("productId") != null || orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId) != null) {
                     sameOrderItemProduct = false;
                 }
                 return (d.productId.equals(productId)
-                        && d.getOrderItem().getString("orderItemSeqId").equals(orderItem.getString("orderItemSeqId"))
+                        && d.getOrderItem().getString("orderItemSeqId").equals(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId))
                         && sameOrderItemProduct);
             } else {
                 return false;

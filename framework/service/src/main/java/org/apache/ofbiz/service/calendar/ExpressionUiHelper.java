@@ -149,13 +149,13 @@ public final class ExpressionUiHelper {
                                                  .queryList();
         Set<String> excludedIds = new HashSet<>();
         for (GenericValue value : findList) {
-            excludedIds.add(value.getString("toTempExprId"));
+            excludedIds.add(value.getString(org.apache.ofbiz.persistence.entity.x.toTempExprId));
         }
         excludedIds.add(tempExprId);
         findList = EntityQuery.use(delegator).from("TemporalExpression").cache(true).queryList();
         Set<String> candidateIds = new HashSet<>();
         for (GenericValue value : findList) {
-            candidateIds.add(value.getString("tempExprId"));
+            candidateIds.add(value.getString(org.apache.ofbiz.persistence.entity.x.tempExprId));
         }
         candidateIds.removeAll(excludedIds);
         return candidateIds;

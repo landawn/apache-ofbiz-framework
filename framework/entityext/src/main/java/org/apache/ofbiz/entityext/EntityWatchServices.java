@@ -38,8 +38,8 @@ public class EntityWatchServices {
      * @return the result of the service execution
      */
     public static Map<String, Object> watchEntity(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue newValue = (GenericValue) context.get("newValue");
-        String fieldName = (String) context.get("fieldName");
+        GenericValue newValue = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.newValue);
+        String fieldName = (String) context.get(org.apache.ofbiz.persistence.entity.x.fieldName);
 
         if (newValue == null) {
             return ServiceUtil.returnSuccess();

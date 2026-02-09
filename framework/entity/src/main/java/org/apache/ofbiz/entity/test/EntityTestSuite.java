@@ -136,7 +136,7 @@ public class EntityTestSuite extends EntityTestCase {
         assertNull("No pre-existing type value", testValue);
         getDelegator().create("TestingType", "testingTypeId", "TEST-UPDATE-1", "description", "Testing Type #Update-1");
         testValue = EntityQuery.use(getDelegator()).from("TestingType").where("testingTypeId", "TEST-UPDATE-1").queryOne();
-        assertEquals("Retrieved value has the correct description", "Testing Type #Update-1", testValue.getString("description"));
+        assertEquals("Retrieved value has the correct description", "Testing Type #Update-1", testValue.getString(org.apache.ofbiz.persistence.entity.x.description));
         // Test Observable aspect
         assertFalse("Observable has not changed", testValue.hasChanged());
         TestObserver observer = new TestObserver();
@@ -152,7 +152,7 @@ public class EntityTestSuite extends EntityTestCase {
         assertFalse("Observable has not changed", testValue.hasChanged());
         // now retrieve it again and make sure that the updated value is correct
         testValue = EntityQuery.use(getDelegator()).from("TestingType").where("testingTypeId", "TEST-UPDATE-1").queryOne();
-        assertEquals("Retrieved value has the correct description", "New Testing Type #Update-1", testValue.getString("description"));
+        assertEquals("Retrieved value has the correct description", "New Testing Type #Update-1", testValue.getString(org.apache.ofbiz.persistence.entity.x.description));
     }
 
     /**
@@ -166,7 +166,7 @@ public class EntityTestSuite extends EntityTestCase {
         assertNull("No pre-existing type value", testValue);
         getDelegator().create("TestingType", "testingTypeId", "TEST-REMOVE-1", "description", "Testing Type #Remove-1");
         testValue = EntityQuery.use(getDelegator()).from("TestingType").where("testingTypeId", "TEST-REMOVE-1").queryOne();
-        assertEquals("Retrieved value has the correct description", "Testing Type #Remove-1", testValue.getString("description"));
+        assertEquals("Retrieved value has the correct description", "Testing Type #Remove-1", testValue.getString(org.apache.ofbiz.persistence.entity.x.description));
         testValue.remove();
         assertFalse("Observable has not changed", testValue.hasChanged());
         // Test immutable
@@ -216,7 +216,7 @@ public class EntityTestSuite extends EntityTestCase {
         assertNull("No pre-existing type value", testValue);
         delegator.create("TestingType", "testingTypeId", "TEST-CACHE-1", "description", "Testing Type #Cache-1");
         testValue = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "TEST-CACHE-1").cache(true).queryOne();
-        assertEquals("Retrieved from cache value has the correct description", "Testing Type #Cache-1", testValue.getString("description"));
+        assertEquals("Retrieved from cache value has the correct description", "Testing Type #Cache-1", testValue.getString(org.apache.ofbiz.persistence.entity.x.description));
         // Test immutable
         try {
             testValue.put("description", "New Testing Type #Cache-1");
@@ -240,16 +240,16 @@ public class EntityTestSuite extends EntityTestCase {
         assertTrue("Modified GenericValue has a different hash code", hashCode != testValue.hashCode());
         testValue.store();
         testValue = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "TEST-CACHE-1").cache(true).queryOne();
-        assertEquals("Retrieved from cache value has the correct description", "New Testing Type #Cache-1", testValue.getString("description"));
+        assertEquals("Retrieved from cache value has the correct description", "New Testing Type #Cache-1", testValue.getString(org.apache.ofbiz.persistence.entity.x.description));
         // Test storeByCondition updates the cache
         testValue = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "TEST-CACHE-1").cache(true).queryFirst();
         EntityCondition storeByCondition = EntityCondition.makeCondition(UtilMisc.toMap("testingTypeId", "TEST-CACHE-1",
-                "lastUpdatedStamp", testValue.get("lastUpdatedStamp")));
+                "lastUpdatedStamp", testValue.get(org.apache.ofbiz.persistence.entity.x.lastUpdatedStamp)));
         int qtyChanged = delegator.storeByCondition("TestingType", UtilMisc.toMap("description", "New Testing Type #Cache-0"), storeByCondition);
         assertEquals("Delegator.storeByCondition updated one value", 1, qtyChanged);
         testValue = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "TEST-CACHE-1").cache(true).queryFirst();
 
-        assertEquals("Retrieved from cache value has the correct description", "New Testing Type #Cache-0", testValue.getString("description"));
+        assertEquals("Retrieved from cache value has the correct description", "New Testing Type #Cache-0", testValue.getString(org.apache.ofbiz.persistence.entity.x.description));
         // Test removeByCondition updates the cache
         qtyChanged = delegator.removeByCondition("TestingType", storeByCondition);
         assertEquals("Delegator.removeByCondition removed one value", 1, qtyChanged);
@@ -275,7 +275,7 @@ public class EntityTestSuite extends EntityTestCase {
                               .queryList();
         assertEquals("Delegator findList returned one value", 1, testList.size());
         testValue = testList.get(0);
-        assertEquals("Retrieved from cache value has the correct description", "Testing Type #Cache-2", testValue.getString("description"));
+        assertEquals("Retrieved from cache value has the correct description", "Testing Type #Cache-2", testValue.getString(org.apache.ofbiz.persistence.entity.x.description));
         // Test immutable
         try {
             testValue.put("description", "New Testing Type #2");
@@ -324,7 +324,7 @@ public class EntityTestSuite extends EntityTestCase {
         // Confirm member entity appears in the view
         testValue = EntityQuery.use(delegator).from("TestingViewPks").where("testingTypeId", "TEST-CACHE-3").cache(true).queryOne();
         assertEquals("View retrieved from cache has the correct member description", "Testing Subtype #Cache-3",
-                testValue.getString("subtypeDescription"));
+                testValue.getString(org.apache.ofbiz.persistence.entity.x.subtypeDescription));
         testValue = EntityQuery.use(delegator).from("TestingSubtype").where("testingTypeId", "TEST-CACHE-3").cache(true).queryOne();
         // Modify member entity
         testValue = (GenericValue) testValue.clone();
@@ -333,7 +333,7 @@ public class EntityTestSuite extends EntityTestCase {
         // Check if cached view contains the modification
         testValue = EntityQuery.use(delegator).from("TestingViewPks").where("testingTypeId", "TEST-CACHE-3").cache(true).queryOne();
         assertEquals("View retrieved from cache has the correct member description", "New Testing Subtype #Cache-3",
-                testValue.getString("subtypeDescription"));
+                testValue.getString(org.apache.ofbiz.persistence.entity.x.subtypeDescription));
     }
 
     /**
@@ -347,14 +347,14 @@ public class EntityTestSuite extends EntityTestCase {
         boolean transBegin = TransactionUtil.begin();
         localDelegator.create("TestingType", "testingTypeId", "TEST-5", "description", "Testing Type #5");
         GenericValue testValue = EntityQuery.use(localDelegator).from("TestingType").where("testingTypeId", "TEST-5").queryOne();
-        assertEquals("Retrieved value has the correct description", "Testing Type #5", testValue.getString("description"));
+        assertEquals("Retrieved value has the correct description", "Testing Type #5", testValue.getString(org.apache.ofbiz.persistence.entity.x.description));
         String newValueStr = UtilXml.toXml(testValue);
         GenericValue newValue = (GenericValue) UtilXml.fromXml(newValueStr);
-        assertEquals("Retrieved value has the correct description", "Testing Type #5", newValue.getString("description"));
+        assertEquals("Retrieved value has the correct description", "Testing Type #5", newValue.getString(org.apache.ofbiz.persistence.entity.x.description));
         newValue.put("description", "XML Testing Type #5");
         newValue.store();
         newValue = EntityQuery.use(localDelegator).from("TestingType").where("testingTypeId", "TEST-5").queryOne();
-        assertEquals("Retrieved value has the correct description", "XML Testing Type #5", newValue.getString("description"));
+        assertEquals("Retrieved value has the correct description", "XML Testing Type #5", newValue.getString(org.apache.ofbiz.persistence.entity.x.description));
         TransactionUtil.rollback(transBegin, null, null);
     }
 
@@ -379,7 +379,7 @@ public class EntityTestSuite extends EntityTestCase {
         for (level1 = 0; level1 < LEVEL_1_MAX; level1++) {
             String nextSeqId = delegator.getNextSeqId("TestingNode");
             GenericValue v = delegator.create("TestingNode", "testingNodeId", nextSeqId,
-                                    "primaryParentNodeId", root.get("testingNodeId"),
+                                    "primaryParentNodeId", root.get(org.apache.ofbiz.persistence.entity.x.testingNodeId),
                                     "description", descriptionPrefix + ":1:node-level #1");
             assertNotNull(v);
         }
@@ -424,7 +424,7 @@ public class EntityTestSuite extends EntityTestCase {
             GenericValue testing = delegator.makeValue("Testing",
                             "testingId", delegator.getNextSeqId("Testing"),
                             "testingTypeId", "TEST-TREE-1");
-            testing.put("testingName", "leaf-#" + node.getString("testingNodeId"));
+            testing.put("testingName", "leaf-#" + node.getString(org.apache.ofbiz.persistence.entity.x.testingNodeId));
             testing.put("description", "level1 leaf");
             testing.put("comments", "No-comments");
             testing.put("testingSize", 10L);
@@ -432,8 +432,8 @@ public class EntityTestSuite extends EntityTestCase {
 
             newValues.add(testing);
             GenericValue member = delegator.makeValue("TestingNodeMember",
-                            "testingNodeId", node.get("testingNodeId"),
-                            "testingId", testing.get("testingId"));
+                            "testingNodeId", node.get(org.apache.ofbiz.persistence.entity.x.testingNodeId),
+                            "testingId", testing.get(org.apache.ofbiz.persistence.entity.x.testingId));
 
             member.put("fromDate", now);
             member.put("thruDate", UtilDateTime.getNextDayStart(now));
@@ -474,11 +474,11 @@ public class EntityTestSuite extends EntityTestCase {
                                            .where(EntityCondition.makeCondition("description", EntityOperator.LIKE, descriptionPrefix + "%"))
                                            .queryList()) {
             if (i % 2 == 0) {
-                GenericValue testing = delegator.create("Testing", "testingId", descriptionPrefix + ":" + node.get("testingNodeId"), "testingTypeId",
-                        typeId, "description", node.get("description"));
+                GenericValue testing = delegator.create("Testing", "testingId", descriptionPrefix + ":" + node.get(org.apache.ofbiz.persistence.entity.x.testingNodeId), "testingTypeId",
+                        typeId, "description", node.get(org.apache.ofbiz.persistence.entity.x.description));
                 GenericValue member = delegator.makeValue("TestingNodeMember",
-                        "testingNodeId", node.get("testingNodeId"),
-                        "testingId", testing.get("testingId"));
+                        "testingNodeId", node.get(org.apache.ofbiz.persistence.entity.x.testingNodeId),
+                        "testingId", testing.get(org.apache.ofbiz.persistence.entity.x.testingId));
 
                 member.put("fromDate", now);
                 member.put("thruDate", UtilDateTime.getNextDayStart(now));
@@ -566,7 +566,7 @@ public class EntityTestSuite extends EntityTestCase {
         assertNotNull("Found nodes", nodes);
 
         for (GenericValue product: nodes) {
-            String nodeId = product.getString("description");
+            String nodeId = product.getString(org.apache.ofbiz.persistence.entity.x.description);
             Debug.logInfo("Testing name - " + nodeId, MODULE);
             assertFalse("No nodes starting w/ root", nodeId.startsWith("root"));
         }
@@ -648,7 +648,7 @@ public class EntityTestSuite extends EntityTestCase {
         List<GenericValue> testings = new ArrayList<>();
 
         for (GenericValue nodeMember: values) {
-            testings.add(nodeMember.getRelatedOne("Testing", false));
+            testings.add(nodeMember.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Testing, false));
         }
         // and remove the nodeMember afterwards
         delegator.removeAll(values);
@@ -826,7 +826,7 @@ public class EntityTestSuite extends EntityTestCase {
                 int i = 0;
                 GenericValue item = iterator.next();
                 while (item != null) {
-                    assertEquals("Testing if iterated data matches test data (row " + i + "): ", getTestId("T3-", i), item.getString("testingId"));
+                    assertEquals("Testing if iterated data matches test data (row " + i + "): ", getTestId("T3-", i), item.getString(org.apache.ofbiz.persistence.entity.x.testingId));
                     item = iterator.next();
                     i++;
                 }
@@ -929,61 +929,61 @@ public class EntityTestSuite extends EntityTestCase {
         try {
             GenericValue testValue = delegator.makeValue("TestFieldType", "testFieldTypeId", id);
             testValue.create();
-            testValue.set("blobField", testBlob);
-            testValue.set("byteArrayField", b);
-            testValue.set("objectField", currentTimestamp);
-            testValue.set("dateField", currentDate);
-            testValue.set("timeField", currentTime);
-            testValue.set("dateTimeField", currentTimestamp);
-            testValue.set("fixedPointField", fixedPoint);
-            testValue.set("floatingPointField", floatingPoint);
-            testValue.set("numericField", numeric);
-            testValue.set("clobField", clobStr);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.blobField, testBlob);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.byteArrayField, b);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.objectField, currentTimestamp);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.dateField, currentDate);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.timeField, currentTime);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.dateTimeField, currentTimestamp);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.fixedPointField, fixedPoint);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.floatingPointField, floatingPoint);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.numericField, numeric);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.clobField, clobStr);
             testValue.store();
             testValue = EntityQuery.use(delegator).from("TestFieldType").where("testFieldTypeId", id).queryOne();
-            assertEquals("testFieldTypeId", id, testValue.get("testFieldTypeId"));
-            Blob blob = (Blob) testValue.get("blobField");
+            assertEquals("testFieldTypeId", id, testValue.get(org.apache.ofbiz.persistence.entity.x.testFieldTypeId));
+            Blob blob = (Blob) testValue.get(org.apache.ofbiz.persistence.entity.x.blobField);
             byte[] c = blob.getBytes(1, (int) blob.length());
             assertEquals("Byte array read from entity is the same length", b.length, c.length);
             for (int i = 0; i < b.length; i++) {
                 assertEquals("Byte array data[" + i + "]", b[i], c[i]);
             }
-            c = (byte[]) testValue.get("byteArrayField");
+            c = (byte[]) testValue.get(org.apache.ofbiz.persistence.entity.x.byteArrayField);
             assertEquals("Byte array read from entity is the same length", b.length, c.length);
             for (int i = 0; i < b.length; i++) {
                 assertEquals("Byte array data[" + i + "]", b[i], c[i]);
             }
-            assertEquals("objectField", currentTimestamp, testValue.get("objectField"));
-            assertEquals("dateField", currentDate, testValue.get("dateField"));
-            assertEquals("timeField", currentTime, testValue.get("timeField"));
-            assertEquals("dateTimeField", currentTimestamp, testValue.get("dateTimeField"));
-            assertEquals("fixedPointField", fixedPoint, testValue.get("fixedPointField"));
-            assertEquals("floatingPointField", floatingPoint, testValue.get("floatingPointField"));
-            assertEquals("numericField", numeric, testValue.get("numericField"));
-            assertEquals("clobField", clobStr, testValue.get("clobField"));
-            testValue.set("blobField", null);
-            testValue.set("byteArrayField", null);
-            testValue.set("objectField", null);
-            testValue.set("dateField", null);
-            testValue.set("timeField", null);
-            testValue.set("dateTimeField", null);
-            testValue.set("fixedPointField", null);
-            testValue.set("floatingPointField", null);
-            testValue.set("numericField", null);
-            testValue.set("clobField", null);
+            assertEquals("objectField", currentTimestamp, testValue.get(org.apache.ofbiz.persistence.entity.x.objectField));
+            assertEquals("dateField", currentDate, testValue.get(org.apache.ofbiz.persistence.entity.x.dateField));
+            assertEquals("timeField", currentTime, testValue.get(org.apache.ofbiz.persistence.entity.x.timeField));
+            assertEquals("dateTimeField", currentTimestamp, testValue.get(org.apache.ofbiz.persistence.entity.x.dateTimeField));
+            assertEquals("fixedPointField", fixedPoint, testValue.get(org.apache.ofbiz.persistence.entity.x.fixedPointField));
+            assertEquals("floatingPointField", floatingPoint, testValue.get(org.apache.ofbiz.persistence.entity.x.floatingPointField));
+            assertEquals("numericField", numeric, testValue.get(org.apache.ofbiz.persistence.entity.x.numericField));
+            assertEquals("clobField", clobStr, testValue.get(org.apache.ofbiz.persistence.entity.x.clobField));
+            testValue.set(org.apache.ofbiz.persistence.entity.x.blobField, null);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.byteArrayField, null);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.objectField, null);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.dateField, null);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.timeField, null);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.dateTimeField, null);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.fixedPointField, null);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.floatingPointField, null);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.numericField, null);
+            testValue.set(org.apache.ofbiz.persistence.entity.x.clobField, null);
             testValue.store();
             testValue = EntityQuery.use(delegator).from("TestFieldType").where("testFieldTypeId", id).queryOne();
-            assertEquals("testFieldTypeId", id, testValue.get("testFieldTypeId"));
-            assertNull("blobField null", testValue.get("blobField"));
-            assertNull("byteArrayField null", testValue.get("byteArrayField"));
-            assertNull("objectField null", testValue.get("objectField"));
-            assertNull("dateField null", testValue.get("dateField"));
-            assertNull("timeField null", testValue.get("timeField"));
-            assertNull("dateTimeField null", testValue.get("dateTimeField"));
-            assertNull("fixedPointField null", testValue.get("fixedPointField"));
-            assertNull("floatingPointField null", testValue.get("floatingPointField"));
-            assertNull("numericField null", testValue.get("numericField"));
-            assertNull("clobField null", testValue.get("clobField"));
+            assertEquals("testFieldTypeId", id, testValue.get(org.apache.ofbiz.persistence.entity.x.testFieldTypeId));
+            assertNull("blobField null", testValue.get(org.apache.ofbiz.persistence.entity.x.blobField));
+            assertNull("byteArrayField null", testValue.get(org.apache.ofbiz.persistence.entity.x.byteArrayField));
+            assertNull("objectField null", testValue.get(org.apache.ofbiz.persistence.entity.x.objectField));
+            assertNull("dateField null", testValue.get(org.apache.ofbiz.persistence.entity.x.dateField));
+            assertNull("timeField null", testValue.get(org.apache.ofbiz.persistence.entity.x.timeField));
+            assertNull("dateTimeField null", testValue.get(org.apache.ofbiz.persistence.entity.x.dateTimeField));
+            assertNull("fixedPointField null", testValue.get(org.apache.ofbiz.persistence.entity.x.fixedPointField));
+            assertNull("floatingPointField null", testValue.get(org.apache.ofbiz.persistence.entity.x.floatingPointField));
+            assertNull("numericField null", testValue.get(org.apache.ofbiz.persistence.entity.x.numericField));
+            assertNull("clobField null", testValue.get(org.apache.ofbiz.persistence.entity.x.clobField));
         } finally {
             // Remove all our newly inserted values.
             List<GenericValue> values = EntityQuery.use(delegator).from("TestFieldType").queryList();
@@ -1034,16 +1034,16 @@ public class EntityTestSuite extends EntityTestCase {
         GenericValue t1 = EntityQuery.use(delegator).from("Testing").where("testingId", "T1").queryOne();
         GenericValue t2 = EntityQuery.use(delegator).from("Testing").where("testingId", "T2").cache(true).queryOne();
         assertNotNull("Create Testing(T1)", t1);
-        assertEquals("Create Testing(T1).testingTypeId", "JUNIT-TEST", t1.getString("testingTypeId"));
-        assertEquals("Create Testing(T1).testingName", "First test", t1.getString("testingName"));
-        assertEquals("Create Testing(T1).testingSize", Long.valueOf(10), t1.getLong("testingSize"));
-        assertEquals("Create Testing(T1).testingDate", UtilDateTime.toTimestamp("01/01/2010 00:00:00"), t1.getTimestamp("testingDate"));
+        assertEquals("Create Testing(T1).testingTypeId", "JUNIT-TEST", t1.getString(org.apache.ofbiz.persistence.entity.x.testingTypeId));
+        assertEquals("Create Testing(T1).testingName", "First test", t1.getString(org.apache.ofbiz.persistence.entity.x.testingName));
+        assertEquals("Create Testing(T1).testingSize", Long.valueOf(10), t1.getLong(org.apache.ofbiz.persistence.entity.x.testingSize));
+        assertEquals("Create Testing(T1).testingDate", UtilDateTime.toTimestamp("01/01/2010 00:00:00"), t1.getTimestamp(org.apache.ofbiz.persistence.entity.x.testingDate));
 
         assertNotNull("Create Testing(T2)", t2);
-        assertEquals("Create Testing(T2).testingTypeId", "JUNIT-TEST2", t2.getString("testingTypeId"));
-        assertEquals("Create Testing(T2).testingName", "Second test", t2.getString("testingName"));
-        assertEquals("Create Testing(T2).testingSize", Long.valueOf(20), t2.getLong("testingSize"));
-        assertEquals("Create Testing(T2).testingDate", UtilDateTime.toTimestamp("02/01/2010 00:00:00"), t2.getTimestamp("testingDate"));
+        assertEquals("Create Testing(T2).testingTypeId", "JUNIT-TEST2", t2.getString(org.apache.ofbiz.persistence.entity.x.testingTypeId));
+        assertEquals("Create Testing(T2).testingName", "Second test", t2.getString(org.apache.ofbiz.persistence.entity.x.testingName));
+        assertEquals("Create Testing(T2).testingSize", Long.valueOf(20), t2.getLong(org.apache.ofbiz.persistence.entity.x.testingSize));
+        assertEquals("Create Testing(T2).testingDate", UtilDateTime.toTimestamp("02/01/2010 00:00:00"), t2.getTimestamp(org.apache.ofbiz.persistence.entity.x.testingDate));
     }
 
     /**
@@ -1070,10 +1070,10 @@ public class EntityTestSuite extends EntityTestCase {
         assertEquals("Create Skip Entity loaded ", 3, numberLoaded);
         GenericValue t1 = EntityQuery.use(delegator).from("Testing").where("testingId", "reader-create-skip").queryOne();
         assertNotNull("Create Skip Testing(T1)", t1);
-        assertEquals("Create Skip Testing(T1).testingTypeId", "reader-create-skip", t1.getString("testingTypeId"));
-        assertEquals("Create Skip Testing(T1).testingName", "reader create skip", t1.getString("testingName"));
-        assertEquals("Create Skip Testing(T1).testingSize", Long.valueOf(10), t1.getLong("testingSize"));
-        assertEquals("Create Skip Testing(T1).testingDate", UtilDateTime.toTimestamp("01/01/2010 00:00:00"), t1.getTimestamp("testingDate"));
+        assertEquals("Create Skip Testing(T1).testingTypeId", "reader-create-skip", t1.getString(org.apache.ofbiz.persistence.entity.x.testingTypeId));
+        assertEquals("Create Skip Testing(T1).testingName", "reader create skip", t1.getString(org.apache.ofbiz.persistence.entity.x.testingName));
+        assertEquals("Create Skip Testing(T1).testingSize", Long.valueOf(10), t1.getLong(org.apache.ofbiz.persistence.entity.x.testingSize));
+        assertEquals("Create Skip Testing(T1).testingDate", UtilDateTime.toTimestamp("01/01/2010 00:00:00"), t1.getTimestamp(org.apache.ofbiz.persistence.entity.x.testingDate));
     }
 
     /**
@@ -1101,16 +1101,16 @@ public class EntityTestSuite extends EntityTestCase {
         GenericValue t1 = EntityQuery.use(delegator).from("Testing").where("testingId", "create-update-T1").queryOne();
         GenericValue t3 = EntityQuery.use(delegator).from("Testing").where("testingId", "create-update-T3").queryOne();
         assertNotNull("Update Testing(T1)", t1);
-        assertEquals("Update Testing(T1).testingTypeId", "create-update", t1.getString("testingTypeId"));
-        assertEquals("Update Testing(T1).testingName", "First test update", t1.getString("testingName"));
-        assertEquals("Update Testing(T1).testingSize", Long.valueOf(20), t1.getLong("testingSize"));
-        assertEquals("Update Testing(T1).testingDate", UtilDateTime.toTimestamp("01/01/2010 00:00:00"), t1.getTimestamp("testingDate"));
+        assertEquals("Update Testing(T1).testingTypeId", "create-update", t1.getString(org.apache.ofbiz.persistence.entity.x.testingTypeId));
+        assertEquals("Update Testing(T1).testingName", "First test update", t1.getString(org.apache.ofbiz.persistence.entity.x.testingName));
+        assertEquals("Update Testing(T1).testingSize", Long.valueOf(20), t1.getLong(org.apache.ofbiz.persistence.entity.x.testingSize));
+        assertEquals("Update Testing(T1).testingDate", UtilDateTime.toTimestamp("01/01/2010 00:00:00"), t1.getTimestamp(org.apache.ofbiz.persistence.entity.x.testingDate));
 
         assertNotNull("Update Testing(T3)", t3);
-        assertEquals("Update Testing(T3).testingTypeId", "create-updated", t3.getString("testingTypeId"));
-        assertEquals("Update Testing(T3).testingName", "Third test", t3.getString("testingName"));
-        assertEquals("Update Testing(T3).testingSize", Long.valueOf(30), t3.getLong("testingSize"));
-        assertEquals("Update Testing(T3).testingDate", UtilDateTime.toTimestamp("03/01/2010 00:00:00"), t3.getTimestamp("testingDate"));
+        assertEquals("Update Testing(T3).testingTypeId", "create-updated", t3.getString(org.apache.ofbiz.persistence.entity.x.testingTypeId));
+        assertEquals("Update Testing(T3).testingName", "Third test", t3.getString(org.apache.ofbiz.persistence.entity.x.testingName));
+        assertEquals("Update Testing(T3).testingSize", Long.valueOf(30), t3.getLong(org.apache.ofbiz.persistence.entity.x.testingSize));
+        assertEquals("Update Testing(T3).testingDate", UtilDateTime.toTimestamp("03/01/2010 00:00:00"), t3.getTimestamp(org.apache.ofbiz.persistence.entity.x.testingDate));
     }
 
     /**
@@ -1136,16 +1136,16 @@ public class EntityTestSuite extends EntityTestCase {
         GenericValue t1 = EntityQuery.use(delegator).from("Testing").where("testingId", "create-replace-T1").queryOne();
         GenericValue t2 = EntityQuery.use(delegator).from("Testing").where("testingId", "create-replace-T2").queryOne();
         assertNotNull("Replace Testing(T1)", t1);
-        assertEquals("Replace Testing(T1).testingTypeId", "create-replace", t1.getString("testingTypeId"));
-        assertEquals("Replace Testing(T1).testingName", "First test replace", t1.getString("testingName"));
-        assertNull("Replace Testing(T1).testingSize", t1.getLong("testingSize"));
-        assertNull("Replace Testing(T1).testingDate", t1.getTimestamp("testingDate"));
+        assertEquals("Replace Testing(T1).testingTypeId", "create-replace", t1.getString(org.apache.ofbiz.persistence.entity.x.testingTypeId));
+        assertEquals("Replace Testing(T1).testingName", "First test replace", t1.getString(org.apache.ofbiz.persistence.entity.x.testingName));
+        assertNull("Replace Testing(T1).testingSize", t1.getLong(org.apache.ofbiz.persistence.entity.x.testingSize));
+        assertNull("Replace Testing(T1).testingDate", t1.getTimestamp(org.apache.ofbiz.persistence.entity.x.testingDate));
 
         assertNotNull("Replace Testing(T2)", t2);
-        assertEquals("Replace Testing(T2).testingTypeId", "create-replace", t2.getString("testingTypeId"));
-        assertEquals("Replace Testing(T2).testingName", "Second test update", t2.getString("testingName"));
-        assertEquals("Replace Testing(T2).testingSize", Long.valueOf(20), t2.getLong("testingSize"));
-        assertEquals("Replace Testing(T2).testingDate", UtilDateTime.toTimestamp("02/01/2010 00:00:00"), t2.getTimestamp("testingDate"));
+        assertEquals("Replace Testing(T2).testingTypeId", "create-replace", t2.getString(org.apache.ofbiz.persistence.entity.x.testingTypeId));
+        assertEquals("Replace Testing(T2).testingName", "Second test update", t2.getString(org.apache.ofbiz.persistence.entity.x.testingName));
+        assertEquals("Replace Testing(T2).testingSize", Long.valueOf(20), t2.getLong(org.apache.ofbiz.persistence.entity.x.testingSize));
+        assertEquals("Replace Testing(T2).testingDate", UtilDateTime.toTimestamp("02/01/2010 00:00:00"), t2.getTimestamp(org.apache.ofbiz.persistence.entity.x.testingDate));
     }
 
     /**

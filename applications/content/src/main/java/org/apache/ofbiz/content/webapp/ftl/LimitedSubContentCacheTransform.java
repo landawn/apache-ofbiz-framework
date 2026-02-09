@@ -209,11 +209,11 @@ public class LimitedSubContentCacheTransform implements TemplateTransformModel {
             }
 
             public boolean prepCtx(Delegator delegator, Map<String, Object> ctx, Environment env, GenericValue view) throws GeneralException {
-                String subContentIdSub = (String) view.get("contentId");
+                String subContentIdSub = (String) view.get(org.apache.ofbiz.persistence.entity.x.contentId);
                 // This order is taken so that the dataResourceType can be overridden in the transform arguments.
                 String subDataResourceTypeId = (String) ctx.get("subDataResourceTypeId");
                 if (UtilValidate.isEmpty(subDataResourceTypeId)) {
-                    subDataResourceTypeId = (String) view.get("drDataResourceTypeId");
+                    subDataResourceTypeId = (String) view.get(org.apache.ofbiz.persistence.entity.x.drDataResourceTypeId);
                     // TODO: If this value is still empty then it is probably necessary to get a value from
                     // the parent context. But it will already have one and it is the same context that is
                     // being passed.
@@ -267,7 +267,7 @@ public class LimitedSubContentCacheTransform implements TemplateTransformModel {
                     double randomValue = Math.random();
                     int idx = (int) (lst.size() * randomValue);
                     pickEntity = lst.get(idx);
-                    String pickEntityId = pickEntity.getString("contentId");
+                    String pickEntityId = pickEntity.getString(org.apache.ofbiz.persistence.entity.x.contentId);
                     if (pickedEntityIds.get(pickEntityId) == null) {
                         pickedEntityIds.put(pickEntityId, pickEntity);
                         lst.remove(idx);

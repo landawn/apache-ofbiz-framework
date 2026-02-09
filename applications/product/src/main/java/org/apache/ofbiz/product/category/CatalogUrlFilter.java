@@ -100,21 +100,21 @@ public class CatalogUrlFilter implements Filter {
                             .orderBy("-fromDate").cache(true).queryList();
                     if (UtilValidate.isNotEmpty(productContentInfos)) {
                         for (GenericValue productContentInfo : productContentInfos) {
-                            String contentId = (String) productContentInfo.get("contentId");
+                            String contentId = (String) productContentInfo.get(org.apache.ofbiz.persistence.entity.x.contentId);
                             List<GenericValue> contentAssocDataResourceViewTos = EntityQuery.use(delegator).from("ContentAssocDataResourceViewTo")
                                     .where("contentIdStart", contentId, "caContentAssocTypeId", "ALTERNATE_LOCALE", "drDataResourceTypeId",
                                             "ELECTRONIC_TEXT").cache(true).queryList();
                             if (UtilValidate.isNotEmpty(contentAssocDataResourceViewTos)) {
                                 for (GenericValue contentAssocDataResourceViewTo : contentAssocDataResourceViewTos) {
-                                    GenericValue electronicText = contentAssocDataResourceViewTo.getRelatedOne("ElectronicText", true);
+                                    GenericValue electronicText = contentAssocDataResourceViewTo.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ElectronicText, true);
                                     if (electronicText != null) {
-                                        String textData = (String) electronicText.get("textData");
+                                        String textData = (String) electronicText.get(org.apache.ofbiz.persistence.entity.x.textData);
                                         textData = UrlServletHelper.invalidCharacter(textData);
                                         if (alternativeUrl.matches(textData + ".+$")) {
                                             String productIdStr = null;
                                             productIdStr = alternativeUrl.replace(textData + "-", "");
                                             productIdStr = productIdStr.replace("-p", "");
-                                            String checkProductId = (String) productContentInfo.get("productId");
+                                            String checkProductId = (String) productContentInfo.get(org.apache.ofbiz.persistence.entity.x.productId);
                                             if (productIdStr.equalsIgnoreCase(checkProductId)) {
                                                 productId = checkProductId;
                                                 break;
@@ -127,16 +127,16 @@ public class CatalogUrlFilter implements Filter {
                                 List<GenericValue> contentDataResourceViews = EntityQuery.use(delegator).from("ContentDataResourceView")
                                         .where("contentId", contentId, "drDataResourceTypeId", "ELECTRONIC_TEXT").cache(true).queryList();
                                 for (GenericValue contentDataResourceView : contentDataResourceViews) {
-                                    GenericValue electronicText = contentDataResourceView.getRelatedOne("ElectronicText", true);
+                                    GenericValue electronicText = contentDataResourceView.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ElectronicText, true);
                                     if (UtilValidate.isNotEmpty(electronicText)) {
-                                        String textData = (String) electronicText.get("textData");
+                                        String textData = (String) electronicText.get(org.apache.ofbiz.persistence.entity.x.textData);
                                         if (UtilValidate.isNotEmpty(textData)) {
                                             textData = UrlServletHelper.invalidCharacter(textData);
                                             if (alternativeUrl.matches(textData + ".+$")) {
                                                 String productIdStr = null;
                                                 productIdStr = alternativeUrl.replace(textData + "-", "");
                                                 productIdStr = productIdStr.replace("-p", "");
-                                                String checkProductId = (String) productContentInfo.get("productId");
+                                                String checkProductId = (String) productContentInfo.get(org.apache.ofbiz.persistence.entity.x.productId);
                                                 if (productIdStr.equalsIgnoreCase(checkProductId)) {
                                                     productId = checkProductId;
                                                     break;
@@ -159,22 +159,22 @@ public class CatalogUrlFilter implements Filter {
                             .where(productCategoryContentConds).orderBy("-fromDate").cache(true).queryList();
                     if (UtilValidate.isNotEmpty(productCategoryContentInfos)) {
                         for (GenericValue productCategoryContentInfo : productCategoryContentInfos) {
-                            String contentId = (String) productCategoryContentInfo.get("contentId");
+                            String contentId = (String) productCategoryContentInfo.get(org.apache.ofbiz.persistence.entity.x.contentId);
                             List<GenericValue> contentAssocDataResourceViewTos = EntityQuery.use(delegator).from("ContentAssocDataResourceViewTo")
                                     .where("contentIdStart", contentId, "caContentAssocTypeId", "ALTERNATE_LOCALE", "drDataResourceTypeId",
                                             "ELECTRONIC_TEXT").cache(true).queryList();
                             if (UtilValidate.isNotEmpty(contentAssocDataResourceViewTos)) {
                                 for (GenericValue contentAssocDataResourceViewTo : contentAssocDataResourceViewTos) {
-                                    GenericValue electronicText = contentAssocDataResourceViewTo.getRelatedOne("ElectronicText", true);
+                                    GenericValue electronicText = contentAssocDataResourceViewTo.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ElectronicText, true);
                                     if (electronicText != null) {
-                                        String textData = (String) electronicText.get("textData");
+                                        String textData = (String) electronicText.get(org.apache.ofbiz.persistence.entity.x.textData);
                                         if (UtilValidate.isNotEmpty(textData)) {
                                             textData = UrlServletHelper.invalidCharacter(textData);
                                             if (alternativeUrl.matches(textData + ".+$")) {
                                                 String productCategoryStr = null;
                                                 productCategoryStr = alternativeUrl.replace(textData + "-", "");
                                                 productCategoryStr = productCategoryStr.replace("-c", "");
-                                                String checkProductCategoryId = (String) productCategoryContentInfo.get("productCategoryId");
+                                                String checkProductCategoryId = (String) productCategoryContentInfo.get(org.apache.ofbiz.persistence.entity.x.productCategoryId);
                                                 if (productCategoryStr.equalsIgnoreCase(checkProductCategoryId)) {
                                                     productCategoryId = checkProductCategoryId;
                                                     break;
@@ -188,16 +188,16 @@ public class CatalogUrlFilter implements Filter {
                                 List<GenericValue> contentDataResourceViews = EntityQuery.use(delegator).from("ContentDataResourceView")
                                         .where("contentId", contentId, "drDataResourceTypeId", "ELECTRONIC_TEXT").cache(true).queryList();
                                 for (GenericValue contentDataResourceView : contentDataResourceViews) {
-                                    GenericValue electronicText = contentDataResourceView.getRelatedOne("ElectronicText", true);
+                                    GenericValue electronicText = contentDataResourceView.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ElectronicText, true);
                                     if (electronicText != null) {
-                                        String textData = (String) electronicText.get("textData");
+                                        String textData = (String) electronicText.get(org.apache.ofbiz.persistence.entity.x.textData);
                                         if (UtilValidate.isNotEmpty(textData)) {
                                             textData = UrlServletHelper.invalidCharacter(textData);
                                             if (alternativeUrl.matches(textData + ".+$")) {
                                                 String productCategoryStr = null;
                                                 productCategoryStr = alternativeUrl.replace(textData + "-", "");
                                                 productCategoryStr = productCategoryStr.replace("-c", "");
-                                                String checkProductCategoryId = (String) productCategoryContentInfo.get("productCategoryId");
+                                                String checkProductCategoryId = (String) productCategoryContentInfo.get(org.apache.ofbiz.persistence.entity.x.productCategoryId);
                                                 if (productCategoryStr.equalsIgnoreCase(checkProductCategoryId)) {
                                                     productCategoryId = checkProductCategoryId;
                                                     break;
@@ -227,7 +227,7 @@ public class CatalogUrlFilter implements Filter {
                             .where(conds).orderBy("-fromDate").cache(true).queryList();
                     if (UtilValidate.isNotEmpty(productCategoryMembers)) {
                         GenericValue productCategoryMember = EntityUtil.getFirst(productCategoryMembers);
-                        productCategoryId = productCategoryMember.getString("productCategoryId");
+                        productCategoryId = productCategoryMember.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId);
                     }
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Cannot find product category for product: " + productId, MODULE);
@@ -252,7 +252,7 @@ public class CatalogUrlFilter implements Filter {
                     List<GenericValue> productCategoryMembers = EntityQuery.use(delegator).from("ProductCategoryMember").where(rolllupConds)
                             .orderBy("-fromDate").cache(true).queryList();
                     for (GenericValue productCategoryMember : productCategoryMembers) {
-                        String trailCategoryId = productCategoryMember.getString("productCategoryId");
+                        String trailCategoryId = productCategoryMember.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId);
                         if (trailCategoryIds.contains(trailCategoryId)) {
                             productCategoryId = trailCategoryId;
                             break;
@@ -279,7 +279,7 @@ public class CatalogUrlFilter implements Filter {
                         if (UtilValidate.isNotEmpty(productCategoryRollups)) {
                             // add only categories that belong to the top category to trail
                             for (GenericValue productCategoryRollup : productCategoryRollups) {
-                                String trailCategoryId = productCategoryRollup.getString("parentProductCategoryId");
+                                String trailCategoryId = productCategoryRollup.getString(org.apache.ofbiz.persistence.entity.x.parentProductCategoryId);
                                 parentProductCategoryId = trailCategoryId;
                                 if (trailCategoryIds.contains(trailCategoryId)) {
                                     trailElements.add(trailCategoryId);

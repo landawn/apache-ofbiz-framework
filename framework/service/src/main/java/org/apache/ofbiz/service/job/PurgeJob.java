@@ -31,7 +31,7 @@ public class PurgeJob extends AbstractJob implements Serializable {
     private final GenericValue jobValue;
 
     public PurgeJob(GenericValue jobValue) {
-        super(jobValue.getString("jobId"), "Purge " + jobValue.getString("jobName"));
+        super(jobValue.getString(org.apache.ofbiz.persistence.entity.x.jobId), "Purge " + jobValue.getString(org.apache.ofbiz.persistence.entity.x.jobName));
         this.jobValue = jobValue;
     }
 

@@ -46,7 +46,7 @@ public class PerformFindTests extends OFBizTestCase {
 
     private static List<GenericValue> getCompleteList(Map<String, Object> context) {
         List<GenericValue> foundElements = new LinkedList<>();
-        try (EntityListIterator listIt = (EntityListIterator) context.get("listIt")) {
+        try (EntityListIterator listIt = (EntityListIterator) context.get(org.apache.ofbiz.persistence.entity.x.listIt)) {
             if (listIt != null) {
                 foundElements = listIt.getCompleteList();
             }

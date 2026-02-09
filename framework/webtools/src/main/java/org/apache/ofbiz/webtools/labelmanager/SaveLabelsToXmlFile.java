@@ -48,20 +48,20 @@ public class SaveLabelsToXmlFile {
     private static final String MODULE = SaveLabelsToXmlFile.class.getName();
 
     public static Map<String, Object> saveLabelsToXmlFile(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
-        String fileName = (String) context.get("fileName");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String fileName = (String) context.get(org.apache.ofbiz.persistence.entity.x.fileName);
         if (UtilValidate.isEmpty(fileName)) {
             Debug.logError("labelFileName cannot be empty", MODULE);
             return ServiceUtil.returnFailure(UtilProperties.getMessage(RESOURCE, "saveLabelsToXmlFile.exceptionDuringSaveLabelsToXmlFile", locale));
         }
-        String key = (String) context.get("key");
-        String keyComment = (String) context.get("keyComment");
-        String updateLabel = (String) context.get("update_label");
-        String confirm = (String) context.get("confirm");
-        String removeLabel = (String) context.get("removeLabel");
-        List<String> localeNames = UtilGenerics.cast(context.get("localeNames"));
-        List<String> localeValues = UtilGenerics.cast(context.get("localeValues"));
-        List<String> localeComments = UtilGenerics.cast(context.get("localeComments"));
+        String key = (String) context.get(org.apache.ofbiz.persistence.entity.x.key);
+        String keyComment = (String) context.get(org.apache.ofbiz.persistence.entity.x.keyComment);
+        String updateLabel = (String) context.get(org.apache.ofbiz.persistence.entity.x.update_label);
+        String confirm = (String) context.get(org.apache.ofbiz.persistence.entity.x.confirm);
+        String removeLabel = (String) context.get(org.apache.ofbiz.persistence.entity.x.removeLabel);
+        List<String> localeNames = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.localeNames));
+        List<String> localeValues = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.localeValues));
+        List<String> localeComments = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.localeComments));
         String apacheLicenseText = null;
         URL apache2Header = SaveLabelsToXmlFile.class.getResource("APACHE2_HEADER_FOR_XML");
         try {

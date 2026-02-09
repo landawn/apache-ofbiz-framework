@@ -217,18 +217,18 @@ public final class ServerHitBin {
                 if (EntityUtilProperties.propertyValueEqualsIgnoreCase("serverstats", "stats.persist." + ServerHitBin.TYPE_IDS[type]
                         + ".bin", "true", delegator)) {
                     GenericValue serverHitBin = delegator.makeValue("ServerHitBin");
-                    serverHitBin.set("contentId", bin.id);
-                    serverHitBin.set("hitTypeId", ServerHitBin.TYPE_IDS[bin.type]);
-                    serverHitBin.set("binStartDateTime", new java.sql.Timestamp(bin.startTime));
-                    serverHitBin.set("binEndDateTime", new java.sql.Timestamp(bin.endTime));
-                    serverHitBin.set("numberHits", bin.getNumberHits());
-                    serverHitBin.set("totalTimeMillis", bin.getTotalRunningTime());
-                    serverHitBin.set("minTimeMillis", bin.getMinTime());
-                    serverHitBin.set("maxTimeMillis", bin.getMaxTime());
+                    serverHitBin.set(org.apache.ofbiz.persistence.entity.x.contentId, bin.id);
+                    serverHitBin.set(org.apache.ofbiz.persistence.entity.x.hitTypeId, ServerHitBin.TYPE_IDS[bin.type]);
+                    serverHitBin.set(org.apache.ofbiz.persistence.entity.x.binStartDateTime, new java.sql.Timestamp(bin.startTime));
+                    serverHitBin.set(org.apache.ofbiz.persistence.entity.x.binEndDateTime, new java.sql.Timestamp(bin.endTime));
+                    serverHitBin.set(org.apache.ofbiz.persistence.entity.x.numberHits, bin.getNumberHits());
+                    serverHitBin.set(org.apache.ofbiz.persistence.entity.x.totalTimeMillis, bin.getTotalRunningTime());
+                    serverHitBin.set(org.apache.ofbiz.persistence.entity.x.minTimeMillis, bin.getMinTime());
+                    serverHitBin.set(org.apache.ofbiz.persistence.entity.x.maxTimeMillis, bin.getMaxTime());
                     // get localhost ip address and hostname to store
                     if (VisitHandler.ADDRESS != null) {
-                        serverHitBin.set("serverIpAddress", VisitHandler.ADDRESS.getHostAddress());
-                        serverHitBin.set("serverHostName", VisitHandler.ADDRESS.getHostName());
+                        serverHitBin.set(org.apache.ofbiz.persistence.entity.x.serverIpAddress, VisitHandler.ADDRESS.getHostAddress());
+                        serverHitBin.set(org.apache.ofbiz.persistence.entity.x.serverHostName, VisitHandler.ADDRESS.getHostName());
                     }
                     try {
                         delegator.createSetNextSeqId(serverHitBin);
@@ -496,7 +496,7 @@ public final class ServerHitBin {
                         + " persistance of visits you should also turn off persistence of hits.", MODULE);
                 return;
             }
-            String visitId = visit.getString("visitId");
+            String visitId = visit.getString(org.apache.ofbiz.persistence.entity.x.visitId);
             visit = EntityQuery.use(delegator).from("Visit").where("visitId", visitId).queryOne();
             if (visit == null) {
                 // GenericValue stored in client session does not exist in database.
@@ -509,30 +509,30 @@ public final class ServerHitBin {
 
             GenericValue serverHit = delegator.makeValue("ServerHit");
 
-            serverHit.set("visitId", visitId);
-            serverHit.set("hitStartDateTime", new java.sql.Timestamp(startTime));
-            serverHit.set("hitTypeId", ServerHitBin.TYPE_IDS[this.type]);
+            serverHit.set(org.apache.ofbiz.persistence.entity.x.visitId, visitId);
+            serverHit.set(org.apache.ofbiz.persistence.entity.x.hitStartDateTime, new java.sql.Timestamp(startTime));
+            serverHit.set(org.apache.ofbiz.persistence.entity.x.hitTypeId, ServerHitBin.TYPE_IDS[this.type]);
             if (userLogin != null) {
-                serverHit.set("userLoginId", userLogin.get("userLoginId"));
+                serverHit.set(org.apache.ofbiz.persistence.entity.x.userLoginId, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
                 ModelEntity modelUserLogin = userLogin.getModelEntity();
                 if (modelUserLogin.isField("partyId")) {
-                    serverHit.set("partyId", userLogin.get("partyId"));
+                    serverHit.set(org.apache.ofbiz.persistence.entity.x.partyId, userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId));
                 }
             }
-            serverHit.set("contentId", this.id);
-            serverHit.set("runningTimeMillis", runningTime);
+            serverHit.set(org.apache.ofbiz.persistence.entity.x.contentId, this.id);
+            serverHit.set(org.apache.ofbiz.persistence.entity.x.runningTimeMillis, runningTime);
 
             String fullRequestUrl = UtilHttp.getFullRequestUrl(request);
 
-            serverHit.set("requestUrl", fullRequestUrl);
+            serverHit.set(org.apache.ofbiz.persistence.entity.x.requestUrl, fullRequestUrl);
             String referrerUrl = request.getHeader("Referer") != null ? request.getHeader("Referer") : "";
 
-            serverHit.set("referrerUrl", referrerUrl);
+            serverHit.set(org.apache.ofbiz.persistence.entity.x.referrerUrl, referrerUrl);
 
             // get localhost ip address and hostname to store
             if (VisitHandler.ADDRESS != null) {
-                serverHit.set("serverIpAddress", VisitHandler.ADDRESS.getHostAddress());
-                serverHit.set("serverHostName", VisitHandler.ADDRESS.getHostName());
+                serverHit.set(org.apache.ofbiz.persistence.entity.x.serverIpAddress, VisitHandler.ADDRESS.getHostAddress());
+                serverHit.set(org.apache.ofbiz.persistence.entity.x.serverHostName, VisitHandler.ADDRESS.getHostName());
             }
 
             serverHit.create();

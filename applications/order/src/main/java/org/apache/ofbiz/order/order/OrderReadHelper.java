@@ -102,7 +102,7 @@ public class OrderReadHelper {
         if (this.orderHeader != null && !"OrderHeader".equals(this.orderHeader.getEntityName())) {
             try {
                 this.orderHeader = orderHeader.getDelegator().findOne("OrderHeader", UtilMisc.toMap("orderId",
-                        orderHeader.getString("orderId")), false);
+                        orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId)), false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
                 this.orderHeader = null;
@@ -110,7 +110,7 @@ public class OrderReadHelper {
         } else if (this.orderHeader == null && orderItems != null) {
             GenericValue firstItem = EntityUtil.getFirst(orderItems);
             try {
-                this.orderHeader = firstItem.getRelatedOne("OrderHeader", false);
+                this.orderHeader = firstItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
                 this.orderHeader = null;
@@ -120,7 +120,7 @@ public class OrderReadHelper {
             if (orderHeader == null) {
                 throw new IllegalArgumentException("Order header passed is null, or is otherwise invalid");
             }
-            throw new IllegalArgumentException("Order header passed in is not valid for orderId [" + orderHeader.getString("orderId") + "]");
+            throw new IllegalArgumentException("Order header passed in is not valid for orderId [" + orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId) + "]");
         }
     }
 
@@ -169,7 +169,7 @@ public class OrderReadHelper {
      * @return the order id
      */
     public String getOrderId() {
-        return orderHeader.getString("orderId");
+        return orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId);
     }
 
     /**
@@ -177,7 +177,7 @@ public class OrderReadHelper {
      * @return the web site id
      */
     public String getWebSiteId() {
-        return orderHeader.getString("webSiteId");
+        return orderHeader.getString(org.apache.ofbiz.persistence.entity.x.webSiteId);
     }
 
     /**
@@ -185,7 +185,7 @@ public class OrderReadHelper {
      * @return the product store id
      */
     public String getProductStoreId() {
-        return orderHeader.getString("productStoreId");
+        return orderHeader.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
     }
 
     /**
@@ -193,7 +193,7 @@ public class OrderReadHelper {
      * @return the product store
      */
     public GenericValue getProductStore() {
-        String productStoreId = orderHeader.getString("productStoreId");
+        String productStoreId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
         try {
             Delegator delegator = orderHeader.getDelegator();
             GenericValue productStore = EntityQuery.use(delegator).from("ProductStore").where("productStoreId", productStoreId).cache().queryOne();
@@ -209,7 +209,7 @@ public class OrderReadHelper {
      * @return the order type id
      */
     public String getOrderTypeId() {
-        return orderHeader.getString("orderTypeId");
+        return orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderTypeId);
     }
 
     /**
@@ -217,7 +217,7 @@ public class OrderReadHelper {
      * @return the currency
      */
     public String getCurrency() {
-        return orderHeader.getString("currencyUom");
+        return orderHeader.getString(org.apache.ofbiz.persistence.entity.x.currencyUom);
     }
 
     /**
@@ -225,7 +225,7 @@ public class OrderReadHelper {
      * @return the order name
      */
     public String getOrderName() {
-        return orderHeader.getString("orderName");
+        return orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderName);
     }
 
     /**
@@ -233,7 +233,7 @@ public class OrderReadHelper {
      * @return the external id
      */
     public String getExternalId() {
-        return orderHeader.getString("externalId");
+        return orderHeader.getString(org.apache.ofbiz.persistence.entity.x.externalId);
     }
 
     /**
@@ -241,7 +241,7 @@ public class OrderReadHelper {
      * @return the priority
      */
     public String getPriority() {
-        return orderHeader.getString("priority");
+        return orderHeader.getString(org.apache.ofbiz.persistence.entity.x.priority);
     }
 
     /**
@@ -251,7 +251,7 @@ public class OrderReadHelper {
     public List<GenericValue> getAdjustments() {
         if (adjustments == null) {
             try {
-                adjustments = orderHeader.getRelated("OrderAdjustment", null, null, false);
+                adjustments = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderAdjustment, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
@@ -268,7 +268,7 @@ public class OrderReadHelper {
     public List<GenericValue> getPaymentPreferences() {
         if (paymentPrefs == null) {
             try {
-                paymentPrefs = orderHeader.getRelated("OrderPaymentPreference", null, UtilMisc.toList("orderPaymentPreferenceId"), false);
+                paymentPrefs = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderPaymentPreference, null, UtilMisc.toList("orderPaymentPreferenceId"), false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
@@ -287,7 +287,7 @@ public class OrderReadHelper {
             try {
                 List<EntityExpr> exprs = UtilMisc.toList(EntityCondition.makeCondition("statusId", EntityOperator.EQUALS, "PMNT_RECEIVED"),
                         EntityCondition.makeCondition("statusId", EntityOperator.EQUALS, "PMNT_CONFIRMED"));
-                payments = paymentPref.getRelated("Payment", null, null, false);
+                payments = paymentPref.getRelated(org.apache.ofbiz.persistence.entity.x.Payment, null, null, false);
                 payments = EntityUtil.filterByOr(payments, exprs);
                 List<EntityExpr> conds = UtilMisc.toList(EntityCondition.makeCondition("paymentTypeId", EntityOperator.EQUALS, "CUSTOMER_PAYMENT"),
                         EntityCondition.makeCondition("paymentTypeId", EntityOperator.EQUALS, "CUSTOMER_DEPOSIT"),
@@ -301,15 +301,15 @@ public class OrderReadHelper {
 
             BigDecimal chargedToPaymentPref = ZERO;
             for (GenericValue payment : payments) {
-                if (payment.get("amount") != null) {
-                    chargedToPaymentPref = chargedToPaymentPref.add(payment.getBigDecimal("amount")).setScale(DECIMALS + 1, ROUNDING);
+                if (payment.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
+                    chargedToPaymentPref = chargedToPaymentPref.add(payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount)).setScale(DECIMALS + 1, ROUNDING);
                 }
             }
 
             if (chargedToPaymentPref.compareTo(ZERO) > 0) {
                 // key of the resulting map is paymentMethodId or paymentMethodTypeId if the paymentMethodId is not available
-                String paymentMethodKey = paymentPref.getString("paymentMethodId") != null ? paymentPref.getString("paymentMethodId")
-                        : paymentPref.getString("paymentMethodTypeId");
+                String paymentMethodKey = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId) != null ? paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId)
+                        : paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
                 if (paymentMethodAmounts.containsKey(paymentMethodKey)) {
                     BigDecimal value = paymentMethodAmounts.get(paymentMethodKey);
                     if (value != null) {
@@ -333,19 +333,19 @@ public class OrderReadHelper {
             List<GenericValue> returnItemResponses = new LinkedList<>();
             try {
                 returnItemResponses = orderHeader.getDelegator().findByAnd("ReturnItemResponse",
-                        UtilMisc.toMap("orderPaymentPreferenceId", paymentPref.getString("orderPaymentPreferenceId")), null, false);
+                        UtilMisc.toMap("orderPaymentPreferenceId", paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId)), null, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
             BigDecimal refundedToPaymentPref = ZERO;
             for (GenericValue returnItemResponse : returnItemResponses) {
-                refundedToPaymentPref = refundedToPaymentPref.add(returnItemResponse.getBigDecimal("responseAmount"))
+                refundedToPaymentPref = refundedToPaymentPref.add(returnItemResponse.getBigDecimal(org.apache.ofbiz.persistence.entity.x.responseAmount))
                         .setScale(DECIMALS + 1, ROUNDING);
             }
 
             if (refundedToPaymentPref.compareTo(ZERO) == 1) {
-                String paymentMethodId = paymentPref.getString("paymentMethodId") != null ? paymentPref.getString("paymentMethodId")
-                        : paymentPref.getString("paymentMethodTypeId");
+                String paymentMethodId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId) != null ? paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId)
+                        : paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
                 paymentMethodAmounts.put(paymentMethodId, refundedToPaymentPref.setScale(DECIMALS, ROUNDING));
             }
         }
@@ -377,7 +377,7 @@ public class OrderReadHelper {
         if (prefs != null) {
             for (GenericValue payPref : prefs) {
                 try {
-                    orderPayments.addAll(payPref.getRelated("Payment", null, null, false));
+                    orderPayments.addAll(payPref.getRelated(org.apache.ofbiz.persistence.entity.x.Payment, null, null, false));
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                     return null;
@@ -394,7 +394,7 @@ public class OrderReadHelper {
     public List<GenericValue> getOrderStatuses() {
         if (orderStatuses == null) {
             try {
-                orderStatuses = orderHeader.getRelated("OrderStatus", null, null, false);
+                orderStatuses = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderStatus, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
@@ -408,7 +408,7 @@ public class OrderReadHelper {
      */
     public List<GenericValue> getOrderTerms() {
         try {
-            return orderHeader.getRelated("OrderTerm", null, null, false);
+            return orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderTerm, null, null, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return null;
@@ -483,20 +483,20 @@ public class OrderReadHelper {
     public String getShippingMethod(String shipGroupSeqId) {
         try {
             GenericValue shipGroup = orderHeader.getDelegator().findOne("OrderItemShipGroup",
-                    UtilMisc.toMap("orderId", orderHeader.getString("orderId"), "shipGroupSeqId", shipGroupSeqId), false);
+                    UtilMisc.toMap("orderId", orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId), "shipGroupSeqId", shipGroupSeqId), false);
 
             if (shipGroup != null) {
-                GenericValue carrierShipmentMethod = shipGroup.getRelatedOne("CarrierShipmentMethod", false);
+                GenericValue carrierShipmentMethod = shipGroup.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CarrierShipmentMethod, false);
 
                 if (carrierShipmentMethod != null) {
-                    GenericValue shipmentMethodType = carrierShipmentMethod.getRelatedOne("ShipmentMethodType", false);
+                    GenericValue shipmentMethodType = carrierShipmentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentMethodType, false);
 
                     if (shipmentMethodType != null) {
-                        return UtilFormatOut.checkNull(shipGroup.getString("carrierPartyId")) + " "
-                                + UtilFormatOut.checkNull(shipmentMethodType.getString("description"));
+                        return UtilFormatOut.checkNull(shipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId)) + " "
+                                + UtilFormatOut.checkNull(shipmentMethodType.getString(org.apache.ofbiz.persistence.entity.x.description));
                     }
                 }
-                return UtilFormatOut.checkNull(shipGroup.getString("carrierPartyId"));
+                return UtilFormatOut.checkNull(shipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId));
             }
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
@@ -512,20 +512,20 @@ public class OrderReadHelper {
     public String getShippingMethodCode(String shipGroupSeqId) {
         try {
             GenericValue shipGroup = orderHeader.getDelegator().findOne("OrderItemShipGroup",
-                    UtilMisc.toMap("orderId", orderHeader.getString("orderId"), "shipGroupSeqId", shipGroupSeqId), false);
+                    UtilMisc.toMap("orderId", orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId), "shipGroupSeqId", shipGroupSeqId), false);
 
             if (shipGroup != null) {
-                GenericValue carrierShipmentMethod = shipGroup.getRelatedOne("CarrierShipmentMethod", false);
+                GenericValue carrierShipmentMethod = shipGroup.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CarrierShipmentMethod, false);
 
                 if (carrierShipmentMethod != null) {
-                    GenericValue shipmentMethodType = carrierShipmentMethod.getRelatedOne("ShipmentMethodType", false);
+                    GenericValue shipmentMethodType = carrierShipmentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentMethodType, false);
 
                     if (shipmentMethodType != null) {
-                        return UtilFormatOut.checkNull(shipmentMethodType.getString("shipmentMethodTypeId")) + "@"
-                                + UtilFormatOut.checkNull(shipGroup.getString("carrierPartyId"));
+                        return UtilFormatOut.checkNull(shipmentMethodType.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId)) + "@"
+                                + UtilFormatOut.checkNull(shipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId));
                     }
                 }
-                return UtilFormatOut.checkNull(shipGroup.getString("carrierPartyId"));
+                return UtilFormatOut.checkNull(shipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId));
             }
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
@@ -548,10 +548,10 @@ public class OrderReadHelper {
      */
     public boolean hasPhysicalProductItems() throws GenericEntityException {
         for (GenericValue orderItem : this.getOrderItems()) {
-            GenericValue product = orderItem.getRelatedOne("Product", true);
+            GenericValue product = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, true);
             if (product != null) {
-                GenericValue productType = product.getRelatedOne("ProductType", true);
-                if ("Y".equals(productType.getString("isPhysical"))) {
+                GenericValue productType = product.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductType, true);
+                if ("Y".equals(productType.getString(org.apache.ofbiz.persistence.entity.x.isPhysical))) {
                     return true;
                 }
             }
@@ -566,7 +566,7 @@ public class OrderReadHelper {
     public GenericValue getOrderItemShipGroup(String shipGroupSeqId) {
         try {
             return orderHeader.getDelegator().findOne("OrderItemShipGroup",
-                    UtilMisc.toMap("orderId", orderHeader.getString("orderId"), "shipGroupSeqId", shipGroupSeqId), false);
+                    UtilMisc.toMap("orderId", orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId), "shipGroupSeqId", shipGroupSeqId), false);
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
         }
@@ -579,7 +579,7 @@ public class OrderReadHelper {
      */
     public List<GenericValue> getOrderItemShipGroups() {
         try {
-            return orderHeader.getRelated("OrderItemShipGroup", null, UtilMisc.toList("shipGroupSeqId"), false);
+            return orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItemShipGroup, null, UtilMisc.toList("shipGroupSeqId"), false);
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
         }
@@ -598,7 +598,7 @@ public class OrderReadHelper {
                 if (ocm != null) {
                     try {
                         GenericValue addr = ocm.getDelegator().findOne("PostalAddress",
-                                UtilMisc.toMap("contactMechId", ocm.getString("contactMechId")), false);
+                                UtilMisc.toMap("contactMechId", ocm.getString(org.apache.ofbiz.persistence.entity.x.contactMechId)), false);
                         if (addr != null) {
                             shippingLocations.add(addr);
                         }
@@ -619,10 +619,10 @@ public class OrderReadHelper {
     public GenericValue getShippingAddress(String shipGroupSeqId) {
         try {
             GenericValue shipGroup = orderHeader.getDelegator().findOne("OrderItemShipGroup",
-                    UtilMisc.toMap("orderId", orderHeader.getString("orderId"), "shipGroupSeqId", shipGroupSeqId), false);
+                    UtilMisc.toMap("orderId", orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId), "shipGroupSeqId", shipGroupSeqId), false);
 
             if (shipGroup != null) {
-                return shipGroup.getRelatedOne("PostalAddress", false);
+                return shipGroup.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
 
             }
         } catch (GenericEntityException e) {
@@ -639,14 +639,14 @@ public class OrderReadHelper {
     @Deprecated
     public GenericValue getShippingAddress() {
         try {
-            GenericValue orderContactMech = EntityUtil.getFirst(orderHeader.getRelated("OrderContactMech",
+            GenericValue orderContactMech = EntityUtil.getFirst(orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderContactMech,
                     UtilMisc.toMap("contactMechPurposeTypeId", "SHIPPING_LOCATION"), null, false));
 
             if (orderContactMech != null) {
-                GenericValue contactMech = orderContactMech.getRelatedOne("ContactMech", false);
+                GenericValue contactMech = orderContactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ContactMech, false);
 
                 if (contactMech != null) {
-                    return contactMech.getRelatedOne("PostalAddress", false);
+                    return contactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
                 }
             }
         } catch (GenericEntityException e) {
@@ -667,7 +667,7 @@ public class OrderReadHelper {
                 if (ocm != null) {
                     try {
                         GenericValue addr = ocm.getDelegator().findOne("PostalAddress",
-                                UtilMisc.toMap("contactMechId", ocm.getString("contactMechId")), false);
+                                UtilMisc.toMap("contactMechId", ocm.getString(org.apache.ofbiz.persistence.entity.x.contactMechId)), false);
                         if (addr != null) {
                             billingLocations.add(addr);
                         }
@@ -689,14 +689,14 @@ public class OrderReadHelper {
     public GenericValue getBillingAddress() {
         GenericValue billingAddress = null;
         try {
-            GenericValue orderContactMech = EntityUtil.getFirst(orderHeader.getRelated("OrderContactMech",
+            GenericValue orderContactMech = EntityUtil.getFirst(orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderContactMech,
                     UtilMisc.toMap("contactMechPurposeTypeId", "BILLING_LOCATION"), null, false));
 
             if (orderContactMech != null) {
-                GenericValue contactMech = orderContactMech.getRelatedOne("ContactMech", false);
+                GenericValue contactMech = orderContactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ContactMech, false);
 
                 if (contactMech != null) {
-                    billingAddress = contactMech.getRelatedOne("PostalAddress", false);
+                    billingAddress = contactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
                 }
             }
         } catch (GenericEntityException e) {
@@ -708,7 +708,7 @@ public class OrderReadHelper {
             GenericValue billingAccount = getBillingAccount();
             if (billingAccount != null) {
                 try {
-                    billingAddress = billingAccount.getRelatedOne("PostalAddress", false);
+                    billingAddress = billingAccount.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e, MODULE);
                 }
@@ -717,15 +717,15 @@ public class OrderReadHelper {
                 GenericValue paymentPreference = EntityUtil.getFirst(getPaymentPreferences());
                 if (paymentPreference != null) {
                     try {
-                        GenericValue paymentMethod = paymentPreference.getRelatedOne("PaymentMethod", false);
+                        GenericValue paymentMethod = paymentPreference.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PaymentMethod, false);
                         if (paymentMethod != null) {
-                            GenericValue creditCard = paymentMethod.getRelatedOne("CreditCard", false);
+                            GenericValue creditCard = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CreditCard, false);
                             if (creditCard != null) {
-                                billingAddress = creditCard.getRelatedOne("PostalAddress", false);
+                                billingAddress = creditCard.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
                             } else {
-                                GenericValue eftAccount = paymentMethod.getRelatedOne("EftAccount", false);
+                                GenericValue eftAccount = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.EftAccount, false);
                                 if (eftAccount != null) {
-                                    billingAddress = eftAccount.getRelatedOne("PostalAddress", false);
+                                    billingAddress = eftAccount.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
                                 }
                             }
                         }
@@ -745,7 +745,7 @@ public class OrderReadHelper {
      */
     public List<GenericValue> getOrderContactMechs(String purposeTypeId) {
         try {
-            return orderHeader.getRelated("OrderContactMech", UtilMisc.toMap("contactMechPurposeTypeId", purposeTypeId), null, false);
+            return orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderContactMech, UtilMisc.toMap("contactMechPurposeTypeId", purposeTypeId), null, false);
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
         }
@@ -758,10 +758,10 @@ public class OrderReadHelper {
      */
     public Timestamp getEarliestShipByDate() {
         try {
-            List<GenericValue> groups = orderHeader.getRelated("OrderItemShipGroup", null, UtilMisc.toList("shipByDate"), false);
+            List<GenericValue> groups = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItemShipGroup, null, UtilMisc.toList("shipByDate"), false);
             if (!groups.isEmpty()) {
                 GenericValue group = groups.get(0);
-                return group.getTimestamp("shipByDate");
+                return group.getTimestamp(org.apache.ofbiz.persistence.entity.x.shipByDate);
             }
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
@@ -775,10 +775,10 @@ public class OrderReadHelper {
      */
     public Timestamp getLatestShipAfterDate() {
         try {
-            List<GenericValue> groups = orderHeader.getRelated("OrderItemShipGroup", null, UtilMisc.toList("shipAfterDate DESC"), false);
+            List<GenericValue> groups = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItemShipGroup, null, UtilMisc.toList("shipAfterDate DESC"), false);
             if (!groups.isEmpty()) {
                 GenericValue group = groups.get(0);
-                return group.getTimestamp("shipAfterDate");
+                return group.getTimestamp(org.apache.ofbiz.persistence.entity.x.shipAfterDate);
             }
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
@@ -793,14 +793,14 @@ public class OrderReadHelper {
     public String getCurrentStatusString() {
         GenericValue statusItem = null;
         try {
-            statusItem = orderHeader.getRelatedOne("StatusItem", true);
+            statusItem = orderHeader.getRelatedOne(org.apache.ofbiz.persistence.entity.x.StatusItem, true);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
         if (statusItem != null) {
-            return statusItem.getString("description");
+            return statusItem.getString(org.apache.ofbiz.persistence.entity.x.description);
         }
-        return orderHeader.getString("statusId");
+        return orderHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId);
     }
 
     /**
@@ -822,12 +822,12 @@ public class OrderReadHelper {
             boolean isCurrent = true;
             while (orderStatusIter.hasNext()) {
                 GenericValue orderStatus = orderStatusIter.next();
-                GenericValue statusItem = orderStatus.getRelatedOne("StatusItem", true);
+                GenericValue statusItem = orderStatus.getRelatedOne(org.apache.ofbiz.persistence.entity.x.StatusItem, true);
 
                 if (statusItem != null) {
-                    orderStatusString.append(statusItem.get("description", locale));
+                    orderStatusString.append(statusItem.get(org.apache.ofbiz.persistence.entity.x.description, locale));
                 } else {
-                    orderStatusString.append(orderStatus.getString("statusId"));
+                    orderStatusString.append(orderStatus.getString(org.apache.ofbiz.persistence.entity.x.statusId));
                 }
 
                 if (isCurrent && orderStatusIter.hasNext()) {
@@ -857,7 +857,7 @@ public class OrderReadHelper {
     public GenericValue getBillingAccount() {
         GenericValue billingAccount = null;
         try {
-            billingAccount = orderHeader.getRelatedOne("BillingAccount", false);
+            billingAccount = orderHeader.getRelatedOne(org.apache.ofbiz.persistence.entity.x.BillingAccount, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
@@ -877,7 +877,7 @@ public class OrderReadHelper {
         try {
             Delegator delegator = orderHeader.getDelegator();
             paymentPreferences = EntityQuery.use(delegator).from("OrderPurchasePaymentSummary")
-                    .where("orderId", orderHeader.get("orderId")).queryList();
+                    .where("orderId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.orderId)).queryList();
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
         }
@@ -885,8 +885,8 @@ public class OrderReadHelper {
                 EntityCondition.makeCondition("paymentMethodTypeId", "EXT_BILLACT"),
                 EntityCondition.makeCondition("preferenceStatusId", EntityOperator.NOT_EQUAL, "PAYMENT_CANCELLED"));
         GenericValue billingAccountPaymentPreference = EntityUtil.getFirst(EntityUtil.filterByAnd(paymentPreferences, exprs));
-        if ((billingAccountPaymentPreference != null) && (billingAccountPaymentPreference.getBigDecimal("maxAmount") != null)) {
-            return billingAccountPaymentPreference.getBigDecimal("maxAmount");
+        if ((billingAccountPaymentPreference != null) && (billingAccountPaymentPreference.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount) != null)) {
+            return billingAccountPaymentPreference.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount);
         }
         return BigDecimal.ZERO;
     }
@@ -948,13 +948,13 @@ public class OrderReadHelper {
         Delegator delegator = orderHeader.getDelegator();
         GenericValue partyObject = null;
         try {
-            GenericValue orderRole = EntityUtil.getFirst(orderHeader.getRelated("OrderRole", UtilMisc.toMap("roleTypeId", roleTypeId), null, false));
+            GenericValue orderRole = EntityUtil.getFirst(orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderRole, UtilMisc.toMap("roleTypeId", roleTypeId), null, false));
 
             if (orderRole != null) {
-                partyObject = EntityQuery.use(delegator).from("Person").where("partyId", orderRole.getString("partyId")).queryOne();
+                partyObject = EntityQuery.use(delegator).from("Person").where("partyId", orderRole.getString(org.apache.ofbiz.persistence.entity.x.partyId)).queryOne();
 
                 if (partyObject == null) {
-                    partyObject = EntityQuery.use(delegator).from("PartyGroup").where("partyId", orderRole.getString("partyId")).queryOne();
+                    partyObject = EntityQuery.use(delegator).from("PartyGroup").where("partyId", orderRole.getString(org.apache.ofbiz.persistence.entity.x.partyId)).queryOne();
                 }
             }
         } catch (GenericEntityException e) {
@@ -969,7 +969,7 @@ public class OrderReadHelper {
      */
     public String getDistributorId() {
         try {
-            GenericEntity distributorRole = EntityUtil.getFirst(orderHeader.getRelated("OrderRole",
+            GenericEntity distributorRole = EntityUtil.getFirst(orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderRole,
                     UtilMisc.toMap("roleTypeId", "DISTRIBUTOR"), null, false));
 
             return distributorRole == null ? null : distributorRole.getString("partyId");
@@ -985,7 +985,7 @@ public class OrderReadHelper {
      */
     public String getAffiliateId() {
         try {
-            GenericEntity distributorRole = EntityUtil.getFirst(orderHeader.getRelated("OrderRole",
+            GenericEntity distributorRole = EntityUtil.getFirst(orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderRole,
                     UtilMisc.toMap("roleTypeId", "AFFILIATE"), null, false));
 
             return distributorRole == null ? null : distributorRole.getString("partyId");
@@ -1027,10 +1027,10 @@ public class OrderReadHelper {
     public Set<String> getItemFeatureSet(GenericValue item) {
         Set<String> featureSet = new LinkedHashSet<>();
         List<GenericValue> featureAppls = null;
-        if (item.get("productId") != null) {
+        if (item.get(org.apache.ofbiz.persistence.entity.x.productId) != null) {
             try {
                 featureAppls = item.getDelegator().findByAnd("ProductFeatureAppl",
-                        UtilMisc.toMap("productId", item.getString("productId")), null, true);
+                        UtilMisc.toMap("productId", item.getString(org.apache.ofbiz.persistence.entity.x.productId)), null, true);
                 List<EntityExpr> filterExprs = UtilMisc.toList(EntityCondition.makeCondition("productFeatureApplTypeId",
                         EntityOperator.EQUALS, "STANDARD_FEATURE"));
                 filterExprs.add(EntityCondition.makeCondition("productFeatureApplTypeId", EntityOperator.EQUALS, "REQUIRED_FEATURE"));
@@ -1040,7 +1040,7 @@ public class OrderReadHelper {
             }
             if (featureAppls != null) {
                 for (GenericValue appl : featureAppls) {
-                    featureSet.add(appl.getString("productFeatureId"));
+                    featureSet.add(appl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId));
                 }
             }
         }
@@ -1048,13 +1048,13 @@ public class OrderReadHelper {
         // get the ADDITIONAL_FEATURE adjustments
         List<GenericValue> additionalFeatures = null;
         try {
-            additionalFeatures = item.getRelated("OrderAdjustment", UtilMisc.toMap("orderAdjustmentTypeId", "ADDITIONAL_FEATURE"), null, false);
+            additionalFeatures = item.getRelated(org.apache.ofbiz.persistence.entity.x.OrderAdjustment, UtilMisc.toMap("orderAdjustmentTypeId", "ADDITIONAL_FEATURE"), null, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Unable to get OrderAdjustment from item : " + item, MODULE);
         }
         if (additionalFeatures != null) {
             for (GenericValue adj : additionalFeatures) {
-                String featureId = adj.getString("productFeatureId");
+                String featureId = adj.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId);
                 if (featureId != null) {
                     featureSet.add(featureId);
                 }
@@ -1075,21 +1075,21 @@ public class OrderReadHelper {
         if (validItems != null) {
             for (GenericValue item : validItems) {
                 List<GenericValue> featureAppls = null;
-                if (item.get("productId") != null) {
+                if (item.get(org.apache.ofbiz.persistence.entity.x.productId) != null) {
                     try {
                         featureAppls = ProductWorker.getProductFeaturesApplIncludeMarketingPackage(
-                                item.getRelatedOne("Product", true));
+                                item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, true));
                     } catch (GenericEntityException e) {
                         Debug.logError(e, "Unable to get ProductFeatureAppl for item : " + item, MODULE);
                     }
                     if (featureAppls != null) {
                         for (GenericValue appl : featureAppls) {
-                            BigDecimal lastQuantity = featureMap.get(appl.getString("productFeatureId"));
+                            BigDecimal lastQuantity = featureMap.get(appl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId));
                             if (lastQuantity == null) {
                                 lastQuantity = BigDecimal.ZERO;
                             }
                             BigDecimal newQuantity = lastQuantity.add(getOrderItemQuantity(item));
-                            featureMap.put(appl.getString("productFeatureId"), newQuantity);
+                            featureMap.put(appl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId), newQuantity);
                         }
                     }
                 }
@@ -1097,14 +1097,14 @@ public class OrderReadHelper {
                 // get the ADDITIONAL_FEATURE adjustments
                 List<GenericValue> additionalFeatures = null;
                 try {
-                    additionalFeatures = item.getRelated("OrderAdjustment", UtilMisc.toMap("orderAdjustmentTypeId", "ADDITIONAL_FEATURE"),
+                    additionalFeatures = item.getRelated(org.apache.ofbiz.persistence.entity.x.OrderAdjustment, UtilMisc.toMap("orderAdjustmentTypeId", "ADDITIONAL_FEATURE"),
                             null, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Unable to get OrderAdjustment from item : " + item, MODULE);
                 }
                 if (additionalFeatures != null) {
                     for (GenericValue adj : additionalFeatures) {
-                        String featureId = adj.getString("productFeatureId");
+                        String featureId = adj.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId);
                         if (featureId != null) {
                             BigDecimal lastQuantity = featureMap.get(featureId);
                             if (lastQuantity == null) {
@@ -1132,7 +1132,7 @@ public class OrderReadHelper {
             for (GenericValue item : validItems) {
                 GenericValue product = null;
                 try {
-                    product = item.getRelatedOne("Product", false);
+                    product = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Problem getting Product from OrderItem; returning 0", MODULE);
                 }
@@ -1158,7 +1158,7 @@ public class OrderReadHelper {
             for (GenericValue item : validItems) {
                 GenericValue product = null;
                 try {
-                    product = item.getRelatedOne("Product", false);
+                    product = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Problem getting Product from OrderItem; returning 0", MODULE);
                 }
@@ -1185,7 +1185,7 @@ public class OrderReadHelper {
             for (GenericValue item : validItems) {
                 GenericValue product = null;
                 try {
-                    product = item.getRelatedOne("Product", false);
+                    product = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Problem getting Product from OrderItem; returning 0", MODULE);
                     return ZERO;
@@ -1210,7 +1210,7 @@ public class OrderReadHelper {
         List<GenericValue> shipGroups = getOrderItemShipGroups();
         if (UtilValidate.isNotEmpty(shipGroups)) {
             for (GenericValue shipGroup : shipGroups) {
-                shippableQuantity = shippableQuantity.add(getShippableQuantity(shipGroup.getString("shipGroupSeqId")));
+                shippableQuantity = shippableQuantity.add(getShippableQuantity(shipGroup.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId)));
             }
         }
         return shippableQuantity.setScale(DECIMALS, ROUNDING);
@@ -1228,7 +1228,7 @@ public class OrderReadHelper {
             for (GenericValue item : validItems) {
                 GenericValue product = null;
                 try {
-                    product = item.getRelatedOne("Product", false);
+                    product = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Problem getting Product from OrderItem; returning 0", MODULE);
                     return ZERO;
@@ -1271,15 +1271,15 @@ public class OrderReadHelper {
 
         GenericValue product = null;
         try {
-            product = item.getRelatedOne("Product", false);
+            product = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Problem getting Product from OrderItem; returning 0", MODULE);
             return BigDecimal.ZERO;
         }
         if (product != null) {
             if (ProductWorker.shippingApplies(product)) {
-                BigDecimal weight = product.getBigDecimal("shippingWeight");
-                String isVariant = product.getString("isVariant");
+                BigDecimal weight = product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingWeight);
+                String isVariant = product.getString(org.apache.ofbiz.persistence.entity.x.isVariant);
                 if (weight == null && "Y".equals(isVariant)) {
                     // get the virtual product and check its weight
                     try {
@@ -1287,7 +1287,7 @@ public class OrderReadHelper {
                         if (UtilValidate.isNotEmpty(virtualId)) {
                             GenericValue virtual = EntityQuery.use(delegator).from("Product").where("productId", virtualId).cache().queryOne();
                             if (virtual != null) {
-                                weight = virtual.getBigDecimal("shippingWeight");
+                                weight = virtual.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingWeight);
                             }
                         }
                     } catch (GenericEntityException e) {
@@ -1329,11 +1329,11 @@ public class OrderReadHelper {
     public BigDecimal getOrderPaymentPreferenceTotalByType(String paymentMethodTypeId) {
         BigDecimal total = ZERO;
         for (GenericValue preference : getPaymentPreferences()) {
-            if (preference.get("maxAmount") == null) {
+            if (preference.get(org.apache.ofbiz.persistence.entity.x.maxAmount) == null) {
                 continue;
             }
-            if (paymentMethodTypeId == null || paymentMethodTypeId.equals(preference.get("paymentMethodTypeId"))) {
-                total = total.add(preference.getBigDecimal("maxAmount")).setScale(DECIMALS, ROUNDING);
+            if (paymentMethodTypeId == null || paymentMethodTypeId.equals(preference.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+                total = total.add(preference.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount)).setScale(DECIMALS, ROUNDING);
             }
         }
         return total;
@@ -1375,10 +1375,10 @@ public class OrderReadHelper {
 
         try {
             // get a set of invoice IDs that belong to the order
-            List<GenericValue> orderItemBillings = orderHeader.getRelated("OrderItemBilling", null, null, false);
+            List<GenericValue> orderItemBillings = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItemBilling, null, null, false);
             Set<String> invoiceIds = new HashSet<>();
             for (GenericValue orderItemBilling : orderItemBillings) {
-                invoiceIds.add(orderItemBilling.getString("invoiceId"));
+                invoiceIds.add(orderItemBilling.getString(org.apache.ofbiz.persistence.entity.x.invoiceId));
             }
 
             // get the payments of the desired type for these invoices TODO: in models where invoices can have many orders, this needs to be refined
@@ -1392,10 +1392,10 @@ public class OrderReadHelper {
             List<GenericValue> payments = orderHeader.getDelegator().findList("PaymentAndApplication", ecl, null, null, null, true);
 
             for (GenericValue payment : payments) {
-                if (payment.get("amountApplied") == null) {
+                if (payment.get(org.apache.ofbiz.persistence.entity.x.amountApplied) == null) {
                     continue;
                 }
-                total = total.add(payment.getBigDecimal("amountApplied")).setScale(DECIMALS, ROUNDING);
+                total = total.add(payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied)).setScale(DECIMALS, ROUNDING);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, e.getMessage(), MODULE);
@@ -1414,17 +1414,17 @@ public class OrderReadHelper {
 
         GenericValue product = null;
         try {
-            product = item.getRelatedOne("Product", false);
+            product = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Problem getting Product from OrderItem", MODULE);
             return BigDecimal.ZERO;
         }
         if (product != null) {
             if (ProductWorker.shippingApplies(product)) {
-                BigDecimal height = product.getBigDecimal("shippingHeight");
-                BigDecimal width = product.getBigDecimal("shippingWidth");
-                BigDecimal depth = product.getBigDecimal("shippingDepth");
-                String isVariant = product.getString("isVariant");
+                BigDecimal height = product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingHeight);
+                BigDecimal width = product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingWidth);
+                BigDecimal depth = product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingDepth);
+                String isVariant = product.getString(org.apache.ofbiz.persistence.entity.x.isVariant);
                 if ((height == null || width == null || depth == null) && "Y".equals(isVariant)) {
                     // get the virtual product and check its values
                     try {
@@ -1433,13 +1433,13 @@ public class OrderReadHelper {
                             GenericValue virtual = EntityQuery.use(delegator).from("Product").where("productId", virtualId).cache().queryOne();
                             if (virtual != null) {
                                 if (height == null) {
-                                    height = virtual.getBigDecimal("shippingHeight");
+                                    height = virtual.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingHeight);
                                 }
                                 if (width == null) {
-                                    width = virtual.getBigDecimal("shippingWidth");
+                                    width = virtual.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingWidth);
                                 }
                                 if (depth == null) {
-                                    depth = virtual.getBigDecimal("shippingDepth");
+                                    depth = virtual.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingDepth);
                                 }
                             }
                         }
@@ -1480,21 +1480,21 @@ public class OrderReadHelper {
 
         GenericValue product = null;
         try {
-            product = item.getRelatedOne("Product", false);
+            product = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Problem getting Product from OrderItem; returning 1", MODULE);
             return 1;
         }
         if (product != null) {
             if (ProductWorker.shippingApplies(product)) {
-                Long pieces = product.getLong("piecesIncluded");
-                String isVariant = product.getString("isVariant");
+                Long pieces = product.getLong(org.apache.ofbiz.persistence.entity.x.piecesIncluded);
+                String isVariant = product.getString(org.apache.ofbiz.persistence.entity.x.isVariant);
                 if (pieces == null && isVariant != null && "Y".equals(isVariant)) {
                     // get the virtual product and check its weight
                     GenericValue virtual = null;
                     try {
                         virtual = EntityQuery.use(delegator).from("ProductAssoc")
-                                .where("productIdTo", product.get("productId"),
+                                .where("productIdTo", product.get(org.apache.ofbiz.persistence.entity.x.productId),
                                         "productAssocTypeId", "PRODUCT_VARIANT")
                                 .orderBy("-fromDate")
                                 .filterByDate().queryFirst();
@@ -1503,8 +1503,8 @@ public class OrderReadHelper {
                     }
                     if (virtual != null) {
                         try {
-                            GenericValue virtualProduct = virtual.getRelatedOne("MainProduct", false);
-                            pieces = virtualProduct.getLong("piecesIncluded");
+                            GenericValue virtualProduct = virtual.getRelatedOne(org.apache.ofbiz.persistence.entity.x.MainProduct, false);
+                            pieces = virtualProduct.getLong(org.apache.ofbiz.persistence.entity.x.piecesIncluded);
                         } catch (GenericEntityException e) {
                             Debug.logError(e, "Problem getting virtual product");
                         }
@@ -1545,7 +1545,7 @@ public class OrderReadHelper {
      */
     public Map<String, Object> getItemInfoMap(GenericValue item) {
         Map<String, Object> itemInfo = new HashMap<>();
-        itemInfo.put("productId", item.getString("productId"));
+        itemInfo.put("productId", item.getString(org.apache.ofbiz.persistence.entity.x.productId));
         itemInfo.put("quantity", getOrderItemQuantity(item));
         itemInfo.put("weight", this.getItemWeight(item));
         itemInfo.put("size", this.getItemSize(item));
@@ -1564,7 +1564,7 @@ public class OrderReadHelper {
         List<GenericValue> orderContactMechs = null;
         try {
             orderContactMechs = EntityQuery.use(delegator).from("OrderContactMech")
-                    .where("orderId", orderHeader.get("orderId"),
+                    .where("orderId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.orderId),
                             "contactMechPurposeTypeId", "ORDER_EMAIL")
                     .queryList();
         } catch (GenericEntityException e) {
@@ -1575,8 +1575,8 @@ public class OrderReadHelper {
         if (orderContactMechs != null) {
             for (GenericValue orderContactMech : orderContactMechs) {
                 try {
-                    GenericValue contactMech = orderContactMech.getRelatedOne("ContactMech", false);
-                    emails.append(emails.length() > 0 ? "," : "").append(contactMech.getString("infoString"));
+                    GenericValue contactMech = orderContactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ContactMech, false);
+                    emails.append(emails.length() > 0 ? "," : "").append(contactMech.getString(org.apache.ofbiz.persistence.entity.x.infoString));
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e, "Problems getting contact mech from order contact mech", MODULE);
                 }
@@ -1610,27 +1610,27 @@ public class OrderReadHelper {
 
         // add up the covered amount, but skip preferences which are declined or cancelled
         for (GenericValue pref : prefs) {
-            if ("PAYMENT_CANCELLED".equals(pref.get("statusId")) || "PAYMENT_DECLINED".equals(pref.get("statusId"))) {
+            if ("PAYMENT_CANCELLED".equals(pref.get(org.apache.ofbiz.persistence.entity.x.statusId)) || "PAYMENT_DECLINED".equals(pref.get(org.apache.ofbiz.persistence.entity.x.statusId))) {
                 continue;
-            } else if ("PAYMENT_SETTLED".equals(pref.get("statusId"))) {
-                List<GenericValue> responses = pref.getRelated("PaymentGatewayResponse", UtilMisc.toMap("transCodeEnumId", "PGT_CAPTURE"), null,
+            } else if ("PAYMENT_SETTLED".equals(pref.get(org.apache.ofbiz.persistence.entity.x.statusId))) {
+                List<GenericValue> responses = pref.getRelated(org.apache.ofbiz.persistence.entity.x.PaymentGatewayResponse, UtilMisc.toMap("transCodeEnumId", "PGT_CAPTURE"), null,
                         false);
                 for (GenericValue response : responses) {
-                    BigDecimal amount = response.getBigDecimal("amount");
+                    BigDecimal amount = response.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
                     if (amount != null) {
                         openAmount = openAmount.add(amount);
                     }
                 }
-                responses = pref.getRelated("PaymentGatewayResponse", UtilMisc.toMap("transCodeEnumId", "PGT_REFUND"), null, false);
+                responses = pref.getRelated(org.apache.ofbiz.persistence.entity.x.PaymentGatewayResponse, UtilMisc.toMap("transCodeEnumId", "PGT_REFUND"), null, false);
                 for (GenericValue response : responses) {
-                    BigDecimal amount = response.getBigDecimal("amount");
+                    BigDecimal amount = response.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
                     if (amount != null) {
                         openAmount = openAmount.subtract(amount);
                     }
                 }
             } else {
                 // all others are currently "unprocessed" payment preferences
-                BigDecimal maxAmount = pref.getBigDecimal("maxAmount");
+                BigDecimal maxAmount = pref.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount);
                 if (maxAmount != null) {
                     openAmount = openAmount.add(maxAmount);
                 }
@@ -1709,7 +1709,7 @@ public class OrderReadHelper {
         List<GenericValue> surveys = null;
         try {
             surveys = EntityQuery.use(delegator).from("SurveyResponse")
-                    .where("orderId", orderHeader.get("orderId")).queryList();
+                    .where("orderId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.orderId)).queryList();
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
@@ -1732,7 +1732,7 @@ public class OrderReadHelper {
     public List<GenericValue> getOrderItems() {
         if (orderItems == null) {
             try {
-                orderItems = orderHeader.getRelated("OrderItem", null, UtilMisc.toList("orderItemSeqId"), false);
+                orderItems = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItem, null, UtilMisc.toList("orderItemSeqId"), false);
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, MODULE);
             }
@@ -1748,7 +1748,7 @@ public class OrderReadHelper {
         if (orderItemAndShipGrp == null) {
             try {
                 orderItemAndShipGrp = orderHeader.getDelegator().findByAnd("OrderItemAndShipGroupAssoc",
-                        UtilMisc.toMap("orderId", orderHeader.getString("orderId")), null, false);
+                        UtilMisc.toMap("orderId", orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId)), null, false);
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, MODULE);
             }
@@ -1797,7 +1797,7 @@ public class OrderReadHelper {
         if (orderDeliverySchedule == null) {
             return false;
         }
-        Timestamp estimatedShipDate = orderDeliverySchedule.getTimestamp("estimatedReadyDate");
+        Timestamp estimatedShipDate = orderDeliverySchedule.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedReadyDate);
         return estimatedShipDate != null && UtilDateTime.nowTimestamp().after(estimatedShipDate);
     }
 
@@ -1810,13 +1810,13 @@ public class OrderReadHelper {
         for (GenericValue item : items) {
             List<GenericValue> receipts = null;
             try {
-                receipts = item.getRelated("ShipmentReceipt", null, null, false);
+                receipts = item.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentReceipt, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, MODULE);
             }
             if (UtilValidate.isNotEmpty(receipts)) {
                 for (GenericValue rec : receipts) {
-                    BigDecimal rejected = rec.getBigDecimal("quantityRejected");
+                    BigDecimal rejected = rec.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityRejected);
                     if (rejected != null && rejected.compareTo(BigDecimal.ZERO) > 0) {
                         return true;
                     }
@@ -1835,14 +1835,14 @@ public class OrderReadHelper {
         for (GenericValue item : items) {
             List<GenericValue> receipts = null;
             try {
-                receipts = item.getRelated("ShipmentReceipt", null, null, false);
+                receipts = item.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentReceipt, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, MODULE);
             }
             if (UtilValidate.isNotEmpty(receipts)) {
                 for (GenericValue rec : receipts) {
-                    BigDecimal acceptedQuantity = rec.getBigDecimal("quantityAccepted");
-                    BigDecimal orderedQuantity = (BigDecimal) item.get("quantity");
+                    BigDecimal acceptedQuantity = rec.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityAccepted);
+                    BigDecimal orderedQuantity = (BigDecimal) item.get(org.apache.ofbiz.persistence.entity.x.quantity);
                     if (acceptedQuantity.intValue() != orderedQuantity.intValue() && acceptedQuantity.intValue() > 0) {
                         return true;
                     }
@@ -1890,29 +1890,29 @@ public class OrderReadHelper {
                 EntityCondition.makeCondition("statusId", EntityOperator.EQUALS, "ITEM_COMPLETED"));
         List<GenericValue> items = EntityUtil.filterByOr(getOrderItems(), exprs);
         for (GenericValue item : items) {
-            if (item.get("productId") != null) {
+            if (item.get(org.apache.ofbiz.persistence.entity.x.productId) != null) {
                 GenericValue product = null;
                 try {
-                    product = item.getRelatedOne("Product", false);
+                    product = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Unable to get Product from OrderItem", MODULE);
                 }
                 if (product != null) {
                     GenericValue productType = null;
                     try {
-                        productType = product.getRelatedOne("ProductType", false);
+                        productType = product.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductType, false);
                     } catch (GenericEntityException e) {
                         Debug.logError(e, "ERROR: Unable to get ProductType from Product", MODULE);
                     }
 
                     if (productType != null) {
-                        String isDigital = productType.getString("isDigital");
+                        String isDigital = productType.getString(org.apache.ofbiz.persistence.entity.x.isDigital);
 
                         if (isDigital != null && "Y".equalsIgnoreCase(isDigital)) {
                             // make sure we have an OrderItemBilling record
                             List<GenericValue> orderItemBillings = null;
                             try {
-                                orderItemBillings = item.getRelated("OrderItemBilling", null, null, false);
+                                orderItemBillings = item.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItemBilling, null, null, false);
                             } catch (GenericEntityException e) {
                                 Debug.logError(e, "Unable to get OrderItemBilling from OrderItem");
                             }
@@ -1921,7 +1921,7 @@ public class OrderReadHelper {
                                 // get the ProductContent records
                                 List<GenericValue> productContents = null;
                                 try {
-                                    productContents = product.getRelated("ProductContent", null, null, false);
+                                    productContents = product.getRelated(org.apache.ofbiz.persistence.entity.x.ProductContent, null, null, false);
                                 } catch (GenericEntityException e) {
                                     Debug.logError("Unable to get ProductContent from Product", MODULE);
                                 }
@@ -1936,10 +1936,10 @@ public class OrderReadHelper {
                                 if (UtilValidate.isNotEmpty(productContents)) {
                                     // make sure we are still within the allowed timeframe and use limits
                                     for (GenericValue productContent : productContents) {
-                                        Timestamp fromDate = productContent.getTimestamp("purchaseFromDate");
-                                        Timestamp thruDate = productContent.getTimestamp("purchaseThruDate");
-                                        if (fromDate == null || item.getTimestamp("orderDate").after(fromDate)) {
-                                            if (thruDate == null || item.getTimestamp("orderDate").before(thruDate)) {
+                                        Timestamp fromDate = productContent.getTimestamp(org.apache.ofbiz.persistence.entity.x.purchaseFromDate);
+                                        Timestamp thruDate = productContent.getTimestamp(org.apache.ofbiz.persistence.entity.x.purchaseThruDate);
+                                        if (fromDate == null || item.getTimestamp(org.apache.ofbiz.persistence.entity.x.orderDate).after(fromDate)) {
+                                            if (thruDate == null || item.getTimestamp(org.apache.ofbiz.persistence.entity.x.orderDate).before(thruDate)) {
                                                 // TODO: Implement use count and days
                                                 digitalItems.add(item);
                                             }
@@ -1970,8 +1970,8 @@ public class OrderReadHelper {
      * @return the current order item work effort
      */
     public String getCurrentOrderItemWorkEffort(GenericValue orderItem) {
-        String orderItemSeqId = orderItem.getString("orderItemSeqId");
-        String orderId = orderItem.getString("orderId");
+        String orderItemSeqId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+        String orderId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId);
         Delegator delegator = orderItem.getDelegator();
         GenericValue workOrderItemFulFillment = null;
         GenericValue workEffort = null;
@@ -1980,13 +1980,13 @@ public class OrderReadHelper {
                     .where("orderId", orderId, "orderItemSeqId", orderItemSeqId)
                     .cache().queryFirst();
             if (workOrderItemFulFillment != null) {
-                workEffort = workOrderItemFulFillment.getRelatedOne("WorkEffort", false);
+                workEffort = workOrderItemFulFillment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.WorkEffort, false);
             }
         } catch (GenericEntityException e) {
             return null;
         }
         if (workEffort != null) {
-            return workEffort.getString("workEffortId");
+            return workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
         }
         return null;
     }
@@ -1999,14 +1999,14 @@ public class OrderReadHelper {
     public String getCurrentItemStatus(GenericValue orderItem) {
         GenericValue statusItem = null;
         try {
-            statusItem = orderItem.getRelatedOne("StatusItem", false);
+            statusItem = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.StatusItem, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Trouble getting StatusItem : " + orderItem, MODULE);
         }
-        if (statusItem == null || statusItem.get("description") == null) {
+        if (statusItem == null || statusItem.get(org.apache.ofbiz.persistence.entity.x.description) == null) {
             return "Not Available";
         }
-        return statusItem.getString("description");
+        return statusItem.getString(org.apache.ofbiz.persistence.entity.x.description);
     }
 
     /**
@@ -2023,12 +2023,12 @@ public class OrderReadHelper {
 
             try {
                 orderItemPriceInfos = EntityQuery.use(delegator).from("OrderItemPriceInfo")
-                        .where("orderId", orderHeader.get("orderId")).queryList();
+                        .where("orderId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.orderId)).queryList();
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, MODULE);
             }
         }
-        String orderItemSeqId = (String) orderItem.get("orderItemSeqId");
+        String orderItemSeqId = (String) orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
 
         return EntityUtil.filterByAnd(this.orderItemPriceInfos, UtilMisc.toMap("orderItemSeqId", orderItemSeqId));
     }
@@ -2044,7 +2044,7 @@ public class OrderReadHelper {
         }
         try {
             return orderHeader.getDelegator().findByAnd("OrderItemShipGroupAssoc",
-                    UtilMisc.toMap("orderId", orderItem.getString("orderId"), "orderItemSeqId", orderItem.getString("orderItemSeqId")),
+                    UtilMisc.toMap("orderId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId), "orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)),
                     UtilMisc.toList("shipGroupSeqId"), false);
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
@@ -2065,12 +2065,12 @@ public class OrderReadHelper {
             Delegator delegator = orderItem.getDelegator();
             try {
                 orderItemShipGrpInvResList = EntityQuery.use(delegator).from("OrderItemShipGrpInvRes")
-                        .where("orderId", orderItem.get("orderId")).queryList();
+                        .where("orderId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderId)).queryList();
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, "Trouble getting OrderItemShipGrpInvRes List", MODULE);
             }
         }
-        return EntityUtil.filterByAnd(orderItemShipGrpInvResList, UtilMisc.toMap("orderItemSeqId", orderItem.getString("orderItemSeqId")));
+        return EntityUtil.filterByAnd(orderItemShipGrpInvResList, UtilMisc.toMap("orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)));
     }
 
     /**
@@ -2097,14 +2097,14 @@ public class OrderReadHelper {
 
             try {
                 orderItemIssuances = EntityQuery.use(delegator).from("ItemIssuance")
-                        .where("orderId", orderItem.get("orderId")).queryList();
+                        .where("orderId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderId)).queryList();
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, "Trouble getting ItemIssuance(s)", MODULE);
             }
         }
 
         // filter the issuances
-        Map<String, Object> filter = UtilMisc.toMap("orderItemSeqId", orderItem.get("orderItemSeqId"));
+        Map<String, Object> filter = UtilMisc.toMap("orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
         if (shipmentId != null) {
             filter.put("shipmentId", shipmentId);
         }
@@ -2117,8 +2117,8 @@ public class OrderReadHelper {
     public Collection<String> getOrderProductIds() {
         Set<String> productIds = new HashSet<>();
         for (GenericValue orderItem : getOrderItems()) {
-            if (orderItem.get("productId") != null) {
-                productIds.add(orderItem.getString("productId"));
+            if (orderItem.get(org.apache.ofbiz.persistence.entity.x.productId) != null) {
+                productIds.add(orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId));
             }
         }
         return productIds;
@@ -2132,7 +2132,7 @@ public class OrderReadHelper {
         Delegator delegator = orderHeader.getDelegator();
         if (this.orderReturnItems == null) {
             try {
-                this.orderReturnItems = EntityQuery.use(delegator).from("ReturnItem").where("orderId", orderHeader.get("orderId")).queryList();
+                this.orderReturnItems = EntityQuery.use(delegator).from("ReturnItem").where("orderId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.orderId)).queryList();
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Problem getting ReturnItem from order", MODULE);
                 return null;
@@ -2154,20 +2154,20 @@ public class OrderReadHelper {
         Map<String, BigDecimal> returnMap = new HashMap<>();
         for (GenericValue orderItem : this.getValidOrderItems()) {
             List<GenericValue> group = EntityUtil.filterByAnd(returnItems, UtilMisc.toList(
-                    EntityCondition.makeCondition("orderId", orderItem.get("orderId")),
-                    EntityCondition.makeCondition("orderItemSeqId", orderItem.get("orderItemSeqId")),
+                    EntityCondition.makeCondition("orderId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderId)),
+                    EntityCondition.makeCondition("orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)),
                     EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "RETURN_CANCELLED")));
 
             // add up the returned quantities for this group TODO: received quantity should be used eventually
             BigDecimal returned = BigDecimal.ZERO;
             for (GenericValue returnItem : group) {
-                if (returnItem.getBigDecimal("returnQuantity") != null) {
-                    returned = returned.add(returnItem.getBigDecimal("returnQuantity"));
+                if (returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity) != null) {
+                    returned = returned.add(returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity));
                 }
             }
 
             // the quantity returned per order item
-            returnMap.put(orderItem.getString("orderItemSeqId"), returned);
+            returnMap.put(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), returned);
         }
         return returnMap;
     }
@@ -2198,8 +2198,8 @@ public class OrderReadHelper {
 
         BigDecimal returnedQuantity = ZERO;
         for (GenericValue returnedItem : returnedItems) {
-            if (returnedItem.get("returnQuantity") != null) {
-                returnedQuantity = returnedQuantity.add(returnedItem.getBigDecimal("returnQuantity")).setScale(DECIMALS, ROUNDING);
+            if (returnedItem.get(org.apache.ofbiz.persistence.entity.x.returnQuantity) != null) {
+                returnedQuantity = returnedQuantity.add(returnedItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity)).setScale(DECIMALS, ROUNDING);
             }
         }
         return returnedQuantity.setScale(DECIMALS, ROUNDING);
@@ -2231,21 +2231,21 @@ public class OrderReadHelper {
                     UtilMisc.toList(EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "RETURN_CANCELLED"))));
         }
         BigDecimal returnedAmount = ZERO;
-        String orderId = orderHeader.getString("orderId");
+        String orderId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId);
         List<String> returnHeaderList = new LinkedList<>();
         for (GenericValue returnedItem : returnedItems) {
-            if ((returnedItem.get("returnPrice") != null) && (returnedItem.get("returnQuantity") != null)) {
-                returnedAmount = returnedAmount.add(returnedItem.getBigDecimal("returnPrice").multiply(returnedItem.getBigDecimal("returnQuantity"))
+            if ((returnedItem.get(org.apache.ofbiz.persistence.entity.x.returnPrice) != null) && (returnedItem.get(org.apache.ofbiz.persistence.entity.x.returnQuantity) != null)) {
+                returnedAmount = returnedAmount.add(returnedItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnPrice).multiply(returnedItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity))
                         .setScale(DECIMALS, ROUNDING));
             }
-            Map<String, Object> itemAdjustmentCondition = UtilMisc.toMap("returnId", returnedItem.get("returnId"), "returnItemSeqId",
-                    returnedItem.get("returnItemSeqId"));
+            Map<String, Object> itemAdjustmentCondition = UtilMisc.toMap("returnId", returnedItem.get(org.apache.ofbiz.persistence.entity.x.returnId), "returnItemSeqId",
+                    returnedItem.get(org.apache.ofbiz.persistence.entity.x.returnItemSeqId));
             if (UtilValidate.isNotEmpty(returnTypeId)) {
                 itemAdjustmentCondition.put("returnTypeId", returnTypeId);
             }
             returnedAmount = returnedAmount.add(getReturnAdjustmentTotal(orderHeader.getDelegator(), itemAdjustmentCondition));
-            if (orderId.equals(returnedItem.getString("orderId")) && (!returnHeaderList.contains(returnedItem.getString("returnId")))) {
-                returnHeaderList.add(returnedItem.getString("returnId"));
+            if (orderId.equals(returnedItem.getString(org.apache.ofbiz.persistence.entity.x.orderId)) && (!returnHeaderList.contains(returnedItem.getString(org.apache.ofbiz.persistence.entity.x.returnId)))) {
+                returnHeaderList.add(returnedItem.getString(org.apache.ofbiz.persistence.entity.x.returnId));
             }
         }
         //get  returnedAmount from returnHeader adjustments whose orderId must equals to current orderHeader.orderId
@@ -2304,8 +2304,8 @@ public class OrderReadHelper {
 
         Map<String, BigDecimal> itemReturnedQuantities = new HashMap<>();
         for (GenericValue returnedItem : returnedItems) {
-            String orderItemSeqId = returnedItem.getString("orderItemSeqId");
-            BigDecimal returnedQuantity = returnedItem.getBigDecimal("returnQuantity");
+            String orderItemSeqId = returnedItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+            BigDecimal returnedQuantity = returnedItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity);
             if (orderItemSeqId != null && returnedQuantity != null) {
                 BigDecimal existingQuantity = itemReturnedQuantities.get(orderItemSeqId);
                 if (existingQuantity == null) {
@@ -2322,7 +2322,7 @@ public class OrderReadHelper {
         BigDecimal totalShippingNotReturned = ZERO;
 
         for (GenericValue orderItem : this.getValidOrderItems()) {
-            BigDecimal itemQuantityDbl = orderItem.getBigDecimal("quantity");
+            BigDecimal itemQuantityDbl = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
             if (itemQuantityDbl == null || itemQuantityDbl.compareTo(ZERO) == 0) {
                 continue;
             }
@@ -2331,7 +2331,7 @@ public class OrderReadHelper {
             BigDecimal itemTaxes = this.getOrderItemTax(orderItem);
             BigDecimal itemShipping = this.getOrderItemShipping(orderItem);
 
-            BigDecimal quantityReturned = itemReturnedQuantities.get(orderItem.get("orderItemSeqId"));
+            BigDecimal quantityReturned = itemReturnedQuantities.get(orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
             if (quantityReturned == null) {
                 quantityReturned = BigDecimal.ZERO;
             }
@@ -2384,16 +2384,16 @@ public class OrderReadHelper {
         // sum up the return items that have a return item response with a billing account defined
         try {
             for (GenericValue returnItem : returnedItems) {
-                GenericValue returnItemResponse = returnItem.getRelatedOne("ReturnItemResponse", false);
+                GenericValue returnItemResponse = returnItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ReturnItemResponse, false);
                 if (returnItemResponse == null) {
                     continue;
                 }
-                if (returnItemResponse.get("billingAccountId") == null) {
+                if (returnItemResponse.get(org.apache.ofbiz.persistence.entity.x.billingAccountId) == null) {
                     continue;
                 }
 
                 // we can just add the response amounts
-                returnedAmount = returnedAmount.add(returnItemResponse.getBigDecimal("responseAmount")).setScale(DECIMALS, ROUNDING);
+                returnedAmount = returnedAmount.add(returnItemResponse.getBigDecimal(org.apache.ofbiz.persistence.entity.x.responseAmount)).setScale(DECIMALS, ROUNDING);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, e.getMessage(), MODULE);
@@ -2443,7 +2443,7 @@ public class OrderReadHelper {
                 List<GenericValue> reses = this.getOrderItemShipGrpInvResList(item);
                 if (reses != null) {
                     for (GenericValue res : reses) {
-                        BigDecimal nav = res.getBigDecimal("quantityNotAvailable");
+                        BigDecimal nav = res.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityNotAvailable);
                         if (nav != null) {
                             backorder = backorder.add(nav).setScale(DECIMALS, ROUNDING);
                         }
@@ -2462,8 +2462,8 @@ public class OrderReadHelper {
     public BigDecimal getItemPickedQuantityBd(GenericValue orderItem) {
         BigDecimal quantityPicked = ZERO;
         EntityConditionList<EntityExpr> pickedConditions = EntityCondition.makeCondition(UtilMisc.toList(
-                EntityCondition.makeCondition("orderId", EntityOperator.EQUALS, orderItem.get("orderId")),
-                EntityCondition.makeCondition("orderItemSeqId", EntityOperator.EQUALS, orderItem.getString("orderItemSeqId")),
+                EntityCondition.makeCondition("orderId", EntityOperator.EQUALS, orderItem.get(org.apache.ofbiz.persistence.entity.x.orderId)),
+                EntityCondition.makeCondition("orderItemSeqId", EntityOperator.EQUALS, orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)),
                 EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "PICKLIST_CANCELLED")),
                 EntityOperator.AND);
 
@@ -2477,7 +2477,7 @@ public class OrderReadHelper {
 
         if (picked != null) {
             for (GenericValue pickedItem : picked) {
-                BigDecimal issueQty = pickedItem.getBigDecimal("quantity");
+                BigDecimal issueQty = pickedItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                 if (issueQty != null) {
                     quantityPicked = quantityPicked.add(issueQty).setScale(DECIMALS, ROUNDING);
                 }
@@ -2496,8 +2496,8 @@ public class OrderReadHelper {
         List<GenericValue> issuance = getOrderItemIssuances(orderItem);
         if (issuance != null) {
             for (GenericValue issue : issuance) {
-                BigDecimal issueQty = issue.getBigDecimal("quantity");
-                BigDecimal cancelQty = issue.getBigDecimal("cancelQuantity");
+                BigDecimal issueQty = issue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                BigDecimal cancelQty = issue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
                 if (cancelQty == null) {
                     cancelQty = ZERO;
                 }
@@ -2525,7 +2525,7 @@ public class OrderReadHelper {
         if (this.orderItemIssuances == null) {
             Delegator delegator = orderItem.getDelegator();
             try {
-                orderItemIssuances = EntityQuery.use(delegator).from("ItemIssuance").where("orderId", orderItem.get("orderId"),
+                orderItemIssuances = EntityQuery.use(delegator).from("ItemIssuance").where("orderId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderId),
                         "shipGroupSeqId", shipGroupSeqId).queryList();
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, "Trouble getting ItemIssuance(s)", MODULE);
@@ -2533,12 +2533,12 @@ public class OrderReadHelper {
         }
 
         // filter the issuance
-        Map<String, Object> filter = UtilMisc.toMap("orderItemSeqId", orderItem.get("orderItemSeqId"), "shipGroupSeqId", shipGroupSeqId);
+        Map<String, Object> filter = UtilMisc.toMap("orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "shipGroupSeqId", shipGroupSeqId);
         List<GenericValue> issuances = EntityUtil.filterByAnd(orderItemIssuances, filter);
         if (UtilValidate.isNotEmpty(issuances)) {
             for (GenericValue issue : issuances) {
-                BigDecimal issueQty = issue.getBigDecimal("quantity");
-                BigDecimal cancelQty = issue.getBigDecimal("cancelQuantity");
+                BigDecimal issueQty = issue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                BigDecimal cancelQty = issue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
                 if (cancelQty == null) {
                     cancelQty = ZERO;
                 }
@@ -2562,7 +2562,7 @@ public class OrderReadHelper {
         List<GenericValue> reses = getOrderItemShipGrpInvResList(orderItem);
         if (reses != null) {
             for (GenericValue res : reses) {
-                BigDecimal quantity = res.getBigDecimal("quantity");
+                BigDecimal quantity = res.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                 if (quantity != null) {
                     reserved = reserved.add(quantity).setScale(DECIMALS, ROUNDING);
                 }
@@ -2579,18 +2579,18 @@ public class OrderReadHelper {
     public BigDecimal getItemBackorderedQuantity(GenericValue orderItem) {
         BigDecimal backOrdered = ZERO;
 
-        Timestamp shipDate = orderItem.getTimestamp("estimatedShipDate");
-        Timestamp autoCancel = orderItem.getTimestamp("autoCancelDate");
+        Timestamp shipDate = orderItem.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedShipDate);
+        Timestamp autoCancel = orderItem.getTimestamp(org.apache.ofbiz.persistence.entity.x.autoCancelDate);
 
         List<GenericValue> reses = getOrderItemShipGrpInvResList(orderItem);
         if (reses != null) {
             for (GenericValue res : reses) {
-                Timestamp promised = res.getTimestamp("currentPromisedDate");
+                Timestamp promised = res.getTimestamp(org.apache.ofbiz.persistence.entity.x.currentPromisedDate);
                 if (promised == null) {
-                    promised = res.getTimestamp("promisedDatetime");
+                    promised = res.getTimestamp(org.apache.ofbiz.persistence.entity.x.promisedDatetime);
                 }
                 if (autoCancel != null || (shipDate != null && shipDate.after(promised))) {
-                    BigDecimal resQty = res.getBigDecimal("quantity");
+                    BigDecimal resQty = res.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                     if (resQty != null) {
                         backOrdered = backOrdered.add(resQty).setScale(DECIMALS, ROUNDING);
                     }
@@ -2617,7 +2617,7 @@ public class OrderReadHelper {
      * @return the item canceled quantity
      */
     public BigDecimal getItemCanceledQuantity(GenericValue orderItem) {
-        BigDecimal cancelQty = orderItem.getBigDecimal("cancelQuantity");
+        BigDecimal cancelQty = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
         if (cancelQty == null) {
             cancelQty = BigDecimal.ZERO;
         }
@@ -2651,7 +2651,7 @@ public class OrderReadHelper {
         for (int i = 0; i < orderItems.size(); i++) {
             GenericValue oi = orderItems.get(i);
 
-            totalItems = totalItems.add(oi.getBigDecimal("quantity")).setScale(DECIMALS, ROUNDING);
+            totalItems = totalItems.add(oi.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity)).setScale(DECIMALS, ROUNDING);
         }
         return totalItems;
     }
@@ -2747,14 +2747,14 @@ public class OrderReadHelper {
     public String getAdjustmentType(GenericValue adjustment) {
         GenericValue adjustmentType = null;
         try {
-            adjustmentType = adjustment.getRelatedOne("OrderAdjustmentType", false);
+            adjustmentType = adjustment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderAdjustmentType, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Problems with order adjustment", MODULE);
         }
-        if (adjustmentType == null || adjustmentType.get("description") == null) {
+        if (adjustmentType == null || adjustmentType.get(org.apache.ofbiz.persistence.entity.x.description) == null) {
             return "";
         }
-        return adjustmentType.getString("description");
+        return adjustmentType.getString(org.apache.ofbiz.persistence.entity.x.description);
     }
 
     /**
@@ -2774,14 +2774,14 @@ public class OrderReadHelper {
     public String getCurrentItemStatusString(GenericValue orderItem) {
         GenericValue statusItem = null;
         try {
-            statusItem = orderItem.getRelatedOne("StatusItem", true);
+            statusItem = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.StatusItem, true);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
         if (statusItem != null) {
-            return statusItem.getString("description");
+            return statusItem.getString(org.apache.ofbiz.persistence.entity.x.description);
         }
-        return orderHeader.getString("statusId");
+        return orderHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId);
     }
 
     /**
@@ -2801,8 +2801,8 @@ public class OrderReadHelper {
         Set<String> productPromoCodesEntered = new HashSet<>();
         try {
             for (GenericValue orderProductPromoCode: EntityQuery.use(delegator).from("OrderProductPromoCode")
-                    .where("orderId", orderHeader.get("orderId")).cache().queryList()) {
-                productPromoCodesEntered.add(orderProductPromoCode.getString("productPromoCodeId"));
+                    .where("orderId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.orderId)).cache().queryList()) {
+                productPromoCodesEntered.add(orderProductPromoCode.getString(org.apache.ofbiz.persistence.entity.x.productPromoCodeId));
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -2817,7 +2817,7 @@ public class OrderReadHelper {
     public List<GenericValue> getProductPromoUse() {
         Delegator delegator = orderHeader.getDelegator();
         try {
-            return EntityQuery.use(delegator).from("ProductPromoUse").where("orderId", orderHeader.get("orderId")).cache().queryList();
+            return EntityQuery.use(delegator).from("ProductPromoUse").where("orderId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.orderId)).cache().queryList();
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
@@ -2871,8 +2871,8 @@ public class OrderReadHelper {
      */
     public static BigDecimal getOrderItemQuantity(GenericValue orderItem) {
 
-        BigDecimal cancelQty = orderItem.getBigDecimal("cancelQuantity");
-        BigDecimal orderQty = orderItem.getBigDecimal("quantity");
+        BigDecimal cancelQty = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
+        BigDecimal orderQty = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
 
         if (cancelQty == null) {
             cancelQty = ZERO;
@@ -2890,8 +2890,8 @@ public class OrderReadHelper {
      * @return the order item ship group quantity
      */
     public static BigDecimal getOrderItemShipGroupQuantity(GenericValue shipGroupAssoc) {
-        BigDecimal cancelQty = shipGroupAssoc.getBigDecimal("cancelQuantity");
-        BigDecimal orderQty = shipGroupAssoc.getBigDecimal("quantity");
+        BigDecimal cancelQty = shipGroupAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
+        BigDecimal orderQty = shipGroupAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
 
         if (cancelQty == null) {
             cancelQty = BigDecimal.ZERO;
@@ -2928,10 +2928,10 @@ public class OrderReadHelper {
         }
         Delegator delegator = orderHeader.getDelegator();
         GenericValue productStore = null;
-        if (orderHeader.get("productStoreId") != null) {
+        if (orderHeader.get(org.apache.ofbiz.persistence.entity.x.productStoreId) != null) {
             try {
                 productStore = EntityQuery.use(delegator).from("ProductStore").where("productStoreId",
-                        orderHeader.getString("productStoreId")).cache().queryOne();
+                        orderHeader.getString(org.apache.ofbiz.persistence.entity.x.productStoreId)).cache().queryOne();
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Cannot locate ProductStore from OrderHeader", MODULE);
             }
@@ -3024,7 +3024,7 @@ public class OrderReadHelper {
      */
     public static List<GenericValue> getOrderSurveyResponses(GenericValue orderHeader) {
         Delegator delegator = orderHeader.getDelegator();
-        String orderId = orderHeader.getString("orderId");
+        String orderId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId);
         List<GenericValue> responses = null;
         try {
             responses = EntityQuery.use(delegator).from("SurveyResponse").where("orderId", orderId, "orderItemSeqId", "_NA_").queryList();
@@ -3045,8 +3045,8 @@ public class OrderReadHelper {
      */
     public static List<GenericValue> getOrderItemSurveyResponse(GenericValue orderItem) {
         Delegator delegator = orderItem.getDelegator();
-        String orderItemSeqId = orderItem.getString("orderItemSeqId");
-        String orderId = orderItem.getString("orderId");
+        String orderItemSeqId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+        String orderId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId);
         List<GenericValue> responses = null;
         try {
             responses = EntityQuery.use(delegator).from("SurveyResponse").where("orderId", orderId, "orderItemSeqId", orderItemSeqId).queryList();
@@ -3093,15 +3093,15 @@ public class OrderReadHelper {
     public static BigDecimal calcOrderAdjustment(GenericValue orderAdjustment, BigDecimal orderSubTotal) {
         BigDecimal adjustment = ZERO;
 
-        if (orderAdjustment.get("amount") != null) {
-            BigDecimal amount = orderAdjustment.getBigDecimal("amount");
+        if (orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
+            BigDecimal amount = orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
             adjustment = adjustment.add(amount);
-        } else if (orderAdjustment.get("sourcePercentage") != null) {
-            BigDecimal percent = orderAdjustment.getBigDecimal("sourcePercentage");
+        } else if (orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.sourcePercentage) != null) {
+            BigDecimal percent = orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.sourcePercentage);
             BigDecimal amount = orderSubTotal.multiply(percent).multiply(PERCENTAGE);
             adjustment = adjustment.add(amount);
         }
-        if ("SALES_TAX".equals(orderAdjustment.get("orderAdjustmentTypeId"))) {
+        if ("SALES_TAX".equals(orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
             return adjustment.setScale(TAX_SCALE, TAX_ROUNDING);
         }
         return adjustment.setScale(DECIMALS, ROUNDING);
@@ -3133,11 +3133,11 @@ public class OrderReadHelper {
             GenericValue orderItem = itemIter.next();
             BigDecimal itemTotal = getOrderItemSubTotal(orderItem, adjustments);
 
-            if (workEfforts != null && orderItem.getString("orderItemTypeId").compareTo("RENTAL_ORDER_ITEM") == 0) {
+            if (workEfforts != null && orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemTypeId).compareTo("RENTAL_ORDER_ITEM") == 0) {
                 Iterator<GenericValue> weIter = UtilMisc.toIterator(workEfforts);
                 while (weIter != null && weIter.hasNext()) {
                     GenericValue workEffort = weIter.next();
-                    if (workEffort.getString("workEffortId").compareTo(orderItem.getString("orderItemSeqId")) == 0) {
+                    if (workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId).compareTo(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)) == 0) {
                         itemTotal = itemTotal.multiply(getWorkEffortRentalQuantity(workEffort)).setScale(DECIMALS, ROUNDING);
                         break;
                     }
@@ -3166,7 +3166,7 @@ public class OrderReadHelper {
      * @return the order item sub total
      */
     public static BigDecimal getOrderItemSubTotal(GenericValue orderItem, List<GenericValue> adjustments, boolean forTax, boolean forShipping) {
-        BigDecimal unitPrice = orderItem.getBigDecimal("unitPrice");
+        BigDecimal unitPrice = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice);
         BigDecimal quantity = getOrderItemQuantity(orderItem);
         BigDecimal result = ZERO;
 
@@ -3178,12 +3178,12 @@ public class OrderReadHelper {
             }
             result = unitPrice.multiply(quantity);
 
-            if ("RENTAL_ORDER_ITEM".equals(orderItem.getString("orderItemTypeId"))) {
+            if ("RENTAL_ORDER_ITEM".equals(orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemTypeId))) {
                 // retrieve related work effort when required.
                 List<GenericValue> workOrderItemFulfillments = null;
                 try {
                     workOrderItemFulfillments = orderItem.getDelegator().findByAnd("WorkOrderItemFulfillment", UtilMisc.toMap("orderId",
-                            orderItem.getString("orderId"), "orderItemSeqId", orderItem.getString("orderItemSeqId")), null, true);
+                            orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId), "orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)), null, true);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                 }
@@ -3193,7 +3193,7 @@ public class OrderReadHelper {
                         GenericValue workOrderItemFulfillment = iter.next();
                         GenericValue workEffort = null;
                         try {
-                            workEffort = workOrderItemFulfillment.getRelatedOne("WorkEffort", true);
+                            workEffort = workOrderItemFulfillment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.WorkEffort, true);
                         } catch (GenericEntityException e) {
                             Debug.logError(e, MODULE);
                         }
@@ -3252,7 +3252,7 @@ public class OrderReadHelper {
             while (promoAdjIter.hasNext()) {
                 GenericValue promoAdjustment = promoAdjIter.next();
                 if (promoAdjustment != null) {
-                    BigDecimal amount = promoAdjustment.getBigDecimal("amount").setScale(TAX_SCALE, TAX_ROUNDING);
+                    BigDecimal amount = promoAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(TAX_SCALE, TAX_ROUNDING);
                     promoAdjTotal = promoAdjTotal.add(amount);
                 }
             }
@@ -3267,9 +3267,9 @@ public class OrderReadHelper {
      */
     public static BigDecimal getWorkEffortRentalLength(GenericValue workEffort) {
         BigDecimal length = null;
-        if (workEffort.get("estimatedStartDate") != null && workEffort.get("estimatedCompletionDate") != null) {
-            length = new BigDecimal(UtilDateTime.getInterval(workEffort.getTimestamp("estimatedStartDate"),
-                    workEffort.getTimestamp("estimatedCompletionDate")) / 86400000);
+        if (workEffort.get(org.apache.ofbiz.persistence.entity.x.estimatedStartDate) != null && workEffort.get(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate) != null) {
+            length = new BigDecimal(UtilDateTime.getInterval(workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedStartDate),
+                    workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate)) / 86400000);
         }
         return length;
     }
@@ -3281,20 +3281,20 @@ public class OrderReadHelper {
      */
     public static BigDecimal getWorkEffortRentalQuantity(GenericValue workEffort) {
         BigDecimal persons = BigDecimal.ONE;
-        if (workEffort.get("reservPersons") != null) {
-            persons = workEffort.getBigDecimal("reservPersons");
+        if (workEffort.get(org.apache.ofbiz.persistence.entity.x.reservPersons) != null) {
+            persons = workEffort.getBigDecimal(org.apache.ofbiz.persistence.entity.x.reservPersons);
         }
         BigDecimal secondPersonPerc = ZERO;
-        if (workEffort.get("reserv2ndPPPerc") != null) {
-            secondPersonPerc = workEffort.getBigDecimal("reserv2ndPPPerc");
+        if (workEffort.get(org.apache.ofbiz.persistence.entity.x.reserv2ndPPPerc) != null) {
+            secondPersonPerc = workEffort.getBigDecimal(org.apache.ofbiz.persistence.entity.x.reserv2ndPPPerc);
         }
         BigDecimal nthPersonPerc = ZERO;
-        if (workEffort.get("reservNthPPPerc") != null) {
-            nthPersonPerc = workEffort.getBigDecimal("reservNthPPPerc");
+        if (workEffort.get(org.apache.ofbiz.persistence.entity.x.reservNthPPPerc) != null) {
+            nthPersonPerc = workEffort.getBigDecimal(org.apache.ofbiz.persistence.entity.x.reservNthPPPerc);
         }
         long length = 1;
-        if (workEffort.get("estimatedStartDate") != null && workEffort.get("estimatedCompletionDate") != null) {
-            length = (workEffort.getTimestamp("estimatedCompletionDate").getTime() - workEffort.getTimestamp("estimatedStartDate").getTime())
+        if (workEffort.get(org.apache.ofbiz.persistence.entity.x.estimatedStartDate) != null && workEffort.get(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate) != null) {
+            length = (workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate).getTime() - workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedStartDate).getTime())
                     / 86400000;
         }
 
@@ -3363,7 +3363,7 @@ public class OrderReadHelper {
      */
     public static BigDecimal getOrderItemAdjustmentsTotal(GenericValue orderItem, List<GenericValue> adjustments, boolean includeOther,
                                                           boolean includeTax, boolean includeShipping, boolean forTax, boolean forShipping) {
-        return calcItemAdjustments(getOrderItemQuantity(orderItem), orderItem.getBigDecimal("unitPrice"),
+        return calcItemAdjustments(getOrderItemQuantity(orderItem), orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice),
                 getOrderItemAdjustmentList(orderItem, adjustments),
                 includeOther, includeTax, includeShipping, forTax, forShipping);
     }
@@ -3375,7 +3375,7 @@ public class OrderReadHelper {
      * @return the order item adjustment list
      */
     public static List<GenericValue> getOrderItemAdjustmentList(GenericValue orderItem, List<GenericValue> adjustments) {
-        return EntityUtil.filterByAnd(adjustments, UtilMisc.toMap("orderItemSeqId", orderItem.get("orderItemSeqId")));
+        return EntityUtil.filterByAnd(adjustments, UtilMisc.toMap("orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)));
     }
 
     /**
@@ -3386,7 +3386,7 @@ public class OrderReadHelper {
      */
     public static List<GenericValue> getOrderItemStatuses(GenericValue orderItem, List<GenericValue> orderStatuses) {
         List<EntityExpr> contraints1 = UtilMisc.toList(EntityCondition.makeCondition("orderItemSeqId", EntityOperator.EQUALS,
-                orderItem.get("orderItemSeqId")));
+                orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)));
         List<EntityExpr> contraints2 = UtilMisc.toList(EntityCondition.makeCondition("orderPaymentPreferenceId", EntityOperator.EQUALS, null));
         contraints2.add(EntityCondition.makeCondition("orderPaymentPreferenceId", EntityOperator.EQUALS, DataModelConstants.SEQ_ID_NA));
         contraints2.add(EntityCondition.makeCondition("orderPaymentPreferenceId", EntityOperator.EQUALS, ""));
@@ -3457,7 +3457,7 @@ public class OrderReadHelper {
      * @return the big decimal
      */
     public static BigDecimal calcItemAdjustment(GenericValue itemAdjustment, GenericValue item) {
-        return calcItemAdjustment(itemAdjustment, getOrderItemQuantity(item), item.getBigDecimal("unitPrice"));
+        return calcItemAdjustment(itemAdjustment, getOrderItemQuantity(item), item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice));
     }
 
     /**
@@ -3469,17 +3469,17 @@ public class OrderReadHelper {
      */
     public static BigDecimal calcItemAdjustment(GenericValue itemAdjustment, BigDecimal quantity, BigDecimal unitPrice) {
         BigDecimal adjustment = ZERO;
-        if (itemAdjustment.get("amount") != null) {
+        if (itemAdjustment.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
             // shouldn't round amounts here, wait until item total is added up otherwise incremental errors are introduced, and there is code that
             // calls this method that does that already: adjustment =
             // adjustment.add(setScaleByType("SALES_TAX".equals(itemAdjustment.get("orderAdjustmentTypeId")),
             // itemAdjustment.getBigDecimal("amount")));
-            adjustment = adjustment.add(itemAdjustment.getBigDecimal("amount"));
-        } else if (itemAdjustment.get("sourcePercentage") != null) {
+            adjustment = adjustment.add(itemAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
+        } else if (itemAdjustment.get(org.apache.ofbiz.persistence.entity.x.sourcePercentage) != null) {
             // see comment above about ROUNDING: adjustment =
             // adjustment.add(setScaleByType("SALES_TAX".equals(itemAdjustment.get("orderAdjustmentTypeId")),
             // itemAdjustment.getBigDecimal("sourcePercentage").multiply(quantity).multiply(unitPrice).multiply(PERCENTAGE)));
-            adjustment = adjustment.add(itemAdjustment.getBigDecimal("sourcePercentage").multiply(quantity).multiply(unitPrice).multiply(PERCENTAGE));
+            adjustment = adjustment.add(itemAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.sourcePercentage).multiply(quantity).multiply(unitPrice).multiply(PERCENTAGE));
         }
         if (Debug.verboseOn()) {
             Debug.logVerbose("calcItemAdjustment: " + itemAdjustment + ", quantity=" + quantity + ", unitPrice=" + unitPrice + ", adjustment="
@@ -3497,9 +3497,9 @@ public class OrderReadHelper {
      */
     public static BigDecimal calcItemAdjustmentRecurringBd(GenericValue itemAdjustment, BigDecimal quantity, BigDecimal unitPrice) {
         BigDecimal adjustmentRecurring = ZERO;
-        if (itemAdjustment.get("recurringAmount") != null) {
-            adjustmentRecurring = adjustmentRecurring.add(setScaleByType("SALES_TAX".equals(itemAdjustment.get("orderAdjustmentTypeId")),
-                    itemAdjustment.getBigDecimal("recurringAmount")));
+        if (itemAdjustment.get(org.apache.ofbiz.persistence.entity.x.recurringAmount) != null) {
+            adjustmentRecurring = adjustmentRecurring.add(setScaleByType("SALES_TAX".equals(itemAdjustment.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId)),
+                    itemAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.recurringAmount)));
         }
         if (Debug.verboseOn()) {
             Debug.logVerbose("calcItemAdjustmentRecurring: " + itemAdjustment + ", quantity=" + quantity + ", unitPrice=" + unitPrice
@@ -3526,13 +3526,13 @@ public class OrderReadHelper {
             for (GenericValue orderAdjustment : adjustments) {
                 boolean includeAdjustment = false;
 
-                if ("SALES_TAX".equals(orderAdjustment.getString("orderAdjustmentTypeId"))
-                        || "VAT_TAX".equals(orderAdjustment.getString("orderAdjustmentTypeId"))
-                        || "VAT_PRICE_CORRECT".equals(orderAdjustment.getString("orderAdjustmentTypeId"))) {
+                if ("SALES_TAX".equals(orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))
+                        || "VAT_TAX".equals(orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))
+                        || "VAT_PRICE_CORRECT".equals(orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
                     if (includeTax) {
                         includeAdjustment = true;
                     }
-                } else if ("SHIPPING_CHARGES".equals(orderAdjustment.getString("orderAdjustmentTypeId"))) {
+                } else if ("SHIPPING_CHARGES".equals(orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
                     if (includeShipping) {
                         includeAdjustment = true;
                     }
@@ -3544,13 +3544,13 @@ public class OrderReadHelper {
 
                 // default to yes, include for shipping; so only exclude if includeInShipping is N, or false;
                 // if Y or null or anything else it will be included
-                if (forTax && "N".equals(orderAdjustment.getString("includeInTax"))) {
+                if (forTax && "N".equals(orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.includeInTax))) {
                     includeAdjustment = false;
                 }
 
                 // default to yes, include for shipping; so only exclude if includeInShipping is N, or false;
                 // if Y or null or anything else it will be included
-                if (forShipping && "N".equals(orderAdjustment.getString("includeInShipping"))) {
+                if (forShipping && "N".equals(orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.includeInShipping))) {
                     includeAdjustment = false;
                 }
 
@@ -3587,7 +3587,7 @@ public class OrderReadHelper {
 
         if (UtilValidate.isNotEmpty(openOrders)) {
             for (GenericValue order : openOrders) {
-                BigDecimal thisQty = order.getBigDecimal("quantity");
+                BigDecimal thisQty = order.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                 if (thisQty == null) {
                     thisQty = BigDecimal.ZERO;
                 }
@@ -3615,7 +3615,7 @@ public class OrderReadHelper {
         } else if (security.hasEntityPermission("ORDERMGR", "_ROLEVIEW", userLogin)) {
             List<GenericValue> orderRoles = null;
             try {
-                orderRoles = orderHeader.getRelated("OrderRole", UtilMisc.toMap("partyId", userLogin.getString("partyId")), null, false);
+                orderRoles = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderRole, UtilMisc.toMap("partyId", userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId)), null, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Cannot get OrderRole from OrderHeader", MODULE);
             }
@@ -3650,17 +3650,17 @@ public class OrderReadHelper {
             BigDecimal returnedAmount = BigDecimal.ZERO;
             try {
                 List<GenericValue> returnAdjustments = EntityQuery.use(orderHeader.getDelegator()).from("ReturnAdjustment")
-                        .where("orderAdjustmentId", orderAdjustment.getString("orderAdjustmentId")).queryList();
+                        .where("orderAdjustmentId", orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId)).queryList();
                 if (UtilValidate.isNotEmpty(returnAdjustments)) {
                     for (GenericValue returnAdjustment : returnAdjustments) {
-                        returnedAmount = returnedAmount.add(returnAdjustment.getBigDecimal("amount"));
+                        returnedAmount = returnedAmount.add(returnAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
                     }
                 }
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
-            if (orderAdjustment.getBigDecimal("amount").compareTo(returnedAmount) > 0) {
-                orderAdjustment.set("amount", orderAdjustment.getBigDecimal("amount").subtract(returnedAmount));
+            if (orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).compareTo(returnedAmount) > 0) {
+                orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.amount, orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).subtract(returnedAmount));
                 filteredAdjustments.add(orderAdjustment);
             }
         }
@@ -3681,8 +3681,8 @@ public class OrderReadHelper {
             adjustments = EntityQuery.use(delegator).from("ReturnAdjustment").where(condition).queryList();
             if (adjustments != null) {
                 for (GenericValue returnAdjustment : adjustments) {
-                    total = total.add(setScaleByType("RET_SALES_TAX_ADJ".equals(returnAdjustment.get("returnAdjustmentTypeId")),
-                            returnAdjustment.getBigDecimal("amount")));
+                    total = total.add(setScaleByType("RET_SALES_TAX_ADJ".equals(returnAdjustment.get(org.apache.ofbiz.persistence.entity.x.returnAdjustmentTypeId)),
+                            returnAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount)));
                 }
             }
         } catch (GenericEntityException e) {
@@ -3710,9 +3710,9 @@ public class OrderReadHelper {
         BigDecimal invoiced = BigDecimal.ZERO;
         try {
             // this is simply the sum of quantity billed in all related OrderItemBillings
-            List<GenericValue> billings = orderItem.getRelated("OrderItemBilling", null, null, false);
+            List<GenericValue> billings = orderItem.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItemBilling, null, null, false);
             for (GenericValue billing : billings) {
-                BigDecimal quantity = billing.getBigDecimal("quantity");
+                BigDecimal quantity = billing.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                 if (quantity != null) {
                     invoiced = invoiced.add(quantity);
                 }
@@ -3774,7 +3774,7 @@ public class OrderReadHelper {
                     EntityUtil.filterByAnd(orderItemAttributes,
                             UtilMisc.toMap("orderItemSeqId", orderItemSeqId, "attrName", attributeName)));
         }
-        return orderItemAttribute != null ? orderItemAttribute.getString("attrValue") : null;
+        return orderItemAttribute != null ? orderItemAttribute.getString(org.apache.ofbiz.persistence.entity.x.attrValue) : null;
     }
 
     /**
@@ -3787,10 +3787,10 @@ public class OrderReadHelper {
         String attributeValue = null;
         if (orderItem != null) {
             try {
-                GenericValue orderItemAttribute = EntityUtil.getFirst(orderItem.getRelated("OrderItemAttribute",
+                GenericValue orderItemAttribute = EntityUtil.getFirst(orderItem.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItemAttribute,
                         UtilMisc.toMap("attrName", attributeName), null, false));
                 if (orderItemAttribute != null) {
-                    attributeValue = orderItemAttribute.getString("attrValue");
+                    attributeValue = orderItemAttribute.getString(org.apache.ofbiz.persistence.entity.x.attrValue);
                 }
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
@@ -3828,7 +3828,7 @@ public class OrderReadHelper {
                 orderAttribute = orderAttributeMap.get(attributeName);
             }
         }
-        return orderAttribute != null ? orderAttribute.getString("attrValue") : null;
+        return orderAttribute != null ? orderAttribute.getString(org.apache.ofbiz.persistence.entity.x.attrValue) : null;
     }
 
     /**
@@ -3861,7 +3861,7 @@ public class OrderReadHelper {
                         BigDecimal totalAmount = BigDecimal.ZERO;
                         //Now for each orderAdjustment record get and add amount.
                         for (GenericValue orderAdjustment : orderAdjByTaxAuthGeoAndPartyIds) {
-                            BigDecimal amount = orderAdjustment.getBigDecimal("amount");
+                            BigDecimal amount = orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
                             if (amount == null) {
                                 amount = ZERO;
                             }
@@ -3880,7 +3880,7 @@ public class OrderReadHelper {
             missedAdjustments.addAll(orderAdjustments);
             missedAdjustments.removeAll(processedAdjustments);
             for (GenericValue orderAdjustment : missedAdjustments) {
-                taxGrandTotal = taxGrandTotal.add(orderAdjustment.getBigDecimal("amount").setScale(TAX_SCALE, TAX_ROUNDING));
+                taxGrandTotal = taxGrandTotal.add(orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(TAX_SCALE, TAX_ROUNDING));
             }
             taxGrandTotal = taxGrandTotal.setScale(TAX_FINAL_SCALE, TAX_ROUNDING);
         }
@@ -3933,15 +3933,15 @@ public class OrderReadHelper {
                         BigDecimal totalAmount = BigDecimal.ZERO;
                         //Now for each orderAdjustment record get and add amount.
                         for (GenericValue orderAdjustment : orderAdjByTaxAuthGeoAndPartyIds) {
-                            BigDecimal amount = orderAdjustment.getBigDecimal("amount");
+                            BigDecimal amount = orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
                             if (amount != null) {
                                 totalAmount = totalAmount.add(amount);
                             }
-                            if ("VAT_TAX".equals(orderAdjustment.getString("orderAdjustmentTypeId"))
-                                    && orderAdjustment.get("amountAlreadyIncluded") != null) {
+                            if ("VAT_TAX".equals(orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))
+                                    && orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.amountAlreadyIncluded) != null) {
                                 // this is the only case where the VAT_TAX amountAlreadyIncluded should be added in, and should just be for display
                                 // and not to calculate the order grandTotal
-                                totalAmount = totalAmount.add(orderAdjustment.getBigDecimal("amountAlreadyIncluded"));
+                                totalAmount = totalAmount.add(orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountAlreadyIncluded));
                             }
                             totalAmount = totalAmount.setScale(TAX_SCALE, TAX_ROUNDING);
                             processedAdjustments.add(orderAdjustment);
@@ -3958,7 +3958,7 @@ public class OrderReadHelper {
             missedAdjustments.addAll(orderAdjustmentsToUse);
             missedAdjustments.removeAll(processedAdjustments);
             for (GenericValue orderAdjustment : missedAdjustments) {
-                taxGrandTotal = taxGrandTotal.add(orderAdjustment.getBigDecimal("amount").setScale(TAX_SCALE, TAX_ROUNDING));
+                taxGrandTotal = taxGrandTotal.add(orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(TAX_SCALE, TAX_ROUNDING));
             }
             taxGrandTotal = taxGrandTotal.setScale(TAX_FINAL_SCALE, TAX_ROUNDING);
         }
@@ -3979,7 +3979,7 @@ public class OrderReadHelper {
     public static BigDecimal getBillingAccountBalance(GenericValue billingAccount) throws GenericEntityException {
 
         Delegator delegator = billingAccount.getDelegator();
-        String billingAccountId = billingAccount.getString("billingAccountId");
+        String billingAccountId = billingAccount.getString(org.apache.ofbiz.persistence.entity.x.billingAccountId);
 
         BigDecimal balance = ZERO;
         BigDecimal accountLimit = getAccountLimit(billingAccount);
@@ -3996,7 +3996,7 @@ public class OrderReadHelper {
                 .queryList();
 
         for (GenericValue orderPaymentPreferenceSum : orderPaymentPreferenceSums) {
-            BigDecimal maxAmount = orderPaymentPreferenceSum.getBigDecimal("maxAmount");
+            BigDecimal maxAmount = orderPaymentPreferenceSum.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount);
             balance = maxAmount != null ? balance.subtract(maxAmount) : balance;
         }
 
@@ -4004,8 +4004,8 @@ public class OrderReadHelper {
                 .queryList();
         // TODO: cancelled payments?
         for (GenericValue paymentAppl : paymentAppls) {
-            if (paymentAppl.getString("invoiceId") == null) {
-                BigDecimal amountApplied = paymentAppl.getBigDecimal("amountApplied");
+            if (paymentAppl.getString(org.apache.ofbiz.persistence.entity.x.invoiceId) == null) {
+                BigDecimal amountApplied = paymentAppl.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied);
                 balance = balance.add(amountApplied);
             }
         }
@@ -4021,10 +4021,10 @@ public class OrderReadHelper {
      * @throws GenericEntityException the generic entity exception
      */
     public static BigDecimal getAccountLimit(GenericValue billingAccount) throws GenericEntityException {
-        if (billingAccount.getBigDecimal("accountLimit") != null) {
-            return billingAccount.getBigDecimal("accountLimit");
+        if (billingAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.accountLimit) != null) {
+            return billingAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.accountLimit);
         }
-        Debug.logWarning("Billing Account [" + billingAccount.getString("billingAccountId")
+        Debug.logWarning("Billing Account [" + billingAccount.getString(org.apache.ofbiz.persistence.entity.x.billingAccountId)
                 + "] does not have an account limit defined, assuming zero.", MODULE);
         return ZERO;
     }
@@ -4058,18 +4058,18 @@ public class OrderReadHelper {
         try {
             if (orderItem != null) {
                 EntityCondition cond = EntityCondition.makeCondition(UtilMisc.toList(
-                        EntityCondition.makeCondition("orderId", orderItem.getString("orderId")),
+                        EntityCondition.makeCondition("orderId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId)),
                         EntityCondition.makeCondition("quantityAccepted", EntityOperator.GREATER_THAN, BigDecimal.ZERO),
-                        EntityCondition.makeCondition("orderItemSeqId", orderItem.getString("orderItemSeqId"))));
+                        EntityCondition.makeCondition("orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId))));
                 Delegator delegator = orderItem.getDelegator();
                 List<GenericValue> shipmentReceipts = EntityQuery.use(delegator).select("quantityAccepted", "quantityRejected")
                         .from("ShipmentReceiptAndItem").where(cond).queryList();
                 for (GenericValue shipmentReceipt : shipmentReceipts) {
-                    if (shipmentReceipt.getBigDecimal("quantityAccepted") != null) {
-                        totalReceived = totalReceived.add(shipmentReceipt.getBigDecimal("quantityAccepted"));
+                    if (shipmentReceipt.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityAccepted) != null) {
+                        totalReceived = totalReceived.add(shipmentReceipt.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityAccepted));
                     }
-                    if (shipmentReceipt.getBigDecimal("quantityRejected") != null) {
-                        totalReceived = totalReceived.add(shipmentReceipt.getBigDecimal("quantityRejected"));
+                    if (shipmentReceipt.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityRejected) != null) {
+                        totalReceived = totalReceived.add(shipmentReceipt.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityRejected));
                     }
                 }
             }

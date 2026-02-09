@@ -263,7 +263,7 @@ public final class FinAccountHelper {
         }
 
         if (finAccount != null) {
-            String dbPin = finAccount.getString("finAccountCode");
+            String dbPin = finAccount.getString(org.apache.ofbiz.persistence.entity.x.finAccountCode);
             Debug.logInfo("FinAccount Pin Validation: [Sent: " + pinNumber + "] [Actual: " + dbPin + "]", MODULE);
             if (dbPin != null && dbPin.equals(pinNumber)) {
                 return true;

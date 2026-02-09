@@ -247,7 +247,7 @@ public class TraverseSubContentTransform implements TemplateTransformModel {
                 List<Object> purposes = ContentWorker.getPurposes(thisContent);
                 assocContext.put("purposes", purposes);
                 List<String> contentTypeAncestry = new LinkedList<>();
-                String contentTypeId = (String) thisContent.get("contentTypeId");
+                String contentTypeId = (String) thisContent.get(org.apache.ofbiz.persistence.entity.x.contentTypeId);
                 try {
                     ContentWorker.getContentTypeAncestry(delegator, contentTypeId, contentTypeAncestry);
                 } catch (GenericEntityException e) {

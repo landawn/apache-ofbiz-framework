@@ -85,12 +85,12 @@ public class PartyServices {
         Delegator delegator = ctx.getDelegator();
         Timestamp now = UtilDateTime.nowTimestamp();
         List<GenericValue> toBeStored = new LinkedList<>();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         // in most cases userLogin will be null, but get anyway so we can keep track of that info if it is available
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
 
-        String partyId = (String) context.get("partyId");
-        String description = (String) context.get("description");
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String description = (String) context.get(org.apache.ofbiz.persistence.entity.x.description);
 
         // if specified partyId starts with a number, return an error
         if (UtilValidate.isNotEmpty(partyId) && partyId.matches("\\d+")) {
@@ -118,29 +118,29 @@ public class PartyServices {
         }
 
         if (party != null) {
-            if (!"PERSON".equals(party.getString("partyTypeId"))) {
+            if (!"PERSON".equals(party.getString(org.apache.ofbiz.persistence.entity.x.partyTypeId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "person.create.party_exists_not_person_type", locale));
             }
         } else {
             // create a party if one doesn't already exist with an initial status from the input
-            String statusId = (String) context.get("statusId");
+            String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
             if (statusId == null) {
                 statusId = "PARTY_ENABLED";
             }
             Map<String, Object> newPartyMap = UtilMisc.toMap("partyId", partyId, "partyTypeId", "PERSON", "description", description,
                     "createdDate", now, "lastModifiedDate", now, "statusId", statusId);
-            String preferredCurrencyUomId = (String) context.get("preferredCurrencyUomId");
+            String preferredCurrencyUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.preferredCurrencyUomId);
             if (UtilValidate.isNotEmpty(preferredCurrencyUomId)) {
                 newPartyMap.put("preferredCurrencyUomId", preferredCurrencyUomId);
             }
-            String externalId = (String) context.get("externalId");
+            String externalId = (String) context.get(org.apache.ofbiz.persistence.entity.x.externalId);
             if (UtilValidate.isNotEmpty(externalId)) {
                 newPartyMap.put("externalId", externalId);
             }
             if (userLogin != null) {
-                newPartyMap.put("createdByUserLogin", userLogin.get("userLoginId"));
-                newPartyMap.put("lastModifiedByUserLogin", userLogin.get("userLoginId"));
+                newPartyMap.put("createdByUserLogin", userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
+                newPartyMap.put("lastModifiedByUserLogin", userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
             }
             party = delegator.makeValue("Party", newPartyMap);
             toBeStored.add(party);
@@ -149,7 +149,7 @@ public class PartyServices {
             GenericValue statusRec = delegator.makeValue("PartyStatus",
                     UtilMisc.toMap("partyId", partyId, "statusId", statusId, "statusDate", now));
             if (userLogin != null) {
-                statusRec.put("changeByUserLoginId", userLogin.get("userLoginId"));
+                statusRec.put("changeByUserLoginId", userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
             }
             toBeStored.add(statusRec);
         }
@@ -190,12 +190,12 @@ public class PartyServices {
      */
     public static Map<String, Object> setPartyStatus(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        GenericValue loggedInUserLogin = (GenericValue) context.get("userLogin");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue loggedInUserLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
 
-        String partyId = (String) context.get("partyId");
-        String statusId = (String) context.get("statusId");
-        Timestamp statusDate = (Timestamp) context.get("statusDate");
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
+        Timestamp statusDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.statusDate);
         if (statusDate == null) {
             statusDate = UtilDateTime.nowTimestamp();
         }
@@ -203,23 +203,23 @@ public class PartyServices {
         try {
             GenericValue party = EntityQuery.use(delegator).from("Party").where("partyId", partyId).queryOne();
 
-            String oldStatusId = party.getString("statusId");
+            String oldStatusId = party.getString(org.apache.ofbiz.persistence.entity.x.statusId);
             if (!statusId.equals(oldStatusId)) {
 
                 if (oldStatusId == null) { // old records
-                    party.set("statusId", statusId);
-                    oldStatusId = party.getString("statusId");
+                    party.set(org.apache.ofbiz.persistence.entity.x.statusId, statusId);
+                    oldStatusId = party.getString(org.apache.ofbiz.persistence.entity.x.statusId);
                 } else {
                     // check that status is defined as a valid change
                     GenericValue statusValidChange = EntityQuery.use(delegator).from("StatusValidChange").where("statusId",
-                            party.getString("statusId"), "statusIdTo", statusId).queryOne();
+                            party.getString(org.apache.ofbiz.persistence.entity.x.statusId), "statusIdTo", statusId).queryOne();
                     if (statusValidChange == null) {
-                        String errorMsg = "Cannot change party status from " + party.getString("statusId") + " to " + statusId;
+                        String errorMsg = "Cannot change party status from " + party.getString(org.apache.ofbiz.persistence.entity.x.statusId) + " to " + statusId;
                         Debug.logWarning(errorMsg, MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "PartyStatusCannotBeChanged",
-                                UtilMisc.toMap("partyFromStatusId", party.getString("statusId"), "partyToStatusId", statusId), locale));
+                                UtilMisc.toMap("partyFromStatusId", party.getString(org.apache.ofbiz.persistence.entity.x.statusId), "partyToStatusId", statusId), locale));
                     }
-                    party.set("statusId", statusId);
+                    party.set(org.apache.ofbiz.persistence.entity.x.statusId, statusId);
                 }
                 party.store();
 
@@ -227,7 +227,7 @@ public class PartyServices {
                 GenericValue partyStatus = delegator.makeValue("PartyStatus", UtilMisc.toMap("partyId", partyId, "statusId", statusId,
                         "statusDate", statusDate));
                 if (loggedInUserLogin != null) {
-                    partyStatus.put("changeByUserLoginId", loggedInUserLogin.get("userLoginId"));
+                    partyStatus.put("changeByUserLoginId", loggedInUserLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
                 }
                 partyStatus.create();
 
@@ -238,8 +238,8 @@ public class PartyServices {
                             EntityCondition.makeCondition("enabled", EntityOperator.NOT_EQUAL, "N"));
                     List<GenericValue> userLogins = EntityQuery.use(delegator).from("UserLogin").where(cond).queryList();
                     for (GenericValue userLogin : userLogins) {
-                        userLogin.set("enabled", "N");
-                        userLogin.set("disabledDateTime", UtilDateTime.nowTimestamp());
+                        userLogin.set(org.apache.ofbiz.persistence.entity.x.enabled, "N");
+                        userLogin.set(org.apache.ofbiz.persistence.entity.x.disabledDateTime, UtilDateTime.nowTimestamp());
                     }
                     delegator.storeAll(userLogins);
                 }
@@ -265,7 +265,7 @@ public class PartyServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         String partyId = getPartyId(context);
         if (UtilValidate.isEmpty(partyId)) {
@@ -291,15 +291,15 @@ public class PartyServices {
         }
 
         // update status by separate service
-        String oldStatusId = party.getString("statusId");
-        if (party.get("statusId") == null) { // old records
-            party.set("statusId", "PARTY_ENABLED");
+        String oldStatusId = party.getString(org.apache.ofbiz.persistence.entity.x.statusId);
+        if (party.get(org.apache.ofbiz.persistence.entity.x.statusId) == null) { // old records
+            party.set(org.apache.ofbiz.persistence.entity.x.statusId, "PARTY_ENABLED");
         }
 
         person.setNonPKFields(context);
         party.setNonPKFields(context);
 
-        party.set("statusId", oldStatusId);
+        party.set(org.apache.ofbiz.persistence.entity.x.statusId, oldStatusId);
 
         try {
             person.store();
@@ -310,10 +310,10 @@ public class PartyServices {
                     "person.update.write_failure", new Object[] {e.getMessage() }, locale));
         }
 
-        if (UtilValidate.isNotEmpty(context.get("statusId")) && !context.get("statusId").equals(oldStatusId)) {
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.statusId)) && !context.get(org.apache.ofbiz.persistence.entity.x.statusId).equals(oldStatusId)) {
             try {
                 Map<String, Object> serviceResult = dispatcher.runSync("setPartyStatus", UtilMisc.toMap("partyId", partyId, "statusId",
-                        context.get("statusId"), "userLogin", context.get("userLogin")));
+                        context.get(org.apache.ofbiz.persistence.entity.x.statusId), "userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin)));
                 if (ServiceUtil.isError(serviceResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                 }
@@ -340,11 +340,11 @@ public class PartyServices {
     public static Map<String, Object> createPartyGroup(DispatchContext ctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         Timestamp now = UtilDateTime.nowTimestamp();
 
-        String partyId = (String) context.get("partyId");
-        Locale locale = (Locale) context.get("locale");
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // partyId might be empty, so check it and get next seq party id if empty
         if (UtilValidate.isEmpty(partyId)) {
@@ -373,7 +373,7 @@ public class PartyServices {
             }
 
             if (party != null) {
-                GenericValue partyType = party.getRelatedOne("PartyType", true);
+                GenericValue partyType = party.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PartyType, true);
 
                 if (!EntityTypeUtil.isType(partyType, partyGroupPartyType)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -383,39 +383,39 @@ public class PartyServices {
                 // create a party if one doesn't already exist
                 String partyTypeId = "PARTY_GROUP";
 
-                if (UtilValidate.isNotEmpty(context.get("partyTypeId"))) {
-                    GenericValue desiredPartyType = EntityQuery.use(delegator).from("PartyType").where("partyTypeId", context.get("partyTypeId"))
+                if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.partyTypeId))) {
+                    GenericValue desiredPartyType = EntityQuery.use(delegator).from("PartyType").where("partyTypeId", context.get(org.apache.ofbiz.persistence.entity.x.partyTypeId))
                             .cache().queryOne();
                     if (desiredPartyType != null && EntityTypeUtil.isType(desiredPartyType, partyGroupPartyType)) {
-                        partyTypeId = desiredPartyType.getString("partyTypeId");
+                        partyTypeId = desiredPartyType.getString(org.apache.ofbiz.persistence.entity.x.partyTypeId);
                     } else {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                                "PartyPartyTypeIdNotFound", UtilMisc.toMap("partyTypeId", context.get("partyTypeId")), locale));
+                                "PartyPartyTypeIdNotFound", UtilMisc.toMap("partyTypeId", context.get(org.apache.ofbiz.persistence.entity.x.partyTypeId)), locale));
                     }
                 }
 
                 Map<String, Object> newPartyMap = UtilMisc.toMap("partyId", partyId, "partyTypeId", partyTypeId, "createdDate", now,
                         "lastModifiedDate", now);
                 if (userLogin != null) {
-                    newPartyMap.put("createdByUserLogin", userLogin.get("userLoginId"));
-                    newPartyMap.put("lastModifiedByUserLogin", userLogin.get("userLoginId"));
+                    newPartyMap.put("createdByUserLogin", userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
+                    newPartyMap.put("lastModifiedByUserLogin", userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
                 }
 
-                String statusId = (String) context.get("statusId");
+                String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
                 party = delegator.makeValue("Party", newPartyMap);
                 party.setNonPKFields(context);
 
                 if (statusId == null) {
                     statusId = "PARTY_ENABLED";
                 }
-                party.set("statusId", statusId);
+                party.set(org.apache.ofbiz.persistence.entity.x.statusId, statusId);
                 party.create();
 
                 // create the status history
                 GenericValue partyStat = delegator.makeValue("PartyStatus",
                         UtilMisc.toMap("partyId", partyId, "statusId", statusId, "statusDate", now));
                 if (userLogin != null) {
-                    partyStat.put("changeByUserLoginId", userLogin.get("userLoginId"));
+                    partyStat.put("changeByUserLoginId", userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
                 }
                 partyStat.create();
             }
@@ -452,7 +452,7 @@ public class PartyServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         String partyId = getPartyId(context);
         if (UtilValidate.isEmpty(partyId)) {
@@ -480,10 +480,10 @@ public class PartyServices {
 
 
         // update status by separate service
-        String oldStatusId = party.getString("statusId");
+        String oldStatusId = party.getString(org.apache.ofbiz.persistence.entity.x.statusId);
         partyGroup.setNonPKFields(context);
         party.setNonPKFields(context);
-        party.set("statusId", oldStatusId);
+        party.set(org.apache.ofbiz.persistence.entity.x.statusId, oldStatusId);
 
         try {
             partyGroup.store();
@@ -495,10 +495,10 @@ public class PartyServices {
                     UtilMisc.toMap("errMessage", e.getMessage()), locale));
         }
 
-        if (UtilValidate.isNotEmpty(context.get("statusId")) && !context.get("statusId").equals(oldStatusId)) {
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.statusId)) && !context.get(org.apache.ofbiz.persistence.entity.x.statusId).equals(oldStatusId)) {
             try {
                 Map<String, Object> serviceResult = dispatcher.runSync("setPartyStatus", UtilMisc.toMap("partyId", partyId,
-                        "statusId", context.get("statusId"), "userLogin", context.get("userLogin")));
+                        "statusId", context.get(org.apache.ofbiz.persistence.entity.x.statusId), "userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin)));
                 if (ServiceUtil.isError(serviceResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                 }
@@ -522,7 +522,7 @@ public class PartyServices {
     public static Map<String, Object> createAffiliate(DispatchContext ctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Timestamp now = UtilDateTime.nowTimestamp();
 
         String partyId = getPartyId(context);
@@ -572,7 +572,7 @@ public class PartyServices {
 
         affiliate = delegator.makeValue("Affiliate", UtilMisc.toMap("partyId", partyId));
         affiliate.setNonPKFields(context);
-        affiliate.set("dateTimeCreated", now, false);
+        affiliate.set(org.apache.ofbiz.persistence.entity.x.dateTimeCreated, now, false);
 
         try {
             delegator.create(affiliate);
@@ -596,7 +596,7 @@ public class PartyServices {
      */
     public static Map<String, Object> updateAffiliate(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         String partyId = getPartyId(context);
         if (UtilValidate.isEmpty(partyId)) {
@@ -642,12 +642,12 @@ public class PartyServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String noteString = (String) context.get("note");
-        String partyId = (String) context.get("partyId");
-        String noteId = (String) context.get("noteId");
-        String noteName = (String) context.get("noteName");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String noteString = (String) context.get(org.apache.ofbiz.persistence.entity.x.note);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String noteId = (String) context.get(org.apache.ofbiz.persistence.entity.x.noteId);
+        String noteName = (String) context.get(org.apache.ofbiz.persistence.entity.x.noteName);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         //Make sure the note Id actually exists if one is passed to avoid a foreign key error below
         if (noteId != null) {
@@ -667,7 +667,7 @@ public class PartyServices {
         if (noteId == null) {
             Map<String, Object> noteRes = null;
             try {
-                noteRes = dispatcher.runSync("createNote", UtilMisc.toMap("partyId", userLogin.getString("partyId"),
+                noteRes = dispatcher.runSync("createNote", UtilMisc.toMap("partyId", userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId),
                          "note", noteString, "userLogin", userLogin, "locale", locale, "noteName", noteName));
                 if (ServiceUtil.isError(noteRes)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(noteRes));
@@ -719,8 +719,8 @@ public class PartyServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         Collection<Map<String, GenericValue>> parties = new LinkedList<>();
-        String email = (String) context.get("email");
-        Locale locale = (Locale) context.get("locale");
+        String email = (String) context.get(org.apache.ofbiz.persistence.entity.x.email);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         if (email.isEmpty()) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -741,8 +741,8 @@ public class PartyServices {
             }
             if (c != null) {
                 for (GenericValue pacm: c) {
-                    GenericValue party = delegator.makeValue("Party", UtilMisc.toMap("partyId", pacm.get("partyId"),
-                            "partyTypeId", pacm.get("partyTypeId")));
+                    GenericValue party = delegator.makeValue("Party", UtilMisc.toMap("partyId", pacm.get(org.apache.ofbiz.persistence.entity.x.partyId),
+                            "partyTypeId", pacm.get(org.apache.ofbiz.persistence.entity.x.partyTypeId)));
 
                     parties.add(UtilMisc.<String, GenericValue>toMap("party", party));
                 }
@@ -762,8 +762,8 @@ public class PartyServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         Collection<Map<String, GenericValue>> parties = new LinkedList<>();
-        String email = (String) context.get("email");
-        Locale locale = (Locale) context.get("locale");
+        String email = (String) context.get(org.apache.ofbiz.persistence.entity.x.email);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         if (email.isEmpty()) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -784,8 +784,8 @@ public class PartyServices {
             }
             if (c != null) {
                 for (GenericValue pacm: c) {
-                    GenericValue party = delegator.makeValue("Party", UtilMisc.toMap("partyId", pacm.get("partyId"),
-                            "partyTypeId", pacm.get("partyTypeId")));
+                    GenericValue party = delegator.makeValue("Party", UtilMisc.toMap("partyId", pacm.get(org.apache.ofbiz.persistence.entity.x.partyId),
+                            "partyTypeId", pacm.get(org.apache.ofbiz.persistence.entity.x.partyTypeId)));
 
                     parties.add(UtilMisc.<String, GenericValue>toMap("party", party));
                 }
@@ -812,8 +812,8 @@ public class PartyServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         Collection<Map<String, GenericValue>> parties = new LinkedList<>();
-        String userLoginId = (String) context.get("userLoginId");
-        Locale locale = (Locale) context.get("locale");
+        String userLoginId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         if (userLoginId.isEmpty()) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -833,8 +833,8 @@ public class PartyServices {
             }
             if (ulc != null) {
                 for (GenericValue ul: ulc) {
-                    GenericValue party = delegator.makeValue("Party", UtilMisc.toMap("partyId", ul.get("partyId"),
-                            "partyTypeId", ul.get("partyTypeId")));
+                    GenericValue party = delegator.makeValue("Party", UtilMisc.toMap("partyId", ul.get(org.apache.ofbiz.persistence.entity.x.partyId),
+                            "partyTypeId", ul.get(org.apache.ofbiz.persistence.entity.x.partyTypeId)));
                     parties.add(UtilMisc.<String, GenericValue>toMap("party", party));
                 }
             }
@@ -859,9 +859,9 @@ public class PartyServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         Collection<Map<String, GenericValue>> parties = new LinkedList<>();
-        String firstName = (String) context.get("firstName");
-        String lastName = (String) context.get("lastName");
-        Locale locale = (Locale) context.get("locale");
+        String firstName = (String) context.get(org.apache.ofbiz.persistence.entity.x.firstName);
+        String lastName = (String) context.get(org.apache.ofbiz.persistence.entity.x.lastName);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         if (firstName == null) {
             firstName = "";
@@ -889,7 +889,7 @@ public class PartyServices {
             if (pc != null) {
                 for (GenericValue person: pc) {
                     GenericValue party = delegator.makeValue("Party", UtilMisc.toMap("partyId",
-                            person.get("partyId"), "partyTypeId", "PERSON"));
+                            person.get(org.apache.ofbiz.persistence.entity.x.partyId), "partyTypeId", "PERSON"));
 
                     parties.add(UtilMisc.<String, GenericValue>toMap("person", person, "party", party));
                 }
@@ -915,8 +915,8 @@ public class PartyServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         Collection<Map<String, GenericValue>> parties = new LinkedList<>();
-        String groupName = (String) context.get("groupName");
-        Locale locale = (Locale) context.get("locale");
+        String groupName = (String) context.get(org.apache.ofbiz.persistence.entity.x.groupName);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         if (groupName.isEmpty()) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -936,7 +936,7 @@ public class PartyServices {
             if (pc != null) {
                 for (GenericValue group: pc) {
                     GenericValue party = delegator.makeValue("Party", UtilMisc.toMap("partyId",
-                            group.get("partyId"), "partyTypeId", "PARTY_GROUP"));
+                            group.get(org.apache.ofbiz.persistence.entity.x.partyId), "partyTypeId", "PARTY_GROUP"));
 
                     parties.add(UtilMisc.<String, GenericValue>toMap("partyGroup", group, "party", party));
                 }
@@ -962,8 +962,8 @@ public class PartyServices {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = dctx.getDelegator();
         List<GenericValue> parties;
-        String externalId = (String) context.get("externalId");
-        Locale locale = (Locale) context.get("locale");
+        String externalId = (String) context.get(org.apache.ofbiz.persistence.entity.x.externalId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         try {
             parties = EntityQuery.use(delegator).from("Party")
@@ -983,8 +983,8 @@ public class PartyServices {
     public static Map<String, Object> getPerson(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        String partyId = (String) context.get("partyId");
-        Locale locale = (Locale) context.get("locale");
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         GenericValue person = null;
 
         try {
@@ -1004,10 +1004,10 @@ public class PartyServices {
     public static Map<String, Object> findParty(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        String extInfo = (String) context.get("extInfo");
+        String extInfo = (String) context.get(org.apache.ofbiz.persistence.entity.x.extInfo);
 
         // get the role types
         try {
@@ -1024,7 +1024,7 @@ public class PartyServices {
         // current role type
         String roleTypeId;
         try {
-            roleTypeId = (String) context.get("roleTypeId");
+            roleTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.roleTypeId);
             if (UtilValidate.isNotEmpty(roleTypeId)) {
                 GenericValue currentRole = EntityQuery.use(delegator).from("RoleType").where("roleTypeId", roleTypeId).cache().queryOne();
                 result.put("currentRole", currentRole);
@@ -1052,7 +1052,7 @@ public class PartyServices {
         // current party type
         String partyTypeId;
         try {
-            partyTypeId = (String) context.get("partyTypeId");
+            partyTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyTypeId);
             if (UtilValidate.isNotEmpty(partyTypeId)) {
                 GenericValue currentPartyType = EntityQuery.use(delegator).from("PartyType").where("partyTypeId", partyTypeId).cache().queryOne();
                 result.put("currentPartyType", currentPartyType);
@@ -1068,7 +1068,7 @@ public class PartyServices {
         // current state
         String stateProvinceGeoId;
         try {
-            stateProvinceGeoId = (String) context.get("stateProvinceGeoId");
+            stateProvinceGeoId = (String) context.get(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId);
             if (UtilValidate.isNotEmpty(stateProvinceGeoId)) {
                 GenericValue currentStateGeo = EntityQuery.use(delegator).from("Geo").where("geoId", stateProvinceGeoId).cache().queryOne();
                 result.put("currentStateGeo", currentStateGeo);
@@ -1084,7 +1084,7 @@ public class PartyServices {
         // set the page parameters
         int viewIndex = 0;
         try {
-            viewIndex = Integer.parseInt((String) context.get("VIEW_INDEX"));
+            viewIndex = Integer.parseInt((String) context.get(org.apache.ofbiz.persistence.entity.x.VIEW_INDEX));
         } catch (Exception e) {
             viewIndex = 0;
         }
@@ -1092,14 +1092,14 @@ public class PartyServices {
 
         int viewSize = 20;
         try {
-            viewSize = Integer.parseInt((String) context.get("VIEW_SIZE"));
+            viewSize = Integer.parseInt((String) context.get(org.apache.ofbiz.persistence.entity.x.VIEW_SIZE));
         } catch (Exception e) {
             viewSize = 20;
         }
         result.put("viewSize", viewSize);
 
         // get the lookup flag
-        String lookupFlag = (String) context.get("lookupFlag");
+        String lookupFlag = (String) context.get(org.apache.ofbiz.persistence.entity.x.lookupFlag);
 
         // blank param list
         String paramList = "";
@@ -1110,7 +1110,7 @@ public class PartyServices {
         int highIndex = 0;
 
         if ("Y".equals(lookupFlag)) {
-            String showAll = (context.get("showAll") != null ? (String) context.get("showAll") : "N");
+            String showAll = (context.get(org.apache.ofbiz.persistence.entity.x.showAll) != null ? (String) context.get(org.apache.ofbiz.persistence.entity.x.showAll) : "N");
             paramList = paramList + "&lookupFlag=" + lookupFlag + "&showAll=" + showAll + "&extInfo=" + extInfo;
 
             // create the dynamic view entity
@@ -1140,17 +1140,17 @@ public class PartyServices {
             fieldsToSelect.add("lastModifiedDate");
 
             // filter on parties that have relationship with logged in user
-            String partyRelationshipTypeId = (String) context.get("partyRelationshipTypeId");
+            String partyRelationshipTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyRelationshipTypeId);
             if (UtilValidate.isNotEmpty(partyRelationshipTypeId)) {
                 // add relation to view
                 dynamicView.addMemberEntity("PRSHP", "PartyRelationship");
                 dynamicView.addAlias("PRSHP", "partyIdTo");
                 dynamicView.addAlias("PRSHP", "partyRelationshipTypeId");
                 dynamicView.addViewLink("PT", "PRSHP", Boolean.FALSE, ModelKeyMap.makeKeyMapList("partyId", "partyIdTo"));
-                List<String> ownerPartyIds = UtilGenerics.cast(context.get("ownerPartyIds"));
+                List<String> ownerPartyIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.ownerPartyIds));
                 EntityCondition relationshipCond = null;
                 if (UtilValidate.isEmpty(ownerPartyIds)) {
-                    String partyIdFrom = userLogin.getString("partyId");
+                    String partyIdFrom = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                     paramList = paramList + "&partyIdFrom=" + partyIdFrom;
                     relationshipCond = EntityCondition.makeCondition(EntityFunction.upperField("partyIdFrom"),
                             EntityOperator.EQUALS, EntityFunction.upper(partyIdFrom));
@@ -1167,12 +1167,12 @@ public class PartyServices {
             }
 
             // get the params
-            String partyId = (String) context.get("partyId");
-            String statusId = (String) context.get("statusId");
-            String userLoginId = (String) context.get("userLoginId");
-            String firstName = (String) context.get("firstName");
-            String lastName = (String) context.get("lastName");
-            String groupName = (String) context.get("groupName");
+            String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+            String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
+            String userLoginId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+            String firstName = (String) context.get(org.apache.ofbiz.persistence.entity.x.firstName);
+            String lastName = (String) context.get(org.apache.ofbiz.persistence.entity.x.lastName);
+            String groupName = (String) context.get(org.apache.ofbiz.persistence.entity.x.groupName);
 
             if (!"Y".equals(showAll)) {
                 // check for a partyId
@@ -1295,9 +1295,9 @@ public class PartyServices {
                 // ----
 
                 // filter on inventory item's fields
-                String inventoryItemId = (String) context.get("inventoryItemId");
-                String serialNumber = (String) context.get("serialNumber");
-                String softIdentifier = (String) context.get("softIdentifier");
+                String inventoryItemId = (String) context.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId);
+                String serialNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.serialNumber);
+                String softIdentifier = (String) context.get(org.apache.ofbiz.persistence.entity.x.softIdentifier);
                 if (UtilValidate.isNotEmpty(inventoryItemId) || UtilValidate.isNotEmpty(serialNumber) || UtilValidate.isNotEmpty(softIdentifier)) {
                     // add role to view
                     dynamicView.addMemberEntity("II", "InventoryItem");
@@ -1347,7 +1347,7 @@ public class PartyServices {
                     dynamicView.addViewLink("PC", "PA", Boolean.FALSE, ModelKeyMap.makeKeyMapList("contactMechId"));
 
                     // filter on address1
-                    String address1 = (String) context.get("address1");
+                    String address1 = (String) context.get(org.apache.ofbiz.persistence.entity.x.address1);
                     if (UtilValidate.isNotEmpty(address1)) {
                         paramList = paramList + "&address1=" + address1;
                         andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("address1"),
@@ -1355,7 +1355,7 @@ public class PartyServices {
                     }
 
                     // filter on address2
-                    String address2 = (String) context.get("address2");
+                    String address2 = (String) context.get(org.apache.ofbiz.persistence.entity.x.address2);
                     if (UtilValidate.isNotEmpty(address2)) {
                         paramList = paramList + "&address2=" + address2;
                         andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("address2"),
@@ -1363,7 +1363,7 @@ public class PartyServices {
                     }
 
                     // filter on city
-                    String city = (String) context.get("city");
+                    String city = (String) context.get(org.apache.ofbiz.persistence.entity.x.city);
                     if (UtilValidate.isNotEmpty(city)) {
                         paramList = paramList + "&city=" + city;
                         andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("city"),
@@ -1377,7 +1377,7 @@ public class PartyServices {
                     }
 
                     // filter on postal code
-                    String postalCode = (String) context.get("postalCode");
+                    String postalCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.postalCode);
                     if (UtilValidate.isNotEmpty(postalCode)) {
                         paramList = paramList + "&postalCode=" + postalCode;
                         andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("postalCode"),
@@ -1402,7 +1402,7 @@ public class PartyServices {
                     dynamicView.addViewLink("PC", "CM", Boolean.FALSE, ModelKeyMap.makeKeyMapList("contactMechId"));
 
                     // filter on infoString
-                    String infoString = (String) context.get("infoString");
+                    String infoString = (String) context.get(org.apache.ofbiz.persistence.entity.x.infoString);
                     if (UtilValidate.isNotEmpty(infoString)) {
                         paramList = paramList + "&infoString=" + infoString;
                         andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("infoString"),
@@ -1427,7 +1427,7 @@ public class PartyServices {
                     dynamicView.addViewLink("PC", "TM", Boolean.FALSE, ModelKeyMap.makeKeyMapList("contactMechId"));
 
                     // filter on countryCode
-                    String countryCode = (String) context.get("countryCode");
+                    String countryCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.countryCode);
                     if (UtilValidate.isNotEmpty(countryCode)) {
                         paramList = paramList + "&countryCode=" + countryCode;
                         andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("countryCode"),
@@ -1435,7 +1435,7 @@ public class PartyServices {
                     }
 
                     // filter on areaCode
-                    String areaCode = (String) context.get("areaCode");
+                    String areaCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.areaCode);
                     if (UtilValidate.isNotEmpty(areaCode)) {
                         paramList = paramList + "&areaCode=" + areaCode;
                         andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("areaCode"),
@@ -1443,7 +1443,7 @@ public class PartyServices {
                     }
 
                     // filter on contact number
-                    String contactNumber = (String) context.get("contactNumber");
+                    String contactNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactNumber);
                     if (UtilValidate.isNotEmpty(contactNumber)) {
                         paramList = paramList + "&contactNumber=" + contactNumber;
                         andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("contactNumber"),
@@ -1464,7 +1464,7 @@ public class PartyServices {
 
             Debug.logInfo("In findParty mainCond=" + mainCond, MODULE);
 
-            String sortField = (String) context.get("sortField");
+            String sortField = (String) context.get(org.apache.ofbiz.persistence.entity.x.sortField);
             if (UtilValidate.isNotEmpty(sortField)) {
                 orderBy.add(sortField);
             }
@@ -1521,14 +1521,14 @@ public class PartyServices {
     public static Map<String, Object> performFindParty(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
-        String extInfo = (String) context.get("extInfo");
-        EntityCondition extCond = (EntityCondition) context.get("extCond");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String extInfo = (String) context.get(org.apache.ofbiz.persistence.entity.x.extInfo);
+        EntityCondition extCond = (EntityCondition) context.get(org.apache.ofbiz.persistence.entity.x.extCond);
         EntityListIterator listIt = null;
 
         // get the lookup flag
-        String noConditionFind = (String) context.get("noConditionFind");
+        String noConditionFind = (String) context.get(org.apache.ofbiz.persistence.entity.x.noConditionFind);
 
         // create the dynamic view entity
         DynamicViewEntity dynamicView = new DynamicViewEntity();
@@ -1549,7 +1549,7 @@ public class PartyServices {
         EntityCondition mainCond = null;
 
         List<String> orderBy = new ArrayList<>();
-        String sortField = (String) context.get("sortField");
+        String sortField = (String) context.get(org.apache.ofbiz.persistence.entity.x.sortField);
         if (UtilValidate.isNotEmpty(sortField)) {
             orderBy.add(sortField);
         }
@@ -1563,17 +1563,17 @@ public class PartyServices {
         fieldsToSelect.add("lastModifiedDate");
 
         // filter on parties that have relationship with logged in user
-        String partyRelationshipTypeId = (String) context.get("partyRelationshipTypeId");
+        String partyRelationshipTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyRelationshipTypeId);
         if (UtilValidate.isNotEmpty(partyRelationshipTypeId)) {
             // add relation to view
             dynamicView.addMemberEntity("PRSHP", "PartyRelationship");
             dynamicView.addAlias("PRSHP", "partyIdTo");
             dynamicView.addAlias("PRSHP", "partyRelationshipTypeId");
             dynamicView.addViewLink("PT", "PRSHP", Boolean.FALSE, ModelKeyMap.makeKeyMapList("partyId", "partyIdTo"));
-            List<String> ownerPartyIds = UtilGenerics.cast(context.get("ownerPartyIds"));
+            List<String> ownerPartyIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.ownerPartyIds));
             EntityCondition relationshipCond = null;
             if (UtilValidate.isEmpty(ownerPartyIds)) {
-                String partyIdFrom = userLogin.getString("partyId");
+                String partyIdFrom = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                 relationshipCond = EntityCondition.makeCondition(EntityFunction.upperField("partyIdFrom"),
                         EntityOperator.EQUALS, EntityFunction.upper(partyIdFrom));
             } else {
@@ -1589,15 +1589,15 @@ public class PartyServices {
         }
 
         // get the params
-        String partyId = (String) context.get("partyId");
-        String partyTypeId = (String) context.get("partyTypeId");
-        String roleTypeId = (String) context.get("roleTypeId");
-        String statusId = (String) context.get("statusId");
-        String userLoginId = (String) context.get("userLoginId");
-        String externalId = (String) context.get("externalId");
-        String firstName = (String) context.get("firstName");
-        String lastName = (String) context.get("lastName");
-        String groupName = (String) context.get("groupName");
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String partyTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyTypeId);
+        String roleTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.roleTypeId);
+        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
+        String userLoginId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+        String externalId = (String) context.get(org.apache.ofbiz.persistence.entity.x.externalId);
+        String firstName = (String) context.get(org.apache.ofbiz.persistence.entity.x.firstName);
+        String lastName = (String) context.get(org.apache.ofbiz.persistence.entity.x.lastName);
+        String groupName = (String) context.get(org.apache.ofbiz.persistence.entity.x.groupName);
 
         // check for a partyId
         if (UtilValidate.isNotEmpty(partyId)) {
@@ -1707,7 +1707,7 @@ public class PartyServices {
         // PartyClassificationGroup Fields
         // ----
 
-        List<String> partyClassificationGroupIds = UtilGenerics.cast(context.get("partyClassificationGroupId"));
+        List<String> partyClassificationGroupIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.partyClassificationGroupId));
         if (UtilValidate.isNotEmpty(partyClassificationGroupIds)) {
             // add PartyClassification to view
             dynamicView.addMemberEntity("PC", "PartyClassification");
@@ -1723,8 +1723,8 @@ public class PartyServices {
         // PartyIdentification Fields
         // ----
 
-        String idValue = (String) context.get("idValue");
-        String partyIdentificationTypeId = (String) context.get("partyIdentificationTypeId");
+        String idValue = (String) context.get(org.apache.ofbiz.persistence.entity.x.idValue);
+        String partyIdentificationTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyIdentificationTypeId);
         if ("I".equals(extInfo) || UtilValidate.isNotEmpty(idValue) || UtilValidate.isNotEmpty(partyIdentificationTypeId)) {
             // add role to view
             dynamicView.addMemberEntity("PAI", "PartyIdentification");
@@ -1747,9 +1747,9 @@ public class PartyServices {
         // ----
 
         // filter on inventory item's fields
-        String inventoryItemId = (String) context.get("inventoryItemId");
-        String serialNumber = (String) context.get("serialNumber");
-        String softIdentifier = (String) context.get("softIdentifier");
+        String inventoryItemId = (String) context.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId);
+        String serialNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.serialNumber);
+        String softIdentifier = (String) context.get(org.apache.ofbiz.persistence.entity.x.softIdentifier);
         if (UtilValidate.isNotEmpty(inventoryItemId)
                 || UtilValidate.isNotEmpty(serialNumber)
                 || UtilValidate.isNotEmpty(softIdentifier)) {
@@ -1784,11 +1784,11 @@ public class PartyServices {
         // ----
         // PostalAddress fields
         // ----
-        String stateProvinceGeoId = (String) context.get("stateProvinceGeoId");
+        String stateProvinceGeoId = (String) context.get(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId);
         if ("P".equals(extInfo)
-                || UtilValidate.isNotEmpty(context.get("address1")) || UtilValidate.isNotEmpty(context.get("address2"))
-                || UtilValidate.isNotEmpty(context.get("city")) || UtilValidate.isNotEmpty(context.get("postalCode"))
-                || UtilValidate.isNotEmpty(context.get("countryGeoId")) || (UtilValidate.isNotEmpty(stateProvinceGeoId))) {
+                || UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.address1)) || UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.address2))
+                || UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.city)) || UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.postalCode))
+                || UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.countryGeoId)) || (UtilValidate.isNotEmpty(stateProvinceGeoId))) {
             // add address to dynamic view
             dynamicView.addMemberEntity("PC", "PartyContactMech");
             dynamicView.addMemberEntity("PA", "PostalAddress");
@@ -1803,21 +1803,21 @@ public class PartyServices {
             dynamicView.addViewLink("PC", "PA", Boolean.FALSE, ModelKeyMap.makeKeyMapList("contactMechId"));
 
             // filter on address1
-            String address1 = (String) context.get("address1");
+            String address1 = (String) context.get(org.apache.ofbiz.persistence.entity.x.address1);
             if (UtilValidate.isNotEmpty(address1)) {
                 andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("address1"), EntityOperator.LIKE,
                         EntityFunction.upper("%" + address1 + "%")));
             }
 
             // filter on address2
-            String address2 = (String) context.get("address2");
+            String address2 = (String) context.get(org.apache.ofbiz.persistence.entity.x.address2);
             if (UtilValidate.isNotEmpty(address2)) {
                 andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("address2"), EntityOperator.LIKE,
                         EntityFunction.upper("%" + address2 + "%")));
             }
 
             // filter on city
-            String city = (String) context.get("city");
+            String city = (String) context.get(org.apache.ofbiz.persistence.entity.x.city);
             if (UtilValidate.isNotEmpty(city)) {
                 andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("city"), EntityOperator.LIKE,
                         EntityFunction.upper("%" + city + "%")));
@@ -1829,7 +1829,7 @@ public class PartyServices {
             }
 
             // filter on postal code
-            String postalCode = (String) context.get("postalCode");
+            String postalCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.postalCode);
             if (UtilValidate.isNotEmpty(postalCode)) {
                 andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("postalCode"), EntityOperator.LIKE,
                         EntityFunction.upper("%" + postalCode + "%")));
@@ -1843,7 +1843,7 @@ public class PartyServices {
         // ----
         // Generic CM Fields
         // ----
-        if ("O".equals(extInfo) || UtilValidate.isNotEmpty(context.get("infoString"))) {
+        if ("O".equals(extInfo) || UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.infoString))) {
             // add info to dynamic view
             dynamicView.addMemberEntity("PC", "PartyContactMech");
             dynamicView.addMemberEntity("CM", "ContactMech");
@@ -1853,7 +1853,7 @@ public class PartyServices {
             dynamicView.addViewLink("PC", "CM", Boolean.FALSE, ModelKeyMap.makeKeyMapList("contactMechId"));
 
             // filter on infoString
-            String infoString = (String) context.get("infoString");
+            String infoString = (String) context.get(org.apache.ofbiz.persistence.entity.x.infoString);
             if (UtilValidate.isNotEmpty(infoString)) {
                 andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("infoString"), EntityOperator.LIKE,
                         EntityFunction.upper("%" + infoString + "%")));
@@ -1865,9 +1865,9 @@ public class PartyServices {
         // TelecomNumber Fields
         // ----
         if ("T".equals(extInfo)
-                || UtilValidate.isNotEmpty(context.get("countryCode"))
-                || UtilValidate.isNotEmpty(context.get("areaCode"))
-                || UtilValidate.isNotEmpty(context.get("contactNumber"))) {
+                || UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.countryCode))
+                || UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.areaCode))
+                || UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.contactNumber))) {
             // add telecom to dynamic view
             dynamicView.addMemberEntity("PC", "PartyContactMech");
             dynamicView.addMemberEntity("TM", "TelecomNumber");
@@ -1879,21 +1879,21 @@ public class PartyServices {
             dynamicView.addViewLink("PC", "TM", Boolean.FALSE, ModelKeyMap.makeKeyMapList("contactMechId"));
 
             // filter on countryCode
-            String countryCode = (String) context.get("countryCode");
+            String countryCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.countryCode);
             if (UtilValidate.isNotEmpty(countryCode)) {
                 andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("countryCode"),
                         EntityOperator.EQUALS, EntityFunction.upper(countryCode)));
             }
 
             // filter on areaCode
-            String areaCode = (String) context.get("areaCode");
+            String areaCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.areaCode);
             if (UtilValidate.isNotEmpty(areaCode)) {
                 andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("areaCode"),
                         EntityOperator.EQUALS, EntityFunction.upper(areaCode)));
             }
 
             // filter on contact number
-            String contactNumber = (String) context.get("contactNumber");
+            String contactNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactNumber);
             if (UtilValidate.isNotEmpty(contactNumber)) {
                 andExprs.add(EntityCondition.makeCondition(EntityFunction.upperField("contactNumber"),
                         EntityOperator.EQUALS, EntityFunction.upper(contactNumber)));
@@ -1949,10 +1949,10 @@ public class PartyServices {
      */
     public static Map<String, Object> linkParty(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = DelegatorFactory.getDelegator("default-no-eca");
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        String partyIdTo = (String) context.get("partyIdTo");
-        String partyId = (String) context.get("partyId");
+        String partyIdTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyIdTo);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
         Timestamp now = UtilDateTime.nowTimestamp();
 
         if (partyIdTo.equals(partyId)) {
@@ -1972,7 +1972,7 @@ public class PartyServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "PartyPartyToDoesNotExists", locale));
         }
-        if ("PARTY_DISABLED".equals(partyTo.get("statusId"))) {
+        if ("PARTY_DISABLED".equals(partyTo.get(org.apache.ofbiz.persistence.entity.x.statusId))) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "PartyCannotMergeDisabledParty", locale));
         }
@@ -2053,7 +2053,7 @@ public class PartyServices {
         }
 
         for (GenericValue attr: rolesToMove) {
-            attr.set("partyId", partyIdTo);
+            attr.set(org.apache.ofbiz.persistence.entity.x.partyId, partyIdTo);
             try {
                 if (EntityQuery.use(delegator).from("PartyRole").where(attr.getPrimaryKey()).queryOne() == null) {
                     attr.create();
@@ -2137,7 +2137,7 @@ public class PartyServices {
         }
 
         for (GenericValue attr: attrsToMove) {
-            attr.set("partyId", partyIdTo);
+            attr.set(org.apache.ofbiz.persistence.entity.x.partyId, partyIdTo);
             try {
                 if (EntityQuery.use(delegator).from("PartyAttribute").where(attr.getPrimaryKey()).queryOne() == null) {
                     attr.create();
@@ -2156,9 +2156,9 @@ public class PartyServices {
 
         // create a party link attribute
         GenericValue linkAttr = delegator.makeValue("PartyAttribute");
-        linkAttr.set("partyId", partyId);
-        linkAttr.set("attrName", "LINKED_TO");
-        linkAttr.set("attrValue", partyIdTo);
+        linkAttr.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
+        linkAttr.set(org.apache.ofbiz.persistence.entity.x.attrName, "LINKED_TO");
+        linkAttr.set(org.apache.ofbiz.persistence.entity.x.attrValue, partyIdTo);
         try {
             delegator.create(linkAttr);
         } catch (GenericEntityException e) {
@@ -2167,9 +2167,9 @@ public class PartyServices {
         }
 
         // disable the party
-        String currentStatus = party.getString("statusId");
+        String currentStatus = party.getString(org.apache.ofbiz.persistence.entity.x.statusId);
         if (currentStatus == null || !"PARTY_DISABLED".equals(currentStatus)) {
-            party.set("statusId", "PARTY_DISABLED");
+            party.set(org.apache.ofbiz.persistence.entity.x.statusId, "PARTY_DISABLED");
 
             try {
                 party.store();
@@ -2186,8 +2186,8 @@ public class PartyServices {
 
     public static Map<String, Object> importAddressMatchMapCsv(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        ByteBuffer fileBytes = (ByteBuffer) context.get("uploadedFile");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        ByteBuffer fileBytes = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.uploadedFile);
         String encoding = System.getProperty("file.encoding");
         String csvFile = Charset.forName(encoding).decode(fileBytes).toString();
         csvFile = csvFile.replaceAll("\\r", "");
@@ -2240,11 +2240,11 @@ public class PartyServices {
     }
 
     public static String getPartyId(Map<String, ? extends Object> context) {
-        String partyId = (String) context.get("partyId");
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
         if (UtilValidate.isEmpty(partyId)) {
-            GenericValue userLogin = (GenericValue) context.get("userLogin");
+            GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
             if (userLogin != null) {
-                partyId = userLogin.getString("partyId");
+                partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
             }
         }
         return partyId;
@@ -2257,10 +2257,10 @@ public class PartyServices {
      */
     public static Map<String, Object> findPartyById(DispatchContext ctx, Map<String, Object> context) {
         Delegator delegator = ctx.getDelegator();
-        String idToFind = (String) context.get("idToFind");
-        String partyIdentificationTypeId = (String) context.get("partyIdentificationTypeId");
-        String searchPartyFirstContext = (String) context.get("searchPartyFirst");
-        String searchAllIdContext = (String) context.get("searchAllId");
+        String idToFind = (String) context.get(org.apache.ofbiz.persistence.entity.x.idToFind);
+        String partyIdentificationTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyIdentificationTypeId);
+        String searchPartyFirstContext = (String) context.get(org.apache.ofbiz.persistence.entity.x.searchPartyFirst);
+        String searchAllIdContext = (String) context.get(org.apache.ofbiz.persistence.entity.x.searchAllId);
 
         boolean searchPartyFirst = !UtilValidate.isNotEmpty(searchPartyFirstContext) || !"N".equals(searchPartyFirstContext);
         boolean searchAllId = UtilValidate.isNotEmpty(searchAllIdContext) && "Y".equals(searchAllIdContext);
@@ -2291,9 +2291,9 @@ public class PartyServices {
     public static Map<String, Object> importParty(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        ByteBuffer fileBytes = (ByteBuffer) context.get("uploadedFile");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        ByteBuffer fileBytes = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.uploadedFile);
         String encoding = System.getProperty("file.encoding");
         String csvString = Charset.forName(encoding).decode(fileBytes).toString();
         Builder csvFormatBuilder = Builder.create().setHeader();

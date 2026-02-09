@@ -31,7 +31,7 @@ public class ServiceEngineTestPermissionServices {
 
     public static Map<String, Object> testPermissionPing(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("hasPermission", "Y".equalsIgnoreCase((String) context.get("givePermission")));
+        result.put("hasPermission", "Y".equalsIgnoreCase((String) context.get(org.apache.ofbiz.persistence.entity.x.givePermission)));
         return result;
     }
 

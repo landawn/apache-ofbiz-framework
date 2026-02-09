@@ -257,7 +257,7 @@ public class MacroMenuRenderer implements MenuStringRenderer {
                 targetParameters.append(parameter.getKey());
                 targetParameters.append("'");
                 targetParameters.append(",'value':'");
-                UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get("simpleEncoder");
+                UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
                 if (simpleEncoder != null) {
                     targetParameters.append(simpleEncoder.encode(parameter.getValue()));
                 } else {
@@ -345,7 +345,7 @@ public class MacroMenuRenderer implements MenuStringRenderer {
             linkStr = sw.toString();
         } else {
             linkStr = menuItem.getTitle(context);
-            UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get("simpleEncoder");
+            UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
             if (simpleEncoder != null) {
                 linkStr = simpleEncoder.encode(linkStr);
             }
@@ -376,7 +376,7 @@ public class MacroMenuRenderer implements MenuStringRenderer {
     public void renderMenuOpen(Appendable writer, Map<String, Object> context, ModelMenu menu) throws IOException {
         if (HtmlWidgetRenderer.NAMED_BORDER_TYPE != ModelWidget.NamedBorderType.NONE) {
             writer.append(HtmlWidgetRenderer.beginNamedBorder("Menu",
-                    menu.getBoundaryCommentName(), ((HttpServletRequest) context.get("request")).getContextPath()));
+                    menu.getBoundaryCommentName(), ((HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request)).getContextPath()));
         }
         Map<String, Object> parameters = new HashMap<>();
         if (ModelWidget.widgetBoundaryCommentsEnabled(context)) {

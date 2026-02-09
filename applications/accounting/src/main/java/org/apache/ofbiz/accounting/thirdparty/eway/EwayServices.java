@@ -42,13 +42,13 @@ public class EwayServices {
 
     // eway charge (auth w/ capture)
     public static Map<String, Object> ewayCharge(DispatchContext dctx, Map<String, Object> context) {
-        String orderId = (String) context.get("orderId");
-        String cvv2 = (String) context.get("cardSecurityCode");
-        String custIp = (String) context.get("customerIpAddress");
-        BigDecimal processAmount = (BigDecimal) context.get("processAmount");
-        GenericValue cc = (GenericValue) context.get("creditCard");
-        GenericValue address = (GenericValue) context.get("billingAddress");
-        GenericValue party = (GenericValue) context.get("billToParty");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String cvv2 = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardSecurityCode);
+        String custIp = (String) context.get(org.apache.ofbiz.persistence.entity.x.customerIpAddress);
+        BigDecimal processAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
+        GenericValue cc = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.creditCard);
+        GenericValue address = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.billingAddress);
+        GenericValue party = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.billToParty);
 
         GatewayRequest req = initRequest(dctx, context, false);
         req.setCustomerInvoiceRef(orderId);
@@ -56,15 +56,15 @@ public class EwayServices {
         req.setCustomerIPAddress(custIp);
 
         // bill to party info
-        req.setCustomerFirstName(UtilFormatOut.checkNull(party.getString("firstName")));
-        req.setCustomerLastName(UtilFormatOut.checkNull(party.getString("lastName")));
+        req.setCustomerFirstName(UtilFormatOut.checkNull(party.getString(org.apache.ofbiz.persistence.entity.x.firstName)));
+        req.setCustomerLastName(UtilFormatOut.checkNull(party.getString(org.apache.ofbiz.persistence.entity.x.lastName)));
 
         // card info
-        String ccName = cc.getString("firstNameOnCard") + " " + cc.getString("lastNameOnCard");
+        String ccName = cc.getString(org.apache.ofbiz.persistence.entity.x.firstNameOnCard) + " " + cc.getString(org.apache.ofbiz.persistence.entity.x.lastNameOnCard);
         req.setCardHoldersName(ccName);
-        req.setCardNumber(cc.getString("cardNumber"));
-        if (cc.get("expireDate") != null) {
-            String[] exp = cc.getString("expireDate").split("\\/");
+        req.setCardNumber(cc.getString(org.apache.ofbiz.persistence.entity.x.cardNumber));
+        if (cc.get(org.apache.ofbiz.persistence.entity.x.expireDate) != null) {
+            String[] exp = cc.getString(org.apache.ofbiz.persistence.entity.x.expireDate).split("\\/");
             req.setCardExpiryMonth(exp[0]);
             req.setCardExpiryYear(exp[1]);
         }
@@ -76,11 +76,11 @@ public class EwayServices {
 
         // billing address
         if (address != null) {
-            String street = address.getString("address1") + ((UtilValidate.isNotEmpty(address.getString("address2"))) ? " "
-                    + address.getString("address2") : "");
+            String street = address.getString(org.apache.ofbiz.persistence.entity.x.address1) + ((UtilValidate.isNotEmpty(address.getString(org.apache.ofbiz.persistence.entity.x.address2))) ? " "
+                    + address.getString(org.apache.ofbiz.persistence.entity.x.address2) : "");
             req.setCustomerAddress(street);
-            req.setCustomerPostcode(address.getString("postalCode"));
-            req.setCustomerBillingCountry(address.getString("countryGeoId"));
+            req.setCustomerPostcode(address.getString(org.apache.ofbiz.persistence.entity.x.postalCode));
+            req.setCustomerBillingCountry(address.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId));
         }
 
         // send the request
@@ -111,9 +111,9 @@ public class EwayServices {
     // eway refund
     public static Map<String, Object> ewayRefund(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
-        GenericValue paymentPref = (GenericValue) context.get("orderPaymentPreference");
-        BigDecimal refundAmount = (BigDecimal) context.get("refundAmount");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        BigDecimal refundAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.refundAmount);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // original charge transaction
         GenericValue chargeTrans = PaymentGatewayServices.getCaptureTransaction(paymentPref);
@@ -133,8 +133,8 @@ public class EwayServices {
         }
 
         // orig ref number
-        String refNum = chargeTrans.getString("referenceNum");
-        String orderId = paymentPref.getString("orderId");
+        String refNum = chargeTrans.getString(org.apache.ofbiz.persistence.entity.x.referenceNum);
+        String orderId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderId);
 
         GatewayRequest req = initRequest(dctx, context, true);
         req.setCustomerInvoiceRef(orderId);
@@ -142,8 +142,8 @@ public class EwayServices {
         req.setTrxnNumber(refNum);
 
         // set the card expire date
-        if (cc.get("expireDate") != null) {
-            String[] exp = cc.getString("expireDate").split("\\/");
+        if (cc.get(org.apache.ofbiz.persistence.entity.x.expireDate) != null) {
+            String[] exp = cc.getString(org.apache.ofbiz.persistence.entity.x.expireDate).split("\\/");
             req.setCardExpiryMonth(exp[0]);
             req.setCardExpiryYear(exp[1]);
         }
@@ -171,12 +171,12 @@ public class EwayServices {
     // eway release (does a refund)
     public static Map<String, Object> ewayRelease(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
-        GenericValue paymentPref = (GenericValue) context.get("orderPaymentPreference");
-        BigDecimal releaseAmount = (BigDecimal) context.get("releaseAmount");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        BigDecimal releaseAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.releaseAmount);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // original charge transaction
-        GenericValue chargeTrans = (GenericValue) context.get("authTrans");
+        GenericValue chargeTrans = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
         if (chargeTrans == null) {
             chargeTrans = PaymentGatewayServices.getAuthTransaction(paymentPref);
         }
@@ -195,8 +195,8 @@ public class EwayServices {
         }
 
         // orig ref number
-        String refNum = chargeTrans.getString("referenceNum");
-        String orderId = paymentPref.getString("orderId");
+        String refNum = chargeTrans.getString(org.apache.ofbiz.persistence.entity.x.referenceNum);
+        String orderId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderId);
 
         GatewayRequest req = initRequest(dctx, context, true);
         req.setCustomerInvoiceRef(orderId);
@@ -204,8 +204,8 @@ public class EwayServices {
         req.setTrxnNumber(refNum);
 
         // set the card expire date
-        if (cc.get("expireDate") != null) {
-            String[] exp = cc.getString("expireDate").split("\\/");
+        if (cc.get(org.apache.ofbiz.persistence.entity.x.expireDate) != null) {
+            String[] exp = cc.getString(org.apache.ofbiz.persistence.entity.x.expireDate).split("\\/");
             req.setCardExpiryMonth(exp[0]);
             req.setCardExpiryYear(exp[1]);
         }
@@ -228,8 +228,8 @@ public class EwayServices {
         return result;
     }
     private static GatewayRequest initRequest(DispatchContext dctx, Map<String, Object> context, boolean refund) {
-        String pgcId = (String) context.get("paymentGatewayConfigId");
-        String cfgStr = (String) context.get("paymentConfig");
+        String pgcId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        String cfgStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
         Delegator delegator = dctx.getDelegator();
 
         String customerId = getPaymentGatewayConfigValue(delegator, pgcId, "customerId", cfgStr, "payment.eway.customerId");

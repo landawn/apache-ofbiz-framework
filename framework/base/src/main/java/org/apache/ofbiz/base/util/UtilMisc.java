@@ -649,7 +649,7 @@ public final class UtilMisc {
             PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
             String defaultCountry = EntityUtilProperties.getPropertyValue("general", "country.geo.id.default", delegator);
             GenericValue defaultGeo = EntityQuery.use(delegator).from("Geo").where("geoId", defaultCountry).cache().queryOne();
-            String defaultGeoCode = defaultGeo != null ? defaultGeo.getString("geoCode") : "US";
+            String defaultGeoCode = defaultGeo != null ? defaultGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode) : "US";
             PhoneNumber phNumber = phoneUtil.parse(phoneNumber, defaultGeoCode);
             if (phoneUtil.isValidNumber(phNumber) || phoneUtil.isPossibleNumber(phNumber)) {
                 String nationalSignificantNumber = phoneUtil.getNationalSignificantNumber(phNumber);

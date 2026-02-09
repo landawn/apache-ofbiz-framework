@@ -37,20 +37,20 @@ public class PackingServices {
     private static final String RESOURCE = "ProductUiLabels";
 
     public static Map<String, Object> addPackLine(DispatchContext dctx, Map<String, ? extends Object> context) {
-        PackingSession session = (PackingSession) context.get("packingSession");
-        String shipGroupSeqId = (String) context.get("shipGroupSeqId");
-        String orderId = (String) context.get("orderId");
-        String productId = (String) context.get("productId");
-        BigDecimal quantity = (BigDecimal) context.get("quantity");
-        BigDecimal weight = (BigDecimal) context.get("weight");
-        Integer packageSeq = (Integer) context.get("packageSeq");
+        PackingSession session = (PackingSession) context.get(org.apache.ofbiz.persistence.entity.x.packingSession);
+        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
+        BigDecimal weight = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.weight);
+        Integer packageSeq = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.packageSeq);
 
         // set the instructions -- will clear out previous if now null
-        String instructions = (String) context.get("handlingInstructions");
+        String instructions = (String) context.get(org.apache.ofbiz.persistence.entity.x.handlingInstructions);
         session.setHandlingInstructions(instructions);
 
         // set the picker party id -- will clear out previous if now null
-        String pickerPartyId = (String) context.get("pickerPartyId");
+        String pickerPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.pickerPartyId);
         session.setPickerPartyId(pickerPartyId);
 
         if (quantity == null) {
@@ -94,30 +94,30 @@ public class PackingServices {
      * @return returns the result of the service execution
      */
     public static Map<String, Object> packBulk(DispatchContext dctx, Map<String, ? extends Object> context) {
-        PackingSession session = (PackingSession) context.get("packingSession");
-        String orderId = (String) context.get("orderId");
-        String shipGroupSeqId = (String) context.get("shipGroupSeqId");
-        Boolean updateQuantity = (Boolean) context.get("updateQuantity");
-        Locale locale = (Locale) context.get("locale");
+        PackingSession session = (PackingSession) context.get(org.apache.ofbiz.persistence.entity.x.packingSession);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
+        Boolean updateQuantity = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.updateQuantity);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (updateQuantity == null) {
             updateQuantity = Boolean.FALSE;
         }
 
         // set the instructions -- will clear out previous if now null
-        String instructions = (String) context.get("handlingInstructions");
+        String instructions = (String) context.get(org.apache.ofbiz.persistence.entity.x.handlingInstructions);
         session.setHandlingInstructions(instructions);
 
         // set the picker party id -- will clear out previous if now null
-        String pickerPartyId = (String) context.get("pickerPartyId");
+        String pickerPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.pickerPartyId);
         session.setPickerPartyId(pickerPartyId);
 
-        Map<String, ?> selInfo = UtilGenerics.cast(context.get("selInfo"));
-        Map<String, String> iteInfo = UtilGenerics.cast(context.get("iteInfo"));
-        Map<String, String> prdInfo = UtilGenerics.cast(context.get("prdInfo"));
-        Map<String, String> qtyInfo = UtilGenerics.cast(context.get("qtyInfo"));
-        Map<String, String> pkgInfo = UtilGenerics.cast(context.get("pkgInfo"));
-        Map<String, String> wgtInfo = UtilGenerics.cast(context.get("wgtInfo"));
-        Map<String, String> numPackagesInfo = UtilGenerics.cast(context.get("numPackagesInfo"));
+        Map<String, ?> selInfo = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.selInfo));
+        Map<String, String> iteInfo = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.iteInfo));
+        Map<String, String> prdInfo = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.prdInfo));
+        Map<String, String> qtyInfo = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.qtyInfo));
+        Map<String, String> pkgInfo = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.pkgInfo));
+        Map<String, String> wgtInfo = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.wgtInfo));
+        Map<String, String> numPackagesInfo = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.numPackagesInfo));
 
         if (selInfo != null) {
             for (String rowKey: selInfo.keySet()) {
@@ -213,7 +213,7 @@ public class PackingServices {
     }
 
     public static Map<String, Object> incrementPackageSeq(DispatchContext dctx, Map<String, ? extends Object> context) {
-        PackingSession session = (PackingSession) context.get("packingSession");
+        PackingSession session = (PackingSession) context.get(org.apache.ofbiz.persistence.entity.x.packingSession);
         int nextSeq = session.nextPackageSeq();
         Map<String, Object> result = ServiceUtil.returnSuccess();
         result.put("nextPackageSeq", nextSeq);
@@ -221,7 +221,7 @@ public class PackingServices {
     }
 
     public static Map<String, Object> clearLastPackage(DispatchContext dctx, Map<String, ? extends Object> context) {
-        PackingSession session = (PackingSession) context.get("packingSession");
+        PackingSession session = (PackingSession) context.get(org.apache.ofbiz.persistence.entity.x.packingSession);
         int nextSeq = session.clearLastPackage();
         Map<String, Object> result = ServiceUtil.returnSuccess();
         result.put("nextPackageSeq", nextSeq);
@@ -229,14 +229,14 @@ public class PackingServices {
     }
 
     public static Map<String, Object> clearPackLine(DispatchContext dctx, Map<String, ? extends Object> context) {
-        PackingSession session = (PackingSession) context.get("packingSession");
-        String orderId = (String) context.get("orderId");
-        String orderItemSeqId = (String) context.get("orderItemSeqId");
-        String shipGroupSeqId = (String) context.get("shipGroupSeqId");
-        String inventoryItemId = (String) context.get("inventoryItemId");
-        String productId = (String) context.get("productId");
-        Integer packageSeqId = (Integer) context.get("packageSeqId");
-        Locale locale = (Locale) context.get("locale");
+        PackingSession session = (PackingSession) context.get(org.apache.ofbiz.persistence.entity.x.packingSession);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
+        String inventoryItemId = (String) context.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId);
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        Integer packageSeqId = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.packageSeqId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         PackingSessionLine line = session.findLine(orderId, orderItemSeqId, shipGroupSeqId,
                 productId, inventoryItemId, packageSeqId);
@@ -253,21 +253,21 @@ public class PackingServices {
     }
 
     public static Map<String, Object> clearPackAll(DispatchContext dctx, Map<String, ? extends Object> context) {
-        PackingSession session = (PackingSession) context.get("packingSession");
+        PackingSession session = (PackingSession) context.get(org.apache.ofbiz.persistence.entity.x.packingSession);
         session.clearAllLines();
 
         return ServiceUtil.returnSuccess();
     }
 
     public static Map<String, Object> calcPackSessionAdditionalShippingCharge(DispatchContext dctx, Map<String, ? extends Object> context) {
-        PackingSession session = (PackingSession) context.get("packingSession");
-        Map<String, String> packageWeights = UtilGenerics.cast(context.get("packageWeights"));
-        String weightUomId = (String) context.get("weightUomId");
-        String shippingContactMechId = (String) context.get("shippingContactMechId");
-        String shipmentMethodTypeId = (String) context.get("shipmentMethodTypeId");
-        String carrierPartyId = (String) context.get("carrierPartyId");
-        String carrierRoleTypeId = (String) context.get("carrierRoleTypeId");
-        String productStoreId = (String) context.get("productStoreId");
+        PackingSession session = (PackingSession) context.get(org.apache.ofbiz.persistence.entity.x.packingSession);
+        Map<String, String> packageWeights = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.packageWeights));
+        String weightUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.weightUomId);
+        String shippingContactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shippingContactMechId);
+        String shipmentMethodTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId);
+        String carrierPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId);
+        String carrierRoleTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId);
+        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
 
         BigDecimal shippableWeight = setSessionPackageWeights(session, packageWeights);
         BigDecimal estimatedShipCost = session.getShipmentCostEstimate(shippingContactMechId, shipmentMethodTypeId, carrierPartyId,
@@ -282,15 +282,15 @@ public class PackingServices {
 
 
     public static Map<String, Object> completePack(DispatchContext dctx, Map<String, ? extends Object> context) {
-        PackingSession session = (PackingSession) context.get("packingSession");
-        Locale locale = (Locale) context.get("locale");
+        PackingSession session = (PackingSession) context.get(org.apache.ofbiz.persistence.entity.x.packingSession);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         // set the instructions -- will clear out previous if now null
-        String instructions = (String) context.get("handlingInstructions");
-        String pickerPartyId = (String) context.get("pickerPartyId");
-        BigDecimal additionalShippingCharge = (BigDecimal) context.get("additionalShippingCharge");
-        Map<String, String> packageWeights = UtilGenerics.cast(context.get("packageWeights"));
-        Map<String, String> boxTypes = UtilGenerics.cast(context.get("boxTypes"));
-        String weightUomId = (String) context.get("weightUomId");
+        String instructions = (String) context.get(org.apache.ofbiz.persistence.entity.x.handlingInstructions);
+        String pickerPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.pickerPartyId);
+        BigDecimal additionalShippingCharge = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.additionalShippingCharge);
+        Map<String, String> packageWeights = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.packageWeights));
+        Map<String, String> boxTypes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.boxTypes));
+        String weightUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.weightUomId);
         session.setHandlingInstructions(instructions);
         session.setPickerPartyId(pickerPartyId);
         session.setAdditionalShippingCharge(additionalShippingCharge);
@@ -298,7 +298,7 @@ public class PackingServices {
         setSessionPackageWeights(session, packageWeights);
         setSessionShipmentBoxTypes(session, boxTypes);
 
-        Boolean force = (Boolean) context.get("forceComplete");
+        Boolean force = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.forceComplete);
         if (force == null) {
             force = Boolean.FALSE;
         }

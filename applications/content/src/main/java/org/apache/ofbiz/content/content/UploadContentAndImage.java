@@ -292,7 +292,7 @@ public class UploadContentAndImage {
             }
 
             // Check for existing AUTHOR link
-            String userLoginId = userLogin.getString("userLoginId");
+            String userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
             GenericValue authorContent = EntityQuery.use(delegator).from("Content").where("contentId", userLoginId).cache().queryOne();
             if (authorContent != null) {
                 long currentAuthorAssocCount = EntityQuery.use(delegator).from("ContentAssoc")
@@ -301,14 +301,14 @@ public class UploadContentAndImage {
                 if (currentAuthorAssocCount == 0) {
                     // Don't want to bother with permission checking on this association
                     GenericValue authorAssoc = delegator.makeValue("ContentAssoc");
-                    authorAssoc.set("contentId", ftlContentId);
-                    authorAssoc.set("contentIdTo", userLoginId);
-                    authorAssoc.set("contentAssocTypeId", "AUTHOR");
-                    authorAssoc.set("fromDate", UtilDateTime.nowTimestamp());
-                    authorAssoc.set("createdByUserLogin", userLoginId);
-                    authorAssoc.set("lastModifiedByUserLogin", userLoginId);
-                    authorAssoc.set("createdDate", UtilDateTime.nowTimestamp());
-                    authorAssoc.set("lastModifiedDate", UtilDateTime.nowTimestamp());
+                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.contentId, ftlContentId);
+                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.contentIdTo, userLoginId);
+                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId, "AUTHOR");
+                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.fromDate, UtilDateTime.nowTimestamp());
+                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLoginId);
+                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLoginId);
+                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
+                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.lastModifiedDate, UtilDateTime.nowTimestamp());
                     authorAssoc.create();
                 }
             }

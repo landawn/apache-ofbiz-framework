@@ -229,7 +229,7 @@ public class VerifyPickSessionRow implements Serializable {
 
             GenericValue picklistItem = EntityQuery.use(delegator).from("PicklistItem").where(picklistItemMap).cache(true).queryOne();
             if (UtilValidate.isNotEmpty(picklistItem)) {
-                BigDecimal itemQty = picklistItem.getBigDecimal("quantity");
+                BigDecimal itemQty = picklistItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                 if (itemQty.compareTo(quantity) == 0) {
                     // set to complete
                     picklistItemMap.put("itemStatusId", "PICKITEM_COMPLETED");

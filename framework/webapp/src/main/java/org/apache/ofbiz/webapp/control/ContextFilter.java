@@ -131,7 +131,7 @@ public class ContextFilter implements Filter {
                 GenericValue tenantDomainName = EntityQuery.use(baseDelegator).from("TenantDomainName").where("domainName", serverName).queryOne();
                 String tenantId = null;
                 if (UtilValidate.isNotEmpty(tenantDomainName)) {
-                    tenantId = tenantDomainName.getString("tenantId");
+                    tenantId = tenantDomainName.getString(org.apache.ofbiz.persistence.entity.x.tenantId);
                 }
                 if (UtilValidate.isEmpty(tenantId)) {
                     tenantId = (String) httpRequest.getAttribute("userTenantId");
@@ -143,7 +143,7 @@ public class ContextFilter implements Filter {
                     // if the request path is a root mount then redirect to the initial path
                     if ("".equals(httpRequest.getContextPath()) && "".equals(httpRequest.getServletPath())) {
                         GenericValue tenant = EntityQuery.use(baseDelegator).from("Tenant").where("tenantId", tenantId).queryOne();
-                        String initialPath = tenant.getString("initialPath");
+                        String initialPath = tenant.getString(org.apache.ofbiz.persistence.entity.x.initialPath);
                         if (UtilValidate.isNotEmpty(initialPath) && !"/".equals(initialPath)) {
                             httpResponse.sendRedirect(initialPath);
                             return;

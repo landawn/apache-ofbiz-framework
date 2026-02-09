@@ -1316,7 +1316,7 @@ public final class UtilValidate {
         try {
             GenericValue geo = EntityQuery.use(delegator).from("Geo").where("geoId", geoId).cache().queryOne();
             PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-            String geoCode = geo != null ? geo.getString("geoCode") : "US";
+            String geoCode = geo != null ? geo.getString(org.apache.ofbiz.persistence.entity.x.geoCode) : "US";
             PhoneNumber phNumber = phoneUtil.parse(phoneNumber, geoCode);
             if (phoneUtil.isValidNumber(phNumber) || phoneUtil.isPossibleNumber(phNumber)) {
                 isValid = true;

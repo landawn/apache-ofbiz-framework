@@ -66,14 +66,14 @@ public final class ProductWorker {
 
     public static boolean shippingApplies(GenericValue product) {
         if (product != null) {
-            String productTypeId = product.getString("productTypeId");
+            String productTypeId = product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId);
             if ("SERVICE".equals(productTypeId) || "SERVICE_PRODUCT".equals(productTypeId)
                     || (ProductWorker.isDigital(product) && !ProductWorker.isPhysical(product))) {
                 // don't charge shipping on services or digital goods
                 return false;
             }
-            return product.get("chargeShipping") == null
-                    || product.getBoolean("chargeShipping");
+            return product.get(org.apache.ofbiz.persistence.entity.x.chargeShipping) == null
+                    || product.getBoolean(org.apache.ofbiz.persistence.entity.x.chargeShipping);
         }
         throw new IllegalArgumentException("No product given to analyze if it needed to ship it");
     }
@@ -89,7 +89,7 @@ public final class ProductWorker {
             Delegator delegator = product.getDelegator();
             List<GenericValue> productGeos = null;
             try {
-                productGeos = product.getRelated("ProductGeo", null, null, false);
+                productGeos = product.getRelated(org.apache.ofbiz.persistence.entity.x.ProductGeo, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
@@ -101,10 +101,10 @@ public final class ProductWorker {
             }
             // exclusion
             for (GenericValue productGeo : excludeGeos) {
-                List<GenericValue> excludeGeoGroup = GeoWorker.expandGeoGroup(productGeo.getString("geoId"), delegator);
-                if (GeoWorker.containsGeo(excludeGeoGroup, postalAddress.getString("countryGeoId"), delegator)
-                        || GeoWorker.containsGeo(excludeGeoGroup, postalAddress.getString("stateProvinceGeoId"), delegator)
-                        || GeoWorker.containsGeo(excludeGeoGroup, postalAddress.getString("postalCodeGeoId"), delegator)) {
+                List<GenericValue> excludeGeoGroup = GeoWorker.expandGeoGroup(productGeo.getString(org.apache.ofbiz.persistence.entity.x.geoId), delegator);
+                if (GeoWorker.containsGeo(excludeGeoGroup, postalAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId), delegator)
+                        || GeoWorker.containsGeo(excludeGeoGroup, postalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId), delegator)
+                        || GeoWorker.containsGeo(excludeGeoGroup, postalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId), delegator)) {
                     return false;
                 }
             }
@@ -114,10 +114,10 @@ public final class ProductWorker {
             }
             // inclusion
             for (GenericValue productGeo: includeGeos) {
-                List<GenericValue> includeGeoGroup = GeoWorker.expandGeoGroup(productGeo.getString("geoId"), delegator);
-                if (GeoWorker.containsGeo(includeGeoGroup, postalAddress.getString("countryGeoId"), delegator)
-                        || GeoWorker.containsGeo(includeGeoGroup, postalAddress.getString("stateProvinceGeoId"), delegator)
-                        || GeoWorker.containsGeo(includeGeoGroup, postalAddress.getString("postalCodeGeoId"), delegator)) {
+                List<GenericValue> includeGeoGroup = GeoWorker.expandGeoGroup(productGeo.getString(org.apache.ofbiz.persistence.entity.x.geoId), delegator);
+                if (GeoWorker.containsGeo(includeGeoGroup, postalAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId), delegator)
+                        || GeoWorker.containsGeo(includeGeoGroup, postalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId), delegator)
+                        || GeoWorker.containsGeo(includeGeoGroup, postalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId), delegator)) {
                     return true;
                 }
             }
@@ -131,7 +131,7 @@ public final class ProductWorker {
         try {
             GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache().queryOne();
             if (product != null) {
-                return "SERIALIZED_INV_ITEM".equals(product.getString("inventoryItemTypeId"));
+                return "SERIALIZED_INV_ITEM".equals(product.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemTypeId));
             }
         } catch (GenericEntityException e) {
             Debug.logWarning(e.getMessage(), MODULE);
@@ -142,7 +142,7 @@ public final class ProductWorker {
     public static boolean taxApplies(GenericValue product) {
         String errMsg = "";
         if (product != null) {
-            Boolean taxable = product.getBoolean("taxable");
+            Boolean taxable = product.getBoolean(org.apache.ofbiz.persistence.entity.x.taxable);
 
             if (taxable == null) {
                 return true;
@@ -156,11 +156,11 @@ public final class ProductWorker {
         GenericValue instanceProduct = EntityQuery.use(delegator).from("Product").where("productId", instanceProductId).queryOne();
 
         if (instanceProduct != null && EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId",
-                instanceProduct.getString("productTypeId"), "parentTypeId", "AGGREGATED")) {
-            GenericValue productAssoc = EntityUtil.getFirst(EntityUtil.filterByDate(instanceProduct.getRelated("AssocProductAssoc",
+                instanceProduct.getString(org.apache.ofbiz.persistence.entity.x.productTypeId), "parentTypeId", "AGGREGATED")) {
+            GenericValue productAssoc = EntityUtil.getFirst(EntityUtil.filterByDate(instanceProduct.getRelated(org.apache.ofbiz.persistence.entity.x.AssocProductAssoc,
                     UtilMisc.toMap("productAssocTypeId", "PRODUCT_CONF"), null, false)));
             if (productAssoc != null) {
-                return productAssoc.getString("productId");
+                return productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productId);
             }
         }
         return null;
@@ -170,9 +170,9 @@ public final class ProductWorker {
         List<GenericValue> productAssocs = getAggregatedAssocs(delegator, aggregatedProductId);
         if (UtilValidate.isNotEmpty(productAssocs) && UtilValidate.isNotEmpty(configId)) {
             for (GenericValue productAssoc: productAssocs) {
-                GenericValue product = productAssoc.getRelatedOne("AssocProduct", false);
-                if (configId.equals(product.getString("configId"))) {
-                    return productAssoc.getString("productIdTo");
+                GenericValue product = productAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.AssocProduct, false);
+                if (configId.equals(product.getString(org.apache.ofbiz.persistence.entity.x.configId))) {
+                    return productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo);
                 }
             }
         }
@@ -182,9 +182,9 @@ public final class ProductWorker {
     public static List<GenericValue> getAggregatedAssocs(Delegator delegator, String aggregatedProductId) throws GenericEntityException {
         GenericValue aggregatedProduct = EntityQuery.use(delegator).from("Product").where("productId", aggregatedProductId).queryOne();
 
-        if (aggregatedProduct != null && ("AGGREGATED".equals(aggregatedProduct.getString("productTypeId"))
-                || "AGGREGATED_SERVICE".equals(aggregatedProduct.getString("productTypeId")))) {
-            List<GenericValue> productAssocs = EntityUtil.filterByDate(aggregatedProduct.getRelated("MainProductAssoc",
+        if (aggregatedProduct != null && ("AGGREGATED".equals(aggregatedProduct.getString(org.apache.ofbiz.persistence.entity.x.productTypeId))
+                || "AGGREGATED_SERVICE".equals(aggregatedProduct.getString(org.apache.ofbiz.persistence.entity.x.productTypeId)))) {
+            List<GenericValue> productAssocs = EntityUtil.filterByDate(aggregatedProduct.getRelated(org.apache.ofbiz.persistence.entity.x.MainProductAssoc,
                     UtilMisc.toMap("productAssocTypeId", "PRODUCT_CONF"), null, false));
             return productAssocs;
         }
@@ -198,14 +198,14 @@ public final class ProductWorker {
         }
         GenericValue productAssoc = EntityUtil.getFirst(productAssocs);
         if (productAssoc != null) {
-            return productAssoc.getString("productId");
+            return productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productId);
         }
         return null;
     }
 
     public static List<GenericValue> getVariantVirtualAssocs(GenericValue variantProduct) throws GenericEntityException {
-        if (variantProduct != null && "Y".equals(variantProduct.getString("isVariant"))) {
-            List<GenericValue> productAssocs = EntityUtil.filterByDate(variantProduct.getRelated("AssocProductAssoc",
+        if (variantProduct != null && "Y".equals(variantProduct.getString(org.apache.ofbiz.persistence.entity.x.isVariant))) {
+            List<GenericValue> productAssocs = EntityUtil.filterByDate(variantProduct.getRelated(org.apache.ofbiz.persistence.entity.x.AssocProductAssoc,
                     UtilMisc.toMap("productAssocTypeId", "PRODUCT_VARIANT"), null, true));
             return productAssocs;
         }
@@ -263,8 +263,8 @@ public final class ProductWorker {
         for (ConfigOption ci: options) {
             List<GenericValue> products = ci.getComponents();
             for (GenericValue product: products) {
-                String productId = product.getString("productId");
-                BigDecimal cmpQuantity = product.getBigDecimal("quantity");
+                String productId = product.getString(org.apache.ofbiz.persistence.entity.x.productId);
+                BigDecimal cmpQuantity = product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                 BigDecimal neededQty = BigDecimal.ZERO;
                 if (cmpQuantity != null) {
                     neededQty = quantity.multiply(cmpQuantity);
@@ -289,7 +289,7 @@ public final class ProductWorker {
         if (variantProduct == null) {
             return new HashSet<>();
         }
-        if (!"Y".equals(variantProduct.getString("isVariant"))) {
+        if (!"Y".equals(variantProduct.getString(org.apache.ofbiz.persistence.entity.x.isVariant))) {
             throw new IllegalArgumentException("Cannot get distinguishing features for a product that is not a variant (ie isVariant!=Y).");
         }
         Delegator delegator = variantProduct.getDelegator();
@@ -299,7 +299,7 @@ public final class ProductWorker {
         Set<GenericValue> distFeatures = new HashSet<>();
 
         List<GenericValue> variantDistinguishingFeatures = EntityQuery.use(delegator).from("ProductFeatureAndAppl")
-                .where("productId", variantProduct.get("productId"), "productFeatureApplTypeId", "DISTINGUISHING_FEAT").cache(true).queryList();
+                .where("productId", variantProduct.get(org.apache.ofbiz.persistence.entity.x.productId), "productFeatureApplTypeId", "DISTINGUISHING_FEAT").cache(true).queryList();
 
         for (GenericValue variantDistinguishingFeature: EntityUtil.filterByDate(variantDistinguishingFeatures)) {
             GenericValue dummyFeature = delegator.makeValue("ProductFeature");
@@ -312,14 +312,14 @@ public final class ProductWorker {
 
         Set<String> virtualSelectableFeatureIds = new HashSet<>();
         for (GenericValue virtualSelectableFeature: EntityUtil.filterByDate(virtualSelectableFeatures)) {
-            virtualSelectableFeatureIds.add(virtualSelectableFeature.getString("productFeatureId"));
+            virtualSelectableFeatureIds.add(virtualSelectableFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId));
         }
 
         List<GenericValue> variantStandardFeatures = EntityQuery.use(delegator).from("ProductFeatureAndAppl")
-                .where("productId", variantProduct.get("productId"), "productFeatureApplTypeId", "STANDARD_FEATURE").cache(true).queryList();
+                .where("productId", variantProduct.get(org.apache.ofbiz.persistence.entity.x.productId), "productFeatureApplTypeId", "STANDARD_FEATURE").cache(true).queryList();
 
         for (GenericValue variantStandardFeature: EntityUtil.filterByDate(variantStandardFeatures)) {
-            if (virtualSelectableFeatureIds.contains(variantStandardFeature.get("productFeatureId"))) {
+            if (virtualSelectableFeatureIds.contains(variantStandardFeature.get(org.apache.ofbiz.persistence.entity.x.productFeatureId))) {
                 GenericValue dummyFeature = delegator.makeValue("ProductFeature");
                 dummyFeature.setAllFields(variantStandardFeature, true, null, null);
                 distFeatures.add(dummyFeature);
@@ -340,7 +340,7 @@ public final class ProductWorker {
             GenericValue alternativeOptionProduct = EntityQuery.use(delegator).from("Product").where("productId", alternativeOptionProductId)
                     .cache().queryOne();
             if (alternativeOptionProduct != null) {
-                if ("Y".equals(alternativeOptionProduct.getString("isVariant"))) {
+                if ("Y".equals(alternativeOptionProduct.getString(org.apache.ofbiz.persistence.entity.x.isVariant))) {
                     Set<GenericValue> distFeatures = getVariantDistinguishingFeatures(alternativeOptionProduct);
                     if (UtilValidate.isNotEmpty(distFeatures)) {
                         StringBuilder nameBuf = new StringBuilder();
@@ -348,12 +348,12 @@ public final class ProductWorker {
                             if (nameBuf.length() > 0) {
                                 nameBuf.append(", ");
                             }
-                            GenericValue productFeatureType = productFeature.getRelatedOne("ProductFeatureType", true);
+                            GenericValue productFeatureType = productFeature.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductFeatureType, true);
                             if (productFeatureType != null) {
-                                nameBuf.append(productFeatureType.get("description", locale));
+                                nameBuf.append(productFeatureType.get(org.apache.ofbiz.persistence.entity.x.description, locale));
                                 nameBuf.append(":");
                             }
-                            nameBuf.append(productFeature.get("description", locale));
+                            nameBuf.append(productFeature.get(org.apache.ofbiz.persistence.entity.x.description, locale));
                         }
                         return nameBuf.toString();
                     }
@@ -399,7 +399,7 @@ public final class ProductWorker {
         try {
             List<GenericValue> productAppls;
             List<EntityCondition> condList = UtilMisc.toList(
-                    EntityCondition.makeCondition("productId", product.getString("productId")),
+                    EntityCondition.makeCondition("productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId)),
                     EntityUtil.getFilterByDateExpr());
             if (productFeatureApplTypeId != null) {
                 condList.add(EntityCondition.makeCondition("productFeatureApplTypeId", productFeatureApplTypeId));
@@ -419,13 +419,13 @@ public final class ProductWorker {
         if (product != null) {
             Delegator delegator = product.getDelegator();
             try {
-                List<String> productIds = UtilMisc.toList(product.getString("productId"));
+                List<String> productIds = UtilMisc.toList(product.getString(org.apache.ofbiz.persistence.entity.x.productId));
 
                 // For marketing package, resolve each features contains in the package
                 if (EntityTypeUtil.hasParentType(delegator, "ProductType",
-                        "productTypeId", product.getString("productTypeId"), "parentTypeId", "MARKETING_PKG_PICK")) {
+                        "productTypeId", product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId), "parentTypeId", "MARKETING_PKG_PICK")) {
                     productIds.addAll(EntityQuery.use(delegator).from("ProductAndAssocTo")
-                            .where("productId", product.get("productId"),
+                            .where("productId", product.get(org.apache.ofbiz.persistence.entity.x.productId),
                                     "productAssocTypeId", "PRODUCT_COMPONENT")
                             .filterByDate()
                             .cache()
@@ -439,7 +439,7 @@ public final class ProductWorker {
                         .cache()
                         .queryList();
             } catch (GenericEntityException e) {
-                Debug.logError(e, "Unable to get features from product : " + product.get("productId"), MODULE);
+                Debug.logError(e, "Unable to get features from product : " + product.get(org.apache.ofbiz.persistence.entity.x.productId), MODULE);
             }
         }
         return null;
@@ -454,7 +454,7 @@ public final class ProductWorker {
         }
 
         if (product != null) {
-            return product.getString("virtualVariantMethodEnum");
+            return product.getString(org.apache.ofbiz.persistence.entity.x.virtualVariantMethodEnum);
         }
         return null;
     }
@@ -472,40 +472,40 @@ public final class ProductWorker {
             Delegator delegator = product.getDelegator();
             List<GenericValue> featuresSorted = EntityQuery.use(delegator)
                                                     .from("ProductFeatureAndAppl")
-                                                    .where("productId", product.getString("productId"),
+                                                    .where("productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId),
                                                             "productFeatureApplTypeId", "SELECTABLE_FEATURE")
                                                     .orderBy("productFeatureTypeId", "sequenceNum").cache(true).queryList();
             String oldType = null;
             List<Map<String, String>> featureList = new LinkedList<>();
             for (GenericValue productFeatureAppl: featuresSorted) {
-                if (oldType == null || !oldType.equals(productFeatureAppl.getString("productFeatureTypeId"))) {
+                if (oldType == null || !oldType.equals(productFeatureAppl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId))) {
                     // use first entry for type and description
                     if (oldType != null) {
                         featureTypeFeatures.add(featureList);
                         featureList = new LinkedList<>();
                     }
                     GenericValue productFeatureType = EntityQuery.use(delegator).from("ProductFeatureType").where("productFeatureTypeId",
-                            productFeatureAppl.getString("productFeatureTypeId")).queryOne();
-                    featureList.add(UtilMisc.<String, String>toMap("productFeatureTypeId", productFeatureAppl.getString("productFeatureTypeId"),
-                            "description", productFeatureType.getString("description")));
-                    oldType = productFeatureAppl.getString("productFeatureTypeId");
+                            productFeatureAppl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId)).queryOne();
+                    featureList.add(UtilMisc.<String, String>toMap("productFeatureTypeId", productFeatureAppl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId),
+                            "description", productFeatureType.getString(org.apache.ofbiz.persistence.entity.x.description)));
+                    oldType = productFeatureAppl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId);
                 }
                 // fill other entries with featureId, description and default price and currency
-                Map<String, String> featureData = UtilMisc.toMap("productFeatureId", productFeatureAppl.getString("productFeatureId"));
-                if (UtilValidate.isNotEmpty(productFeatureAppl.get("description"))) {
-                    featureData.put("description", productFeatureAppl.getString("description"));
+                Map<String, String> featureData = UtilMisc.toMap("productFeatureId", productFeatureAppl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId));
+                if (UtilValidate.isNotEmpty(productFeatureAppl.get(org.apache.ofbiz.persistence.entity.x.description))) {
+                    featureData.put("description", productFeatureAppl.getString(org.apache.ofbiz.persistence.entity.x.description));
                 } else {
-                    featureData.put("description", productFeatureAppl.getString("productFeatureId"));
+                    featureData.put("description", productFeatureAppl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId));
                 }
                 List<GenericValue> productFeaturePrices = EntityQuery.use(delegator).from("ProductFeaturePrice")
-                        .where("productFeatureId", productFeatureAppl.getString("productFeatureId"), "productPriceTypeId", "DEFAULT_PRICE")
+                        .where("productFeatureId", productFeatureAppl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId), "productPriceTypeId", "DEFAULT_PRICE")
                         .filterByDate()
                         .queryList();
                 if (UtilValidate.isNotEmpty(productFeaturePrices)) {
                     GenericValue productFeaturePrice = productFeaturePrices.get(0);
-                    if (UtilValidate.isNotEmpty(productFeaturePrice.get("price"))) {
-                        featureData.put("price", productFeaturePrice.getBigDecimal("price").toString());
-                        featureData.put("currencyUomId", productFeaturePrice.getString("currencyUomId"));
+                    if (UtilValidate.isNotEmpty(productFeaturePrice.get(org.apache.ofbiz.persistence.entity.x.price))) {
+                        featureData.put("price", productFeaturePrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price).toString());
+                        featureData.put("currencyUomId", productFeaturePrice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId));
                     }
                 }
                 featureList.add(featureData);
@@ -527,11 +527,11 @@ public final class ProductWorker {
      * @return a List of ProductFeature GenericValues
      */
     public static List<GenericValue> getVariantSelectionFeatures(GenericValue variantProduct) {
-        if (variantProduct == null || !"Y".equals(variantProduct.getString("isVariant"))) {
+        if (variantProduct == null || !"Y".equals(variantProduct.getString(org.apache.ofbiz.persistence.entity.x.isVariant))) {
             return null;
         }
-        GenericValue virtualProduct = ProductWorker.getParentProduct(variantProduct.getString("productId"), variantProduct.getDelegator());
-        if (virtualProduct == null || !"Y".equals(virtualProduct.getString("isVirtual"))) {
+        GenericValue virtualProduct = ProductWorker.getParentProduct(variantProduct.getString(org.apache.ofbiz.persistence.entity.x.productId), variantProduct.getDelegator());
+        if (virtualProduct == null || !"Y".equals(virtualProduct.getString(org.apache.ofbiz.persistence.entity.x.isVirtual))) {
             return null;
         }
         // The selectable features from the virtual product
@@ -544,9 +544,9 @@ public final class ProductWorker {
         for (GenericValue standardFeature : standardFeatures) {
             // For each standard variant feature check it is also a virtual selectable feature and
             // if a feature of the same type hasn't already been added to the list
-            if (selectableTypes.contains(standardFeature.getString("productFeatureTypeId")) && selectableFeatures.contains(standardFeature)) {
+            if (selectableTypes.contains(standardFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId)) && selectableFeatures.contains(standardFeature)) {
                 result.add(standardFeature);
-                selectableTypes.remove(standardFeature.getString("productFeatureTypeId"));
+                selectableTypes.remove(standardFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId));
             }
         }
         return result;
@@ -565,7 +565,7 @@ public final class ProductWorker {
 
         if (productFeatureAppls != null) {
             for (GenericValue appl: productFeatureAppls) {
-                String featureType = appl.getString("productFeatureTypeId");
+                String featureType = appl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId);
                 List<GenericValue> features = featureMap.get(featureType);
                 if (features == null) {
                     features = new LinkedList<>();
@@ -597,10 +597,10 @@ public final class ProductWorker {
     public static BigDecimal calcOrderAdjustment(GenericValue orderAdjustment, BigDecimal orderSubTotal) {
         BigDecimal adjustment = BigDecimal.ZERO;
 
-        if (orderAdjustment.get("amount") != null) {
-            adjustment = adjustment.add(orderAdjustment.getBigDecimal("amount"));
-        } else if (orderAdjustment.get("sourcePercentage") != null) {
-            adjustment = adjustment.add(orderAdjustment.getBigDecimal("sourcePercentage").multiply(orderSubTotal));
+        if (orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
+            adjustment = adjustment.add(orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
+        } else if (orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.sourcePercentage) != null) {
+            adjustment = adjustment.add(orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.sourcePercentage).multiply(orderSubTotal));
         }
         return adjustment;
     }
@@ -613,11 +613,11 @@ public final class ProductWorker {
             for (GenericValue orderAdjustment: adjustments) {
                 boolean includeAdjustment = false;
 
-                if ("SALES_TAX".equals(orderAdjustment.getString("orderAdjustmentTypeId"))) {
+                if ("SALES_TAX".equals(orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
                     if (includeTax) {
                         includeAdjustment = true;
                     }
-                } else if ("SHIPPING_CHARGES".equals(orderAdjustment.getString("orderAdjustmentTypeId"))) {
+                } else if ("SHIPPING_CHARGES".equals(orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
                     if (includeShipping) {
                         includeAdjustment = true;
                     }
@@ -629,13 +629,13 @@ public final class ProductWorker {
 
                 // default to yes, include for shipping; so only exclude if includeInShipping is N, or false;
                 // if Y or null or anything else it will be included
-                if (forTax && "N".equals(orderAdjustment.getString("includeInTax"))) {
+                if (forTax && "N".equals(orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.includeInTax))) {
                     includeAdjustment = false;
                 }
 
                 // default to yes, include for shipping; so only exclude if includeInShipping is N, or false;
                 // if Y or null or anything else it will be included
-                if (forShipping && "N".equals(orderAdjustment.getString("includeInShipping"))) {
+                if (forShipping && "N".equals(orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.includeInShipping))) {
                     includeAdjustment = false;
                 }
 
@@ -672,8 +672,8 @@ public final class ProductWorker {
         }
 
         BigDecimal productRating = BigDecimal.ZERO;
-        BigDecimal productEntityRating = product.getBigDecimal("productRating");
-        String entityFieldType = product.getString("ratingTypeEnum");
+        BigDecimal productEntityRating = product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.productRating);
+        String entityFieldType = product.getString(org.apache.ofbiz.persistence.entity.x.ratingTypeEnum);
 
         // null check
         if (productEntityRating == null) {
@@ -693,7 +693,7 @@ public final class ProductWorker {
                     reviewByAnd.put("productStoreId", productStoreId);
                 }
                 if (product != null) {
-                    reviewByAnd.put("productId", (String) product.get("productId"));
+                    reviewByAnd.put("productId", (String) product.get(org.apache.ofbiz.persistence.entity.x.productId));
                 }
                 try {
                     DynamicViewEntity avgProductReview = new DynamicViewEntity();
@@ -704,7 +704,7 @@ public final class ProductWorker {
                     avgProductReview.addAlias("PR", "productStoreId");
                     GenericValue averageProductReview = EntityQuery.use(delegator).select("productRatingAvg")
                             .from(avgProductReview).where(reviewByAnd).queryFirst();
-                    productRating = averageProductReview.getBigDecimal("productRatingAvg");
+                    productRating = averageProductReview.getBigDecimal(org.apache.ofbiz.persistence.entity.x.productRatingAvg);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                 }
@@ -714,7 +714,7 @@ public final class ProductWorker {
                 BigDecimal numRatings = BigDecimal.ZERO;
                 if (reviews != null) {
                     for (GenericValue productReview: reviews) {
-                        BigDecimal rating = productReview.getBigDecimal("productRating");
+                        BigDecimal rating = productReview.getBigDecimal(org.apache.ofbiz.persistence.entity.x.productRating);
                         if (rating != null) {
                             ratingTally = ratingTally.add(rating);
                             numRatings = numRatings.add(BigDecimal.ONE);
@@ -757,7 +757,7 @@ public final class ProductWorker {
         }
         List<GenericValue> categories = new LinkedList<>();
         try {
-            List<GenericValue> categoryMembers = product.getRelated("ProductCategoryMember", null, null, false);
+            List<GenericValue> categoryMembers = product.getRelated(org.apache.ofbiz.persistence.entity.x.ProductCategoryMember, null, null, false);
             categoryMembers = EntityUtil.filterByDate(categoryMembers);
             categories = EntityUtil.getRelated("ProductCategory", null, categoryMembers, false);
         } catch (GenericEntityException e) {
@@ -792,7 +792,7 @@ public final class ProductWorker {
             if (UtilValidate.isNotEmpty(virtualProductAssocs)) {
                 //found one, set this first as the parent product
                 GenericValue productAssoc = EntityUtil.getFirst(virtualProductAssocs);
-                parentProduct = productAssoc.getRelatedOne("MainProduct", true);
+                parentProduct = productAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.MainProduct, true);
             }
         } catch (GenericEntityException e) {
             throw new RuntimeException("Entity Engine error getting Parent Product (" + e.getMessage() + ")");
@@ -805,11 +805,11 @@ public final class ProductWorker {
         if (product != null) {
             GenericValue productType = null;
             try {
-                productType = product.getRelatedOne("ProductType", true);
+                productType = product.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductType, true);
             } catch (GenericEntityException e) {
                 Debug.logWarning(e.getMessage(), MODULE);
             }
-            String isDigitalValue = (productType != null ? productType.getString("isDigital") : null);
+            String isDigitalValue = (productType != null ? productType.getString(org.apache.ofbiz.persistence.entity.x.isDigital) : null);
             isDigital = isDigitalValue != null && "Y".equalsIgnoreCase(isDigitalValue);
         }
         return isDigital;
@@ -820,11 +820,11 @@ public final class ProductWorker {
         if (product != null) {
             GenericValue productType = null;
             try {
-                productType = product.getRelatedOne("ProductType", true);
+                productType = product.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductType, true);
             } catch (GenericEntityException e) {
                 Debug.logWarning(e.getMessage(), MODULE);
             }
-            String isPhysicalValue = (productType != null ? productType.getString("isPhysical") : null);
+            String isPhysicalValue = (productType != null ? productType.getString(org.apache.ofbiz.persistence.entity.x.isPhysical) : null);
             isPhysical = isPhysicalValue != null && "Y".equalsIgnoreCase(isPhysicalValue);
         }
         return isPhysical;
@@ -834,7 +834,7 @@ public final class ProductWorker {
         try {
             GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productI).cache().queryOne();
             if (product != null) {
-                return "Y".equals(product.getString("isVirtual"));
+                return "Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.isVirtual));
             }
         } catch (GenericEntityException e) {
             Debug.logWarning(e.getMessage(), MODULE);
@@ -847,7 +847,7 @@ public final class ProductWorker {
         try {
             GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productI).cache().queryOne();
             if (product != null) {
-                return "Y".equals(product.getString("requireAmount"));
+                return "Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.requireAmount));
             }
         } catch (GenericEntityException e) {
             Debug.logWarning(e.getMessage(), MODULE);
@@ -860,7 +860,7 @@ public final class ProductWorker {
         try {
             GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache().queryOne();
             if (product != null) {
-                return product.getString("productTypeId");
+                return product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId);
             }
         } catch (GenericEntityException e) {
             Debug.logWarning(e.getMessage(), MODULE);
@@ -877,24 +877,24 @@ public final class ProductWorker {
      * convert the value otherwise the weight is returned as is.
      */
     public static BigDecimal getProductWeight(GenericValue product, String desiredUomId, Delegator delegator, LocalDispatcher dispatcher) {
-        BigDecimal weight = product.getBigDecimal("productWeight");
-        String weightUomId = product.getString("weightUomId");
+        BigDecimal weight = product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.productWeight);
+        String weightUomId = product.getString(org.apache.ofbiz.persistence.entity.x.weightUomId);
 
         if (weight == null) {
-            GenericValue parentProduct = getParentProduct(product.getString("productId"), delegator);
+            GenericValue parentProduct = getParentProduct(product.getString(org.apache.ofbiz.persistence.entity.x.productId), delegator);
             if (parentProduct != null) {
-                weight = parentProduct.getBigDecimal("productWeight");
-                weightUomId = parentProduct.getString("weightUomId");
+                weight = parentProduct.getBigDecimal(org.apache.ofbiz.persistence.entity.x.productWeight);
+                weightUomId = parentProduct.getString(org.apache.ofbiz.persistence.entity.x.weightUomId);
             }
         }
 
         // If the weight isn't define and the product is a marketing package,
         // we calculate the weight by of all product present on the package
         if (weight == null && EntityTypeUtil.hasParentType(delegator, "ProductType",
-                "productTypeId", product.getString("productTypeId"), "parentTypeId", "MARKETING_PKG_PICK")) {
+                "productTypeId", product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId), "parentTypeId", "MARKETING_PKG_PICK")) {
             try {
                 List<GenericValue> productAssocs = EntityQuery.use(delegator).from("ProductAndAssocTo")
-                        .where("productId", product.get("productId"),
+                        .where("productId", product.get(org.apache.ofbiz.persistence.entity.x.productId),
                                 "productAssocTypeId", "PRODUCT_COMPONENT")
                         .filterByDate()
                         .cache()
@@ -904,7 +904,7 @@ public final class ProductWorker {
                     for (GenericValue productAssoc : productAssocs) {
                         BigDecimal assocWeight = getProductWeight(productAssoc, desiredUomId, delegator, dispatcher);
                         if (assocWeight != null) {
-                            weight = weight.add(assocWeight.multiply((BigDecimal) productAssoc.getOrDefault("quantity", BigDecimal.ONE)));
+                            weight = weight.add(assocWeight.multiply((BigDecimal) productAssoc.getOrDefault(org.apache.ofbiz.persistence.entity.x.quantity, BigDecimal.ONE)));
                         }
                     }
                 }
@@ -919,7 +919,7 @@ public final class ProductWorker {
         }
 
         // attempt a conversion if necessary
-        if (desiredUomId != null && product.get("weightUomId") != null && !desiredUomId.equals(product.get("weightUomId"))) {
+        if (desiredUomId != null && product.get(org.apache.ofbiz.persistence.entity.x.weightUomId) != null && !desiredUomId.equals(product.get(org.apache.ofbiz.persistence.entity.x.weightUomId))) {
             Map<String, Object> result = new HashMap<>();
             try {
                 result = dispatcher.runSync("convertUom", UtilMisc.<String, Object>toMap("uomId", weightUomId, "uomIdTo",
@@ -935,7 +935,7 @@ public final class ProductWorker {
                 return null;
             }
         }
-        Debug.logWarning(" WEIGHT FOUND FOR " + product.get("productId") + " is " + weight + " " + desiredUomId, MODULE);
+        Debug.logWarning(" WEIGHT FOUND FOR " + product.get(org.apache.ofbiz.persistence.entity.x.productId) + " is " + weight + " " + desiredUomId, MODULE);
         return weight;
     }
 
@@ -1006,7 +1006,7 @@ public final class ProductWorker {
     public static String findProductId(Delegator delegator, String idToFind, String goodIdentificationTypeId) throws GenericEntityException {
         GenericValue product = findProduct(delegator, idToFind, goodIdentificationTypeId);
         if (product != null) {
-            return product.getString("productId");
+            return product.getString(org.apache.ofbiz.persistence.entity.x.productId);
         } else {
             return null;
         }
@@ -1031,7 +1031,7 @@ public final class ProductWorker {
                 GenericValue productToAdd = product;
                 //retreive product GV if the actual genericValue came from viewEntity
                 if (!"Product".equals(product.getEntityName())) {
-                    productToAdd = EntityQuery.use(delegator).from("Product").where("productId", product.get("productId")).cache().queryOne();
+                    productToAdd = EntityQuery.use(delegator).from("Product").where("productId", product.get(org.apache.ofbiz.persistence.entity.x.productId)).cache().queryOne();
                 }
 
                 if (UtilValidate.isEmpty(products)) {
@@ -1066,8 +1066,8 @@ public final class ProductWorker {
 
     public static boolean isSellable(GenericValue product, Timestamp atTime) {
         if (product != null) {
-            Timestamp introDate = product.getTimestamp("introductionDate");
-            Timestamp discDate = product.getTimestamp("salesDiscontinuationDate");
+            Timestamp introDate = product.getTimestamp(org.apache.ofbiz.persistence.entity.x.introductionDate);
+            Timestamp discDate = product.getTimestamp(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate);
             if (introDate == null || introDate.before(atTime)) {
                 if (discDate == null || discDate.after(atTime)) {
                     return true;
@@ -1084,14 +1084,14 @@ public final class ProductWorker {
         List<GenericValue> refubProductAssocs = EntityQuery.use(delegator).from("ProductAssoc").where("productId", productId,
                 "productAssocTypeId", "PRODUCT_REFURB").filterByDate().queryList();
         for (GenericValue refubProductAssoc: refubProductAssocs) {
-            productIdSet.add(refubProductAssoc.getString("productIdTo"));
+            productIdSet.add(refubProductAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo));
         }
 
         // see if this is a refurb productId to, and find product(s) it is a refurb of
         List<GenericValue> refubProductToAssocs = EntityQuery.use(delegator).from("ProductAssoc").where("productIdTo",
                 productId, "productAssocTypeId", "PRODUCT_REFURB").filterByDate().queryList();
         for (GenericValue refubProductToAssoc: refubProductToAssocs) {
-            productIdSet.add(refubProductToAssoc.getString("productId"));
+            productIdSet.add(refubProductToAssoc.getString(org.apache.ofbiz.persistence.entity.x.productId));
         }
 
         return productIdSet;
@@ -1108,9 +1108,9 @@ public final class ProductWorker {
                 List<GenericValue> incompatibilityVariants = EntityQuery.use(delegator).from("ProductFeatureIactn")
                         .where("productId", productId, "productFeatureIactnTypeId", "FEATURE_IACTN_INCOMP").cache(true).queryList();
                 for (GenericValue incompatibilityVariant: incompatibilityVariants) {
-                    String featur = incompatibilityVariant.getString("productFeatureId");
+                    String featur = incompatibilityVariant.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId);
                     if (paramValue.equals(featur)) {
-                        String featurTo = incompatibilityVariant.getString("productFeatureIdTo");
+                        String featurTo = incompatibilityVariant.getString(org.apache.ofbiz.persistence.entity.x.productFeatureIdTo);
                         for (String paramValueTo: selectedFeatures) {
                             if (featurTo.equals(paramValueTo)) {
                                 Debug.logWarning("Incompatible features", MODULE);
@@ -1124,9 +1124,9 @@ public final class ProductWorker {
                 List<GenericValue> dependenciesVariants = EntityQuery.use(delegator).from("ProductFeatureIactn")
                         .where("productId", productId, "productFeatureIactnTypeId", "FEATURE_IACTN_DEPEND").cache(true).queryList();
                 for (GenericValue dpVariant: dependenciesVariants) {
-                    String featur = dpVariant.getString("productFeatureId");
+                    String featur = dpVariant.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId);
                     if (paramValue.equals(featur)) {
-                        String featurTo = dpVariant.getString("productFeatureIdTo");
+                        String featurTo = dpVariant.getString(org.apache.ofbiz.persistence.entity.x.productFeatureIdTo);
                         boolean found = false;
                         for (String paramValueTo: selectedFeatures) {
                             if (featurTo.equals(paramValueTo)) {
@@ -1149,14 +1149,14 @@ public final class ProductWorker {
             for (GenericValue productAssoc: productAssocs) {
                 for (String featureId: selectedFeatures) {
                     List<GenericValue> pAppls = EntityQuery.use(delegator).from("ProductFeatureAppl").where("productId",
-                            productAssoc.getString("productIdTo"), "productFeatureId", featureId, "productFeatureApplTypeId", "STANDARD_FEATURE")
+                            productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo), "productFeatureId", featureId, "productFeatureApplTypeId", "STANDARD_FEATURE")
                             .cache(true).queryList();
                     if (UtilValidate.isEmpty(pAppls)) {
                         continue nextProd;
                     }
                 }
                 productFound = true;
-                variantProductId = productAssoc.getString("productIdTo");
+                variantProductId = productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo);
                 break;
             }
 
@@ -1174,7 +1174,7 @@ public final class ProductWorker {
                 product.create();
                 // add the selected/standard features as 'standard features' to the 'ProductFeatureAppl' table
                 GenericValue productFeatureAppl = delegator.makeValue("ProductFeatureAppl",
-                        UtilMisc.toMap("productId", product.getString("productId"), "productFeatureApplTypeId", "STANDARD_FEATURE"));
+                        UtilMisc.toMap("productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId), "productFeatureApplTypeId", "STANDARD_FEATURE"));
                 productFeatureAppl.put("fromDate", UtilDateTime.nowTimestamp());
                 for (String productFeatureId: selectedFeatures) {
                     productFeatureAppl.put("productFeatureId", productFeatureId);
@@ -1184,7 +1184,7 @@ public final class ProductWorker {
                 List<GenericValue> stdFeaturesAppls = EntityQuery.use(delegator).from("ProductFeatureAppl").where("productId", productId,
                         "productFeatureApplTypeId", "STANDARD_FEATURE").filterByDate().queryList();
                 for (GenericValue stdFeaturesAppl: stdFeaturesAppls) {
-                    stdFeaturesAppl.put("productId", product.getString("productId"));
+                    stdFeaturesAppl.put("productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId));
                     stdFeaturesAppl.create();
                 }
                 /* 3. use the price of the virtual product(Entity:ProductPrice) as a basis and adjust according the prices in the feature price table
@@ -1196,34 +1196,34 @@ public final class ProductWorker {
                 for (GenericValue productPrice: productPrices) {
                     for (String selectedFeaturedId: selectedFeatures) {
                         List<GenericValue> productFeaturePrices = EntityQuery.use(delegator).from("ProductFeaturePrice")
-                                .where("productFeatureId", selectedFeaturedId, "productPriceTypeId", productPrice.getString("productPriceTypeId"))
+                                .where("productFeatureId", selectedFeaturedId, "productPriceTypeId", productPrice.getString(org.apache.ofbiz.persistence.entity.x.productPriceTypeId))
                                 .filterByDate().queryList();
                         if (UtilValidate.isNotEmpty(productFeaturePrices)) {
                             GenericValue productFeaturePrice = productFeaturePrices.get(0);
                             if (productFeaturePrice != null) {
-                                productPrice.put("price", productPrice.getBigDecimal("price").add(productFeaturePrice.getBigDecimal("price")));
+                                productPrice.put("price", productPrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price).add(productFeaturePrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price)));
                             }
                         }
                     }
-                    if (productPrice.get("price") == null) {
-                        productPrice.put("price", productPrice.getBigDecimal("price"));
+                    if (productPrice.get(org.apache.ofbiz.persistence.entity.x.price) == null) {
+                        productPrice.put("price", productPrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price));
                     }
-                    productPrice.put("productId", product.getString("productId"));
+                    productPrice.put("productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId));
                     productPrice.create();
                 }
                 // add the product association
                 GenericValue productAssoc = delegator.makeValue("ProductAssoc", UtilMisc.toMap("productId", productId, "productIdTo",
-                        product.getString("productId"), "productAssocTypeId", "PRODUCT_VARIANT"));
+                        product.getString(org.apache.ofbiz.persistence.entity.x.productId), "productAssocTypeId", "PRODUCT_VARIANT"));
                 productAssoc.put("fromDate", UtilDateTime.nowTimestamp());
                 productAssoc.create();
-                Debug.logInfo("set the productId to: " + product.getString("productId"), MODULE);
+                Debug.logInfo("set the productId to: " + product.getString(org.apache.ofbiz.persistence.entity.x.productId), MODULE);
 
                 // copy the supplier
                 List<GenericValue> supplierProducts = EntityQuery.use(delegator).from("SupplierProduct").where("productId", productId)
                         .cache(true).queryList();
                 for (GenericValue supplierProduct: supplierProducts) {
                     supplierProduct = (GenericValue) supplierProduct.clone();
-                    supplierProduct.set("productId", product.getString("productId"));
+                    supplierProduct.set(org.apache.ofbiz.persistence.entity.x.productId, product.getString(org.apache.ofbiz.persistence.entity.x.productId));
                     supplierProduct.create();
                 }
 
@@ -1232,12 +1232,12 @@ public final class ProductWorker {
                         .cache(true).queryList();
                 for (GenericValue productContent: productContents) {
                     productContent = (GenericValue) productContent.clone();
-                    productContent.set("productId", product.getString("productId"));
+                    productContent.set(org.apache.ofbiz.persistence.entity.x.productId, product.getString(org.apache.ofbiz.persistence.entity.x.productId));
                     productContent.create();
                 }
 
                 // finally use the new productId to be added to the cart
-                variantProductId = product.getString("productId"); // set to the new product
+                variantProductId = product.getString(org.apache.ofbiz.persistence.entity.x.productId); // set to the new product
             }
 
         } catch (GenericEntityException e) {
@@ -1285,7 +1285,7 @@ public final class ProductWorker {
 
             if (productAssocs != null) {
                 GenericValue productAssoc = EntityUtil.getFirst(productAssocs);
-                return productAssoc.getString("productIdTo");
+                return productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo);
             }
             return null;
         }
@@ -1319,7 +1319,7 @@ public final class ProductWorker {
     public static boolean isAggregateService(Delegator delegator, String aggregatedProductId) {
         try {
             GenericValue aggregatedProduct = EntityQuery.use(delegator).from("Product").where("productId", aggregatedProductId).cache().queryOne();
-            if (UtilValidate.isNotEmpty(aggregatedProduct) && "AGGREGATED_SERVICE".equals(aggregatedProduct.getString("productTypeId"))) {
+            if (UtilValidate.isNotEmpty(aggregatedProduct) && "AGGREGATED_SERVICE".equals(aggregatedProduct.getString(org.apache.ofbiz.persistence.entity.x.productTypeId))) {
                 return true;
             }
         } catch (GenericEntityException e) {
@@ -1335,11 +1335,11 @@ public final class ProductWorker {
         List<GenericValue> productsInStock = new ArrayList<>();
         if (UtilValidate.isNotEmpty(productsToFilter)) {
             for (GenericValue genericRecord : productsToFilter) {
-                String productId = genericRecord.getString("productId");
+                String productId = genericRecord.getString(org.apache.ofbiz.persistence.entity.x.productId);
                 GenericValue product = null;
                 product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache(true).queryOne();
                 boolean isMarketingPackage = EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId",
-                        product.getString("productTypeId"), "parentTypeId", "MARKETING_PKG");
+                        product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId), "parentTypeId", "MARKETING_PKG");
 
                 if (UtilValidate.isNotEmpty(isMarketingPackage) && isMarketingPackage) {
                     Map<String, Object> resultOutput = new HashMap<>();
@@ -1351,7 +1351,7 @@ public final class ProductWorker {
                         productsInStock.add(genericRecord);
                     }
                 } else {
-                    if ("Y".equals(product.getString("isVirtual"))) {
+                    if ("Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.isVirtual))) {
                         BigDecimal availableInventory = BigDecimal.ZERO;
                         try {
                             Map<String, Object> variantResultOutput = dispatcher.runSync("getAllProductVariants",
@@ -1365,11 +1365,11 @@ public final class ProductWorker {
                             for (GenericValue productVariant : productVariants) {
                                 List<GenericValue> facilities = EntityQuery.use(delegator)
                                         .from("ProductFacility")
-                                        .where("productId", productVariant.getString("productIdTo"))
+                                        .where("productId", productVariant.getString(org.apache.ofbiz.persistence.entity.x.productIdTo))
                                         .queryList();
                                 if (UtilValidate.isNotEmpty(facilities)) {
                                     for (GenericValue facility : facilities) {
-                                        BigDecimal lastInventoryCount = facility.getBigDecimal("lastInventoryCount");
+                                        BigDecimal lastInventoryCount = facility.getBigDecimal(org.apache.ofbiz.persistence.entity.x.lastInventoryCount);
                                         if (lastInventoryCount != null) {
                                             availableInventory = lastInventoryCount.add(availableInventory);
                                         }
@@ -1388,7 +1388,7 @@ public final class ProductWorker {
                         List<GenericValue> facilities = EntityQuery.use(delegator).from("ProductFacility").where("productId", productId).queryList();
                         if (UtilValidate.isNotEmpty(facilities)) {
                             for (GenericValue facility : facilities) {
-                                BigDecimal lastInventoryCount = facility.getBigDecimal("lastInventoryCount");
+                                BigDecimal lastInventoryCount = facility.getBigDecimal(org.apache.ofbiz.persistence.entity.x.lastInventoryCount);
                                 if (lastInventoryCount != null) {
                                     availableInventory = lastInventoryCount.add(availableInventory);
                                 }

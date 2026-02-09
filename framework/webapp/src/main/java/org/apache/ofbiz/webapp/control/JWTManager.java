@@ -217,7 +217,7 @@ public class JWTManager {
         }
         GenericValue userLogin = (GenericValue) result.get("userLogin");
 
-        String token = createJwt(delegator, UtilMisc.toMap("userLoginId", userLogin.getString("userLoginId")));
+        String token = createJwt(delegator, UtilMisc.toMap("userLoginId", userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId)));
         if (token == null) {
             Debug.logError("Unable to generate token", MODULE);
             request.setAttribute("_ERROR_MESSAGE_", "Unable to generate token");
@@ -426,9 +426,9 @@ public class JWTManager {
      * @return boolean True if it works, log an error message if it fails
      */
     private static boolean storeUserlogin(GenericValue userLogin) {
-        String enabled = userLogin.getString("enabled");
+        String enabled = userLogin.getString(org.apache.ofbiz.persistence.entity.x.enabled);
         if (enabled == null || "Y".equals(enabled)) {
-            userLogin.set("hasLoggedOut", "N");
+            userLogin.set(org.apache.ofbiz.persistence.entity.x.hasLoggedOut, "N");
             try {
                 userLogin.store();
             } catch (GenericEntityException e) {

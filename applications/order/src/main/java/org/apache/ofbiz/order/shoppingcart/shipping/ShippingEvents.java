@@ -121,21 +121,21 @@ public class ShippingEvents {
         }
 
         GenericValue shipGroup = orh.getOrderItemShipGroup(shipGroupSeqId);
-        String shipmentMethodTypeId = shipGroup.getString("shipmentMethodTypeId");
-        String carrierRoleTypeId = shipGroup.getString("carrierRoleTypeId");
-        String carrierPartyId = shipGroup.getString("carrierPartyId");
-        String supplierPartyId = shipGroup.getString("supplierPartyId");
+        String shipmentMethodTypeId = shipGroup.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId);
+        String carrierRoleTypeId = shipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId);
+        String carrierPartyId = shipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId);
+        String supplierPartyId = shipGroup.getString(org.apache.ofbiz.persistence.entity.x.supplierPartyId);
 
         GenericValue shipAddr = orh.getShippingAddress(shipGroupSeqId);
         if (shipAddr == null) {
             return UtilMisc.<String, Object>toMap("shippingTotal", BigDecimal.ZERO);
         }
 
-        String contactMechId = shipAddr.getString("contactMechId");
+        String contactMechId = shipAddr.getString(org.apache.ofbiz.persistence.entity.x.contactMechId);
         String partyId = null;
         GenericValue partyObject = orh.getPlacingParty();
         if (partyObject != null) {
-            partyId = partyObject.getString("partyId");
+            partyId = partyObject.getString(org.apache.ofbiz.persistence.entity.x.partyId);
         }
         return getShipGroupEstimate(dispatcher, delegator, orh.getOrderTypeId(), shipmentMethodTypeId, carrierPartyId, carrierRoleTypeId,
                 contactMechId, orh.getProductStoreId(), supplierPartyId, orh.getShippableItemInfo(shipGroupSeqId),
@@ -203,7 +203,7 @@ public class ShippingEvents {
                     return ServiceUtil.returnError("Cannot find the origin shipping address (SHIP_ORIG_LOCATION) for the supplier with ID ["
                             + supplierPartyId + "].  Will not be able to calculate drop shipment estimate.");
                 }
-                shippingOriginContactMechId = originAddress.getString("contactMechId");
+                shippingOriginContactMechId = originAddress.getString(org.apache.ofbiz.persistence.entity.x.contactMechId);
             } catch (GeneralException e) {
                 return ServiceUtil.returnError(standardMessage);
             }
@@ -274,15 +274,15 @@ public class ShippingEvents {
         // using shippingAllowance percent and deduct it from Actual Shipping Cost.
         if (BigDecimal.ZERO.compareTo(shippingTotal) < 0 && UtilValidate.isNotEmpty(totalAllowance)
                 && BigDecimal.ZERO.compareTo(totalAllowance) < 0) {
-            BigDecimal shippingAllowancePercent = storeShipMethod.getBigDecimal("allowancePercent") != null ? storeShipMethod.getBigDecimal(
-                    "allowancePercent") : BigDecimal.ZERO;
+            BigDecimal shippingAllowancePercent = storeShipMethod.getBigDecimal(org.apache.ofbiz.persistence.entity.x.allowancePercent) != null ? storeShipMethod.getBigDecimal(
+                    org.apache.ofbiz.persistence.entity.x.allowancePercent) : BigDecimal.ZERO;
             totalAllowance = totalAllowance.multiply(shippingAllowancePercent.divide(BigDecimal.valueOf(100)));
             shippingTotal = shippingTotal.subtract(totalAllowance);
         }
 
         // Check if minimum price is set for any Shipping Option, if yes,
         // compare it with total shipping and use greater of the two.
-        BigDecimal minimumPrice = storeShipMethod.getBigDecimal("minimumPrice");
+        BigDecimal minimumPrice = storeShipMethod.getBigDecimal(org.apache.ofbiz.persistence.entity.x.minimumPrice);
         if (UtilValidate.isNotEmpty(minimumPrice) && shippingTotal.compareTo(minimumPrice) < 0) {
             shippingTotal = minimumPrice;
         }
@@ -321,7 +321,7 @@ public class ShippingEvents {
         try {
             customMethod = EntityQuery.use(delegator).from("CustomMethod").where("customMethodId", shipmentCustomMethodId).queryOne();
             if (customMethod != null) {
-                serviceName = customMethod.getString("customMethodName");
+                serviceName = customMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -331,14 +331,14 @@ public class ShippingEvents {
 
     public static BigDecimal getExternalShipEstimate(LocalDispatcher dispatcher, GenericValue storeShipMeth, Map<String, Object> context)
             throws GeneralException {
-        String shipmentCustomMethodId = storeShipMeth.getString("shipmentCustomMethodId");
+        String shipmentCustomMethodId = storeShipMeth.getString(org.apache.ofbiz.persistence.entity.x.shipmentCustomMethodId);
         Delegator delegator = dispatcher.getDelegator();
         String serviceName = "";
         if (UtilValidate.isNotEmpty(shipmentCustomMethodId)) {
             serviceName = getShipmentCustomMethod(dispatcher.getDelegator(), shipmentCustomMethodId);
         }
         if (UtilValidate.isEmpty(serviceName)) {
-            serviceName = storeShipMeth.getString("serviceName");
+            serviceName = storeShipMeth.getString(org.apache.ofbiz.persistence.entity.x.serviceName);
         }
         // invoke the external shipping estimate service
         BigDecimal externalShipAmt = null;
@@ -356,13 +356,13 @@ public class ShippingEvents {
             }
         }
         if (serviceName != null) {
-            String shipmentGatewayConfigId = storeShipMeth.getString("shipmentGatewayConfigId");
-            String configProps = storeShipMeth.getString("configProps");
+            String shipmentGatewayConfigId = storeShipMeth.getString(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId);
+            String configProps = storeShipMeth.getString(org.apache.ofbiz.persistence.entity.x.configProps);
             if (UtilValidate.isNotEmpty(serviceName)) {
                 // prepare the external service context
-                context.put("serviceConfigProps", configProps);
-                context.put("shipmentCustomMethodId", shipmentCustomMethodId);
-                context.put("shipmentGatewayConfigId", shipmentGatewayConfigId);
+                context.put(org.apache.ofbiz.persistence.entity.x.serviceConfigProps, configProps);
+                context.put(org.apache.ofbiz.persistence.entity.x.shipmentCustomMethodId, shipmentCustomMethodId);
+                context.put(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId, shipmentGatewayConfigId);
 
                 // invoke the service
                 Map<String, Object> serviceResp = null;
@@ -412,9 +412,9 @@ public class ShippingEvents {
         GenericValue generalAddress = null;
         GenericValue originAddress = null;
         for (GenericValue address : addresses) {
-            if ("GENERAL_LOCATION".equals(address.get("contactMechPurposeTypeId"))) {
+            if ("GENERAL_LOCATION".equals(address.get(org.apache.ofbiz.persistence.entity.x.contactMechPurposeTypeId))) {
                 generalAddress = address;
-            } else if ("SHIP_ORIG_LOCATION".equals(address.get("contactMechPurposeTypeId"))) {
+            } else if ("SHIP_ORIG_LOCATION".equals(address.get(org.apache.ofbiz.persistence.entity.x.contactMechPurposeTypeId))) {
                 originAddress = address;
             }
         }
@@ -550,8 +550,8 @@ public class ShippingEvents {
                                                       List<GenericValue> shippingTimeEstimates) {
         GenericValue shippingTimeEstimate = getShippingTimeEstimate(storeCarrierShipMethod, shippingTimeEstimates);
         if (shippingTimeEstimate == null) return null;
-        BigDecimal leadTimeConverted = UomWorker.convertUom(shippingTimeEstimate.getBigDecimal("leadTime"),
-                shippingTimeEstimate.getString("leadTimeUomId"), "TF_day", dispatcher);
+        BigDecimal leadTimeConverted = UomWorker.convertUom(shippingTimeEstimate.getBigDecimal(org.apache.ofbiz.persistence.entity.x.leadTime),
+                shippingTimeEstimate.getString(org.apache.ofbiz.persistence.entity.x.leadTimeUomId), "TF_day", dispatcher);
         return leadTimeConverted != null ? leadTimeConverted.setScale(2, RoundingMode.UP).doubleValue() : null;
     }
 }

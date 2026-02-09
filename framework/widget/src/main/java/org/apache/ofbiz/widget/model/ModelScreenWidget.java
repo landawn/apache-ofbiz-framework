@@ -617,7 +617,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
             boolean collapsed = getInitiallyCollapsed(context);
             if (this.collapsible) {
                 String preferenceKey = getPreferenceKey(context) + "_collapsed";
-                Map<String, Object> requestParameters = UtilGenerics.cast(context.get("requestParameters"));
+                Map<String, Object> requestParameters = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.requestParameters));
                 if (requestParameters != null) {
                     String collapsedParam = (String) requestParameters.get(preferenceKey);
                     if (collapsedParam != null) {
@@ -645,7 +645,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
         //initially-collapsed status, which may be overriden by user preference
         public boolean getInitiallyCollapsed(Map<String, Object> context) {
             String screenletId = this.getId(context) + "_collapsed";
-            Map<String, ? extends Object> userPreferences = UtilGenerics.cast(context.get("userPreferences"));
+            Map<String, ? extends Object> userPreferences = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.userPreferences));
             if (userPreferences != null && userPreferences.containsKey(screenletId)) {
                 return Boolean.valueOf((String) userPreferences.get(screenletId));
             }
@@ -678,7 +678,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
 
         public String getTitle(Map<String, Object> context) {
             String title = this.titleExdr.expandString(context);
-            UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get("simpleEncoder");
+            UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
             if (simpleEncoder != null) {
                 title = simpleEncoder.encode(title);
             }
@@ -790,7 +790,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
                 }
 
                 UtilGenerics.<MapStack<String>>cast(context).push();
-                Object obj = context.get("_WIDGETTRAIL_");
+                Object obj = context.get(org.apache.ofbiz.persistence.entity.x._WIDGETTRAIL_);
 
                 // build the widgetpath
                 List<String> widgetTrail = (obj instanceof List) ? UtilGenerics.cast(obj) : null;
@@ -800,7 +800,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
 
                 String thisName = nameExdr.expandString(context);
                 widgetTrail.add(thisName);
-                context.put("_WIDGETTRAIL_", widgetTrail);
+                context.put(org.apache.ofbiz.persistence.entity.x._WIDGETTRAIL_, widgetTrail);
             }
 
             // don't need the renderer here, will just pass this on down to another screen call;
@@ -892,7 +892,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
 
             // put the sectionMap in the context, make sure it is in the sub-scope, ie after calling push on the MapStack
             contextMs.push();
-            context.put("sections", sections);
+            context.put(org.apache.ofbiz.persistence.entity.x.sections, sections);
 
             String name = this.getName(context);
             String location = this.getLocation(context);
@@ -967,7 +967,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
         @Override
         public void renderWidgetString(Appendable writer, Map<String, Object> context,
                                        ScreenStringRenderer screenStringRenderer) throws GeneralException, IOException {
-            Map<String, ? extends Object> preRenderedContent = UtilGenerics.cast(context.get("preRenderedContent"));
+            Map<String, ? extends Object> preRenderedContent = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.preRenderedContent));
             if (preRenderedContent != null && preRenderedContent.containsKey(getName())) {
                 try {
                     writer.append((String) preRenderedContent.get(getName()));
@@ -977,7 +977,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
                     throw new RuntimeException(errMsg);
                 }
             } else {
-                SectionsRenderer sections = (SectionsRenderer) context.get("sections");
+                SectionsRenderer sections = (SectionsRenderer) context.get(org.apache.ofbiz.persistence.entity.x.sections);
                 // for now if sections is null, just log a warning; may be permissible to make the screen for flexible
                 if (sections == null) {
                     Debug.logWarning("In decorator-section-include could not find sections object in the context, "
@@ -1029,7 +1029,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
         public String getText(Map<String, Object> context) {
             String text = this.textExdr.expandString(context);
             // FIXME: Encoding should be done by the renderer, not by the model.
-            UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get("simpleEncoder");
+            UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
             if (simpleEncoder != null) {
                 text = simpleEncoder.encode(text);
             }
@@ -1078,7 +1078,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
         @Override
         public void renderWidgetString(Appendable writer, Map<String, Object> context, ScreenStringRenderer screenStringRenderer) {
             // Output format might not support forms, so make form rendering optional.
-            FormStringRenderer formStringRenderer = (FormStringRenderer) context.get("formStringRenderer");
+            FormStringRenderer formStringRenderer = (FormStringRenderer) context.get(org.apache.ofbiz.persistence.entity.x.formStringRenderer);
             if (formStringRenderer == null) {
                 if (Debug.verboseOn()) {
                     Debug.logVerbose("FormStringRenderer instance not found in rendering context, form not rendered.", MODULE);
@@ -1111,7 +1111,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
         public ModelForm getModelForm(Map<String, Object> context) throws IOException, SAXException, ParserConfigurationException {
             String name = this.getName(context);
             String location = this.getLocation(context);
-            VisualTheme visualTheme = (VisualTheme) context.get("visualTheme");
+            VisualTheme visualTheme = (VisualTheme) context.get(org.apache.ofbiz.persistence.entity.x.visualTheme);
             return FormFactory.getFormFromLocation(location, name, getModelScreen().getDelegator(context).getModelReader(),
                     visualTheme, getModelScreen().getDispatcher(context).getDispatchContext());
         }
@@ -1168,7 +1168,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
         @Override
         public void renderWidgetString(Appendable writer, Map<String, Object> context, ScreenStringRenderer screenStringRenderer) {
             // Output format might not support forms, so make form rendering optional.
-            FormStringRenderer formStringRenderer = (FormStringRenderer) context.get("formStringRenderer");
+            FormStringRenderer formStringRenderer = (FormStringRenderer) context.get(org.apache.ofbiz.persistence.entity.x.formStringRenderer);
             if (formStringRenderer == null) {
                 if (Debug.verboseOn()) {
                     Debug.logVerbose("FormStringRenderer instance not found in rendering context, form not rendered.", MODULE);
@@ -1202,7 +1202,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
             String name = this.getName(context);
             String location = this.getLocation(context);
             try {
-                VisualTheme visualTheme = (VisualTheme) context.get("visualTheme");
+                VisualTheme visualTheme = (VisualTheme) context.get(org.apache.ofbiz.persistence.entity.x.visualTheme);
                 modelForm = GridFactory.getGridFromLocation(location, name, getModelScreen().getDelegator(context).getModelReader(),
                         visualTheme, getModelScreen().getDispatcher(context).getDispatchContext());
             } catch (RuntimeException e) {
@@ -1268,7 +1268,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
         public void renderWidgetString(Appendable writer, Map<String, Object> context,
                                        ScreenStringRenderer screenStringRenderer) throws GeneralException, IOException {
             // Output format might not support trees, so make tree rendering optional.
-            TreeStringRenderer treeStringRenderer = (TreeStringRenderer) context.get("treeStringRenderer");
+            TreeStringRenderer treeStringRenderer = (TreeStringRenderer) context.get(org.apache.ofbiz.persistence.entity.x.treeStringRenderer);
             if (treeStringRenderer == null) {
                 if (Debug.verboseOn()) {
                     Debug.logVerbose("TreeStringRenderer instance not found in rendering context, tree not rendered.", MODULE);
@@ -1422,7 +1422,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
                 // because many times there will be embedded "subcontent" elements
                 // that use the syntax: <subcontent content-id="${contentId}"...
                 // and this is a step to make sure that it is there.
-                Delegator delegator = (Delegator) context.get("delegator");
+                Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
                 GenericValue content = null;
                 String expandedDataResourceId = getDataResourceId(context);
                 String expandedContentId = getContentId(context);
@@ -1434,7 +1434,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
                 // as templates that contain "subcontent" elements will expect to find the master
                 // contentId in the context as "contentId".
                 UtilGenerics.<MapStack<String>>cast(context).push();
-                context.put("contentId", expandedContentId);
+                context.put(org.apache.ofbiz.persistence.entity.x.contentId, expandedContentId);
 
                 if (expandedDataResourceId.isEmpty()) {
                     if (!expandedContentId.isEmpty()) {
@@ -1445,8 +1445,8 @@ public abstract class ModelScreenWidget extends ModelWidget {
                         return;
                     }
                     if (content != null) {
-                        if (content.get("dataResourceId") != null) {
-                            expandedDataResourceId = content.getString("dataResourceId");
+                        if (content.get(org.apache.ofbiz.persistence.entity.x.dataResourceId) != null) {
+                            expandedDataResourceId = content.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
                         }
                     } else {
                         String errMsg = "Could not find content with contentId [" + expandedContentId + "] ";
@@ -1462,10 +1462,10 @@ public abstract class ModelScreenWidget extends ModelWidget {
 
                 String mimeTypeId = null;
                 if (dataResource != null) {
-                    mimeTypeId = dataResource.getString("mimeTypeId");
+                    mimeTypeId = dataResource.getString(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
                 }
                 if (content != null) {
-                    mimeTypeId = content.getString("mimeTypeId");
+                    mimeTypeId = content.getString(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
                 }
 
                 // This is to render an image only, not an application document
@@ -1625,7 +1625,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
         @Override
         public void renderWidgetString(Appendable writer, Map<String, Object> context, ScreenStringRenderer screenStringRenderer) throws IOException {
             // Output format might not support menus, so make menu rendering optional.
-            MenuStringRenderer menuStringRenderer = (MenuStringRenderer) context.get("menuStringRenderer");
+            MenuStringRenderer menuStringRenderer = (MenuStringRenderer) context.get(org.apache.ofbiz.persistence.entity.x.menuStringRenderer);
             if (menuStringRenderer == null) {
                 if (Debug.verboseOn()) {
                     Debug.logVerbose("MenuStringRenderer instance not found in rendering context, menu not rendered.", MODULE);
@@ -1641,7 +1641,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
             String location = this.getLocation(context);
             ModelMenu modelMenu = null;
             try {
-                modelMenu = MenuFactory.getMenuFromLocation(location, name, (VisualTheme) context.get("visualTheme"));
+                modelMenu = MenuFactory.getMenuFromLocation(location, name, (VisualTheme) context.get(org.apache.ofbiz.persistence.entity.x.visualTheme));
             } catch (Exception e) {
                 String errMsg = "Error rendering included menu named [" + name + "] at location [" + location + "]: ";
                 Debug.logError(e, errMsg, MODULE);
@@ -1927,7 +1927,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
         }
 
         private GenericValue getPortalPageValue(Map<String, Object> context) {
-            Delegator delegator = (Delegator) context.get("delegator");
+            Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
             String expandedPortalPageId = getId(context);
             GenericValue portalPage = null;
             if (!expandedPortalPageId.isEmpty()) {
@@ -1957,11 +1957,11 @@ public abstract class ModelScreenWidget extends ModelWidget {
             GenericValue portalPage = getPortalPageValue(context);
             if (portalPage != null) {
                 try {
-                    Delegator delegator = (Delegator) context.get("delegator");
+                    Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
                     List<GenericValue> portalPageColumns = null;
                     List<GenericValue> portalPagePortlets = null;
                     List<GenericValue> portletAttributes = null;
-                    String actualPortalPageId = portalPage.getString("portalPageId");
+                    String actualPortalPageId = portalPage.getString(org.apache.ofbiz.persistence.entity.x.portalPageId);
                     portalPageColumns = EntityQuery.use(delegator)
                                                    .from("PortalPageColumn")
                                                    .where("portalPageId", actualPortalPageId)
@@ -1979,7 +1979,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
                     ListIterator<GenericValue> columnsIterator = portalPageColumns.listIterator();
                     while (columnsIterator.hasNext()) {
                         GenericValue columnValue = columnsIterator.next();
-                        String columnSeqId = columnValue.getString("columnSeqId");
+                        String columnSeqId = columnValue.getString(org.apache.ofbiz.persistence.entity.x.columnSeqId);
 
                         // Renders the portalPageColumn header
                         screenStringRenderer.renderPortalPageColumnBegin(writer, context, this, columnValue);
@@ -1987,7 +1987,7 @@ public abstract class ModelScreenWidget extends ModelWidget {
                         // Get the Portlets located in the current column
                         portalPagePortlets = EntityQuery.use(delegator)
                                                         .from("PortalPagePortletView")
-                                                        .where("portalPageId", portalPage.getString("portalPageId"), "columnSeqId", columnSeqId)
+                                                        .where("portalPageId", portalPage.getString(org.apache.ofbiz.persistence.entity.x.portalPageId), "columnSeqId", columnSeqId)
                                                         .orderBy("sequenceNum")
                                                         .queryList();
                         // First Portlet in a Column has no previous Portlet
@@ -2014,25 +2014,25 @@ public abstract class ModelScreenWidget extends ModelWidget {
                             }
 
                             // Set info to allow portlet movement in the page
-                            context.put("prevPortletId", prevPortletId);
-                            context.put("prevPortletSeqId", prevPortletSeqId);
-                            context.put("nextPortletId", nextPortletId);
-                            context.put("nextPortletSeqId", nextPortletSeqId);
-                            context.put("prevColumnSeqId", prevColumnSeqId);
-                            context.put("nextColumnSeqId", nextColumnSeqId);
+                            context.put(org.apache.ofbiz.persistence.entity.x.prevPortletId, prevPortletId);
+                            context.put(org.apache.ofbiz.persistence.entity.x.prevPortletSeqId, prevPortletSeqId);
+                            context.put(org.apache.ofbiz.persistence.entity.x.nextPortletId, nextPortletId);
+                            context.put(org.apache.ofbiz.persistence.entity.x.nextPortletSeqId, nextPortletSeqId);
+                            context.put(org.apache.ofbiz.persistence.entity.x.prevColumnSeqId, prevColumnSeqId);
+                            context.put(org.apache.ofbiz.persistence.entity.x.nextColumnSeqId, nextColumnSeqId);
 
                             // Get portlet's attributes
                             portletAttributes = EntityQuery.use(delegator)
                                                            .from("PortletAttribute")
-                                                           .where("portalPageId", portletValue.get("portalPageId"),
-                                                                   "portalPortletId", portletValue.get("portalPortletId"),
-                                                                   "portletSeqId", portletValue.get("portletSeqId"))
+                                                           .where("portalPageId", portletValue.get(org.apache.ofbiz.persistence.entity.x.portalPageId),
+                                                                   "portalPortletId", portletValue.get(org.apache.ofbiz.persistence.entity.x.portalPortletId),
+                                                                   "portletSeqId", portletValue.get(org.apache.ofbiz.persistence.entity.x.portletSeqId))
                                                            .queryList();
 
                             ListIterator<GenericValue> attributesIterator = portletAttributes.listIterator();
                             while (attributesIterator.hasNext()) {
                                 GenericValue attribute = attributesIterator.next();
-                                context.put(attribute.getString("attrName"), attribute.getString("attrValue"));
+                                context.put(attribute.getString(org.apache.ofbiz.persistence.entity.x.attrName), attribute.getString(org.apache.ofbiz.persistence.entity.x.attrValue));
                             }
 
                             // Renders the portalPagePortlet
@@ -2043,12 +2043,12 @@ public abstract class ModelScreenWidget extends ModelWidget {
                             // Remove the portlet's attributes so that these are not available for other portlets
                             while (attributesIterator.hasPrevious()) {
                                 GenericValue attribute = attributesIterator.previous();
-                                context.remove(attribute.getString("attrName"));
+                                context.remove(attribute.getString(org.apache.ofbiz.persistence.entity.x.attrName));
                             }
 
                             // Uses the actual portlet as prevPortlet for next iteration
-                            prevPortletId = (String) portletValue.get("portalPortletId");
-                            prevPortletSeqId = (String) portletValue.get("portletSeqId");
+                            prevPortletId = (String) portletValue.get(org.apache.ofbiz.persistence.entity.x.portalPortletId);
+                            prevPortletSeqId = (String) portletValue.get(org.apache.ofbiz.persistence.entity.x.portletSeqId);
                         }
                         // Renders the portalPageColumn footer
                         screenStringRenderer.renderPortalPageColumnEnd(writer, context, this, columnValue);
@@ -2075,12 +2075,12 @@ public abstract class ModelScreenWidget extends ModelWidget {
 
         public String getOriginalPortalPageId(Map<String, Object> context) {
             GenericValue portalPage = getPortalPageValue(context);
-            return portalPage.getString("originalPortalPageId");
+            return portalPage.getString(org.apache.ofbiz.persistence.entity.x.originalPortalPageId);
         }
 
         public String getActualPortalPageId(Map<String, Object> context) {
             GenericValue portalPage = getPortalPageValue(context);
-            return portalPage.getString("portalPageId");
+            return portalPage.getString(org.apache.ofbiz.persistence.entity.x.portalPageId);
         }
 
         public String getConfMode(Map<String, Object> context) {

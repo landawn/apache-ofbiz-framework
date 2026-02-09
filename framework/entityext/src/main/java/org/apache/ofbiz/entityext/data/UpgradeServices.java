@@ -71,16 +71,16 @@ public class UpgradeServices {
     public static Map<String, Object> generateMySqlFileWithAlterTableForTimestamps(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // check permission
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         if (!security.hasPermission("ENTITY_MAINT", userLogin)) {
             Debug.logError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale));
         }
 
-        String groupName = (String) context.get("groupName");
+        String groupName = (String) context.get(org.apache.ofbiz.persistence.entity.x.groupName);
 
         Map<String, ModelEntity> modelEntities;
         try (PrintWriter dataWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(

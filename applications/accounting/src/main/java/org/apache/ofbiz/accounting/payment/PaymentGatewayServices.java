@@ -104,10 +104,10 @@ public class PaymentGatewayServices {
     public static Map<String, Object> authOrderPaymentPreference(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
-        String orderPaymentPreferenceId = (String) context.get("orderPaymentPreferenceId");
-        BigDecimal overrideAmount = (BigDecimal) context.get("overrideAmount");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String orderPaymentPreferenceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId);
+        BigDecimal overrideAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.overrideAmount);
 
         // validate overrideAmount if its available
         if (overrideAmount != null) {
@@ -128,7 +128,7 @@ public class PaymentGatewayServices {
         try {
             orderPaymentPreference = EntityQuery.use(delegator).from("OrderPaymentPreference").where("orderPaymentPreferenceId",
                     orderPaymentPreferenceId).queryOne();
-            orderHeader = orderPaymentPreference.getRelatedOne("OrderHeader", false);
+            orderHeader = orderPaymentPreference.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -141,13 +141,13 @@ public class PaymentGatewayServices {
         BigDecimal totalRemaining = orh.getOrderGrandTotal();
 
         // get the process attempts so far
-        Long procAttempt = orderPaymentPreference.getLong("processAttempt");
+        Long procAttempt = orderPaymentPreference.getLong(org.apache.ofbiz.persistence.entity.x.processAttempt);
         if (procAttempt == null) {
             procAttempt = 0L;
         }
 
         // update the process attempt count
-        orderPaymentPreference.set("processAttempt", procAttempt + 1);
+        orderPaymentPreference.set(org.apache.ofbiz.persistence.entity.x.processAttempt, procAttempt + 1);
         try {
             orderPaymentPreference.store();
             orderPaymentPreference.refresh();
@@ -159,7 +159,7 @@ public class PaymentGatewayServices {
 
         // if we are already authorized, then this is a re-auth request
         boolean reAuth = false;
-        if (orderPaymentPreference.get("statusId") != null && "PAYMENT_AUTHORIZED".equals(orderPaymentPreference.getString("statusId"))) {
+        if (orderPaymentPreference.get(org.apache.ofbiz.persistence.entity.x.statusId) != null && "PAYMENT_AUTHORIZED".equals(orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
             reAuth = true;
         }
 
@@ -168,7 +168,7 @@ public class PaymentGatewayServices {
         if (overrideAmount != null) {
             transAmount = overrideAmount;
         } else {
-            transAmount = orderPaymentPreference.getBigDecimal("maxAmount");
+            transAmount = orderPaymentPreference.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount);
         }
 
         // round this before moving on just in case a funny number made it this far
@@ -217,16 +217,16 @@ public class PaymentGatewayServices {
                         // if we have a failure at this point and no NSF retry is needed, then try other credit cards on file, if the user has any
                         if (!needsNsfRetry) {
                             // is this an auto-order?
-                            if (UtilValidate.isNotEmpty(orderHeader.getString("autoOrderShoppingListId"))) {
-                                GenericValue productStore = orderHeader.getRelatedOne("ProductStore", false);
+                            if (UtilValidate.isNotEmpty(orderHeader.getString(org.apache.ofbiz.persistence.entity.x.autoOrderShoppingListId))) {
+                                GenericValue productStore = orderHeader.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductStore, false);
                                 // according to the store should we try other cards?
-                                if ("Y".equals(productStore.getString("autoOrderCcTryOtherCards"))) {
+                                if ("Y".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.autoOrderCcTryOtherCards))) {
                                     // get other credit cards for the bill to party
                                     List<GenericValue> otherPaymentMethodAndCreditCardList = null;
                                     String billToPartyId = null;
                                     GenericValue billToParty = orh.getBillToParty();
                                     if (billToParty != null) {
-                                        billToPartyId = billToParty.getString("partyId");
+                                        billToPartyId = billToParty.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                                     //} else {
                                         // TODO optional: any other ways to find the bill to party? perhaps look at info from OrderPaymentPreference,
                                         //  ie search back from other PaymentMethod...
@@ -240,8 +240,8 @@ public class PaymentGatewayServices {
                                     if (UtilValidate.isNotEmpty(otherPaymentMethodAndCreditCardList)) {
                                         for (GenericValue otherPaymentMethodAndCreditCard : otherPaymentMethodAndCreditCardList) {
                                             // change OrderPaymentPreference in memory only and call auth service
-                                            orderPaymentPreference.set("paymentMethodId", otherPaymentMethodAndCreditCard
-                                                    .getString("paymentMethodId"));
+                                            orderPaymentPreference.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, otherPaymentMethodAndCreditCard
+                                                    .getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
                                             Map<String, Object> authRetryResult = authPayment(dispatcher, userLogin, orh, orderPaymentPreference,
                                                     totalRemaining, reAuth, transAmount);
                                             try {
@@ -301,7 +301,7 @@ public class PaymentGatewayServices {
                 results.put("finished", Boolean.FALSE);
                 results.put("errors", Boolean.TRUE);
                 results.put(ModelService.ERROR_MESSAGE, errMsg);
-                orderPaymentPreference.set("statusId", "PAYMENT_CANCELLED");
+                orderPaymentPreference.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_CANCELLED");
                 try {
                     orderPaymentPreference.store();
                 } catch (GenericEntityException e) {
@@ -324,12 +324,12 @@ public class PaymentGatewayServices {
     public static Map<String, Object> authOrderPayments(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String orderId = (String) context.get("orderId");
-        Locale locale = (Locale) context.get("locale");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = new HashMap<>();
         boolean reAuth = false;
-        if (context.get("reAuth") != null) {
-            reAuth = (Boolean) context.get("reAuth");
+        if (context.get(org.apache.ofbiz.persistence.entity.x.reAuth) != null) {
+            reAuth = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.reAuth);
         }
         // get the order header and payment preferences
         GenericValue orderHeader = null;
@@ -370,12 +370,12 @@ public class PaymentGatewayServices {
         int hadError = 0;
         List<String> messages = new LinkedList<>();
         for (GenericValue paymentPref : paymentPrefs) {
-            if (reAuth && "PAYMENT_AUTHORIZED".equals(paymentPref.getString("statusId"))) {
+            if (reAuth && "PAYMENT_AUTHORIZED".equals(paymentPref.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                 String paymentConfig = null;
                 // get the payment settings i.e. serviceName and config properties file name
                 GenericValue paymentSettings = getPaymentSettings(orh.getOrderHeader(), paymentPref, AUTH_SERVICE_TYPE, false);
                 if (paymentSettings != null) {
-                    paymentConfig = paymentSettings.getString("paymentPropertiesPath");
+                    paymentConfig = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath);
                     if (UtilValidate.isEmpty(paymentConfig)) {
                         paymentConfig = "payment.properties";
                     }
@@ -387,8 +387,8 @@ public class PaymentGatewayServices {
                 }
             }
             Map<String, Object> authContext = new HashMap<>();
-            authContext.put("orderPaymentPreferenceId", paymentPref.getString("orderPaymentPreferenceId"));
-            authContext.put("userLogin", context.get("userLogin"));
+            authContext.put("orderPaymentPreferenceId", paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
+            authContext.put("userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
 
             Map<String, Object> results = null;
             try {
@@ -399,7 +399,7 @@ public class PaymentGatewayServices {
             } catch (GenericServiceException se) {
                 Debug.logError(se, "Error in calling authOrderPaymentPreference from authOrderPayments", MODULE);
                 hadError += 1;
-                messages.add("Could not authorize OrderPaymentPreference [" + paymentPref.getString("orderPaymentPreferenceId")
+                messages.add("Could not authorize OrderPaymentPreference [" + paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId)
                         + "] for order [" + orderId + "]: " + se.toString());
                 continue;
             }
@@ -409,7 +409,7 @@ public class PaymentGatewayServices {
 
             if (ServiceUtil.isError(results)) {
                 hadError += 1;
-                messages.add("Could not authorize OrderPaymentPreference [" + paymentPref.getString("orderPaymentPreferenceId")
+                messages.add("Could not authorize OrderPaymentPreference [" + paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId)
                         + "] for order [" + orderId + "]: " + results.get(ModelService.ERROR_MESSAGE));
                 continue;
             }
@@ -467,15 +467,15 @@ public class PaymentGatewayServices {
 
         GenericValue paymentSettings = getPaymentSettings(orh.getOrderHeader(), paymentPreference, serviceType, false);
         if (paymentSettings != null) {
-            String customMethodId = paymentSettings.getString("paymentCustomMethodId");
+            String customMethodId = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentCustomMethodId);
             if (UtilValidate.isNotEmpty(customMethodId)) {
                 serviceName = getPaymentCustomMethod(orh.getOrderHeader().getDelegator(), customMethodId);
             }
             if (UtilValidate.isEmpty(serviceName)) {
-                serviceName = paymentSettings.getString("paymentService");
+                serviceName = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentService);
             }
-            paymentConfig = paymentSettings.getString("paymentPropertiesPath");
-            paymentGatewayConfigId = paymentSettings.getString("paymentGatewayConfigId");
+            paymentConfig = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath);
+            paymentGatewayConfigId = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
         } else {
             throw new GeneralException("Could not find any valid payment settings for order with ID [" + orh.getOrderId()
                     + "], and payment operation (serviceType) [" + serviceType + "]");
@@ -491,7 +491,7 @@ public class PaymentGatewayServices {
 
         // get the visit record to obtain the client's IP address
         GenericValue orderHeader = orh.getOrderHeader();
-        String visitId = orderHeader.getString("visitId");
+        String visitId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.visitId);
         GenericValue visit = null;
         if (visitId != null) {
             try {
@@ -501,11 +501,11 @@ public class PaymentGatewayServices {
             }
         }
 
-        if (visit != null && visit.get("clientIpAddress") != null) {
-            processContext.put("customerIpAddress", visit.getString("clientIpAddress"));
+        if (visit != null && visit.get(org.apache.ofbiz.persistence.entity.x.clientIpAddress) != null) {
+            processContext.put("customerIpAddress", visit.getString(org.apache.ofbiz.persistence.entity.x.clientIpAddress));
         }
 
-        GenericValue productStore = orderHeader.getRelatedOne("ProductStore", false);
+        GenericValue productStore = orderHeader.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductStore, false);
 
         processContext.put("userLogin", userLogin);
         processContext.put("orderId", orh.getOrderId());
@@ -516,8 +516,8 @@ public class PaymentGatewayServices {
         processContext.put("paymentGatewayConfigId", paymentGatewayConfigId);
         processContext.put("currency", orh.getCurrency());
         processContext.put("orderPaymentPreference", paymentPreference);
-        if (paymentPreference.get("securityCode") != null) {
-            processContext.put("cardSecurityCode", paymentPreference.get("securityCode"));
+        if (paymentPreference.get(org.apache.ofbiz.persistence.entity.x.securityCode) != null) {
+            processContext.put("cardSecurityCode", paymentPreference.get(org.apache.ofbiz.persistence.entity.x.securityCode));
         }
 
         // get the billing information
@@ -529,8 +529,8 @@ public class PaymentGatewayServices {
         // use override or max amount available
         if (overrideAmount != null) {
             processAmount = overrideAmount;
-        } else if (paymentPreference.get("maxAmount") != null) {
-            processAmount = paymentPreference.getBigDecimal("maxAmount");
+        } else if (paymentPreference.get(org.apache.ofbiz.persistence.entity.x.maxAmount) != null) {
+            processAmount = paymentPreference.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount);
         }
 
         // Check if the order is a replacement order
@@ -558,11 +558,11 @@ public class PaymentGatewayServices {
 
             // only try other exp dates if orderHeader.autoOrderShoppingListId is not empty, productStore.autoOrderCcTryExp=Y
             // and this payment is a creditCard
-            boolean tryOtherExpDates = "Y".equals(productStore.getString("autoOrderCcTryExp")) && creditCard != null
-                    && UtilValidate.isNotEmpty(orderHeader.getString("autoOrderShoppingListId"));
+            boolean tryOtherExpDates = "Y".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.autoOrderCcTryExp)) && creditCard != null
+                    && UtilValidate.isNotEmpty(orderHeader.getString(org.apache.ofbiz.persistence.entity.x.autoOrderShoppingListId));
 
             // if we are not trying other expire dates OR if we are and the date is after today, then run the service
-            if (!tryOtherExpDates || UtilValidate.isDateAfterToday(creditCard.getString("expireDate"))) {
+            if (!tryOtherExpDates || UtilValidate.isDateAfterToday(creditCard.getString(org.apache.ofbiz.persistence.entity.x.expireDate))) {
                 processorResult = dispatcher.runSync(serviceName, processContext, TX_TIME, true);
                 if (ServiceUtil.isError(processorResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(processorResult));
@@ -570,10 +570,10 @@ public class PaymentGatewayServices {
             }
 
             // try other expire dates if the expireDate is not after today, or if we called the auth service and resultBadExpire = true
-            if (tryOtherExpDates && (!UtilValidate.isDateAfterToday(creditCard.getString("expireDate")) || (processorResult != null
+            if (tryOtherExpDates && (!UtilValidate.isDateAfterToday(creditCard.getString(org.apache.ofbiz.persistence.entity.x.expireDate)) || (processorResult != null
                     && Boolean.TRUE.equals(processorResult.get("resultBadExpire"))))) {
                 // try adding 2, 3, 4 years later with the same month
-                String expireDate = creditCard.getString("expireDate");
+                String expireDate = creditCard.getString(org.apache.ofbiz.persistence.entity.x.expireDate);
                 int dateSlash1 = expireDate.indexOf("/");
                 String month = expireDate.substring(0, dateSlash1);
                 String year = expireDate.substring(dateSlash1 + 1);
@@ -581,7 +581,7 @@ public class PaymentGatewayServices {
                 // start adding 2 years, if comes back with resultBadExpire try again up to twice incrementing one year
                 year = StringUtil.addToNumberString(year, 2);
                 // note that this is set in memory only for now, not saved to the database unless successful
-                creditCard.set("expireDate", month + "/" + year);
+                creditCard.set(org.apache.ofbiz.persistence.entity.x.expireDate, month + "/" + year);
                 // don't need to set back in the processContext, it's already there: processContext.put("creditCard", creditCard);
                 processorResult = dispatcher.runSync(serviceName, processContext, TX_TIME, true);
                 if (ServiceUtil.isError(processorResult)) {
@@ -593,7 +593,7 @@ public class PaymentGatewayServices {
                 if (ServiceUtil.isSuccess(processorResult) && Boolean.TRUE.equals(processorResult.get("resultBadExpire"))) {
                     // okay, try one more year...
                     year = StringUtil.addToNumberString(year, 1);
-                    creditCard.set("expireDate", month + "/" + year);
+                    creditCard.set(org.apache.ofbiz.persistence.entity.x.expireDate, month + "/" + year);
                     processorResult = dispatcher.runSync(serviceName, processContext, TX_TIME, true);
                     if (ServiceUtil.isError(processorResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(processorResult));
@@ -603,7 +603,7 @@ public class PaymentGatewayServices {
                 if (ServiceUtil.isSuccess(processorResult) && Boolean.TRUE.equals(processorResult.get("resultBadExpire"))) {
                     // okay, try one more year... and this is the last try
                     year = StringUtil.addToNumberString(year, 1);
-                    creditCard.set("expireDate", month + "/" + year);
+                    creditCard.set(org.apache.ofbiz.persistence.entity.x.expireDate, month + "/" + year);
                     processorResult = dispatcher.runSync(serviceName, processContext, TX_TIME, true);
                     if (ServiceUtil.isError(processorResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(processorResult));
@@ -649,10 +649,10 @@ public class PaymentGatewayServices {
                                                    boolean anyServiceType) {
         Delegator delegator = orderHeader.getDelegator();
         GenericValue paymentSettings = null;
-        String paymentMethodTypeId = paymentPreference.getString("paymentMethodTypeId");
+        String paymentMethodTypeId = paymentPreference.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
 
         if (paymentMethodTypeId != null) {
-            String productStoreId = orderHeader.getString("productStoreId");
+            String productStoreId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
             if (productStoreId != null) {
                 paymentSettings = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStoreId, paymentMethodTypeId,
                         paymentServiceType, anyServiceType);
@@ -665,15 +665,15 @@ public class PaymentGatewayServices {
         String payToPartyId = "Company"; // default value
         GenericValue productStore = null;
         try {
-            productStore = orderHeader.getRelatedOne("ProductStore", false);
+            productStore = orderHeader.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductStore, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Unable to get ProductStore from OrderHeader", MODULE);
             return null;
         }
-        if (productStore != null && productStore.get("payToPartyId") != null) {
-            payToPartyId = productStore.getString("payToPartyId");
+        if (productStore != null && productStore.get(org.apache.ofbiz.persistence.entity.x.payToPartyId) != null) {
+            payToPartyId = productStore.getString(org.apache.ofbiz.persistence.entity.x.payToPartyId);
         } else {
-            Debug.logWarning("Using default value of [Company] for payToPartyId on order [" + orderHeader.getString("orderId") + "]", MODULE);
+            Debug.logWarning("Using default value of [Company] for payToPartyId on order [" + orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId) + "]", MODULE);
         }
         return payToPartyId;
     }
@@ -681,32 +681,32 @@ public class PaymentGatewayServices {
     private static String getBillingInformation(OrderReadHelper orh, GenericValue paymentPreference, Map<String, Object> toContext)
             throws GenericEntityException {
         // gather the payment related objects.
-        String paymentMethodTypeId = paymentPreference.getString("paymentMethodTypeId");
-        GenericValue paymentMethod = paymentPreference.getRelatedOne("PaymentMethod", false);
+        String paymentMethodTypeId = paymentPreference.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
+        GenericValue paymentMethod = paymentPreference.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PaymentMethod, false);
         if (paymentMethod != null && "CREDIT_CARD".equals(paymentMethodTypeId)) {
             // type credit card
-            GenericValue creditCard = paymentMethod.getRelatedOne("CreditCard", false);
-            GenericValue billingAddress = creditCard.getRelatedOne("PostalAddress", false);
+            GenericValue creditCard = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CreditCard, false);
+            GenericValue billingAddress = creditCard.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
             toContext.put("creditCard", creditCard);
             toContext.put("billingAddress", billingAddress);
         } else if (paymentMethod != null && "EFT_ACCOUNT".equals(paymentMethodTypeId)) {
             // type eft
-            GenericValue eftAccount = paymentMethod.getRelatedOne("EftAccount", false);
-            GenericValue billingAddress = eftAccount.getRelatedOne("PostalAddress", false);
+            GenericValue eftAccount = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.EftAccount, false);
+            GenericValue billingAddress = eftAccount.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
             toContext.put("eftAccount", eftAccount);
             toContext.put("billingAddress", billingAddress);
         } else if (paymentMethod != null && "GIFT_CARD".equals(paymentMethodTypeId)) {
             // type gift card
-            GenericValue giftCard = paymentMethod.getRelatedOne("GiftCard", false);
+            GenericValue giftCard = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.GiftCard, false);
             toContext.put("giftCard", giftCard);
-            GenericValue orderHeader = paymentPreference.getRelatedOne("OrderHeader", false);
-            List<GenericValue> orderItems = orderHeader.getRelated("OrderItem", null, null, false);
-            toContext.put("orderId", orderHeader.getString("orderId"));
+            GenericValue orderHeader = paymentPreference.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
+            List<GenericValue> orderItems = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItem, null, null, false);
+            toContext.put("orderId", orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId));
             toContext.put("orderItems", orderItems);
         } else if ("FIN_ACCOUNT".equals(paymentMethodTypeId)) {
-            toContext.put("finAccountId", paymentPreference.getString("finAccountId"));
+            toContext.put("finAccountId", paymentPreference.getString(org.apache.ofbiz.persistence.entity.x.finAccountId));
         } else if ("EXT_PAYPAL".equals(paymentMethodTypeId)) {
-            GenericValue payPalPaymentMethod = paymentMethod.getRelatedOne("PayPalPaymentMethod", false);
+            GenericValue payPalPaymentMethod = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PayPalPaymentMethod, false);
             toContext.put("payPalPaymentMethod", payPalPaymentMethod);
         } else {
             // add other payment types here; i.e. gift cards, etc.
@@ -719,7 +719,7 @@ public class PaymentGatewayServices {
         GenericValue billToPersonOrGroup = orh.getBillToParty();
         GenericValue billToEmail = null;
 
-        Collection<GenericValue> emails = ContactHelper.getContactMech(billToPersonOrGroup.getRelatedOne("Party", false),
+        Collection<GenericValue> emails = ContactHelper.getContactMech(billToPersonOrGroup.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Party, false),
                 "PRIMARY_EMAIL", "EMAIL_ADDRESS", false);
 
         if (UtilValidate.isNotEmpty(emails)) {
@@ -729,7 +729,7 @@ public class PaymentGatewayServices {
         toContext.put("billToParty", billToPersonOrGroup);
         toContext.put("billToEmail", billToEmail);
 
-        return billToPersonOrGroup.getString("partyId");
+        return billToPersonOrGroup.getString(org.apache.ofbiz.persistence.entity.x.partyId);
     }
 
     /**
@@ -739,9 +739,9 @@ public class PaymentGatewayServices {
     public static Map<String, Object> releaseOrderPayments(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderPaymentPreferenceId = (String) context.get("orderPaymentPreferenceId");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderPaymentPreferenceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         String orderId = "";
         // Get the OrderPaymentPreference
@@ -750,9 +750,9 @@ public class PaymentGatewayServices {
             if (orderPaymentPreferenceId != null) {
                 paymentPref = EntityQuery.use(delegator).from("OrderPaymentPreference").where("orderPaymentPreferenceId", orderPaymentPreferenceId)
                         .queryOne();
-                orderId = paymentPref.getString("orderId");
+                orderId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderId);
             } else {
-                orderId = (String) context.get("orderId");
+                orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
             }
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -794,16 +794,16 @@ public class PaymentGatewayServices {
         List<GenericValue> finished = new LinkedList<>();
         for (GenericValue pPref : paymentPrefs) {
             Map<String, Object> releaseContext = UtilMisc.toMap("userLogin", userLogin, "orderPaymentPreferenceId",
-                    pPref.getString("orderPaymentPreferenceId"));
+                    pPref.getString(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
             Map<String, Object> releaseResult = null;
             try {
                 releaseResult = dispatcher.runSync("releaseOrderPaymentPreference", releaseContext);
             } catch (GenericServiceException e) {
                 Debug.logError(e, "Problem calling releaseOrderPaymentPreference service for orderPaymentPreferenceId"
-                        + paymentPref.getString("orderPaymentPreferenceId"), MODULE);
+                        + paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "AccountingTroubleCallingReleaseOrderPaymentPreferenceService", locale) + " "
-                        + paymentPref.getString("orderPaymentPreferenceId"));
+                        + paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
             }
             if (ServiceUtil.isError(releaseResult)) {
                 Debug.logError(ServiceUtil.getErrorMessage(releaseResult), MODULE);
@@ -825,39 +825,39 @@ public class PaymentGatewayServices {
     public static Map<String, Object> processCreditResult(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String currencyUomId = (String) context.get("currencyUomId");
-        GenericValue paymentPref = (GenericValue) context.get("orderPaymentPreference");
-        Boolean creditResponse = (Boolean) context.get("creditResult");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String currencyUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.currencyUomId);
+        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        Boolean creditResponse = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.creditResult);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         // create the PaymentGatewayResponse
         String responseId = delegator.getNextSeqId("PaymentGatewayResponse");
         GenericValue pgCredit = delegator.makeValue("PaymentGatewayResponse");
-        pgCredit.set("paymentGatewayResponseId", responseId);
-        pgCredit.set("paymentServiceTypeEnumId", CREDIT_SERVICE_TYPE);
-        pgCredit.set("orderPaymentPreferenceId", paymentPref.get("orderPaymentPreferenceId"));
-        pgCredit.set("paymentMethodTypeId", paymentPref.get("paymentMethodTypeId"));
-        pgCredit.set("paymentMethodId", paymentPref.get("paymentMethodId"));
-        pgCredit.set("transCodeEnumId", "PGT_CREDIT");
+        pgCredit.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, responseId);
+        pgCredit.set(org.apache.ofbiz.persistence.entity.x.paymentServiceTypeEnumId, CREDIT_SERVICE_TYPE);
+        pgCredit.set(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
+        pgCredit.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
+        pgCredit.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        pgCredit.set(org.apache.ofbiz.persistence.entity.x.transCodeEnumId, "PGT_CREDIT");
         // set the credit info
-        pgCredit.set("amount", context.get("creditAmount"));
-        pgCredit.set("referenceNum", context.get("creditRefNum"));
-        pgCredit.set("altReference", context.get("creditAltRefNum"));
-        pgCredit.set("gatewayCode", context.get("creditCode"));
-        pgCredit.set("gatewayFlag", context.get("creditFlag"));
-        pgCredit.set("gatewayMessage", context.get("creditMessage"));
-        pgCredit.set("transactionDate", UtilDateTime.nowTimestamp());
-        pgCredit.set("currencyUomId", currencyUomId);
+        pgCredit.set(org.apache.ofbiz.persistence.entity.x.amount, context.get(org.apache.ofbiz.persistence.entity.x.creditAmount));
+        pgCredit.set(org.apache.ofbiz.persistence.entity.x.referenceNum, context.get(org.apache.ofbiz.persistence.entity.x.creditRefNum));
+        pgCredit.set(org.apache.ofbiz.persistence.entity.x.altReference, context.get(org.apache.ofbiz.persistence.entity.x.creditAltRefNum));
+        pgCredit.set(org.apache.ofbiz.persistence.entity.x.gatewayCode, context.get(org.apache.ofbiz.persistence.entity.x.creditCode));
+        pgCredit.set(org.apache.ofbiz.persistence.entity.x.gatewayFlag, context.get(org.apache.ofbiz.persistence.entity.x.creditFlag));
+        pgCredit.set(org.apache.ofbiz.persistence.entity.x.gatewayMessage, context.get(org.apache.ofbiz.persistence.entity.x.creditMessage));
+        pgCredit.set(org.apache.ofbiz.persistence.entity.x.transactionDate, UtilDateTime.nowTimestamp());
+        pgCredit.set(org.apache.ofbiz.persistence.entity.x.currencyUomId, currencyUomId);
         // create the internal messages
         List<GenericValue> messageEntities = new LinkedList<>();
-        List<String> messages = UtilGenerics.cast(context.get("internalRespMsgs"));
+        List<String> messages = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.internalRespMsgs));
         if (UtilValidate.isNotEmpty(messages)) {
             for (String message : messages) {
                 GenericValue respMsg = delegator.makeValue("PaymentGatewayRespMsg");
                 String respMsgId = delegator.getNextSeqId("PaymentGatewayRespMsg");
-                respMsg.set("paymentGatewayRespMsgId", respMsgId);
-                respMsg.set("paymentGatewayResponseId", responseId);
-                respMsg.set("pgrMessage", message);
+                respMsg.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayRespMsgId, respMsgId);
+                respMsg.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, responseId);
+                respMsg.set(org.apache.ofbiz.persistence.entity.x.pgrMessage, message);
                 // store the messages
                 messageEntities.add(respMsg);
             }
@@ -866,7 +866,7 @@ public class PaymentGatewayServices {
         savePgrAndMsgs(dctx, pgCredit, messageEntities);
 
         if (creditResponse != null && creditResponse) {
-            paymentPref.set("statusId", "PAYMENT_CANCELLED");
+            paymentPref.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_CANCELLED");
             try {
                 paymentPref.store();
             } catch (GenericEntityException e) {
@@ -875,7 +875,7 @@ public class PaymentGatewayServices {
             // cancel any payment records
             List<GenericValue> paymentList = null;
             try {
-                paymentList = paymentPref.getRelated("Payment", null, null, false);
+                paymentList = paymentPref.getRelated(org.apache.ofbiz.persistence.entity.x.Payment, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Unable to get Payment records from OrderPaymentPreference : " + paymentPref, MODULE);
             }
@@ -885,7 +885,7 @@ public class PaymentGatewayServices {
                     GenericValue pay = pi.next();
                     try {
                         Map<String, Object> cancelResults = dispatcher.runSync("setPaymentStatus",
-                                UtilMisc.toMap("userLogin", userLogin, "paymentId", pay.get("paymentId"), "statusId", "PMNT_CANCELLED"));
+                                UtilMisc.toMap("userLogin", userLogin, "paymentId", pay.get(org.apache.ofbiz.persistence.entity.x.paymentId), "statusId", "PMNT_CANCELLED"));
                         if (ServiceUtil.isError(cancelResults)) {
                             throw new GenericServiceException(ServiceUtil.getErrorMessage(cancelResults));
                         }
@@ -911,9 +911,9 @@ public class PaymentGatewayServices {
     public static Map<String, Object> releaseOrderPaymentPreference(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderPaymentPreferenceId = (String) context.get("orderPaymentPreferenceId");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderPaymentPreferenceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         // Get the OrderPaymentPreference
         GenericValue paymentPref = null;
@@ -937,7 +937,7 @@ public class PaymentGatewayServices {
         }
         // Get the OrderHeader
         GenericValue orderHeader = null;
-        String orderId = paymentPref.getString("orderId");
+        String orderId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderId);
         try {
             orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
         } catch (GenericEntityException e) {
@@ -961,26 +961,26 @@ public class PaymentGatewayServices {
         // get the payment settings i.e. serviceName and config properties file name
         GenericValue paymentSettings = getPaymentSettings(orderHeader, paymentPref, RELEASE_SERVICE_TYPE, false);
         if (paymentSettings != null) {
-            String customMethodId = paymentSettings.getString("paymentCustomMethodId");
+            String customMethodId = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentCustomMethodId);
             if (UtilValidate.isNotEmpty(customMethodId)) {
                 serviceName = getPaymentCustomMethod(orh.getOrderHeader().getDelegator(), customMethodId);
             }
             if (UtilValidate.isEmpty(serviceName)) {
-                serviceName = paymentSettings.getString("paymentService");
+                serviceName = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentService);
             }
-            paymentConfig = paymentSettings.getString("paymentPropertiesPath");
-            paymentGatewayConfigId = paymentSettings.getString("paymentGatewayConfigId");
+            paymentConfig = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath);
+            paymentGatewayConfigId = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
             if (serviceName == null) {
-                Debug.logWarning("No payment release service for - " + paymentPref.getString("paymentMethodTypeId"), MODULE);
+                Debug.logWarning("No payment release service for - " + paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER,
                         "AccountingTroubleCallingReleaseOrderPaymentPreferenceService", locale) + " "
-                        + paymentPref.getString("paymentMethodTypeId"));
+                        + paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
             }
         } else {
-            Debug.logWarning("No payment release settings found for - " + paymentPref.getString("paymentMethodTypeId"), MODULE);
+            Debug.logWarning("No payment release settings found for - " + paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER,
                     "AccountingTroubleCallingReleaseOrderPaymentPreferenceService", locale) + " "
-                    + paymentPref.getString("paymentMethodTypeId"));
+                    + paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
         }
         if (UtilValidate.isEmpty(paymentConfig)) {
             paymentConfig = "payment.properties";
@@ -988,7 +988,7 @@ public class PaymentGatewayServices {
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(paymentPref);
         Map<String, Object> releaseContext = new HashMap<>();
         releaseContext.put("orderPaymentPreference", paymentPref);
-        releaseContext.put("releaseAmount", authTransaction.getBigDecimal("amount"));
+        releaseContext.put("releaseAmount", authTransaction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
         releaseContext.put("currency", currency);
         releaseContext.put("paymentConfig", paymentConfig);
         releaseContext.put("paymentGatewayConfigId", paymentGatewayConfigId);
@@ -1030,49 +1030,49 @@ public class PaymentGatewayServices {
     public static Map<String, Object> processReleaseResult(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String currencyUomId = (String) context.get("currencyUomId");
-        GenericValue paymentPref = (GenericValue) context.get("orderPaymentPreference");
-        Boolean releaseResponse = (Boolean) context.get("releaseResult");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String currencyUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.currencyUomId);
+        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        Boolean releaseResponse = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.releaseResult);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         // create the PaymentGatewayResponse
         String responseId = delegator.getNextSeqId("PaymentGatewayResponse");
         GenericValue pgResponse = delegator.makeValue("PaymentGatewayResponse");
-        pgResponse.set("paymentGatewayResponseId", responseId);
-        pgResponse.set("paymentServiceTypeEnumId", RELEASE_SERVICE_TYPE);
-        pgResponse.set("orderPaymentPreferenceId", paymentPref.get("orderPaymentPreferenceId"));
-        pgResponse.set("paymentMethodTypeId", paymentPref.get("paymentMethodTypeId"));
-        pgResponse.set("paymentMethodId", paymentPref.get("paymentMethodId"));
-        pgResponse.set("transCodeEnumId", "PGT_RELEASE");
+        pgResponse.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, responseId);
+        pgResponse.set(org.apache.ofbiz.persistence.entity.x.paymentServiceTypeEnumId, RELEASE_SERVICE_TYPE);
+        pgResponse.set(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
+        pgResponse.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
+        pgResponse.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        pgResponse.set(org.apache.ofbiz.persistence.entity.x.transCodeEnumId, "PGT_RELEASE");
         // set the release info
-        pgResponse.set("amount", context.get("releaseAmount"));
-        pgResponse.set("referenceNum", context.get("releaseRefNum"));
-        pgResponse.set("altReference", context.get("releaseAltRefNum"));
-        pgResponse.set("gatewayCode", context.get("releaseCode"));
-        pgResponse.set("gatewayFlag", context.get("releaseFlag"));
-        pgResponse.set("gatewayMessage", context.get("releaseMessage"));
-        pgResponse.set("transactionDate", UtilDateTime.nowTimestamp());
-        pgResponse.set("currencyUomId", currencyUomId);
+        pgResponse.set(org.apache.ofbiz.persistence.entity.x.amount, context.get(org.apache.ofbiz.persistence.entity.x.releaseAmount));
+        pgResponse.set(org.apache.ofbiz.persistence.entity.x.referenceNum, context.get(org.apache.ofbiz.persistence.entity.x.releaseRefNum));
+        pgResponse.set(org.apache.ofbiz.persistence.entity.x.altReference, context.get(org.apache.ofbiz.persistence.entity.x.releaseAltRefNum));
+        pgResponse.set(org.apache.ofbiz.persistence.entity.x.gatewayCode, context.get(org.apache.ofbiz.persistence.entity.x.releaseCode));
+        pgResponse.set(org.apache.ofbiz.persistence.entity.x.gatewayFlag, context.get(org.apache.ofbiz.persistence.entity.x.releaseFlag));
+        pgResponse.set(org.apache.ofbiz.persistence.entity.x.gatewayMessage, context.get(org.apache.ofbiz.persistence.entity.x.releaseMessage));
+        pgResponse.set(org.apache.ofbiz.persistence.entity.x.transactionDate, UtilDateTime.nowTimestamp());
+        pgResponse.set(org.apache.ofbiz.persistence.entity.x.currencyUomId, currencyUomId);
         // store the gateway response
         savePgr(dctx, pgResponse);
         // create the internal messages
-        List<String> messages = UtilGenerics.cast(context.get("internalRespMsgs"));
+        List<String> messages = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.internalRespMsgs));
         if (UtilValidate.isNotEmpty(messages)) {
             Iterator<String> i = messages.iterator();
             while (i.hasNext()) {
                 GenericValue respMsg = delegator.makeValue("PaymentGatewayRespMsg");
                 String respMsgId = delegator.getNextSeqId("PaymentGatewayRespMsg");
                 String message = i.next();
-                respMsg.set("paymentGatewayRespMsgId", respMsgId);
-                respMsg.set("paymentGatewayResponseId", responseId);
-                respMsg.set("pgrMessage", message);
+                respMsg.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayRespMsgId, respMsgId);
+                respMsg.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, responseId);
+                respMsg.set(org.apache.ofbiz.persistence.entity.x.pgrMessage, message);
                 // store the messages
                 savePgr(dctx, respMsg);
             }
         }
 
         if (releaseResponse != null && releaseResponse) {
-            paymentPref.set("statusId", "PAYMENT_CANCELLED");
+            paymentPref.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_CANCELLED");
             try {
                 paymentPref.store();
             } catch (GenericEntityException e) {
@@ -1081,7 +1081,7 @@ public class PaymentGatewayServices {
             // cancel any payment records
             List<GenericValue> paymentList = null;
             try {
-                paymentList = paymentPref.getRelated("Payment", null, null, false);
+                paymentList = paymentPref.getRelated(org.apache.ofbiz.persistence.entity.x.Payment, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Unable to get Payment records from OrderPaymentPreference : " + paymentPref, MODULE);
             }
@@ -1091,7 +1091,7 @@ public class PaymentGatewayServices {
                     GenericValue pay = pi.next();
                     try {
                         Map<String, Object> cancelResults = dispatcher.runSync("setPaymentStatus", UtilMisc.toMap("userLogin",
-                                userLogin, "paymentId", pay.get("paymentId"), "statusId", "PMNT_CANCELLED"));
+                                userLogin, "paymentId", pay.get(org.apache.ofbiz.persistence.entity.x.paymentId), "statusId", "PMNT_CANCELLED"));
                         if (ServiceUtil.isError(cancelResults)) {
                             throw new GenericServiceException(ServiceUtil.getErrorMessage(cancelResults));
                         }
@@ -1116,9 +1116,9 @@ public class PaymentGatewayServices {
     public static Map<String, Object> capturePaymentsByInvoice(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String invoiceId = (String) context.get("invoiceId");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String invoiceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.invoiceId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // lookup the invoice
         GenericValue invoice = null;
@@ -1139,7 +1139,7 @@ public class PaymentGatewayServices {
         // get the OrderItemBilling records for this invoice
         List<GenericValue> orderItemBillings = null;
         try {
-            orderItemBillings = invoice.getRelated("OrderItemBilling", null, null, false);
+            orderItemBillings = invoice.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItemBilling, null, null, false);
         } catch (GenericEntityException e) {
             Debug.logError("Trouble getting OrderItemBilling(s) from Invoice #" + invoiceId, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -1148,7 +1148,7 @@ public class PaymentGatewayServices {
         }
 
         // check for an associated billing account
-        String billingAccountId = invoice.getString("billingAccountId");
+        String billingAccountId = invoice.getString(org.apache.ofbiz.persistence.entity.x.billingAccountId);
 
         // make sure they are all for the same order
         String testOrderId = null;
@@ -1157,7 +1157,7 @@ public class PaymentGatewayServices {
             Iterator<GenericValue> oii = orderItemBillings.iterator();
             while (oii.hasNext()) {
                 GenericValue oib = oii.next();
-                String orderId = oib.getString("orderId");
+                String orderId = oib.getString(org.apache.ofbiz.persistence.entity.x.orderId);
                 if (testOrderId == null) {
                     testOrderId = orderId;
                 } else {
@@ -1208,12 +1208,12 @@ public class PaymentGatewayServices {
     public static Map<String, Object> captureOrderPayments(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
-        String invoiceId = (String) context.get("invoiceId");
-        String billingAccountId = (String) context.get("billingAccountId");
-        BigDecimal amountToCapture = (BigDecimal) context.get("captureAmount");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String invoiceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.invoiceId);
+        String billingAccountId = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingAccountId);
+        BigDecimal amountToCapture = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.captureAmount);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         amountToCapture = amountToCapture.setScale(DECIMALS, ROUNDING);
 
         // get the order header and payment preferences
@@ -1267,7 +1267,7 @@ public class PaymentGatewayServices {
             while (paymentsBa.hasNext()) {
                 GenericValue paymentPref = paymentsBa.next();
 
-                BigDecimal authAmount = paymentPref.getBigDecimal("maxAmount");
+                BigDecimal authAmount = paymentPref.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount);
                 if (authAmount == null) {
                     authAmount = ZERO;
                 }
@@ -1325,7 +1325,7 @@ public class PaymentGatewayServices {
                         captureResult.put("invoiceId", invoiceId);
                         captureResult.put("captureResult", Boolean.TRUE);
                         captureResult.put("orderPaymentPreference", paymentPref);
-                        if (context.get("captureRefNum") == null) {
+                        if (context.get(org.apache.ofbiz.persistence.entity.x.captureRefNum) == null) {
                             captureResult.put("captureRefNum", "");
                             // FIXME: this is an hack to avoid a service validation error for processCaptureResult (captureRefNum is mandatory,
                             //  but it is not used for billing accounts)
@@ -1385,7 +1385,7 @@ public class PaymentGatewayServices {
                     continue;
                 }
 
-                BigDecimal authAmount = authTrans.getBigDecimal("amount");
+                BigDecimal authAmount = authTrans.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
                 if (authAmount == null) {
                     authAmount = ZERO;
                 }
@@ -1473,8 +1473,8 @@ public class PaymentGatewayServices {
         if (amountToCapture.compareTo(ZERO) > 0) {
             GenericValue productStore = orh.getProductStore();
             if (UtilValidate.isNotEmpty(productStore)) {
-                boolean shipIfCaptureFails = UtilValidate.isEmpty(productStore.get("shipIfCaptureFails"))
-                        || "Y".equalsIgnoreCase(productStore.getString("shipIfCaptureFails"));
+                boolean shipIfCaptureFails = UtilValidate.isEmpty(productStore.get(org.apache.ofbiz.persistence.entity.x.shipIfCaptureFails))
+                        || "Y".equalsIgnoreCase(productStore.getString(org.apache.ofbiz.persistence.entity.x.shipIfCaptureFails));
                 if (!shipIfCaptureFails) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER,
                             "AccountingPaymentCannotBeCaptured", locale));
@@ -1495,32 +1495,32 @@ public class PaymentGatewayServices {
     public static Map<String, Object> processCaptureSplitPayment(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        GenericValue paymentPref = (GenericValue) context.get("orderPaymentPreference");
-        BigDecimal splitAmount = (BigDecimal) context.get("splitAmount");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        BigDecimal splitAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.splitAmount);
 
-        String orderId = paymentPref.getString("orderId");
+        String orderId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderId);
         OrderReadHelper orh = new OrderReadHelper(delegator, orderId);
 
         String statusId = "PAYMENT_NOT_AUTH";
-        if ("EXT_BILLACT".equals(paymentPref.getString("paymentMethodTypeId"))) {
+        if ("EXT_BILLACT".equals(paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
             statusId = "PAYMENT_NOT_RECEIVED";
-        } else if ("EXT_PAYPAL".equals(paymentPref.get("paymentMethodTypeId"))) {
+        } else if ("EXT_PAYPAL".equals(paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
             statusId = "PAYMENT_AUTHORIZED";
         }
         // create a new payment preference
         Debug.logInfo("Creating payment preference split", MODULE);
         String newPrefId = delegator.getNextSeqId("OrderPaymentPreference");
         GenericValue newPref = delegator.makeValue("OrderPaymentPreference", UtilMisc.toMap("orderPaymentPreferenceId", newPrefId));
-        newPref.set("orderId", paymentPref.get("orderId"));
-        newPref.set("paymentMethodTypeId", paymentPref.get("paymentMethodTypeId"));
-        newPref.set("paymentMethodId", paymentPref.get("paymentMethodId"));
-        newPref.set("maxAmount", splitAmount);
-        newPref.set("statusId", statusId);
-        newPref.set("createdDate", UtilDateTime.nowTimestamp());
+        newPref.set(org.apache.ofbiz.persistence.entity.x.orderId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.orderId));
+        newPref.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
+        newPref.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        newPref.set(org.apache.ofbiz.persistence.entity.x.maxAmount, splitAmount);
+        newPref.set(org.apache.ofbiz.persistence.entity.x.statusId, statusId);
+        newPref.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
         if (userLogin != null) {
-            newPref.set("createdByUserLogin", userLogin.getString("userLoginId"));
+            newPref.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
         }
         if (Debug.verboseOn()) {
             Debug.logVerbose("New preference : " + newPref, MODULE);
@@ -1533,13 +1533,13 @@ public class PaymentGatewayServices {
 
             // PayPal requires us to reuse the existing authorization, so we'll
             // fake it and copy the existing auth with the remaining amount
-            if ("EXT_PAYPAL".equals(paymentPref.get("paymentMethodTypeId"))) {
+            if ("EXT_PAYPAL".equals(paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
                 String newAuthId = delegator.getNextSeqId("PaymentGatewayResponse");
                 GenericValue authTrans = getAuthTransaction(paymentPref);
                 GenericValue newAuthTrans = delegator.makeValue("PaymentGatewayResponse", authTrans);
-                newAuthTrans.set("paymentGatewayResponseId", newAuthId);
-                newAuthTrans.set("orderPaymentPreferenceId", newPref.get("orderPaymentPreferenceId"));
-                newAuthTrans.set("amount", splitAmount);
+                newAuthTrans.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, newAuthId);
+                newAuthTrans.set(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId, newPref.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
+                newAuthTrans.set(org.apache.ofbiz.persistence.entity.x.amount, splitAmount);
                 savePgr(dctx, newAuthTrans);
             } else if ("PAYMENT_NOT_AUTH".equals(statusId)) {
                 // authorize the new preference
@@ -1567,9 +1567,9 @@ public class PaymentGatewayServices {
     }
     public static Map<String, Object> captureBillingAccountPayments(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String invoiceId = (String) context.get("invoiceId");
-        String billingAccountId = (String) context.get("billingAccountId");
-        BigDecimal captureAmount = (BigDecimal) context.get("captureAmount");
+        String invoiceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.invoiceId);
+        String billingAccountId = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingAccountId);
+        BigDecimal captureAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.captureAmount);
         captureAmount = captureAmount.setScale(DECIMALS, ROUNDING);
         BigDecimal capturedAmount = BigDecimal.ZERO;
 
@@ -1586,30 +1586,30 @@ public class PaymentGatewayServices {
                         break;
                     }
                     GenericValue paymentApplication = paymentApplicationsIt.next();
-                    GenericValue payment = paymentApplication.getRelatedOne("Payment", false);
-                    if (payment.getString("paymentPreferenceId") != null) {
+                    GenericValue payment = paymentApplication.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Payment, false);
+                    if (payment.getString(org.apache.ofbiz.persistence.entity.x.paymentPreferenceId) != null) {
                         // if the payment is reserved for a specific OrderPaymentPreference,
                         // we don't use it.
                         continue;
                     }
                     // TODO: check the statusId of the payment
-                    BigDecimal paymentApplicationAmount = paymentApplication.getBigDecimal("amountApplied");
+                    BigDecimal paymentApplicationAmount = paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied);
                     BigDecimal amountToCapture = paymentApplicationAmount.min(captureAmount.subtract(capturedAmount));
                     amountToCapture = amountToCapture.setScale(DECIMALS, ROUNDING);
                     if (amountToCapture.compareTo(paymentApplicationAmount) == 0) {
                         // apply the whole payment application to the invoice
-                        paymentApplication.set("invoiceId", invoiceId);
+                        paymentApplication.set(org.apache.ofbiz.persistence.entity.x.invoiceId, invoiceId);
                         paymentApplication.store();
                     } else {
                         // the amount to capture is lower than the amount available in this payment application:
                         // split the payment application into two records and apply one to the invoice
                         GenericValue newPaymentApplication = delegator.makeValue("PaymentApplication", paymentApplication);
                         String paymentApplicationId = delegator.getNextSeqId("PaymentApplication");
-                        paymentApplication.set("invoiceId", invoiceId);
-                        paymentApplication.set("amountApplied", amountToCapture);
+                        paymentApplication.set(org.apache.ofbiz.persistence.entity.x.invoiceId, invoiceId);
+                        paymentApplication.set(org.apache.ofbiz.persistence.entity.x.amountApplied, amountToCapture);
                         paymentApplication.store();
-                        newPaymentApplication.set("paymentApplicationId", paymentApplicationId);
-                        newPaymentApplication.set("amountApplied", paymentApplicationAmount.subtract(amountToCapture));
+                        newPaymentApplication.set(org.apache.ofbiz.persistence.entity.x.paymentApplicationId, paymentApplicationId);
+                        newPaymentApplication.set(org.apache.ofbiz.persistence.entity.x.amountApplied, paymentApplicationAmount.subtract(amountToCapture));
                         newPaymentApplication.create();
                     }
                     capturedAmount = capturedAmount.add(amountToCapture);
@@ -1640,15 +1640,15 @@ public class PaymentGatewayServices {
         // get the payment settings i.e. serviceName and config properties file name
         GenericValue paymentSettings = getPaymentSettings(orh.getOrderHeader(), paymentPref, CAPTURE_SERVICE_TYPE, false);
         if (paymentSettings != null) {
-            String customMethodId = paymentSettings.getString("paymentCustomMethodId");
+            String customMethodId = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentCustomMethodId);
             if (UtilValidate.isNotEmpty(customMethodId)) {
                 serviceName = getPaymentCustomMethod(orh.getOrderHeader().getDelegator(), customMethodId);
             }
             if (UtilValidate.isEmpty(serviceName)) {
-                serviceName = paymentSettings.getString("paymentService");
+                serviceName = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentService);
             }
-            paymentConfig = paymentSettings.getString("paymentPropertiesPath");
-            paymentGatewayConfigId = paymentSettings.getString("paymentGatewayConfigId");
+            paymentConfig = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath);
+            paymentGatewayConfigId = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
 
             if (serviceName == null) {
                 Debug.logError("Service name is null for payment setting; cannot process", MODULE);
@@ -1734,7 +1734,7 @@ public class PaymentGatewayServices {
             Debug.logInfo("Capture [" + serviceName + "] : " + captureContext, MODULE);
         }
         try {
-            String paymentMethodTypeId = paymentPref.getString("paymentMethodTypeId");
+            String paymentMethodTypeId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
             if (paymentMethodTypeId != null && "GIFT_CARD".equals(paymentMethodTypeId)) {
                 getBillingInformation(orh, paymentPref, captureContext);
             }
@@ -1795,26 +1795,26 @@ public class PaymentGatewayServices {
 
     public static Map<String, Object> storePaymentErrorMessage(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        GenericValue paymentPref = (GenericValue) context.get("orderPaymentPreference");
-        String serviceType = (String) context.get("paymentServiceTypeEnumId");
-        String transactionCode = (String) context.get("transCodeEnumId");
-        Map<String, Object> result = UtilGenerics.cast(context.get("serviceResultMap"));
-        Locale locale = (Locale) context.get("locale");
+        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        String serviceType = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentServiceTypeEnumId);
+        String transactionCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.transCodeEnumId);
+        Map<String, Object> result = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.serviceResultMap));
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String responseId = delegator.getNextSeqId("PaymentGatewayResponse");
         GenericValue response = delegator.makeValue("PaymentGatewayResponse");
         String message = ServiceUtil.getErrorMessage(result);
         if (message.length() > 255) {
             message = message.substring(0, 255);
         }
-        response.set("paymentGatewayResponseId", responseId);
-        response.set("paymentServiceTypeEnumId", serviceType);
-        response.set("orderPaymentPreferenceId", paymentPref.get("orderPaymentPreferenceId"));
-        response.set("paymentMethodTypeId", paymentPref.get("paymentMethodTypeId"));
-        response.set("paymentMethodId", paymentPref.get("paymentMethodId"));
-        response.set("transCodeEnumId", transactionCode);
-        response.set("referenceNum", "ERROR");
-        response.set("gatewayMessage", message);
-        response.set("transactionDate", UtilDateTime.nowTimestamp());
+        response.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, responseId);
+        response.set(org.apache.ofbiz.persistence.entity.x.paymentServiceTypeEnumId, serviceType);
+        response.set(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
+        response.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
+        response.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        response.set(org.apache.ofbiz.persistence.entity.x.transCodeEnumId, transactionCode);
+        response.set(org.apache.ofbiz.persistence.entity.x.referenceNum, "ERROR");
+        response.set(org.apache.ofbiz.persistence.entity.x.gatewayMessage, message);
+        response.set(org.apache.ofbiz.persistence.entity.x.transactionDate, UtilDateTime.nowTimestamp());
 
         try {
             delegator.create(response);
@@ -1833,7 +1833,7 @@ public class PaymentGatewayServices {
         Boolean authResult = (Boolean) result.get("authResult");
         Boolean captureResult = (Boolean) result.get("captureResult");
         boolean resultPassed = false;
-        String initialStatus = paymentPreference.getString("statusId");
+        String initialStatus = paymentPreference.getString(org.apache.ofbiz.persistence.entity.x.statusId);
         String authServiceType = null;
 
         if (authResult != null) {
@@ -1876,12 +1876,12 @@ public class PaymentGatewayServices {
 
     public static Map<String, Object> processAuthResult(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
-        Boolean authResult = (Boolean) context.get("authResult");
-        String authType = (String) context.get("serviceTypeEnum");
-        String currencyUomId = (String) context.get("currencyUomId");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        Boolean authResult = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.authResult);
+        String authType = (String) context.get(org.apache.ofbiz.persistence.entity.x.serviceTypeEnum);
+        String currencyUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.currencyUomId);
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (authResult == null) {
             Debug.logError("No authentification result available. Payment preference can't be checked.", MODULE);
             return ServiceUtil
@@ -1898,68 +1898,68 @@ public class PaymentGatewayServices {
 
         // type of auth this was can be determined by the previous status
         if (UtilValidate.isEmpty(authType)) {
-            authType = ("PAYMENT_NOT_AUTH".equals(orderPaymentPreference.getString("statusId"))) ? AUTH_SERVICE_TYPE : REAUTH_SERVICE_TYPE;
+            authType = ("PAYMENT_NOT_AUTH".equals(orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.statusId))) ? AUTH_SERVICE_TYPE : REAUTH_SERVICE_TYPE;
         }
 
         try {
-            String paymentMethodId = orderPaymentPreference.getString("paymentMethodId");
+            String paymentMethodId = orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
             GenericValue paymentMethod = EntityQuery.use(delegator).from("PaymentMethod").where("paymentMethodId", paymentMethodId).queryOne();
             GenericValue creditCard = null;
-            if (paymentMethod != null && "CREDIT_CARD".equals(paymentMethod.getString("paymentMethodTypeId"))) {
-                creditCard = paymentMethod.getRelatedOne("CreditCard", false);
+            if (paymentMethod != null && "CREDIT_CARD".equals(paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+                creditCard = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CreditCard, false);
             }
 
             // create the PaymentGatewayResponse
             String responseId = delegator.getNextSeqId("PaymentGatewayResponse");
             GenericValue response = delegator.makeValue("PaymentGatewayResponse");
-            response.set("paymentGatewayResponseId", responseId);
-            response.set("paymentServiceTypeEnumId", authType);
-            response.set("orderPaymentPreferenceId", orderPaymentPreference.get("orderPaymentPreferenceId"));
-            response.set("paymentMethodTypeId", orderPaymentPreference.get("paymentMethodTypeId"));
-            response.set("paymentMethodId", orderPaymentPreference.get("paymentMethodId"));
-            response.set("transCodeEnumId", "PGT_AUTHORIZE");
-            response.set("currencyUomId", currencyUomId);
+            response.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, responseId);
+            response.set(org.apache.ofbiz.persistence.entity.x.paymentServiceTypeEnumId, authType);
+            response.set(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId, orderPaymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
+            response.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, orderPaymentPreference.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
+            response.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, orderPaymentPreference.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+            response.set(org.apache.ofbiz.persistence.entity.x.transCodeEnumId, "PGT_AUTHORIZE");
+            response.set(org.apache.ofbiz.persistence.entity.x.currencyUomId, currencyUomId);
 
             // set the avs/fraud result
-            response.set("gatewayAvsResult", context.get("avsCode"));
-            response.set("gatewayCvResult", context.get("cvCode"));
-            response.set("gatewayScoreResult", context.get("scoreCode"));
+            response.set(org.apache.ofbiz.persistence.entity.x.gatewayAvsResult, context.get(org.apache.ofbiz.persistence.entity.x.avsCode));
+            response.set(org.apache.ofbiz.persistence.entity.x.gatewayCvResult, context.get(org.apache.ofbiz.persistence.entity.x.cvCode));
+            response.set(org.apache.ofbiz.persistence.entity.x.gatewayScoreResult, context.get(org.apache.ofbiz.persistence.entity.x.scoreCode));
 
             // set the auth info
-            BigDecimal processAmount = (BigDecimal) context.get("processAmount");
-            response.set("amount", processAmount);
-            response.set("referenceNum", context.get("authRefNum"));
-            response.set("altReference", context.get("authAltRefNum"));
-            response.set("gatewayCode", context.get("authCode"));
-            response.set("gatewayFlag", context.get("authFlag"));
-            response.set("gatewayMessage", context.get("authMessage"));
-            response.set("transactionDate", UtilDateTime.nowTimestamp());
+            BigDecimal processAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
+            response.set(org.apache.ofbiz.persistence.entity.x.amount, processAmount);
+            response.set(org.apache.ofbiz.persistence.entity.x.referenceNum, context.get(org.apache.ofbiz.persistence.entity.x.authRefNum));
+            response.set(org.apache.ofbiz.persistence.entity.x.altReference, context.get(org.apache.ofbiz.persistence.entity.x.authAltRefNum));
+            response.set(org.apache.ofbiz.persistence.entity.x.gatewayCode, context.get(org.apache.ofbiz.persistence.entity.x.authCode));
+            response.set(org.apache.ofbiz.persistence.entity.x.gatewayFlag, context.get(org.apache.ofbiz.persistence.entity.x.authFlag));
+            response.set(org.apache.ofbiz.persistence.entity.x.gatewayMessage, context.get(org.apache.ofbiz.persistence.entity.x.authMessage));
+            response.set(org.apache.ofbiz.persistence.entity.x.transactionDate, UtilDateTime.nowTimestamp());
 
-            if (Boolean.TRUE.equals(context.get("resultDeclined"))) {
-                response.set("resultDeclined", "Y");
+            if (Boolean.TRUE.equals(context.get(org.apache.ofbiz.persistence.entity.x.resultDeclined))) {
+                response.set(org.apache.ofbiz.persistence.entity.x.resultDeclined, "Y");
             }
-            if (Boolean.TRUE.equals(context.get("resultNsf"))) {
-                response.set("resultNsf", "Y");
+            if (Boolean.TRUE.equals(context.get(org.apache.ofbiz.persistence.entity.x.resultNsf))) {
+                response.set(org.apache.ofbiz.persistence.entity.x.resultNsf, "Y");
             }
-            if (Boolean.TRUE.equals(context.get("resultBadExpire"))) {
-                response.set("resultBadExpire", "Y");
+            if (Boolean.TRUE.equals(context.get(org.apache.ofbiz.persistence.entity.x.resultBadExpire))) {
+                response.set(org.apache.ofbiz.persistence.entity.x.resultBadExpire, "Y");
             }
-            if (Boolean.TRUE.equals(context.get("resultBadCardNumber"))) {
-                response.set("resultBadCardNumber", "Y");
+            if (Boolean.TRUE.equals(context.get(org.apache.ofbiz.persistence.entity.x.resultBadCardNumber))) {
+                response.set(org.apache.ofbiz.persistence.entity.x.resultBadCardNumber, "Y");
             }
 
             // create the internal messages
             List<GenericValue> messageEntities = new LinkedList<>();
-            List<String> messages = UtilGenerics.cast(context.get("internalRespMsgs"));
+            List<String> messages = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.internalRespMsgs));
             if (UtilValidate.isNotEmpty(messages)) {
                 Iterator<String> i = messages.iterator();
                 while (i.hasNext()) {
                     GenericValue respMsg = delegator.makeValue("PaymentGatewayRespMsg");
                     String respMsgId = delegator.getNextSeqId("PaymentGatewayRespMsg");
                     String message = i.next();
-                    respMsg.set("paymentGatewayRespMsgId", respMsgId);
-                    respMsg.set("paymentGatewayResponseId", responseId);
-                    respMsg.set("pgrMessage", message);
+                    respMsg.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayRespMsgId, respMsgId);
+                    respMsg.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, responseId);
+                    respMsg.set(org.apache.ofbiz.persistence.entity.x.pgrMessage, message);
                     messageEntities.add(respMsg);
                 }
             }
@@ -1967,7 +1967,7 @@ public class PaymentGatewayServices {
             // save the response and respective messages
             savePgrAndMsgs(dctx, response, messageEntities);
 
-            if (response.getBigDecimal("amount").compareTo((BigDecimal) context.get("processAmount")) != 0) {
+            if (response.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).compareTo((BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount)) != 0) {
                 Debug.logWarning("The authorized amount does not match the max amount : Response - " + response + " : result - "
                         + context, MODULE);
             }
@@ -1976,20 +1976,20 @@ public class PaymentGatewayServices {
             boolean authResultOk = authResult;
 
             if (authResultOk) {
-                orderPaymentPreference.set("statusId", "PAYMENT_AUTHORIZED");
+                orderPaymentPreference.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_AUTHORIZED");
             } else {
-                orderPaymentPreference.set("statusId", "PAYMENT_DECLINED");
+                orderPaymentPreference.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_DECLINED");
             }
 
             // remove sensitive credit card data regardless of outcome
-            orderPaymentPreference.set("securityCode", null);
-            orderPaymentPreference.set("track2", null);
+            orderPaymentPreference.set(org.apache.ofbiz.persistence.entity.x.securityCode, null);
+            orderPaymentPreference.set(org.apache.ofbiz.persistence.entity.x.track2, null);
 
             boolean needsNsfRetry = needsNsfRetry(orderPaymentPreference, context, delegator);
             if (needsNsfRetry) {
-                orderPaymentPreference.set("needsNsfRetry", "Y");
+                orderPaymentPreference.set(org.apache.ofbiz.persistence.entity.x.needsNsfRetry, "Y");
             } else {
-                orderPaymentPreference.set("needsNsfRetry", "N");
+                orderPaymentPreference.set(org.apache.ofbiz.persistence.entity.x.needsNsfRetry, "N");
             }
 
             orderPaymentPreference.store();
@@ -1997,22 +1997,22 @@ public class PaymentGatewayServices {
             // if the payment was declined and this is a CreditCard, save that information on the CreditCard entity
             if (!authResultOk) {
                 if (creditCard != null) {
-                    Long consecutiveFailedAuths = creditCard.getLong("consecutiveFailedAuths");
+                    Long consecutiveFailedAuths = creditCard.getLong(org.apache.ofbiz.persistence.entity.x.consecutiveFailedAuths);
                     if (consecutiveFailedAuths == null) {
-                        creditCard.set("consecutiveFailedAuths", 1L);
+                        creditCard.set(org.apache.ofbiz.persistence.entity.x.consecutiveFailedAuths, 1L);
                     } else {
-                        creditCard.set("consecutiveFailedAuths", consecutiveFailedAuths + 1);
+                        creditCard.set(org.apache.ofbiz.persistence.entity.x.consecutiveFailedAuths, consecutiveFailedAuths + 1);
                     }
-                    creditCard.set("lastFailedAuthDate", nowTimestamp);
+                    creditCard.set(org.apache.ofbiz.persistence.entity.x.lastFailedAuthDate, nowTimestamp);
 
-                    if (Boolean.TRUE.equals(context.get("resultNsf"))) {
-                        Long consecutiveFailedNsf = creditCard.getLong("consecutiveFailedNsf");
+                    if (Boolean.TRUE.equals(context.get(org.apache.ofbiz.persistence.entity.x.resultNsf))) {
+                        Long consecutiveFailedNsf = creditCard.getLong(org.apache.ofbiz.persistence.entity.x.consecutiveFailedNsf);
                         if (consecutiveFailedNsf == null) {
-                            creditCard.set("consecutiveFailedNsf", 1L);
+                            creditCard.set(org.apache.ofbiz.persistence.entity.x.consecutiveFailedNsf, 1L);
                         } else {
-                            creditCard.set("consecutiveFailedNsf", consecutiveFailedNsf + 1);
+                            creditCard.set(org.apache.ofbiz.persistence.entity.x.consecutiveFailedNsf, consecutiveFailedNsf + 1);
                         }
-                        creditCard.set("lastFailedNsfDate", nowTimestamp);
+                        creditCard.set(org.apache.ofbiz.persistence.entity.x.lastFailedNsfDate, nowTimestamp);
                     }
                     creditCard.store();
                 }
@@ -2020,11 +2020,11 @@ public class PaymentGatewayServices {
 
             // auth was successful, to clear out any failed auth or nsf info
             if (authResultOk) {
-                if ((creditCard != null) && (creditCard.get("lastFailedAuthDate") != null)) {
-                    creditCard.set("consecutiveFailedAuths", 0L);
-                    creditCard.set("lastFailedAuthDate", null);
-                    creditCard.set("consecutiveFailedNsf", 0L);
-                    creditCard.set("lastFailedNsfDate", null);
+                if ((creditCard != null) && (creditCard.get(org.apache.ofbiz.persistence.entity.x.lastFailedAuthDate) != null)) {
+                    creditCard.set(org.apache.ofbiz.persistence.entity.x.consecutiveFailedAuths, 0L);
+                    creditCard.set(org.apache.ofbiz.persistence.entity.x.lastFailedAuthDate, null);
+                    creditCard.set(org.apache.ofbiz.persistence.entity.x.consecutiveFailedNsf, 0L);
+                    creditCard.set(org.apache.ofbiz.persistence.entity.x.lastFailedNsfDate, null);
                     creditCard.store();
                 }
             }
@@ -2042,18 +2042,18 @@ public class PaymentGatewayServices {
         boolean needsNsfRetry = false;
         if (Boolean.TRUE.equals(processContext.get("resultNsf"))) {
             // only track this for auto-orders, since we will only not fail and re-try on those
-            GenericValue orderHeader = orderPaymentPreference.getRelatedOne("OrderHeader", false);
-            if (UtilValidate.isNotEmpty(orderHeader.getString("autoOrderShoppingListId"))) {
-                GenericValue productStore = orderHeader.getRelatedOne("ProductStore", false);
-                if ("Y".equals(productStore.getString("autoOrderCcTryLaterNsf"))) {
+            GenericValue orderHeader = orderPaymentPreference.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
+            if (UtilValidate.isNotEmpty(orderHeader.getString(org.apache.ofbiz.persistence.entity.x.autoOrderShoppingListId))) {
+                GenericValue productStore = orderHeader.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductStore, false);
+                if ("Y".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.autoOrderCcTryLaterNsf))) {
                     // one last condition: make sure there have been less than ProductStore.autoOrderCcTryLaterMax
                     //   PaymentGatewayResponse records with the same orderPaymentPreferenceId and paymentMethodId (just in case it has changed)
                     //   and that have resultNsf = Y, ie only consider other NSF responses
-                    Long autoOrderCcTryLaterMax = productStore.getLong("autoOrderCcTryLaterMax");
+                    Long autoOrderCcTryLaterMax = productStore.getLong(org.apache.ofbiz.persistence.entity.x.autoOrderCcTryLaterMax);
                     if (autoOrderCcTryLaterMax != null) {
                         long failedTries = EntityQuery.use(delegator).from("PaymentGatewayResponse")
-                                .where("orderPaymentPreferenceId", orderPaymentPreference.get("orderPaymentPreferenceId"),
-                                    "paymentMethodId", orderPaymentPreference.get("paymentMethodId"),
+                                .where("orderPaymentPreferenceId", orderPaymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId),
+                                    "paymentMethodId", orderPaymentPreference.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId),
                                     "resultNsf", "Y").queryCount();
                         if (failedTries < autoOrderCcTryLaterMax) {
                             needsNsfRetry = true;
@@ -2135,7 +2135,7 @@ public class PaymentGatewayServices {
         // lookup the order header
         OrderReadHelper orh = null;
         try {
-            GenericValue orderHeader = paymentPreference.getRelatedOne("OrderHeader", false);
+            GenericValue orderHeader = paymentPreference.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
             if (orderHeader != null) {
                 orh = new OrderReadHelper(orderHeader);
             }
@@ -2145,7 +2145,7 @@ public class PaymentGatewayServices {
 
         // make sure the order exists
         if (orh == null) {
-            throw new GeneralException("No order found for payment preference #" + paymentPreference.get("orderPaymentPreferenceId"));
+            throw new GeneralException("No order found for payment preference #" + paymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
         }
 
         // set the re-auth amount
@@ -2153,7 +2153,7 @@ public class PaymentGatewayServices {
             amount = ZERO;
         }
         if (amount.compareTo(ZERO) == 0) {
-            amount = paymentPreference.getBigDecimal("maxAmount");
+            amount = paymentPreference.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount);
             Debug.logInfo("resetting payment amount from 0.00 to correctMax amount", MODULE);
         }
         Debug.logInfo("reauth with amount: " + amount, MODULE);
@@ -2196,17 +2196,17 @@ public class PaymentGatewayServices {
     public static Map<String, Object> processCaptureResult(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
-        GenericValue paymentPreference = (GenericValue) context.get("orderPaymentPreference");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String invoiceId = (String) context.get("invoiceId");
-        String payTo = (String) context.get("payToPartyId");
-        BigDecimal amount = (BigDecimal) context.get("captureAmount");
-        String serviceType = (String) context.get("serviceTypeEnum");
-        String currencyUomId = (String) context.get("currencyUomId");
-        boolean captureSuccessful = (Boolean) context.get("captureResult");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue paymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String invoiceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.invoiceId);
+        String payTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.payToPartyId);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.captureAmount);
+        String serviceType = (String) context.get(org.apache.ofbiz.persistence.entity.x.serviceTypeEnum);
+        String currencyUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.currencyUomId);
+        boolean captureSuccessful = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.captureResult);
 
-        String paymentMethodTypeId = paymentPreference.getString("paymentMethodTypeId");
+        String paymentMethodTypeId = paymentPreference.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
 
         if (UtilValidate.isEmpty(serviceType)) {
             serviceType = CAPTURE_SERVICE_TYPE;
@@ -2227,8 +2227,8 @@ public class PaymentGatewayServices {
         } else {
             prefStatusId = "PAYMENT_DECLINED";
         }
-        paymentPreference.set("statusId", prefStatusId);
-        paymentPreference.set("maxAmount", amount);
+        paymentPreference.set(org.apache.ofbiz.persistence.entity.x.statusId, prefStatusId);
+        paymentPreference.set(org.apache.ofbiz.persistence.entity.x.maxAmount, amount);
         try {
             paymentPreference.store();
         } catch (GenericEntityException e) {
@@ -2240,42 +2240,42 @@ public class PaymentGatewayServices {
             // create the PaymentGatewayResponse record
             String responseId = delegator.getNextSeqId("PaymentGatewayResponse");
             GenericValue response = delegator.makeValue("PaymentGatewayResponse");
-            response.set("paymentGatewayResponseId", responseId);
-            response.set("paymentServiceTypeEnumId", serviceType);
-            response.set("orderPaymentPreferenceId", paymentPreference.get("orderPaymentPreferenceId"));
-            response.set("paymentMethodTypeId", paymentMethodTypeId);
-            response.set("paymentMethodId", paymentPreference.get("paymentMethodId"));
-            response.set("transCodeEnumId", "PGT_CAPTURE");
-            response.set("currencyUomId", currencyUomId);
-            if (context.get("authRefNum") != null) {
-                response.set("subReference", context.get("authRefNum"));
-                response.set("altReference", context.get("authAltRefNum"));
+            response.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, responseId);
+            response.set(org.apache.ofbiz.persistence.entity.x.paymentServiceTypeEnumId, serviceType);
+            response.set(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId, paymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
+            response.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, paymentMethodTypeId);
+            response.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, paymentPreference.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+            response.set(org.apache.ofbiz.persistence.entity.x.transCodeEnumId, "PGT_CAPTURE");
+            response.set(org.apache.ofbiz.persistence.entity.x.currencyUomId, currencyUomId);
+            if (context.get(org.apache.ofbiz.persistence.entity.x.authRefNum) != null) {
+                response.set(org.apache.ofbiz.persistence.entity.x.subReference, context.get(org.apache.ofbiz.persistence.entity.x.authRefNum));
+                response.set(org.apache.ofbiz.persistence.entity.x.altReference, context.get(org.apache.ofbiz.persistence.entity.x.authAltRefNum));
             } else {
-                response.set("altReference", context.get("captureAltRefNum"));
+                response.set(org.apache.ofbiz.persistence.entity.x.altReference, context.get(org.apache.ofbiz.persistence.entity.x.captureAltRefNum));
             }
 
             // set the capture info
-            response.set("amount", amount);
-            response.set("referenceNum", context.get("captureRefNum"));
-            response.set("gatewayCode", context.get("captureCode"));
-            response.set("gatewayFlag", context.get("captureFlag"));
-            response.set("gatewayMessage", context.get("captureMessage"));
-            response.set("transactionDate", UtilDateTime.nowTimestamp());
+            response.set(org.apache.ofbiz.persistence.entity.x.amount, amount);
+            response.set(org.apache.ofbiz.persistence.entity.x.referenceNum, context.get(org.apache.ofbiz.persistence.entity.x.captureRefNum));
+            response.set(org.apache.ofbiz.persistence.entity.x.gatewayCode, context.get(org.apache.ofbiz.persistence.entity.x.captureCode));
+            response.set(org.apache.ofbiz.persistence.entity.x.gatewayFlag, context.get(org.apache.ofbiz.persistence.entity.x.captureFlag));
+            response.set(org.apache.ofbiz.persistence.entity.x.gatewayMessage, context.get(org.apache.ofbiz.persistence.entity.x.captureMessage));
+            response.set(org.apache.ofbiz.persistence.entity.x.transactionDate, UtilDateTime.nowTimestamp());
 
             // save the response
             savePgr(dctx, response);
 
             // create the internal messages
-            List<String> messages = UtilGenerics.cast(context.get("internalRespMsgs"));
+            List<String> messages = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.internalRespMsgs));
             if (UtilValidate.isNotEmpty(messages)) {
                 Iterator<String> i = messages.iterator();
                 while (i.hasNext()) {
                     GenericValue respMsg = delegator.makeValue("PaymentGatewayRespMsg");
                     String respMsgId = delegator.getNextSeqId("PaymentGatewayRespMsg");
                     String message = i.next();
-                    respMsg.set("paymentGatewayRespMsgId", respMsgId);
-                    respMsg.set("paymentGatewayResponseId", responseId);
-                    respMsg.set("pgrMessage", message);
+                    respMsg.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayRespMsgId, respMsgId);
+                    respMsg.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, responseId);
+                    respMsg.set(org.apache.ofbiz.persistence.entity.x.pgrMessage, message);
 
                     // save the message
                     savePgr(dctx, respMsg);
@@ -2299,10 +2299,10 @@ public class PaymentGatewayServices {
             String partyIdFrom = null;
             if (invoice != null) {
                 // get the party from the invoice, which is the bill-to party (partyId)
-                partyIdFrom = invoice.getString("partyId");
+                partyIdFrom = invoice.getString(org.apache.ofbiz.persistence.entity.x.partyId);
             } else {
                 // otherwise get the party from the order's OrderRole
-                String orderId = paymentPreference.getString("orderId");
+                String orderId = paymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId);
                 GenericValue orderRole = null;
                 try {
                     orderRole = EntityQuery.use(delegator).from("OrderRole").where("orderId", orderId, "roleTypeId", "BILL_TO_CUSTOMER").queryFirst();
@@ -2310,7 +2310,7 @@ public class PaymentGatewayServices {
                     Debug.logError(e, MODULE);
                 }
                 if (orderRole != null) {
-                    partyIdFrom = orderRole.getString("partyId");
+                    partyIdFrom = orderRole.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                 }
             }
 
@@ -2321,27 +2321,27 @@ public class PaymentGatewayServices {
                 partyIdTo = payTo;
             } else if (invoice != null) {
                 // use the invoice partyIdFrom as the pay to party (which is who supplied the invoice)
-                partyIdTo = invoice.getString("partyIdFrom");
+                partyIdTo = invoice.getString(org.apache.ofbiz.persistence.entity.x.partyIdFrom);
             } else {
                 // otherwise default to Company and print a big warning about this
                 partyIdTo = EntityUtilProperties.getPropertyValue("general", "ORGANIZATION_PARTY", "Company", delegator);
                 Debug.logWarning("Using default value of [" + partyIdTo + "] for payTo on invoice [" + invoiceId + "] and orderPaymentPreference ["
-                        + paymentPreference.getString("orderPaymentPreferenceId") + "]", MODULE);
+                        + paymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId) + "]", MODULE);
             }
 
 
             Map<String, Object> paymentCtx = UtilMisc.<String, Object>toMap("paymentTypeId", "CUSTOMER_PAYMENT");
-            paymentCtx.put("paymentMethodTypeId", paymentPreference.get("paymentMethodTypeId"));
-            paymentCtx.put("paymentMethodId", paymentPreference.get("paymentMethodId"));
+            paymentCtx.put("paymentMethodTypeId", paymentPreference.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
+            paymentCtx.put("paymentMethodId", paymentPreference.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
             paymentCtx.put("paymentGatewayResponseId", responseId);
             paymentCtx.put("partyIdTo", partyIdTo);
             paymentCtx.put("partyIdFrom", partyIdFrom);
             paymentCtx.put("statusId", "PMNT_RECEIVED");
-            paymentCtx.put("paymentPreferenceId", paymentPreference.get("orderPaymentPreferenceId"));
+            paymentCtx.put("paymentPreferenceId", paymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
             paymentCtx.put("amount", amount);
             paymentCtx.put("currencyUomId", currencyUomId);
             paymentCtx.put("userLogin", userLogin);
-            paymentCtx.put("paymentRefNum", context.get("captureRefNum"));
+            paymentCtx.put("paymentRefNum", context.get(org.apache.ofbiz.persistence.entity.x.captureRefNum));
 
             Map<String, Object> payRes;
             try {
@@ -2361,7 +2361,7 @@ public class PaymentGatewayServices {
             if (invoiceId != null) {
                 Debug.logInfo("Processing Invoice #" + invoiceId, MODULE);
                 Map<String, Object> paCtx = UtilMisc.<String, Object>toMap("paymentId", paymentId, "invoiceId", invoiceId);
-                paCtx.put("amountApplied", context.get("captureAmount"));
+                paCtx.put("amountApplied", context.get(org.apache.ofbiz.persistence.entity.x.captureAmount));
                 paCtx.put("userLogin", userLogin);
                 Map<String, Object> paRes;
                 try {
@@ -2382,10 +2382,10 @@ public class PaymentGatewayServices {
     public static Map<String, Object> refundOrderPaymentPreference(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderPaymentPreferenceId = (String) context.get("orderPaymentPreferenceId");
-        BigDecimal amount = (BigDecimal) context.get("amount");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderPaymentPreferenceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         GenericValue orderPaymentPreference = null;
         try {
             orderPaymentPreference = EntityQuery.use(delegator).from("OrderPaymentPreference").where("orderPaymentPreferenceId",
@@ -2419,14 +2419,14 @@ public class PaymentGatewayServices {
 
     public static Map<String, Object> refundPayment(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        GenericValue paymentPref = (GenericValue) context.get("orderPaymentPreference");
-        BigDecimal refundAmount = (BigDecimal) context.get("refundAmount");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        BigDecimal refundAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.refundAmount);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         GenericValue orderHeader = null;
         try {
-            orderHeader = paymentPref.getRelatedOne("OrderHeader", false);
+            orderHeader = paymentPref.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Cannot get OrderHeader from OrderPaymentPreference", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -2445,15 +2445,15 @@ public class PaymentGatewayServices {
         String paymentGatewayConfigId = null;
 
         if (paymentSettings != null) {
-            String customMethodId = paymentSettings.getString("paymentCustomMethodId");
+            String customMethodId = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentCustomMethodId);
             if (UtilValidate.isNotEmpty(customMethodId)) {
                 serviceName = getPaymentCustomMethod(orh.getOrderHeader().getDelegator(), customMethodId);
             }
             if (UtilValidate.isEmpty(serviceName)) {
-                serviceName = paymentSettings.getString("paymentService");
+                serviceName = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentService);
             }
-            String paymentConfig = paymentSettings.getString("paymentPropertiesPath");
-            paymentGatewayConfigId = paymentSettings.getString("paymentGatewayConfigId");
+            String paymentConfig = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath);
+            paymentGatewayConfigId = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
 
             if (serviceName != null) {
                 Map<String, Object> serviceContext = new HashMap<>();
@@ -2523,7 +2523,7 @@ public class PaymentGatewayServices {
         } else {
             return ServiceUtil.returnFailure(UtilProperties.getMessage(RESOURCE,
                     "AccountingPaymentSettingNotFound",
-                    UtilMisc.toMap("productStoreId", orderHeader.getString("productStoreId"),
+                    UtilMisc.toMap("productStoreId", orderHeader.getString(org.apache.ofbiz.persistence.entity.x.productStoreId),
                             "transactionType", REFUND_SERVICE_TYPE), locale));
         }
     }
@@ -2531,58 +2531,58 @@ public class PaymentGatewayServices {
     public static Map<String, Object> processRefundResult(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        GenericValue paymentPref = (GenericValue) context.get("orderPaymentPreference");
-        String currencyUomId = (String) context.get("currencyUomId");
-        String payToPartyId = (String) context.get("payToPartyId");
-        String payFromPartyId = (String) context.get("payFromPartyId");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        String currencyUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.currencyUomId);
+        String payToPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.payToPartyId);
+        String payFromPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.payFromPartyId);
 
         // create the PaymentGatewayResponse record
         String responseId = delegator.getNextSeqId("PaymentGatewayResponse");
         GenericValue response = delegator.makeValue("PaymentGatewayResponse");
-        response.set("paymentGatewayResponseId", responseId);
-        response.set("paymentServiceTypeEnumId", REFUND_SERVICE_TYPE);
-        response.set("orderPaymentPreferenceId", paymentPref.get("orderPaymentPreferenceId"));
-        response.set("paymentMethodTypeId", paymentPref.get("paymentMethodTypeId"));
-        response.set("paymentMethodId", paymentPref.get("paymentMethodId"));
-        response.set("transCodeEnumId", "PGT_REFUND");
+        response.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, responseId);
+        response.set(org.apache.ofbiz.persistence.entity.x.paymentServiceTypeEnumId, REFUND_SERVICE_TYPE);
+        response.set(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
+        response.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
+        response.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        response.set(org.apache.ofbiz.persistence.entity.x.transCodeEnumId, "PGT_REFUND");
 
         // set the capture info
-        response.set("amount", context.get("refundAmount"));
-        response.set("currencyUomId", currencyUomId);
-        response.set("referenceNum", context.get("refundRefNum"));
-        response.set("altReference", context.get("refundAltRefNum"));
-        response.set("gatewayCode", context.get("refundCode"));
-        response.set("gatewayFlag", context.get("refundFlag"));
-        response.set("gatewayMessage", context.get("refundMessage"));
-        response.set("transactionDate", UtilDateTime.nowTimestamp());
+        response.set(org.apache.ofbiz.persistence.entity.x.amount, context.get(org.apache.ofbiz.persistence.entity.x.refundAmount));
+        response.set(org.apache.ofbiz.persistence.entity.x.currencyUomId, currencyUomId);
+        response.set(org.apache.ofbiz.persistence.entity.x.referenceNum, context.get(org.apache.ofbiz.persistence.entity.x.refundRefNum));
+        response.set(org.apache.ofbiz.persistence.entity.x.altReference, context.get(org.apache.ofbiz.persistence.entity.x.refundAltRefNum));
+        response.set(org.apache.ofbiz.persistence.entity.x.gatewayCode, context.get(org.apache.ofbiz.persistence.entity.x.refundCode));
+        response.set(org.apache.ofbiz.persistence.entity.x.gatewayFlag, context.get(org.apache.ofbiz.persistence.entity.x.refundFlag));
+        response.set(org.apache.ofbiz.persistence.entity.x.gatewayMessage, context.get(org.apache.ofbiz.persistence.entity.x.refundMessage));
+        response.set(org.apache.ofbiz.persistence.entity.x.transactionDate, UtilDateTime.nowTimestamp());
 
         // save the response
         savePgr(dctx, response);
 
         // create the internal messages
-        List<String> messages = UtilGenerics.cast(context.get("internalRespMsgs"));
+        List<String> messages = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.internalRespMsgs));
         if (UtilValidate.isNotEmpty(messages)) {
             Iterator<String> i = messages.iterator();
             while (i.hasNext()) {
                 GenericValue respMsg = delegator.makeValue("PaymentGatewayRespMsg");
                 String respMsgId = delegator.getNextSeqId("PaymentGatewayRespMsg");
                 String message = i.next();
-                respMsg.set("paymentGatewayRespMsgId", respMsgId);
-                respMsg.set("paymentGatewayResponseId", responseId);
-                respMsg.set("pgrMessage", message);
+                respMsg.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayRespMsgId, respMsgId);
+                respMsg.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, responseId);
+                respMsg.set(org.apache.ofbiz.persistence.entity.x.pgrMessage, message);
 
                 // save the message
                 savePgr(dctx, respMsg);
             }
         }
 
-        Boolean refundResult = (Boolean) context.get("refundResult");
+        Boolean refundResult = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.refundResult);
         if (refundResult != null && refundResult) {
 
             // mark the preference as refunded
-            paymentPref.set("statusId", "PAYMENT_REFUNDED");
+            paymentPref.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_REFUNDED");
             try {
                 paymentPref.store();
             } catch (GenericEntityException e) {
@@ -2591,17 +2591,17 @@ public class PaymentGatewayServices {
 
             // handle the (reverse) payment
             Map<String, Object> paymentCtx = UtilMisc.<String, Object>toMap("paymentTypeId", "CUSTOMER_REFUND");
-            paymentCtx.put("paymentMethodTypeId", paymentPref.get("paymentMethodTypeId"));
-            paymentCtx.put("paymentMethodId", paymentPref.get("paymentMethodId"));
+            paymentCtx.put("paymentMethodTypeId", paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
+            paymentCtx.put("paymentMethodId", paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
             paymentCtx.put("paymentGatewayResponseId", responseId);
             paymentCtx.put("partyIdTo", payToPartyId);
             paymentCtx.put("partyIdFrom", payFromPartyId);
             paymentCtx.put("statusId", "PMNT_SENT");
-            paymentCtx.put("paymentPreferenceId", paymentPref.get("orderPaymentPreferenceId"));
+            paymentCtx.put("paymentPreferenceId", paymentPref.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
             paymentCtx.put("currencyUomId", currencyUomId);
-            paymentCtx.put("amount", context.get("refundAmount"));
+            paymentCtx.put("amount", context.get(org.apache.ofbiz.persistence.entity.x.refundAmount));
             paymentCtx.put("userLogin", userLogin);
-            paymentCtx.put("paymentRefNum", context.get("refundRefNum"));
+            paymentCtx.put("paymentRefNum", context.get(org.apache.ofbiz.persistence.entity.x.refundRefNum));
             paymentCtx.put("comments", "Refund");
 
             String paymentId = null;
@@ -2625,7 +2625,7 @@ public class PaymentGatewayServices {
 
             Map<String, Object> result = ServiceUtil.returnSuccess();
             result.put("paymentId", paymentId);
-            result.put("refundAmount", context.get("refundAmount"));
+            result.put("refundAmount", context.get(org.apache.ofbiz.persistence.entity.x.refundAmount));
             return result;
         } else {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -2636,9 +2636,9 @@ public class PaymentGatewayServices {
     public static Map<String, Object> retryFailedOrderAuth(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String orderId = (String) context.get("orderId");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // get the order header
         GenericValue orderHeader = null;
@@ -2650,13 +2650,13 @@ public class PaymentGatewayServices {
         }
 
         // make sure we have a valid order record
-        if (orderHeader == null || orderHeader.get("statusId") == null) {
+        if (orderHeader == null || orderHeader.get(org.apache.ofbiz.persistence.entity.x.statusId) == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER,
                     "OrderOrderNotFound", UtilMisc.toMap("orderId", orderId), locale));
         }
 
         // check the current order status
-        if (!"ORDER_CREATED".equals(orderHeader.getString("statusId"))) {
+        if (!"ORDER_CREATED".equals(orderHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
             // if we are out of the created status; then we were either cancelled, rejected or approved
             Debug.logWarning("Was re-trying a failed auth for orderId [" + orderId + "] but it is not in the ORDER_CREATED status, so skipping.",
                     MODULE);
@@ -2703,7 +2703,7 @@ public class PaymentGatewayServices {
     public static Map<String, Object> retryFailedAuths(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         EntityQuery eq = EntityQuery.use(delegator)
                 .from("OrderPaymentPreference")
                 .where(EntityCondition.makeCondition("statusId", EntityOperator.EQUALS, "PAYMENT_NOT_AUTH"),
@@ -2716,7 +2716,7 @@ public class PaymentGatewayServices {
                 Debug.logInfo("Processing failed order re-auth(s)", MODULE);
                 GenericValue value = null;
                 while (((value = eli.next()) != null)) {
-                    String orderId = value.getString("orderId");
+                    String orderId = value.getString(org.apache.ofbiz.persistence.entity.x.orderId);
                     if (!processList.contains(orderId)) { // just try each order once
                         try {
                             // each re-try is independent of each other; if one fails it should not effect the others
@@ -2738,7 +2738,7 @@ public class PaymentGatewayServices {
     public static Map<String, Object> retryFailedAuthNsfs(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
 
         // get the date/time for one week before now since we'll only retry once a week for NSFs
         Calendar calcCal = Calendar.getInstance();
@@ -2757,7 +2757,7 @@ public class PaymentGatewayServices {
                 Debug.logInfo("Processing failed order re-auth(s)", MODULE);
                 GenericValue value = null;
                 while (((value = eli.next()) != null)) {
-                    String orderId = value.getString("orderId");
+                    String orderId = value.getString(org.apache.ofbiz.persistence.entity.x.orderId);
                     if (!processList.contains(orderId)) { // just try each order once
                         try {
                             // each re-try is independent of each other; if one fails it should not effect the others
@@ -2779,7 +2779,7 @@ public class PaymentGatewayServices {
         GenericValue capTrans = null;
         try {
             List<String> order = UtilMisc.toList("-transactionDate");
-            List<GenericValue> transactions = orderPaymentPreference.getRelated("PaymentGatewayResponse", null, order, false);
+            List<GenericValue> transactions = orderPaymentPreference.getRelated(org.apache.ofbiz.persistence.entity.x.PaymentGatewayResponse, null, order, false);
             List<EntityExpr> exprs = UtilMisc.toList(
                     EntityCondition.makeCondition("paymentServiceTypeEnumId", EntityOperator.EQUALS, CAPTURE_SERVICE_TYPE),
                     EntityCondition.makeCondition(EntityFunction.upperField("referenceNum"), EntityComparisonOperator.NOT_EQUAL,
@@ -2812,7 +2812,7 @@ public class PaymentGatewayServices {
         List<GenericValue> authTransactions = null;
         try {
             List<String> order = UtilMisc.toList("-transactionDate");
-            List<GenericValue> transactions = orderPaymentPreference.getRelated("PaymentGatewayResponse", null, order, false);
+            List<GenericValue> transactions = orderPaymentPreference.getRelated(org.apache.ofbiz.persistence.entity.x.PaymentGatewayResponse, null, order, false);
             List<EntityExpr> exprs = UtilMisc.toList(EntityCondition.makeCondition("paymentServiceTypeEnumId", EntityOperator.EQUALS,
                     AUTH_SERVICE_TYPE),
                     EntityCondition.makeCondition("paymentServiceTypeEnumId", EntityOperator.EQUALS, REAUTH_SERVICE_TYPE));
@@ -2828,7 +2828,7 @@ public class PaymentGatewayServices {
         Timestamp authTime = null;
 
         if (authTrans != null) {
-            authTime = authTrans.getTimestamp("transactionDate");
+            authTime = authTrans.getTimestamp(org.apache.ofbiz.persistence.entity.x.transactionDate);
         }
 
         return authTime;
@@ -2845,20 +2845,20 @@ public class PaymentGatewayServices {
 
         GenericValue paymentMethod = null;
         try {
-            paymentMethod = orderPaymentPreference.getRelatedOne("PaymentMethod", false);
+            paymentMethod = orderPaymentPreference.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PaymentMethod, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
 
-        if (paymentMethod != null && "CREDIT_CARD".equals(paymentMethod.getString("paymentMethodTypeId"))) {
+        if (paymentMethod != null && "CREDIT_CARD".equals(paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
             GenericValue creditCard = null;
             try {
-                creditCard = paymentMethod.getRelatedOne("CreditCard", false);
+                creditCard = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CreditCard, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
             if (creditCard != null) {
-                String cardType = creditCard.getString("cardType");
+                String cardType = creditCard.getString(org.apache.ofbiz.persistence.entity.x.cardType);
                 // add more types as necessary -- maybe we should create seed data for credit card types??
                 if ("CCT_DISCOVER".equals(cardType)) {
                     reauthDays = EntityUtilProperties.getPropertyValue(paymentConfig, "payment.general.reauth.disc.days", "90", delegator);
@@ -2873,7 +2873,7 @@ public class PaymentGatewayServices {
                 }
 
             }
-        } else if (paymentMethod != null && "EXT_PAYPAL".equals(paymentMethod.get("paymentMethodTypeId"))) {
+        } else if (paymentMethod != null && "EXT_PAYPAL".equals(paymentMethod.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
             reauthDays = EntityUtilProperties.getPropertyValue(paymentConfig, "payment.general.reauth.paypal.days", "3", delegator);
         }
 
@@ -2937,11 +2937,11 @@ public class PaymentGatewayServices {
 
     public static Map<String, Object> savePaymentGatewayResponse(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        GenericValue pgr = (GenericValue) context.get("paymentGatewayResponse");
+        GenericValue pgr = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponse);
         if ("PaymentGatewayResponse".equals(pgr.getEntityName())) {
-            String message = pgr.getString("gatewayMessage");
+            String message = pgr.getString(org.apache.ofbiz.persistence.entity.x.gatewayMessage);
             if (UtilValidate.isNotEmpty(message) && message.length() > 255) {
-                pgr.set("gatewayMessage", message.substring(0, 255));
+                pgr.set(org.apache.ofbiz.persistence.entity.x.gatewayMessage, message.substring(0, 255));
             }
         }
 
@@ -2956,13 +2956,13 @@ public class PaymentGatewayServices {
 
     public static Map<String, Object> savePaymentGatewayResponseAndMessages(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        GenericValue pgr = (GenericValue) context.get("paymentGatewayResponse");
-        String gatewayMessage = pgr.getString("gatewayMessage");
+        GenericValue pgr = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponse);
+        String gatewayMessage = pgr.getString(org.apache.ofbiz.persistence.entity.x.gatewayMessage);
         if (UtilValidate.isNotEmpty(gatewayMessage) && gatewayMessage.length() > 255) {
-            pgr.set("gatewayMessage", gatewayMessage.substring(0, 255));
+            pgr.set(org.apache.ofbiz.persistence.entity.x.gatewayMessage, gatewayMessage.substring(0, 255));
         }
         @SuppressWarnings("unchecked")
-        List<GenericValue> messages = (List<GenericValue>) context.get("messages");
+        List<GenericValue> messages = (List<GenericValue>) context.get(org.apache.ofbiz.persistence.entity.x.messages);
 
         try {
             delegator.create(pgr);
@@ -2978,24 +2978,24 @@ public class PaymentGatewayServices {
 
     // manual auth service
     public static Map<String, Object> processManualCcAuth(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
 
         // security check
         if (!security.hasEntityPermission("MANUAL", "_PAYMENT", userLogin) && !security.hasEntityPermission("ACCOUNTING", "_CREATE", userLogin)) {
-            Debug.logWarning("**** Security [" + (new Date()).toString() + "]: " + userLogin.get("userLoginId")
+            Debug.logWarning("**** Security [" + (new Date()).toString() + "]: " + userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId)
                     + " attempt to run manual payment transaction!", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPaymentTransactionNotAuthorized", locale));
         }
 
-        String paymentMethodId = (String) context.get("paymentMethodId");
-        String productStoreId = (String) context.get("productStoreId");
-        String securityCode = (String) context.get("securityCode");
-        BigDecimal amount = (BigDecimal) context.get("amount");
+        String paymentMethodId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
+        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
+        String securityCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.securityCode);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
 
         // check the payment method; verify type
         GenericValue paymentMethod;
@@ -3005,7 +3005,7 @@ public class PaymentGatewayServices {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
-        if (paymentMethod == null || !"CREDIT_CARD".equals(paymentMethod.getString("paymentMethodTypeId"))) {
+        if (paymentMethod == null || !"CREDIT_CARD".equals(paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPaymentManualAuthOnlyForCreditCard", locale));
         }
@@ -3013,7 +3013,7 @@ public class PaymentGatewayServices {
         // get the billToParty object
         GenericValue billToParty;
         try {
-            billToParty = paymentMethod.getRelatedOne("Party", false);
+            billToParty = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Party, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -3045,15 +3045,15 @@ public class PaymentGatewayServices {
                     "AccountingPaymentSettingNotFound",
                     UtilMisc.toMap("productStoreId", productStoreId, "transactionType", ""), locale));
         } else {
-            String customMethodId = paymentSettings.getString("paymentCustomMethodId");
+            String customMethodId = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentCustomMethodId);
             if (UtilValidate.isNotEmpty(customMethodId)) {
                 paymentService = getPaymentCustomMethod(delegator, customMethodId);
             }
             if (UtilValidate.isEmpty(paymentService)) {
-                paymentService = paymentSettings.getString("paymentService");
+                paymentService = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentService);
             }
-            paymentConfig = paymentSettings.getString("paymentPropertiesPath");
-            paymentGatewayConfigId = paymentSettings.getString("paymentGatewayConfigId");
+            paymentConfig = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath);
+            paymentGatewayConfigId = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
             if (UtilValidate.isEmpty(paymentConfig)) {
                 paymentConfig = "payment.properties";
             }
@@ -3061,14 +3061,14 @@ public class PaymentGatewayServices {
 
         // prepare the order payment preference (facade)
         GenericValue orderPaymentPref = delegator.makeValue("OrderPaymentPreference", new HashMap<>());
-        orderPaymentPref.set("orderPaymentPreferenceId", "_NA_");
-        orderPaymentPref.set("orderId", "_NA_");
-        orderPaymentPref.set("presentFlag", "N");
-        orderPaymentPref.set("overflowFlag", "Y");
-        orderPaymentPref.set("paymentMethodTypeId", "CREDIT_CARD");
-        orderPaymentPref.set("paymentMethodId", paymentMethodId);
+        orderPaymentPref.set(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId, "_NA_");
+        orderPaymentPref.set(org.apache.ofbiz.persistence.entity.x.orderId, "_NA_");
+        orderPaymentPref.set(org.apache.ofbiz.persistence.entity.x.presentFlag, "N");
+        orderPaymentPref.set(org.apache.ofbiz.persistence.entity.x.overflowFlag, "Y");
+        orderPaymentPref.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, "CREDIT_CARD");
+        orderPaymentPref.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, paymentMethodId);
         if (UtilValidate.isNotEmpty(securityCode)) {
-            orderPaymentPref.set("securityCode", securityCode);
+            orderPaymentPref.set(org.apache.ofbiz.persistence.entity.x.securityCode, securityCode);
         }
         // this record is not to be stored, just passed to the service for use
 
@@ -3104,7 +3104,7 @@ public class PaymentGatewayServices {
             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(response));
         }
 
-        Boolean authResult = (Boolean) response.get("authResult");
+        Boolean authResult = (Boolean) response.get(org.apache.ofbiz.persistence.entity.x.authResult);
         Debug.logInfo("Authorization service returned: " + authResult, MODULE);
         if (authResult != null && authResult) {
             return ServiceUtil.returnSuccess();
@@ -3116,23 +3116,23 @@ public class PaymentGatewayServices {
 
     // manual processing service
     public static Map<String, Object> processManualCcTx(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
         // security check
         if (!security.hasEntityPermission("MANUAL", "_PAYMENT", userLogin) && !security.hasEntityPermission("ACCOUNTING", "_CREATE", userLogin)) {
-            Debug.logWarning("**** Security [" + (new Date()).toString() + "]: " + userLogin.get("userLoginId")
+            Debug.logWarning("**** Security [" + (new Date()).toString() + "]: " + userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId)
                     + " attempt to run manual payment transaction!", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPaymentTransactionNotAuthorized", locale));
         }
-        String orderPaymentPreferenceId = (String) context.get("orderPaymentPreferenceId");
-        String paymentMethodTypeId = (String) context.get("paymentMethodTypeId");
-        String productStoreId = (String) context.get("productStoreId");
-        String transactionType = (String) context.get("transactionType");
-        String referenceCode = (String) context.get("referenceCode");
+        String orderPaymentPreferenceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId);
+        String paymentMethodTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
+        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
+        String transactionType = (String) context.get(org.apache.ofbiz.persistence.entity.x.transactionType);
+        String referenceCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.referenceCode);
         if (referenceCode == null) {
             referenceCode = Long.valueOf(System.currentTimeMillis()).toString();
         }
@@ -3158,7 +3158,7 @@ public class PaymentGatewayServices {
         }
         // Get the OrderHeader
         GenericValue orderHeader = null;
-        String orderId = paymentPref.getString("orderId");
+        String orderId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderId);
         try {
             orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
         } catch (GenericEntityException e) {
@@ -3191,15 +3191,15 @@ public class PaymentGatewayServices {
                     "AccountingPaymentSettingNotFound",
                     UtilMisc.toMap("productStoreId", productStoreId, "transactionType", transactionType), locale));
         } else {
-            paymentGatewayConfigId = paymentSettings.getString("paymentGatewayConfigId");
-            String customMethodId = paymentSettings.getString("paymentCustomMethodId");
+            paymentGatewayConfigId = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+            String customMethodId = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentCustomMethodId);
             if (UtilValidate.isNotEmpty(customMethodId)) {
                 paymentService = getPaymentCustomMethod(delegator, customMethodId);
             }
             if (UtilValidate.isEmpty(paymentService)) {
-                paymentService = paymentSettings.getString("paymentService");
+                paymentService = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentService);
             }
-            paymentConfig = paymentSettings.getString("paymentPropertiesPath");
+            paymentConfig = paymentSettings.getString(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath);
             if (paymentConfig == null) {
                 paymentConfig = "payment.properties";
             }
@@ -3215,27 +3215,27 @@ public class PaymentGatewayServices {
         if ("CREDIT_CARD".equals(paymentMethodTypeId)) {
             GenericValue creditCard = delegator.makeValue("CreditCard");
             creditCard.setAllFields(context, true, null, null);
-            if (creditCard.get("firstNameOnCard") == null || creditCard.get("lastNameOnCard") == null || creditCard.get("cardType") == null
-                    || creditCard.get("cardNumber") == null) {
+            if (creditCard.get(org.apache.ofbiz.persistence.entity.x.firstNameOnCard) == null || creditCard.get(org.apache.ofbiz.persistence.entity.x.lastNameOnCard) == null || creditCard.get(org.apache.ofbiz.persistence.entity.x.cardType) == null
+                    || creditCard.get(org.apache.ofbiz.persistence.entity.x.cardNumber) == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "AccountingPaymentCreditCardMissingMandatoryFields", locale));
             }
-            String expMonth = (String) context.get("expMonth");
-            String expYear = (String) context.get("expYear");
+            String expMonth = (String) context.get(org.apache.ofbiz.persistence.entity.x.expMonth);
+            String expYear = (String) context.get(org.apache.ofbiz.persistence.entity.x.expYear);
             String expDate = expMonth + "/" + expYear;
-            creditCard.set("expireDate", expDate);
+            creditCard.set(org.apache.ofbiz.persistence.entity.x.expireDate, expDate);
             requestContext.put("creditCard", creditCard);
-            requestContext.put("cardSecurityCode", context.get("cardSecurityCode"));
+            requestContext.put("cardSecurityCode", context.get(org.apache.ofbiz.persistence.entity.x.cardSecurityCode));
             GenericValue billingAddress = delegator.makeValue("PostalAddress");
             billingAddress.setAllFields(context, true, null, null);
-            if (billingAddress.get("address1") == null || billingAddress.get("city") == null || billingAddress.get("postalCode") == null) {
+            if (billingAddress.get(org.apache.ofbiz.persistence.entity.x.address1) == null || billingAddress.get(org.apache.ofbiz.persistence.entity.x.city) == null || billingAddress.get(org.apache.ofbiz.persistence.entity.x.postalCode) == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "AccountingPaymentCreditCardBillingAddressMssingMandatoryFields", locale));
             }
             requestContext.put("billingAddress", billingAddress);
             GenericValue billToEmail = delegator.makeValue("ContactMech");
-            billToEmail.set("infoString", context.get("infoString"));
-            if (billToEmail.get("infoString") == null) {
+            billToEmail.set(org.apache.ofbiz.persistence.entity.x.infoString, context.get(org.apache.ofbiz.persistence.entity.x.infoString));
+            if (billToEmail.get(org.apache.ofbiz.persistence.entity.x.infoString) == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "AccountingPaymentCreditCardEmailAddressCannotBeEmpty", locale));
             }
@@ -3244,7 +3244,7 @@ public class PaymentGatewayServices {
             requestContext.put("referenceCode", referenceCode);
             String currency = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
             requestContext.put("currency", currency);
-            requestContext.put("creditAmount", context.get("amount"));
+            requestContext.put("creditAmount", context.get(org.apache.ofbiz.persistence.entity.x.amount));
         } else {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPaymentTransactionNotYetSupported", locale) + " " + paymentMethodTypeId);
@@ -3290,9 +3290,9 @@ public class PaymentGatewayServices {
             return ServiceUtil.returnError(ServiceUtil.makeErrorMessage(response, null, null, null, null));
         }
         // get the reference number
-        String refNum = (String) response.get("creditRefNum");
-        String code = (String) response.get("creditCode");
-        String msg = (String) response.get("creditMessage");
+        String refNum = (String) response.get(org.apache.ofbiz.persistence.entity.x.creditRefNum);
+        String code = (String) response.get(org.apache.ofbiz.persistence.entity.x.creditCode);
+        String msg = (String) response.get(org.apache.ofbiz.persistence.entity.x.creditMessage);
         Map<String, Object> returnResults = ServiceUtil.returnSuccess(UtilProperties.getMessage(RESOURCE,
                 "AccountingPaymentTransactionManualResult",
                 UtilMisc.toMap("msg", msg, "code", code, "refNum", refNum), locale));
@@ -3304,11 +3304,11 @@ public class PaymentGatewayServices {
     public static Map<String, Object> verifyCreditCard(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        String productStoreId = (String) context.get("productStoreId");
-        String mode = (String) context.get("mode");
-        String paymentMethodId = (String) context.get("paymentMethodId");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
+        String mode = (String) context.get(org.apache.ofbiz.persistence.entity.x.mode);
+        String paymentMethodId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (Debug.infoOn()) {
             Debug.logInfo("Running verifyCreditCard [ " + paymentMethodId + "] for store: " + productStoreId, MODULE);
         }
@@ -3368,9 +3368,9 @@ public class PaymentGatewayServices {
      * Simple test processor; declines all orders &lt; 100.00; approves all orders &gt;= 100.00
      */
     public static Map<String, Object> testProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = new HashMap<>();
-        BigDecimal processAmount = (BigDecimal) context.get("processAmount");
+        BigDecimal processAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
 
         if (processAmount != null && processAmount.compareTo(new BigDecimal("100.00")) >= 0) {
             result.put("authResult", Boolean.TRUE);
@@ -3386,7 +3386,7 @@ public class PaymentGatewayServices {
 
         String refNum = UtilDateTime.nowAsString();
 
-        result.put("processAmount", context.get("processAmount"));
+        result.put("processAmount", context.get(org.apache.ofbiz.persistence.entity.x.processAmount));
         result.put("authRefNum", refNum);
         result.put("authAltRefNum", refNum);
         result.put("authFlag", "X");
@@ -3401,9 +3401,9 @@ public class PaymentGatewayServices {
      * Simple test processor; declines all orders &lt; 100.00; approves all orders &gt; 100.00
      */
     public static Map<String, Object> testProcessorWithCapture(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = new HashMap<>();
-        BigDecimal processAmount = (BigDecimal) context.get("processAmount");
+        BigDecimal processAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
 
         if (processAmount != null && processAmount.compareTo(new BigDecimal("100.00")) >= 0) {
             result.put("authResult", Boolean.TRUE);
@@ -3421,7 +3421,7 @@ public class PaymentGatewayServices {
 
         String refNum = UtilDateTime.nowAsString();
 
-        result.put("processAmount", context.get("processAmount"));
+        result.put("processAmount", context.get(org.apache.ofbiz.persistence.entity.x.processAmount));
         result.put("authRefNum", refNum);
         result.put("authAltRefNum", refNum);
         result.put("captureRefNum", refNum);
@@ -3440,7 +3440,7 @@ public class PaymentGatewayServices {
      *  Test authorize - does random declines
      */
     public static Map<String, Object> testRandomAuthorize(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         String refNum = UtilDateTime.nowAsString();
         int i = SECURE_RANDOM.nextInt(9);
@@ -3452,7 +3452,7 @@ public class PaymentGatewayServices {
             result.put("authFlag", "D");
         }
 
-        result.put("processAmount", context.get("processAmount"));
+        result.put("processAmount", context.get(org.apache.ofbiz.persistence.entity.x.processAmount));
         result.put("authRefNum", refNum);
         result.put("authAltRefNum", refNum);
         result.put("authCode", "100");
@@ -3466,14 +3466,14 @@ public class PaymentGatewayServices {
      * Always approve processor.
      */
     public static Map<String, Object> alwaysApproveProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = new HashMap<>();
         Debug.logInfo("Test Processor Approving Credit Card", MODULE);
 
         String refNum = UtilDateTime.nowAsString();
 
         result.put("authResult", Boolean.TRUE);
-        result.put("processAmount", context.get("processAmount"));
+        result.put("processAmount", context.get(org.apache.ofbiz.persistence.entity.x.processAmount));
         result.put("authRefNum", refNum);
         result.put("authAltRefNum", refNum);
         result.put("authCode", "100");
@@ -3484,14 +3484,14 @@ public class PaymentGatewayServices {
     }
 
     public static Map<String, Object> alwaysApproveWithCapture(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = new HashMap<>();
         String refNum = UtilDateTime.nowAsString();
         Debug.logInfo("Test Processor Approving Credit Card with Capture", MODULE);
 
         result.put("authResult", Boolean.TRUE);
         result.put("captureResult", Boolean.TRUE);
-        result.put("processAmount", context.get("processAmount"));
+        result.put("processAmount", context.get(org.apache.ofbiz.persistence.entity.x.processAmount));
         result.put("authRefNum", refNum);
         result.put("authAltRefNum", refNum);
         result.put("captureRefNum", refNum);
@@ -3509,9 +3509,9 @@ public class PaymentGatewayServices {
      * Always decline processor
      */
     public static Map<String, Object> alwaysDeclineProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        BigDecimal processAmount = (BigDecimal) context.get("processAmount");
+        BigDecimal processAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
         Debug.logInfo("Test Processor Declining Credit Card", MODULE);
 
         String refNum = UtilDateTime.nowAsString();
@@ -3530,9 +3530,9 @@ public class PaymentGatewayServices {
      * Always NSF (not sufficient funds) processor
      */
     public static Map<String, Object> alwaysNsfProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        BigDecimal processAmount = (BigDecimal) context.get("processAmount");
+        BigDecimal processAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
         Debug.logInfo("Test Processor NSF Credit Card", MODULE);
 
         String refNum = UtilDateTime.nowAsString();
@@ -3552,9 +3552,9 @@ public class PaymentGatewayServices {
      * Always fail/bad expire date processor
      */
     public static Map<String, Object> alwaysBadExpireProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        BigDecimal processAmount = (BigDecimal) context.get("processAmount");
+        BigDecimal processAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
         Debug.logInfo("Test Processor Bad Expire Date Credit Card", MODULE);
 
         String refNum = UtilDateTime.nowAsString();
@@ -3574,8 +3574,8 @@ public class PaymentGatewayServices {
      * Fail/bad expire date when year is even processor
      */
     public static Map<String, Object> badExpireEvenProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue creditCard = (GenericValue) context.get("creditCard");
-        String expireDate = creditCard.getString("expireDate");
+        GenericValue creditCard = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.creditCard);
+        String expireDate = creditCard.getString(org.apache.ofbiz.persistence.entity.x.expireDate);
         String lastNumberStr = expireDate.substring(expireDate.length() - 1);
         int lastNumber = Integer.parseInt(lastNumberStr);
 
@@ -3590,9 +3590,9 @@ public class PaymentGatewayServices {
      * Always bad card number processor
      */
     public static Map<String, Object> alwaysBadCardNumberProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        BigDecimal processAmount = (BigDecimal) context.get("processAmount");
+        BigDecimal processAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
         Debug.logInfo("Test Processor Bad Card Number Credit Card", MODULE);
 
         String refNum = UtilDateTime.nowAsString();
@@ -3611,19 +3611,19 @@ public class PaymentGatewayServices {
      * Always fail (error) processor
      */
     public static Map<String, Object> alwaysFailProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                 "AccountingPaymentTestAuthorizationAlwaysFailed", locale));
     }
 
     public static Map<String, Object> testRelease(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
 
         String refNum = UtilDateTime.nowAsString();
 
         result.put("releaseResult", Boolean.TRUE);
-        result.put("releaseAmount", context.get("releaseAmount"));
+        result.put("releaseAmount", context.get(org.apache.ofbiz.persistence.entity.x.releaseAmount));
         result.put("releaseRefNum", refNum);
         result.put("releaseAltRefNum", refNum);
         result.put("releaseFlag", "U");
@@ -3635,14 +3635,14 @@ public class PaymentGatewayServices {
      * Test capture service (returns true)
      */
     public static Map<String, Object> testCapture(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Debug.logInfo("Test Capture Process", MODULE);
 
         String refNum = UtilDateTime.nowAsString();
 
         result.put("captureResult", Boolean.TRUE);
-        result.put("captureAmount", context.get("captureAmount"));
+        result.put("captureAmount", context.get(org.apache.ofbiz.persistence.entity.x.captureAmount));
         result.put("captureRefNum", refNum);
         result.put("captureAltRefNum", refNum);
         result.put("captureFlag", "C");
@@ -3654,9 +3654,9 @@ public class PaymentGatewayServices {
      * Always decline processor
      */
     public static Map<String, Object> testCCProcessorCaptureAlwaysDecline(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        BigDecimal processAmount = (BigDecimal) context.get("captureAmount");
+        BigDecimal processAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.captureAmount);
         Debug.logInfo("Test Processor Declining Credit Card capture", MODULE);
 
         String refNum = UtilDateTime.nowAsString();
@@ -3671,9 +3671,9 @@ public class PaymentGatewayServices {
     }
 
     public static Map<String, Object> testCaptureWithReAuth(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
-        GenericValue authTransaction = (GenericValue) context.get("authTrans");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        GenericValue authTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
         Debug.logInfo("Test Capture with 2 minute delay failure/re-auth process", MODULE);
 
         if (authTransaction == null) {
@@ -3684,11 +3684,11 @@ public class PaymentGatewayServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPaymentCannotBeCaptured", locale));
         }
-        Timestamp txStamp = authTransaction.getTimestamp("transactionDate");
+        Timestamp txStamp = authTransaction.getTimestamp(org.apache.ofbiz.persistence.entity.x.transactionDate);
         Timestamp nowStamp = UtilDateTime.nowTimestamp();
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("captureAmount", context.get("captureAmount"));
+        result.put("captureAmount", context.get(org.apache.ofbiz.persistence.entity.x.captureAmount));
         result.put("captureRefNum", UtilDateTime.nowAsString());
 
         Calendar cal = Calendar.getInstance();
@@ -3714,12 +3714,12 @@ public class PaymentGatewayServices {
      * Test refund service (returns true)
      */
     public static Map<String, Object> testRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Debug.logInfo("Test Refund Process", MODULE);
 
         result.put("refundResult", Boolean.TRUE);
-        result.put("refundAmount", context.get("refundAmount"));
+        result.put("refundAmount", context.get(org.apache.ofbiz.persistence.entity.x.refundAmount));
         result.put("refundRefNum", UtilDateTime.nowAsString());
         result.put("refundFlag", "R");
         result.put("refundMessage", UtilProperties.getMessage(RESOURCE, "AccountingPaymentTestRefund", locale));
@@ -3727,12 +3727,12 @@ public class PaymentGatewayServices {
     }
 
     public static Map<String, Object> testRefundFailure(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Debug.logInfo("Test Refund Process", MODULE);
 
         result.put("refundResult", Boolean.FALSE);
-        result.put("refundAmount", context.get("refundAmount"));
+        result.put("refundAmount", context.get(org.apache.ofbiz.persistence.entity.x.refundAmount));
         result.put("refundRefNum", UtilDateTime.nowAsString());
         result.put("refundFlag", "R");
         result.put("refundMessage", UtilProperties.getMessage(RESOURCE, "AccountingPaymentTestRefundFailure", locale));
@@ -3745,7 +3745,7 @@ public class PaymentGatewayServices {
         try {
             customMethod = EntityQuery.use(delegator).from("CustomMethod").where("customMethodId", customMethodId).queryOne();
             if (UtilValidate.isNotEmpty(customMethod)) {
-                serviceName = customMethod.getString("customMethodName");
+                serviceName = customMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -3758,7 +3758,7 @@ public class PaymentGatewayServices {
 
         List<GenericValue> returnItemResponses = new LinkedList<>();
         try {
-            returnItemResponses = orderHeader.getRelated("ReplacementReturnItemResponse", null, null, false);
+            returnItemResponses = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.ReplacementReturnItemResponse, null, null, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return replacementOrderFlag;

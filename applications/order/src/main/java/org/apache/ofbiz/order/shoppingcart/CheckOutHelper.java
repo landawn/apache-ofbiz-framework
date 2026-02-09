@@ -304,9 +304,9 @@ public class CheckOutHelper {
                     if (UtilValidate.isNotEmpty(billingAccountTerms)) {
                         for (GenericValue billingAccountTerm : billingAccountTerms) {
                             // the term is not copied if in the cart a term of the same type is already set
-                            if (!cart.hasOrderTerm(billingAccountTerm.getString("termTypeId"))) {
-                                cart.addOrderTerm(billingAccountTerm.getString("termTypeId"), billingAccountTerm.getBigDecimal("termValue"),
-                                        billingAccountTerm.getLong("termDays"));
+                            if (!cart.hasOrderTerm(billingAccountTerm.getString(org.apache.ofbiz.persistence.entity.x.termTypeId))) {
+                                cart.addOrderTerm(billingAccountTerm.getString(org.apache.ofbiz.persistence.entity.x.termTypeId), billingAccountTerm.getBigDecimal(org.apache.ofbiz.persistence.entity.x.termValue),
+                                        billingAccountTerm.getLong(org.apache.ofbiz.persistence.entity.x.termDays));
                             }
                         }
                     }
@@ -545,8 +545,8 @@ public class CheckOutHelper {
                             errMsg = UtilProperties.getMessage(RES_ERROR, "checkhelper.gift_card_does_not_exist", cart.getLocale());
                             errorMessages.add(errMsg);
                             gcFieldsOkay = false;
-                        } else if ((finAccount.getBigDecimal("availableBalance") == null)
-                                || !((finAccount.getBigDecimal("availableBalance")).compareTo(FinAccountHelper.getZero()) > 0)) {
+                        } else if ((finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.availableBalance) == null)
+                                || !((finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.availableBalance)).compareTo(FinAccountHelper.getZero()) > 0)) {
                             // if account's available balance (including authorizations) is not greater than zero, then return an error
                             errMsg = UtilProperties.getMessage(RES_ERROR, "checkhelper.gift_card_has_no_value", cart.getLocale());
                             errorMessages.add(errMsg);
@@ -671,26 +671,26 @@ public class CheckOutHelper {
         Map<String, Object> context = this.cart.makeCartMap(this.dispatcher, areOrderItemsExploded);
 
         //get the TrackingCodeOrder List
-        context.put("trackingCodeOrders", trackingCodeOrders);
+        context.put(org.apache.ofbiz.persistence.entity.x.trackingCodeOrders, trackingCodeOrders);
 
         if (distributorId != null) {
-            context.put("distributorId", distributorId);
+            context.put(org.apache.ofbiz.persistence.entity.x.distributorId, distributorId);
         }
         if (affiliateId != null) {
-            context.put("affiliateId", affiliateId);
+            context.put(org.apache.ofbiz.persistence.entity.x.affiliateId, affiliateId);
         }
 
-        context.put("orderId", orderId);
-        context.put("supplierPartyId", supplierPartyId);
-        context.put("grandTotal", grandTotal);
-        context.put("userLogin", userLogin);
-        context.put("visitId", visitId);
+        context.put(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
+        context.put(org.apache.ofbiz.persistence.entity.x.supplierPartyId, supplierPartyId);
+        context.put(org.apache.ofbiz.persistence.entity.x.grandTotal, grandTotal);
+        context.put(org.apache.ofbiz.persistence.entity.x.userLogin, userLogin);
+        context.put(org.apache.ofbiz.persistence.entity.x.visitId, visitId);
         if (UtilValidate.isEmpty(webSiteId)) {
             webSiteId = cart.getWebSiteId();
         }
-        context.put("webSiteId", webSiteId);
-        context.put("originOrderId", originOrderId);
-        context.put("agreementId", cart.getAgreementId());
+        context.put(org.apache.ofbiz.persistence.entity.x.webSiteId, webSiteId);
+        context.put(org.apache.ofbiz.persistence.entity.x.originOrderId, originOrderId);
+        context.put(org.apache.ofbiz.persistence.entity.x.agreementId, cart.getAgreementId());
 
         // need the partyId; don't use userLogin in case of an order via order mgr
         String partyId = this.cart.getPartyId();
@@ -728,10 +728,10 @@ public class CheckOutHelper {
         // ----------
         // If needed, the production runs are created and linked to the order lines.
         //
-        List<GenericValue> orderItems = UtilGenerics.cast(context.get("orderItems"));
+        List<GenericValue> orderItems = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderItems));
         int counter = 0;
         for (GenericValue orderItem : orderItems) {
-            String productId = orderItem.getString("productId");
+            String productId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
             if (productId != null) {
                 try {
                     // do something tricky here: run as the "system" user
@@ -739,15 +739,15 @@ public class CheckOutHelper {
                     GenericValue permUserLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", "system").cache().queryOne();
                     GenericValue productStore = ProductStoreWorker.getProductStore(productStoreId, delegator);
                     GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productId).queryOne();
-                    if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", product.getString("productTypeId"), "parentTypeId",
+                    if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId), "parentTypeId",
                             "AGGREGATED")) {
                         org.apache.ofbiz.product.config.ProductConfigWrapper config = this.cart.findCartItem(counter).getConfigWrapper();
                         Map<String, Object> inputMap = new HashMap<>();
                         inputMap.put("config", config);
-                        inputMap.put("facilityId", productStore.getString("inventoryFacilityId"));
+                        inputMap.put("facilityId", productStore.getString(org.apache.ofbiz.persistence.entity.x.inventoryFacilityId));
                         inputMap.put("orderId", orderId);
-                        inputMap.put("orderItemSeqId", orderItem.getString("orderItemSeqId"));
-                        inputMap.put("quantity", orderItem.getBigDecimal("quantity"));
+                        inputMap.put("orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                        inputMap.put("quantity", orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
                         inputMap.put("userLogin", permUserLogin);
 
                         Map<String, Object> prunResult = dispatcher.runSync("createProductionRunFromConfiguration", inputMap);
@@ -820,12 +820,12 @@ public class CheckOutHelper {
             while (emailIter != null && emailIter.hasNext()) {
                 GenericValue email = emailIter.next();
                 GenericValue orderContactMech = this.delegator.makeValue("OrderContactMech",
-                        UtilMisc.toMap("orderId", orderId, "contactMechId", email.getString("contactMechId"), "contactMechPurposeTypeId",
+                        UtilMisc.toMap("orderId", orderId, "contactMechId", email.getString(org.apache.ofbiz.persistence.entity.x.contactMechId), "contactMechPurposeTypeId",
                                 "ORDER_EMAIL"));
                 toBeStored.add(orderContactMech);
                 if (UtilValidate.isEmpty(ContactHelper.getContactMechByPurpose(party, "ORDER_EMAIL", false))) {
                     GenericValue partyContactMechPurpose = this.delegator.makeValue("PartyContactMechPurpose",
-                            UtilMisc.toMap("partyId", party.getString("partyId"), "contactMechId", email.getString("contactMechId"),
+                            UtilMisc.toMap("partyId", party.getString(org.apache.ofbiz.persistence.entity.x.partyId), "contactMechId", email.getString(org.apache.ofbiz.persistence.entity.x.contactMechId),
                                     "contactMechPurposeTypeId", "ORDER_EMAIL", "fromDate", UtilDateTime.nowTimestamp()));
                     toBeStored.add(partyContactMechPurpose);
                 }
@@ -984,7 +984,7 @@ public class CheckOutHelper {
                 GenericValue billAddr = cpi.getBillingAddress(delegator);
                 if (billAddr != null) {
                     shipAddress = billAddr;
-                    Debug.logInfo("In makeTaxContext no shipping address, but found address with ID [" + shipAddress.get("contactMechId")
+                    Debug.logInfo("In makeTaxContext no shipping address, but found address with ID [" + shipAddress.get(org.apache.ofbiz.persistence.entity.x.contactMechId)
                             + "] from payment method.", MODULE);
                     break;
                 }
@@ -999,7 +999,7 @@ public class CheckOutHelper {
                 if (facilityContactMech != null) {
                     try {
                         shipAddress = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId",
-                                facilityContactMech.getString("contactMechId")).queryOne();
+                                facilityContactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechId)).queryOne();
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
                     }
@@ -1096,9 +1096,9 @@ public class CheckOutHelper {
                 GenericValue userLogin, boolean faceToFace, boolean manualHold, LocalDispatcher dispatcher, Delegator delegator)
                 throws GeneralException {
         // Get some payment related strings
-        String declineMessage = productStore.getString("authDeclinedMessage");
-        String errMessage = productStore.getString("authErrorMessage");
-        String retryOnError = productStore.getString("retryFailedAuths");
+        String declineMessage = productStore.getString(org.apache.ofbiz.persistence.entity.x.authDeclinedMessage);
+        String errMessage = productStore.getString(org.apache.ofbiz.persistence.entity.x.authErrorMessage);
+        String retryOnError = productStore.getString(org.apache.ofbiz.persistence.entity.x.retryFailedAuths);
         if (retryOnError == null) {
             retryOnError = "Y";
         }
@@ -1121,11 +1121,11 @@ public class CheckOutHelper {
             for (GenericValue opp : manualRefPaymentPrefs) {
                 Map<String, Object> authCtx = new HashMap<>();
                 authCtx.put("orderPaymentPreference", opp);
-                if (opp.get("paymentMethodId") == null) {
+                if (opp.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId) == null) {
                     authCtx.put("serviceTypeEnum", "PRDS_PAY_EXTERNAL");
                 }
-                authCtx.put("processAmount", opp.getBigDecimal("maxAmount"));
-                authCtx.put("authRefNum", opp.getString("manualRefNum"));
+                authCtx.put("processAmount", opp.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount));
+                authCtx.put("authRefNum", opp.getString(org.apache.ofbiz.persistence.entity.x.manualRefNum));
                 authCtx.put("authResult", Boolean.TRUE);
                 authCtx.put("userLogin", userLogin);
                 authCtx.put("currencyUomId", currencyUomId);
@@ -1140,16 +1140,16 @@ public class CheckOutHelper {
                 // approve the order
                 OrderChangeHelper.approveOrder(dispatcher, userLogin, orderId, manualHold);
 
-                if ("Y".equalsIgnoreCase(productStore.getString("manualAuthIsCapture"))) {
+                if ("Y".equalsIgnoreCase(productStore.getString(org.apache.ofbiz.persistence.entity.x.manualAuthIsCapture))) {
                     Map<String, Object> captCtx = new HashMap<>();
                     captCtx.put("orderPaymentPreference", opp);
-                    if (opp.get("paymentMethodId") == null) {
+                    if (opp.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId) == null) {
                         captCtx.put("serviceTypeEnum", "PRDS_PAY_EXTERNAL");
                     }
-                    captCtx.put("payToPartyId", productStore.get("payToPartyId"));
+                    captCtx.put("payToPartyId", productStore.get(org.apache.ofbiz.persistence.entity.x.payToPartyId));
                     captCtx.put("captureResult", Boolean.TRUE);
-                    captCtx.put("captureAmount", opp.getBigDecimal("maxAmount"));
-                    captCtx.put("captureRefNum", opp.getString("manualRefNum"));
+                    captCtx.put("captureAmount", opp.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount));
+                    captCtx.put("captureRefNum", opp.getString(org.apache.ofbiz.persistence.entity.x.manualRefNum));
                     captCtx.put("userLogin", userLogin);
                     captCtx.put("currencyUomId", currencyUomId);
 
@@ -1170,7 +1170,7 @@ public class CheckOutHelper {
         List<GenericValue> payPalPaymentPrefs = EntityUtil.filterByAnd(allPaymentPreferences, payPalExprs);
         if (UtilValidate.isNotEmpty(payPalPaymentPrefs)) {
             GenericValue payPalPaymentPref = EntityUtil.getFirst(payPalPaymentPrefs);
-            ExpressCheckoutEvents.doExpressCheckout(productStore.getString("productStoreId"), orderId, payPalPaymentPref, userLogin,
+            ExpressCheckoutEvents.doExpressCheckout(productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId), orderId, payPalPaymentPref, userLogin,
                     delegator, dispatcher);
         }
 
@@ -1181,8 +1181,8 @@ public class CheckOutHelper {
         // Check the payment preferences; if we have ANY w/ status PAYMENT_NOT_AUTH invoke payment service.
         // Invoke payment processing.
         if (UtilValidate.isNotEmpty(onlinePaymentPrefs)) {
-            boolean autoApproveOrder = UtilValidate.isEmpty(productStore.get("autoApproveOrder")) || "Y".equalsIgnoreCase(productStore
-                    .getString("autoApproveOrder"));
+            boolean autoApproveOrder = UtilValidate.isEmpty(productStore.get(org.apache.ofbiz.persistence.entity.x.autoApproveOrder)) || "Y".equalsIgnoreCase(productStore
+                    .getString(org.apache.ofbiz.persistence.entity.x.autoApproveOrder));
             if (orderTotal.compareTo(BigDecimal.ZERO) == 0 && autoApproveOrder) {
                 // if there is nothing to authorize; don't bother
                 boolean ok = OrderChangeHelper.approveOrder(dispatcher, userLogin, orderId, manualHold);
@@ -1238,7 +1238,7 @@ public class CheckOutHelper {
                     // set the order and item status to approved
                     if (autoApproveOrder) {
                         List<GenericValue> productStorePaymentSettingList = EntityQuery.use(delegator).from("ProductStorePaymentSetting")
-                                .where("productStoreId", productStore.getString("productStoreId"), "paymentMethodTypeId", "CREDIT_CARD",
+                                .where("productStoreId", productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId), "paymentMethodTypeId", "CREDIT_CARD",
                                         "paymentService", "cyberSourceCCAuth").queryList();
                         if (!productStorePaymentSettingList.isEmpty()) {
                             String decision = (String) paymentResult.get("authCode");
@@ -1354,7 +1354,7 @@ public class CheckOutHelper {
         BigDecimal prefTotal = BigDecimal.ZERO;
         if (allPaymentPrefs != null) {
             for (GenericValue pref : allPaymentPrefs) {
-                BigDecimal maxAmount = pref.getBigDecimal("maxAmount");
+                BigDecimal maxAmount = pref.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount);
                 if (maxAmount == null) {
                     maxAmount = BigDecimal.ZERO;
                 }
@@ -1365,13 +1365,13 @@ public class CheckOutHelper {
         if (prefTotal.compareTo(cartTotal) > 0) {
             BigDecimal change = prefTotal.subtract(cartTotal).negate();
             GenericValue newPref = delegator.makeValue("OrderPaymentPreference");
-            newPref.set("orderId", orderId);
-            newPref.set("paymentMethodTypeId", "CASH");
-            newPref.set("statusId", "PAYMENT_RECEIVED");
-            newPref.set("maxAmount", change);
-            newPref.set("createdDate", UtilDateTime.nowTimestamp());
+            newPref.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
+            newPref.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, "CASH");
+            newPref.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_RECEIVED");
+            newPref.set(org.apache.ofbiz.persistence.entity.x.maxAmount, change);
+            newPref.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
             if (userLogin != null) {
-                newPref.set("createdByUserLogin", userLogin.getString("userLoginId"));
+                newPref.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
             }
             delegator.createSetNextSeqId(newPref);
         }
@@ -1389,7 +1389,7 @@ public class CheckOutHelper {
         if (shippingAddressObj == null) {
             return ServiceUtil.returnSuccess("success");
         }
-        String shippingAddress = UtilFormatOut.checkNull(shippingAddressObj.getString("address1")).toUpperCase(Locale.getDefault());
+        String shippingAddress = UtilFormatOut.checkNull(shippingAddressObj.getString(org.apache.ofbiz.persistence.entity.x.address1)).toUpperCase(Locale.getDefault());
         shippingAddress = UtilFormatOut.makeSqlSafe(shippingAddress);
         List<EntityExpr> exprs = UtilMisc.toList(EntityCondition.makeCondition(
                 EntityCondition.makeCondition(EntityFunction.upperField("denylistString"), EntityOperator.EQUALS,
@@ -1400,13 +1400,13 @@ public class CheckOutHelper {
 
         List<GenericValue> paymentMethods = this.cart.getPaymentMethods();
         for (GenericValue paymentMethod : paymentMethods) {
-            if ((paymentMethod != null) && ("CREDIT_CARD".equals(paymentMethod.getString("paymentMethodTypeId")))) {
+            if ((paymentMethod != null) && ("CREDIT_CARD".equals(paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId)))) {
                 GenericValue creditCard = null;
                 GenericValue billingAddress = null;
                 try {
-                    creditCard = paymentMethod.getRelatedOne("CreditCard", false);
+                    creditCard = paymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CreditCard, false);
                     if (creditCard != null) {
-                        billingAddress = creditCard.getRelatedOne("PostalAddress", false);
+                        billingAddress = creditCard.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
                     }
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Problems getting credit card from payment method", MODULE);
@@ -1414,13 +1414,13 @@ public class CheckOutHelper {
                     return ServiceUtil.returnError(errMsg);
                 }
                 if (creditCard != null) {
-                    String creditCardNumber = UtilFormatOut.checkNull(creditCard.getString("cardNumber"));
+                    String creditCardNumber = UtilFormatOut.checkNull(creditCard.getString(org.apache.ofbiz.persistence.entity.x.cardNumber));
                     exprs.add(EntityCondition.makeCondition(
                             EntityCondition.makeCondition("denylistString", EntityOperator.EQUALS, creditCardNumber), EntityOperator.AND,
                             EntityCondition.makeCondition("orderDenylistTypeId", EntityOperator.EQUALS, "DENYLIST_CREDITCARD")));
                 }
                 if (billingAddress != null) {
-                    String address = UtilFormatOut.checkNull(billingAddress.getString("address1").toUpperCase(Locale.getDefault()));
+                    String address = UtilFormatOut.checkNull(billingAddress.getString(org.apache.ofbiz.persistence.entity.x.address1).toUpperCase(Locale.getDefault()));
                     address = UtilFormatOut.makeSqlSafe(address);
                     exprs.add(EntityCondition.makeCondition(
                             EntityCondition.makeCondition(EntityFunction.upperField("denylistString"), EntityOperator.EQUALS,
@@ -1467,13 +1467,13 @@ public class CheckOutHelper {
     public Map<String, Object> failedDenylistCheck(GenericValue userLogin, GenericValue productStore) {
         Map<String, Object> result;
         String errMsg = null;
-        String rejectMessage = productStore.getString("authFraudMessage");
+        String rejectMessage = productStore.getString(org.apache.ofbiz.persistence.entity.x.authFraudMessage);
         String orderId = this.cart.getOrderId();
 
         try {
             if (userLogin != null) {
                 // nuke the userlogin
-                userLogin.set("enabled", "N");
+                userLogin.set(org.apache.ofbiz.persistence.entity.x.enabled, "N");
                 userLogin.store();
             } else {
                 userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", "system").cache().queryOne();
@@ -1518,7 +1518,7 @@ public class CheckOutHelper {
         if (orderHeader != null) {
             List<GenericValue> paymentPrefs = null;
             try {
-                paymentPrefs = orderHeader.getRelated("OrderPaymentPreference", null, null, false);
+                paymentPrefs = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderPaymentPreference, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Problems getting order payments", MODULE);
                 errMsg = UtilProperties.getMessage(RES_ERROR, "checkhelper.problems_getting_payment_preference", (cart != null ? cart.getLocale()
@@ -1531,10 +1531,10 @@ public class CheckOutHelper {
                     Debug.logError("Too many payment preferences, you cannot have more then one when using external gateways", MODULE);
                 }
                 GenericValue paymentPreference = EntityUtil.getFirst(paymentPrefs);
-                String paymentMethodTypeId = paymentPreference.getString("paymentMethodTypeId");
+                String paymentMethodTypeId = paymentPreference.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
                 if (paymentMethodTypeId.startsWith("EXT_")) {
                     // PayPal with a PaymentMethod is not an external payment method
-                    if (!("EXT_PAYPAL".equals(paymentMethodTypeId) && UtilValidate.isNotEmpty(paymentPreference.getString("paymentMethodId")))) {
+                    if (!("EXT_PAYPAL".equals(paymentMethodTypeId) && UtilValidate.isNotEmpty(paymentPreference.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId)))) {
                         String type = paymentMethodTypeId.substring(4);
                         result = ServiceUtil.returnSuccess();
                         result.put("type", type.toLowerCase(Locale.getDefault()));
@@ -1776,8 +1776,8 @@ public class CheckOutHelper {
         Map<String, BigDecimal> accountMap = new HashMap<>();
         if (paymentPrefs != null) {
             for (GenericValue pp : paymentPrefs) {
-                if (pp.get("billingAccountId") != null) {
-                    accountMap.put(pp.getString("billingAccountId"), pp.getBigDecimal("maxAmount"));
+                if (pp.get(org.apache.ofbiz.persistence.entity.x.billingAccountId) != null) {
+                    accountMap.put(pp.getString(org.apache.ofbiz.persistence.entity.x.billingAccountId), pp.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount));
                 }
             }
         }
@@ -1895,7 +1895,7 @@ public class CheckOutHelper {
     public void validateGiftCardAmounts() {
         // get the product store
         GenericValue productStore = ProductStoreWorker.getProductStore(cart.getProductStoreId(), delegator);
-        if (productStore != null && !"Y".equalsIgnoreCase(productStore.getString("checkGcBalance"))) {
+        if (productStore != null && !"Y".equalsIgnoreCase(productStore.getString(org.apache.ofbiz.persistence.entity.x.checkGcBalance))) {
             return;
         }
 
@@ -1913,8 +1913,8 @@ public class CheckOutHelper {
                 ctx.put("currency", cart.getCurrency());
                 if ("ofbiz".equalsIgnoreCase(giftCardType)) {
                     balanceField = "balance";
-                    ctx.put("cardNumber", gc.getString("cardNumber"));
-                    ctx.put("pinNumber", gc.getString("pinNumber"));
+                    ctx.put("cardNumber", gc.getString(org.apache.ofbiz.persistence.entity.x.cardNumber));
+                    ctx.put("pinNumber", gc.getString(org.apache.ofbiz.persistence.entity.x.pinNumber));
                     gcBalanceMap = dispatcher.runSync("checkGiftCertificateBalance", ctx);
                     if (ServiceUtil.isError(gcBalanceMap)) {
                         Debug.logError(ServiceUtil.getErrorMessage(gcBalanceMap), MODULE);
@@ -1923,8 +1923,8 @@ public class CheckOutHelper {
                 if ("valuelink".equalsIgnoreCase(giftCardType)) {
                     balanceField = "balance";
                     ctx.put("paymentConfig", paymentConfig);
-                    ctx.put("cardNumber", gc.getString("cardNumber"));
-                    ctx.put("pin", gc.getString("pinNumber"));
+                    ctx.put("cardNumber", gc.getString(org.apache.ofbiz.persistence.entity.x.cardNumber));
+                    ctx.put("pin", gc.getString(org.apache.ofbiz.persistence.entity.x.pinNumber));
                     gcBalanceMap = dispatcher.runSync("balanceInquireGiftCard", ctx);
                     if (ServiceUtil.isError(gcBalanceMap)) {
                         Debug.logError(ServiceUtil.getErrorMessage(gcBalanceMap), MODULE);
@@ -1941,11 +1941,11 @@ public class CheckOutHelper {
             }
 
             // get the bill-up to amount
-            BigDecimal billUpTo = cart.getPaymentAmount(gc.getString("paymentMethodId"));
+            BigDecimal billUpTo = cart.getPaymentAmount(gc.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
 
             // null bill-up to means use the full balance || update the bill-up to with the balance
             if (billUpTo == null || billUpTo.compareTo(BigDecimal.ZERO) == 0 || gcBalance.compareTo(billUpTo) < 0) {
-                cart.addPaymentAmount(gc.getString("paymentMethodId"), gcBalance);
+                cart.addPaymentAmount(gc.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId), gcBalance);
             }
         }
     }

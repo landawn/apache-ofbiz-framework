@@ -103,7 +103,7 @@ public class OfbizPathShortener {
                 .where("originalPathHash", generateHash(path))
                 .cache()
                 .queryFirst();
-        return existingPath != null ? existingPath.getString("shortenedPath") : null;
+        return existingPath != null ? existingPath.getString(org.apache.ofbiz.persistence.entity.x.shortenedPath) : null;
     }
 
     /**
@@ -169,7 +169,7 @@ public class OfbizPathShortener {
                 .cache()
                 .queryOne();
         return existingPath != null
-                ? existingPath.getString("originalPath")
+                ? existingPath.getString(org.apache.ofbiz.persistence.entity.x.originalPath)
                 : null;
     }
 

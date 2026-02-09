@@ -126,11 +126,11 @@ public class ICalConverter {
 
     protected static VAlarm createAlarm(GenericValue workEffortEventReminder) {
         VAlarm alarm = null;
-        Timestamp reminderStamp = workEffortEventReminder.getTimestamp("reminderDateTime");
+        Timestamp reminderStamp = workEffortEventReminder.getTimestamp(org.apache.ofbiz.persistence.entity.x.reminderDateTime);
         if (reminderStamp != null) {
             alarm = new VAlarm(new DateTime(reminderStamp));
         } else {
-            TimeDuration duration = TimeDuration.fromNumber(workEffortEventReminder.getLong("reminderOffset"));
+            TimeDuration duration = TimeDuration.fromNumber(workEffortEventReminder.getLong(org.apache.ofbiz.persistence.entity.x.reminderOffset));
             alarm = new VAlarm(new Dur(duration.days(), duration.hours(), duration.minutes(), duration.seconds()));
         }
         return alarm;
@@ -153,7 +153,7 @@ public class ICalConverter {
         setWorkEffortServiceMap(component, serviceMap);
         serviceMap.put("workEffortTypeId", "VTODO".equals(component.getName()) ? "TASK" : "EVENT");
         serviceMap.put("currentStatusId", "VTODO".equals(component.getName()) ? "CAL_NEEDS_ACTION" : "CAL_TENTATIVE");
-        serviceMap.put("partyId", ((GenericValue) context.get("userLogin")).get("partyId"));
+        serviceMap.put("partyId", ((GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin)).get("partyId"));
         serviceMap.put("roleTypeId", "CAL_OWNER");
         serviceMap.put("statusId", "PRTYASGN_ASSIGNED");
         Map<String, Object> serviceResult = invokeService("createWorkEffortAndPartyAssign", serviceMap, context);
@@ -164,7 +164,7 @@ public class ICalConverter {
         if (workEffortId != null) {
             replaceProperty(component.getProperties(), toXProperty(WORKEFFORT_ID_X_PROP_NAME, workEffortId));
             serviceMap.clear();
-            serviceMap.put("workEffortIdFrom", context.get("workEffortId"));
+            serviceMap.put("workEffortIdFrom", context.get(org.apache.ofbiz.persistence.entity.x.workEffortId));
             serviceMap.put("workEffortIdTo", workEffortId);
             serviceMap.put("workEffortAssocTypeId", "WORK_EFF_DEPENDENCY");
             serviceMap.put("fromDate", new Timestamp(System.currentTimeMillis()));
@@ -318,18 +318,18 @@ public class ICalConverter {
 
     protected static void getAlarms(GenericValue workEffort, ComponentList alarms) throws GenericEntityException {
         Description description = null;
-        if (workEffort.get("description") != null) {
-            description = new Description(workEffort.getString("description"));
+        if (workEffort.get(org.apache.ofbiz.persistence.entity.x.description) != null) {
+            description = new Description(workEffort.getString(org.apache.ofbiz.persistence.entity.x.description));
         } else {
-            description = new Description(workEffort.getString("workEffortName"));
+            description = new Description(workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortName));
         }
         Summary summary = new Summary(UtilProperties.getMessage("WorkEffortUiLabels", "WorkEffortEventReminder", Locale.getDefault()));
         Delegator delegator = workEffort.getDelegator();
-        String workEffortId = workEffort.getString("workEffortId");
+        String workEffortId = workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
         List<GenericValue> reminderList = EntityQuery.use(delegator).from("WorkEffortEventReminder").where("workEffortId",
-                workEffort.get("workEffortId")).queryList();
+                workEffort.get(org.apache.ofbiz.persistence.entity.x.workEffortId)).queryList();
         for (GenericValue reminder : reminderList) {
-            String reminderId = workEffortId + "-" + reminder.getString("sequenceId");
+            String reminderId = workEffortId + "-" + reminder.getString(org.apache.ofbiz.persistence.entity.x.sequenceId);
             VAlarm alarm = null;
             PropertyList alarmProps = null;
             boolean newAlarm = true;
@@ -351,10 +351,10 @@ public class ICalConverter {
                 alarmProps = alarm.getProperties();
                 alarmProps.add(new XProperty(REMINDER_X_PROP_NAME, reminderId));
             }
-            GenericValue contactMech = reminder.getRelatedOne("ContactMech", false);
-            if (contactMech != null && "EMAIL_ADDRESS".equals(contactMech.get("contactMechTypeId"))) {
+            GenericValue contactMech = reminder.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ContactMech, false);
+            if (contactMech != null && "EMAIL_ADDRESS".equals(contactMech.get(org.apache.ofbiz.persistence.entity.x.contactMechTypeId))) {
                 try {
-                    alarmProps.add(new Attendee(contactMech.getString("infoString")));
+                    alarmProps.add(new Attendee(contactMech.getString(org.apache.ofbiz.persistence.entity.x.infoString)));
                     alarmProps.add(Action.EMAIL);
                     alarmProps.add(summary);
                     alarmProps.add(description);
@@ -388,14 +388,14 @@ public class ICalConverter {
      * @throws GenericEntityException if communications with the database failed
      */
     public static ResponseProperties getICalendar(String workEffortId, Map<String, Object> context) throws GenericEntityException {
-        Delegator delegator = (Delegator) context.get("delegator");
+        Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
         GenericValue publishProperties = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", workEffortId).queryOne();
         if (!isCalendarPublished(publishProperties)) {
             Debug.logInfo("WorkEffort calendar is not published: " + workEffortId, MODULE);
             return ICalWorker.createNotFoundResponse(null);
         }
-        if (!"WES_PUBLIC".equals(publishProperties.get("scopeEnumId"))) {
-            if (context.get("userLogin") == null) {
+        if (!"WES_PUBLIC".equals(publishProperties.get(org.apache.ofbiz.persistence.entity.x.scopeEnumId))) {
+            if (context.get(org.apache.ofbiz.persistence.entity.x.userLogin) == null) {
                 return ICalWorker.createNotAuthorizedResponse(null);
             }
             if (!hasPermission(workEffortId, "VIEW", context)) {
@@ -427,7 +427,7 @@ public class ICalConverter {
     }
 
     protected static void getPartyUrl(Property property, GenericValue partyAssign, Map<String, Object> context) {
-        Map<String, ? extends Object> serviceMap = UtilMisc.toMap("partyId", partyAssign.get("partyId"));
+        Map<String, ? extends Object> serviceMap = UtilMisc.toMap("partyId", partyAssign.get(org.apache.ofbiz.persistence.entity.x.partyId));
         Map<String, Object> resultMap = invokeService("getPartyICalUrl", serviceMap, context);
         String iCalUrl = (String) resultMap.get("iCalUrl");
         if (iCalUrl != null) {
@@ -443,7 +443,7 @@ public class ICalConverter {
     }
 
     protected static List<GenericValue> getRelatedWorkEfforts(GenericValue workEffort, Map<String, Object> context) {
-        Map<String, ? extends Object> serviceMap = UtilMisc.toMap("workEffortId", workEffort.getString("workEffortId"));
+        Map<String, ? extends Object> serviceMap = UtilMisc.toMap("workEffortId", workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId));
         Map<String, Object> resultMap = invokeService("getICalWorkEfforts", serviceMap, context);
         List<GenericValue> workEfforts = UtilGenerics.checkCollection(resultMap.get("workEfforts"), GenericValue.class);
         if (workEfforts != null) {
@@ -453,7 +453,7 @@ public class ICalConverter {
     }
 
     protected static boolean hasPermission(String workEffortId, String action, Map<String, Object> context) {
-        if (context.get("userLogin") == null) {
+        if (context.get(org.apache.ofbiz.persistence.entity.x.userLogin) == null) {
             return false;
         }
         Map<String, ? extends Object> serviceMap = UtilMisc.toMap("workEffortId", workEffortId, "mainAction", action);
@@ -466,8 +466,8 @@ public class ICalConverter {
     }
 
     protected static Map<String, Object> invokeService(String serviceName, Map<String, ? extends Object> serviceMap, Map<String, Object> context) {
-        LocalDispatcher dispatcher = (LocalDispatcher) context.get("dispatcher");
-        Locale locale = (Locale) context.get("locale");
+        LocalDispatcher dispatcher = (LocalDispatcher) context.get(org.apache.ofbiz.persistence.entity.x.dispatcher);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> localMap = new HashMap<>();
         try {
             ModelService modelService = null;
@@ -487,10 +487,10 @@ public class ICalConverter {
             Debug.logError(e, errMsg, MODULE);
             return ServiceUtil.returnError(errMsg + e);
         }
-        if (context.get("userLogin") != null) {
-            localMap.put("userLogin", context.get("userLogin"));
+        if (context.get(org.apache.ofbiz.persistence.entity.x.userLogin) != null) {
+            localMap.put("userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
         }
-        localMap.put("locale", context.get("locale"));
+        localMap.put("locale", context.get(org.apache.ofbiz.persistence.entity.x.locale));
         try {
             Map<String, Object> result = dispatcher.runSync(serviceName, localMap);
             if (ServiceUtil.isError(result)) {
@@ -506,10 +506,10 @@ public class ICalConverter {
     }
 
     protected static boolean isCalendarPublished(GenericValue publishProperties) {
-        if (publishProperties == null || !"PUBLISH_PROPS".equals(publishProperties.get("workEffortTypeId"))) {
+        if (publishProperties == null || !"PUBLISH_PROPS".equals(publishProperties.get(org.apache.ofbiz.persistence.entity.x.workEffortTypeId))) {
             return false;
         }
-        DateRange range = new DateRange(publishProperties.getTimestamp("actualStartDate"), publishProperties.getTimestamp("actualCompletionDate"));
+        DateRange range = new DateRange(publishProperties.getTimestamp(org.apache.ofbiz.persistence.entity.x.actualStartDate), publishProperties.getTimestamp(org.apache.ofbiz.persistence.entity.x.actualCompletionDate));
         return range.includesDate(new Date());
     }
 
@@ -524,19 +524,19 @@ public class ICalConverter {
             }
         }
         ParameterList parameterList = property.getParameters();
-        replaceParameter(parameterList, toXParameter(PARTY_ID_X_PARAM_NAME, partyAssign.getString("partyId")));
+        replaceParameter(parameterList, toXParameter(PARTY_ID_X_PARAM_NAME, partyAssign.getString(org.apache.ofbiz.persistence.entity.x.partyId)));
         replaceParameter(parameterList, new Cn(makePartyName(partyAssign)));
-        replaceParameter(parameterList, toParticipationStatus(partyAssign.getString("assignmentStatusId")));
+        replaceParameter(parameterList, toParticipationStatus(partyAssign.getString(org.apache.ofbiz.persistence.entity.x.assignmentStatusId)));
     }
 
     protected static void loadRelatedParties(List<GenericValue> relatedParties, PropertyList componentProps, Map<String, Object> context) {
         PropertyList attendees = componentProps.getProperties("ATTENDEE");
         for (GenericValue partyValue : relatedParties) {
-            if ("CAL_ORGANIZER~CAL_OWNER".contains(partyValue.getString("roleTypeId"))) {
+            if ("CAL_ORGANIZER~CAL_OWNER".contains(partyValue.getString(org.apache.ofbiz.persistence.entity.x.roleTypeId))) {
                 // RFC 2445 4.6.1, 4.6.2, and 4.6.3 ORGANIZER can appear only once
                 replaceProperty(componentProps, createOrganizer(partyValue, context));
             } else {
-                String partyId = partyValue.getString("partyId");
+                String partyId = partyValue.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                 boolean newAttendee = true;
                 Attendee attendee = null;
                 Iterator<Attendee> i = UtilGenerics.cast(attendees.iterator());
@@ -559,28 +559,28 @@ public class ICalConverter {
 
     protected static void loadWorkEffort(PropertyList componentProps, GenericValue workEffort) {
         replaceProperty(componentProps, new DtStamp()); // iCalendar object created date/time
-        replaceProperty(componentProps, toClazz(workEffort.getString("scopeEnumId")));
-        replaceProperty(componentProps, toCreated(workEffort.getTimestamp("createdDate")));
-        replaceProperty(componentProps, toDescription(workEffort.getString("description")));
-        replaceProperty(componentProps, toDtStart(workEffort.getTimestamp("estimatedStartDate")));
-        replaceProperty(componentProps, toLastModified(workEffort.getTimestamp("lastModifiedDate")));
-        replaceProperty(componentProps, toPriority(workEffort.getLong("priority")));
-        replaceProperty(componentProps, toLocation(workEffort.getString("locationDesc")));
-        replaceProperty(componentProps, toStatus(workEffort.getString("currentStatusId")));
-        replaceProperty(componentProps, toSummary(workEffort.getString("workEffortName")));
+        replaceProperty(componentProps, toClazz(workEffort.getString(org.apache.ofbiz.persistence.entity.x.scopeEnumId)));
+        replaceProperty(componentProps, toCreated(workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.createdDate)));
+        replaceProperty(componentProps, toDescription(workEffort.getString(org.apache.ofbiz.persistence.entity.x.description)));
+        replaceProperty(componentProps, toDtStart(workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedStartDate)));
+        replaceProperty(componentProps, toLastModified(workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.lastModifiedDate)));
+        replaceProperty(componentProps, toPriority(workEffort.getLong(org.apache.ofbiz.persistence.entity.x.priority)));
+        replaceProperty(componentProps, toLocation(workEffort.getString(org.apache.ofbiz.persistence.entity.x.locationDesc)));
+        replaceProperty(componentProps, toStatus(workEffort.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId)));
+        replaceProperty(componentProps, toSummary(workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortName)));
         Property uid = componentProps.getProperty(Uid.UID);
         if (uid == null) {
             // Don't overwrite UIDs created by calendar clients
-            replaceProperty(componentProps, toUid(workEffort.getString("workEffortId")));
+            replaceProperty(componentProps, toUid(workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId)));
         }
-        replaceProperty(componentProps, toXProperty(WORKEFFORT_ID_X_PROP_NAME, workEffort.getString("workEffortId")));
+        replaceProperty(componentProps, toXProperty(WORKEFFORT_ID_X_PROP_NAME, workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId)));
     }
 
     protected static Calendar makeCalendar(GenericValue workEffort, Map<String, Object> context) throws GenericEntityException {
         String iCalData = null;
-        GenericValue iCalValue = workEffort.getRelatedOne("WorkEffortIcalData", false);
+        GenericValue iCalValue = workEffort.getRelatedOne(org.apache.ofbiz.persistence.entity.x.WorkEffortIcalData, false);
         if (iCalValue != null) {
-            iCalData = iCalValue.getString("icalData");
+            iCalData = iCalValue.getString(org.apache.ofbiz.persistence.entity.x.icalData);
         }
         boolean newCalendar = true;
         Calendar calendar = null;
@@ -604,7 +604,7 @@ public class ICalConverter {
         }
         PropertyList propList = calendar.getProperties();
         replaceProperty(propList, PROD_ID);
-        replaceProperty(propList, new XProperty(WORKEFFORT_ID_X_PROP_NAME, workEffort.getString("workEffortId")));
+        replaceProperty(propList, new XProperty(WORKEFFORT_ID_X_PROP_NAME, workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId)));
         if (newCalendar) {
             propList.add(Version.VERSION_2_0);
             propList.add(CalScale.GREGORIAN);
@@ -618,9 +618,9 @@ public class ICalConverter {
     }
 
     protected static String makePartyName(GenericValue partyAssign) {
-        String partyName = partyAssign.getString("groupName");
+        String partyName = partyAssign.getString(org.apache.ofbiz.persistence.entity.x.groupName);
         if (UtilValidate.isEmpty(partyName)) {
-            partyName = partyAssign.getString("firstName") + " " + partyAssign.getString("lastName");
+            partyName = partyAssign.getString(org.apache.ofbiz.persistence.entity.x.firstName) + " " + partyAssign.getString(org.apache.ofbiz.persistence.entity.x.lastName);
         }
         return partyName;
     }
@@ -717,20 +717,20 @@ public class ICalConverter {
         }
         String workEffortId = fromXProperty(calendar.getProperties(), WORKEFFORT_ID_X_PROP_NAME);
         if (workEffortId == null) {
-            workEffortId = (String) context.get("workEffortId");
+            workEffortId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortId);
         }
-        if (!workEffortId.equals(context.get("workEffortId"))) {
+        if (!workEffortId.equals(context.get(org.apache.ofbiz.persistence.entity.x.workEffortId))) {
             Debug.logWarning("Spoof attempt: received calendar workEffortId " + workEffortId
-                    + " on URL workEffortId " + context.get("workEffortId"), MODULE);
+                    + " on URL workEffortId " + context.get(org.apache.ofbiz.persistence.entity.x.workEffortId), MODULE);
             return ICalWorker.createForbiddenResponse(null);
         }
-        Delegator delegator = (Delegator) context.get("delegator");
+        Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
         GenericValue publishProperties = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", workEffortId).queryOne();
         if (!isCalendarPublished(publishProperties)) {
             Debug.logInfo("WorkEffort calendar is not published: " + workEffortId, MODULE);
             return ICalWorker.createNotFoundResponse(null);
         }
-        if (context.get("userLogin") == null) {
+        if (context.get(org.apache.ofbiz.persistence.entity.x.userLogin) == null) {
             return ICalWorker.createNotAuthorizedResponse(null);
         }
         if (!hasPermission(workEffortId, "UPDATE", context)) {
@@ -742,7 +742,7 @@ public class ICalConverter {
         if (UtilValidate.isNotEmpty(workEfforts)) {
             // Security issue: make sure only related work efforts get updated
             for (GenericValue workEffort : workEfforts) {
-                validWorkEfforts.add(workEffort.getString("workEffortId"));
+                validWorkEfforts.add(workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId));
             }
         }
         List<Component> components = UtilGenerics.checkCollection(calendar.getComponents(), Component.class);
@@ -755,7 +755,7 @@ public class ICalConverter {
                     if (uid != null) {
                         GenericValue workEffort = EntityQuery.use(delegator).from("WorkEffort").where("universalId", uid.getValue()).queryFirst();
                         if (workEffort != null) {
-                            workEffortId = workEffort.getString("workEffortId");
+                            workEffortId = workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
                         }
                     }
                 }
@@ -765,7 +765,7 @@ public class ICalConverter {
                         responseProps = storeWorkEffort(component, context);
                     } else {
                         Debug.logWarning("Spoof attempt: unrelated workEffortId " + workEffortId
-                                + " on URL workEffortId " + context.get("workEffortId"), MODULE);
+                                + " on URL workEffortId " + context.get(org.apache.ofbiz.persistence.entity.x.workEffortId), MODULE);
                         responseProps = ICalWorker.createForbiddenResponse(null);
                     }
                 } else if (hasCreatePermission) {
@@ -776,8 +776,8 @@ public class ICalConverter {
                 }
             }
         }
-        Map<String, ? extends Object> serviceMap = UtilMisc.toMap("workEffortId", context.get("workEffortId"), "icalData", calendar.toString());
-        GenericValue iCalData = publishProperties.getRelatedOne("WorkEffortIcalData", false);
+        Map<String, ? extends Object> serviceMap = UtilMisc.toMap("workEffortId", context.get(org.apache.ofbiz.persistence.entity.x.workEffortId), "icalData", calendar.toString());
+        GenericValue iCalData = publishProperties.getRelatedOne(org.apache.ofbiz.persistence.entity.x.WorkEffortIcalData, false);
         Map<String, Object> serviceResult = null;
         if (iCalData == null) {
             serviceResult = invokeService("createWorkEffortICalData", serviceMap, context);
@@ -817,7 +817,7 @@ public class ICalConverter {
             serviceMap.put("workEffortId", workEffortId);
             serviceMap.put("partyId", partyId);
             serviceMap.put("roleTypeId", FROM_ROLE_MAP.get(property.getName()));
-            Delegator delegator = (Delegator) context.get("delegator");
+            Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
             List<GenericValue> assignments = null;
             try {
                 assignments = EntityQuery.use(delegator).from("WorkEffortPartyAssignment").where(serviceMap).filterByDate().queryList();
@@ -837,7 +837,7 @@ public class ICalConverter {
     protected static ResponseProperties storeWorkEffort(Component component, Map<String, Object> context) throws GenericEntityException {
         PropertyList propertyList = component.getProperties();
         String workEffortId = fromXProperty(propertyList, WORKEFFORT_ID_X_PROP_NAME);
-        Delegator delegator = (Delegator) context.get("delegator");
+        Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
         GenericValue workEffort = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", workEffortId).queryOne();
         if (workEffort == null) {
             return ICalWorker.createNotFoundResponse(null);
@@ -855,19 +855,19 @@ public class ICalConverter {
     protected static ResponseProperties toCalendarComponent(ComponentList components, GenericValue workEffort, Map<String, Object> context)
             throws GenericEntityException {
         Delegator delegator = workEffort.getDelegator();
-        String workEffortId = workEffort.getString("workEffortId");
-        String workEffortUid = workEffort.getString("universalId");
-        String workEffortTypeId = workEffort.getString("workEffortTypeId");
+        String workEffortId = workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
+        String workEffortUid = workEffort.getString(org.apache.ofbiz.persistence.entity.x.universalId);
+        String workEffortTypeId = workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortTypeId);
         GenericValue typeValue = EntityQuery.use(delegator).from("WorkEffortType").where("workEffortTypeId", workEffortTypeId).cache().queryOne();
         boolean isTask = false;
         boolean newComponent = true;
         ComponentList resultList = null;
         ComponentList alarms = null;
         Component result = null;
-        if ("TASK".equals(workEffortTypeId) || (typeValue != null && "TASK".equals(typeValue.get("parentTypeId")))) {
+        if ("TASK".equals(workEffortTypeId) || (typeValue != null && "TASK".equals(typeValue.get(org.apache.ofbiz.persistence.entity.x.parentTypeId)))) {
             isTask = true;
             resultList = components.getComponents("VTODO");
-        } else if ("EVENT".equals(workEffortTypeId) || (typeValue != null && "EVENT".equals(typeValue.get("parentTypeId")))) {
+        } else if ("EVENT".equals(workEffortTypeId) || (typeValue != null && "EVENT".equals(typeValue.get(org.apache.ofbiz.persistence.entity.x.parentTypeId)))) {
             resultList = components.getComponents("VEVENT");
         } else {
             return null;
@@ -911,13 +911,13 @@ public class ICalConverter {
         PropertyList componentProps = result.getProperties();
         loadWorkEffort(componentProps, workEffort);
         if (isTask) {
-            replaceProperty(componentProps, toCompleted(workEffort.getTimestamp("actualCompletionDate")));
-            replaceProperty(componentProps, toPercentComplete(workEffort.getLong("percentComplete")));
+            replaceProperty(componentProps, toCompleted(workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.actualCompletionDate)));
+            replaceProperty(componentProps, toPercentComplete(workEffort.getLong(org.apache.ofbiz.persistence.entity.x.percentComplete)));
         } else {
-            replaceProperty(componentProps, toDtEnd(workEffort.getTimestamp("estimatedCompletionDate")));
+            replaceProperty(componentProps, toDtEnd(workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate)));
         }
-        if (workEffort.get("estimatedCompletionDate") == null) {
-            replaceProperty(componentProps, toDuration(workEffort.getDouble("estimatedMilliSeconds")));
+        if (workEffort.get(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate) == null) {
+            replaceProperty(componentProps, toDuration(workEffort.getDouble(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds)));
         }
         List<GenericValue> relatedParties = EntityQuery.use(delegator).from("WorkEffortPartyAssignView").where("workEffortId",
                 workEffortId).filterByDate().queryList();
@@ -925,8 +925,8 @@ public class ICalConverter {
             loadRelatedParties(relatedParties, componentProps, context);
         }
         if (newComponent) {
-            if (UtilValidate.isNotEmpty(workEffort.getString("tempExprId"))) {
-                TemporalExpression tempExpr = TemporalExpressionWorker.getTemporalExpression(delegator, workEffort.getString("tempExprId"));
+            if (UtilValidate.isNotEmpty(workEffort.getString(org.apache.ofbiz.persistence.entity.x.tempExprId))) {
+                TemporalExpression tempExpr = TemporalExpressionWorker.getTemporalExpression(delegator, workEffort.getString(org.apache.ofbiz.persistence.entity.x.tempExprId));
                 if (tempExpr != null) {
                     try {
                         ICalRecurConverter.convert(tempExpr, componentProps);

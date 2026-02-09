@@ -37,7 +37,7 @@ public class FreeMarkerWorkerTests {
     public void renderTemplateFromString() throws Exception {
         StringWriter out = new StringWriter();
         Map<String, Object> context = new HashMap<>();
-        context.put("name", "World!");
+        context.put(org.apache.ofbiz.persistence.entity.x.name, "World!");
         FreeMarkerWorker.renderTemplateFromString("template1", "Hello ${name}", context, out, 0, false);
         assertEquals("Hello World!", out.toString());
     }

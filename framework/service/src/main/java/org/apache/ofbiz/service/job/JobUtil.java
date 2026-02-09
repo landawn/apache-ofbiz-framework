@@ -41,26 +41,26 @@ public final class JobUtil {
             }
             beganTransaction = TransactionUtil.begin(60);
             jobValue.remove();
-            GenericValue relatedValue = jobValue.getRelatedOne("RecurrenceInfo", false);
+            GenericValue relatedValue = jobValue.getRelatedOne(org.apache.ofbiz.persistence.entity.x.RecurrenceInfo, false);
             if (relatedValue != null) {
                 if (EntityQuery.use(jobValue.getDelegator()).from("JobSandbox")
-                        .where("recurrenceInfoId", relatedValue.get("recurrenceInfoId"))
+                        .where("recurrenceInfoId", relatedValue.get(org.apache.ofbiz.persistence.entity.x.recurrenceInfoId))
                         .queryCount() == 0) {
                     relatedValue.remove();
                     relatedValue.removeRelated("RecurrenceRule");
                 }
             }
-            relatedValue = jobValue.getRelatedOne("RuntimeData", false);
+            relatedValue = jobValue.getRelatedOne(org.apache.ofbiz.persistence.entity.x.RuntimeData, false);
             if (relatedValue != null) {
                 if (EntityQuery.use(jobValue.getDelegator()).from("JobSandbox")
-                        .where("runtimeDataId", relatedValue.get("runtimeDataId"))
+                        .where("runtimeDataId", relatedValue.get(org.apache.ofbiz.persistence.entity.x.runtimeDataId))
                         .queryCount() == 0) {
                     relatedValue.remove();
                 }
             }
             TransactionUtil.commit(beganTransaction);
             if (Debug.infoOn()) {
-                Debug.logInfo("Purged job " + jobValue.get("jobId"), MODULE);
+                Debug.logInfo("Purged job " + jobValue.get(org.apache.ofbiz.persistence.entity.x.jobId), MODULE);
             }
         } catch (Throwable t) {
             String errMsg = "Exception thrown while purging job: ";

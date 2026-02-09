@@ -105,7 +105,7 @@ public class CommonEvents {
 
             if (userLogin != null) {
                 GenericValue ulUpdate = GenericValue.create(userLogin);
-                ulUpdate.set("lastLocale", localeString);
+                ulUpdate.set(org.apache.ofbiz.persistence.entity.x.lastLocale, localeString);
                 try {
                     ulUpdate.store();
                     userLogin.refreshFromCache();
@@ -131,7 +131,7 @@ public class CommonEvents {
 
             if (userLogin != null) {
                 GenericValue ulUpdate = GenericValue.create(userLogin);
-                ulUpdate.set("lastTimeZone", tzString);
+                ulUpdate.set(org.apache.ofbiz.persistence.entity.x.lastTimeZone, tzString);
                 try {
                     ulUpdate.store();
                     userLogin.refreshFromCache();
@@ -170,7 +170,7 @@ public class CommonEvents {
 
             if (userLogin != null) {
                 GenericValue ulUpdate = GenericValue.create(userLogin);
-                ulUpdate.set("lastCurrencyUom", currencyUom);
+                ulUpdate.set(org.apache.ofbiz.persistence.entity.x.lastCurrencyUom, currencyUom);
                 try {
                     ulUpdate.store();
                     userLogin.refreshFromCache();

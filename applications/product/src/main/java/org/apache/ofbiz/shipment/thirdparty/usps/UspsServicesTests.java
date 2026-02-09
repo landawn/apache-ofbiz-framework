@@ -216,16 +216,16 @@ public class UspsServicesTests extends OFBizTestCase {
         // prepare the context
         Map<String, Object> context = new HashMap<>();
 
-        context.put("service", "Priority");
-        context.put("originZip", "20770");
-        context.put("destinationZip", "09021");
-        context.put("pounds", "5");
-        context.put("ounces", "1");
-        context.put("container", "None");
-        context.put("size", "Regular");
-        context.put("machinable", "False");
-        context.put("shipmentGatewayConfigId", "USPS_CONFIG");
-        context.put("configProps", "shipment");
+        context.put(org.apache.ofbiz.persistence.entity.x.service, "Priority");
+        context.put(org.apache.ofbiz.persistence.entity.x.originZip, "20770");
+        context.put(org.apache.ofbiz.persistence.entity.x.destinationZip, "09021");
+        context.put(org.apache.ofbiz.persistence.entity.x.pounds, "5");
+        context.put(org.apache.ofbiz.persistence.entity.x.ounces, "1");
+        context.put(org.apache.ofbiz.persistence.entity.x.container, "None");
+        context.put(org.apache.ofbiz.persistence.entity.x.size, "Regular");
+        context.put(org.apache.ofbiz.persistence.entity.x.machinable, "False");
+        context.put(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId, "USPS_CONFIG");
+        context.put(org.apache.ofbiz.persistence.entity.x.configProps, "shipment");
 
         // run the service
         Map<String, Object> result = getDispatcher().runSync("uspsDomesticRate", context);

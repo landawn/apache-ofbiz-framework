@@ -103,7 +103,7 @@ public class HumanResEvents {
                         .filterByDate().queryList();
                 if (UtilValidate.isNotEmpty(emlpfillCtxs)) {
                     for (GenericValue emlpfillCtx : emlpfillCtxs) {
-                        String memberId = emlpfillCtx.getString("partyId");
+                        String memberId = emlpfillCtx.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                         title = PartyHelper.getPartyName(delegator, memberId, false);
                         Map<String, Object> josonMap = new HashMap<>();
                         Map<String, Object> dataMap = new HashMap<>();
@@ -143,7 +143,7 @@ public class HumanResEvents {
         String hrefString2 = (String) params.get("hrefString2");
         try {
             childOfComs = EntityQuery.use(delegator).from("PartyRelationship")
-                    .where("partyIdFrom", partyGroup.get("partyId"),
+                    .where("partyIdFrom", partyGroup.get(org.apache.ofbiz.persistence.entity.x.partyId),
                             "partyRelationshipTypeId", "GROUP_ROLLUP")
                             .filterByDate().queryList();
             if (UtilValidate.isNotEmpty(childOfComs)) {
@@ -156,7 +156,7 @@ public class HumanResEvents {
                     Map<String, Object> dataMap = new HashMap<>();
                     Map<String, Object> dataAttrMap = new HashMap<>();
                     Map<String, Object> attrMap = new HashMap<>();
-                    catId = childOfCom.getString("partyIdTo");
+                    catId = childOfCom.getString(org.apache.ofbiz.persistence.entity.x.partyIdTo);
                     title = PartyHelper.getPartyName(delegator, catId, false);
                     josonMap.put("title", title);
                     //Check child existing
@@ -208,8 +208,8 @@ public class HumanResEvents {
                     Map<String, Object> emplAttrMap = new HashMap<>();
                     Map<String, Object> empldataMap = new HashMap<>();
                     Map<String, Object> emplDataAttrMap = new HashMap<>();
-                    String emplId = (String) childOfEmpl.get("emplPositionId");
-                    String typeId = (String) childOfEmpl.get("emplPositionTypeId");
+                    String emplId = (String) childOfEmpl.get(org.apache.ofbiz.persistence.entity.x.emplPositionId);
+                    String typeId = (String) childOfEmpl.get(org.apache.ofbiz.persistence.entity.x.emplPositionTypeId);
                     //check child
                     List<GenericValue> emlpfCtxs = EntityQuery.use(delegator).from("EmplPositionFulfillment")
                             .where("emplPositionId", emplId)
@@ -220,7 +220,7 @@ public class HumanResEvents {
                     GenericValue emplContext = EntityQuery.use(delegator).from("EmplPositionType").where("emplPositionTypeId", typeId).queryOne();
                     String title = null;
                     if (UtilValidate.isNotEmpty(emplContext)) {
-                        title = (String) emplContext.get("description") + " " + "[" + emplId + "]";
+                        title = (String) emplContext.get(org.apache.ofbiz.persistence.entity.x.description) + " " + "[" + emplId + "]";
                     }
                     String hrefStr = "emplPositionView?emplPositionId=" + emplId;
                     emplAttrMap.put("href", hrefStr);

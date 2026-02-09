@@ -77,7 +77,7 @@ public final class BOMHelper {
         int depth = 0;
         for (GenericValue oneNode : productNodesList) {
             depth = 0;
-            depth = getMaxDepth(oneNode.getString("productId"), bomType, inDate, delegator);
+            depth = getMaxDepth(oneNode.getString(org.apache.ofbiz.persistence.entity.x.productId), bomType, inDate, delegator);
             depth++;
             if (depth > maxDepth) {
                 maxDepth = depth;
@@ -123,11 +123,11 @@ public final class BOMHelper {
         GenericValue duplicatedNode = null;
         for (GenericValue oneNode : productNodesList) {
             for (String idKey : productIdKeys) {
-                if (oneNode.getString("productId").equals(idKey)) {
+                if (oneNode.getString(org.apache.ofbiz.persistence.entity.x.productId).equals(idKey)) {
                     return oneNode;
                 }
             }
-            duplicatedNode = searchDuplicatedAncestor(oneNode.getString("productId"), productIdKey, productIdKeys, bomType, inDate, delegator,
+            duplicatedNode = searchDuplicatedAncestor(oneNode.getString(org.apache.ofbiz.persistence.entity.x.productId), productIdKey, productIdKeys, bomType, inDate, delegator,
                     dispatcher, userLogin);
             if (duplicatedNode != null) {
                 break;
@@ -148,22 +148,22 @@ public final class BOMHelper {
             List<GenericValue> shipmentPlans = EntityQuery.use(delegator).from("OrderShipment")
                     .where("shipmentId", shipmentId).queryList();
             for (GenericValue shipmentPlan : shipmentPlans) {
-                GenericValue orderItem = shipmentPlan.getRelatedOne("OrderItem", false);
+                GenericValue orderItem = shipmentPlan.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItem, false);
 
                 List<GenericValue> productionRuns = EntityQuery.use(delegator).from("WorkOrderItemFulfillment")
-                        .where("orderId", shipmentPlan.get("orderId"),
-                                "orderItemSeqId", shipmentPlan.get("orderItemSeqId"),
-                                "shipGroupSeqId", shipmentPlan.get("shipGroupSeqId"))
+                        .where("orderId", shipmentPlan.get(org.apache.ofbiz.persistence.entity.x.orderId),
+                                "orderItemSeqId", shipmentPlan.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId),
+                                "shipGroupSeqId", shipmentPlan.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId))
                         .cache().queryList();
                 if (UtilValidate.isNotEmpty(productionRuns)) {
-                    Debug.logError("Production Run for order item (" + orderItem.getString("orderId") + "/"
-                            + orderItem.getString("orderItemSeqId") + ") not created.", MODULE);
+                    Debug.logError("Production Run for order item (" + orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId) + "/"
+                            + orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId) + ") not created.", MODULE);
                     continue;
                 }
                 Map<String, Object> result = dispatcher.runSync("createProductionRunsForOrder", UtilMisc.<String, Object>toMap("quantity",
-                        shipmentPlan.getBigDecimal("quantity"), "orderId",
-                        shipmentPlan.getString("orderId"), "orderItemSeqId", shipmentPlan.getString("orderItemSeqId"), "shipGroupSeqId",
-                        shipmentPlan.getString("shipGroupSeqId"), "shipmentId",
+                        shipmentPlan.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity), "orderId",
+                        shipmentPlan.getString(org.apache.ofbiz.persistence.entity.x.orderId), "orderItemSeqId", shipmentPlan.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "shipGroupSeqId",
+                        shipmentPlan.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId), "shipmentId",
                         shipmentId, "userLogin", userLogin));
                 if (ServiceUtil.isError(result)) {
                     String errorMessage = ServiceUtil.getErrorMessage(result);

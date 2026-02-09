@@ -43,7 +43,7 @@ public class ServiceEngineTestServices {
     private static final String RESOURCE = "ServiceErrorUiLabels";
 
     public static Map<String, Object> testServiceDeadLockRetry(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         try {
             // NOTE using persist=false so that the lock retry will have to fix the problem instead of the job poller picking it up again
@@ -75,11 +75,11 @@ public class ServiceEngineTestServices {
 
     public static Map<String, Object> testServiceDeadLockRetryThreadA(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             // grab entity SVCLRT_A by changing, then wait, then find and change SVCLRT_B
             GenericValue testingTypeA = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "SVCLRT_A").queryOne();
-            testingTypeA.set("description", "New description for SVCLRT_A");
+            testingTypeA.set(org.apache.ofbiz.persistence.entity.x.description, "New description for SVCLRT_A");
             testingTypeA.store();
 
             // wait at least long enough for the other method to have locked resource B
@@ -88,12 +88,12 @@ public class ServiceEngineTestServices {
 
             Debug.logInfo("In testServiceDeadLockRetryThreadA done with wait, updating SVCLRT_B", MODULE);
             GenericValue testingTypeB = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "SVCLRT_B").queryOne();
-            testingTypeB.set("description", "New description for SVCLRT_B");
+            testingTypeB.set(org.apache.ofbiz.persistence.entity.x.description, "New description for SVCLRT_B");
             testingTypeB.store();
 
             Debug.logInfo("In testServiceDeadLockRetryThreadA done with updating SVCLRT_B, updating SVCLRT_AONLY", MODULE);
             GenericValue testingTypeAOnly = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "SVCLRT_AONLY").queryOne();
-            testingTypeAOnly.set("description", "New description for SVCLRT_AONLY; this is only changed by thread A so if it doesn't match "
+            testingTypeAOnly.set(org.apache.ofbiz.persistence.entity.x.description, "New description for SVCLRT_AONLY; this is only changed by thread A so if it doesn't match "
                     + "something happened to thread A!");
             testingTypeAOnly.store();
         } catch (GenericEntityException e) {
@@ -111,11 +111,11 @@ public class ServiceEngineTestServices {
 
     public static Map<String, Object> testServiceDeadLockRetryThreadB(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             // grab entity SVCLRT_B by changing, then wait, then change SVCLRT_A
             GenericValue testingTypeB = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "SVCLRT_B").queryOne();
-            testingTypeB.set("description", "New description for SVCLRT_B");
+            testingTypeB.set(org.apache.ofbiz.persistence.entity.x.description, "New description for SVCLRT_B");
             testingTypeB.store();
 
             // wait at least long enough for the other method to have locked resource B
@@ -124,12 +124,12 @@ public class ServiceEngineTestServices {
 
             Debug.logInfo("In testServiceDeadLockRetryThreadB done with wait, updating SVCLRT_A", MODULE);
             GenericValue testingTypeA = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "SVCLRT_A").queryOne();
-            testingTypeA.set("description", "New description for SVCLRT_A");
+            testingTypeA.set(org.apache.ofbiz.persistence.entity.x.description, "New description for SVCLRT_A");
             testingTypeA.store();
 
             Debug.logInfo("In testServiceDeadLockRetryThreadA done with updating SVCLRT_A, updating SVCLRT_BONLY", MODULE);
             GenericValue testingTypeAOnly = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "SVCLRT_BONLY").queryOne();
-            testingTypeAOnly.set("description", "New description for SVCLRT_BONLY; this is only changed by thread B so if it doesn't match "
+            testingTypeAOnly.set(org.apache.ofbiz.persistence.entity.x.description, "New description for SVCLRT_BONLY; this is only changed by thread B so if it doesn't match "
                     + "something happened to thread B!");
             testingTypeAOnly.store();
         } catch (GenericEntityException e) {
@@ -149,7 +149,7 @@ public class ServiceEngineTestServices {
 
     public static Map<String, Object> testServiceLockWaitTimeoutRetry(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             // NOTE using persist=false so that the lock retry will have to fix the problem instead of the job poller picking it up again
             GenericResultWaiter grabberWaiter = dispatcher.runAsyncWait("testServiceLockWaitTimeoutRetryGrabber", null, false);
@@ -178,11 +178,11 @@ public class ServiceEngineTestServices {
 
     public static Map<String, Object> testServiceLockWaitTimeoutRetryGrabber(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             // grab entity SVCLWTRT by changing, then wait a LONG time, ie more than the wait timeout
             GenericValue testingType = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "SVCLWTRT").queryOne();
-            testingType.set("description", "New description for SVCLWTRT from the GRABBER service, this should be replaced by Waiter service in the"
+            testingType.set(org.apache.ofbiz.persistence.entity.x.description, "New description for SVCLWTRT from the GRABBER service, this should be replaced by Waiter service in the"
                     + " service engine auto-retry");
             testingType.store();
 
@@ -206,7 +206,7 @@ public class ServiceEngineTestServices {
 
     public static Map<String, Object> testServiceLockWaitTimeoutRetryWaiter(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             // wait for a small amount of time to make sure the grabber does it's thing first
             Thread.sleep(100);
@@ -215,7 +215,7 @@ public class ServiceEngineTestServices {
 
             // TRY grab entity SVCLWTRT by looking up and changing, should get a lock wait timeout exception because of the Grabber thread
             GenericValue testingType = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "SVCLWTRT").queryOne();
-            testingType.set("description", "New description for SVCLWTRT from Waiter service, this is the value that should be there.");
+            testingType.set(org.apache.ofbiz.persistence.entity.x.description, "New description for SVCLWTRT from Waiter service, this is the value that should be there.");
             testingType.store();
 
             Debug.logInfo("In testServiceLockWaitTimeoutRetryWaiter successfully updated SVCLWTRT", MODULE);
@@ -252,11 +252,11 @@ public class ServiceEngineTestServices {
     public static Map<String, Object> testServiceLockWaitTimeoutRetryCantRecover(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             // grab entity SVCLWTRTCR by changing, then wait a LONG time, ie more than the wait timeout
             GenericValue testingType = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "SVCLWTRTCR").queryOne();
-            testingType.set("description", "New description for SVCLWTRTCR from Lock Wait Timeout Lock GRABBER, this should be replaced by the one "
+            testingType.set(org.apache.ofbiz.persistence.entity.x.description, "New description for SVCLWTRTCR from Lock Wait Timeout Lock GRABBER, this should be replaced by the one "
                     + "in the Waiter service.");
             testingType.store();
 
@@ -286,13 +286,13 @@ public class ServiceEngineTestServices {
 
     public static Map<String, Object> testServiceLockWaitTimeoutRetryCantRecoverWaiter(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             Debug.logInfo("In testServiceLockWaitTimeoutRetryCantRecoverWaiter updating SVCLWTRTCR", MODULE);
 
             // TRY grab entity SVCLWTRTCR by looking up and changing, should get a lock wait timeout exception because of the Grabber thread
             GenericValue testingType = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "SVCLWTRTCR").queryOne();
-            testingType.set("description", "New description for SVCLWTRTCR from Lock Wait Timeout Lock Waiter, this is the value that should be "
+            testingType.set(org.apache.ofbiz.persistence.entity.x.description, "New description for SVCLWTRTCR from Lock Wait Timeout Lock Waiter, this is the value that should be "
                     + "there.");
             testingType.store();
 
@@ -311,7 +311,7 @@ public class ServiceEngineTestServices {
     public static Map<String, Object> testServiceOwnTxSubServiceAfterSetRollbackOnlyInParentErrorCatchWrapper(DispatchContext dctx, Map<String, ?
             extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             Map<String, Object> resultMap = dispatcher.runSync("testServiceOwnTxSubServiceAfterSetRollbackOnlyInParent", null, 60, true);
             if (ServiceUtil.isError(resultMap)) {
@@ -331,11 +331,11 @@ public class ServiceEngineTestServices {
                                                                                              Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             // change the SVC_SRBO value first to test that the rollback really does revert/reset
             GenericValue testingType = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "SVC_SRBO").queryOne();
-            testingType.set("description", "New description for SVC_SRBO; this should be reset on the rollback, if this is in the db then the test "
+            testingType.set(org.apache.ofbiz.persistence.entity.x.description, "New description for SVC_SRBO; this should be reset on the rollback, if this is in the db then the test "
                     + "failed");
             testingType.store();
 
@@ -366,7 +366,7 @@ public class ServiceEngineTestServices {
 
     public static Map<String, Object> testServiceEcaGlobalEventExec(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             // this will return an error, but we'll ignore the result
             dispatcher.runSync("testServiceEcaGlobalEventExecToRollback", null, 60, true);
@@ -384,10 +384,10 @@ public class ServiceEngineTestServices {
 
     public static Map<String, Object> testServiceEcaGlobalEventExecOnCommit(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             GenericValue testingType = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "SVC_SECAGC").queryOne();
-            testingType.set("description", "New description for SVC_SECAGC, what it should be after the global-commit test");
+            testingType.set(org.apache.ofbiz.persistence.entity.x.description, "New description for SVC_SECAGC, what it should be after the global-commit test");
             testingType.store();
         } catch (GenericEntityException e) {
             Debug.logError(e, "Entity Engine Exception: " + e.toString(), MODULE);
@@ -400,16 +400,16 @@ public class ServiceEngineTestServices {
 
     public static Map<String, Object> testServiceEcaGlobalEventExecToRollback(DispatchContext dctx, Map<String, ? extends Object> context) {
         // this service doesn't actually have to do anything, just a placeholder for ECA rules, this one should rollback
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ServiceTestRollback", locale));
     }
 
     public static Map<String, Object> testServiceEcaGlobalEventExecOnRollback(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             GenericValue testingType = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "SVC_SECAGR").queryOne();
-            testingType.set("description", "New description for SVC_SECAGR, what it should be after the global-rollback test");
+            testingType.set(org.apache.ofbiz.persistence.entity.x.description, "New description for SVC_SECAGR, what it should be after the global-rollback test");
             testingType.store();
         } catch (GenericEntityException e) {
             Debug.logError(e, "Entity Engine Exception: " + e.toString(), MODULE);

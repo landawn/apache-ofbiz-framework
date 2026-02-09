@@ -120,13 +120,13 @@ public class NotificationServices {
      */
     public static Map<String, Object> sendNotification(DispatchContext ctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = null;
 
         try {
             // see whether the optional 'body' attribute was specified or needs to be processed
             // nulls are handled the same as not specified
-            String body = (String) context.get("body");
+            String body = (String) context.get(org.apache.ofbiz.persistence.entity.x.body);
 
             if (body == null) {
                 // prepare the body of the notification email
@@ -145,15 +145,15 @@ public class NotificationServices {
             if (body != null) {
                 // retain only the required attributes for the sendMail service
                 Map<String, Object> emailContext = new LinkedHashMap<>();
-                emailContext.put("sendTo", context.get("sendTo"));
+                emailContext.put("sendTo", context.get(org.apache.ofbiz.persistence.entity.x.sendTo));
                 emailContext.put("body", body);
-                emailContext.put("sendCc", context.get("sendCc"));
-                emailContext.put("sendBcc", context.get("sendBcc"));
-                emailContext.put("sendFrom", context.get("sendFrom"));
-                emailContext.put("subject", context.get("subject"));
-                emailContext.put("sendVia", context.get("sendVia"));
-                emailContext.put("sendType", context.get("sendType"));
-                emailContext.put("contentType", context.get("contentType"));
+                emailContext.put("sendCc", context.get(org.apache.ofbiz.persistence.entity.x.sendCc));
+                emailContext.put("sendBcc", context.get(org.apache.ofbiz.persistence.entity.x.sendBcc));
+                emailContext.put("sendFrom", context.get(org.apache.ofbiz.persistence.entity.x.sendFrom));
+                emailContext.put("subject", context.get(org.apache.ofbiz.persistence.entity.x.subject));
+                emailContext.put("sendVia", context.get(org.apache.ofbiz.persistence.entity.x.sendVia));
+                emailContext.put("sendType", context.get(org.apache.ofbiz.persistence.entity.x.sendType));
+                emailContext.put("contentType", context.get(org.apache.ofbiz.persistence.entity.x.contentType));
 
                 // pass on to the sendMail service
                 result = dispatcher.runSync("sendMail", emailContext);
@@ -185,10 +185,10 @@ public class NotificationServices {
      */
     private static Map<String, Object> prepareNotification(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        String templateName = (String) context.get("templateName");
-        Map<String, Object> templateData = UtilGenerics.cast(context.get("templateData"));
-        String webSiteId = (String) context.get("webSiteId");
-        Locale locale = (Locale) context.get("locale");
+        String templateName = (String) context.get(org.apache.ofbiz.persistence.entity.x.templateName);
+        Map<String, Object> templateData = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.templateData));
+        String webSiteId = (String) context.get(org.apache.ofbiz.persistence.entity.x.webSiteId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = null;
         if (templateData == null) {
             templateData = new LinkedHashMap<>();
@@ -261,10 +261,10 @@ public class NotificationServices {
                 OfbizUrlBuilder builder = OfbizUrlBuilder.from(webAppInfo, delegator);
                 StringBuilder newURL = new StringBuilder();
                 builder.buildHostPart(newURL, "", false);
-                context.put("baseUrl", newURL.toString());
+                context.put(org.apache.ofbiz.persistence.entity.x.baseUrl, newURL.toString());
                 newURL = new StringBuilder();
                 builder.buildHostPart(newURL, "", true);
-                context.put("baseSecureUrl", newURL.toString());
+                context.put(org.apache.ofbiz.persistence.entity.x.baseSecureUrl, newURL.toString());
             } catch (Exception e) {
                 Debug.logWarning(e, "Exception thrown while adding baseUrl to context: ", MODULE);
             }

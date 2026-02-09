@@ -59,10 +59,10 @@ public class PurchaseOrderTest extends OFBizTestCase {
 
         GenericValue orderItem = delegator.makeValue("OrderItem", UtilMisc.toMap("orderItemSeqId", "00001", "orderItemTypeId",
                 "PRODUCT_ORDER_ITEM", "prodCatalogId", "DemoCatalog", "productId", "GZ-1000", "quantity", new BigDecimal("2"), "isPromo", "N"));
-        orderItem.set("unitPrice", new BigDecimal("1399.5"));
-        orderItem.set("unitListPrice", BigDecimal.ZERO);
-        orderItem.set("isModifiedPrice", "N");
-        orderItem.set("statusId", "ITEM_CREATED");
+        orderItem.set(org.apache.ofbiz.persistence.entity.x.unitPrice, new BigDecimal("1399.5"));
+        orderItem.set(org.apache.ofbiz.persistence.entity.x.unitListPrice, BigDecimal.ZERO);
+        orderItem.set(org.apache.ofbiz.persistence.entity.x.isModifiedPrice, "N");
+        orderItem.set(org.apache.ofbiz.persistence.entity.x.statusId, "ITEM_CREATED");
         List<GenericValue> orderItems = new LinkedList<>();
         orderItems.add(orderItem);
         ctx.put("orderItems", orderItems);
@@ -81,7 +81,7 @@ public class PurchaseOrderTest extends OFBizTestCase {
 
         GenericValue orderItemShipGroup = delegator.makeValue("OrderItemShipGroup", UtilMisc.toMap("carrierPartyId", "UPS",
                 "contactMechId", "9000", "isGift", "N", "maySplit", "N", "shipGroupSeqId", "00001", "shipmentMethodTypeId", "NEXT_DAY"));
-        orderItemShipGroup.set("carrierRoleTypeId", "CARRIER");
+        orderItemShipGroup.set(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId, "CARRIER");
         List<GenericValue> orderItemShipGroupInfo = new LinkedList<>();
         orderItemShipGroupInfo.add(orderItemShipGroup);
         ctx.put("orderItemShipGroupInfo", orderItemShipGroupInfo);

@@ -68,10 +68,10 @@ public class ContentUrlFilter implements Filter {
                     if (contentDataResourceView != null) {
                         GenericValue content = EntityQuery.use(delegator).from("ContentAssoc")
                                 .where("contentAssocTypeId", "ALTERNATIVE_URL",
-                                        "contentIdTo", contentDataResourceView.get("contentId"))
+                                        "contentIdTo", contentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.contentId))
                                 .filterByDate().queryFirst();
                         if (content != null) {
-                            urlContentId = content.getString("contentId");
+                            urlContentId = content.getString(org.apache.ofbiz.persistence.entity.x.contentId);
                         }
                     }
                 } catch (GenericEntityException gee) {

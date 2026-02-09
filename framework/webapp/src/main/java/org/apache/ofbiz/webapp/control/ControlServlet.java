@@ -125,7 +125,7 @@ public class ControlServlet extends HttpServlet {
 
         // set the Entity Engine user info if we have a userLogin
         if (userLogin != null) {
-            GenericDelegator.pushUserIdentifier(userLogin.getString("userLoginId"));
+            GenericDelegator.pushUserIdentifier(userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
         }
 
         // workaraound if we are in the root webapp
@@ -266,16 +266,16 @@ public class ControlServlet extends HttpServlet {
             Debug.logError("An error occurred, going to the errorPage: " + errorPage, MODULE);
 
             Map<String, Object> context = new HashMap<>();
-            context.put("request", request);
-            context.put("response", response);
-            context.put("session", session);
-            context.put("dispatcher", dispatcher);
-            context.put("delegator", delegator);
-            context.put("security", security);
-            context.put("locale", UtilHttp.getLocale(request));
-            context.put("timeZone", UtilHttp.getTimeZone(request));
-            context.put("userLogin", session.getAttribute("userLogin"));
-            context.put("visualTheme", UtilHttp.getVisualTheme(request));
+            context.put(org.apache.ofbiz.persistence.entity.x.request, request);
+            context.put(org.apache.ofbiz.persistence.entity.x.response, response);
+            context.put(org.apache.ofbiz.persistence.entity.x.session, session);
+            context.put(org.apache.ofbiz.persistence.entity.x.dispatcher, dispatcher);
+            context.put(org.apache.ofbiz.persistence.entity.x.delegator, delegator);
+            context.put(org.apache.ofbiz.persistence.entity.x.security, security);
+            context.put(org.apache.ofbiz.persistence.entity.x.locale, UtilHttp.getLocale(request));
+            context.put(org.apache.ofbiz.persistence.entity.x.timeZone, UtilHttp.getTimeZone(request));
+            context.put(org.apache.ofbiz.persistence.entity.x.userLogin, session.getAttribute("userLogin"));
+            context.put(org.apache.ofbiz.persistence.entity.x.visualTheme, UtilHttp.getVisualTheme(request));
 
             boolean errorPageFailed = false;
             if (errorPage.endsWith(".jsp")) {

@@ -69,7 +69,7 @@ public class HtmlMenuRendererImage extends HtmlMenuRenderer {
         } catch (GenericEntityException e) {
             throw new RuntimeException(e.getMessage());
         }
-        String medallionLogoStr = webSitePublishPoint.getString("medallionLogo");
+        String medallionLogoStr = webSitePublishPoint.getString(org.apache.ofbiz.persistence.entity.x.medallionLogo);
         StringWriter buf = new StringWriter();
         appendContentUrl(buf, medallionLogoStr);
         imgStr.append(buf.toString());

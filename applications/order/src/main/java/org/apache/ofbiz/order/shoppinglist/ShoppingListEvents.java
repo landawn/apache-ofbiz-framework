@@ -243,16 +243,16 @@ public class ShoppingListEvents {
                 throw new IllegalArgumentException(errMsg);
             }
 
-            shoppingListItems = shoppingList.getRelated("ShoppingListItem", null, null, false);
+            shoppingListItems = shoppingList.getRelated(org.apache.ofbiz.persistence.entity.x.ShoppingListItem, null, null, false);
             if (shoppingListItems == null) {
                 shoppingListItems = new LinkedList<>();
             }
 
             // include all items of child lists if flagged to do so
             if (includeChild) {
-                List<GenericValue> childShoppingLists = shoppingList.getRelated("ChildShoppingList", null, null, false);
+                List<GenericValue> childShoppingLists = shoppingList.getRelated(org.apache.ofbiz.persistence.entity.x.ChildShoppingList, null, null, false);
                 for (GenericValue v : childShoppingLists) {
-                    List<GenericValue> items = v.getRelated("ShoppingListItem", null, null, false);
+                    List<GenericValue> items = v.getRelated(org.apache.ofbiz.persistence.entity.x.ShoppingListItem, null, null, false);
                     shoppingListItems.addAll(items);
                 }
             }
@@ -285,15 +285,15 @@ public class ShoppingListEvents {
         // add the items
         StringBuilder eventMessage = new StringBuilder();
         for (GenericValue shoppingListItem : shoppingListItems) {
-            String productId = shoppingListItem.getString("productId");
-            BigDecimal quantity = shoppingListItem.getBigDecimal("quantity");
-            Timestamp reservStart = shoppingListItem.getTimestamp("reservStart");
-            BigDecimal reservLength = shoppingListItem.getBigDecimal("reservLength");
-            BigDecimal reservPersons = shoppingListItem.getBigDecimal("reservPersons");
-            String configId = shoppingListItem.getString("configId");
+            String productId = shoppingListItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
+            BigDecimal quantity = shoppingListItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+            Timestamp reservStart = shoppingListItem.getTimestamp(org.apache.ofbiz.persistence.entity.x.reservStart);
+            BigDecimal reservLength = shoppingListItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.reservLength);
+            BigDecimal reservPersons = shoppingListItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.reservPersons);
+            String configId = shoppingListItem.getString(org.apache.ofbiz.persistence.entity.x.configId);
             try {
-                String listId = shoppingListItem.getString("shoppingListId");
-                String itemId = shoppingListItem.getString("shoppingListItemSeqId");
+                String listId = shoppingListItem.getString(org.apache.ofbiz.persistence.entity.x.shoppingListId);
+                String itemId = shoppingListItem.getString(org.apache.ofbiz.persistence.entity.x.shoppingListItemSeqId);
 
                 Map<String, Object> attributes = new HashMap<>();
                 // list items are noted in the shopping cart
@@ -393,7 +393,7 @@ public class ShoppingListEvents {
     public static String getAutoSaveListId(Delegator delegator, LocalDispatcher dispatcher, String partyId, GenericValue userLogin,
                                            String productStoreId) throws GenericEntityException, GenericServiceException {
         if (partyId == null && userLogin != null) {
-            partyId = userLogin.getString("partyId");
+            partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
         }
 
         String autoSaveListId = null;
@@ -407,7 +407,7 @@ public class ShoppingListEvents {
 
             if (UtilValidate.isNotEmpty(existingLists)) {
                 list = EntityUtil.getFirst(existingLists);
-                autoSaveListId = list.getString("shoppingListId");
+                autoSaveListId = list.getString(org.apache.ofbiz.persistence.entity.x.shoppingListId);
             }
         }
         if (list == null && dispatcher != null) {
@@ -442,7 +442,7 @@ public class ShoppingListEvents {
             GenericValue shoppingList = EntityQuery.use(delegator).from("ShoppingList").where("shoppingListId", autoSaveListId).queryOne();
             Integer currentListSize = 0;
             if (UtilValidate.isNotEmpty(shoppingList)) {
-                List<GenericValue> shoppingListItems = shoppingList.getRelated("ShoppingListItem", null, null, false);
+                List<GenericValue> shoppingListItems = shoppingList.getRelated(org.apache.ofbiz.persistence.entity.x.ShoppingListItem, null, null, false);
                 if (UtilValidate.isNotEmpty(shoppingListItems)) {
                     currentListSize = shoppingListItems.size();
                 }
@@ -544,7 +544,7 @@ public class ShoppingListEvents {
                 Debug.logError(e, MODULE);
             }
             if (shoppingList != null) {
-                java.sql.Timestamp lastModified = shoppingList.getTimestamp("lastAdminModified");
+                java.sql.Timestamp lastModified = shoppingList.getTimestamp(org.apache.ofbiz.persistence.entity.x.lastAdminModified);
                 if (lastModified != null) {
                     if (lastModified.after(lastLoad)) {
                         okayToLoad = true;
@@ -590,9 +590,9 @@ public class ShoppingListEvents {
             int count = 0;
             for (String responseId : surveyResps) {
                 GenericValue listResp = delegator.makeValue("ShoppingListItemSurvey");
-                listResp.set("shoppingListId", item.getString("shoppingListId"));
-                listResp.set("shoppingListItemSeqId", item.getString("shoppingListItemSeqId"));
-                listResp.set("surveyResponseId", responseId);
+                listResp.set(org.apache.ofbiz.persistence.entity.x.shoppingListId, item.getString(org.apache.ofbiz.persistence.entity.x.shoppingListId));
+                listResp.set(org.apache.ofbiz.persistence.entity.x.shoppingListItemSeqId, item.getString(org.apache.ofbiz.persistence.entity.x.shoppingListItemSeqId));
+                listResp.set(org.apache.ofbiz.persistence.entity.x.surveyResponseId, responseId);
                 delegator.create(listResp);
                 count++;
             }
@@ -608,19 +608,19 @@ public class ShoppingListEvents {
         Map<String, Map<String, String>> attributeInfos = new HashMap<>();
         if (UtilValidate.isNotEmpty(items)) {
             for (GenericValue item : items) {
-                String listId = item.getString("shoppingListId");
-                String itemId = item.getString("shoppingListItemSeqId");
+                String listId = item.getString(org.apache.ofbiz.persistence.entity.x.shoppingListId);
+                String itemId = item.getString(org.apache.ofbiz.persistence.entity.x.shoppingListItemSeqId);
                 String itemKey = listId + "." + itemId;
 
                 try {
-                    List<GenericValue> itemAttributes = item.getRelated("ShoppingListItemAttribute", null, null, true);
+                    List<GenericValue> itemAttributes = item.getRelated(org.apache.ofbiz.persistence.entity.x.ShoppingListItemAttribute, null, null, true);
                     for (GenericValue attribute : itemAttributes) {
                         Map<String, String> attribMap = attributeInfos.get(itemKey);
                         if (attribMap == null) {
                             attribMap = new HashMap<>();
                             attributeInfos.put(itemKey, attribMap);
                         }
-                        attribMap.put(attribute.getString("attrName"), attribute.getString("attrValue"));
+                        attribMap.put(attribute.getString(org.apache.ofbiz.persistence.entity.x.attrName), attribute.getString(org.apache.ofbiz.persistence.entity.x.attrValue));
                     }
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e, "Error loading related ShoppingListItemAttributes for shoppingListItem "
@@ -639,8 +639,8 @@ public class ShoppingListEvents {
         Map<String, List<String>> surveyInfos = new HashMap<>();
         if (UtilValidate.isNotEmpty(items)) {
             for (GenericValue item : items) {
-                String listId = item.getString("shoppingListId");
-                String itemId = item.getString("shoppingListItemSeqId");
+                String listId = item.getString(org.apache.ofbiz.persistence.entity.x.shoppingListId);
+                String itemId = item.getString(org.apache.ofbiz.persistence.entity.x.shoppingListItemSeqId);
                 surveyInfos.put(listId + "." + itemId, getItemSurveyInfo(item));
             }
         }
@@ -655,14 +655,14 @@ public class ShoppingListEvents {
         List<String> responseIds = new LinkedList<>();
         List<GenericValue> surveyResp = null;
         try {
-            surveyResp = item.getRelated("ShoppingListItemSurvey", null, null, false);
+            surveyResp = item.getRelated(org.apache.ofbiz.persistence.entity.x.ShoppingListItemSurvey, null, null, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
 
         if (UtilValidate.isNotEmpty(surveyResp)) {
             for (GenericValue resp : surveyResp) {
-                responseIds.add(resp.getString("surveyResponseId"));
+                responseIds.add(resp.getString(org.apache.ofbiz.persistence.entity.x.surveyResponseId));
             }
         }
 
@@ -704,7 +704,7 @@ public class ShoppingListEvents {
 
         // check userLogin
         if (userLogin != null) {
-            String partyId = userLogin.getString("partyId");
+            String partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
             if (UtilValidate.isEmpty(partyId)) {
                 return "success";
             }

@@ -78,7 +78,7 @@ public final class CatalogWorker {
         }
         if (catalogs != null) {
             for (GenericValue c: catalogs) {
-                catalogIds.add(c.getString("prodCatalogId"));
+                catalogIds.add(c.getString(org.apache.ofbiz.persistence.entity.x.prodCatalogId));
             }
         }
         return catalogIds;
@@ -105,7 +105,7 @@ public final class CatalogWorker {
         GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
         if (userLogin == null) userLogin = (GenericValue) session.getAttribute("autoUserLogin");
         if (userLogin == null) return null;
-        String partyId = userLogin.getString("partyId");
+        String partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
         if (partyId == null) return null;
         Delegator delegator = (Delegator) request.getAttribute("delegator");
         return getPartyCatalogs(delegator, partyId);
@@ -205,7 +205,7 @@ public final class CatalogWorker {
 
         if (!allCatalogLinks.isEmpty()) {
             for (GenericValue catalogLink: allCatalogLinks) {
-                categoryIds.add(catalogLink.getString("prodCatalogId"));
+                categoryIds.add(catalogLink.getString(org.apache.ofbiz.persistence.entity.x.prodCatalogId));
             }
         }
         return categoryIds;
@@ -223,7 +223,7 @@ public final class CatalogWorker {
             GenericValue prodCatalog = EntityQuery.use(delegator).from("ProdCatalog").where("prodCatalogId", prodCatalogId).cache().queryOne();
 
             if (prodCatalog != null) {
-                return prodCatalog.getString("catalogName");
+                return prodCatalog.getString(org.apache.ofbiz.persistence.entity.x.catalogName);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, "Error looking up name for prodCatalog with id " + prodCatalogId, MODULE);
@@ -236,7 +236,7 @@ public final class CatalogWorker {
         GenericValue prodCatalog = getProdCatalog(request, getCurrentCatalogId(request));
 
         if (prodCatalog == null) return "";
-        String contentPathPrefix = prodCatalog.getString("contentPathPrefix");
+        String contentPathPrefix = prodCatalog.getString(org.apache.ofbiz.persistence.entity.x.contentPathPrefix);
 
         return StringUtil.cleanUpPathPrefix(contentPathPrefix);
     }
@@ -245,7 +245,7 @@ public final class CatalogWorker {
         GenericValue prodCatalog = getProdCatalog(request, getCurrentCatalogId(request));
 
         if (prodCatalog == null) return "";
-        String templatePathPrefix = prodCatalog.getString("templatePathPrefix");
+        String templatePathPrefix = prodCatalog.getString(org.apache.ofbiz.persistence.entity.x.templatePathPrefix);
 
         return StringUtil.cleanUpPathPrefix(templatePathPrefix);
     }
@@ -271,7 +271,7 @@ public final class CatalogWorker {
             GenericValue prodCatalogCategory = EntityUtil.getFirst(getProdCatalogCategories(delegator, prodCatalogId, prodCatalogCategoryTypeId));
 
             if (prodCatalogCategory != null) {
-                return prodCatalogCategory.getString("productCategoryId");
+                return prodCatalogCategory.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId);
             }
         }
         return null;
@@ -331,7 +331,7 @@ public final class CatalogWorker {
             GenericValue prodCatalog = EntityQuery.use(delegator).from("ProdCatalog").where("prodCatalogId", prodCatalogId).cache().queryOne();
 
             if (prodCatalog != null) {
-                return "Y".equals(prodCatalog.getString("useQuickAdd"));
+                return "Y".equals(prodCatalog.getString(org.apache.ofbiz.persistence.entity.x.useQuickAdd));
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, "Error looking up name for prodCatalog with id " + prodCatalogId, MODULE);

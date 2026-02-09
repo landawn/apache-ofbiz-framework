@@ -104,12 +104,12 @@ public class ContentJsonEvents {
             }
             GenericValue newAssoc = (GenericValue) oldAssoc.clone();
 
-            oldAssoc.set("thruDate", now);
+            oldAssoc.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
             oldAssoc.store();
 
-            newAssoc.set("contentId", contentIdFromNew);
-            newAssoc.set("fromDate", now);
-            newAssoc.set("thruDate", null);
+            newAssoc.set(org.apache.ofbiz.persistence.entity.x.contentId, contentIdFromNew);
+            newAssoc.set(org.apache.ofbiz.persistence.entity.x.fromDate, now);
+            newAssoc.set(org.apache.ofbiz.persistence.entity.x.thruDate, null);
             delegator.clearCacheLine(delegator.create(newAssoc));
 
             return newAssoc;
@@ -136,7 +136,7 @@ public class ContentJsonEvents {
                 EntityUtil.getFilterByDateExpr());
         List<GenericValue> assocs = delegator.findList("ContentAssoc", condition, null, null, null, true);
         for (GenericValue assoc : assocs) {
-            assoc.set("thruDate", now);
+            assoc.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
             delegator.store(assoc);
         }
         deleteWebPathAliases(delegator, contentId);
@@ -149,20 +149,20 @@ public class ContentJsonEvents {
                 EntityUtil.getFilterByDateExpr());
         List<GenericValue> pathAliases = delegator.findList("WebSitePathAlias", condition, null, null, null, true);
         for (GenericValue alias : pathAliases) {
-            alias.set("thruDate", now);
+            alias.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
             delegator.store(alias);
         }
         List<GenericValue> subContents = delegator.findList("ContentAssoc", condition, null, null, null, true);
         for (GenericValue subContentAssoc : subContents) {
-            deleteWebPathAliases(delegator, subContentAssoc.getString("contentIdTo"));
+            deleteWebPathAliases(delegator, subContentAssoc.getString(org.apache.ofbiz.persistence.entity.x.contentIdTo));
         }
     }
 
     private static Map<String, Object> getTreeNode(GenericValue assoc) throws GenericEntityException {
-        GenericValue content = assoc.getRelatedOne("ToContent", true);
-        String contentName = assoc.getString("contentIdTo");
-        if (content != null && content.getString("contentName") != null) {
-            contentName = content.getString("contentName");
+        GenericValue content = assoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ToContent, true);
+        String contentName = assoc.getString(org.apache.ofbiz.persistence.entity.x.contentIdTo);
+        if (content != null && content.getString(org.apache.ofbiz.persistence.entity.x.contentName) != null) {
+            contentName = content.getString(org.apache.ofbiz.persistence.entity.x.contentName);
             if (contentName.length() > CONTENT_NAME_MAX_LENGTH) {
                 contentName = contentName.substring(0, CONTENT_NAME_MAX_LENGTH);
             }
@@ -171,14 +171,14 @@ public class ContentJsonEvents {
         Map<String, Object> data = UtilMisc.toMap("title", (Object) contentName);
 
         Map<String, Object> attr = UtilMisc.toMap(
-                "id", assoc.get("contentIdTo"),
-                "contentId", assoc.get("contentId"),
-                "fromDate", assoc.getTimestamp("fromDate").toString(),
-                "contentAssocTypeId", assoc.get("contentAssocTypeId"));
+                "id", assoc.get(org.apache.ofbiz.persistence.entity.x.contentIdTo),
+                "contentId", assoc.get(org.apache.ofbiz.persistence.entity.x.contentId),
+                "fromDate", assoc.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate).toString(),
+                "contentAssocTypeId", assoc.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId));
 
         Map<String, Object> node = UtilMisc.toMap("data", (Object) data, "attr", (Object) attr);
 
-        List<GenericValue> assocChildren = content != null ? content.getRelated("FromContentAssoc", null, null, true) : null;
+        List<GenericValue> assocChildren = content != null ? content.getRelated(org.apache.ofbiz.persistence.entity.x.FromContentAssoc, null, null, true) : null;
         assocChildren = EntityUtil.filterByDate(assocChildren);
         if (!CollectionUtils.isEmpty(assocChildren)) {
             node.put("state", "closed");

@@ -80,17 +80,17 @@ public class ProductionRun {
                 GenericValue workEffort = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", productionRunId).queryOne();
                 if (workEffort != null) {
                     // If this is a task, get the parent production run
-                    if (workEffort.getString("workEffortTypeId") != null && "PROD_ORDER_TASK".equals(workEffort.getString("workEffortTypeId"))) {
+                    if (workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortTypeId) != null && "PROD_ORDER_TASK".equals(workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortTypeId))) {
                         workEffort = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId",
-                                workEffort.getString("workEffortParentId")).queryOne();
+                                workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortParentId)).queryOne();
                     }
                 }
                 this.productionRun = workEffort;
                 if (exist()) {
-                    this.estimatedStartDate = productionRun.getTimestamp("estimatedStartDate");
-                    this.estimatedCompletionDate = productionRun.getTimestamp("estimatedCompletionDate");
-                    this.productionRunName = productionRun.getString("workEffortName");
-                    this.description = productionRun.getString("description");
+                    this.estimatedStartDate = productionRun.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedStartDate);
+                    this.estimatedCompletionDate = productionRun.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate);
+                    this.productionRunName = productionRun.getString(org.apache.ofbiz.persistence.entity.x.workEffortName);
+                    this.description = productionRun.getString(org.apache.ofbiz.persistence.entity.x.description);
                 }
             }
         } catch (GenericEntityException e) {
@@ -128,14 +128,14 @@ public class ProductionRun {
             if (updateCompletionDate) {
                 this.estimatedCompletionDate = recalculateEstimatedCompletionDate();
             }
-            productionRun.set("estimatedStartDate", this.estimatedStartDate);
-            productionRun.set("estimatedCompletionDate", this.estimatedCompletionDate);
-            productionRun.set("workEffortName", this.productionRunName);
-            productionRun.set("description", this.description);
+            productionRun.set(org.apache.ofbiz.persistence.entity.x.estimatedStartDate, this.estimatedStartDate);
+            productionRun.set(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate, this.estimatedCompletionDate);
+            productionRun.set(org.apache.ofbiz.persistence.entity.x.workEffortName, this.productionRunName);
+            productionRun.set(org.apache.ofbiz.persistence.entity.x.description, this.description);
             try {
                 if (quantityIsUpdated) {
-                    productionRun.set("quantityToProduce", this.quantity);
-                    productionRunProduct.set("estimatedQuantity", this.quantity.doubleValue());
+                    productionRun.set(org.apache.ofbiz.persistence.entity.x.quantityToProduce, this.quantity);
+                    productionRunProduct.set(org.apache.ofbiz.persistence.entity.x.estimatedQuantity, this.quantity.doubleValue());
                     productionRunProduct.store();
                     quantityIsUpdated = false;
                 }
@@ -168,11 +168,11 @@ public class ProductionRun {
         if (exist()) {
             if (productProduced == null) {
                 try {
-                    List<GenericValue> productionRunProducts = productionRun.getRelated("WorkEffortGoodStandard",
+                    List<GenericValue> productionRunProducts = productionRun.getRelated(org.apache.ofbiz.persistence.entity.x.WorkEffortGoodStandard,
                             UtilMisc.toMap("workEffortGoodStdTypeId", "PRUN_PROD_DELIV"), null, false);
                     this.productionRunProduct = EntityUtil.getFirst(productionRunProducts);
-                    quantity = productionRunProduct.getBigDecimal("estimatedQuantity");
-                    productProduced = productionRunProduct.getRelatedOne("Product", true);
+                    quantity = productionRunProduct.getBigDecimal(org.apache.ofbiz.persistence.entity.x.estimatedQuantity);
+                    productProduced = productionRunProduct.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, true);
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e.getMessage(), MODULE);
                 }
@@ -205,8 +205,8 @@ public class ProductionRun {
         this.updateCompletionDate = true;
         if (productionRunComponents == null) getProductionRunComponents();
         for (GenericValue component : productionRunComponents) {
-            componentQuantity = component.getBigDecimal("estimatedQuantity");
-            component.set("estimatedQuantity", componentQuantity.divide(previousQuantity, 10, RoundingMode.HALF_UP).multiply(newQuantity)
+            componentQuantity = component.getBigDecimal(org.apache.ofbiz.persistence.entity.x.estimatedQuantity);
+            component.set(org.apache.ofbiz.persistence.entity.x.estimatedQuantity, componentQuantity.divide(previousQuantity, 10, RoundingMode.HALF_UP).multiply(newQuantity)
                     .doubleValue());
         }
     }
@@ -259,13 +259,13 @@ public class ProductionRun {
             if (quantity == null) getQuantity();
             Timestamp endDate = null;
             for (GenericValue routingTask : productionRunRoutingTasks) {
-                if (priority.compareTo(routingTask.getLong("priority")) <= 0) {
+                if (priority.compareTo(routingTask.getLong(org.apache.ofbiz.persistence.entity.x.priority)) <= 0) {
                     // Calculate the estimatedCompletionDate
                     long totalTime = ProductionRun.getEstimatedTaskTime(routingTask, quantity, dispatcher);
                     endDate = TechDataServices.addForward(TechDataServices.getTechDataCalendar(routingTask), startDate, totalTime);
                     // update the routingTask
-                    routingTask.set("estimatedStartDate", startDate);
-                    routingTask.set("estimatedCompletionDate", endDate);
+                    routingTask.set(org.apache.ofbiz.persistence.entity.x.estimatedStartDate, startDate);
+                    routingTask.set(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate, endDate);
                     startDate = endDate;
                 }
             }
@@ -302,7 +302,7 @@ public class ProductionRun {
      * @return the description property
      **/
     public String getDescription() {
-        if (exist()) return productionRun.getString("description");
+        if (exist()) return productionRun.getString(org.apache.ofbiz.persistence.entity.x.description);
         else return null;
     }
 
@@ -321,7 +321,7 @@ public class ProductionRun {
         if (exist()) {
             if (currentStatus == null) {
                 try {
-                    currentStatus = productionRun.getRelatedOne("CurrentStatusItem", true);
+                    currentStatus = productionRun.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CurrentStatusItem, true);
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e.getMessage(), MODULE);
                 }
@@ -344,7 +344,7 @@ public class ProductionRun {
                         GenericValue routingTask;
                         for (GenericValue productionRunRoutingTask : productionRunRoutingTasks) {
                             routingTask = productionRunRoutingTask;
-                            productionRunComponents.addAll(routingTask.getRelated("WorkEffortGoodStandard",
+                            productionRunComponents.addAll(routingTask.getRelated(org.apache.ofbiz.persistence.entity.x.WorkEffortGoodStandard,
                                     UtilMisc.toMap("workEffortGoodStdTypeId", "PRUNT_PROD_NEEDED"), null, false));
                         }
                     } catch (GenericEntityException e) {
@@ -364,7 +364,7 @@ public class ProductionRun {
         if (exist()) {
             if (productionRunRoutingTasks == null) {
                 try {
-                    productionRunRoutingTasks = productionRun.getRelated("ChildWorkEffort",
+                    productionRunRoutingTasks = productionRun.getRelated(org.apache.ofbiz.persistence.entity.x.ChildWorkEffort,
                             UtilMisc.toMap("workEffortTypeId", "PROD_ORDER_TASK"), UtilMisc.toList("priority"), false);
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e.getMessage(), MODULE);
@@ -383,7 +383,7 @@ public class ProductionRun {
         if (exist()) {
             if (productionRunRoutingTasks == null) {
                 try {
-                    productionRunRoutingTasks = productionRun.getRelated("ChildWorkEffort",
+                    productionRunRoutingTasks = productionRun.getRelated(org.apache.ofbiz.persistence.entity.x.ChildWorkEffort,
                             UtilMisc.toMap("workEffortTypeId", "PROD_ORDER_TASK"), UtilMisc.toList("priority"), false);
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e.getMessage(), MODULE);
@@ -417,20 +417,20 @@ public class ProductionRun {
         double setupTime = 0;
         double taskTime = 1;
         double totalTaskTime = 0;
-        if (task.get("estimatedSetupMillis") != null) {
-            setupTime = task.getDouble("estimatedSetupMillis");
+        if (task.get(org.apache.ofbiz.persistence.entity.x.estimatedSetupMillis) != null) {
+            setupTime = task.getDouble(org.apache.ofbiz.persistence.entity.x.estimatedSetupMillis);
         }
-        if (task.get("estimatedMilliSeconds") != null) {
-            taskTime = task.getDouble("estimatedMilliSeconds");
+        if (task.get(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds) != null) {
+            taskTime = task.getDouble(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds);
         }
         totalTaskTime = (setupTime + taskTime * quantity.doubleValue());
 
-        if (task.get("estimateCalcMethod") != null) {
+        if (task.get(org.apache.ofbiz.persistence.entity.x.estimateCalcMethod) != null) {
             String serviceName = null;
             try {
-                GenericValue genericService = task.getRelatedOne("CustomMethod", false);
-                if (genericService != null && genericService.getString("customMethodName") != null) {
-                    serviceName = genericService.getString("customMethodName");
+                GenericValue genericService = task.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CustomMethod, false);
+                if (genericService != null && genericService.getString(org.apache.ofbiz.persistence.entity.x.customMethodName) != null) {
+                    serviceName = genericService.getString(org.apache.ofbiz.persistence.entity.x.customMethodName);
                     // call the service
                     // and put the value in totalTaskTime
                     Map<String, Object> estimateCalcServiceMap = UtilMisc.<String, Object>toMap("workEffort", task, "quantity", quantity, "productId",

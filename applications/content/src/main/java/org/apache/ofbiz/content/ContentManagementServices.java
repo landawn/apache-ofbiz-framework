@@ -77,13 +77,13 @@ public class ContentManagementServices {
      */
     public static Map<String, Object> getSubContent(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String contentId = (String) context.get("contentId");
-        String subContentId = (String) context.get("subContentId");
-        String mapKey = (String) context.get("mapKey");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Timestamp fromDate = (Timestamp) context.get("fromDate");
-        List<String> assocTypes = UtilGenerics.cast(context.get("assocTypes"));
-        String assocTypesString = (String) context.get("assocTypesString");
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String subContentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.subContentId);
+        String mapKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.mapKey);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Timestamp fromDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
+        List<String> assocTypes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.assocTypes));
+        String assocTypesString = (String) context.get(org.apache.ofbiz.persistence.entity.x.assocTypesString);
         if (UtilValidate.isNotEmpty(assocTypesString)) {
             List<String> lst = StringUtil.split(assocTypesString, "|");
             if (assocTypes == null) {
@@ -114,7 +114,7 @@ public class ContentManagementServices {
      */
     public static Map<String, Object> getContent(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String contentId = (String) context.get("contentId");
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
         GenericValue view = null;
 
         try {
@@ -146,10 +146,10 @@ public class ContentManagementServices {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // Check if a webshell is not uploaded
-        String textData = (String) context.get("textData");
+        String textData = (String) context.get(org.apache.ofbiz.persistence.entity.x.textData);
         if (UtilValidate.isNotEmpty(textData)) {
             try {
                 if (!SecuredUpload.isValidText(textData, Collections.emptyList())) {
@@ -165,12 +165,12 @@ public class ContentManagementServices {
         // Knowing why a request fails permission check is one of the more difficult
         // aspects of content management. Setting "displayFailCond" to true will
         // put an html table in result.errorMessage that will show what tests were performed
-        Boolean bDisplayFailCond = (Boolean) context.get("displayFailCond");
-        String mapKey = (String) context.get("mapKey");
+        Boolean bDisplayFailCond = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.displayFailCond);
+        String mapKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.mapKey);
 
         // If "deactivateExisting" is set, other Contents that are tied to the same
         // contentIdTo will be deactivated (thruDate set to now)
-        String deactivateString = (String) context.get("deactivateExisting");
+        String deactivateString = (String) context.get(org.apache.ofbiz.persistence.entity.x.deactivateExisting);
         boolean deactivateExisting = "true".equalsIgnoreCase(deactivateString);
 
         if (Debug.infoOn()) {
@@ -178,17 +178,17 @@ public class ContentManagementServices {
         }
 
         // ContentPurposes can get passed in as a delimited string or a list. Combine.
-        List<String> contentPurposeList = UtilGenerics.cast(context.get("contentPurposeList"));
+        List<String> contentPurposeList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.contentPurposeList));
         if (contentPurposeList == null) {
             contentPurposeList = new LinkedList<>();
         }
-        String contentPurposeString = (String) context.get("contentPurposeString");
+        String contentPurposeString = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentPurposeString);
         if (UtilValidate.isNotEmpty(contentPurposeString)) {
             List<String> tmpPurposes = StringUtil.split(contentPurposeString, "|");
             contentPurposeList.addAll(tmpPurposes);
         }
-        context.put("contentPurposeList", contentPurposeList);
-        context.put("contentPurposeString", null);
+        context.put(org.apache.ofbiz.persistence.entity.x.contentPurposeList, contentPurposeList);
+        context.put(org.apache.ofbiz.persistence.entity.x.contentPurposeString, null);
 
         if (Debug.infoOn()) {
             Debug.logInfo("in persist... contentPurposeList(0):" + contentPurposeList, MODULE);
@@ -199,10 +199,10 @@ public class ContentManagementServices {
 
         content.setPKFields(context);
         content.setNonPKFields(context);
-        String contentId = (String) content.get("contentId");
-        String contentTypeId = (String) content.get("contentTypeId");
-        String origContentId = (String) content.get("contentId");
-        String origDataResourceId = (String) content.get("dataResourceId");
+        String contentId = (String) content.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String contentTypeId = (String) content.get(org.apache.ofbiz.persistence.entity.x.contentTypeId);
+        String origContentId = (String) content.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String origDataResourceId = (String) content.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
 
         if (Debug.infoOn()) {
             Debug.logInfo("in persist... contentId(0):" + contentId, MODULE);
@@ -212,25 +212,25 @@ public class ContentManagementServices {
         dataResource.setPKFields(context);
         dataResource.setNonPKFields(context);
         dataResource.setAllFields(context, false, "dr", null);
-        String isPublic = (String) context.get("isPublic");
+        String isPublic = (String) context.get(org.apache.ofbiz.persistence.entity.x.isPublic);
         if (UtilValidate.isEmpty(isPublic)) {
-            dataResource.set("isPublic", "N");
+            dataResource.set(org.apache.ofbiz.persistence.entity.x.isPublic, "N");
         }
         context.putAll(dataResource);
-        String dataResourceId = (String) dataResource.get("dataResourceId");
-        String dataResourceTypeId = (String) dataResource.get("dataResourceTypeId");
+        String dataResourceId = (String) dataResource.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+        String dataResourceTypeId = (String) dataResource.get(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId);
         if (Debug.infoOn()) {
             Debug.logInfo("in persist... dataResourceId(0):" + dataResourceId, MODULE);
         }
 
         GenericValue contentAssoc = delegator.makeValue("ContentAssoc");
-        String contentAssocTypeId = (String) context.get("contentAssocTypeId");
+        String contentAssocTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId);
         if (UtilValidate.isNotEmpty(contentAssocTypeId)) {
-            context.put("caContentAssocTypeId", contentAssocTypeId);
+            context.put(org.apache.ofbiz.persistence.entity.x.caContentAssocTypeId, contentAssocTypeId);
         }
-        contentAssocTypeId = (String) context.get("caContentAssocTypeId");
+        contentAssocTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.caContentAssocTypeId);
         contentAssoc.setAllFields(context, false, "ca", null);
-        contentAssoc.put("contentId", context.get("caContentId"));
+        contentAssoc.put("contentId", context.get(org.apache.ofbiz.persistence.entity.x.caContentId));
         context.putAll(contentAssoc);
 
         GenericValue electronicText = delegator.makeValue("ElectronicText");
@@ -239,17 +239,17 @@ public class ContentManagementServices {
 
         // save expected primary keys on result now in case there is no operation that uses them
         Map<String, Object> results = ServiceUtil.returnSuccess();
-        results.put("contentId", content.get("contentId"));
-        results.put("dataResourceId", dataResource.get("dataResourceId"));
-        results.put("drDataResourceId", dataResource.get("dataResourceId"));
-        results.put("drDataResourceId", dataResource.get("dataResourceId"));
-        results.put("caContentIdTo", contentAssoc.get("contentIdTo"));
-        results.put("caContentId", contentAssoc.get("contentId"));
-        results.put("caFromDate", contentAssoc.get("fromDate"));
-        results.put("caContentAssocTypeId", contentAssoc.get("contentAssocTypeId"));
+        results.put("contentId", content.get(org.apache.ofbiz.persistence.entity.x.contentId));
+        results.put("dataResourceId", dataResource.get(org.apache.ofbiz.persistence.entity.x.dataResourceId));
+        results.put("drDataResourceId", dataResource.get(org.apache.ofbiz.persistence.entity.x.dataResourceId));
+        results.put("drDataResourceId", dataResource.get(org.apache.ofbiz.persistence.entity.x.dataResourceId));
+        results.put("caContentIdTo", contentAssoc.get(org.apache.ofbiz.persistence.entity.x.contentIdTo));
+        results.put("caContentId", contentAssoc.get(org.apache.ofbiz.persistence.entity.x.contentId));
+        results.put("caFromDate", contentAssoc.get(org.apache.ofbiz.persistence.entity.x.fromDate));
+        results.put("caContentAssocTypeId", contentAssoc.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId));
 
         // get user info for multiple use
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         boolean dataResourceExists = true;
         if (Debug.infoOn()) {
             Debug.logInfo("in persist... dataResourceTypeId(0):" + dataResourceTypeId, MODULE);
@@ -269,13 +269,13 @@ public class ContentManagementServices {
             dataResourceId = (String) dataResourceResult.get("dataResourceId");
             results.put("dataResourceId", dataResourceId);
             results.put("drDataResourceId", dataResourceId);
-            context.put("dataResourceId", dataResourceId);
+            context.put(org.apache.ofbiz.persistence.entity.x.dataResourceId, dataResourceId);
             content.put("dataResourceId", dataResourceId);
-            context.put("drDataResourceId", dataResourceId);
+            context.put(org.apache.ofbiz.persistence.entity.x.drDataResourceId, dataResourceId);
         }
         // Do update and create permission checks on Content if warranted.
 
-        context.put("skipPermissionCheck", null); // Force check here
+        context.put(org.apache.ofbiz.persistence.entity.x.skipPermissionCheck, null); // Force check here
         boolean contentExists = true;
         if (Debug.infoOn()) {
             Debug.logInfo("in persist... contentTypeId:" + contentTypeId + " dataResourceTypeId:" + dataResourceTypeId + " contentId:"
@@ -301,7 +301,7 @@ public class ContentManagementServices {
                 contentContext.putAll(contentModel.makeValid(content, ModelService.IN_PARAM));
                 contentContext.put("userLogin", userLogin);
                 contentContext.put("displayFailCond", bDisplayFailCond);
-                contentContext.put("skipPermissionCheck", context.get("skipPermissionCheck"));
+                contentContext.put("skipPermissionCheck", context.get(org.apache.ofbiz.persistence.entity.x.skipPermissionCheck));
                 Debug.logInfo("In persistContentAndAssoc calling updateContent with content: " + contentContext, MODULE);
                 Map<String, Object> thisResult = dispatcher.runSync("updateContent", contentContext);
                 if (ServiceUtil.isError(thisResult) || ServiceUtil.isFailure(thisResult)) {
@@ -314,7 +314,7 @@ public class ContentManagementServices {
                 contentContext.putAll(contentModel.makeValid(content, ModelService.IN_PARAM));
                 contentContext.put("userLogin", userLogin);
                 contentContext.put("displayFailCond", bDisplayFailCond);
-                contentContext.put("skipPermissionCheck", context.get("skipPermissionCheck"));
+                contentContext.put("skipPermissionCheck", context.get(org.apache.ofbiz.persistence.entity.x.skipPermissionCheck));
                 Debug.logInfo("In persistContentAndAssoc calling createContent with content: " + contentContext, MODULE);
                 Map<String, Object> thisResult = dispatcher.runSync("createContent", contentContext);
                 if (ServiceUtil.isError(thisResult) || ServiceUtil.isFailure(thisResult)) {
@@ -324,8 +324,8 @@ public class ContentManagementServices {
                 contentId = (String) thisResult.get("contentId");
             }
             results.put("contentId", contentId);
-            context.put("contentId", contentId);
-            context.put("caContentIdTo", contentId);
+            context.put(org.apache.ofbiz.persistence.entity.x.contentId, contentId);
+            context.put(org.apache.ofbiz.persistence.entity.x.caContentIdTo, contentId);
 
             // Add ContentPurposes if this is a create operation
             if (contentId != null && !contentExists) {
@@ -371,14 +371,14 @@ public class ContentManagementServices {
         if (Debug.infoOn()) {
             Debug.logInfo("contentAssoc: " + contentAssoc.toString(), MODULE);
         }
-        if (UtilValidate.isNotEmpty(contentAssocTypeId) && contentAssoc.get("contentId") != null && contentAssoc.get("contentIdTo") != null) {
+        if (UtilValidate.isNotEmpty(contentAssocTypeId) && contentAssoc.get(org.apache.ofbiz.persistence.entity.x.contentId) != null && contentAssoc.get(org.apache.ofbiz.persistence.entity.x.contentIdTo) != null) {
             if (Debug.infoOn()) {
                 Debug.logInfo("in persistContentAndAssoc, deactivateExisting:" + deactivateExisting, MODULE);
             }
             Map<String, Object> contentAssocContext = new HashMap<>();
             contentAssocContext.put("userLogin", userLogin);
             contentAssocContext.put("displayFailCond", bDisplayFailCond);
-            contentAssocContext.put("skipPermissionCheck", context.get("skipPermissionCheck"));
+            contentAssocContext.put("skipPermissionCheck", context.get(org.apache.ofbiz.persistence.entity.x.skipPermissionCheck));
             Map<String, Object> thisResult = null;
             try {
                 GenericValue contentAssocExisting = EntityQuery.use(delegator).from("ContentAssoc").where(contentAssoc.getPrimaryKey()).queryOne();
@@ -399,8 +399,8 @@ public class ContentManagementServices {
                 } else {
                     if (deactivateExisting) {
                         contentAssocExisting.put("thruDate", UtilDateTime.nowTimestamp());
-                    } else if (UtilValidate.isNotEmpty(context.get("thruDate"))) {
-                        contentAssocExisting.put("thruDate", context.get("thruDate"));
+                    } else if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.thruDate))) {
+                        contentAssocExisting.put("thruDate", context.get(org.apache.ofbiz.persistence.entity.x.thruDate));
                     }
                     ModelService contentAssocModel = dispatcher.getDispatchContext().getModelService("updateContentAssoc");
                     Map<String, Object> ctx = contentAssocModel.makeValid(contentAssocExisting, ModelService.IN_PARAM);
@@ -419,8 +419,8 @@ public class ContentManagementServices {
             }
         }
         context.remove("skipPermissionCheck");
-        context.put("contentId", origContentId);
-        context.put("dataResourceId", origDataResourceId);
+        context.put(org.apache.ofbiz.persistence.entity.x.contentId, origContentId);
+        context.put(org.apache.ofbiz.persistence.entity.x.dataResourceId, origDataResourceId);
         context.remove("dataResource");
         Debug.logInfo("results:" + results, MODULE);
         return results;
@@ -432,10 +432,10 @@ public class ContentManagementServices {
     public static Map<String, Object> updateSiteRoles(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         Map<String, Object> results = new HashMap<>();
-        String siteContentId = (String) context.get("contentId");
-        String partyId = (String) context.get("partyId");
+        String siteContentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
 
         if (UtilValidate.isEmpty(siteContentId) || UtilValidate.isEmpty(partyId)) {
             return results;
@@ -454,7 +454,7 @@ public class ContentManagementServices {
             serviceContext.put("contentId", siteContentId);
             serviceContext.put("userLogin", userLogin);
             Debug.logInfo("updateSiteRoles, serviceContext(0):" + serviceContext, MODULE);
-            String siteRole = (String) roleType.get("roleTypeId"); // BLOG_EDITOR, BLOG_ADMIN, etc.
+            String siteRole = (String) roleType.get(org.apache.ofbiz.persistence.entity.x.roleTypeId); // BLOG_EDITOR, BLOG_ADMIN, etc.
             String cappedSiteRole = ModelUtil.dbNameToVarName(siteRole);
             if (Debug.infoOn()) {
                 Debug.logInfo("updateSiteRoles, cappediteRole(1):" + cappedSiteRole, MODULE);
@@ -521,7 +521,7 @@ public class ContentManagementServices {
 
     public static Map<String, Object> persistDataResourceAndData(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result;
         try {
             ModelService checkPermModel = dispatcher.getDispatchContext().getModelService("checkContentPermission");
@@ -569,15 +569,15 @@ public class ContentManagementServices {
         GenericValue electronicText = delegator.makeValue("ElectronicText");
         electronicText.setPKFields(context);
         electronicText.setNonPKFields(context);
-        String textData = (String) electronicText.get("textData");
+        String textData = (String) electronicText.get(org.apache.ofbiz.persistence.entity.x.textData);
 
 
-        String dataResourceId = (String) dataResource.get("dataResourceId");
-        String dataResourceTypeId = (String) dataResource.get("dataResourceTypeId");
+        String dataResourceId = (String) dataResource.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+        String dataResourceTypeId = (String) dataResource.get(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId);
         if (Debug.infoOn()) {
             Debug.logInfo("in persist... dataResourceId(0):" + dataResourceId, MODULE);
         }
-        context.put("skipPermissionCheck", "granted"); // TODO: a temp hack because I don't want to bother with DataResource permissions at this time.
+        context.put(org.apache.ofbiz.persistence.entity.x.skipPermissionCheck, "granted"); // TODO: a temp hack because I don't want to bother with DataResource permissions at this time.
         boolean dataResourceExists = true;
         if (UtilValidate.isEmpty(dataResourceId)) {
             dataResourceExists = false;
@@ -591,18 +591,18 @@ public class ContentManagementServices {
                 return ServiceUtil.returnError(e.toString());
             }
         }
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         ModelService dataResourceModel = dispatcher.getDispatchContext().getModelService("updateDataResource");
         Map<String, Object> ctx = dataResourceModel.makeValid(dataResource, ModelService.IN_PARAM);
         newDrContext.putAll(ctx);
         newDrContext.put("userLogin", userLogin);
-        newDrContext.put("skipPermissionCheck", context.get("skipPermissionCheck"));
-        ByteBuffer imageDataBytes = (ByteBuffer) context.get("imageData");
+        newDrContext.put("skipPermissionCheck", context.get(org.apache.ofbiz.persistence.entity.x.skipPermissionCheck));
+        ByteBuffer imageDataBytes = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.imageData);
         String mimeTypeId = (String) newDrContext.get("mimeTypeId");
         if (imageDataBytes != null && (mimeTypeId == null || (mimeTypeId.indexOf("image") >= 0) || (mimeTypeId.indexOf("application") >= 0))) {
-            mimeTypeId = (String) context.get("_imageData_contentType");
+            mimeTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x._imageData_contentType);
             if ("IMAGE_OBJECT".equals(dataResourceTypeId)) {
-                String fileName = (String) context.get("_imageData_fileName");
+                String fileName = (String) context.get(org.apache.ofbiz.persistence.entity.x._imageData_fileName);
                 newDrContext.put("objectInfo", fileName);
             }
             newDrContext.put("mimeTypeId", mimeTypeId);
@@ -641,10 +641,10 @@ public class ContentManagementServices {
                 uploadImage.put("userLogin", userLogin);
                 uploadImage.put("dataResourceId", dataResourceId);
                 uploadImage.put("dataResourceTypeId", dataResourceTypeId);
-                uploadImage.put("rootDir", context.get("objectInfo"));
+                uploadImage.put("rootDir", context.get(org.apache.ofbiz.persistence.entity.x.objectInfo));
                 uploadImage.put("uploadedFile", imageDataBytes);
-                uploadImage.put("_uploadedFile_fileName", context.get("_imageData_fileName"));
-                uploadImage.put("_uploadedFile_contentType", context.get("_imageData_contentType"));
+                uploadImage.put("_uploadedFile_fileName", context.get(org.apache.ofbiz.persistence.entity.x._imageData_fileName));
+                uploadImage.put("_uploadedFile_contentType", context.get(org.apache.ofbiz.persistence.entity.x._imageData_contentType));
                 thisResult = dispatcher.runSync("attachUploadToDataResource", uploadImage);
                 if (ServiceUtil.isError(thisResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
@@ -667,7 +667,7 @@ public class ContentManagementServices {
             }
             Map<String, Object> fileContext = new HashMap<>();
             fileContext.put("userLogin", userLogin);
-            String forceElectronicText = (String) context.get("forceElectronicText");
+            String forceElectronicText = (String) context.get(org.apache.ofbiz.persistence.entity.x.forceElectronicText);
             if ("IMAGE_OBJECT".equals(dataResourceTypeId)) {
                 if (imageDataBytes != null || "true".equalsIgnoreCase(forceElectronicText)) {
                     fileContext.put("dataResourceId", dataResourceId);
@@ -689,10 +689,10 @@ public class ContentManagementServices {
                 uploadImage.put("userLogin", userLogin);
                 uploadImage.put("dataResourceId", dataResourceId);
                 uploadImage.put("dataResourceTypeId", dataResourceTypeId);
-                uploadImage.put("rootDir", context.get("objectInfo"));
+                uploadImage.put("rootDir", context.get(org.apache.ofbiz.persistence.entity.x.objectInfo));
                 uploadImage.put("uploadedFile", imageDataBytes);
-                uploadImage.put("_uploadedFile_fileName", context.get("_imageData_fileName"));
-                uploadImage.put("_uploadedFile_contentType", context.get("_imageData_contentType"));
+                uploadImage.put("_uploadedFile_fileName", context.get(org.apache.ofbiz.persistence.entity.x._imageData_fileName));
+                uploadImage.put("_uploadedFile_contentType", context.get(org.apache.ofbiz.persistence.entity.x._imageData_contentType));
                 thisResult = dispatcher.runSync("attachUploadToDataResource", uploadImage);
                 if (ServiceUtil.isError(thisResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
@@ -710,7 +710,7 @@ public class ContentManagementServices {
         }
         result.put("dataResourceId", dataResourceId);
         result.put("drDataResourceId", dataResourceId);
-        context.put("dataResourceId", dataResourceId);
+        context.put(org.apache.ofbiz.persistence.entity.x.dataResourceId, dataResourceId);
         return result;
     }
 
@@ -719,7 +719,7 @@ public class ContentManagementServices {
         Map<String, Object> result = new HashMap<>();
         List<GenericValue> userLoginList = EntityQuery.use(delegator).from("UserLogin").where("partyId", serviceContext.get("partyId")).queryList();
         for (GenericValue partyUserLogin : userLoginList) {
-            String partyUserLoginId = partyUserLogin.getString("userLoginId");
+            String partyUserLoginId = partyUserLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
             serviceContext.put("contentId", partyUserLoginId); // author contentId
             result = dispatcher.runSync("createContentRole", serviceContext);
             if (ServiceUtil.isError(result)) {
@@ -739,8 +739,8 @@ public class ContentManagementServices {
         // with a new siteContentId each time.
         // siteContentId could also have been name deptContentId, since this same
         // service is used for updating department roles, too.
-        String siteContentId = (String) context.get("contentId");
-        String partyId = (String) context.get("partyId");
+        String siteContentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
         serviceContext.put("partyId", partyId);
         serviceContext.put("contentId", siteContentId);
 
@@ -751,7 +751,7 @@ public class ContentManagementServices {
             return ServiceUtil.returnError(e.toString());
         }
         for (GenericValue roleType : siteRoles) {
-            String siteRole = (String) roleType.get("roleTypeId"); // BLOG_EDITOR, BLOG_ADMIN, etc.
+            String siteRole = (String) roleType.get(org.apache.ofbiz.persistence.entity.x.roleTypeId); // BLOG_EDITOR, BLOG_ADMIN, etc.
             String cappedSiteRole = ModelUtil.dbNameToVarName(siteRole);
 
             String siteRoleVal = (String) context.get(cappedSiteRole);
@@ -800,14 +800,14 @@ public class ContentManagementServices {
     public static Map<String, Object> updateOrRemove(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> results = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        String entityName = (String) context.get("entityName");
-        String action = (String) context.get("action");
-        String pkFieldCount = (String) context.get("pkFieldCount");
+        String entityName = (String) context.get(org.apache.ofbiz.persistence.entity.x.entityName);
+        String action = (String) context.get(org.apache.ofbiz.persistence.entity.x.action);
+        String pkFieldCount = (String) context.get(org.apache.ofbiz.persistence.entity.x.pkFieldCount);
         Map<String, String> pkFields = new HashMap<>();
         int fieldCount = Integer.parseInt(pkFieldCount);
         for (int i = 0; i < fieldCount; i++) {
-            String fieldName = (String) context.get("fieldName" + i);
-            String fieldValue = (String) context.get("fieldValue" + i);
+            String fieldName = (String) context.get(org.apache.ofbiz.persistence.entity.x.fieldName + i);
+            String fieldValue = (String) context.get(org.apache.ofbiz.persistence.entity.x.fieldValue + i);
             if (UtilValidate.isEmpty(fieldValue)) {
                 // It may be the case that the last row in a form is "empty" waiting for
                 // someone to enter a value, in which case we do not want to throw an
@@ -863,16 +863,16 @@ public class ContentManagementServices {
     public static Map<String, Object> resequence(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        String contentId = (String) context.get("contentId");
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
 
-        int seqStep = (Integer) context.get("seqInc");
+        int seqStep = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.seqInc);
 
         // Resolve the association type to use for resolve content's child
-        List<String> typeList = UtilGenerics.cast(context.get("typeList"));
+        List<String> typeList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.typeList));
         if (typeList == null) {
             typeList = new LinkedList<>();
         }
-        String contentAssocTypeId = (String) context.get("contentAssocTypeId");
+        String contentAssocTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId);
         if (UtilValidate.isNotEmpty(contentAssocTypeId)) {
             typeList.add(contentAssocTypeId);
         }
@@ -889,8 +889,8 @@ public class ContentManagementServices {
                     .orderBy("sequenceNum", "fromDate", "createdDate")
                     .filterByDate()
                     .queryList();
-            String contentIdTo = (String) context.get("contentIdTo");
-            String dir = (String) context.get("dir");
+            String contentIdTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentIdTo);
+            String dir = (String) context.get(org.apache.ofbiz.persistence.entity.x.dir);
             int seqNum = seqStep;
             boolean switchSequence = UtilValidate.isNotEmpty(contentIdTo) && UtilValidate.isNotEmpty(dir);
             boolean switchModeUp = switchSequence && dir.startsWith("up");
@@ -903,7 +903,7 @@ public class ContentManagementServices {
                 contentAssoc.put("sequenceNum", (long) seqNum);
                 seqNum += seqStep;
                 if (switchSequence
-                        && contentIdTo.equals(contentAssoc.getString("contentIdTo"))
+                        && contentIdTo.equals(contentAssoc.getString(org.apache.ofbiz.persistence.entity.x.contentIdTo))
                         && !stopLimit) {
                     changePosition = i;
                 }
@@ -913,8 +913,8 @@ public class ContentManagementServices {
             if (changePosition >= 0) {
                 GenericValue currentContent = contentAssocs.get(changePosition);
                 GenericValue destinationContent = contentAssocs.get(changePosition + (switchModeUp ? -1 : +1));
-                long switchSeqNum = currentContent.getLong("sequenceNum");
-                currentContent.put("sequenceNum", destinationContent.getLong("sequenceNum"));
+                long switchSeqNum = currentContent.getLong(org.apache.ofbiz.persistence.entity.x.sequenceNum);
+                currentContent.put("sequenceNum", destinationContent.getLong(org.apache.ofbiz.persistence.entity.x.sequenceNum));
                 destinationContent.put("sequenceNum", switchSeqNum);
             }
             delegator.storeAll(contentAssocs);
@@ -930,33 +930,33 @@ public class ContentManagementServices {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Map<String, Object> thisResult = new HashMap<>();
-        String contentId = (String) context.get("contentId");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String userLoginId = userLogin.getString("userLoginId");
-        Locale locale = (Locale) context.get("locale");
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             GenericValue content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).queryOne();
             if (content == null) {
                 Debug.logError("content was null", MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentNoContentFound", UtilMisc.toMap("contentId", ""), locale));
             }
-            String dataResourceId = content.getString("dataResourceId");
+            String dataResourceId = content.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
 
-            content.set("dataResourceId", null);
-            content.set("lastModifiedDate", UtilDateTime.nowTimestamp());
-            content.set("lastModifiedByUserLogin", userLoginId);
+            content.set(org.apache.ofbiz.persistence.entity.x.dataResourceId, null);
+            content.set(org.apache.ofbiz.persistence.entity.x.lastModifiedDate, UtilDateTime.nowTimestamp());
+            content.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLoginId);
             content.store();
 
             if (UtilValidate.isNotEmpty(dataResourceId)) {
                 // add previous DataResource as part of new subcontent
                 GenericValue contentClone = (GenericValue) content.clone();
-                contentClone.set("dataResourceId", dataResourceId);
-                content.set("lastModifiedDate", UtilDateTime.nowTimestamp());
-                content.set("lastModifiedByUserLogin", userLoginId);
-                content.set("createdDate", UtilDateTime.nowTimestamp());
-                content.set("createdByUserLogin", userLoginId);
+                contentClone.set(org.apache.ofbiz.persistence.entity.x.dataResourceId, dataResourceId);
+                content.set(org.apache.ofbiz.persistence.entity.x.lastModifiedDate, UtilDateTime.nowTimestamp());
+                content.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLoginId);
+                content.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
+                content.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLoginId);
 
-                contentClone.set("contentId", null);
+                contentClone.set(org.apache.ofbiz.persistence.entity.x.contentId, null);
                 ModelService modelService = dctx.getModelService("persistContentAndAssoc");
                 Map<String, Object> serviceIn = modelService.makeValid(contentClone, ModelService.IN_PARAM);
                 serviceIn.put("userLogin", userLogin);
@@ -986,11 +986,11 @@ public class ContentManagementServices {
     public static Map<String, Object> updateLeafCount(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        List<String> typeList = UtilGenerics.cast(context.get("typeList"));
+        List<String> typeList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.typeList));
         if (typeList == null) {
             typeList = UtilMisc.toList("PUBLISH_LINK", "SUB_CONTENT");
         }
-        String startContentId = (String) context.get("contentId");
+        String startContentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
         try {
             int leafCount = ContentManagementWorker.updateStatsTopDown(delegator, startContentId, typeList);
             result.put("leafCount", leafCount);
@@ -1012,14 +1012,14 @@ public class ContentManagementServices {
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
         Map<String, Object> results = new HashMap<>();
-        Locale locale = (Locale) context.get("locale");
-        Set<String> visitedSet = UtilGenerics.cast(context.get("visitedSet"));
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Set<String> visitedSet = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.visitedSet));
         if (visitedSet == null) {
             visitedSet = new HashSet<>();
-            context.put("visitedSet", visitedSet);
+            context.put(org.apache.ofbiz.persistence.entity.x.visitedSet, visitedSet);
         }
-        String pageMode = (String) context.get("pageMode");
-        String contentId = (String) context.get("contentId");
+        String pageMode = (String) context.get(org.apache.ofbiz.persistence.entity.x.pageMode);
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
         visitedSet.add(contentId);
         String contentTypeId = "PAGE_NODE";
         if (pageMode != null && pageMode.toLowerCase(Locale.getDefault()).indexOf("outline") >= 0) {
@@ -1032,7 +1032,7 @@ public class ContentManagementServices {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentNoContentFound", UtilMisc.toMap("contentId", contentId),
                         locale));
             }
-            thisContent.set("contentTypeId", contentTypeId);
+            thisContent.set(org.apache.ofbiz.persistence.entity.x.contentTypeId, contentTypeId);
             thisContent.store();
             List<GenericValue> kids = ContentWorker.getAssociatedContent(thisContent, "from", UtilMisc.toList("SUB_CONTENT"), null, null, null);
             for (GenericValue kidContent : kids) {
@@ -1055,14 +1055,14 @@ public class ContentManagementServices {
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
         Map<String, Object> results = new HashMap<>();
-        Locale locale = (Locale) context.get("locale");
-        Set<String> visitedSet = UtilGenerics.cast(context.get("visitedSet"));
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Set<String> visitedSet = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.visitedSet));
         if (visitedSet == null) {
             visitedSet = new HashSet<>();
-            context.put("visitedSet", visitedSet);
+            context.put(org.apache.ofbiz.persistence.entity.x.visitedSet, visitedSet);
         }
-        String contentId = (String) context.get("contentId");
-        String pageMode = (String) context.get("pageMode");
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String pageMode = (String) context.get(org.apache.ofbiz.persistence.entity.x.pageMode);
         String contentTypeId = "OUTLINE_NODE";
         if (pageMode != null && pageMode.toLowerCase(Locale.getDefault()).indexOf("page") >= 0) {
             contentTypeId = "PAGE_NODE";
@@ -1074,7 +1074,7 @@ public class ContentManagementServices {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "ContentNoContentFound", UtilMisc.toMap("contentId", contentId), locale));
             }
-            thisContent.set("contentTypeId", "OUTLINE_NODE");
+            thisContent.set(org.apache.ofbiz.persistence.entity.x.contentTypeId, "OUTLINE_NODE");
             thisContent.store();
             List<GenericValue> kids = ContentWorker.getAssociatedContent(thisContent, "from", UtilMisc.toList("SUB_CONTENT"), null, null, null);
             for (GenericValue kidContent : kids) {
@@ -1132,11 +1132,11 @@ public class ContentManagementServices {
     }
 
     public static void updatePageNodeChildren(GenericValue content, Map<String, Object> context) throws GenericEntityException {
-        String contentId = content.getString("contentId");
-        Set<String> visitedSet = UtilGenerics.cast(context.get("visitedSet"));
+        String contentId = content.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+        Set<String> visitedSet = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.visitedSet));
         if (visitedSet == null) {
             visitedSet = new HashSet<>();
-            context.put("visitedSet", visitedSet);
+            context.put(org.apache.ofbiz.persistence.entity.x.visitedSet, visitedSet);
         } else {
             if (visitedSet.contains(contentId)) {
                 Debug.logWarning("visitedSet already contains:" + contentId, MODULE);
@@ -1156,11 +1156,11 @@ public class ContentManagementServices {
 
     public static void updateOutlineNodeChildren(GenericValue content, boolean forceOutline, Map<String, Object> context)
             throws GenericEntityException {
-        String contentId = content.getString("contentId");
-        Set<String> visitedSet = UtilGenerics.cast(context.get("visitedSet"));
+        String contentId = content.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+        Set<String> visitedSet = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.visitedSet));
         if (visitedSet == null) {
             visitedSet = new HashSet<>();
-            context.put("visitedSet", visitedSet);
+            context.put(org.apache.ofbiz.persistence.entity.x.visitedSet, visitedSet);
         } else {
             if (visitedSet.contains(contentId)) {
                 Debug.logWarning("visitedSet already contains:" + contentId, MODULE);
@@ -1169,10 +1169,10 @@ public class ContentManagementServices {
                 visitedSet.add(contentId);
             }
         }
-        String contentTypeId = content.getString("contentTypeId");
+        String contentTypeId = content.getString(org.apache.ofbiz.persistence.entity.x.contentTypeId);
         String newContentTypeId = contentTypeId;
-        String dataResourceId = content.getString("dataResourceId");
-        Long branchCount = (Long) content.get("childBranchCount");
+        String dataResourceId = content.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+        Long branchCount = (Long) content.get(org.apache.ofbiz.persistence.entity.x.childBranchCount);
         if (forceOutline) {
             newContentTypeId = "OUTLINE_NODE";
         } else if (contentTypeId == null || "DOCUMENT".equals(contentTypeId)) {
@@ -1199,7 +1199,7 @@ public class ContentManagementServices {
     public static Map<String, Object> findSubNodes(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
         Map<String, Object> results = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        String contentIdTo = (String) context.get("contentId");
+        String contentIdTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
         try {
             List<GenericValue> lst = EntityQuery.use(delegator).from("ContentAssocDataResourceViewFrom")
                     .where("caContentIdTo", contentIdTo,
@@ -1217,14 +1217,14 @@ public class ContentManagementServices {
 
     public static String updateTypeAndFile(GenericValue dataResource, Map<String, Object> context) {
         String retVal = null;
-        String mimeTypeId = (String) context.get("_imageData_contentType");
-        String fileName = (String) context.get("_imageData_fileName");
+        String mimeTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x._imageData_contentType);
+        String fileName = (String) context.get(org.apache.ofbiz.persistence.entity.x._imageData_fileName);
         try {
             if (UtilValidate.isNotEmpty(fileName)) {
-                dataResource.set("objectInfo", fileName);
+                dataResource.set(org.apache.ofbiz.persistence.entity.x.objectInfo, fileName);
             }
             if (UtilValidate.isNotEmpty(mimeTypeId)) {
-                dataResource.set("mimeTypeId", mimeTypeId);
+                dataResource.set(org.apache.ofbiz.persistence.entity.x.mimeTypeId, mimeTypeId);
             }
             dataResource.store();
         } catch (GenericEntityException e) {
@@ -1236,18 +1236,18 @@ public class ContentManagementServices {
     public static Map<String, Object> initContentChildCounts(DispatchContext dctx, Map<String, ? extends Object> context)
             throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
-        Locale locale = (Locale) context.get("locale");
-        GenericValue content = (GenericValue) context.get("content");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue content = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.content);
         if (content == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentNoContentFound", UtilMisc.toMap("contentId", ""), locale));
         }
-        Long leafCount = (Long) content.get("childLeafCount");
+        Long leafCount = (Long) content.get(org.apache.ofbiz.persistence.entity.x.childLeafCount);
         if (leafCount == null) {
-            content.set("childLeafCount", 0L);
+            content.set(org.apache.ofbiz.persistence.entity.x.childLeafCount, 0L);
         }
-        Long branchCount = (Long) content.get("childBranchCount");
+        Long branchCount = (Long) content.get(org.apache.ofbiz.persistence.entity.x.childBranchCount);
         if (branchCount == null) {
-            content.set("childBranchCount", 0L);
+            content.set(org.apache.ofbiz.persistence.entity.x.childBranchCount, 0L);
         }
 
         return result;
@@ -1257,9 +1257,9 @@ public class ContentManagementServices {
             throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        String contentId = (String) context.get("contentId");
-        String contentAssocTypeId = (String) context.get("contentAssocTypeId");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String contentAssocTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId);
 
         try {
             GenericValue content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).cache().queryOne();
@@ -1267,7 +1267,7 @@ public class ContentManagementServices {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentNoContentFound", UtilMisc.toMap("contentId", contentId),
                         locale));
             }
-            Long leafCount = (Long) content.get("childLeafCount");
+            Long leafCount = (Long) content.get(org.apache.ofbiz.persistence.entity.x.childLeafCount);
             if (leafCount == null) {
                 leafCount = 0L;
             }
@@ -1286,9 +1286,9 @@ public class ContentManagementServices {
             throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        String contentId = (String) context.get("contentId");
-        String contentAssocTypeId = (String) context.get("contentAssocTypeId");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String contentAssocTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId);
 
         try {
             GenericValue content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).cache().queryOne();
@@ -1296,7 +1296,7 @@ public class ContentManagementServices {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentNoContentFound", UtilMisc.toMap("contentId", contentId),
                         locale));
             }
-            Long leafCount = (Long) content.get("childLeafCount");
+            Long leafCount = (Long) content.get(org.apache.ofbiz.persistence.entity.x.childLeafCount);
             if (leafCount == null) {
                 leafCount = 0L;
             }
@@ -1316,8 +1316,8 @@ public class ContentManagementServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
 
-        String contentId = (String) context.get("contentId");
-        String contentAssocTypeId = (String) context.get("contentAssocTypeId");
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String contentAssocTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId);
         List<String> typeList = new LinkedList<>();
         if (UtilValidate.isNotEmpty(contentAssocTypeId)) {
             typeList.add(contentAssocTypeId);
@@ -1340,12 +1340,12 @@ public class ContentManagementServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
         Map<String, Object> thisResult = new HashMap<>();
-        String partyId = (String) context.get("partyId");
-        String webPubPt = (String) context.get("contentId");
-        String roleTypeId = (String) context.get("useRoleTypeId");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Integer useTime = (Integer) context.get("useTime");
-        String useTimeUomId = (String) context.get("useTimeUomId");
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String webPubPt = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String roleTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.useRoleTypeId);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Integer useTime = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.useTime);
+        String useTimeUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.useTimeUomId);
         boolean hasExistingContentRole = false;
         GenericValue contentRole = null;
         try {
@@ -1363,13 +1363,13 @@ public class ContentManagementServices {
 
         if (contentRole == null) {
             contentRole = delegator.makeValue("ContentRole");
-            contentRole.set("contentId", webPubPt);
-            contentRole.set("partyId", partyId);
-            contentRole.set("roleTypeId", roleTypeId);
-            contentRole.set("fromDate", nowTimestamp);
+            contentRole.set(org.apache.ofbiz.persistence.entity.x.contentId, webPubPt);
+            contentRole.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
+            contentRole.set(org.apache.ofbiz.persistence.entity.x.roleTypeId, roleTypeId);
+            contentRole.set(org.apache.ofbiz.persistence.entity.x.fromDate, nowTimestamp);
         }
 
-        Timestamp thruDate = (Timestamp) contentRole.get("thruDate");
+        Timestamp thruDate = (Timestamp) contentRole.get(org.apache.ofbiz.persistence.entity.x.thruDate);
         if (thruDate == null) {
             // no thruDate? start with NOW
             thruDate = nowTimestamp;
@@ -1397,7 +1397,7 @@ public class ContentManagementServices {
         }
         calendar.add(field, useTime);
         thruDate = new Timestamp(calendar.getTimeInMillis());
-        contentRole.set("thruDate", thruDate);
+        contentRole.set(org.apache.ofbiz.persistence.entity.x.thruDate, thruDate);
         try {
             if (hasExistingContentRole) {
                 contentRole.store();
@@ -1423,10 +1423,10 @@ public class ContentManagementServices {
         Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
         Map<String, Object> result;
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String productId = (String) context.get("productId");
-        Integer qty = (Integer) context.get("quantity");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        Integer qty = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
         if (qty == null) {
             qty = 1;
         }
@@ -1454,15 +1454,15 @@ public class ContentManagementServices {
             Debug.logError(msg, MODULE);
             return ServiceUtil.returnError(msg);
         }
-        Long useTime = (Long) productContent.get("useTime");
+        Long useTime = (Long) productContent.get(org.apache.ofbiz.persistence.entity.x.useTime);
         Integer newUseTime = null;
         if (UtilValidate.isNotEmpty(useTime)) {
             newUseTime = useTime.intValue() * qty;
         }
-        context.put("useTime", newUseTime);
-        context.put("useTimeUomId", productContent.get("useTimeUomId"));
-        context.put("useRoleTypeId", productContent.get("useRoleTypeId"));
-        context.put("contentId", productContent.get("contentId"));
+        context.put(org.apache.ofbiz.persistence.entity.x.useTime, newUseTime);
+        context.put(org.apache.ofbiz.persistence.entity.x.useTimeUomId, productContent.get(org.apache.ofbiz.persistence.entity.x.useTimeUomId));
+        context.put(org.apache.ofbiz.persistence.entity.x.useRoleTypeId, productContent.get(org.apache.ofbiz.persistence.entity.x.useRoleTypeId));
+        context.put(org.apache.ofbiz.persistence.entity.x.contentId, productContent.get(org.apache.ofbiz.persistence.entity.x.contentId));
         ModelService subscriptionModel = dispatcher.getDispatchContext().getModelService("updateContentSubscription");
         Map<String, Object> ctx = subscriptionModel.makeValid(context, ModelService.IN_PARAM);
         result = dispatcher.runSync("updateContentSubscription", ctx);
@@ -1477,9 +1477,9 @@ public class ContentManagementServices {
         Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String orderId = (String) context.get("orderId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
 
         Debug.logInfo("In updateContentSubscriptionByOrder service with orderId: " + orderId, MODULE);
 
@@ -1489,8 +1489,8 @@ public class ContentManagementServices {
                     .where("orderId", orderId, "roleTypeId", "END_USER_CUSTOMER")
                     .queryFirst();
             if (orderRole != null) {
-                String partyId = (String) orderRole.get("partyId");
-                context.put("partyId", partyId);
+                String partyId = (String) orderRole.get(org.apache.ofbiz.persistence.entity.x.partyId);
+                context.put(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
             } else {
                 String msg = "No OrderRole found for orderId:" + orderId;
                 return ServiceUtil.returnFailure(msg);
@@ -1501,19 +1501,19 @@ public class ContentManagementServices {
                 String msg = UtilProperties.getMessage(RESOURCE, "ContentNoOrderHeaderFound", UtilMisc.toMap("orderId", orderId), locale);
                 return ServiceUtil.returnError(msg);
             }
-            Timestamp orderCreatedDate = (Timestamp) orderHeader.get("orderDate");
-            context.put("orderCreatedDate", orderCreatedDate);
-            List<GenericValue> orderItemList = orderHeader.getRelated("OrderItem", null, null, false);
+            Timestamp orderCreatedDate = (Timestamp) orderHeader.get(org.apache.ofbiz.persistence.entity.x.orderDate);
+            context.put(org.apache.ofbiz.persistence.entity.x.orderCreatedDate, orderCreatedDate);
+            List<GenericValue> orderItemList = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItem, null, null, false);
             ModelService subscriptionModel = dispatcher.getDispatchContext().getModelService("updateContentSubscriptionByProduct");
             for (GenericValue orderItem : orderItemList) {
-                BigDecimal qty = orderItem.getBigDecimal("quantity");
-                String productId = (String) orderItem.get("productId");
+                BigDecimal qty = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                String productId = (String) orderItem.get(org.apache.ofbiz.persistence.entity.x.productId);
                 long productContentCount = EntityQuery.use(delegator).from("ProductContent")
                         .where("productId", productId, "productContentTypeId", "ONLINE_ACCESS")
                         .filterByDate().queryCount();
                 if (productContentCount > 0) {
-                    context.put("productId", productId);
-                    context.put("quantity", qty.intValue());
+                    context.put(org.apache.ofbiz.persistence.entity.x.productId, productId);
+                    context.put(org.apache.ofbiz.persistence.entity.x.quantity, qty.intValue());
                     Map<String, Object> ctx = subscriptionModel.makeValid(context, ModelService.IN_PARAM);
                     result = dispatcher.runSync("updateContentSubscriptionByProduct", ctx);
                     if (ServiceUtil.isError(result)) {
@@ -1533,14 +1533,14 @@ public class ContentManagementServices {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Security security = dctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (!security.hasEntityPermission("CONTENTMGR", "_ADMIN", userLogin)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentPermissionNotGranted", locale));
         }
-        String contentId = (String) context.get("contentId");
-        String serviceName = (String) context.get("serviceName");
-        String contentAssocTypeId = (String) context.get("contentAssocTypeId");
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String serviceName = (String) context.get(org.apache.ofbiz.persistence.entity.x.serviceName);
+        String contentAssocTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId);
         List<String> contentAssocTypeIdList = new LinkedList<>();
         if (UtilValidate.isNotEmpty(contentAssocTypeId)) {
             contentAssocTypeIdList = StringUtil.split(contentAssocTypeId, "|");
@@ -1565,13 +1565,13 @@ public class ContentManagementServices {
     public static Map<String, Object> followNodeChildrenMethod(GenericValue content, LocalDispatcher dispatcher, String serviceName,
             Map<String, Object> context) throws GenericEntityException, GenericServiceException {
         Map<String, Object> result = null;
-        String contentId = content.getString("contentId");
-        List<String> contentAssocTypeIdList = UtilGenerics.cast(context.get("contentAssocTypeIdList"));
-        Locale locale = (Locale) context.get("locale");
-        Set<String> visitedSet = UtilGenerics.cast(context.get("visitedSet"));
+        String contentId = content.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+        List<String> contentAssocTypeIdList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeIdList));
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Set<String> visitedSet = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.visitedSet));
         if (visitedSet == null) {
             visitedSet = new HashSet<>();
-            context.put("visitedSet", visitedSet);
+            context.put(org.apache.ofbiz.persistence.entity.x.visitedSet, visitedSet);
         } else {
             if (visitedSet.contains(contentId)) {
                 Debug.logWarning("visitedSet already contains:" + contentId, MODULE);
@@ -1581,7 +1581,7 @@ public class ContentManagementServices {
             }
         }
 
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         result = dispatcher.runSync(serviceName, UtilMisc.toMap("content", content, "userLogin", userLogin));
         if (ServiceUtil.isError(result)) {
             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
@@ -1596,8 +1596,8 @@ public class ContentManagementServices {
 
     private static String validateUploadedFile(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        String objectInfo = (String) context.get("objectInfo");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String objectInfo = (String) context.get(org.apache.ofbiz.persistence.entity.x.objectInfo);
         String errorMessage = null;
         if (!UtilValidate.isEmpty(objectInfo)) {
             File file = new File(objectInfo);

@@ -104,7 +104,7 @@ public class WorkEffortSearch {
             List<GenericValue> workEffortAssocList = EntityQuery.use(delegator).from("WorkEffortAssoc").where("workEffortIdFrom", workEffortId,
                     "workEffortAssocTypeId", "WORK_EFF_BREAKDOWN").cache(true).queryList();
             for (GenericValue workEffortAssoc: workEffortAssocList) {
-                String subWorkEffortId = workEffortAssoc.getString("workEffortIdTo");
+                String subWorkEffortId = workEffortAssoc.getString(org.apache.ofbiz.persistence.entity.x.workEffortIdTo);
                 if (workEffortIdSet.contains(subWorkEffortId)) {
                     // if this category has already been traversed, no use doing it again; this will also avoid infinite loops
                     continue;
@@ -120,7 +120,7 @@ public class WorkEffortSearch {
             List<GenericValue> childWorkEffortList = EntityQuery.use(delegator).select("workEffortId", "workEffortParentId").from("WorkEffort")
                     .where("workEffortParentId", workEffortId).cache(true).queryList();
             for (GenericValue childWorkEffort: childWorkEffortList) {
-                String subWorkEffortId = childWorkEffort.getString("workEffortId");
+                String subWorkEffortId = childWorkEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
                 if (workEffortIdSet.contains(subWorkEffortId)) {
                     // if this category has already been traversed, no use doing it again; this will also avoid infinite loops
                     continue;
@@ -417,11 +417,11 @@ public class WorkEffortSearch {
 
                 Set<String> workEffortIdSet = new HashSet<>();
 
-                workEffortIds.add(searchResult.getString("workEffortId"));
-                workEffortIdSet.add(searchResult.getString("workEffortId"));
+                workEffortIds.add(searchResult.getString(org.apache.ofbiz.persistence.entity.x.workEffortId));
+                workEffortIdSet.add(searchResult.getString(org.apache.ofbiz.persistence.entity.x.workEffortId));
 
                 while (((searchResult = eli.next()) != null) && (maxResults == null || numRetreived < maxResults)) {
-                    String workEffortId = searchResult.getString("workEffortId");
+                    String workEffortId = searchResult.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
                     if (!workEffortIdSet.contains(workEffortId)) {
                         workEffortIds.add(workEffortId);
                         workEffortIdSet.add(workEffortId);
@@ -468,21 +468,21 @@ public class WorkEffortSearch {
                     GenericValue workEffortSearchResult = delegator.makeValue("WorkEffortSearchResult");
                     String workEffortSearchResultId = delegator.getNextSeqId("WorkEffortSearchResult");
 
-                    workEffortSearchResult.set("workEffortSearchResultId", workEffortSearchResultId);
-                    workEffortSearchResult.set("visitId", this.visitId);
+                    workEffortSearchResult.set(org.apache.ofbiz.persistence.entity.x.workEffortSearchResultId, workEffortSearchResultId);
+                    workEffortSearchResult.set(org.apache.ofbiz.persistence.entity.x.visitId, this.visitId);
                     if (this.resultSortOrder != null) {
-                        workEffortSearchResult.set("orderByName", this.resultSortOrder.getOrderName());
-                        workEffortSearchResult.set("isAscending", this.resultSortOrder.isAscending() ? "Y" : "N");
+                        workEffortSearchResult.set(org.apache.ofbiz.persistence.entity.x.orderByName, this.resultSortOrder.getOrderName());
+                        workEffortSearchResult.set(org.apache.ofbiz.persistence.entity.x.isAscending, this.resultSortOrder.isAscending() ? "Y" : "N");
                     }
-                    workEffortSearchResult.set("numResults", numResults);
-                    workEffortSearchResult.set("secondsTotal", secondsTotal);
-                    workEffortSearchResult.set("searchDate", nowTimestamp);
+                    workEffortSearchResult.set(org.apache.ofbiz.persistence.entity.x.numResults, numResults);
+                    workEffortSearchResult.set(org.apache.ofbiz.persistence.entity.x.secondsTotal, secondsTotal);
+                    workEffortSearchResult.set(org.apache.ofbiz.persistence.entity.x.searchDate, nowTimestamp);
                     workEffortSearchResult.create();
 
                     int seqId = 1;
                     for (GenericValue workEffortSearchConstraint: workEffortSearchConstraintList) {
-                        workEffortSearchConstraint.set("workEffortSearchResultId", workEffortSearchResultId);
-                        workEffortSearchConstraint.set("constraintSeqId", Integer.toString(seqId));
+                        workEffortSearchConstraint.set(org.apache.ofbiz.persistence.entity.x.workEffortSearchResultId, workEffortSearchResultId);
+                        workEffortSearchConstraint.set(org.apache.ofbiz.persistence.entity.x.constraintSeqId, Integer.toString(seqId));
                         workEffortSearchConstraint.create();
                         seqId++;
                     }
@@ -625,7 +625,7 @@ public class WorkEffortSearch {
             StringBuilder ppBuf = new StringBuilder();
             ppBuf.append(UtilProperties.getMessage(RESOURCE, "WorkEffortAssoc", locale) + ": ");
             if (workEffort != null) {
-                ppBuf.append(workEffort.getString("workEffortName"));
+                ppBuf.append(workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortName));
             }
             if (workEffort == null || detailed) {
                 ppBuf.append(" [");
@@ -634,7 +634,7 @@ public class WorkEffortSearch {
             }
             if (UtilValidate.isNotEmpty(this.workEffortAssocTypeId)) {
                 if (workEffortAssocType != null) {
-                    ppBuf.append(workEffortAssocType.getString("description"));
+                    ppBuf.append(workEffortAssocType.getString(org.apache.ofbiz.persistence.entity.x.description));
                 }
                 if (workEffortAssocType == null || detailed) {
                     ppBuf.append(" [");
@@ -812,19 +812,19 @@ public class WorkEffortSearch {
             StringBuilder ppBuf = new StringBuilder();
             ppBuf.append("WorkEffort Assignment: ");
             if (partyNameView != null) {
-                if (UtilValidate.isNotEmpty(partyNameView.getString("firstName"))) {
-                    ppBuf.append(partyNameView.getString("firstName"));
+                if (UtilValidate.isNotEmpty(partyNameView.getString(org.apache.ofbiz.persistence.entity.x.firstName))) {
+                    ppBuf.append(partyNameView.getString(org.apache.ofbiz.persistence.entity.x.firstName));
                     ppBuf.append(" ");
                 }
-                if (UtilValidate.isNotEmpty(partyNameView.getString("middleName"))) {
-                    ppBuf.append(partyNameView.getString("middleName"));
+                if (UtilValidate.isNotEmpty(partyNameView.getString(org.apache.ofbiz.persistence.entity.x.middleName))) {
+                    ppBuf.append(partyNameView.getString(org.apache.ofbiz.persistence.entity.x.middleName));
                     ppBuf.append(" ");
                 }
-                if (UtilValidate.isNotEmpty(partyNameView.getString("lastName"))) {
-                    ppBuf.append(partyNameView.getString("lastName"));
+                if (UtilValidate.isNotEmpty(partyNameView.getString(org.apache.ofbiz.persistence.entity.x.lastName))) {
+                    ppBuf.append(partyNameView.getString(org.apache.ofbiz.persistence.entity.x.lastName));
                 }
-                if (UtilValidate.isNotEmpty(partyNameView.getString("groupName"))) {
-                    ppBuf.append(partyNameView.getString("groupName"));
+                if (UtilValidate.isNotEmpty(partyNameView.getString(org.apache.ofbiz.persistence.entity.x.groupName))) {
+                    ppBuf.append(partyNameView.getString(org.apache.ofbiz.persistence.entity.x.groupName));
                 }
             } else {
                 ppBuf.append("[");
@@ -833,7 +833,7 @@ public class WorkEffortSearch {
             }
 
             if (roleType != null) {
-                ppBuf.append(roleType.getString("description"));
+                ppBuf.append(roleType.getString(org.apache.ofbiz.persistence.entity.x.description));
             } else {
                 if (UtilValidate.isNotEmpty(this.roleTypeId)) {
                     ppBuf.append("[");
@@ -940,7 +940,7 @@ public class WorkEffortSearch {
                         infoOut.append(productId);
                         infoOut.append("]");
                     } else {
-                        infoOut.append(product.getString("productName"));
+                        infoOut.append(product.getString(org.apache.ofbiz.persistence.entity.x.productName));
                     }
 
                     if (productIdIter.hasNext()) {

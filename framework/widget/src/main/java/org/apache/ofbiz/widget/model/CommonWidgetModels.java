@@ -97,7 +97,7 @@ public final class CommonWidgetModels {
         @SuppressWarnings("unchecked")
         public Map<String, String> getParametersMap(Map<String, Object> context, String defaultEntityName) {
             Map<String, String> autEntityParams = new HashMap<>();
-            Delegator delegator = (Delegator) context.get("delegator");
+            Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
             if (delegator == null) {
                 Debug.logError(
                         "We can not append auto entity Parameters since we could not find delegator in the current context",
@@ -125,7 +125,7 @@ public final class CommonWidgetModels {
                         && ((field.getIsPk() && includePk) || (!field.getIsPk() && includeNonPk))) {
                     Object flexibleValue = fma.get(context);
                     if (UtilValidate.isEmpty(flexibleValue) && context.containsKey("parameters")) {
-                        flexibleValue = fma.get((Map<String, Object>) context.get("parameters"));
+                        flexibleValue = fma.get((Map<String, Object>) context.get(org.apache.ofbiz.persistence.entity.x.parameters));
                     }
                     if (UtilValidate.isNotEmpty(flexibleValue) || sendIfEmpty) {
                         autEntityParams.put(fieldName, String.valueOf(flexibleValue));
@@ -163,7 +163,7 @@ public final class CommonWidgetModels {
         @SuppressWarnings("unchecked")
         public Map<String, String> getParametersMap(Map<String, Object> context, String defaultServiceName) {
             Map<String, String> autServiceParams = new HashMap<>();
-            LocalDispatcher dispatcher = (LocalDispatcher) context.get("dispatcher");
+            LocalDispatcher dispatcher = (LocalDispatcher) context.get(org.apache.ofbiz.persistence.entity.x.dispatcher);
             if (dispatcher == null) {
                 Debug.logError(
                         "We can not append auto service Parameters since we could not find dispatcher in the current context",
@@ -197,7 +197,7 @@ public final class CommonWidgetModels {
                     if (!excludeList.contains(paramName)) {
                         Object flexibleValue = fma.get(context);
                         if (UtilValidate.isEmpty(flexibleValue) && context.containsKey("parameters")) {
-                            flexibleValue = fma.get((Map<String, ? extends Object>) context.get("parameters"));
+                            flexibleValue = fma.get((Map<String, ? extends Object>) context.get(org.apache.ofbiz.persistence.entity.x.parameters));
                         }
                         if (UtilValidate.isNotEmpty(flexibleValue) || sendIfEmpty) {
                             autServiceParams.put(paramName, String.valueOf(flexibleValue));
@@ -259,7 +259,7 @@ public final class CommonWidgetModels {
         public String getAlt(Map<String, Object> context) {
             String alt = this.alt.expandString(context);
             // FIXME: Encoding should be done by the renderer, not by the model.
-            UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get("simpleEncoder");
+            UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
             if (simpleEncoder != null) {
                 alt = simpleEncoder.encode(alt);
             }
@@ -457,7 +457,7 @@ public final class CommonWidgetModels {
             this.styleExdr = FlexibleStringExpander.getInstance("");
             this.targetExdr = FlexibleStringExpander.getInstance(target);
             this.targetWindowExdr = FlexibleStringExpander.getInstance("");
-            this.textExdr = FlexibleStringExpander.getInstance((String) portalPage.get("portalPageName", locale));
+            this.textExdr = FlexibleStringExpander.getInstance((String) portalPage.get(org.apache.ofbiz.persistence.entity.x.portalPageName, locale));
             this.urlMode = "intra-app";
             this.size = null;
             this.requestConfirmation = false;
@@ -624,7 +624,7 @@ public final class CommonWidgetModels {
         public String getTarget(Map<String, Object> context) {
             Map<String, Object> expanderContext = context;
             UtilCodec.SimpleEncoder simpleEncoder = context == null ? null : (UtilCodec.SimpleEncoder) context
-                    .get("simpleEncoder");
+                    .get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
             if (simpleEncoder != null) {
                 expanderContext = UtilCodec.HtmlEncodingMapWrapper.getHtmlEncodingMapWrapper(context, simpleEncoder);
             }
@@ -646,7 +646,7 @@ public final class CommonWidgetModels {
         public String getText(Map<String, Object> context) {
             String text = this.textExdr.expandString(context);
             // FIXME: Encoding should be done by the renderer, not by the model.
-            UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get("simpleEncoder");
+            UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
             if (simpleEncoder != null) {
                 text = simpleEncoder.encode(text);
             }
@@ -739,7 +739,7 @@ public final class CommonWidgetModels {
                 retVal = context.get(this.name);
             }
             if (retVal != null) {
-                TimeZone timeZone = (TimeZone) context.get("timeZone");
+                TimeZone timeZone = (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone);
                 if (timeZone == null) {
                     timeZone = TimeZone.getDefault();
                 }

@@ -86,18 +86,18 @@ public class RenderSubContentCacheTransform implements TemplateTransformModel {
         String subContentIdSub = null;
         if (view != null) {
             try {
-                dataResourceId = (String) view.get("drDataResourceId");
+                dataResourceId = (String) view.get(org.apache.ofbiz.persistence.entity.x.drDataResourceId);
             } catch (IllegalArgumentException e) {
-                dataResourceId = (String) view.get("dataResourceId");
+                dataResourceId = (String) view.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
             }
-            subContentIdSub = (String) view.get("contentId");
+            subContentIdSub = (String) view.get(org.apache.ofbiz.persistence.entity.x.contentId);
         }
         // This order is taken so that the dataResourceType can be overridden in the transform arguments.
         String subDataResourceTypeId = (String) templateRoot.get("subDataResourceTypeId");
 
         if (UtilValidate.isEmpty(subDataResourceTypeId) && view != null) {
             try {
-                subDataResourceTypeId = (String) view.get("drDataResourceTypeId");
+                subDataResourceTypeId = (String) view.get(org.apache.ofbiz.persistence.entity.x.drDataResourceTypeId);
             } catch (IllegalArgumentException e) {
                 // view may be "Content"
             }
@@ -161,7 +161,7 @@ public class RenderSubContentCacheTransform implements TemplateTransformModel {
                 }
 
                 if (thisView != null) {
-                    String contentId = thisView.getString("contentId");
+                    String contentId = thisView.getString(org.apache.ofbiz.persistence.entity.x.contentId);
                     if (contentId != null) {
                         try {
                             ContentWorker.renderContentAsText(dispatcher, contentId, out, templateRoot, locale, mimeTypeId, null, null, true);
@@ -201,34 +201,34 @@ public class RenderSubContentCacheTransform implements TemplateTransformModel {
                     if (view != null) {
                         ModelEntity modelEntity = view.getModelEntity();
                         if (UtilValidate.isEmpty(contentId) && modelEntity.getField("caContentId") != null) {
-                            contentId = view.getString("caContentId");
+                            contentId = view.getString(org.apache.ofbiz.persistence.entity.x.caContentId);
                         }
                         if (UtilValidate.isEmpty(contentId) && modelEntity.getField("contentId") != null) {
-                            contentId = view.getString("contentId");
+                            contentId = view.getString(org.apache.ofbiz.persistence.entity.x.contentId);
                         }
                         if (UtilValidate.isEmpty(contentIdTo) && modelEntity.getField("caContentIdTo") != null) {
-                            contentIdTo = view.getString("caContentIdTo");
+                            contentIdTo = view.getString(org.apache.ofbiz.persistence.entity.x.caContentIdTo);
                         }
                         if (UtilValidate.isEmpty(contentIdTo) && modelEntity.getField("contentIdTo") != null) {
-                            contentIdTo = view.getString("contentIdTo");
+                            contentIdTo = view.getString(org.apache.ofbiz.persistence.entity.x.contentIdTo);
                         }
                         if (UtilValidate.isEmpty(contentAssocTypeId) && modelEntity.getField("caContentAssocTypeId") != null) {
-                            contentAssocTypeId = view.getString("caContentAssocTypeId");
+                            contentAssocTypeId = view.getString(org.apache.ofbiz.persistence.entity.x.caContentAssocTypeId);
                         }
                         if (UtilValidate.isEmpty(contentAssocTypeId) && modelEntity.getField("contentAssocTypeId") != null) {
-                            contentAssocTypeId = view.getString("contentAssocTypeId");
+                            contentAssocTypeId = view.getString(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId);
                         }
                         if (UtilValidate.isEmpty(mapKey) && modelEntity.getField("caMapKey") != null) {
-                            mapKey = view.getString("caMapKey");
+                            mapKey = view.getString(org.apache.ofbiz.persistence.entity.x.caMapKey);
                         }
                         if (UtilValidate.isEmpty(mapKey) && modelEntity.getField("mapKey") != null) {
-                            mapKey = view.getString("mapKey");
+                            mapKey = view.getString(org.apache.ofbiz.persistence.entity.x.mapKey);
                         }
                         if (UtilValidate.isEmpty(fromDate) && modelEntity.getField("caFromDate") != null) {
-                            fromDate = view.getString("caFromDate");
+                            fromDate = view.getString(org.apache.ofbiz.persistence.entity.x.caFromDate);
                         }
                         if (UtilValidate.isEmpty(fromDate) && modelEntity.getField("fromDate") != null) {
-                            fromDate = view.getString("fromDate");
+                            fromDate = view.getString(org.apache.ofbiz.persistence.entity.x.fromDate);
                         }
                     }
                 } else {

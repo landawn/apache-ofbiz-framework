@@ -65,12 +65,12 @@ public final class MethodContext {
         this.methodType = MethodContext.SERVICE;
         this.parameters = UtilMisc.makeMapWritable(context);
         this.loader = loader;
-        this.locale = (Locale) context.get("locale");
-        this.timeZone = (TimeZone) context.get("timeZone");
+        this.locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        this.timeZone = (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone);
         this.dispatcher = ctx.getDispatcher();
         this.delegator = ctx.getDelegator();
         this.security = ctx.getSecurity();
-        this.userLogin = (GenericValue) context.get("userLogin");
+        this.userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         if (this.loader == null) {
             try {
                 this.loader = Thread.currentThread().getContextClassLoader();
@@ -110,15 +110,15 @@ public final class MethodContext {
         this.methodType = methodType;
         this.parameters = UtilMisc.makeMapWritable(context);
         this.loader = loader;
-        this.locale = (Locale) context.get("locale");
-        this.timeZone = (TimeZone) context.get("timeZone");
-        this.dispatcher = (LocalDispatcher) context.get("dispatcher");
-        this.delegator = (Delegator) context.get("delegator");
-        this.security = (Security) context.get("security");
-        this.userLogin = (GenericValue) context.get("userLogin");
+        this.locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        this.timeZone = (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone);
+        this.dispatcher = (LocalDispatcher) context.get(org.apache.ofbiz.persistence.entity.x.dispatcher);
+        this.delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
+        this.security = (Security) context.get(org.apache.ofbiz.persistence.entity.x.security);
+        this.userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         if (methodType == MethodContext.EVENT) {
-            this.request = (HttpServletRequest) context.get("request");
-            this.response = (HttpServletResponse) context.get("response");
+            this.request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
+            this.response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
             if (this.locale == null) {
                 this.locale = UtilHttp.getLocale(request);
             }

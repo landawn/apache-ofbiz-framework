@@ -85,11 +85,11 @@ public final class InventoryWorker {
             return qty;
         }
         for (GenericValue nextOrder : purchaseOrders) {
-            if (nextOrder.get("quantity") != null) {
-                BigDecimal itemQuantity = nextOrder.getBigDecimal("quantity");
+            if (nextOrder.get(org.apache.ofbiz.persistence.entity.x.quantity) != null) {
+                BigDecimal itemQuantity = nextOrder.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                 BigDecimal cancelQuantity = BigDecimal.ZERO;
-                if (nextOrder.get("cancelQuantity") != null) {
-                    cancelQuantity = nextOrder.getBigDecimal("cancelQuantity");
+                if (nextOrder.get(org.apache.ofbiz.persistence.entity.x.cancelQuantity) != null) {
+                    cancelQuantity = nextOrder.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
                 }
                 itemQuantity = itemQuantity.subtract(cancelQuantity);
                 if (itemQuantity.compareTo(BigDecimal.ZERO) >= 0) {
@@ -129,7 +129,7 @@ public final class InventoryWorker {
             List<GenericValue> orderedProducts = EntityQuery.use(delegator).select(fieldsToSelect).from("OrderItemQuantityReportGroupByProduct")
                     .where(conditions).queryList();
             for (GenericValue value: orderedProducts) {
-                results.put(value.getString("productId"), value.getBigDecimal("quantityOpen"));
+                results.put(value.getString(org.apache.ofbiz.persistence.entity.x.productId), value.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityOpen));
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);

@@ -47,16 +47,16 @@ public final class ImageManagementHelper {
                     "productContentTypeId", "DEFAULT_IMAGE", "statusId", "IM_APPROVED", "drIsPublic", "N").orderBy("sequenceNum").queryList();
             if (UtilValidate.isNotEmpty(defaultImageList)) {
                 GenericValue productContent = EntityUtil.getFirst(defaultImageList);
-                if (UtilValidate.isNotEmpty(productContent.get("drObjectInfo"))) {
-                    internalImageUrl = (String) productContent.get("drObjectInfo");
+                if (UtilValidate.isNotEmpty(productContent.get(org.apache.ofbiz.persistence.entity.x.drObjectInfo))) {
+                    internalImageUrl = (String) productContent.get(org.apache.ofbiz.persistence.entity.x.drObjectInfo);
                 }
             } else {
                 List<GenericValue> productContentList = EntityQuery.use(delegator).from("ProductContentAndInfo").where("productId", productId,
                         "productContentTypeId", "IMAGE", "statusId", "IM_APPROVED", "drIsPublic", "N").orderBy("sequenceNum").queryList();
                 if (UtilValidate.isNotEmpty(productContentList)) {
                     GenericValue productContent = EntityUtil.getFirst(productContentList);
-                    if (UtilValidate.isNotEmpty(productContent.get("drObjectInfo"))) {
-                        internalImageUrl = (String) productContent.get("drObjectInfo");
+                    if (UtilValidate.isNotEmpty(productContent.get(org.apache.ofbiz.persistence.entity.x.drObjectInfo))) {
+                        internalImageUrl = (String) productContent.get(org.apache.ofbiz.persistence.entity.x.drObjectInfo);
                     }
                 }
             }

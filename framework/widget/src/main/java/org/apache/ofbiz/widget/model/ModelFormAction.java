@@ -221,7 +221,7 @@ public abstract class ModelFormAction {
                                 + "] calling service with name [" + serviceNameExpanded
                                 + "]: the result that is supposed to be a List or ListIterator and is not.");
                     }
-                    context.put("listName", listName);
+                    context.put(org.apache.ofbiz.persistence.entity.x.listName, listName);
                     context.put(listName, listObj);
                 }
             } catch (GenericServiceException e) {

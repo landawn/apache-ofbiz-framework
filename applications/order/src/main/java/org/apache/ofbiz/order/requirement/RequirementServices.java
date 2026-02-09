@@ -61,12 +61,12 @@ public class RequirementServices {
     public static Map<String, Object> getRequirementsForSupplier(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        EntityCondition requirementConditions = (EntityCondition) context.get("requirementConditions");
-        String partyId = (String) context.get("partyId");
-        String unassignedRequirements = (String) context.get("unassignedRequirements");
-        List<String> statusIds = UtilGenerics.cast(context.get("statusIds"));
+        EntityCondition requirementConditions = (EntityCondition) context.get(org.apache.ofbiz.persistence.entity.x.requirementConditions);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String unassignedRequirements = (String) context.get(org.apache.ofbiz.persistence.entity.x.unassignedRequirements);
+        List<String> statusIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.statusIds));
         //TODO currencyUomId still not used
         try {
             List<EntityCondition> conditions = UtilMisc.toList(
@@ -112,10 +112,10 @@ public class RequirementServices {
             List<Map<String, Object>> requirements = new LinkedList<>();
             for (GenericValue requirement : requirementAndRoles) {
                 Map<String, Object> union = new HashMap<>();
-                String productId = requirement.getString("productId");
-                partyId = requirement.getString("partyId");
-                String facilityId = requirement.getString("facilityId");
-                BigDecimal requiredQuantity = requirement.getBigDecimal("quantity");
+                String productId = requirement.getString(org.apache.ofbiz.persistence.entity.x.productId);
+                partyId = requirement.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+                String facilityId = requirement.getString(org.apache.ofbiz.persistence.entity.x.facilityId);
+                BigDecimal requiredQuantity = requirement.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
 
                 // get an available supplier product, preferably the one with the smallest minimum quantity to order, followed by price
                 String supplierKey = partyId + "^" + productId;
@@ -133,7 +133,7 @@ public class RequirementServices {
                 // add our supplier product and cost of this line to the data
                 if (supplierProduct != null) {
                     union.putAll(supplierProduct.getAllFields());
-                    BigDecimal lastPrice = supplierProduct.getBigDecimal("lastPrice");
+                    BigDecimal lastPrice = supplierProduct.getBigDecimal(org.apache.ofbiz.persistence.entity.x.lastPrice);
                     amountTotal = amountTotal.add(lastPrice.multiply(requiredQuantity));
                 }
 
@@ -141,10 +141,10 @@ public class RequirementServices {
                 GenericValue gid = gids.get(productId);
                 if (gid == null) {
                     gid = EntityQuery.use(delegator).from("GoodIdentification").where("goodIdentificationTypeId", "UPCA", "productId",
-                            requirement.get("productId")).queryOne();
+                            requirement.get(org.apache.ofbiz.persistence.entity.x.productId)).queryOne();
                     gids.put(productId, gid);
                 }
-                if (gid != null) union.put("idValue", gid.get("idValue"));
+                if (gid != null) union.put("idValue", gid.get(org.apache.ofbiz.persistence.entity.x.idValue));
 
                 // the ATP and QOH quantities
                 if (UtilValidate.isNotEmpty(facilityId)) {
@@ -178,7 +178,7 @@ public class RequirementServices {
                     GenericValue count = EntityQuery.use(delegator).select("quantityOrdered").from("OrderItemQuantityReportGroupByProduct")
                             .where(prodConditions).queryFirst();
                     if (count != null) {
-                        sold = count.getBigDecimal("quantityOrdered");
+                        sold = count.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityOrdered);
                         if (sold != null) productsSold.put(productId, sold);
                     }
                 }
@@ -187,7 +187,7 @@ public class RequirementServices {
                 }
 
                 // keep a running total of distinct products and quantity to order
-                if (requirement.getBigDecimal("quantity") == null) requirement.put("quantity", BigDecimal.ONE); // default quantity = 1
+                if (requirement.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity) == null) requirement.put("quantity", BigDecimal.ONE); // default quantity = 1
                 quantity = quantity.add(requiredQuantity);
                 products.add(productId);
 
@@ -216,12 +216,12 @@ public class RequirementServices {
     public static Map<String, Object> createAutoRequirementsForOrder(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
 
-        String orderId = (String) context.get("orderId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
         try {
             GenericValue order = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
-            GenericValue productStore = order.getRelatedOne("ProductStore", true);
+            GenericValue productStore = order.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductStore, true);
             if (productStore == null) {
                 Debug.logInfo("ProductStore for order ID " + orderId + " not found, requirements not created", MODULE);
                 return ServiceUtil.returnSuccess();
@@ -229,31 +229,31 @@ public class RequirementServices {
             List<GenericValue> orderItemAndShipGroups = EntityQuery.use(delegator).select("orderId", "shipGroupSeqId", "orderItemSeqId").from(
                     "OrderItemAndShipGroupAssoc").where("orderId", orderId).distinct().queryList();
             for (GenericValue orderItemAndShipGroup : orderItemAndShipGroups) {
-                GenericValue item = EntityQuery.use(delegator).from("OrderItem").where("orderId", orderItemAndShipGroup.getString("orderId"),
-                        "orderItemSeqId", orderItemAndShipGroup.getString("orderItemSeqId")).queryOne();
-                GenericValue product = item.getRelatedOne("Product", false);
+                GenericValue item = EntityQuery.use(delegator).from("OrderItem").where("orderId", orderItemAndShipGroup.getString(org.apache.ofbiz.persistence.entity.x.orderId),
+                        "orderItemSeqId", orderItemAndShipGroup.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).queryOne();
+                GenericValue product = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                 if (product == null) continue;
-                if ((!"PRODRQM_AUTO".equals(product.get("requirementMethodEnumId"))
-                        && !"PRODRQM_AUTO".equals(productStore.get("requirementMethodEnumId")))
-                        || (product.get("requirementMethodEnumId") == null
-                        && !"PRODRQM_AUTO".equals(productStore.get("requirementMethodEnumId")))) {
+                if ((!"PRODRQM_AUTO".equals(product.get(org.apache.ofbiz.persistence.entity.x.requirementMethodEnumId))
+                        && !"PRODRQM_AUTO".equals(productStore.get(org.apache.ofbiz.persistence.entity.x.requirementMethodEnumId)))
+                        || (product.get(org.apache.ofbiz.persistence.entity.x.requirementMethodEnumId) == null
+                        && !"PRODRQM_AUTO".equals(productStore.get(org.apache.ofbiz.persistence.entity.x.requirementMethodEnumId)))) {
                     continue;
                 }
-                BigDecimal quantity = item.getBigDecimal("quantity");
-                BigDecimal cancelQuantity = item.getBigDecimal("cancelQuantity");
+                BigDecimal quantity = item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                BigDecimal cancelQuantity = item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
                 BigDecimal required = quantity.subtract(cancelQuantity == null ? BigDecimal.ZERO : cancelQuantity);
                 if (required.compareTo(BigDecimal.ZERO) <= 0) continue;
                 GenericValue orderItemShipGroup = EntityQuery.use(delegator).from("OrderItemShipGroup").where("orderId", orderId, "shipGroupSeqId",
-                        orderItemAndShipGroup.getString("shipGroupSeqId")).cache().queryOne();
-                Map<String, Object> input = UtilMisc.toMap("userLogin", userLogin, "facilityId", orderItemShipGroup.getString("facilityId"),
-                        "productId", product.get("productId"), "quantity", required, "requirementTypeId", "PRODUCT_REQUIREMENT");
+                        orderItemAndShipGroup.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId)).cache().queryOne();
+                Map<String, Object> input = UtilMisc.toMap("userLogin", userLogin, "facilityId", orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.facilityId),
+                        "productId", product.get(org.apache.ofbiz.persistence.entity.x.productId), "quantity", required, "requirementTypeId", "PRODUCT_REQUIREMENT");
                 Map<String, Object> results = dispatcher.runSync("createRequirement", input);
                 if (ServiceUtil.isError(results)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(results));
                 }
                 String requirementId = (String) results.get("requirementId");
 
-                input = UtilMisc.toMap("userLogin", userLogin, "orderId", order.get("orderId"), "orderItemSeqId", item.get("orderItemSeqId"),
+                input = UtilMisc.toMap("userLogin", userLogin, "orderId", order.get(org.apache.ofbiz.persistence.entity.x.orderId), "orderItemSeqId", item.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId),
                         "requirementId", requirementId, "quantity", required);
                 results = dispatcher.runSync("createOrderRequirementCommitment", input);
                 if (ServiceUtil.isError(results)) {
@@ -271,7 +271,7 @@ public class RequirementServices {
     public static Map<String, Object> createATPRequirementsForOrder(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
 
         /*
          * The strategy in this service is to begin making requirements when the product falls below the
@@ -285,44 +285,44 @@ public class RequirementServices {
          * The only concern would be a UI to manage numerous requirements with ease, preferrably by aggregating
          * on productId.
          */
-        String orderId = (String) context.get("orderId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
         try {
             GenericValue order = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
-            GenericValue productStore = order.getRelatedOne("ProductStore", true);
+            GenericValue productStore = order.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductStore, true);
             if (productStore == null) {
                 Debug.logInfo("ProductStore for order ID " + orderId + " not found, ATP requirements not created", MODULE);
                 return ServiceUtil.returnSuccess();
             }
-            String facilityId = productStore.getString("inventoryFacilityId");
-            List<GenericValue> orderItems = order.getRelated("OrderItem", null, null, false);
+            String facilityId = productStore.getString(org.apache.ofbiz.persistence.entity.x.inventoryFacilityId);
+            List<GenericValue> orderItems = order.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItem, null, null, false);
             for (GenericValue item : orderItems) {
-                GenericValue product = item.getRelatedOne("Product", false);
+                GenericValue product = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                 if (product == null) {
                     continue;
                 }
 
-                if (!("PRODRQM_ATP".equals(product.get("requirementMethodEnumId"))
-                        || ("PRODRQM_ATP".equals(productStore.get("requirementMethodEnumId")) && product.get("requirementMethodEnumId") == null))) {
+                if (!("PRODRQM_ATP".equals(product.get(org.apache.ofbiz.persistence.entity.x.requirementMethodEnumId))
+                        || ("PRODRQM_ATP".equals(productStore.get(org.apache.ofbiz.persistence.entity.x.requirementMethodEnumId)) && product.get(org.apache.ofbiz.persistence.entity.x.requirementMethodEnumId) == null))) {
                     continue;
                 }
 
-                BigDecimal quantity = item.getBigDecimal("quantity");
-                BigDecimal cancelQuantity = item.getBigDecimal("cancelQuantity");
+                BigDecimal quantity = item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                BigDecimal cancelQuantity = item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
                 BigDecimal ordered = quantity.subtract(cancelQuantity == null ? BigDecimal.ZERO : cancelQuantity);
                 if (ordered.compareTo(BigDecimal.ZERO) <= 0) continue;
 
                 // get the minimum stock for this facility (if not configured assume a minimum of zero, ie create requirements when it goes into
                 // backorder)
                 GenericValue productFacility = EntityQuery.use(delegator).from("ProductFacility").where("facilityId", facilityId, "productId",
-                        product.get("productId")).queryOne();
+                        product.get(org.apache.ofbiz.persistence.entity.x.productId)).queryOne();
                 BigDecimal minimumStock = BigDecimal.ZERO;
-                if (productFacility != null && productFacility.get("minimumStock") != null) {
-                    minimumStock = productFacility.getBigDecimal("minimumStock");
+                if (productFacility != null && productFacility.get(org.apache.ofbiz.persistence.entity.x.minimumStock) != null) {
+                    minimumStock = productFacility.getBigDecimal(org.apache.ofbiz.persistence.entity.x.minimumStock);
                 }
 
                 // get the facility ATP for product, which should be updated for this item's reservation
                 Map<String, Object> results = dispatcher.runSync("getInventoryAvailableByFacility", UtilMisc.toMap("userLogin", userLogin,
-                        "productId", product.get("productId"), "facilityId", facilityId));
+                        "productId", product.get(org.apache.ofbiz.persistence.entity.x.productId), "facilityId", facilityId));
                 if (ServiceUtil.isError(results)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(results));
                 }
@@ -332,15 +332,15 @@ public class RequirementServices {
                 BigDecimal pendingRequirements = BigDecimal.ZERO;
                 EntityConditionList<EntityExpr> ecl = EntityCondition.makeCondition(UtilMisc.toList(
                         EntityCondition.makeCondition("facilityId", EntityOperator.EQUALS, facilityId),
-                        EntityCondition.makeCondition("productId", EntityOperator.EQUALS, product.get("productId")),
+                        EntityCondition.makeCondition("productId", EntityOperator.EQUALS, product.get(org.apache.ofbiz.persistence.entity.x.productId)),
                         EntityCondition.makeCondition("requirementTypeId", EntityOperator.EQUALS, "PRODUCT_REQUIREMENT"),
                         EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "REQ_ORDERED"),
                         EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "REQ_REJECTED")),
                         EntityOperator.AND);
                 List<GenericValue> requirements = EntityQuery.use(delegator).from("Requirement").where(ecl).queryList();
                 for (GenericValue requirement : requirements) {
-                    pendingRequirements = pendingRequirements.add(requirement.get("quantity") == null ? BigDecimal.ZERO
-                            : requirement.getBigDecimal("quantity"));
+                    pendingRequirements = pendingRequirements.add(requirement.get(org.apache.ofbiz.persistence.entity.x.quantity) == null ? BigDecimal.ZERO
+                            : requirement.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
                 }
 
                 // the minimum stock is an upper bound, therefore we either require up to the minimum stock or the input required quantity,
@@ -349,7 +349,7 @@ public class RequirementServices {
                 BigDecimal required = ordered.compareTo(shortfall) < 0 ? ordered : shortfall;
                 if (required.compareTo(BigDecimal.ZERO) <= 0) continue;
 
-                Map<String, Object> input = UtilMisc.toMap("userLogin", userLogin, "facilityId", facilityId, "productId", product.get("productId"),
+                Map<String, Object> input = UtilMisc.toMap("userLogin", userLogin, "facilityId", facilityId, "productId", product.get(org.apache.ofbiz.persistence.entity.x.productId),
                         "quantity", required, "requirementTypeId", "PRODUCT_REQUIREMENT");
                 results = dispatcher.runSync("createRequirement", input);
                 if (ServiceUtil.isError(results)) {
@@ -357,7 +357,7 @@ public class RequirementServices {
                 }
                 String requirementId = (String) results.get("requirementId");
 
-                input = UtilMisc.toMap("userLogin", userLogin, "orderId", order.get("orderId"), "orderItemSeqId", item.get("orderItemSeqId"),
+                input = UtilMisc.toMap("userLogin", userLogin, "orderId", order.get(org.apache.ofbiz.persistence.entity.x.orderId), "orderItemSeqId", item.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId),
                         "requirementId", requirementId, "quantity", required);
                 results = dispatcher.runSync("createOrderRequirementCommitment", input);
                 if (ServiceUtil.isError(results)) {
@@ -373,19 +373,19 @@ public class RequirementServices {
     public static Map<String, Object> updateRequirementsToOrdered(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String orderId = (String) context.get("orderId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
         OrderReadHelper orh = new OrderReadHelper(delegator, orderId);
         try {
             for (GenericValue orderItem : orh.getOrderItems()) {
                 GenericValue orderRequirementCommitment = EntityQuery.use(delegator).from("OrderRequirementCommitment")
-                        .where(UtilMisc.toMap("orderId", orderId, "orderItemSeqId", orderItem.getString("orderItemSeqId")))
+                        .where(UtilMisc.toMap("orderId", orderId, "orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)))
                         .queryFirst();
                 if (orderRequirementCommitment != null) {
-                    String requirementId = orderRequirementCommitment.getString("requirementId");
+                    String requirementId = orderRequirementCommitment.getString(org.apache.ofbiz.persistence.entity.x.requirementId);
                     /* Change status of requirement to ordered */
                     Map<String, Object> inputMap = UtilMisc.<String, Object>toMap("userLogin", userLogin, "requirementId", requirementId, "statusId",
-                            "REQ_ORDERED", "quantity", orderItem.getBigDecimal("quantity"));
+                            "REQ_ORDERED", "quantity", orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
                     // TODO: check service result for an error return
                     Map<String, Object> results = dispatcher.runSync("updateRequirement", inputMap);
                     if (ServiceUtil.isError(results)) {

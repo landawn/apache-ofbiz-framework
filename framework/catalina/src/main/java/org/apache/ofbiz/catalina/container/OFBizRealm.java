@@ -40,7 +40,7 @@ public class OFBizRealm extends RealmBase {
         try {
             GenericValue userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", username).queryOne();
             if (userLogin != null) {
-                return userLogin.getString("currentPassword");
+                return userLogin.getString(org.apache.ofbiz.persistence.entity.x.currentPassword);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);

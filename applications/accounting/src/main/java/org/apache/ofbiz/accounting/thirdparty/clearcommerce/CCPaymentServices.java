@@ -60,17 +60,17 @@ public class CCPaymentServices {
     private static final int MAX_SEV_COMP = 4;
 
     public static Map<String, Object> ccAuth(DispatchContext dctx, Map<String, Object> context) {
-        String ccAction = (String) context.get("ccAction");
+        String ccAction = (String) context.get(org.apache.ofbiz.persistence.entity.x.ccAction);
         Delegator delegator = dctx.getDelegator();
         if (ccAction == null) {
             ccAction = "PreAuth";
         }
-        Document authRequestDoc = buildPrimaryTxRequest(context, ccAction, (BigDecimal) context.get("processAmount"),
-                (String) context.get("orderId"));
+        Document authRequestDoc = buildPrimaryTxRequest(context, ccAction, (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount),
+                (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId));
 
         Document authResponseDoc = null;
         try {
-            authResponseDoc = sendRequest(authRequestDoc, (String) context.get("paymentConfig"), delegator);
+            authResponseDoc = sendRequest(authRequestDoc, (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig), delegator);
         } catch (ClearCommerceException cce) {
             return ServiceUtil.returnError(cce.getMessage());
         }
@@ -93,15 +93,15 @@ public class CCPaymentServices {
     public static Map<String, Object> ccCredit(DispatchContext dctx, Map<String, Object> context) {
         String action = "Credit";
         Delegator delegator = dctx.getDelegator();
-        if (context.get("pbOrder") != null) {
+        if (context.get(org.apache.ofbiz.persistence.entity.x.pbOrder) != null) {
             action = "Auth"; // required for periodic billing....
         }
 
-        Document creditRequestDoc = buildPrimaryTxRequest(context, action, (BigDecimal) context.get("creditAmount"),
-                (String) context.get("referenceCode"));
+        Document creditRequestDoc = buildPrimaryTxRequest(context, action, (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.creditAmount),
+                (String) context.get(org.apache.ofbiz.persistence.entity.x.referenceCode));
         Document creditResponseDoc = null;
         try {
-            creditResponseDoc = sendRequest(creditRequestDoc, (String) context.get("paymentConfig"), delegator);
+            creditResponseDoc = sendRequest(creditRequestDoc, (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig), delegator);
         } catch (ClearCommerceException cce) {
             return ServiceUtil.returnError(cce.getMessage());
         }
@@ -122,21 +122,21 @@ public class CCPaymentServices {
     }
 
     public static Map<String, Object> ccCapture(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPaymentTransactionAuthorizationNotFoundCannotCapture", locale));
         }
 
-        Document captureRequestDoc = buildSecondaryTxRequest(context, authTransaction.getString("referenceNum"),
-                "PostAuth", (BigDecimal) context.get("captureAmount"), delegator);
+        Document captureRequestDoc = buildSecondaryTxRequest(context, authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum),
+                "PostAuth", (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.captureAmount), delegator);
 
         Document captureResponseDoc = null;
         try {
-            captureResponseDoc = sendRequest(captureRequestDoc, (String) context.get("paymentConfig"), delegator);
+            captureResponseDoc = sendRequest(captureRequestDoc, (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig), delegator);
         } catch (ClearCommerceException cce) {
             return ServiceUtil.returnError(cce.getMessage());
         }
@@ -157,21 +157,21 @@ public class CCPaymentServices {
     }
 
     public static Map<String, Object> ccRelease(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPaymentTransactionAuthorizationNotFoundCannotRelease", locale));
         }
 
-        Document releaseRequestDoc = buildSecondaryTxRequest(context, authTransaction.getString("referenceNum"), "Void",
+        Document releaseRequestDoc = buildSecondaryTxRequest(context, authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum), "Void",
                 null, delegator);
 
         Document releaseResponseDoc = null;
         try {
-            releaseResponseDoc = sendRequest(releaseRequestDoc, (String) context.get("paymentConfig"), delegator);
+            releaseResponseDoc = sendRequest(releaseRequestDoc, (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig), delegator);
         } catch (ClearCommerceException cce) {
             return ServiceUtil.returnError(cce.getMessage());
         }
@@ -192,8 +192,8 @@ public class CCPaymentServices {
     }
 
     public static Map<String, Object> ccReleaseNoop(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -202,19 +202,19 @@ public class CCPaymentServices {
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         result.put("releaseResult", Boolean.TRUE);
-        result.put("releaseCode", authTransaction.getString("gatewayCode"));
-        result.put("releaseAmount", authTransaction.getBigDecimal("amount"));
-        result.put("releaseRefNum", authTransaction.getString("referenceNum"));
-        result.put("releaseFlag", authTransaction.getString("gatewayFlag"));
+        result.put("releaseCode", authTransaction.getString(org.apache.ofbiz.persistence.entity.x.gatewayCode));
+        result.put("releaseAmount", authTransaction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
+        result.put("releaseRefNum", authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
+        result.put("releaseFlag", authTransaction.getString(org.apache.ofbiz.persistence.entity.x.gatewayFlag));
         result.put("releaseMessage", "Approved.");
 
         return result;
     }
 
     public static Map<String, Object> ccRefund(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -223,12 +223,12 @@ public class CCPaymentServices {
 
         // Although refunds are applied to captured transactions, using the auth reference number is ok here
         // Related auth and capture transactions will always have the same reference number
-        Document refundRequestDoc = buildSecondaryTxRequest(context, authTransaction.getString("referenceNum"),
-                "Credit", (BigDecimal) context.get("refundAmount"), delegator);
+        Document refundRequestDoc = buildSecondaryTxRequest(context, authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum),
+                "Credit", (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.refundAmount), delegator);
 
         Document refundResponseDoc = null;
         try {
-            refundResponseDoc = sendRequest(refundRequestDoc, (String) context.get("paymentConfig"), delegator);
+            refundResponseDoc = sendRequest(refundRequestDoc, (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig), delegator);
         } catch (ClearCommerceException cce) {
             return ServiceUtil.returnError(cce.getMessage());
         }
@@ -249,21 +249,21 @@ public class CCPaymentServices {
     }
 
     public static Map<String, Object> ccReAuth(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPaymentTransactionAuthorizationNotFoundCannotReauth", locale));
         }
 
-        Document reauthRequestDoc = buildSecondaryTxRequest(context, authTransaction.getString("referenceNum"),
-                "RePreAuth", (BigDecimal) context.get("reauthAmount"), delegator);
+        Document reauthRequestDoc = buildSecondaryTxRequest(context, authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum),
+                "RePreAuth", (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.reauthAmount), delegator);
 
         Document reauthResponseDoc = null;
         try {
-            reauthResponseDoc = sendRequest(reauthRequestDoc, (String) context.get("paymentConfig"), delegator);
+            reauthResponseDoc = sendRequest(reauthRequestDoc, (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig), delegator);
         } catch (ClearCommerceException cce) {
             return ServiceUtil.returnError(cce.getMessage());
         }
@@ -285,16 +285,16 @@ public class CCPaymentServices {
     }
 
     public static Map<String, Object> ccReport(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
         // configuration file
-        String paymentConfig = (String) context.get("paymentConfig");
+        String paymentConfig = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
         if (UtilValidate.isEmpty(paymentConfig)) {
             paymentConfig = "payment.properties";
         }
 
         // orderId
-        String orderId = (String) context.get("orderId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
         if (UtilValidate.isEmpty(orderId)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingClearCommerceCannotExecuteReport", locale));
@@ -367,7 +367,7 @@ public class CCPaymentServices {
         Debug.set(Debug.VERBOSE, true);
         // Document reportResponseDoc = null;
         try {
-            sendRequest(requestDocument, (String) context.get("paymentConfig"), delegator);
+            sendRequest(requestDocument, (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig), delegator);
         } catch (ClearCommerceException cce) {
             return ServiceUtil.returnError(cce.getMessage());
         }
@@ -651,12 +651,12 @@ public class CCPaymentServices {
 
     private static Document buildPrimaryTxRequest(Map<String, Object> context, String type, BigDecimal amount, String refNum) {
 
-        String paymentConfig = (String) context.get("paymentConfig");
+        String paymentConfig = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
         if (UtilValidate.isEmpty(paymentConfig)) {
             paymentConfig = "payment.properties";
         }
         // payment mech
-        GenericValue creditCard = (GenericValue) context.get("creditCard");
+        GenericValue creditCard = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.creditCard);
         Delegator delegator = creditCard.getDelegator();
         Document requestDocument = createRequestDocument(paymentConfig, delegator);
 
@@ -669,13 +669,13 @@ public class CCPaymentServices {
         Element consumerElement = UtilXml.addChildElement(orderFormDocElement, "Consumer", requestDocument);
 
         // email address
-        GenericValue billToEmail = (GenericValue) context.get("billToEmail");
+        GenericValue billToEmail = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.billToEmail);
         if (billToEmail != null) {
-            UtilXml.addChildElementValue(consumerElement, "Email", billToEmail.getString("infoString"), requestDocument);
+            UtilXml.addChildElementValue(consumerElement, "Email", billToEmail.getString(org.apache.ofbiz.persistence.entity.x.infoString), requestDocument);
         }
 
         boolean enableCVM = EntityUtilProperties.propertyValueEqualsIgnoreCase(paymentConfig, "payment.clearcommerce.enableCVM", "Y", delegator);
-        String cardSecurityCode = enableCVM ? (String) context.get("cardSecurityCode") : null;
+        String cardSecurityCode = enableCVM ? (String) context.get(org.apache.ofbiz.persistence.entity.x.cardSecurityCode) : null;
 
         // Default to locale code 840 (United States)
         String localCode = EntityUtilProperties.getPropertyValue(paymentConfig, "payment.clearcommerce.localeCode", "840", delegator);
@@ -683,7 +683,7 @@ public class CCPaymentServices {
         appendPaymentMechNode(consumerElement, creditCard, cardSecurityCode, localCode);
 
         // billing address
-        GenericValue billingAddress = (GenericValue) context.get("billingAddress");
+        GenericValue billingAddress = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.billingAddress);
         if (billingAddress != null) {
             Element billToElement = UtilXml.addChildElement(consumerElement, "BillTo", requestDocument);
             Element billToLocationElement = UtilXml.addChildElement(billToElement, "Location", requestDocument);
@@ -691,7 +691,7 @@ public class CCPaymentServices {
         }
 
         // shipping address
-        GenericValue shippingAddress = (GenericValue) context.get("shippingAddress");
+        GenericValue shippingAddress = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.shippingAddress);
         if (shippingAddress != null) {
             Element shipToElement = UtilXml.addChildElement(consumerElement, "ShipTo", requestDocument);
             Element shipToLocationElement = UtilXml.addChildElement(shipToElement, "Location", requestDocument);
@@ -706,7 +706,7 @@ public class CCPaymentServices {
 
         // TODO: determine if adding OrderItemList is worthwhile - JFE 2004.02.14
 
-        Map<String, Object> pbOrder = UtilGenerics.cast(context.get("pbOrder"));
+        Map<String, Object> pbOrder = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.pbOrder));
         if (pbOrder != null) {
             if (Debug.verboseOn()) {
                 Debug.logVerbose("pbOrder Map not empty:" + pbOrder.toString(), MODULE);
@@ -720,16 +720,16 @@ public class CCPaymentServices {
             Element total = UtilXml.addChildElementValue(pbOrderElement, "TotalNumberPayments", (String) pbOrder.get(
                     "TotalNumberPayments"), requestDocument);
             total.setAttribute("DataType", "S32");
-        } else if (context.get("OrderFrequencyCycle") != null && context.get("OrderFrequencyInterval") != null
-                && context.get("TotalNumberPayments") != null) {
+        } else if (context.get(org.apache.ofbiz.persistence.entity.x.OrderFrequencyCycle) != null && context.get(org.apache.ofbiz.persistence.entity.x.OrderFrequencyInterval) != null
+                && context.get(org.apache.ofbiz.persistence.entity.x.TotalNumberPayments) != null) {
             Element pbOrderElement = UtilXml.addChildElement(orderFormDocElement, "PbOrder", requestDocument); // periodic billing order
             UtilXml.addChildElementValue(pbOrderElement, "OrderFrequencyCycle", (String) context.get(
-                    "OrderFrequencyCycle"), requestDocument);
+                    org.apache.ofbiz.persistence.entity.x.OrderFrequencyCycle), requestDocument);
             Element interval = UtilXml.addChildElementValue(pbOrderElement, "OrderFrequencyInterval", (String) context
-                    .get("OrderFrequencyInterval"), requestDocument);
+                    .get(org.apache.ofbiz.persistence.entity.x.OrderFrequencyInterval), requestDocument);
             interval.setAttribute("DataType", "S32");
             Element total = UtilXml.addChildElementValue(pbOrderElement, "TotalNumberPayments", (String) context.get(
-                    "TotalNumberPayments"), requestDocument);
+                    org.apache.ofbiz.persistence.entity.x.TotalNumberPayments), requestDocument);
             total.setAttribute("DataType", "S32");
         }
 
@@ -738,7 +738,7 @@ public class CCPaymentServices {
 
     private static Document buildSecondaryTxRequest(Map<String, Object> context, String id, String type, BigDecimal amount, Delegator delegator) {
 
-        String paymentConfig = (String) context.get("paymentConfig");
+        String paymentConfig = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
         if (UtilValidate.isEmpty(paymentConfig)) {
             paymentConfig = "payment.properties";
         }
@@ -765,9 +765,9 @@ public class CCPaymentServices {
         Element paymentMechElement = UtilXml.addChildElement(element, "PaymentMech", document);
         Element creditCardElement = UtilXml.addChildElement(paymentMechElement, "CreditCard", document);
 
-        UtilXml.addChildElementValue(creditCardElement, "Number", creditCard.getString("cardNumber"), document);
+        UtilXml.addChildElementValue(creditCardElement, "Number", creditCard.getString(org.apache.ofbiz.persistence.entity.x.cardNumber), document);
 
-        String expDate = creditCard.getString("expireDate");
+        String expDate = creditCard.getString(org.apache.ofbiz.persistence.entity.x.expireDate);
         Element expiresElement = UtilXml.addChildElementValue(creditCardElement, "Expires", expDate.substring(0, 3)
                 + expDate.substring(5), document);
         expiresElement.setAttribute("DataType", "ExpirationDate");
@@ -793,18 +793,18 @@ public class CCPaymentServices {
 
         Element addressElement = UtilXml.addChildElement(element, "Address", document);
 
-        UtilXml.addChildElementValue(addressElement, "Name", address.getString("toName"), document);
-        UtilXml.addChildElementValue(addressElement, "Street1", address.getString("address1"), document);
-        UtilXml.addChildElementValue(addressElement, "Street2", address.getString("address2"), document);
-        UtilXml.addChildElementValue(addressElement, "City", address.getString("city"), document);
-        UtilXml.addChildElementValue(addressElement, "StateProv", address.getString("stateProvinceGeoId"), document);
-        UtilXml.addChildElementValue(addressElement, "PostalCode", address.getString("postalCode"), document);
+        UtilXml.addChildElementValue(addressElement, "Name", address.getString(org.apache.ofbiz.persistence.entity.x.toName), document);
+        UtilXml.addChildElementValue(addressElement, "Street1", address.getString(org.apache.ofbiz.persistence.entity.x.address1), document);
+        UtilXml.addChildElementValue(addressElement, "Street2", address.getString(org.apache.ofbiz.persistence.entity.x.address2), document);
+        UtilXml.addChildElementValue(addressElement, "City", address.getString(org.apache.ofbiz.persistence.entity.x.city), document);
+        UtilXml.addChildElementValue(addressElement, "StateProv", address.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId), document);
+        UtilXml.addChildElementValue(addressElement, "PostalCode", address.getString(org.apache.ofbiz.persistence.entity.x.postalCode), document);
 
-        String countryGeoId = address.getString("countryGeoId");
+        String countryGeoId = address.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId);
         if (UtilValidate.isNotEmpty(countryGeoId)) {
             try {
-                GenericValue countryGeo = address.getRelatedOne("CountryGeo", true);
-                UtilXml.addChildElementValue(addressElement, "Country", countryGeo.getString("geoSecCode"), document);
+                GenericValue countryGeo = address.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, true);
+                UtilXml.addChildElementValue(addressElement, "Country", countryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoSecCode), document);
             } catch (GenericEntityException gee) {
                 Debug.logInfo(gee, "Error finding related Geo for countryGeoId: " + countryGeoId, MODULE);
             }

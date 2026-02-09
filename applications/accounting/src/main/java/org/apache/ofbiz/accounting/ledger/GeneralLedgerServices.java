@@ -38,9 +38,9 @@ public class GeneralLedgerServices {
     public static Map<String, Object> createUpdateCostCenter(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Map<String, Object> createGlAcctCatMemFromCostCentersMap = null;
-        String glAccountId = (String) context.get("glAccountId");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Map<String, String> amountPercentageMap = UtilGenerics.cast(context.get("amountPercentageMap"));
+        String glAccountId = (String) context.get(org.apache.ofbiz.persistence.entity.x.glAccountId);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Map<String, String> amountPercentageMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.amountPercentageMap));
         BigDecimal totalAmountPercentage = GeneralLedgerServices.calculateCostCenterTotal(amountPercentageMap);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         for (Map.Entry<String, String> rowEntry : amountPercentageMap.entrySet()) {

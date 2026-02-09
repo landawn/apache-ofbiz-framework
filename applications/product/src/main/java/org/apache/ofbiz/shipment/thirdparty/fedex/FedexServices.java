@@ -152,12 +152,12 @@ public class FedexServices {
      */
     public static Map<String, Object> fedexSubscriptionRequest(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentGatewayConfigId = (String) context.get("shipmentGatewayConfigId");
-        String resource = (String) context.get("configProps");
-        Locale locale = (Locale) context.get("locale");
+        String shipmentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId);
+        String resource = (String) context.get(org.apache.ofbiz.persistence.entity.x.configProps);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         List<Object> errorList = new LinkedList<>();
 
-        Boolean replaceMeterNumber = (Boolean) context.get("replaceMeterNumber");
+        Boolean replaceMeterNumber = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.replaceMeterNumber);
 
         if (!replaceMeterNumber) {
             String meterNumber = getShipmentGatewayConfigValue(delegator, shipmentGatewayConfigId, "accessMeterNumber",
@@ -169,8 +169,8 @@ public class FedexServices {
             }
         }
 
-        String companyPartyId = (String) context.get("companyPartyId");
-        String contactPartyName = (String) context.get("contactPartyName");
+        String companyPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.companyPartyId);
+        String contactPartyName = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactPartyName);
 
         Map<String, Object> result = new HashMap<>();
 
@@ -252,15 +252,15 @@ public class FedexServices {
                         "FacilityShipmentFedexCompanyPartyHasNotPostalAddress",
                         UtilMisc.toMap("companyPartyId", companyPartyId), locale));
             }
-            GenericValue countryGeo = EntityQuery.use(delegator).from("Geo").where("geoId", postalAddress.getString("countryGeoId"))
+            GenericValue countryGeo = EntityQuery.use(delegator).from("Geo").where("geoId", postalAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId))
                     .cache().queryOne();
-            String countryCode = countryGeo.getString("geoCode");
+            String countryCode = countryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode);
             String stateOrProvinceCode = null;
             // Only add the StateOrProvinceCode element if the address is in USA or Canada
             if ("CA".equals(countryCode) || "US".equals(countryCode)) {
                 GenericValue stateProvinceGeo = EntityQuery.use(delegator).from("Geo").where("geoId",
-                        postalAddress.getString("stateProvinceGeoId")).cache().queryOne();
-                stateOrProvinceCode = stateProvinceGeo.getString("geoCode");
+                        postalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId)).cache().queryOne();
+                stateOrProvinceCode = stateProvinceGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode);
             }
 
             // Get the first valid primary phone number (required by Fedex)
@@ -281,10 +281,10 @@ public class FedexServices {
                         "FacilityShipmentFedexCompanyPartyHasNotPrimaryPhoneNumber",
                         UtilMisc.toMap("companyPartyId", companyPartyId), locale));
             }
-            phoneNumber = phoneNumberValue.getString("areaCode") + phoneNumberValue.getString("contactNumber");
+            phoneNumber = phoneNumberValue.getString(org.apache.ofbiz.persistence.entity.x.areaCode) + phoneNumberValue.getString(org.apache.ofbiz.persistence.entity.x.contactNumber);
             // Fedex doesn't want the North American country code
-            if (UtilValidate.isNotEmpty(phoneNumberValue.getString("countryCode")) && !("CA".equals(countryCode) || "US".equals(countryCode))) {
-                phoneNumber = phoneNumberValue.getString("countryCode") + phoneNumber;
+            if (UtilValidate.isNotEmpty(phoneNumberValue.getString(org.apache.ofbiz.persistence.entity.x.countryCode)) && !("CA".equals(countryCode) || "US".equals(countryCode))) {
+                phoneNumber = phoneNumberValue.getString(org.apache.ofbiz.persistence.entity.x.countryCode) + phoneNumber;
             }
             phoneNumber = phoneNumber.replaceAll("[^+\\d]", "");
 
@@ -300,10 +300,10 @@ public class FedexServices {
                     EntityOperator.AND));
             GenericValue faxNumberValue = EntityUtil.getFirst(faxNumbers);
             if (!UtilValidate.isEmpty(faxNumberValue)) {
-                faxNumber = faxNumberValue.getString("areaCode") + faxNumberValue.getString("contactNumber");
+                faxNumber = faxNumberValue.getString(org.apache.ofbiz.persistence.entity.x.areaCode) + faxNumberValue.getString(org.apache.ofbiz.persistence.entity.x.contactNumber);
                 // Fedex doesn't want the North American country code
-                if (UtilValidate.isNotEmpty(faxNumberValue.getString("countryCode")) && !("CA".equals(countryCode) || "US".equals(countryCode))) {
-                    faxNumber = faxNumberValue.getString("countryCode") + faxNumber;
+                if (UtilValidate.isNotEmpty(faxNumberValue.getString(org.apache.ofbiz.persistence.entity.x.countryCode)) && !("CA".equals(countryCode) || "US".equals(countryCode))) {
+                    faxNumber = faxNumberValue.getString(org.apache.ofbiz.persistence.entity.x.countryCode) + faxNumber;
                 }
                 faxNumber = faxNumber.replaceAll("[^+\\d]", "");
             }
@@ -317,7 +317,7 @@ public class FedexServices {
                     EntityOperator.AND));
             GenericValue emailAddressValue = EntityUtil.getFirst(emailAddresses);
             if (!UtilValidate.isEmpty(emailAddressValue)) {
-                emailAddress = emailAddressValue.getString("infoString");
+                emailAddress = emailAddressValue.getString(org.apache.ofbiz.persistence.entity.x.infoString);
             }
 
             // Get the location of the Freemarker (XML) template for the FDXSubscriptionRequest
@@ -341,15 +341,15 @@ public class FedexServices {
             if (UtilValidate.isNotEmpty(emailAddress)) {
                 subscriptionRequestContext.put("EMailAddress", emailAddress);
             }
-            subscriptionRequestContext.put("Line1", postalAddress.getString("address1"));
-            if (UtilValidate.isNotEmpty(postalAddress.getString("address2"))) {
-                subscriptionRequestContext.put("Line2", postalAddress.getString("address2"));
+            subscriptionRequestContext.put("Line1", postalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1));
+            if (UtilValidate.isNotEmpty(postalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2))) {
+                subscriptionRequestContext.put("Line2", postalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2));
             }
-            subscriptionRequestContext.put("City", postalAddress.getString("city"));
+            subscriptionRequestContext.put("City", postalAddress.getString(org.apache.ofbiz.persistence.entity.x.city));
             if (UtilValidate.isNotEmpty(stateOrProvinceCode)) {
                 subscriptionRequestContext.put("StateOrProvinceCode", stateOrProvinceCode);
             }
-            subscriptionRequestContext.put("PostalCode", postalAddress.getString("postalCode"));
+            subscriptionRequestContext.put("PostalCode", postalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode));
             subscriptionRequestContext.put("CountryCode", countryCode);
 
             StringWriter outWriter = new StringWriter();
@@ -415,9 +415,9 @@ public class FedexServices {
     public static Map<String, Object> fedexShipRequest(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
-        String shipmentId = (String) context.get("shipmentId");
-        String shipmentRouteSegmentId = (String) context.get("shipmentRouteSegmentId");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
+        String shipmentRouteSegmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId);
 
         Map<String, Object> shipmentGatewayConfig = ShipmentServices.getShipmentGatewayConfigFromShipment(delegator, shipmentId, locale);
         String shipmentGatewayConfigId = (String) shipmentGatewayConfig.get("shipmentGatewayConfigId");
@@ -499,22 +499,22 @@ public class FedexServices {
             }
 
             // Determine the Fedex carrier
-            String carrierPartyId = shipmentRouteSegment.getString("carrierPartyId");
+            String carrierPartyId = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId);
             if (!"FEDEX".equals(carrierPartyId)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentFedexNotRouteSegmentCarrier",
                         UtilMisc.toMap("shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId), locale));
             }
 
             // Check the shipmentRouteSegment's carrier status
-            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString("carrierServiceStatusId"))
-                    && !"SHRSCS_NOT_STARTED".equals(shipmentRouteSegment.getString("carrierServiceStatusId"))) {
+            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId))
+                    && !"SHRSCS_NOT_STARTED".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentFedexRouteSegmentStatusNotStarted",
                         UtilMisc.toMap("shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId, "shipmentRouteSegmentStatus",
-                                shipmentRouteSegment.getString("carrierServiceStatusId")), locale));
+                                shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId)), locale));
             }
 
             // Translate shipmentMethodTypeId to Fedex service code and carrier code
-            String shipmentMethodTypeId = shipmentRouteSegment.getString("shipmentMethodTypeId");
+            String shipmentMethodTypeId = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId);
             GenericValue carrierShipmentMethod = EntityQuery.use(delegator).from("CarrierShipmentMethod").where("shipmentMethodTypeId",
                     shipmentMethodTypeId, "partyId", "FEDEX", "roleTypeId", "CARRIER").queryOne();
             if (UtilValidate.isEmpty(carrierShipmentMethod)) {
@@ -522,12 +522,12 @@ public class FedexServices {
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId, "carrierPartyId",
                                 carrierPartyId, "shipmentMethodTypeId", shipmentMethodTypeId), locale));
             }
-            if (UtilValidate.isEmpty(carrierShipmentMethod.getString("carrierServiceCode"))) {
+            if (UtilValidate.isEmpty(carrierShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceCode))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentFedexNoCarrieServiceCode",
                         UtilMisc.toMap("shipmentMethodTypeId", shipmentMethodTypeId), locale));
             }
-            String service = carrierShipmentMethod.getString("carrierServiceCode");
+            String service = carrierShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceCode);
 
             // CarrierCode is FDXG only for FEDEXGROUND and GROUNDHOMEDELIVERY services.
             boolean isGroundService = "FEDEXGROUND".equals(service) || "GROUNDHOMEDELIVERY".equals(service);
@@ -536,85 +536,85 @@ public class FedexServices {
             // Determine the currency by trying the shipmentRouteSegment, then the Shipment, then the framework's default currency,
             // and finally default to USD
             String currencyCode = null;
-            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString("currencyUomId"))) {
-                currencyCode = shipmentRouteSegment.getString("currencyUomId");
-            } else if (UtilValidate.isNotEmpty(shipment.getString("currencyUomId"))) {
-                currencyCode = shipment.getString("currencyUomId");
+            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId))) {
+                currencyCode = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId);
+            } else if (UtilValidate.isNotEmpty(shipment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId))) {
+                currencyCode = shipment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId);
             } else {
                 currencyCode = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
             }
 
             // Get and validate origin postal address
-            GenericValue originPostalAddress = shipmentRouteSegment.getRelatedOne("OriginPostalAddress", false);
+            GenericValue originPostalAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginPostalAddress, false);
             if (UtilValidate.isEmpty(originPostalAddress)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentOriginPostalAddressNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
-            } else if (UtilValidate.isEmpty(originPostalAddress.getString("address1"))
-                       || UtilValidate.isEmpty(originPostalAddress.getString("city"))
-                       || UtilValidate.isEmpty(originPostalAddress.getString("postalCode"))
-                       || UtilValidate.isEmpty(originPostalAddress.getString("countryGeoId"))) {
+            } else if (UtilValidate.isEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1))
+                       || UtilValidate.isEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city))
+                       || UtilValidate.isEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode))
+                       || UtilValidate.isEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentOriginPostalAddressNotComplete",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            GenericValue originCountryGeo = originPostalAddress.getRelatedOne("CountryGeo", false);
+            GenericValue originCountryGeo = originPostalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
             if (UtilValidate.isEmpty(originCountryGeo)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentOriginCountryGeoNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
-            String originAddressCountryCode = originCountryGeo.getString("geoCode");
+            String originAddressCountryCode = originCountryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode);
             String originAddressStateOrProvinceCode = null;
 
             // Only add the StateOrProvinceCode element if the address is in USA or Canada
             if ("CA".equals(originAddressCountryCode) || "US".equals(originAddressCountryCode)) {
-                if (UtilValidate.isEmpty(originPostalAddress.getString("stateProvinceGeoId"))) {
+                if (UtilValidate.isEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId))) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "FacilityShipmentRouteSegmentOriginStateProvinceGeoIdRequired",
-                            UtilMisc.toMap("contactMechId", originPostalAddress.getString("contactMechId"),
+                            UtilMisc.toMap("contactMechId", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.contactMechId),
                                     "shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
                 }
                 GenericValue stateProvinceGeo = EntityQuery.use(delegator).from("Geo").where("geoId", originPostalAddress
-                        .getString("stateProvinceGeoId")).cache().queryOne();
-                originAddressStateOrProvinceCode = stateProvinceGeo.getString("geoCode");
+                        .getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId)).cache().queryOne();
+                originAddressStateOrProvinceCode = stateProvinceGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode);
             }
 
             // Get and validate origin telecom number
-            GenericValue originTelecomNumber = shipmentRouteSegment.getRelatedOne("OriginTelecomNumber", false);
+            GenericValue originTelecomNumber = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginTelecomNumber, false);
             if (UtilValidate.isEmpty(originTelecomNumber)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentOriginTelecomNumberNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            String originContactPhoneNumber = originTelecomNumber.getString("areaCode") + originTelecomNumber.getString("contactNumber");
+            String originContactPhoneNumber = originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.areaCode) + originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.contactNumber);
 
             // Fedex doesn't want the North American country code
-            if (UtilValidate.isNotEmpty(originTelecomNumber.getString("countryCode")) && !("CA".equals(originAddressCountryCode)
+            if (UtilValidate.isNotEmpty(originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode)) && !("CA".equals(originAddressCountryCode)
                     || "US".equals(originAddressCountryCode))) {
-                originContactPhoneNumber = originTelecomNumber.getString("countryCode") + originContactPhoneNumber;
+                originContactPhoneNumber = originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode) + originContactPhoneNumber;
             }
             originContactPhoneNumber = originContactPhoneNumber.replaceAll("[^+\\d]", "");
 
             // Get the origin contact name from the owner of the origin facility
             GenericValue partyFrom = null;
-            GenericValue originFacility = shipment.getRelatedOne("OriginFacility", false);
+            GenericValue originFacility = shipment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginFacility, false);
             if (UtilValidate.isEmpty(originFacility)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentFedexOriginFacilityRequired",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             } else {
-                partyFrom = originFacility.getRelatedOne("OwnerParty", false);
+                partyFrom = originFacility.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OwnerParty, false);
                 if (UtilValidate.isEmpty(partyFrom)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "FacilityShipmentFedexOwnerPartyRequired",
                             UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId,
-                                    "facilityId", originFacility.getString("facilityId")), locale));
+                                    "facilityId", originFacility.getString(org.apache.ofbiz.persistence.entity.x.facilityId)), locale));
                 }
             }
 
-            String originContactKey = "PERSON".equals(partyFrom.getString("partyTypeId")) ? "OriginContactPersonName" : "OriginContactCompanyName";
+            String originContactKey = "PERSON".equals(partyFrom.getString(org.apache.ofbiz.persistence.entity.x.partyTypeId)) ? "OriginContactPersonName" : "OriginContactCompanyName";
             String originContactName = PartyHelper.getPartyName(partyFrom, false);
             if (UtilValidate.isEmpty(originContactName)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -623,67 +623,67 @@ public class FedexServices {
             }
 
             // Get and validate destination postal address
-            GenericValue destinationPostalAddress = shipmentRouteSegment.getRelatedOne("DestPostalAddress", false);
+            GenericValue destinationPostalAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestPostalAddress, false);
             if (UtilValidate.isEmpty(destinationPostalAddress)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentDestPostalAddressNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
-            } else if (UtilValidate.isEmpty(destinationPostalAddress.getString("address1"))
-                       || UtilValidate.isEmpty(destinationPostalAddress.getString("city"))
-                       || UtilValidate.isEmpty(destinationPostalAddress.getString("postalCode"))
-                       || UtilValidate.isEmpty(destinationPostalAddress.getString("countryGeoId"))) {
+            } else if (UtilValidate.isEmpty(destinationPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1))
+                       || UtilValidate.isEmpty(destinationPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city))
+                       || UtilValidate.isEmpty(destinationPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode))
+                       || UtilValidate.isEmpty(destinationPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentDestPostalAddressIncomplete",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            GenericValue destinationCountryGeo = destinationPostalAddress.getRelatedOne("CountryGeo", false);
+            GenericValue destinationCountryGeo = destinationPostalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
             if (UtilValidate.isEmpty(destinationCountryGeo)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentDestCountryGeoNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            String destinationAddressCountryCode = destinationCountryGeo.getString("geoCode");
+            String destinationAddressCountryCode = destinationCountryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode);
             String destinationAddressStateOrProvinceCode = null;
 
             // Only add the StateOrProvinceCode element if the address is in USA or Canada
             if ("CA".equals(destinationAddressCountryCode) || "US".equals(destinationAddressCountryCode)) {
-                if (UtilValidate.isEmpty(destinationPostalAddress.getString("stateProvinceGeoId"))) {
+                if (UtilValidate.isEmpty(destinationPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId))) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "FacilityShipmentRouteSegmentDestStateProvinceGeoIdNotFound",
-                            UtilMisc.toMap("contactMechId", destinationPostalAddress.getString("contactMechId"),
+                            UtilMisc.toMap("contactMechId", destinationPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.contactMechId),
                                     "shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
                 }
                 GenericValue stateProvinceGeo = EntityQuery.use(delegator).from("Geo").where("geoId",
-                        destinationPostalAddress.getString("stateProvinceGeoId")).cache().queryOne();
-                destinationAddressStateOrProvinceCode = stateProvinceGeo.getString("geoCode");
+                        destinationPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId)).cache().queryOne();
+                destinationAddressStateOrProvinceCode = stateProvinceGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode);
             }
 
             // Get and validate destination telecom number
-            GenericValue destinationTelecomNumber = shipmentRouteSegment.getRelatedOne("DestTelecomNumber", false);
+            GenericValue destinationTelecomNumber = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestTelecomNumber, false);
             if (UtilValidate.isEmpty(destinationTelecomNumber)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentDestTelecomNumberNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            String destinationContactPhoneNumber = destinationTelecomNumber.getString("areaCode")
-                    + destinationTelecomNumber.getString("contactNumber");
+            String destinationContactPhoneNumber = destinationTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.areaCode)
+                    + destinationTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.contactNumber);
 
             // Fedex doesn't want the North American country code
-            if (UtilValidate.isNotEmpty(destinationTelecomNumber.getString("countryCode")) && !("CA".equals(destinationAddressCountryCode)
+            if (UtilValidate.isNotEmpty(destinationTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode)) && !("CA".equals(destinationAddressCountryCode)
                     || "US".equals(destinationAddressCountryCode))) {
-                destinationContactPhoneNumber = destinationTelecomNumber.getString("countryCode") + destinationContactPhoneNumber;
+                destinationContactPhoneNumber = destinationTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode) + destinationContactPhoneNumber;
             }
             destinationContactPhoneNumber = destinationContactPhoneNumber.replaceAll("[^+\\d]", "");
 
             // Get the destination contact name
-            String destinationPartyId = shipment.getString("partyIdTo");
+            String destinationPartyId = shipment.getString(org.apache.ofbiz.persistence.entity.x.partyIdTo);
             if (UtilValidate.isEmpty(destinationPartyId)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentFedexPartyToRequired",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
             GenericValue partyTo = EntityQuery.use(delegator).from("Party").where("partyId", destinationPartyId).queryOne();
-            String destinationContactKey = "PERSON".equals(partyTo.getString("partyTypeId")) ? "DestinationContactPersonName"
+            String destinationContactKey = "PERSON".equals(partyTo.getString(org.apache.ofbiz.persistence.entity.x.partyTypeId)) ? "DestinationContactPersonName"
                     : "DestinationContactCompanyName";
             String destinationContactName = PartyHelper.getPartyName(partyTo, false);
             if (UtilValidate.isEmpty(destinationContactName)) {
@@ -697,7 +697,7 @@ public class FedexServices {
             if ("GROUNDHOMEDELIVERY".equals(service)) {
 
                 // Determine the home-delivery instructions
-                homeDeliveryType = shipmentRouteSegment.getString("homeDeliveryType");
+                homeDeliveryType = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.homeDeliveryType);
                 if (UtilValidate.isNotEmpty(homeDeliveryType)) {
                     if (!("DATECERTAIN".equals(homeDeliveryType) || "EVENING".equals(homeDeliveryType) || "APPOINTMENT".equals(homeDeliveryType))) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -705,7 +705,7 @@ public class FedexServices {
                                 UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
                     }
                 }
-                homeDeliveryDate = shipmentRouteSegment.getTimestamp("homeDeliveryDate");
+                homeDeliveryDate = shipmentRouteSegment.getTimestamp(org.apache.ofbiz.persistence.entity.x.homeDeliveryDate);
                 if (UtilValidate.isEmpty(homeDeliveryDate)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "FacilityShipmentFedexHomeDeliveryDateRequired",
@@ -717,7 +717,7 @@ public class FedexServices {
                 }
             }
 
-            List<GenericValue> shipmentPackageRouteSegs = shipmentRouteSegment.getRelated("ShipmentPackageRouteSeg", null,
+            List<GenericValue> shipmentPackageRouteSegs = shipmentRouteSegment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentPackageRouteSeg, null,
                     UtilMisc.toList("+shipmentPackageSeqId"), false);
             if (UtilValidate.isEmpty(shipmentPackageRouteSegs)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "FacilityShipmentPackageRouteSegsNotFound",
@@ -743,27 +743,27 @@ public class FedexServices {
             shipRequestContext.put("PayorType", "SENDER");
             shipRequestContext.put(originContactKey, originContactName);
             shipRequestContext.put("OriginContactPhoneNumber", originContactPhoneNumber);
-            shipRequestContext.put("OriginAddressLine1", originPostalAddress.getString("address1"));
-            if (UtilValidate.isNotEmpty(originPostalAddress.getString("address2"))) {
-                shipRequestContext.put("OriginAddressLine2", originPostalAddress.getString("address2"));
+            shipRequestContext.put("OriginAddressLine1", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1));
+            if (UtilValidate.isNotEmpty(originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2))) {
+                shipRequestContext.put("OriginAddressLine2", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2));
             }
-            shipRequestContext.put("OriginAddressCity", originPostalAddress.getString("city"));
+            shipRequestContext.put("OriginAddressCity", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city));
             if (UtilValidate.isNotEmpty(originAddressStateOrProvinceCode)) {
                 shipRequestContext.put("OriginAddressStateOrProvinceCode", originAddressStateOrProvinceCode);
             }
-            shipRequestContext.put("OriginAddressPostalCode", originPostalAddress.getString("postalCode"));
+            shipRequestContext.put("OriginAddressPostalCode", originPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode));
             shipRequestContext.put("OriginAddressCountryCode", originAddressCountryCode);
             shipRequestContext.put(destinationContactKey, destinationContactName);
             shipRequestContext.put("DestinationContactPhoneNumber", destinationContactPhoneNumber);
-            shipRequestContext.put("DestinationAddressLine1", destinationPostalAddress.getString("address1"));
-            if (UtilValidate.isNotEmpty(destinationPostalAddress.getString("address2"))) {
-                shipRequestContext.put("DestinationAddressLine2", destinationPostalAddress.getString("address2"));
+            shipRequestContext.put("DestinationAddressLine1", destinationPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1));
+            if (UtilValidate.isNotEmpty(destinationPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2))) {
+                shipRequestContext.put("DestinationAddressLine2", destinationPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2));
             }
-            shipRequestContext.put("DestinationAddressCity", destinationPostalAddress.getString("city"));
+            shipRequestContext.put("DestinationAddressCity", destinationPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city));
             if (UtilValidate.isNotEmpty(destinationAddressStateOrProvinceCode)) {
                 shipRequestContext.put("DestinationAddressStateOrProvinceCode", destinationAddressStateOrProvinceCode);
             }
-            shipRequestContext.put("DestinationAddressPostalCode", destinationPostalAddress.getString("postalCode"));
+            shipRequestContext.put("DestinationAddressPostalCode", destinationPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode));
             shipRequestContext.put("DestinationAddressCountryCode", destinationAddressCountryCode);
             shipRequestContext.put("LabelType", "2DCOMMON");
             // Required type for FDXShipRequest. Not directly in the FTL because it shouldn't be changed.
@@ -777,8 +777,8 @@ public class FedexServices {
 
             // Get the weight from the ShipmentRouteSegment first, which overrides all later weight computations
             boolean hasBillingWeight = false;
-            BigDecimal billingWeight = shipmentRouteSegment.getBigDecimal("billingWeight");
-            String billingWeightUomId = shipmentRouteSegment.getString("billingWeightUomId");
+            BigDecimal billingWeight = shipmentRouteSegment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.billingWeight);
+            String billingWeightUomId = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.billingWeightUomId);
             if ((billingWeight != null) && (billingWeight.compareTo(BigDecimal.ZERO) > 0)) {
                 hasBillingWeight = true;
                 if (billingWeightUomId == null) {
@@ -804,8 +804,8 @@ public class FedexServices {
 
             // Loop through Shipment segments (NOTE: only one supported, loop is here for future refactoring reference)
             for (GenericValue shipmentPackageRouteSeg: shipmentPackageRouteSegs) {
-                GenericValue shipmentPackage = shipmentPackageRouteSeg.getRelatedOne("ShipmentPackage", false);
-                GenericValue shipmentBoxType = shipmentPackage.getRelatedOne("ShipmentBoxType", false);
+                GenericValue shipmentPackage = shipmentPackageRouteSeg.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentPackage, false);
+                GenericValue shipmentBoxType = shipmentPackage.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentBoxType, false);
 
                 // FedEx requires the packaging type
                 String packaging = null;
@@ -815,13 +815,13 @@ public class FedexServices {
                     if (UtilValidate.isEmpty(packaging)) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                                 "FacilityShipmentFedexPackingTypeNotConfigured",
-                                UtilMisc.toMap("shipmentPackageSeqId", shipmentPackage.getString("shipmentPackageSeqId"),
+                                UtilMisc.toMap("shipmentPackageSeqId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId),
                                         "shipmentId", shipmentId), locale));
                     }
-                    Debug.logWarning("Package " + shipmentPackage.getString("shipmentPackageSeqId") + " of shipment " + shipmentId
+                    Debug.logWarning("Package " + shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId) + " of shipment " + shipmentId
                             + " has no packaging type set - defaulting to " + packaging, MODULE);
                 } else {
-                    packaging = shipmentBoxType.getString("shipmentBoxTypeId");
+                    packaging = shipmentBoxType.getString(org.apache.ofbiz.persistence.entity.x.shipmentBoxTypeId);
                 }
 
                 // Make sure that the packaging type is valid for FedEx
@@ -830,31 +830,31 @@ public class FedexServices {
                 if (UtilValidate.isEmpty(carrierShipmentBoxType)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "FacilityShipmentFedexPackingTypeInvalid",
-                            UtilMisc.toMap("shipmentPackageSeqId", shipmentPackage.getString("shipmentPackageSeqId"),
+                            UtilMisc.toMap("shipmentPackageSeqId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId),
                                     "shipmentId", shipmentId), locale));
-                } else if (UtilValidate.isEmpty(carrierShipmentBoxType.getString("packagingTypeCode"))) {
+                } else if (UtilValidate.isEmpty(carrierShipmentBoxType.getString(org.apache.ofbiz.persistence.entity.x.packagingTypeCode))) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "FacilityShipmentFedexPackingTypeMissing",
-                            UtilMisc.toMap("shipmentPackageSeqId", shipmentPackage.getString("shipmentPackageSeqId"),
+                            UtilMisc.toMap("shipmentPackageSeqId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId),
                                     "shipmentId", shipmentId), locale));
                 }
-                packaging = carrierShipmentBoxType.getString("packagingTypeCode");
+                packaging = carrierShipmentBoxType.getString(org.apache.ofbiz.persistence.entity.x.packagingTypeCode);
 
                 // Determine the dimensions of the package
                 BigDecimal dimensionsLength = null;
                 BigDecimal dimensionsWidth = null;
                 BigDecimal dimensionsHeight = null;
                 if (shipmentBoxType != null) {
-                    dimensionsLength = shipmentBoxType.getBigDecimal("boxLength");
-                    dimensionsWidth = shipmentBoxType.getBigDecimal("boxWidth");
-                    dimensionsHeight = shipmentBoxType.getBigDecimal("boxHeight");
+                    dimensionsLength = shipmentBoxType.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxLength);
+                    dimensionsWidth = shipmentBoxType.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxWidth);
+                    dimensionsHeight = shipmentBoxType.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxHeight);
 
                     String boxDimensionsUomId = null;
-                    GenericValue boxDimensionsUom = shipmentBoxType.getRelatedOne("DimensionUom", false);
+                    GenericValue boxDimensionsUom = shipmentBoxType.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DimensionUom, false);
                     if (!UtilValidate.isEmpty(boxDimensionsUom)) {
-                        boxDimensionsUomId = boxDimensionsUom.getString("uomId");
+                        boxDimensionsUomId = boxDimensionsUom.getString(org.apache.ofbiz.persistence.entity.x.uomId);
                     } else {
-                        Debug.logWarning("Packaging type for package " + shipmentPackage.getString("shipmentPackageSeqId")
+                        Debug.logWarning("Packaging type for package " + shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId)
                                 + " of shipmentRouteSegment " + shipmentRouteSegmentId + " of shipment " + shipmentId
                                 + " is missing dimensionUomId, assuming default shipment.default.dimension.uom of " + dimensionsUomId
                                 + " from " + SHIPMENT_PROPERTIES_FILE, MODULE);
@@ -865,7 +865,7 @@ public class FedexServices {
                             Map<String, Object> results = dispatcher.runSync("convertUom", UtilMisc.<String, Object>toMap("uomId",
                                     boxDimensionsUomId, "uomIdTo", dimensionsUomId, "originalValue", dimensionsLength));
                             if (ServiceUtil.isError(results) || (results.get("convertedValue") == null)) {
-                                Debug.logWarning("Unable to convert length for package " + shipmentPackage.getString("shipmentPackageSeqId")
+                                Debug.logWarning("Unable to convert length for package " + shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId)
                                         + " of shipmentRouteSegment " + shipmentRouteSegmentId + " of shipment " + shipmentId, MODULE);
                                 dimensionsLength = null;
                             } else {
@@ -879,7 +879,7 @@ public class FedexServices {
                             Map<String, Object> results = dispatcher.runSync("convertUom", UtilMisc.<String, Object>toMap("uomId",
                                     boxDimensionsUomId, "uomIdTo", dimensionsUomId, "originalValue", dimensionsWidth));
                             if (ServiceUtil.isError(results) || (results.get("convertedValue") == null)) {
-                                Debug.logWarning("Unable to convert width for package " + shipmentPackage.getString("shipmentPackageSeqId")
+                                Debug.logWarning("Unable to convert width for package " + shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId)
                                         + " of shipmentRouteSegment " + shipmentRouteSegmentId + " of shipment " + shipmentId, MODULE);
                                 dimensionsWidth = null;
                             } else {
@@ -893,7 +893,7 @@ public class FedexServices {
                             Map<String, Object> results = dispatcher.runSync("convertUom", UtilMisc.<String, Object>toMap("uomId",
                                     boxDimensionsUomId, "uomIdTo", dimensionsUomId, "originalValue", dimensionsHeight));
                             if (ServiceUtil.isError(results) || (results.get("convertedValue") == null)) {
-                                Debug.logWarning("Unable to convert height for package " + shipmentPackage.getString("shipmentPackageSeqId")
+                                Debug.logWarning("Unable to convert height for package " + shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId)
                                         + " of shipmentRouteSegment " + shipmentRouteSegmentId + " of shipment " + shipmentId, MODULE);
                                 dimensionsHeight = null;
                             } else {
@@ -907,8 +907,8 @@ public class FedexServices {
                 // Determine the package weight (possibly overriden by route segment billing weight)
                 BigDecimal packageWeight = null;
                 if (!hasBillingWeight) {
-                    if (UtilValidate.isNotEmpty(shipmentPackage.getString("weight"))) {
-                        packageWeight = shipmentPackage.getBigDecimal("weight");
+                    if (UtilValidate.isNotEmpty(shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.weight))) {
+                        packageWeight = shipmentPackage.getBigDecimal(org.apache.ofbiz.persistence.entity.x.weight);
                     } else {
 
                         // Use default weight if available
@@ -923,7 +923,7 @@ public class FedexServices {
                     }
 
                     // Convert weight if necessary
-                    String packageWeightUomId = shipmentPackage.getString("weightUomId");
+                    String packageWeightUomId = shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.weightUomId);
                     if (UtilValidate.isEmpty(packageWeightUomId)) {
                         Debug.logWarning("Shipment Route Segment missing weightUomId in shipmentId " + shipmentId
                                 + ", assuming shipment.default.weight.uom of " + weightUomId + " from " + SHIPMENT_PROPERTIES_FILE, MODULE);
@@ -935,7 +935,7 @@ public class FedexServices {
                         if (ServiceUtil.isError(results) || (results.get("convertedValue") == null)) {
                             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                                     "FacilityShipmentFedexWeightOfPackageCannotBeConverted",
-                                    UtilMisc.toMap("shipmentPackageSeqId", shipmentPackage.getString("shipmentPackageSeqId"),
+                                    UtilMisc.toMap("shipmentPackageSeqId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId),
                                             "shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId), locale));
                         } else {
                             packageWeight = (BigDecimal) results.get("convertedValue");
@@ -946,13 +946,13 @@ public class FedexServices {
                 if (weight == null || weight.compareTo(BigDecimal.ZERO) < 0) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "FacilityShipmentFedexWeightOfPackageNotAvailable",
-                            UtilMisc.toMap("shipmentPackageSeqId", shipmentPackage.getString("shipmentPackageSeqId"),
+                            UtilMisc.toMap("shipmentPackageSeqId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId),
                                     "shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId), locale));
                 }
 
                 // Populate the Freemarker context with package-related information
                 shipRequestContext.put("CustomerReference", shipmentId + ":" + shipmentRouteSegmentId + ":" + shipmentPackage.getString(
-                        "shipmentPackageSeqId"));
+                        org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId));
                 shipRequestContext.put("DropoffType", dropoffType);
                 shipRequestContext.put("Packaging", packaging);
                 if (UtilValidate.isNotEmpty(dimensionsUomId)
@@ -1059,17 +1059,17 @@ public class FedexServices {
         if (labelBytes != null) {
 
             // Store in db blob
-            shipmentPackageRouteSeg.setBytes("labelImage", labelBytes);
+            shipmentPackageRouteSeg.setBytes(org.apache.ofbiz.persistence.entity.x.labelImage, labelBytes);
         } else {
             Debug.logInfo("Failed to either decode returned FedEx label or no data found in Labels/OutboundLabel.", MODULE);
             // TODO: Cancel the package
         }
 
-        shipmentPackageRouteSeg.set("trackingCode", trackingNumber);
-        shipmentPackageRouteSeg.set("labelHtml", encodedImageString);
+        shipmentPackageRouteSeg.set(org.apache.ofbiz.persistence.entity.x.trackingCode, trackingNumber);
+        shipmentPackageRouteSeg.set(org.apache.ofbiz.persistence.entity.x.labelHtml, encodedImageString);
         shipmentPackageRouteSeg.store();
 
-        shipmentRouteSegment.set("trackingIdNumber", trackingNumber);
+        shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.trackingIdNumber, trackingNumber);
         shipmentRouteSegment.put("carrierServiceStatusId", "SHRSCS_CONFIRMED");
         shipmentRouteSegment.store();
 

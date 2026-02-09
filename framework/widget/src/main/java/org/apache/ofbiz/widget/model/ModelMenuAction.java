@@ -103,9 +103,9 @@ public abstract class ModelMenuAction {
             if (this.fromScope != null && "user".equals(this.fromScope)) {
                 if (!this.fromField.isEmpty()) {
                     String originalName = this.fromField.getOriginalName();
-                    String currentWidgetTrail = (String) context.get("_WIDGETTRAIL_");
+                    String currentWidgetTrail = (String) context.get(org.apache.ofbiz.persistence.entity.x._WIDGETTRAIL_);
                     String newKey = currentWidgetTrail + "|" + originalName;
-                    HttpSession session = (HttpSession) context.get("session");
+                    HttpSession session = (HttpSession) context.get(org.apache.ofbiz.persistence.entity.x.session);
                     newValue = session.getAttribute(newKey);
                     if (Debug.verboseOn()) {
                         Debug.logVerbose("In user getting value for field from [" + this.fromField.getOriginalName() + "]: " + newValue, MODULE);
@@ -117,9 +117,9 @@ public abstract class ModelMenuAction {
             } else if (this.fromScope != null && "application".equals(this.fromScope)) {
                 if (!this.fromField.isEmpty()) {
                     String originalName = this.fromField.getOriginalName();
-                    String currentWidgetTrail = (String) context.get("_WIDGETTRAIL_");
+                    String currentWidgetTrail = (String) context.get(org.apache.ofbiz.persistence.entity.x._WIDGETTRAIL_);
                     String newKey = currentWidgetTrail + "|" + originalName;
-                    ServletContext servletContext = (ServletContext) context.get("application");
+                    ServletContext servletContext = (ServletContext) context.get(org.apache.ofbiz.persistence.entity.x.application);
                     newValue = servletContext.getAttribute(newKey);
                     if (Debug.verboseOn()) {
                         Debug.logVerbose("In application getting value for field from [" + this.fromField.getOriginalName() + "]: "
@@ -155,7 +155,7 @@ public abstract class ModelMenuAction {
                 } else {
                     try {
                         newValue = ObjectType.simpleTypeOrObjectConvert(newValue, this.type, null,
-                                (TimeZone) context.get("timeZone"), (Locale) context.get("locale"), true);
+                                (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone), (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale), true);
                     } catch (GeneralException e) {
                         String errMsg = "Could not convert field value for the field: [" + this.field.getOriginalName()
                                 + "] to the [" + this.type + "] type for the value [" + newValue + "]: " + e.toString();
@@ -166,9 +166,9 @@ public abstract class ModelMenuAction {
             }
             if (this.toScope != null && "user".equals(this.toScope)) {
                 String originalName = this.field.getOriginalName();
-                String currentWidgetTrail = (String) context.get("_WIDGETTRAIL_");
+                String currentWidgetTrail = (String) context.get(org.apache.ofbiz.persistence.entity.x._WIDGETTRAIL_);
                 String newKey = currentWidgetTrail + "|" + originalName;
-                HttpSession session = (HttpSession) context.get("session");
+                HttpSession session = (HttpSession) context.get(org.apache.ofbiz.persistence.entity.x.session);
                 session.setAttribute(newKey, newValue);
                 if (Debug.verboseOn()) {
                     Debug.logVerbose("In user setting value for field from [" + this.field.getOriginalName() + "]: " + newValue, MODULE);
@@ -176,9 +176,9 @@ public abstract class ModelMenuAction {
 
             } else if (this.toScope != null && "application".equals(this.toScope)) {
                 String originalName = this.field.getOriginalName();
-                String currentWidgetTrail = (String) context.get("_WIDGETTRAIL_");
+                String currentWidgetTrail = (String) context.get(org.apache.ofbiz.persistence.entity.x._WIDGETTRAIL_);
                 String newKey = currentWidgetTrail + "|" + originalName;
-                ServletContext servletContext = (ServletContext) context.get("application");
+                ServletContext servletContext = (ServletContext) context.get(org.apache.ofbiz.persistence.entity.x.application);
                 servletContext.setAttribute(newKey, newValue);
                 if (Debug.verboseOn()) {
                     Debug.logVerbose("In application setting value for field from [" + this.field.getOriginalName() + "]: " + newValue, MODULE);
@@ -192,7 +192,7 @@ public abstract class ModelMenuAction {
             }
 
             if (global) {
-                Map<String, Object> globalCtx = UtilGenerics.cast(context.get("globalContext"));
+                Map<String, Object> globalCtx = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.globalContext));
                 if (globalCtx != null) {
                     this.field.put(globalCtx, newValue);
                 }

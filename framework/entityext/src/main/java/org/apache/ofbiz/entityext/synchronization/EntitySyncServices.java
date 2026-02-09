@@ -78,7 +78,7 @@ public class EntitySyncServices {
      *@return Map with the result of the service, the output parameters
      */
     public static Map<String, Object> runEntitySync(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         EntitySyncContext esc = null;
         try {
             esc = new EntitySyncContext(dctx, context);
@@ -135,8 +135,8 @@ public class EntitySyncServices {
      */
     public static Map<String, Object> storeEntitySyncData(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String overrideDelegatorName = (String) context.get("delegatorName");
-        Locale locale = (Locale) context.get("locale");
+        String overrideDelegatorName = (String) context.get(org.apache.ofbiz.persistence.entity.x.delegatorName);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (UtilValidate.isNotEmpty(overrideDelegatorName)) {
             delegator = DelegatorFactory.getDelegator(overrideDelegatorName);
             if (delegator == null) {
@@ -146,11 +146,11 @@ public class EntitySyncServices {
         }
         //LocalDispatcher dispatcher = dctx.getDispatcher();
 
-        String entitySyncId = (String) context.get("entitySyncId");
+        String entitySyncId = (String) context.get(org.apache.ofbiz.persistence.entity.x.entitySyncId);
         // incoming lists will already be sorted by lastUpdatedStamp (or lastCreatedStamp)
-        List<GenericValue> valuesToCreate = UtilGenerics.cast(context.get("valuesToCreate"));
-        List<GenericValue> valuesToStore = UtilGenerics.cast(context.get("valuesToStore"));
-        List<GenericEntity> keysToRemove = UtilGenerics.cast(context.get("keysToRemove"));
+        List<GenericValue> valuesToCreate = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.valuesToCreate));
+        List<GenericValue> valuesToStore = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.valuesToStore));
+        List<GenericEntity> keysToRemove = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.keysToRemove));
 
         if (Debug.infoOn()) {
             Debug.logInfo("Running storeEntitySyncData (" + entitySyncId + ") - [" + valuesToCreate.size() + "] to create; [" + valuesToStore.size()
@@ -281,11 +281,11 @@ public class EntitySyncServices {
      */
     public static Map<String, Object> runPullEntitySync(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
-        String entitySyncId = (String) context.get("entitySyncId");
-        String remotePullAndReportEntitySyncDataName = (String) context.get("remotePullAndReportEntitySyncDataName");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String entitySyncId = (String) context.get(org.apache.ofbiz.persistence.entity.x.entitySyncId);
+        String remotePullAndReportEntitySyncDataName = (String) context.get(org.apache.ofbiz.persistence.entity.x.remotePullAndReportEntitySyncDataName);
 
-        Debug.logInfo("Running runPullEntitySync for entitySyncId=" + context.get("entitySyncId"), MODULE);
+        Debug.logInfo("Running runPullEntitySync for entitySyncId=" + context.get(org.apache.ofbiz.persistence.entity.x.entitySyncId), MODULE);
 
         // loop until no data is returned to store
         boolean gotMoreData = true;
@@ -306,8 +306,8 @@ public class EntitySyncServices {
             // call pullAndReportEntitySyncData, initially with no results, then with results from last loop
             Map<String, Object> remoteCallContext = new HashMap<>();
             remoteCallContext.put("entitySyncId", entitySyncId);
-            remoteCallContext.put("delegatorName", context.get("remoteDelegatorName"));
-            remoteCallContext.put("userLogin", context.get("userLogin"));
+            remoteCallContext.put("delegatorName", context.get(org.apache.ofbiz.persistence.entity.x.remoteDelegatorName));
+            remoteCallContext.put("userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
 
             remoteCallContext.put("startDate", startDate);
             remoteCallContext.put("toCreateInserted", toCreateInserted);
@@ -349,11 +349,11 @@ public class EntitySyncServices {
                         if (keysToRemove == null) keysToRemove = Collections.emptyList();
 
                         Map<String, Object> callLocalStoreContext = UtilMisc.toMap("entitySyncId", entitySyncId, "delegatorName",
-                                context.get("localDelegatorName"),
+                                context.get(org.apache.ofbiz.persistence.entity.x.localDelegatorName),
                                 "valuesToCreate", valuesToCreate, "valuesToStore", valuesToStore,
                                 "keysToRemove", keysToRemove);
 
-                        callLocalStoreContext.put("userLogin", context.get("userLogin"));
+                        callLocalStoreContext.put("userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
                         Map<String, Object> storeResult = dispatcher.runSync("storeEntitySyncData", callLocalStoreContext);
                         if (ServiceUtil.isError(storeResult)) {
                             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtErrorCallingService", locale),
@@ -398,7 +398,7 @@ public class EntitySyncServices {
      */
     public static Map<String, Object> pullAndReportEntitySyncData(DispatchContext dctx, Map<String, ? extends Object> context) {
         EntitySyncContext esc = null;
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             esc = new EntitySyncContext(dctx, context);
 
@@ -472,7 +472,7 @@ public class EntitySyncServices {
     }
 
     public static Map<String, Object> runOfflineEntitySync(DispatchContext dctx, Map<String, ? extends Object> context) {
-        String fileName = (String) context.get("fileName");
+        String fileName = (String) context.get(org.apache.ofbiz.persistence.entity.x.fileName);
         EntitySyncContext esc = null;
         long totalRowsExported = 0;
         try {
@@ -553,9 +553,9 @@ public class EntitySyncServices {
     public static Map<String, Object> loadOfflineSyncData(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String fileName = (String) context.get("xmlFileName");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String fileName = (String) context.get(org.apache.ofbiz.persistence.entity.x.xmlFileName);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         URL xmlFile = UtilURL.fromResource(fileName);
         if (xmlFile != null) {
             Document xmlSyncDoc = null;
@@ -610,7 +610,7 @@ public class EntitySyncServices {
     }
 
     public static Map<String, Object> updateOfflineEntitySync(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtThisServiceIsNotYetImplemented", locale));
     }
 
@@ -623,7 +623,7 @@ public class EntitySyncServices {
     public static Map<String, Object> cleanSyncRemoveInfo(DispatchContext dctx, Map<String, ? extends Object> context) {
         Debug.logInfo("Running cleanSyncRemoveInfo", MODULE);
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         try {
             // find the largest keepRemoveInfoHours value on an EntitySyncRemove and kill everything before that,
@@ -632,7 +632,7 @@ public class EntitySyncServices {
 
             List<GenericValue> entitySyncRemoveList = EntityQuery.use(delegator).from("EntitySync").queryList();
             for (GenericValue entitySyncRemove: entitySyncRemoveList) {
-                Double curKrih = entitySyncRemove.getDouble("keepRemoveInfoHours");
+                Double curKrih = entitySyncRemove.getDouble(org.apache.ofbiz.persistence.entity.x.keepRemoveInfoHours);
                 if (curKrih != null) {
                     double curKrihVal = curKrih;
                     if (curKrihVal > keepRemoveInfoHours) {

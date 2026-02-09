@@ -41,11 +41,11 @@ public class CertificateServices {
 
     public static Map<String, Object> importIssuerCertificate(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String certString = (String) context.get("certString");
-        String componentName = (String) context.get("componentName");
-        String keystoreName = (String) context.get("keystoreName");
-        String alias = (String) context.get("alias");
-        String importIssuer = (String) context.get("importIssuer");
+        String certString = (String) context.get(org.apache.ofbiz.persistence.entity.x.certString);
+        String componentName = (String) context.get(org.apache.ofbiz.persistence.entity.x.componentName);
+        String keystoreName = (String) context.get(org.apache.ofbiz.persistence.entity.x.keystoreName);
+        String alias = (String) context.get(org.apache.ofbiz.persistence.entity.x.alias);
+        String importIssuer = (String) context.get(org.apache.ofbiz.persistence.entity.x.importIssuer);
 
         // load the keystore
         KeyStore ks;
@@ -81,13 +81,13 @@ public class CertificateServices {
         Map<String, String> x500Map = KeyStoreUtil.getCertX500Map(cert);
         if (importIssuer != null && "Y".equalsIgnoreCase(importIssuer)) {
             GenericValue provision = delegator.makeValue("X509IssuerProvision");
-            provision.set("commonName", x500Map.get("CN"));
-            provision.set("organizationalUnit", x500Map.get("OU"));
-            provision.set("organizationName", x500Map.get("O"));
-            provision.set("cityLocality", x500Map.get("L"));
-            provision.set("stateProvince", x500Map.get("ST"));
-            provision.set("country", x500Map.get("C"));
-            provision.set("serialNumber", cert.getSerialNumber().toString(16));
+            provision.set(org.apache.ofbiz.persistence.entity.x.commonName, x500Map.get("CN"));
+            provision.set(org.apache.ofbiz.persistence.entity.x.organizationalUnit, x500Map.get("OU"));
+            provision.set(org.apache.ofbiz.persistence.entity.x.organizationName, x500Map.get("O"));
+            provision.set(org.apache.ofbiz.persistence.entity.x.cityLocality, x500Map.get("L"));
+            provision.set(org.apache.ofbiz.persistence.entity.x.stateProvince, x500Map.get("ST"));
+            provision.set(org.apache.ofbiz.persistence.entity.x.country, x500Map.get("C"));
+            provision.set(org.apache.ofbiz.persistence.entity.x.serialNumber, cert.getSerialNumber().toString(16));
 
             try {
                 delegator.createSetNextSeqId(provision);

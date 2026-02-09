@@ -46,9 +46,9 @@ public class ProductStoreSurveyWrapper extends SurveyWrapper {
         if (this.productStoreSurveyAppl != null) {
             this.setPartyId(partyId);
             this.setDelegator(productStoreSurveyAppl.getDelegator());
-            this.setSurveyId(productStoreSurveyAppl.getString("surveyId"));
-            this.surveyTemplate = productStoreSurveyAppl.getString("surveyTemplate");
-            this.resultTemplate = productStoreSurveyAppl.getString("resultTemplate");
+            this.setSurveyId(productStoreSurveyAppl.getString(org.apache.ofbiz.persistence.entity.x.surveyId));
+            this.surveyTemplate = productStoreSurveyAppl.getString(org.apache.ofbiz.persistence.entity.x.surveyTemplate);
+            this.resultTemplate = productStoreSurveyAppl.getString(org.apache.ofbiz.persistence.entity.x.resultTemplate);
         } else {
             throw new IllegalArgumentException("Required parameter productStoreSurveyAppl missing");
         }

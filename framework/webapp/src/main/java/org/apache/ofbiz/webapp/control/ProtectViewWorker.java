@@ -64,7 +64,7 @@ public final class ProtectViewWorker {
         String returnValue = "success";
 
         if (userLogin != null) {
-            String userLoginId = userLogin.getString("userLoginId");
+            String userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
             try {
                 List<GenericValue> protectedViews = EntityQuery.use(delegator)
                                                                .from("UserLoginAndProtectedView")
@@ -84,7 +84,7 @@ public final class ProtectViewWorker {
                     String viewNameUserLoginId = viewNameId + userLoginId;
                     if (UtilValidate.isNotEmpty(tarpittedLoginViews)) {
                         GenericValue tarpittedLoginView = tarpittedLoginViews.get(0);
-                        Long tarpitReleaseDateTime = (Long) tarpittedLoginView.get("tarpitReleaseDateTime");
+                        Long tarpitReleaseDateTime = (Long) tarpittedLoginView.get(org.apache.ofbiz.persistence.entity.x.tarpitReleaseDateTime);
                         if (now < tarpitReleaseDateTime) {
                             String tarpittedMessage = UtilProperties.getMessage(RESOURCE_WEBAPP, "protectedviewevents.tarpitted_message",
                                     UtilHttp.getLocale(request));
@@ -98,7 +98,7 @@ public final class ProtectViewWorker {
                     Long curMaxHits = HITS_BY_VIEW_ACCESSED.get(viewNameUserLoginId);
                     if (UtilValidate.isEmpty(curMaxHits)) {
                         HITS_BY_VIEW_ACCESSED.put(viewNameUserLoginId, ONE);
-                        Long maxHitsDuration = (Long) protectedView.get("maxHitsDuration") * 1000;
+                        Long maxHitsDuration = (Long) protectedView.get(org.apache.ofbiz.persistence.entity.x.maxHitsDuration) * 1000;
                         DURATION_BY_VIEW_ACCESSED.put(viewNameUserLoginId, now + maxHitsDuration);
                     } else {
                         Long maxDuration = DURATION_BY_VIEW_ACCESSED.get(viewNameUserLoginId);
@@ -107,17 +107,17 @@ public final class ProtectViewWorker {
                         // Are we in a period of time where we need to check if there was too much hits ?
                         if (now < maxDuration) {
                             // Check if over the max hit count...
-                            if (newMaxHits > protectedView.getLong("maxHits")) { // yes : block and set tarpitReleaseDateTime
+                            if (newMaxHits > protectedView.getLong(org.apache.ofbiz.persistence.entity.x.maxHits)) { // yes : block and set tarpitReleaseDateTime
                                 String blockedMessage = UtilProperties.getMessage(RESOURCE_WEBAPP, "protectedviewevents.blocked_message",
                                         UtilHttp.getLocale(request));
                                 returnValue = ":_protect_:" + blockedMessage;
 
-                                Long tarpitDuration = (Long) protectedView.get("tarpitDuration") * 1000;
+                                Long tarpitDuration = (Long) protectedView.get(org.apache.ofbiz.persistence.entity.x.tarpitDuration) * 1000;
 
                                 GenericValue tarpittedLoginView = delegator.makeValue("TarpittedLoginView");
-                                tarpittedLoginView.set("userLoginId", userLoginId);
-                                tarpittedLoginView.set("viewNameId", viewNameId);
-                                tarpittedLoginView.set("tarpitReleaseDateTime", now + tarpitDuration);
+                                tarpittedLoginView.set(org.apache.ofbiz.persistence.entity.x.userLoginId, userLoginId);
+                                tarpittedLoginView.set(org.apache.ofbiz.persistence.entity.x.viewNameId, viewNameId);
+                                tarpittedLoginView.set(org.apache.ofbiz.persistence.entity.x.tarpitReleaseDateTime, now + tarpitDuration);
 
                                 try {
                                     delegator.createOrStore(tarpittedLoginView);
@@ -133,7 +133,7 @@ public final class ProtectViewWorker {
                             // but it does not make any more sense.
                             // Of course for this to work well the tarpitting period must be long enough...
                             HITS_BY_VIEW_ACCESSED.put(viewNameUserLoginId, ONE);
-                            Long maxHitsDuration = (Long) protectedView.get("maxHitsDuration") * 1000;
+                            Long maxHitsDuration = (Long) protectedView.get(org.apache.ofbiz.persistence.entity.x.maxHitsDuration) * 1000;
                             DURATION_BY_VIEW_ACCESSED.put(viewNameUserLoginId, now + maxHitsDuration);
                         }
                     }

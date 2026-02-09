@@ -289,16 +289,16 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                 throw new IllegalArgumentException("Unable to locate ProductStore by ID [" + productStoreId + "]");
             }
 
-            String storeViewCartOnAdd = productStore.getString("viewCartOnAdd");
+            String storeViewCartOnAdd = productStore.getString(org.apache.ofbiz.persistence.entity.x.viewCartOnAdd);
             if (storeViewCartOnAdd != null && "Y".equalsIgnoreCase(storeViewCartOnAdd)) {
                 this.viewCartOnAdd = true;
             }
 
             if (billFromVendorPartyId == null) {
                 // since default cart is of type SALES_ORDER, set to store's payToPartyId
-                this.billFromVendorPartyId = productStore.getString("payToPartyId");
+                this.billFromVendorPartyId = productStore.getString(org.apache.ofbiz.persistence.entity.x.payToPartyId);
             }
-            this.facilityId = productStore.getString("inventoryFacilityId");
+            this.facilityId = productStore.getString(org.apache.ofbiz.persistence.entity.x.inventoryFacilityId);
         }
 
     }
@@ -638,9 +638,9 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
 
                 if ("PURCHASE_ORDER".equals(getOrderType())) {
                     supplierProduct = getSupplierProduct(productId, newQuantity, dispatcher);
-                    if (supplierProduct != null && supplierProduct.getBigDecimal("lastPrice") != null) {
-                        sci.setSupplierProductId(supplierProduct.getString("supplierProductId"));
-                        sci.setBasePrice(supplierProduct.getBigDecimal("lastPrice"));
+                    if (supplierProduct != null && supplierProduct.getBigDecimal(org.apache.ofbiz.persistence.entity.x.lastPrice) != null) {
+                        sci.setSupplierProductId(supplierProduct.getString(org.apache.ofbiz.persistence.entity.x.supplierProductId));
+                        sci.setBasePrice(supplierProduct.getBigDecimal(org.apache.ofbiz.persistence.entity.x.lastPrice));
                         sci.setName(ShoppingCartItem.getPurchaseOrderItemDescription(sci.getProduct(), supplierProduct, this.getLocale(),
                                 dispatcher));
                     } else {
@@ -1002,8 +1002,8 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         for (ShoppingCartItem cartItem : this.cartLines) {
             GenericValue product = cartItem.getProduct();
             try {
-                GenericValue productType = product.getRelatedOne("ProductType", true);
-                if (productType == null || !"N".equals(productType.getString("isPhysical"))) {
+                GenericValue productType = product.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductType, true);
+                if (productType == null || !"N".equals(productType.getString(org.apache.ofbiz.persistence.entity.x.isPhysical))) {
                     return false;
                 }
             } catch (GenericEntityException e) {
@@ -1024,8 +1024,8 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         for (ShoppingCartItem cartItem: shipInfo.getShipItems()) {
             GenericValue product = cartItem.getProduct();
             try {
-                GenericValue productType = product.getRelatedOne("ProductType", true);
-                if (productType == null || !"N".equals(productType.getString("isPhysical"))) {
+                GenericValue productType = product.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductType, true);
+                if (productType == null || !"N".equals(productType.getString(org.apache.ofbiz.persistence.entity.x.isPhysical))) {
                     return false;
                 }
             } catch (GenericEntityException e) {
@@ -1148,11 +1148,11 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         if (itemGroupValue == null) {
             return null;
         }
-        String itemGroupNumber = itemGroupValue.getString("orderItemGroupSeqId");
+        String itemGroupNumber = itemGroupValue.getString(org.apache.ofbiz.persistence.entity.x.orderItemGroupSeqId);
         ShoppingCartItemGroup itemGroup = this.getItemGroupByNumber(itemGroupNumber);
         if (itemGroup == null) {
-            ShoppingCartItemGroup parentGroup = addItemGroup(itemGroupValue.getRelatedOne("ParentOrderItemGroup", true));
-            itemGroup = new ShoppingCartItemGroup(itemGroupNumber, itemGroupValue.getString("groupName"), parentGroup);
+            ShoppingCartItemGroup parentGroup = addItemGroup(itemGroupValue.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ParentOrderItemGroup, true));
+            itemGroup = new ShoppingCartItemGroup(itemGroupNumber, itemGroupValue.getString(org.apache.ofbiz.persistence.entity.x.groupName), parentGroup);
             int parsedGroupNumber = Integer.parseInt(itemGroupNumber);
             if (parsedGroupNumber > this.nextGroupNumber) {
                 this.nextGroupNumber = parsedGroupNumber + 1;
@@ -1711,7 +1711,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
             if (party == null) {
                 return null;
             }
-            Timestamp createdDate = party.getTimestamp("createdDate");
+            Timestamp createdDate = party.getTimestamp(org.apache.ofbiz.persistence.entity.x.createdDate);
             if (createdDate == null) {
                 return null;
             }
@@ -1782,7 +1782,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                 ul = this.getAutoUserLogin();
             }
             // autoSaveListId shouldn't be set to null for anonymous user until the list is not cleared from the database
-            if (ul != null && !"anonymous".equals(ul.getString("userLoginId"))) {
+            if (ul != null && !"anonymous".equals(ul.getString(org.apache.ofbiz.persistence.entity.x.userLoginId))) {
                 this.autoSaveListId = null;
             }
             // load the auto-save list ID
@@ -1936,7 +1936,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         try {
             GenericValue pm = this.getDelegator().findOne("PaymentMethod", UtilMisc.toMap("paymentMethodId", paymentMethodId), false);
             if (pm != null) {
-                return pm.getString("paymentMethodTypeId");
+                return pm.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -2163,7 +2163,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                 if (UtilValidate.isNotEmpty(declinedPaymentMethods)) {
                     List<String> paymentMethodIdsToRemove = new ArrayList<>();
                     for (GenericValue opp : declinedPaymentMethods) {
-                        paymentMethodIdsToRemove.add(opp.getString("paymentMethodId"));
+                        paymentMethodIdsToRemove.add(opp.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
                     }
                     clearPaymentMethodsById(paymentMethodIdsToRemove);
                 }
@@ -2188,7 +2188,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                 Debug.logError(e, "ERROR: Unable to get payment method record to expire : " + inf.paymentMethodId, MODULE);
             }
             if (paymentMethod != null) {
-                paymentMethod.set("thruDate", now);
+                paymentMethod.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
                 try {
                     paymentMethod.store();
                 } catch (GenericEntityException e) {
@@ -2264,9 +2264,9 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         List<GenericValue> paymentMethods = this.getPaymentMethods();
         List<GenericValue> creditCards = new LinkedList<>();
         for (GenericValue pm : paymentMethods) {
-            if ("CREDIT_CARD".equals(pm.getString("paymentMethodTypeId"))) {
+            if ("CREDIT_CARD".equals(pm.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
                 try {
-                    GenericValue cc = pm.getRelatedOne("CreditCard", false);
+                    GenericValue cc = pm.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CreditCard, false);
                     creditCards.add(cc);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Unable to get credit card record from payment method : " + pm, MODULE);
@@ -2281,9 +2281,9 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         List<GenericValue> paymentMethods = this.getPaymentMethods();
         List<GenericValue> giftCards = new LinkedList<>();
         for (GenericValue pm : paymentMethods) {
-            if ("GIFT_CARD".equals(pm.getString("paymentMethodTypeId"))) {
+            if ("GIFT_CARD".equals(pm.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
                 try {
-                    GenericValue gc = pm.getRelatedOne("GiftCard", false);
+                    GenericValue gc = pm.getRelatedOne(org.apache.ofbiz.persistence.entity.x.GiftCard, false);
                     giftCards.add(gc);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Unable to get gift card record from payment method : " + pm, MODULE);
@@ -2336,7 +2336,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         try {
             GenericValue giftCertSettings = getGiftCertSettingFromStore(delegator);
             if (giftCertSettings != null) {
-                return "Y".equals(giftCertSettings.getString("requirePinCode"));
+                return "Y".equals(giftCertSettings.getString(org.apache.ofbiz.persistence.entity.x.requirePinCode));
             }
             Debug.logWarning("No product store gift certificate settings found for store [" + getProductStoreId() + "]",
                     MODULE);
@@ -2356,7 +2356,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         try {
             GenericValue giftCertSettings = getGiftCertSettingFromStore(delegator);
             if (giftCertSettings != null) {
-                return "Y".equals(giftCertSettings.getString("validateGCFinAcct"));
+                return "Y".equals(giftCertSettings.getString(org.apache.ofbiz.persistence.entity.x.validateGCFinAcct));
             }
             Debug.logWarning("No product store gift certificate settings found for store [" + getProductStoreId() + "]",
                     MODULE);
@@ -3225,7 +3225,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                             "POSTAL_ADDRESS", false);
                     if (UtilValidate.isNotEmpty(shippingContactMechList)) {
                         GenericValue shippingContactMech = (shippingContactMechList.iterator()).next();
-                        this.setAllShippingContactMechId(shippingContactMech.getString("contactMechId"));
+                        this.setAllShippingContactMechId(shippingContactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechId));
                     }
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Error setting shippingContactMechId in setDefaultCheckoutOptions() method.", MODULE);
@@ -3236,8 +3236,8 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                     .getWrapper(dispatcher, this, 0);
             GenericValue carrierShipmentMethod = EntityUtil.getFirst(shipEstimateWrapper.getShippingMethods());
             if (carrierShipmentMethod != null) {
-                this.setAllShipmentMethodTypeId(carrierShipmentMethod.getString("shipmentMethodTypeId"));
-                this.setAllCarrierPartyId(carrierShipmentMethod.getString("partyId"));
+                this.setAllShipmentMethodTypeId(carrierShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId));
+                this.setAllCarrierPartyId(carrierShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.partyId));
             }
         } else {
             // checkout options for purchase orders
@@ -3253,7 +3253,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                     GenericValue facilityContactMech = ContactMechWorker.getFacilityContactMechByPurpose(this.getDelegator(), facilityId,
                             UtilMisc.toList("SHIPPING_LOCATION", "PRIMARY_LOCATION"));
                     if (facilityContactMech != null) {
-                        this.setShippingContactMechId(0, facilityContactMech.getString("contactMechId"));
+                        this.setShippingContactMechId(0, facilityContactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechId));
                     }
                 }
             }
@@ -3342,8 +3342,8 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
             Iterator<GenericValue> cartAdjustmentIter = cartAdjustments.iterator();
             while (cartAdjustmentIter.hasNext()) {
                 GenericValue checkOrderAdjustment = cartAdjustmentIter.next();
-                if (UtilValidate.isEmpty(checkOrderAdjustment.getString("shipGroupSeqId"))
-                        || DataModelConstants.SEQ_ID_NA.equals(checkOrderAdjustment.getString("shipGroupSeqId"))) {
+                if (UtilValidate.isEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId))
+                        || DataModelConstants.SEQ_ID_NA.equals(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId))) {
                     tempAdjustmentsList.add(checkOrderAdjustment);
                 }
             }
@@ -3391,7 +3391,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         BigDecimal itemsTotal = BigDecimal.ZERO;
         for (ShoppingCartItem cartItem : this.cartLines) {
             GenericValue product = cartItem.getProduct();
-            if (product != null && "N".equals(product.getString("includeInPromotions"))) {
+            if (product != null && "N".equals(product.getString(org.apache.ofbiz.persistence.entity.x.includeInPromotions))) {
                 // don't include in total if this is the case...
                 continue;
             }
@@ -3409,7 +3409,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         BigDecimal itemsTotal = BigDecimal.ZERO;
         for (ShoppingCartItem cartItem : this.cartLines) {
             GenericValue product = cartItem.getProduct();
-            if (product == null || "N".equals(product.getString("includeInPromotions")) || !productIds.contains(cartItem.getProductId())) {
+            if (product == null || "N".equals(product.getString(org.apache.ofbiz.persistence.entity.x.includeInPromotions)) || !productIds.contains(cartItem.getProductId())) {
                 // don't include in total if this is the case...
                 continue;
             }
@@ -3435,7 +3435,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                     GenericValue paymentMethod = this.getDelegator().findOne("PaymentMethod",
                             UtilMisc.toMap("paymentMethodId", payment.paymentMethodId), true);
                     if (paymentMethod != null) {
-                        thisPaymentMethodTypeId = paymentMethod.getString("paymentMethodTypeId");
+                        thisPaymentMethodTypeId = paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
                     }
                 } catch (GenericEntityException e) {
                     Debug.logError(e, e.getMessage(), MODULE);
@@ -3654,7 +3654,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
             return false;
         }
         for (GenericValue orderTerm : orderTerms) {
-            if (termTypeId.equals(orderTerm.getString("termTypeId"))) {
+            if (termTypeId.equals(orderTerm.getString(org.apache.ofbiz.persistence.entity.x.termTypeId))) {
                 return true;
             }
         }
@@ -3700,7 +3700,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                 for (int i = 0; i < adjs.size();) {
                     GenericValue orderAdjustment = adjs.get(i);
 
-                    if (orderAdjustmentTypeId.equals(orderAdjustment.getString("orderAdjustmentTypeId"))) {
+                    if (orderAdjustmentTypeId.equals(orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
                         adjs.remove(i);
                     } else {
                         i++;
@@ -3902,7 +3902,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
             return;
         }
         // is this a free shipping action?
-        if (!"PROMO_FREE_SHIPPING".equals(productPromoAction.getString("productPromoActionEnumId"))) {
+        if (!"PROMO_FREE_SHIPPING".equals(productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.productPromoActionEnumId))) {
             return; // Changed 1-5-04 by Si Chen
         }
         // to easily make sure that no duplicate exists, do a remove first
@@ -3978,11 +3978,11 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         List<GenericValue> cartAdjustments = this.getAdjustments();
         if (cartAdjustments != null) {
             for (GenericValue checkOrderAdjustment : cartAdjustments) {
-                if (UtilValidate.isNotEmpty(checkOrderAdjustment.getString("productPromoId"))
-                        && UtilValidate.isNotEmpty(checkOrderAdjustment.getString("productPromoRuleId"))
-                        && UtilValidate.isNotEmpty(checkOrderAdjustment.getString("productPromoActionSeqId"))) {
-                    if (checkOrderAdjustment.get("amount") != null) {
-                        totalDiscount = totalDiscount.add(checkOrderAdjustment.getBigDecimal("amount"));
+                if (UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoId))
+                        && UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoRuleId))
+                        && UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId))) {
+                    if (checkOrderAdjustment.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
+                        totalDiscount = totalDiscount.add(checkOrderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
                     }
                 }
             }
@@ -3993,11 +3993,11 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
             Iterator<GenericValue> checkOrderAdjustments = UtilMisc.toIterator(checkItem.getAdjustments());
             while (checkOrderAdjustments != null && checkOrderAdjustments.hasNext()) {
                 GenericValue checkOrderAdjustment = checkOrderAdjustments.next();
-                if (UtilValidate.isNotEmpty(checkOrderAdjustment.getString("productPromoId"))
-                        && UtilValidate.isNotEmpty(checkOrderAdjustment.getString("productPromoRuleId"))
-                        && UtilValidate.isNotEmpty(checkOrderAdjustment.getString("productPromoActionSeqId"))) {
-                    if (checkOrderAdjustment.get("amount") != null) {
-                        totalDiscount = totalDiscount.add(checkOrderAdjustment.getBigDecimal("amount"));
+                if (UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoId))
+                        && UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoRuleId))
+                        && UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId))) {
+                    if (checkOrderAdjustment.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
+                        totalDiscount = totalDiscount.add(checkOrderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
                     }
                 }
             }
@@ -4058,9 +4058,9 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         // remove cart adjustments from promo actions
         List<GenericValue> cartAdjustments = this.getAdjustments();
         if (cartAdjustments != null) {
-            cartAdjustments.removeIf(checkOrderAdjustment -> UtilValidate.isNotEmpty(checkOrderAdjustment.getString("productPromoId"))
-                    && UtilValidate.isNotEmpty(checkOrderAdjustment.getString("productPromoRuleId"))
-                    && UtilValidate.isNotEmpty(checkOrderAdjustment.getString("productPromoActionSeqId")));
+            cartAdjustments.removeIf(checkOrderAdjustment -> UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoId))
+                    && UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoRuleId))
+                    && UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId)));
         }
 
         // remove cart lines that are promos (ie GWPs) and cart line adjustments from promo actions
@@ -4074,9 +4074,9 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                 // found a promo item with the productId, see if it has a matching adjustment on it
                 List<GenericValue> checkOrderAdjustments = checkItem.getAdjustments();
                 if (!checkOrderAdjustments.isEmpty()) {
-                    checkOrderAdjustments.removeIf(checkOrderAdjustment -> UtilValidate.isNotEmpty(checkOrderAdjustment.getString("productPromoId"))
-                            && UtilValidate.isNotEmpty(checkOrderAdjustment.getString("productPromoRuleId"))
-                            && UtilValidate.isNotEmpty(checkOrderAdjustment.getString("productPromoActionSeqId")));
+                    checkOrderAdjustments.removeIf(checkOrderAdjustment -> UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoId))
+                            && UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoRuleId))
+                            && UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId)));
                 }
             }
         }
@@ -4215,8 +4215,8 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
 
             //create new product and associate it
             GenericValue product = item.getProduct();
-            String productName = product.getString("productName");
-            String description = product.getString("description");
+            String productName = product.getString(org.apache.ofbiz.persistence.entity.x.productName);
+            String description = product.getString(org.apache.ofbiz.persistence.entity.x.description);
             Map<String, Object> serviceContext = new HashMap<>();
             GenericValue permUserLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", "system").queryOne();
             String internalName = item.getProductId() + "_" + configId;
@@ -4230,8 +4230,8 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
             }
 
             serviceContext.put("configId", configId);
-            if (UtilValidate.isNotEmpty(product.getString("requirementMethodEnumId"))) {
-                serviceContext.put("requirementMethodEnumId", product.getString("requirementMethodEnumId"));
+            if (UtilValidate.isNotEmpty(product.getString(org.apache.ofbiz.persistence.entity.x.requirementMethodEnumId))) {
+                serviceContext.put("requirementMethodEnumId", product.getString(org.apache.ofbiz.persistence.entity.x.requirementMethodEnumId));
             }
             serviceContext.put("userLogin", permUserLogin);
 
@@ -4261,7 +4261,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                     "workEffortGoodStdTypeId", "ROU_PROD_TEMPLATE", "statusId", "WEGS_CREATED").filterByDate().queryFirst();
             if (productionRunTemplate != null) {
                 serviceContext.clear();
-                serviceContext.put("workEffortId", productionRunTemplate.getString("workEffortId"));
+                serviceContext.put("workEffortId", productionRunTemplate.getString(org.apache.ofbiz.persistence.entity.x.workEffortId));
                 serviceContext.put("productId", newProductId);
                 serviceContext.put("workEffortGoodStdTypeId", "ROU_PROD_TEMPLATE");
                 serviceContext.put("statusId", "WEGS_CREATED");
@@ -4387,47 +4387,47 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                 }
 
                 GenericValue orderItem = getDelegator().makeValue("OrderItem");
-                orderItem.set("orderItemSeqId", item.getOrderItemSeqId());
-                orderItem.set("externalId", item.getExternalId());
-                orderItem.set("orderItemTypeId", item.getItemType());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, item.getOrderItemSeqId());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.externalId, item.getExternalId());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.orderItemTypeId, item.getItemType());
                 if (item.getItemGroup() != null) {
-                    orderItem.set("orderItemGroupSeqId", item.getItemGroup().getGroupNumber());
+                    orderItem.set(org.apache.ofbiz.persistence.entity.x.orderItemGroupSeqId, item.getItemGroup().getGroupNumber());
                 }
-                orderItem.set("productId", UtilValidate.isNotEmpty(aggregatedInstanceId) ? aggregatedInstanceId : item.getProductId());
-                orderItem.set("supplierProductId", item.getSupplierProductId());
-                orderItem.set("prodCatalogId", item.getProdCatalogId());
-                orderItem.set("productCategoryId", item.getProductCategoryId());
-                orderItem.set("quantity", item.getQuantity());
-                orderItem.set("selectedAmount", item.getSelectedAmount());
-                orderItem.set("unitPrice", item.getBasePrice());
-                orderItem.set("unitListPrice", item.getListPrice());
-                orderItem.set("discountRate", item.getDiscountRate());
-                orderItem.set("isModifiedPrice", item.getIsModifiedPrice() ? "Y" : "N");
-                orderItem.set("isPromo", item.getIsPromo() ? "Y" : "N");
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.productId, UtilValidate.isNotEmpty(aggregatedInstanceId) ? aggregatedInstanceId : item.getProductId());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.supplierProductId, item.getSupplierProductId());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.prodCatalogId, item.getProdCatalogId());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.productCategoryId, item.getProductCategoryId());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.quantity, item.getQuantity());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.selectedAmount, item.getSelectedAmount());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.unitPrice, item.getBasePrice());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.unitListPrice, item.getListPrice());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.discountRate, item.getDiscountRate());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.isModifiedPrice, item.getIsModifiedPrice() ? "Y" : "N");
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.isPromo, item.getIsPromo() ? "Y" : "N");
 
-                orderItem.set("shoppingListId", item.getShoppingListId());
-                orderItem.set("shoppingListItemSeqId", item.getShoppingListItemSeqId());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.shoppingListId, item.getShoppingListId());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.shoppingListItemSeqId, item.getShoppingListItemSeqId());
 
-                orderItem.set("itemDescription", item.getName(dispatcher));
-                orderItem.set("comments", item.getItemComment());
-                orderItem.set("estimatedDeliveryDate", item.getDesiredDeliveryDate());
-                orderItem.set("correspondingPoId", this.getPoNumber());
-                orderItem.set("quoteId", item.getQuoteId());
-                orderItem.set("quoteItemSeqId", item.getQuoteItemSeqId());
-                orderItem.set("statusId", status);
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.itemDescription, item.getName(dispatcher));
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.comments, item.getItemComment());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.estimatedDeliveryDate, item.getDesiredDeliveryDate());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.correspondingPoId, this.getPoNumber());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.quoteId, item.getQuoteId());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.quoteItemSeqId, item.getQuoteItemSeqId());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.statusId, status);
 
-                orderItem.set("shipBeforeDate", item.getShipBeforeDate());
-                orderItem.set("shipAfterDate", item.getShipAfterDate());
-                orderItem.set("reserveAfterDate", item.getReserveAfterDate());
-                orderItem.set("estimatedShipDate", item.getEstimatedShipDate());
-                orderItem.set("cancelBackOrderDate", item.getCancelBackOrderDate());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.shipBeforeDate, item.getShipBeforeDate());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.shipAfterDate, item.getShipAfterDate());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.reserveAfterDate, item.getReserveAfterDate());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.estimatedShipDate, item.getEstimatedShipDate());
+                orderItem.set(org.apache.ofbiz.persistence.entity.x.cancelBackOrderDate, item.getCancelBackOrderDate());
                 if (this.getUserLogin() != null) {
-                    orderItem.set("changeByUserLoginId", this.getUserLogin().get("userLoginId"));
+                    orderItem.set(org.apache.ofbiz.persistence.entity.x.changeByUserLoginId, this.getUserLogin().get("userLoginId"));
                 }
 
                 String fromInventoryItemId = (String) item.getAttribute("fromInventoryItemId");
                 if (fromInventoryItemId != null) {
-                    orderItem.set("fromInventoryItemId", fromInventoryItemId);
+                    orderItem.set(org.apache.ofbiz.persistence.entity.x.fromInventoryItemId, fromInventoryItemId);
                 }
 
                 result.add(orderItem);
@@ -4453,14 +4453,14 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         for (ShoppingCartItem item : cartLines) {
             if ("RENTAL_ORDER_ITEM".equals(item.getItemType())) {         // prepare workeffort when the order item is a rental item
                 GenericValue workEffort = getDelegator().makeValue("WorkEffort");
-                workEffort.set("workEffortId", item.getOrderItemSeqId());  // fill temporary with sequence number
-                workEffort.set("estimatedStartDate", item.getReservStart());
-                workEffort.set("estimatedCompletionDate", item.getReservStart(item.getReservLength()));
-                workEffort.set("reservPersons", item.getReservPersons());
-                workEffort.set("reserv2ndPPPerc", item.getReserv2ndPPPerc());
-                workEffort.set("reservNthPPPerc", item.getReservNthPPPerc());
-                workEffort.set("accommodationMapId", item.getAccommodationMapId());
-                workEffort.set("accommodationSpotId", item.getAccommodationSpotId());
+                workEffort.set(org.apache.ofbiz.persistence.entity.x.workEffortId, item.getOrderItemSeqId());  // fill temporary with sequence number
+                workEffort.set(org.apache.ofbiz.persistence.entity.x.estimatedStartDate, item.getReservStart());
+                workEffort.set(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate, item.getReservStart(item.getReservLength()));
+                workEffort.set(org.apache.ofbiz.persistence.entity.x.reservPersons, item.getReservPersons());
+                workEffort.set(org.apache.ofbiz.persistence.entity.x.reserv2ndPPPerc, item.getReserv2ndPPPerc());
+                workEffort.set(org.apache.ofbiz.persistence.entity.x.reservNthPPPerc, item.getReservNthPPPerc());
+                workEffort.set(org.apache.ofbiz.persistence.entity.x.accommodationMapId, item.getAccommodationMapId());
+                workEffort.set(org.apache.ofbiz.persistence.entity.x.accommodationSpotId, item.getAccommodationSpotId());
                 allWorkEfforts.add(workEffort);
             }
         }
@@ -4477,7 +4477,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
 
             allAdjs.add(orderAdjustment);
 
-            if ("SHIPPING_CHARGES".equals(orderAdjustment.get("orderAdjustmentTypeId"))) {
+            if ("SHIPPING_CHARGES".equals(orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
                 Iterator<GenericValue> fsppas = this.freeShippingProductPromoActions.iterator();
 
                 //while (fsppas.hasNext()) {
@@ -4493,10 +4493,10 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
             if (adjs != null) {
                 for (GenericValue orderAdjustment: adjs) {
 
-                    orderAdjustment.set("orderItemSeqId", item.getOrderItemSeqId());
+                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, item.getOrderItemSeqId());
                     allAdjs.add(orderAdjustment);
 
-                    if ("SHIPPING_CHARGES".equals(orderAdjustment.get("orderAdjustmentTypeId"))) {
+                    if ("SHIPPING_CHARGES".equals(orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
                         Iterator<GenericValue> fsppas = this.freeShippingProductPromoActions.iterator();
 
                         //while (fsppas.hasNext()) {
@@ -4518,30 +4518,30 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
 
         for (GenericValue orderAdj: makeAllAdjustments()) {
             GenericValue quoteAdj = this.getDelegator().makeValue("QuoteAdjustment");
-            quoteAdj.put("quoteAdjustmentId", orderAdj.get("orderAdjustmentId"));
-            quoteAdj.put("quoteAdjustmentTypeId", orderAdj.get("orderAdjustmentTypeId"));
-            quoteAdj.put("quoteItemSeqId", orderAdj.get("orderItemSeqId"));
-            quoteAdj.put("comments", orderAdj.get("comments"));
-            quoteAdj.put("description", orderAdj.get("description"));
-            quoteAdj.put("amount", orderAdj.get("amount"));
-            quoteAdj.put("productPromoId", orderAdj.get("productPromoId"));
-            quoteAdj.put("productPromoRuleId", orderAdj.get("productPromoRuleId"));
-            quoteAdj.put("productPromoActionSeqId", orderAdj.get("productPromoActionSeqId"));
-            quoteAdj.put("productFeatureId", orderAdj.get("productFeatureId"));
-            quoteAdj.put("correspondingProductId", orderAdj.get("correspondingProductId"));
-            quoteAdj.put("sourceReferenceId", orderAdj.get("sourceReferenceId"));
-            quoteAdj.put("sourcePercentage", orderAdj.get("sourcePercentage"));
-            quoteAdj.put("customerReferenceId", orderAdj.get("customerReferenceId"));
-            quoteAdj.put("primaryGeoId", orderAdj.get("primaryGeoId"));
-            quoteAdj.put("secondaryGeoId", orderAdj.get("secondaryGeoId"));
-            quoteAdj.put("exemptAmount", orderAdj.get("exemptAmount"));
-            quoteAdj.put("taxAuthGeoId", orderAdj.get("taxAuthGeoId"));
-            quoteAdj.put("taxAuthPartyId", orderAdj.get("taxAuthPartyId"));
-            quoteAdj.put("overrideGlAccountId", orderAdj.get("overrideGlAccountId"));
-            quoteAdj.put("includeInTax", orderAdj.get("includeInTax"));
-            quoteAdj.put("includeInShipping", orderAdj.get("includeInShipping"));
-            quoteAdj.put("createdDate", orderAdj.get("createdDate"));
-            quoteAdj.put("createdByUserLogin", orderAdj.get("createdByUserLogin"));
+            quoteAdj.put("quoteAdjustmentId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId));
+            quoteAdj.put("quoteAdjustmentTypeId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId));
+            quoteAdj.put("quoteItemSeqId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+            quoteAdj.put("comments", orderAdj.get(org.apache.ofbiz.persistence.entity.x.comments));
+            quoteAdj.put("description", orderAdj.get(org.apache.ofbiz.persistence.entity.x.description));
+            quoteAdj.put("amount", orderAdj.get(org.apache.ofbiz.persistence.entity.x.amount));
+            quoteAdj.put("productPromoId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.productPromoId));
+            quoteAdj.put("productPromoRuleId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.productPromoRuleId));
+            quoteAdj.put("productPromoActionSeqId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId));
+            quoteAdj.put("productFeatureId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.productFeatureId));
+            quoteAdj.put("correspondingProductId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.correspondingProductId));
+            quoteAdj.put("sourceReferenceId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.sourceReferenceId));
+            quoteAdj.put("sourcePercentage", orderAdj.get(org.apache.ofbiz.persistence.entity.x.sourcePercentage));
+            quoteAdj.put("customerReferenceId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.customerReferenceId));
+            quoteAdj.put("primaryGeoId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.primaryGeoId));
+            quoteAdj.put("secondaryGeoId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.secondaryGeoId));
+            quoteAdj.put("exemptAmount", orderAdj.get(org.apache.ofbiz.persistence.entity.x.exemptAmount));
+            quoteAdj.put("taxAuthGeoId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId));
+            quoteAdj.put("taxAuthPartyId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.taxAuthPartyId));
+            quoteAdj.put("overrideGlAccountId", orderAdj.get(org.apache.ofbiz.persistence.entity.x.overrideGlAccountId));
+            quoteAdj.put("includeInTax", orderAdj.get(org.apache.ofbiz.persistence.entity.x.includeInTax));
+            quoteAdj.put("includeInShipping", orderAdj.get(org.apache.ofbiz.persistence.entity.x.includeInShipping));
+            quoteAdj.put("createdDate", orderAdj.get(org.apache.ofbiz.persistence.entity.x.createdDate));
+            quoteAdj.put("createdByUserLogin", orderAdj.get(org.apache.ofbiz.persistence.entity.x.createdByUserLogin));
             quoteAdjs.add(quoteAdj);
         }
 
@@ -4586,7 +4586,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
 
             if (infos != null) {
                 for (GenericValue orderItemPriceInfo : infos) {
-                    orderItemPriceInfo.set("orderItemSeqId", item.getOrderItemSeqId());
+                    orderItemPriceInfo.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, item.getOrderItemSeqId());
                     allInfos.add(orderItemPriceInfo);
                 }
             }
@@ -4602,12 +4602,12 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         int sequenceValue = 0;
         for (ProductPromoUseInfo productPromoUseInfo: this.productPromoUseInfoList) {
             GenericValue productPromoUse = this.getDelegator().makeValue("ProductPromoUse");
-            productPromoUse.set("promoSequenceId", UtilFormatOut.formatPaddedNumber(sequenceValue, 5));
-            productPromoUse.set("productPromoId", productPromoUseInfo.getProductPromoId());
-            productPromoUse.set("productPromoCodeId", productPromoUseInfo.getProductPromoCodeId());
-            productPromoUse.set("totalDiscountAmount", productPromoUseInfo.getTotalDiscountAmount());
-            productPromoUse.set("quantityLeftInActions", productPromoUseInfo.getQuantityLeftInActions());
-            productPromoUse.set("partyId", partyId);
+            productPromoUse.set(org.apache.ofbiz.persistence.entity.x.promoSequenceId, UtilFormatOut.formatPaddedNumber(sequenceValue, 5));
+            productPromoUse.set(org.apache.ofbiz.persistence.entity.x.productPromoId, productPromoUseInfo.getProductPromoId());
+            productPromoUse.set(org.apache.ofbiz.persistence.entity.x.productPromoCodeId, productPromoUseInfo.getProductPromoCodeId());
+            productPromoUse.set(org.apache.ofbiz.persistence.entity.x.totalDiscountAmount, productPromoUseInfo.getTotalDiscountAmount());
+            productPromoUse.set(org.apache.ofbiz.persistence.entity.x.quantityLeftInActions, productPromoUseInfo.getQuantityLeftInActions());
+            productPromoUse.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
             productPromoUses.add(productPromoUse);
             sequenceValue++;
         }
@@ -4625,7 +4625,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                             .where(EntityCondition.makeCondition("surveyResponseId", EntityOperator.IN, responses)).queryList();
                     if (surveyResponses != null) {
                         for (GenericValue surveyResponse : surveyResponses) {
-                            surveyResponse.set("orderItemSeqId", item.getOrderItemSeqId());
+                            surveyResponse.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, item.getOrderItemSeqId());
                             allInfos.add(surveyResponse);
                         }
                     }
@@ -4664,9 +4664,9 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                 for (Map.Entry<String, String> entry: itemContactMechIds.entrySet()) {
                     GenericValue orderContactMech = getDelegator().makeValue("OrderItemContactMech");
 
-                    orderContactMech.set("contactMechPurposeTypeId", entry.getKey());
-                    orderContactMech.set("contactMechId", entry.getValue());
-                    orderContactMech.set("orderItemSeqId", item.getOrderItemSeqId());
+                    orderContactMech.set(org.apache.ofbiz.persistence.entity.x.contactMechPurposeTypeId, entry.getKey());
+                    orderContactMech.set(org.apache.ofbiz.persistence.entity.x.contactMechId, entry.getValue());
+                    orderContactMech.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, item.getOrderItemSeqId());
                     allOrderContactMechs.add(orderContactMech);
                 }
             }
@@ -4722,11 +4722,11 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
 
                         GenericValue orderItemAttribute = getDelegator().makeValue("OrderItemAttribute");
                         if (UtilValidate.isNotEmpty(orderId)) {
-                            orderItemAttribute.set("orderId", orderId);
+                            orderItemAttribute.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
                         }
-                        orderItemAttribute.set("orderItemSeqId", item.getOrderItemSeqId());
-                        orderItemAttribute.set("attrName", key);
-                        orderItemAttribute.set("attrValue", value);
+                        orderItemAttribute.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, item.getOrderItemSeqId());
+                        orderItemAttribute.set(org.apache.ofbiz.persistence.entity.x.attrName, key);
+                        orderItemAttribute.set(org.apache.ofbiz.persistence.entity.x.attrValue, value);
 
                         result.add(orderItemAttribute);
                     }
@@ -4747,7 +4747,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         for (Map.Entry<String, String> entry: orderAttributes.entrySet()) {
             GenericValue orderAtt = this.getDelegator().makeValue("OrderAttribute");
             if (UtilValidate.isNotEmpty(orderId)) {
-                orderAtt.set("orderId", orderId);
+                orderAtt.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
             }
             String key = entry.getKey();
             String value = entry.getValue();
@@ -4792,13 +4792,13 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                                                          .queryFirst();
                         if (commitment != null) {
                             GenericValue orderItemAssociation = getDelegator().makeValue("OrderItemAssoc");
-                            orderItemAssociation.set("orderId", commitment.getString("orderId"));
-                            orderItemAssociation.set("orderItemSeqId", commitment.getString("orderItemSeqId"));
-                            orderItemAssociation.set("shipGroupSeqId", "_NA_");
-                            orderItemAssociation.set("toOrderId", this.getOrderId());
-                            orderItemAssociation.set("toOrderItemSeqId", item.getOrderItemSeqId());
-                            orderItemAssociation.set("toShipGroupSeqId", "_NA_");
-                            orderItemAssociation.set("orderItemAssocTypeId", "PURCHASE_ORDER");
+                            orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.orderId, commitment.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                            orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, commitment.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                            orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId, "_NA_");
+                            orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.toOrderId, this.getOrderId());
+                            orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.toOrderItemSeqId, item.getOrderItemSeqId());
+                            orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.toShipGroupSeqId, "_NA_");
+                            orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.orderItemAssocTypeId, "PURCHASE_ORDER");
                             allOrderItemAssociations.add(orderItemAssociation);
                         }
                     } catch (GenericEntityException e) {
@@ -4807,14 +4807,14 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                 }
                 if (item.getAssociatedOrderId() != null && item.getAssociatedOrderItemSeqId() != null) {
                     GenericValue orderItemAssociation = getDelegator().makeValue("OrderItemAssoc");
-                    orderItemAssociation.set("orderId", item.getAssociatedOrderId());
-                    orderItemAssociation.set("orderItemSeqId", item.getAssociatedOrderItemSeqId());
-                    orderItemAssociation.set("shipGroupSeqId", csi.getAssociatedShipGroupSeqId() != null
+                    orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.orderId, item.getAssociatedOrderId());
+                    orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, item.getAssociatedOrderItemSeqId());
+                    orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId, csi.getAssociatedShipGroupSeqId() != null
                             ? csi.getAssociatedShipGroupSeqId() : "_NA_");
-                    orderItemAssociation.set("toOrderId", this.getOrderId());
-                    orderItemAssociation.set("toOrderItemSeqId", item.getOrderItemSeqId());
-                    orderItemAssociation.set("toShipGroupSeqId", csi.getShipGroupSeqId() != null ? csi.getShipGroupSeqId() : "_NA_");
-                    orderItemAssociation.set("orderItemAssocTypeId", item.getOrderItemAssocTypeId());
+                    orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.toOrderId, this.getOrderId());
+                    orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.toOrderItemSeqId, item.getOrderItemSeqId());
+                    orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.toShipGroupSeqId, csi.getShipGroupSeqId() != null ? csi.getShipGroupSeqId() : "_NA_");
+                    orderItemAssociation.set(org.apache.ofbiz.persistence.entity.x.orderItemAssocTypeId, item.getOrderItemAssocTypeId());
                     allOrderItemAssociations.add(orderItemAssociation);
                 }
             }
@@ -4915,8 +4915,8 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
             try {
                 GenericValue productStore = this.getDelegator().findOne("ProductStore", UtilMisc.toMap("productStoreId",
                         this.getProductStoreId()), true);
-                facilityId = productStore.getString("inventoryFacilityId");
-                storeRequirementMethodEnumId = productStore.getString("requirementMethodEnumId");
+                facilityId = productStore.getString(org.apache.ofbiz.persistence.entity.x.inventoryFacilityId);
+                storeRequirementMethodEnumId = productStore.getString(org.apache.ofbiz.persistence.entity.x.requirementMethodEnumId);
             } catch (GenericEntityException gee) {
                 Debug.logError(UtilProperties.getMessage(RES_ERROR, "OrderProblemGettingProductStoreRecords", locale) + gee.getMessage(), MODULE);
                 return ServiceUtil.returnError(
@@ -4957,7 +4957,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                 if (product == null) {
                     continue;
                 }
-                String productId = product.getString("productId");
+                String productId = product.getString(org.apache.ofbiz.persistence.entity.x.productId);
 
                 GenericValue productFacility = null;
                 try {
@@ -4970,12 +4970,12 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
 
                 String requirementMethodEnumId = storeRequirementMethodEnumId;
 
-                if (productFacility != null && UtilValidate.isNotEmpty(productFacility.getString("requirementMethodEnumId"))) {
-                    requirementMethodEnumId = productFacility.getString("requirementMethodEnumId");
+                if (productFacility != null && UtilValidate.isNotEmpty(productFacility.getString(org.apache.ofbiz.persistence.entity.x.requirementMethodEnumId))) {
+                    requirementMethodEnumId = productFacility.getString(org.apache.ofbiz.persistence.entity.x.requirementMethodEnumId);
                 }
 
-                if (UtilValidate.isNotEmpty(product.getString("requirementMethodEnumId"))) {
-                    requirementMethodEnumId = product.getString("requirementMethodEnumId");
+                if (UtilValidate.isNotEmpty(product.getString(org.apache.ofbiz.persistence.entity.x.requirementMethodEnumId))) {
+                    requirementMethodEnumId = product.getString(org.apache.ofbiz.persistence.entity.x.requirementMethodEnumId);
                 }
 
                 if ("PRODRQM_DS".equals(requirementMethodEnumId)) {
@@ -5040,7 +5040,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                     supplierProducts = EntityUtil.orderBy(supplierProducts, UtilMisc.toList("supplierPrefOrderId"));
                     GenericValue supplierProduct = EntityUtil.getFirst(supplierProducts);
                     if (!UtilValidate.isEmpty(supplierProduct)) {
-                        supplierPartyId = supplierProduct.getString("partyId");
+                        supplierPartyId = supplierProduct.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                     }
                 } catch (GenericServiceException e) {
                     Debug.logWarning(UtilProperties.getMessage(RES_ERROR, "OrderRunServiceGetSuppliersForProductError", locale)
@@ -5181,10 +5181,10 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
         /** make order item group */
         protected GenericValue makeOrderItemGroup(Delegator delegator) {
             GenericValue orderItemGroup = delegator.makeValue("OrderItemGroup");
-            orderItemGroup.set("orderItemGroupSeqId", this.getGroupNumber());
-            orderItemGroup.set("groupName", this.getGroupName());
+            orderItemGroup.set(org.apache.ofbiz.persistence.entity.x.orderItemGroupSeqId, this.getGroupNumber());
+            orderItemGroup.set(org.apache.ofbiz.persistence.entity.x.groupName, this.getGroupName());
             if (this.parentGroup != null) {
-                orderItemGroup.set("parentGroupSeqId", this.parentGroup.getGroupNumber());
+                orderItemGroup.set(org.apache.ofbiz.persistence.entity.x.parentGroupSeqId, this.parentGroup.getGroupNumber());
             }
             return orderItemGroup;
         }
@@ -5628,38 +5628,38 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
             // create order contact mech for shipping address
             if (this.internalContactMechId != null) {
                 GenericValue orderCm = delegator.makeValue("OrderContactMech");
-                orderCm.set("contactMechPurposeTypeId", "SHIPPING_LOCATION");
-                orderCm.set("contactMechId", this.internalContactMechId);
+                orderCm.set(org.apache.ofbiz.persistence.entity.x.contactMechPurposeTypeId, "SHIPPING_LOCATION");
+                orderCm.set(org.apache.ofbiz.persistence.entity.x.contactMechId, this.internalContactMechId);
                 values.add(orderCm);
             }
 
             // create the ship group
             GenericValue shipGroup = delegator.makeValue("OrderItemShipGroup");
-            shipGroup.set("shipmentMethodTypeId", shipmentMethodTypeId);
-            shipGroup.set("carrierRoleTypeId", carrierRoleTypeId);
-            shipGroup.set("carrierPartyId", carrierPartyId);
-            shipGroup.set("supplierPartyId", supplierPartyId);
-            shipGroup.set("supplierAgreementId", supplierAgreementId);
-            shipGroup.set("shippingInstructions", shippingInstructions);
-            shipGroup.set("giftMessage", giftMessage);
-            shipGroup.set("contactMechId", this.internalContactMechId);
-            shipGroup.set("telecomContactMechId", this.telecomContactMechId);
-            shipGroup.set("maySplit", maySplit);
-            shipGroup.set("isGift", isGift);
-            shipGroup.set("shipGroupSeqId", shipGroupSeqId);
-            shipGroup.set("vendorPartyId", vendorPartyId);
-            shipGroup.set("facilityId", facilityId);
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId, shipmentMethodTypeId);
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId, carrierRoleTypeId);
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.carrierPartyId, carrierPartyId);
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.supplierPartyId, supplierPartyId);
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.supplierAgreementId, supplierAgreementId);
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.shippingInstructions, shippingInstructions);
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.giftMessage, giftMessage);
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.contactMechId, this.internalContactMechId);
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.telecomContactMechId, this.telecomContactMechId);
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.maySplit, maySplit);
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.isGift, isGift);
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId, shipGroupSeqId);
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.vendorPartyId, vendorPartyId);
+            shipGroup.set(org.apache.ofbiz.persistence.entity.x.facilityId, facilityId);
 
             // use the cart's default ship before and after dates here
             if ((shipBeforeDate == null) && (cart.getDefaultShipBeforeDate() != null)) {
-                shipGroup.set("shipByDate", cart.getDefaultShipBeforeDate());
+                shipGroup.set(org.apache.ofbiz.persistence.entity.x.shipByDate, cart.getDefaultShipBeforeDate());
             } else {
-                shipGroup.set("shipByDate", shipBeforeDate);
+                shipGroup.set(org.apache.ofbiz.persistence.entity.x.shipByDate, shipBeforeDate);
             }
             if ((shipAfterDate == null) && (cart.getDefaultShipAfterDate() != null)) {
-                shipGroup.set("shipAfterDate", cart.getDefaultShipAfterDate());
+                shipGroup.set(org.apache.ofbiz.persistence.entity.x.shipAfterDate, cart.getDefaultShipAfterDate());
             } else {
-                shipGroup.set("shipAfterDate", shipAfterDate);
+                shipGroup.set(org.apache.ofbiz.persistence.entity.x.shipAfterDate, shipAfterDate);
             }
 
             values.add(shipGroup);
@@ -5676,7 +5676,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
             if (!estimatedShipDates.isEmpty()) {
                 estimatedShipDates.sort(null);
                 estimatedShipDate = estimatedShipDates.getLast();
-                shipGroup.set("estimatedShipDate", estimatedShipDate);
+                shipGroup.set(org.apache.ofbiz.persistence.entity.x.estimatedShipDate, estimatedShipDate);
             }
 
             //set estimated delivery dates
@@ -5727,24 +5727,24 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                 }
             }
             if (estimatedDeliveryDate != null) {
-                shipGroup.set("estimatedDeliveryDate", estimatedDeliveryDate);
+                shipGroup.set(org.apache.ofbiz.persistence.entity.x.estimatedDeliveryDate, estimatedDeliveryDate);
             }
 
             // create the shipping estimate adjustments
             if (shipEstimate.compareTo(BigDecimal.ZERO) != 0) {
                 GenericValue shipAdj = delegator.makeValue("OrderAdjustment");
-                shipAdj.set("orderAdjustmentTypeId", "SHIPPING_CHARGES");
-                shipAdj.set("amount", shipEstimate);
+                shipAdj.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId, "SHIPPING_CHARGES");
+                shipAdj.set(org.apache.ofbiz.persistence.entity.x.amount, shipEstimate);
                 if ("PURCHASE_ORDER".equals(cart.getOrderType())) {
-                    shipAdj.set("isManual", "Y");
+                    shipAdj.set(org.apache.ofbiz.persistence.entity.x.isManual, "Y");
                 }
-                shipAdj.set("shipGroupSeqId", shipGroupSeqId);
+                shipAdj.set(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId, shipGroupSeqId);
                 values.add(shipAdj);
             }
 
             // create the top level tax adjustments
             for (GenericValue taxAdj : shipTaxAdj) {
-                taxAdj.set("shipGroupSeqId", shipGroupSeqId);
+                taxAdj.set(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId, shipGroupSeqId);
                 values.add(taxAdj);
             }
 
@@ -5754,15 +5754,15 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                 CartShipItemInfo itemInfo = entry.getValue();
 
                 GenericValue assoc = delegator.makeValue("OrderItemShipGroupAssoc");
-                assoc.set("orderItemSeqId", item.getOrderItemSeqId());
-                assoc.set("shipGroupSeqId", shipGroupSeqId);
-                assoc.set("quantity", itemInfo.quantity);
+                assoc.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, item.getOrderItemSeqId());
+                assoc.set(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId, shipGroupSeqId);
+                assoc.set(org.apache.ofbiz.persistence.entity.x.quantity, itemInfo.quantity);
                 values.add(assoc);
 
                 // create the item tax adjustment
                 for (GenericValue taxAdj : itemInfo.itemTaxAdj) {
-                    taxAdj.set("orderItemSeqId", item.getOrderItemSeqId());
-                    taxAdj.set("shipGroupSeqId", shipGroupSeqId);
+                    taxAdj.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, item.getOrderItemSeqId());
+                    taxAdj.set(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId, shipGroupSeqId);
                     values.add(taxAdj);
                 }
             }
@@ -6044,8 +6044,8 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
             GenericValue postalAddress = null;
 
             if ("PaymentMethod".equals(valueObj.getEntityName())) {
-                String paymentMethodTypeId = valueObj.getString("paymentMethodTypeId");
-                String paymentMethodId = valueObj.getString("paymentMethodId");
+                String paymentMethodTypeId = valueObj.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
+                String paymentMethodId = valueObj.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
 
                 // billing account, credit card, gift card, eft account all have postal address
                 try {
@@ -6062,7 +6062,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                         pmObj = EntityQuery.use(delegator).from("PayPalPaymentMethod").where("paymentMethodId", paymentMethodId).queryOne();
                     }
                     if (pmObj != null) {
-                        postalAddress = pmObj.getRelatedOne("PostalAddress", false);
+                        postalAddress = pmObj.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
                     } else {
                         Debug.logInfo("No PaymentMethod Object Found - " + paymentMethodId, MODULE);
                     }
@@ -6086,13 +6086,13 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
 
                     GenericValue billingAddress = this.getBillingAddress(delegator);
                     if (billingAddress != null) {
-                        billingAddressId = billingAddress.getString("contactMechId");
+                        billingAddressId = billingAddress.getString(org.apache.ofbiz.persistence.entity.x.contactMechId);
                     }
 
                     if (UtilValidate.isNotEmpty(billingAddressId)) {
                         GenericValue orderCm = delegator.makeValue("OrderContactMech");
-                        orderCm.set("contactMechPurposeTypeId", "BILLING_LOCATION");
-                        orderCm.set("contactMechId", billingAddressId);
+                        orderCm.set(org.apache.ofbiz.persistence.entity.x.contactMechPurposeTypeId, "BILLING_LOCATION");
+                        orderCm.set(org.apache.ofbiz.persistence.entity.x.contactMechId, billingAddressId);
                         values.add(orderCm);
                     }
                 }
@@ -6105,7 +6105,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                     Debug.logError(e.toString(), MODULE);
                 }
                 if (productStore != null) {
-                    splitPayPrefPerShpGrp = productStore.getString("splitPayPrefPerShpGrp");
+                    splitPayPrefPerShpGrp = productStore.getString(org.apache.ofbiz.persistence.entity.x.splitPayPrefPerShpGrp);
                 }
                 if (splitPayPrefPerShpGrp == null) {
                     splitPayPrefPerShpGrp = "N";
@@ -6121,34 +6121,34 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
 
                         // create the OrderPaymentPreference record
                         GenericValue opp = delegator.makeValue("OrderPaymentPreference");
-                        opp.set("paymentMethodTypeId", valueObj.getString("paymentMethodTypeId"));
-                        opp.set("presentFlag", isPresent ? "Y" : "N");
-                        opp.set("swipedFlag", isSwiped ? "Y" : "N");
-                        opp.set("overflowFlag", overflow ? "Y" : "N");
-                        opp.set("paymentMethodId", paymentMethodId);
-                        opp.set("finAccountId", finAccountId);
-                        opp.set("billingPostalCode", postalCode);
-                        opp.set("maxAmount", maxAmount);
-                        opp.set("shipGroupSeqId", csi.getShipGroupSeqId());
+                        opp.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, valueObj.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
+                        opp.set(org.apache.ofbiz.persistence.entity.x.presentFlag, isPresent ? "Y" : "N");
+                        opp.set(org.apache.ofbiz.persistence.entity.x.swipedFlag, isSwiped ? "Y" : "N");
+                        opp.set(org.apache.ofbiz.persistence.entity.x.overflowFlag, overflow ? "Y" : "N");
+                        opp.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, paymentMethodId);
+                        opp.set(org.apache.ofbiz.persistence.entity.x.finAccountId, finAccountId);
+                        opp.set(org.apache.ofbiz.persistence.entity.x.billingPostalCode, postalCode);
+                        opp.set(org.apache.ofbiz.persistence.entity.x.maxAmount, maxAmount);
+                        opp.set(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId, csi.getShipGroupSeqId());
                         if (refNum != null) {
-                            opp.set("manualRefNum", refNum[0]);
-                            opp.set("manualAuthCode", refNum[1]);
+                            opp.set(org.apache.ofbiz.persistence.entity.x.manualRefNum, refNum[0]);
+                            opp.set(org.apache.ofbiz.persistence.entity.x.manualAuthCode, refNum[1]);
                         }
                         if (securityCode != null) {
-                            opp.set("securityCode", securityCode);
+                            opp.set(org.apache.ofbiz.persistence.entity.x.securityCode, securityCode);
                         }
                         if (track2 != null) {
-                            opp.set("track2", track2);
+                            opp.set(org.apache.ofbiz.persistence.entity.x.track2, track2);
                         }
                         if (paymentMethodId != null || "FIN_ACCOUNT".equals(paymentMethodTypeId)) {
-                            opp.set("statusId", "PAYMENT_NOT_AUTH");
+                            opp.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_NOT_AUTH");
                         } else if (paymentMethodTypeId != null) {
                             // external payment method types require notification when received
                             // internal payment method types are assumed to be in-hand
                             if (paymentMethodTypeId.startsWith("EXT_")) {
-                                opp.set("statusId", "PAYMENT_NOT_RECEIVED");
+                                opp.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_NOT_RECEIVED");
                             } else {
-                                opp.set("statusId", "PAYMENT_RECEIVED");
+                                opp.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_RECEIVED");
                             }
                         }
                         Debug.logInfo("ShipGroup [" + csi.getShipGroupSeqId() + "]", MODULE);
@@ -6161,33 +6161,33 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
 
                     // create the OrderPaymentPreference record
                     GenericValue opp = delegator.makeValue("OrderPaymentPreference");
-                    opp.set("paymentMethodTypeId", valueObj.getString("paymentMethodTypeId"));
-                    opp.set("presentFlag", isPresent ? "Y" : "N");
-                    opp.set("swipedFlag", isSwiped ? "Y" : "N");
-                    opp.set("overflowFlag", overflow ? "Y" : "N");
-                    opp.set("paymentMethodId", paymentMethodId);
-                    opp.set("finAccountId", finAccountId);
-                    opp.set("billingPostalCode", postalCode);
-                    opp.set("maxAmount", maxAmount);
+                    opp.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, valueObj.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
+                    opp.set(org.apache.ofbiz.persistence.entity.x.presentFlag, isPresent ? "Y" : "N");
+                    opp.set(org.apache.ofbiz.persistence.entity.x.swipedFlag, isSwiped ? "Y" : "N");
+                    opp.set(org.apache.ofbiz.persistence.entity.x.overflowFlag, overflow ? "Y" : "N");
+                    opp.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, paymentMethodId);
+                    opp.set(org.apache.ofbiz.persistence.entity.x.finAccountId, finAccountId);
+                    opp.set(org.apache.ofbiz.persistence.entity.x.billingPostalCode, postalCode);
+                    opp.set(org.apache.ofbiz.persistence.entity.x.maxAmount, maxAmount);
                     if (refNum != null) {
-                        opp.set("manualRefNum", refNum[0]);
-                        opp.set("manualAuthCode", refNum[1]);
+                        opp.set(org.apache.ofbiz.persistence.entity.x.manualRefNum, refNum[0]);
+                        opp.set(org.apache.ofbiz.persistence.entity.x.manualAuthCode, refNum[1]);
                     }
                     if (securityCode != null) {
-                        opp.set("securityCode", securityCode);
+                        opp.set(org.apache.ofbiz.persistence.entity.x.securityCode, securityCode);
                     }
                     if (track2 != null) {
-                        opp.set("track2", securityCode);
+                        opp.set(org.apache.ofbiz.persistence.entity.x.track2, securityCode);
                     }
                     if (paymentMethodId != null || "FIN_ACCOUNT".equals(paymentMethodTypeId)) {
-                        opp.set("statusId", "PAYMENT_NOT_AUTH");
+                        opp.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_NOT_AUTH");
                     } else if (paymentMethodTypeId != null) {
                         // external payment method types require notification when received
                         // internal payment method types are assumed to be in-hand
                         if (paymentMethodTypeId.startsWith("EXT_")) {
-                            opp.set("statusId", "PAYMENT_NOT_RECEIVED");
+                            opp.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_NOT_RECEIVED");
                         } else {
-                            opp.set("statusId", "PAYMENT_RECEIVED");
+                            opp.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_RECEIVED");
                         }
                     }
                     Debug.logInfo("Creating OrderPaymentPreference - " + opp, MODULE);
@@ -6401,7 +6401,7 @@ public class ShoppingCart implements Iterable<ShoppingCartItem>, Serializable {
                                                       .queryList();
             Map<String, BigDecimal> productPriceMap = new HashMap<>();
             for (GenericValue productPrice : productPriceList) {
-                productPriceMap.put(productPrice.getString("productPriceTypeId"), productPrice.getBigDecimal("price"));
+                productPriceMap.put(productPrice.getString(org.apache.ofbiz.persistence.entity.x.productPriceTypeId), productPrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price));
             }
             if (UtilValidate.isNotEmpty(productPriceMap.get("SPECIAL_PROMO_PRICE"))) {
                 itemBasePrice = productPriceMap.get("SPECIAL_PROMO_PRICE");

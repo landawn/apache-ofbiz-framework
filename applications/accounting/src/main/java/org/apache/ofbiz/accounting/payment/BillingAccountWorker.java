@@ -79,15 +79,15 @@ public final class BillingAccountWorker {
         if (!billingAccountRoleList.isEmpty()) {
             BigDecimal totalAvailable = BigDecimal.ZERO;
             for (GenericValue billingAccountRole : billingAccountRoleList) {
-                GenericValue billingAccountVO = billingAccountRole.getRelatedOne("BillingAccount", false);
+                GenericValue billingAccountVO = billingAccountRole.getRelatedOne(org.apache.ofbiz.persistence.entity.x.BillingAccount, false);
 
                 // skip accounts that have thruDate < nowTimestamp
-                java.sql.Timestamp thruDate = billingAccountVO.getTimestamp("thruDate");
+                java.sql.Timestamp thruDate = billingAccountVO.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate);
                 if ((thruDate != null) && UtilDateTime.nowTimestamp().after(thruDate)) {
                     continue;
                 }
 
-                if (currencyUomId.equals(billingAccountVO.getString("accountCurrencyUomId"))) {
+                if (currencyUomId.equals(billingAccountVO.getString(org.apache.ofbiz.persistence.entity.x.accountCurrencyUomId))) {
                     BigDecimal accountBalance = OrderReadHelper.getBillingAccountBalance(billingAccountVO);
 
                     Map<String, Object> billingAccount = new HashMap<>(billingAccountVO);
@@ -124,8 +124,8 @@ public final class BillingAccountWorker {
      * @throws GenericEntityException
      */
     public static BigDecimal getBillingAccountAvailableBalance(GenericValue billingAccount) throws GenericEntityException {
-        if ((billingAccount != null) && (billingAccount.get("accountLimit") != null)) {
-            BigDecimal accountLimit = billingAccount.getBigDecimal("accountLimit");
+        if ((billingAccount != null) && (billingAccount.get(org.apache.ofbiz.persistence.entity.x.accountLimit) != null)) {
+            BigDecimal accountLimit = billingAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.accountLimit);
             BigDecimal availableBalance = accountLimit.subtract(OrderReadHelper.getBillingAccountBalance(billingAccount))
                     .setScale(DECIMALS, ROUNDING);
             return availableBalance;
@@ -155,11 +155,11 @@ public final class BillingAccountWorker {
         List<GenericValue> paymentAppls = EntityQuery.use(delegator).from("PaymentApplication").where("billingAccountId",
                 billingAccountId).queryList();
         for (GenericValue paymentAppl : paymentAppls) {
-            BigDecimal amountApplied = paymentAppl.getBigDecimal("amountApplied");
-            GenericValue invoice = paymentAppl.getRelatedOne("Invoice", false);
+            BigDecimal amountApplied = paymentAppl.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied);
+            GenericValue invoice = paymentAppl.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Invoice, false);
             if (invoice != null) {
                 // make sure the invoice has not been canceled and it is not a "Customer return invoice"
-                if (!"CUST_RTN_INVOICE".equals(invoice.getString("invoiceTypeId")) && !"INVOICE_CANCELLED".equals(invoice.getString("statusId"))) {
+                if (!"CUST_RTN_INVOICE".equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceTypeId)) && !"INVOICE_CANCELLED".equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                     balance = balance.add(amountApplied);
                 }
             } else {
@@ -178,16 +178,16 @@ public final class BillingAccountWorker {
      * @throws GenericEntityException
      */
     public static BigDecimal availableToCapture(GenericValue billingAccount) throws GenericEntityException {
-        BigDecimal netBalance = getBillingAccountNetBalance(billingAccount.getDelegator(), billingAccount.getString("billingAccountId"));
-        BigDecimal accountLimit = billingAccount.getBigDecimal("accountLimit");
+        BigDecimal netBalance = getBillingAccountNetBalance(billingAccount.getDelegator(), billingAccount.getString(org.apache.ofbiz.persistence.entity.x.billingAccountId));
+        BigDecimal accountLimit = billingAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.accountLimit);
 
         return accountLimit.subtract(netBalance).setScale(DECIMALS, ROUNDING);
     }
 
     public static Map<String, Object> calcBillingAccountBalance(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String billingAccountId = (String) context.get("billingAccountId");
-        Locale locale = (Locale) context.get("locale");
+        String billingAccountId = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingAccountId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
 
         try {

@@ -407,7 +407,7 @@ public class UtilCodec {
      * @return encoding url with OFBiz rule
      */
     public static String encodeUrl(String queryString, Map<String, Object> context) {
-        return "true".equalsIgnoreCase((String) context.get("escapeUrlEncode"))
+        return "true".equalsIgnoreCase((String) context.get(org.apache.ofbiz.persistence.entity.x.escapeUrlEncode))
                 ? queryString
                 : encodeUrl(queryString);
     }

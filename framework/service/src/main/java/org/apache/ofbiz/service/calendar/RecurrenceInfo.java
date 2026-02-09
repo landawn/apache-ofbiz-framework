@@ -58,15 +58,15 @@ public class RecurrenceInfo {
     /** Initializes the rules for this RecurrenceInfo object. */
     public void init() throws RecurrenceInfoException {
 
-        if (info.get("startDateTime") == null) {
+        if (info.get(org.apache.ofbiz.persistence.entity.x.startDateTime) == null) {
             throw new RecurrenceInfoException("Recurrence startDateTime cannot be null.");
         }
 
         // Get start date
-        long startTime = info.getTimestamp("startDateTime").getTime();
+        long startTime = info.getTimestamp(org.apache.ofbiz.persistence.entity.x.startDateTime).getTime();
 
         if (startTime > 0) {
-            int nanos = info.getTimestamp("startDateTime").getNanos();
+            int nanos = info.getTimestamp(org.apache.ofbiz.persistence.entity.x.startDateTime).getNanos();
 
             startTime += (nanos / 1000000);
         } else {
@@ -77,7 +77,7 @@ public class RecurrenceInfo {
         // Get the recurrence rules objects
         try {
             rRulesList = new ArrayList<>();
-            for (GenericValue value: info.getRelated("RecurrenceRule", null, null, false)) {
+            for (GenericValue value: info.getRelated(org.apache.ofbiz.persistence.entity.x.RecurrenceRule, null, null, false)) {
                 rRulesList.add(new RecurrenceRule(value));
             }
         } catch (GenericEntityException gee) {
@@ -89,7 +89,7 @@ public class RecurrenceInfo {
         // Get the exception rules objects
         try {
             eRulesList = new ArrayList<>();
-            for (GenericValue value: info.getRelated("ExceptionRecurrenceRule", null, null, false)) {
+            for (GenericValue value: info.getRelated(org.apache.ofbiz.persistence.entity.x.ExceptionRecurrenceRule, null, null, false)) {
                 eRulesList.add(new RecurrenceRule(value));
             }
         } catch (GenericEntityException gee) {
@@ -99,9 +99,9 @@ public class RecurrenceInfo {
         }
 
         // Get the recurrence date list
-        rDateList = RecurrenceUtil.parseDateList(StringUtil.split(info.getString("recurrenceDateTimes"), ","));
+        rDateList = RecurrenceUtil.parseDateList(StringUtil.split(info.getString(org.apache.ofbiz.persistence.entity.x.recurrenceDateTimes), ","));
         // Get the exception date list
-        eDateList = RecurrenceUtil.parseDateList(StringUtil.split(info.getString("exceptionDateTimes"), ","));
+        eDateList = RecurrenceUtil.parseDateList(StringUtil.split(info.getString(org.apache.ofbiz.persistence.entity.x.exceptionDateTimes), ","));
 
         // Sort the lists.
         rDateList.sort(null);
@@ -110,7 +110,7 @@ public class RecurrenceInfo {
 
     /** Returns the primary key for this value object */
     public String getID() {
-        return info.getString("recurrenceInfoId");
+        return info.getString(org.apache.ofbiz.persistence.entity.x.recurrenceInfoId);
     }
 
     /** Returns the startDate Date object. */
@@ -145,8 +145,8 @@ public class RecurrenceInfo {
 
     /** Returns the current count of this recurrence. */
     public long getCurrentCount() {
-        if (info.get("recurrenceCount") != null) {
-            return info.getLong("recurrenceCount");
+        if (info.get(org.apache.ofbiz.persistence.entity.x.recurrenceCount) != null) {
+            return info.getLong(org.apache.ofbiz.persistence.entity.x.recurrenceCount);
         }
         return 0;
     }
@@ -159,7 +159,7 @@ public class RecurrenceInfo {
     /** Increments the current count of this recurrence. */
     public void incrementCurrentCount(boolean store) throws GenericEntityException {
         if (store) {
-            info.set("recurrenceCount", getCurrentCount() + 1);
+            info.set(org.apache.ofbiz.persistence.entity.x.recurrenceCount, getCurrentCount() + 1);
             info.store();
         }
     }
@@ -302,7 +302,7 @@ public class RecurrenceInfo {
      * @return the string
      */
     public String primaryKey() {
-        return info.getString("recurrenceInfoId");
+        return info.getString(org.apache.ofbiz.persistence.entity.x.recurrenceInfoId);
     }
 
     public static RecurrenceInfo makeInfo(Delegator delegator, long startTime, int frequency,
@@ -322,8 +322,8 @@ public class RecurrenceInfo {
             String ruleId = r.primaryKey();
             GenericValue value = delegator.makeValue("RecurrenceInfo");
 
-            value.set("recurrenceRuleId", ruleId);
-            value.set("startDateTime", new java.sql.Timestamp(startTime));
+            value.set(org.apache.ofbiz.persistence.entity.x.recurrenceRuleId, ruleId);
+            value.set(org.apache.ofbiz.persistence.entity.x.startDateTime, new java.sql.Timestamp(startTime));
             delegator.createSetNextSeqId(value);
             RecurrenceInfo newInfo = new RecurrenceInfo(value);
 

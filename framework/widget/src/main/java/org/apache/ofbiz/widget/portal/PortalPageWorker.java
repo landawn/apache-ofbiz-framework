@@ -81,12 +81,12 @@ public class PortalPageWorker {
                         EntityOperator.AND);
                 portalPages = EntityQuery.use(delegator).from("PortalPage").where(cond).queryList();
                 List<GenericValue> userPortalPages = new ArrayList<>();
-                if (UtilValidate.isNotEmpty(context.get("userLogin"))) { // check if a user is logged in
-                    String userLoginId = ((GenericValue) context.get("userLogin")).getString("userLoginId");
+                if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.userLogin))) { // check if a user is logged in
+                    String userLoginId = ((GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin)).getString("userLoginId");
                     // replace with private pages
                     for (GenericValue portalPage : portalPages) {
                         List<GenericValue> privatePortalPages = EntityQuery.use(delegator).from("PortalPage")
-                                .where("ownerUserLoginId", userLoginId, "originalPortalPageId", portalPage.getString("portalPageId"))
+                                .where("ownerUserLoginId", userLoginId, "originalPortalPageId", portalPage.getString(org.apache.ofbiz.persistence.entity.x.portalPageId))
                                 .queryList();
                         if (UtilValidate.isNotEmpty(privatePortalPages)) {
                             userPortalPages.add(privatePortalPages.get(0));
@@ -118,8 +118,8 @@ public class PortalPageWorker {
             try {
                 // Get the current userLoginId
                 String userLoginId = "_NA_";
-                if (UtilValidate.isNotEmpty(context.get("userLogin"))) { // check if a user is logged in
-                    userLoginId = ((GenericValue) context.get("userLogin")).getString("userLoginId");
+                if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.userLogin))) { // check if a user is logged in
+                    userLoginId = ((GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin)).getString("userLoginId");
                 }
 
                 // Get the PortalPage ensuring that it is either owned by the user or a system page
@@ -158,17 +158,17 @@ public class PortalPageWorker {
         Boolean userIsAllowed = false;
 
         if (UtilValidate.isNotEmpty(portalPageId)) {
-            GenericValue userLogin = (GenericValue) context.get("userLogin");
+            GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
             if (userLogin != null) {
-                String userLoginId = (String) userLogin.get("userLoginId");
-                Security security = (Security) context.get("security");
+                String userLoginId = (String) userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+                Security security = (Security) context.get(org.apache.ofbiz.persistence.entity.x.security);
 
                 Boolean hasPortalAdminPermission = security.hasPermission("PORTALPAGE_ADMIN", userLogin);
                 try {
                     Delegator delegator = WidgetWorker.getDelegator(context);
                     GenericValue portalPage = EntityQuery.use(delegator).from("PortalPage").where("portalPageId", portalPageId).queryOne();
                     if (portalPage != null) {
-                        String ownerUserLoginId = (String) portalPage.get("ownerUserLoginId");
+                        String ownerUserLoginId = (String) portalPage.get(org.apache.ofbiz.persistence.entity.x.ownerUserLoginId);
                         // Users with PORTALPAGE_ADMIN permission can configure every Portal Page
                         userIsAllowed = (ownerUserLoginId.equals(userLoginId) || hasPortalAdminPermission);
                     }

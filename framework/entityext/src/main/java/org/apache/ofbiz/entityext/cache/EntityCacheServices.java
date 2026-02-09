@@ -194,7 +194,7 @@ public class EntityCacheServices implements DistributedCacheClear {
      */
     public static Map<String, Object> clearAllEntityCaches(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Boolean distributeBool = (Boolean) context.get("distribute");
+        Boolean distributeBool = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.distribute);
         boolean distribute = false;
         if (distributeBool != null) distribute = distributeBool;
 
@@ -211,12 +211,12 @@ public class EntityCacheServices implements DistributedCacheClear {
      */
     public static Map<String, Object> clearCacheLine(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Boolean distributeBool = (Boolean) context.get("distribute");
+        Boolean distributeBool = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.distribute);
         boolean distribute = false;
         if (distributeBool != null) distribute = distributeBool;
 
         if (context.containsKey("value")) {
-            GenericValue value = (GenericValue) context.get("value");
+            GenericValue value = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.value);
             if (Debug.infoOn()) {
                 Debug.logInfo("Got a clear cache line by value service call; entityName: " + value.getEntityName(), MODULE);
             }
@@ -225,7 +225,7 @@ public class EntityCacheServices implements DistributedCacheClear {
             }
             delegator.clearCacheLine(value, distribute);
         } else if (context.containsKey("dummyPK")) {
-            GenericEntity dummyPK = (GenericEntity) context.get("dummyPK");
+            GenericEntity dummyPK = (GenericEntity) context.get(org.apache.ofbiz.persistence.entity.x.dummyPK);
             if (Debug.infoOn()) {
                 Debug.logInfo("Got a clear cache line by dummyPK service call; entityName: " + dummyPK.getEntityName(), MODULE);
             }
@@ -234,7 +234,7 @@ public class EntityCacheServices implements DistributedCacheClear {
             }
             delegator.clearCacheLineFlexible(dummyPK, distribute);
         } else if (context.containsKey("primaryKey")) {
-            GenericPK primaryKey = (GenericPK) context.get("primaryKey");
+            GenericPK primaryKey = (GenericPK) context.get(org.apache.ofbiz.persistence.entity.x.primaryKey);
             if (Debug.infoOn()) {
                 Debug.logInfo("Got a clear cache line by primaryKey service call; entityName: " + primaryKey.getEntityName(), MODULE);
             }
@@ -243,8 +243,8 @@ public class EntityCacheServices implements DistributedCacheClear {
             }
             delegator.clearCacheLine(primaryKey, distribute);
         } else if (context.containsKey("condition")) {
-            String entityName = (String) context.get("entityName");
-            EntityCondition condition = (EntityCondition) context.get("condition");
+            String entityName = (String) context.get(org.apache.ofbiz.persistence.entity.x.entityName);
+            EntityCondition condition = (EntityCondition) context.get(org.apache.ofbiz.persistence.entity.x.condition);
             if (Debug.infoOn()) {
                 Debug.logInfo("Got a clear cache line by condition service call; entityName: " + entityName, MODULE);
             }

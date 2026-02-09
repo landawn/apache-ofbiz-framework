@@ -62,8 +62,8 @@ public class ValueLinkServices {
         ValueLinkApi vl = ValueLinkApi.getInstance(delegator, props);
         vl.reload();
 
-        Boolean kekOnly = context.get("kekOnly") != null ? (Boolean) context.get("kekOnly") : Boolean.FALSE;
-        String kekTest = (String) context.get("kekTest");
+        Boolean kekOnly = context.get(org.apache.ofbiz.persistence.entity.x.kekOnly) != null ? (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.kekOnly) : Boolean.FALSE;
+        String kekTest = (String) context.get(org.apache.ofbiz.persistence.entity.x.kekTest);
         Debug.logInfo("KEK Only : " + kekOnly, MODULE);
 
         StringBuffer buf = vl.outputKeyCreation(kekOnly, kekTest);
@@ -85,8 +85,8 @@ public class ValueLinkServices {
         ValueLinkApi vl = ValueLinkApi.getInstance(delegator, props);
         vl.reload();
 
-        String testString = (String) context.get("kekTest");
-        Integer mode = (Integer) context.get("mode");
+        String testString = (String) context.get(org.apache.ofbiz.persistence.entity.x.kekTest);
+        Integer mode = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.mode);
         byte[] testBytes = StringUtil.fromHexString(testString);
 
         // place holder
@@ -128,9 +128,9 @@ public class ValueLinkServices {
     // change working key service
     public static Map<String, Object> assignWorkingKey(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         Properties props = getProperties(context);
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // get an api instance
         ValueLinkApi vl = ValueLinkApi.getInstance(delegator, props);
@@ -140,7 +140,7 @@ public class ValueLinkServices {
         byte[] mwk = null;
 
         // see if we passed in the DES hex string
-        String desHexString = (String) context.get("desHexString");
+        String desHexString = (String) context.get(org.apache.ofbiz.persistence.entity.x.desHexString);
         if (UtilValidate.isEmpty(desHexString)) {
             mwk = vl.generateMwk();
         } else {
@@ -175,11 +175,11 @@ public class ValueLinkServices {
                     UtilMisc.toMap("responseCode", responseCode), locale));
         }
         GenericValue vlKeys = GenericValue.create(vl.getGenericValue());
-        vlKeys.set("lastWorkingKey", vlKeys.get("workingKey"));
-        vlKeys.set("workingKey", StringUtil.toHexString(mwk));
-        vlKeys.set("workingKeyIndex", request.get("EncryptID"));
-        vlKeys.set("lastModifiedDate", UtilDateTime.nowTimestamp());
-        vlKeys.set("lastModifiedByUserLogin", userLogin != null ? userLogin.get("userLoginId") : null);
+        vlKeys.set(org.apache.ofbiz.persistence.entity.x.lastWorkingKey, vlKeys.get(org.apache.ofbiz.persistence.entity.x.workingKey));
+        vlKeys.set(org.apache.ofbiz.persistence.entity.x.workingKey, StringUtil.toHexString(mwk));
+        vlKeys.set(org.apache.ofbiz.persistence.entity.x.workingKeyIndex, request.get("EncryptID"));
+        vlKeys.set(org.apache.ofbiz.persistence.entity.x.lastModifiedDate, UtilDateTime.nowTimestamp());
+        vlKeys.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLogin != null ? userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId) : null);
         try {
             vlKeys.store();
         } catch (GenericEntityException e) {
@@ -194,17 +194,17 @@ public class ValueLinkServices {
     public static Map<String, Object> activate(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
-        String vlPromoCode = (String) context.get("vlPromoCode");
-        String cardNumber = (String) context.get("cardNumber");
-        String pin = (String) context.get("pin");
-        String currency = (String) context.get("currency");
-        String orderId = (String) context.get("orderId");
-        String partyId = (String) context.get("partyId");
-        BigDecimal amount = (BigDecimal) context.get("amount");
-        Locale locale = (Locale) context.get("locale");
+        String vlPromoCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.vlPromoCode);
+        String cardNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber);
+        String pin = (String) context.get(org.apache.ofbiz.persistence.entity.x.pin);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // override interface for void/rollback
-        String iFace = (String) context.get("Interface");
+        String iFace = (String) context.get(org.apache.ofbiz.persistence.entity.x.Interface);
 
         // get an api instance
         ValueLinkApi vl = ValueLinkApi.getInstance(delegator, props);
@@ -270,12 +270,12 @@ public class ValueLinkServices {
     public static Map<String, Object> linkPhysicalCard(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
-        String virtualCard = (String) context.get("virtualCard");
-        String virtualPin = (String) context.get("virtualPin");
-        String physicalCard = (String) context.get("physicalCard");
-        String physicalPin = (String) context.get("physicalPin");
-        String partyId = (String) context.get("partyId");
-        Locale locale = (Locale) context.get("locale");
+        String virtualCard = (String) context.get(org.apache.ofbiz.persistence.entity.x.virtualCard);
+        String virtualPin = (String) context.get(org.apache.ofbiz.persistence.entity.x.virtualPin);
+        String physicalCard = (String) context.get(org.apache.ofbiz.persistence.entity.x.physicalCard);
+        String physicalPin = (String) context.get(org.apache.ofbiz.persistence.entity.x.physicalPin);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // get an api instance
         ValueLinkApi vl = ValueLinkApi.getInstance(delegator, props);
@@ -319,12 +319,12 @@ public class ValueLinkServices {
     public static Map<String, Object> disablePin(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
-        String cardNumber = (String) context.get("cardNumber");
-        String pin = (String) context.get("pin");
-        String orderId = (String) context.get("orderId");
-        String partyId = (String) context.get("partyId");
-        BigDecimal amount = (BigDecimal) context.get("amount");
-        Locale locale = (Locale) context.get("locale");
+        String cardNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber);
+        String pin = (String) context.get(org.apache.ofbiz.persistence.entity.x.pin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // get an api instance
         ValueLinkApi vl = ValueLinkApi.getInstance(delegator, props);
@@ -371,16 +371,16 @@ public class ValueLinkServices {
     public static Map<String, Object> redeem(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
-        String cardNumber = (String) context.get("cardNumber");
-        String pin = (String) context.get("pin");
-        String currency = (String) context.get("currency");
-        String orderId = (String) context.get("orderId");
-        String partyId = (String) context.get("partyId");
-        BigDecimal amount = (BigDecimal) context.get("amount");
-        Locale locale = (Locale) context.get("locale");
+        String cardNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber);
+        String pin = (String) context.get(org.apache.ofbiz.persistence.entity.x.pin);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // override interface for void/rollback
-        String iFace = (String) context.get("Interface");
+        String iFace = (String) context.get(org.apache.ofbiz.persistence.entity.x.Interface);
 
         // get an api instance
         ValueLinkApi vl = ValueLinkApi.getInstance(delegator, props);
@@ -434,16 +434,16 @@ public class ValueLinkServices {
     public static Map<String, Object> reload(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
-        String cardNumber = (String) context.get("cardNumber");
-        String pin = (String) context.get("pin");
-        String currency = (String) context.get("currency");
-        String orderId = (String) context.get("orderId");
-        String partyId = (String) context.get("partyId");
-        BigDecimal amount = (BigDecimal) context.get("amount");
-        Locale locale = (Locale) context.get("locale");
+        String cardNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber);
+        String pin = (String) context.get(org.apache.ofbiz.persistence.entity.x.pin);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // override interface for void/rollback
-        String iFace = (String) context.get("Interface");
+        String iFace = (String) context.get(org.apache.ofbiz.persistence.entity.x.Interface);
 
         // get an api instance
         ValueLinkApi vl = ValueLinkApi.getInstance(delegator, props);
@@ -496,12 +496,12 @@ public class ValueLinkServices {
     public static Map<String, Object> balanceInquire(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
-        String cardNumber = (String) context.get("cardNumber");
-        String pin = (String) context.get("pin");
-        String currency = (String) context.get("currency");
-        String orderId = (String) context.get("orderId");
-        String partyId = (String) context.get("partyId");
-        Locale locale = (Locale) context.get("locale");
+        String cardNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber);
+        String pin = (String) context.get(org.apache.ofbiz.persistence.entity.x.pin);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // get an api instance
         ValueLinkApi vl = ValueLinkApi.getInstance(delegator, props);
@@ -548,11 +548,11 @@ public class ValueLinkServices {
     public static Map<String, Object> transactionHistory(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
-        String cardNumber = (String) context.get("cardNumber");
-        String pin = (String) context.get("pin");
-        String orderId = (String) context.get("orderId");
-        String partyId = (String) context.get("partyId");
-        Locale locale = (Locale) context.get("locale");
+        String cardNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber);
+        String pin = (String) context.get(org.apache.ofbiz.persistence.entity.x.pin);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // get an api instance
         ValueLinkApi vl = ValueLinkApi.getInstance(delegator, props);
@@ -599,16 +599,16 @@ public class ValueLinkServices {
     public static Map<String, Object> refund(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
-        String cardNumber = (String) context.get("cardNumber");
-        String pin = (String) context.get("pin");
-        String currency = (String) context.get("currency");
-        String orderId = (String) context.get("orderId");
-        String partyId = (String) context.get("partyId");
-        BigDecimal amount = (BigDecimal) context.get("amount");
-        Locale locale = (Locale) context.get("locale");
+        String cardNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber);
+        String pin = (String) context.get(org.apache.ofbiz.persistence.entity.x.pin);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // override interface for void/rollback
-        String iFace = (String) context.get("Interface");
+        String iFace = (String) context.get(org.apache.ofbiz.persistence.entity.x.Interface);
 
         // get an api instance
         ValueLinkApi vl = ValueLinkApi.getInstance(delegator, props);
@@ -659,28 +659,28 @@ public class ValueLinkServices {
     }
 
     public static Map<String, Object> voidRedeem(DispatchContext dctx, Map<String, Object> context) {
-        context.put("Interface", "Redeem/Void");
+        context.put(org.apache.ofbiz.persistence.entity.x.Interface, "Redeem/Void");
         return redeem(dctx, context);
     }
 
     public static Map<String, Object> voidRefund(DispatchContext dctx, Map<String, Object> context) {
-        context.put("Interface", "Refund/Void");
+        context.put(org.apache.ofbiz.persistence.entity.x.Interface, "Refund/Void");
         return refund(dctx, context);
     }
 
     public static Map<String, Object> voidReload(DispatchContext dctx, Map<String, Object> context) {
-        context.put("Interface", "Reload/Void");
+        context.put(org.apache.ofbiz.persistence.entity.x.Interface, "Reload/Void");
         return reload(dctx, context);
     }
 
     public static Map<String, Object> voidActivate(DispatchContext dctx, Map<String, Object> context) {
-        context.put("Interface", "Activate/Void");
+        context.put(org.apache.ofbiz.persistence.entity.x.Interface, "Activate/Void");
         return activate(dctx, context);
     }
 
     public static Map<String, Object> timeOutReversal(DispatchContext dctx, Map<String, Object> context) {
-        String vlInterface = (String) context.get("Interface");
-        Locale locale = (Locale) context.get("locale");
+        String vlInterface = (String) context.get(org.apache.ofbiz.persistence.entity.x.Interface);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Debug.logInfo("704 Interface : " + vlInterface, MODULE);
         if (vlInterface != null) {
             if (vlInterface.startsWith("Activate")) {
@@ -711,15 +711,15 @@ public class ValueLinkServices {
 
         // append the rollback interface
         if (!vlInterface.endsWith("Rollback")) {
-            context.put("Interface", vlInterface + "/Rollback");
+            context.put(org.apache.ofbiz.persistence.entity.x.Interface, vlInterface + "/Rollback");
         } else {
             // no need to re-run ourself we are persisted
             return;
         }
 
         // set the old tx time and number
-        context.put("MerchTime", request.get("MerchTime"));
-        context.put("TermTxnNo", request.get("TermTxnNo"));
+        context.put(org.apache.ofbiz.persistence.entity.x.MerchTime, request.get("MerchTime"));
+        context.put(org.apache.ofbiz.persistence.entity.x.TermTxnNo, request.get("TermTxnNo"));
 
         // Activate/Rollback is not supported by valuelink
         if (!"Activate".equals(vlInterface)) {
@@ -735,7 +735,7 @@ public class ValueLinkServices {
     }
 
     private static Properties getProperties(Map<String, Object> context) {
-        String paymentProperties = (String) context.get("paymentConfig");
+        String paymentProperties = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
         if (paymentProperties == null) {
             paymentProperties = "payment.properties";
         }
@@ -748,14 +748,14 @@ public class ValueLinkServices {
     public static Map<String, Object> giftCardProcessor(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
-        GenericValue giftCard = (GenericValue) context.get("giftCard");
-        GenericValue party = (GenericValue) context.get("billToParty");
-        String paymentConfig = (String) context.get("paymentConfig");
-        String currency = (String) context.get("currency");
-        String orderId = (String) context.get("orderId");
-        BigDecimal amount = (BigDecimal) context.get("processAmount");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue giftCard = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.giftCard);
+        GenericValue party = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.billToParty);
+        String paymentConfig = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
 
         // make sure we have a currency
         if (currency == null) {
@@ -765,11 +765,11 @@ public class ValueLinkServices {
         Map<String, Object> redeemCtx = new HashMap<>();
         redeemCtx.put("userLogin", userLogin);
         redeemCtx.put("paymentConfig", paymentConfig);
-        redeemCtx.put("cardNumber", giftCard.get("cardNumber"));
-        redeemCtx.put("pin", giftCard.get("pinNumber"));
+        redeemCtx.put("cardNumber", giftCard.get(org.apache.ofbiz.persistence.entity.x.cardNumber));
+        redeemCtx.put("pin", giftCard.get(org.apache.ofbiz.persistence.entity.x.pinNumber));
         redeemCtx.put("currency", currency);
         redeemCtx.put("orderId", orderId);
-        redeemCtx.put("partyId", party.get("partyId"));
+        redeemCtx.put("partyId", party.get(org.apache.ofbiz.persistence.entity.x.partyId));
         redeemCtx.put("amount", amount);
 
         // invoke the redeem service
@@ -825,20 +825,20 @@ public class ValueLinkServices {
     public static Map<String, Object> giftCardRelease(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
-        GenericValue paymentPref = (GenericValue) context.get("orderPaymentPreference");
-        String paymentConfig = (String) context.get("paymentConfig");
-        String currency = (String) context.get("currency");
-        BigDecimal amount = (BigDecimal) context.get("releaseAmount");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        String paymentConfig = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.releaseAmount);
 
         // get the orderId for tracking
-        String orderId = paymentPref.getString("orderId");
+        String orderId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderId);
 
         // get the GiftCard VO
         GenericValue giftCard = null;
         try {
-            giftCard = paymentPref.getRelatedOne("GiftCard", false);
+            giftCard = paymentPref.getRelatedOne(org.apache.ofbiz.persistence.entity.x.GiftCard, false);
         } catch (GenericEntityException e) {
             Debug.logError("Unable to get GiftCard from OrderPaymentPreference", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -858,8 +858,8 @@ public class ValueLinkServices {
         Map<String, Object> redeemCtx = new HashMap<>();
         redeemCtx.put("userLogin", userLogin);
         redeemCtx.put("paymentConfig", paymentConfig);
-        redeemCtx.put("cardNumber", giftCard.get("cardNumber"));
-        redeemCtx.put("pin", giftCard.get("pinNumber"));
+        redeemCtx.put("cardNumber", giftCard.get(org.apache.ofbiz.persistence.entity.x.cardNumber));
+        redeemCtx.put("pin", giftCard.get(org.apache.ofbiz.persistence.entity.x.pinNumber));
         redeemCtx.put("currency", currency);
         redeemCtx.put("orderId", orderId);
         redeemCtx.put("amount", amount);
@@ -890,20 +890,20 @@ public class ValueLinkServices {
     public static Map<String, Object> giftCardRefund(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
-        GenericValue paymentPref = (GenericValue) context.get("orderPaymentPreference");
-        String paymentConfig = (String) context.get("paymentConfig");
-        String currency = (String) context.get("currency");
-        BigDecimal amount = (BigDecimal) context.get("refundAmount");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        String paymentConfig = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.refundAmount);
 
         // get the orderId for tracking
-        String orderId = paymentPref.getString("orderId");
+        String orderId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderId);
 
         // get the GiftCard VO
         GenericValue giftCard = null;
         try {
-            giftCard = paymentPref.getRelatedOne("GiftCard", false);
+            giftCard = paymentPref.getRelatedOne(org.apache.ofbiz.persistence.entity.x.GiftCard, false);
         } catch (GenericEntityException e) {
             Debug.logError("Unable to get GiftCard from OrderPaymentPreference", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -923,8 +923,8 @@ public class ValueLinkServices {
         Map<String, Object> refundCtx = new HashMap<>();
         refundCtx.put("userLogin", userLogin);
         refundCtx.put("paymentConfig", paymentConfig);
-        refundCtx.put("cardNumber", giftCard.get("cardNumber"));
-        refundCtx.put("pin", giftCard.get("pinNumber"));
+        refundCtx.put("cardNumber", giftCard.get(org.apache.ofbiz.persistence.entity.x.cardNumber));
+        refundCtx.put("pin", giftCard.get(org.apache.ofbiz.persistence.entity.x.pinNumber));
         refundCtx.put("currency", currency);
         refundCtx.put("orderId", orderId);
         refundCtx.put("amount", amount);
@@ -958,17 +958,17 @@ public class ValueLinkServices {
         // this service should always be called via FULFILLMENT_EXTASYNC
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        GenericValue orderItem = (GenericValue) context.get("orderItem");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue orderItem = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderItem);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // order ID for tracking
-        String orderId = orderItem.getString("orderId");
+        String orderId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId);
 
         // the order header for store info
         GenericValue orderHeader = null;
         try {
-            orderHeader = orderItem.getRelatedOne("OrderHeader", false);
+            orderHeader = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Unable to get OrderHeader from OrderItem", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER,
@@ -1000,7 +1000,7 @@ public class ValueLinkServices {
         GenericValue paymentSetting = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStoreId, "GIFT_CARD", null, true);
         String paymentConfig = null;
         if (paymentSetting != null) {
-            paymentConfig = paymentSetting.getString("paymentPropertiesPath");
+            paymentConfig = paymentSetting.getString(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath);
         }
         if (paymentConfig == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -1012,17 +1012,17 @@ public class ValueLinkServices {
         GenericValue placingParty = orh.getPlacingParty();
         String partyId = null;
         if (placingParty != null) {
-            partyId = placingParty.getString("partyId");
+            partyId = placingParty.getString(org.apache.ofbiz.persistence.entity.x.partyId);
         }
 
         // amount/quantity of the gift card(s)
-        BigDecimal amount = orderItem.getBigDecimal("unitPrice");
-        BigDecimal quantity = orderItem.getBigDecimal("quantity");
+        BigDecimal amount = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice);
+        BigDecimal quantity = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
 
         // the product entity needed for information
         GenericValue product = null;
         try {
-            product = orderItem.getRelatedOne("Product", false);
+            product = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
         } catch (GenericEntityException e) {
             Debug.logError("Unable to get Product from OrderItem", MODULE);
         }
@@ -1036,7 +1036,7 @@ public class ValueLinkServices {
         try {
             typeFeature = EntityQuery.use(delegator)
                     .from("ProductFeatureAndAppl")
-                    .where("productId", product.get("productId"),
+                    .where("productId", product.get(org.apache.ofbiz.persistence.entity.x.productId),
                             "productFeatureTypeId", "TYPE")
                     .orderBy("-fromDate").filterByDate().queryFirst();
         } catch (GenericEntityException e) {
@@ -1047,11 +1047,11 @@ public class ValueLinkServices {
         if (typeFeature == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingValueLinkFeatureTypeRequested",
-                    UtilMisc.toMap("productId", product.get("productId")), locale));
+                    UtilMisc.toMap("productId", product.get(org.apache.ofbiz.persistence.entity.x.productId)), locale));
         }
 
         // get the VL promo code
-        String promoCode = typeFeature.getString("idCode");
+        String promoCode = typeFeature.getString(org.apache.ofbiz.persistence.entity.x.idCode);
         if (UtilValidate.isEmpty(promoCode)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingValueLinkPromoCodeInvalid", locale));
@@ -1065,7 +1065,7 @@ public class ValueLinkServices {
         try {
             surveyResponse = EntityQuery.use(delegator).from("SurveyResponse")
                     .where("orderId", orderId,
-                            "orderItemSeqId", orderItem.get("orderItemSeqId"),
+                            "orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId),
                             "surveyId", surveyId)
                     .queryFirst();
         } catch (GenericEntityException e) {
@@ -1077,7 +1077,7 @@ public class ValueLinkServices {
         // get the response answers
         List<GenericValue> responseAnswers = null;
         try {
-            responseAnswers = surveyResponse.getRelated("SurveyResponseAnswer", null, null, false);
+            responseAnswers = surveyResponse.getRelated(org.apache.ofbiz.persistence.entity.x.SurveyResponseAnswer, null, null, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -1090,15 +1090,15 @@ public class ValueLinkServices {
             for (GenericValue answer : responseAnswers) {
                 GenericValue question = null;
                 try {
-                    question = answer.getRelatedOne("SurveyQuestion", false);
+                    question = answer.getRelatedOne(org.apache.ofbiz.persistence.entity.x.SurveyQuestion, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "AccountingGiftCertificateNumberCannotFulfillFromSurveyAnswers", locale));
                 }
                 if (question != null) {
-                    String desc = question.getString("description");
-                    String ans = answer.getString("textResponse");  // only support text response types for now
+                    String desc = question.getString(org.apache.ofbiz.persistence.entity.x.description);
+                    String ans = answer.getString(org.apache.ofbiz.persistence.entity.x.textResponse);  // only support text response types for now
                     answerMap.put(desc, ans);
                 }
             }
@@ -1156,8 +1156,8 @@ public class ValueLinkServices {
             vlFulFill.put("merchantId", EntityUtilProperties.getPropertyValue(paymentConfig, "payment.valuelink.merchantId", delegator));
             vlFulFill.put("partyId", partyId);
             vlFulFill.put("orderId", orderId);
-            vlFulFill.put("orderItemSeqId", orderItem.get("orderItemSeqId"));
-            vlFulFill.put("surveyResponseId", surveyResponse.get("surveyResponseId"));
+            vlFulFill.put("orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+            vlFulFill.put("surveyResponseId", surveyResponse.get(org.apache.ofbiz.persistence.entity.x.surveyResponseId));
             vlFulFill.put("cardNumber", activateResult.get("cardNumber"));
             vlFulFill.put("pinNumber", activateResult.get("pin"));
             vlFulFill.put("amount", activateResult.get("amount"));
@@ -1199,7 +1199,7 @@ public class ValueLinkServices {
                 answerMap.put("locale", locale);
 
                 // set the bcc address(s)
-                String bcc = productStoreEmail.getString("bccAddress");
+                String bcc = productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.bccAddress);
                 if (copyMe) {
                     if (UtilValidate.isNotEmpty(bcc)) {
                         bcc = bcc + "," + orderEmails;
@@ -1209,14 +1209,14 @@ public class ValueLinkServices {
                 }
 
                 Map<String, Object> emailCtx = new HashMap<>();
-                emailCtx.put("bodyScreenUri", productStoreEmail.getString("bodyScreenLocation"));
+                emailCtx.put("bodyScreenUri", productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.bodyScreenLocation));
                 emailCtx.put("bodyParameters", answerMap);
                 emailCtx.put("sendTo", sendToEmail);
-                emailCtx.put("contentType", productStoreEmail.get("contentType"));
-                emailCtx.put("sendFrom", productStoreEmail.get("fromAddress"));
-                emailCtx.put("sendCc", productStoreEmail.get("ccAddress"));
+                emailCtx.put("contentType", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.contentType));
+                emailCtx.put("sendFrom", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.fromAddress));
+                emailCtx.put("sendCc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.ccAddress));
                 emailCtx.put("sendBcc", bcc);
-                emailCtx.put("subject", productStoreEmail.getString("subject"));
+                emailCtx.put("subject", productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.subject));
                 emailCtx.put("userLogin", userLogin);
 
                 // send off the email async so we will retry on failed attempts
@@ -1239,17 +1239,17 @@ public class ValueLinkServices {
         // this service should always be called via FULFILLMENT_EXTSYNC
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        GenericValue orderItem = (GenericValue) context.get("orderItem");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue orderItem = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderItem);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // order ID for tracking
-        String orderId = orderItem.getString("orderId");
+        String orderId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId);
 
         // the order header for store info
         GenericValue orderHeader = null;
         try {
-            orderHeader = orderItem.getRelatedOne("OrderHeader", false);
+            orderHeader = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Unable to get OrderHeader from OrderItem", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER,
@@ -1282,7 +1282,7 @@ public class ValueLinkServices {
         GenericValue paymentSetting = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStoreId, "GIFT_CARD", null, true);
         String paymentConfig = null;
         if (paymentSetting != null) {
-            paymentConfig = paymentSetting.getString("paymentPropertiesPath");
+            paymentConfig = paymentSetting.getString(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath);
         }
         if (paymentConfig == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -1293,11 +1293,11 @@ public class ValueLinkServices {
         GenericValue placingParty = orh.getPlacingParty();
         String partyId = null;
         if (placingParty != null) {
-            partyId = placingParty.getString("partyId");
+            partyId = placingParty.getString(org.apache.ofbiz.persistence.entity.x.partyId);
         }
 
         // amount of the gift card reload
-        BigDecimal amount = orderItem.getBigDecimal("unitPrice");
+        BigDecimal amount = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice);
 
         // survey information
         String surveyId = EntityUtilProperties.getPropertyValue(paymentConfig, "payment.giftcert.reload.surveyId", delegator);
@@ -1307,7 +1307,7 @@ public class ValueLinkServices {
         try {
             surveyResponse = EntityQuery.use(delegator).from("SurveyResponse")
                     .where("orderId", orderId,
-                            "orderItemSeqId", orderItem.get("orderItemSeqId"),
+                            "orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId),
                             "surveyId", surveyId).orderBy("-responseDate")
                     .queryFirst();
         } catch (GenericEntityException e) {
@@ -1319,7 +1319,7 @@ public class ValueLinkServices {
         // get the response answers
         List<GenericValue> responseAnswers = null;
         try {
-            responseAnswers = surveyResponse.getRelated("SurveyResponseAnswer", null, null, false);
+            responseAnswers = surveyResponse.getRelated(org.apache.ofbiz.persistence.entity.x.SurveyResponseAnswer, null, null, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -1332,15 +1332,15 @@ public class ValueLinkServices {
             for (GenericValue answer : responseAnswers) {
                 GenericValue question = null;
                 try {
-                    question = answer.getRelatedOne("SurveyQuestion", false);
+                    question = answer.getRelatedOne(org.apache.ofbiz.persistence.entity.x.SurveyQuestion, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "AccountingGiftCertificateNumberCannotFulfillFromSurveyAnswers", locale));
                 }
                 if (question != null) {
-                    String desc = question.getString("description");
-                    String ans = answer.getString("textResponse");  // only support text response types for now
+                    String desc = question.getString(org.apache.ofbiz.persistence.entity.x.description);
+                    String ans = answer.getString(org.apache.ofbiz.persistence.entity.x.textResponse);  // only support text response types for now
                     answerMap.put(desc, ans);
                 }
             }
@@ -1377,8 +1377,8 @@ public class ValueLinkServices {
         vlFulFill.put("merchantId", EntityUtilProperties.getPropertyValue(paymentConfig, "payment.valuelink.merchantId", delegator));
         vlFulFill.put("partyId", partyId);
         vlFulFill.put("orderId", orderId);
-        vlFulFill.put("orderItemSeqId", orderItem.get("orderItemSeqId"));
-        vlFulFill.put("surveyResponseId", surveyResponse.get("surveyResponseId"));
+        vlFulFill.put("orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+        vlFulFill.put("surveyResponseId", surveyResponse.get(org.apache.ofbiz.persistence.entity.x.surveyResponseId));
         vlFulFill.put("cardNumber", cardNumber);
         vlFulFill.put("pinNumber", pinNumber);
         vlFulFill.put("amount", amount);
@@ -1443,14 +1443,14 @@ public class ValueLinkServices {
             Map<String, Object> emailCtx = new HashMap<>();
             answerMap.put("locale", locale);
 
-            emailCtx.put("bodyScreenUri", productStoreEmail.getString("bodyScreenLocation"));
+            emailCtx.put("bodyScreenUri", productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.bodyScreenLocation));
             emailCtx.put("bodyParameters", answerMap);
             emailCtx.put("sendTo", orh.getOrderEmailString());
-            emailCtx.put("contentType", productStoreEmail.get("contentType"));
-            emailCtx.put("sendFrom", productStoreEmail.get("fromAddress"));
-            emailCtx.put("sendCc", productStoreEmail.get("ccAddress"));
-            emailCtx.put("sendBcc", productStoreEmail.get("bccAddress"));
-            emailCtx.put("subject", productStoreEmail.getString("subject"));
+            emailCtx.put("contentType", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.contentType));
+            emailCtx.put("sendFrom", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.fromAddress));
+            emailCtx.put("sendCc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.ccAddress));
+            emailCtx.put("sendBcc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.bccAddress));
+            emailCtx.put("subject", productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.subject));
             emailCtx.put("userLogin", userLogin);
 
             // send off the email async so we will retry on failed attempts

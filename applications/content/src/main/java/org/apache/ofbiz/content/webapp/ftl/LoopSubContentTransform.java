@@ -97,17 +97,17 @@ public class LoopSubContentTransform implements TemplateTransformModel {
         ctx.put("subContentDataResourceView", subContentDataResourceView);
         GenericValue electronicText = null;
         try {
-            electronicText = subContentDataResourceView.getRelatedOne("ElectronicText", false);
+            electronicText = subContentDataResourceView.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ElectronicText, false);
         } catch (GenericEntityException e) {
             throw new RuntimeException(e.getMessage());
         }
 
-        String dataResourceId = (String) subContentDataResourceView.get("drDataResourceId");
-        String subContentIdSub = (String) subContentDataResourceView.get("contentId"); // in ContentAssocDataResourceViewTo
+        String dataResourceId = (String) subContentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.drDataResourceId);
+        String subContentIdSub = (String) subContentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.contentId); // in ContentAssocDataResourceViewTo
         // This order is taken so that the dataResourceType can be overridden in the transform arguments.
         String subDataResourceTypeId = (String) ctx.get("subDataResourceTypeId");
         if (UtilValidate.isEmpty(subDataResourceTypeId)) {
-            subDataResourceTypeId = (String) subContentDataResourceView.get("drDataResourceTypeId");
+            subDataResourceTypeId = (String) subContentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.drDataResourceTypeId);
             // TODO: If this value is still empty then it is probably necessary to get a value from
             // the parent context. But it will already have one and it is the same context that is
             // being passed.
@@ -115,13 +115,13 @@ public class LoopSubContentTransform implements TemplateTransformModel {
         // This order is taken so that the mimeType can be overridden in the transform arguments.
         String mimeTypeId = (String) ctx.get("mimeTypeId");
         if (UtilValidate.isEmpty(mimeTypeId)) {
-            mimeTypeId = (String) subContentDataResourceView.get("mimeTypeId");
+            mimeTypeId = (String) subContentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
             String parentContentId = (String) ctx.get("contentId");
             if (UtilValidate.isEmpty(mimeTypeId) && UtilValidate.isNotEmpty(parentContentId)) { // will need these below
                 try {
                     GenericValue parentContent = EntityQuery.use(delegator).from("Content").where("contentId", parentContentId).queryOne();
                     if (parentContent != null) {
-                        mimeTypeId = (String) parentContent.get("mimeTypeId");
+                        mimeTypeId = (String) parentContent.get(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
                         ctx.put("parentContent", parentContent);
                     }
                 } catch (GenericEntityException e) {
@@ -134,7 +134,7 @@ public class LoopSubContentTransform implements TemplateTransformModel {
         // This is what the FM template will see.
         ctx.put("subContentDataResourceView", subContentDataResourceView);
         if (electronicText != null) {
-            ctx.put("textData", electronicText.get("textData"));
+            ctx.put("textData", electronicText.get(org.apache.ofbiz.persistence.entity.x.textData));
         } else {
             ctx.put("textData", null);
         }

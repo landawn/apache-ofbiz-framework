@@ -193,7 +193,7 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
         if (HtmlWidgetRenderer.NAMED_BORDER_TYPE != ModelWidget.NamedBorderType.NONE && section.isMainSection()) {
             // render start of named border for screen
             writer.append(HtmlWidgetRenderer.beginNamedBorder("Screen",
-                    section.getBoundaryCommentName(), ((HttpServletRequest) context.get("request")).getContextPath()));
+                    section.getBoundaryCommentName(), ((HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request)).getContextPath()));
         }
     }
     @Override
@@ -219,13 +219,13 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
         String containerId = container.getId(context);
         String containerType = container.getType(context);
         String autoUpdateTarget = container.getAutoUpdateTargetExdr(context);
-        HttpServletRequest request = (HttpServletRequest) context.get("request");
+        HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
         String autoUpdateLink = "";
         if (UtilValidate.isNotEmpty(autoUpdateTarget) && UtilHttp.isJavaScriptEnabled(request)) {
             if (UtilValidate.isEmpty(containerId)) {
                 containerId = getNextElementId();
             }
-            HttpServletResponse response = (HttpServletResponse) context.get("response");
+            HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
             RequestHandler rh = RequestHandler.from(request);
             autoUpdateLink = rh.makeLink(request, response, autoUpdateTarget);
         }
@@ -264,8 +264,8 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
 
     @Override
     public void renderLink(Appendable writer, Map<String, Object> context, ModelScreenWidget.ScreenLink link) throws IOException {
-        HttpServletResponse response = (HttpServletResponse) context.get("response");
-        HttpServletRequest request = (HttpServletRequest) context.get("request");
+        HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
+        HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
         VisualTheme visualTheme = UtilHttp.getVisualTheme(request);
         ModelTheme modelTheme = visualTheme.getModelTheme();
         String targetWindow = link.getTargetWindow(context);
@@ -366,8 +366,8 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
         boolean fullPath = false;
         boolean secure = false;
         boolean encode = false;
-        HttpServletResponse response = (HttpServletResponse) context.get("response");
-        HttpServletRequest request = (HttpServletRequest) context.get("request");
+        HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
+        HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
         String urlString = "";
         if (urlMode != null && "intra-app".equalsIgnoreCase(urlMode)) {
             if (request != null && response != null) {
@@ -417,13 +417,13 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
 
     @Override
     public void renderContentBody(Appendable writer, Map<String, Object> context, ModelScreenWidget.Content content) throws IOException {
-        Locale locale = UtilMisc.ensureLocale(context.get("locale"));
+        Locale locale = UtilMisc.ensureLocale(context.get(org.apache.ofbiz.persistence.entity.x.locale));
         String mimeTypeId = "text/html";
         String expandedContentId = content.getContentId(context);
         String expandedDataResourceId = content.getDataResourceId(context);
         String renderedContent = null;
-        LocalDispatcher dispatcher = (LocalDispatcher) context.get("dispatcher");
-        Delegator delegator = (Delegator) context.get("delegator");
+        LocalDispatcher dispatcher = (LocalDispatcher) context.get(org.apache.ofbiz.persistence.entity.x.dispatcher);
+        Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
 
         // make a new map for content rendering; so our current map does not get clobbered
         Map<String, Object> contentContext = new HashMap<>();
@@ -493,8 +493,8 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
         }
 
         if (UtilValidate.isNotEmpty(editRequest) && "true".equals(enableEditValue)) {
-            HttpServletResponse response = (HttpServletResponse) context.get("response");
-            HttpServletRequest request = (HttpServletRequest) context.get("request");
+            HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
+            HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
             if (request != null && response != null) {
                 if (editRequest.indexOf('?') < 0) {
                     editRequest += "?";
@@ -521,8 +521,8 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
         String dataResourceId = content.getDataResourceId(context);
         String urlString = "/ViewSimpleContent?dataResourceId=" + dataResourceId;
         String fullUrlString = "";
-        HttpServletRequest request = (HttpServletRequest) context.get("request");
-        HttpServletResponse response = (HttpServletResponse) context.get("response");
+        HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
+        HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
         if (request != null && response != null) {
             RequestHandler rh = RequestHandler.from(request);
             fullUrlString = rh.makeLink(request, response, urlString, true, false, false);
@@ -550,12 +550,12 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
 
     @Override
     public void renderSubContentBody(Appendable writer, Map<String, Object> context, ModelScreenWidget.SubContent content) throws IOException {
-        Locale locale = UtilMisc.ensureLocale(context.get("locale"));
+        Locale locale = UtilMisc.ensureLocale(context.get(org.apache.ofbiz.persistence.entity.x.locale));
         String mimeTypeId = "text/html";
         String expandedContentId = content.getContentId(context);
         String expandedMapKey = content.getMapKey(context);
         String renderedContent = "";
-        LocalDispatcher dispatcher = (LocalDispatcher) context.get("dispatcher");
+        LocalDispatcher dispatcher = (LocalDispatcher) context.get(org.apache.ofbiz.persistence.entity.x.dispatcher);
 
         // create a new map for the content rendering; so our current context does not get overwritten!
         Map<String, Object> contentContext = new HashMap<>();
@@ -605,8 +605,8 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
             editMode += " Image";
         }
         if (UtilValidate.isNotEmpty(editRequest) && "true".equals(enableEditValue)) {
-            HttpServletResponse response = (HttpServletResponse) context.get("response");
-            HttpServletRequest request = (HttpServletRequest) context.get("request");
+            HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
+            HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
             if (request != null && response != null) {
                 if (editRequest.indexOf('?') < 0) {
                     editRequest += "?";
@@ -635,8 +635,8 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
     @Override
     public void renderScreenletBegin(Appendable writer, Map<String, Object> context, boolean collapsed, ModelScreenWidget.Screenlet screenlet)
             throws IOException {
-        HttpServletRequest request = (HttpServletRequest) context.get("request");
-        HttpServletResponse response = (HttpServletResponse) context.get("response");
+        HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
+        HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
         VisualTheme visualTheme = UtilHttp.getVisualTheme(request);
         ModelTheme modelTheme = visualTheme.getModelTheme();
         boolean javaScriptEnabled = UtilHttp.isJavaScriptEnabled(request);
@@ -658,8 +658,8 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
             showMore = true;
             if (collapsible) {
                 this.getNextElementId();
-                Map<String, Object> uiLabelMap = UtilGenerics.cast(context.get("uiLabelMap"));
-                Map<String, Object> paramMap = UtilGenerics.cast(context.get("requestParameters"));
+                Map<String, Object> uiLabelMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.uiLabelMap));
+                Map<String, Object> paramMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.requestParameters));
                 Map<String, Object> requestParameters = new HashMap<>(paramMap);
                 if (uiLabelMap != null) {
                     expandToolTip = (String) uiLabelMap.get("CommonExpand");
@@ -673,13 +673,13 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
             }
             StringWriter sb = new StringWriter();
             if (navMenu != null) {
-                MenuStringRenderer savedRenderer = (MenuStringRenderer) context.get("menuStringRenderer");
+                MenuStringRenderer savedRenderer = (MenuStringRenderer) context.get(org.apache.ofbiz.persistence.entity.x.menuStringRenderer);
                 MenuStringRenderer renderer;
                 try {
                     renderer = new MacroMenuRenderer(modelTheme.getMenuRendererLocation("screen"), request, response);
-                    context.put("menuStringRenderer", renderer);
+                    context.put(org.apache.ofbiz.persistence.entity.x.menuStringRenderer, renderer);
                     navMenu.renderWidgetString(sb, context, this);
-                    context.put("menuStringRenderer", savedRenderer);
+                    context.put(org.apache.ofbiz.persistence.entity.x.menuStringRenderer, savedRenderer);
                 } catch (TemplateException e) {
                     Debug.logError(e, MODULE);
                 }
@@ -716,20 +716,20 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
     public void renderScreenletSubWidget(Appendable writer, Map<String, Object> context, ModelScreenWidget subWidget,
                                          ModelScreenWidget.Screenlet screenlet) throws GeneralException, IOException {
         if (subWidget.equals(screenlet.getNavigationForm())) {
-            HttpServletRequest request = (HttpServletRequest) context.get("request");
-            HttpServletResponse response = (HttpServletResponse) context.get("response");
+            HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
+            HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
             if (request != null && response != null) {
                 VisualTheme visualTheme = UtilHttp.getVisualTheme(request);
                 ModelTheme modelTheme = visualTheme.getModelTheme();
-                Map<String, Object> globalCtx = UtilGenerics.cast(context.get("globalContext"));
+                Map<String, Object> globalCtx = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.globalContext));
                 globalCtx.put("NO_PAGINATOR", true);
-                FormStringRenderer savedRenderer = (FormStringRenderer) context.get("formStringRenderer");
+                FormStringRenderer savedRenderer = (FormStringRenderer) context.get(org.apache.ofbiz.persistence.entity.x.formStringRenderer);
                 MacroFormRenderer renderer = new MacroFormRenderer(
                         modelTheme.getFormRendererLocation("screen"), request, response);
                 renderer.setRenderPagination(false);
-                context.put("formStringRenderer", renderer);
+                context.put(org.apache.ofbiz.persistence.entity.x.formStringRenderer, renderer);
                 subWidget.renderWidgetString(writer, context, this);
-                context.put("formStringRenderer", savedRenderer);
+                context.put(org.apache.ofbiz.persistence.entity.x.formStringRenderer, savedRenderer);
             }
         } else {
             subWidget.renderWidgetString(writer, context, this);
@@ -748,8 +748,8 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
      * @throws IOException the io exception
      */
     protected void renderScreenletPaginateMenu(Appendable writer, Map<String, Object> context, ModelScreenWidget.Form form) throws IOException {
-        HttpServletResponse response = (HttpServletResponse) context.get("response");
-        HttpServletRequest request = (HttpServletRequest) context.get("request");
+        HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
+        HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
         ModelForm modelForm;
         try {
             modelForm = form.getModelForm(context);
@@ -781,7 +781,7 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
         }
 
         // needed for the "Page" and "rows" labels
-        Map<String, String> uiLabelMap = UtilGenerics.cast(context.get("uiLabelMap"));
+        Map<String, String> uiLabelMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.uiLabelMap));
         String ofLabel = "";
         if (uiLabelMap == null) {
             Debug.logWarning("Could not find uiLabelMap in context", MODULE);
@@ -799,7 +799,7 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
         }
 
         RequestHandler rh = RequestHandler.from(request);
-        Object obj = context.get("requestParameters");
+        Object obj = context.get(org.apache.ofbiz.persistence.entity.x.requestParameters);
 
         Map<String, Object> inputFields = (obj instanceof Map) ? UtilGenerics.cast(obj) : null;
         // strip out any multi form fields if the form is of type multi
@@ -890,7 +890,7 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
         String originalPortalPageId = portalPage.getOriginalPortalPageId(context);
         String confMode = portalPage.getConfMode(context);
 
-        Map<String, String> uiLabelMap = UtilGenerics.cast(context.get("uiLabelMap"));
+        Map<String, String> uiLabelMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.uiLabelMap));
         String addColumnLabel = "";
         String addColumnHint = "";
         if (uiLabelMap == null) {
@@ -929,12 +929,12 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
                                             GenericValue portalPageColumn) throws GeneralException, IOException {
         String portalPageId = portalPage.getActualPortalPageId(context);
         String originalPortalPageId = portalPage.getOriginalPortalPageId(context);
-        String columnSeqId = portalPageColumn.getString("columnSeqId");
-        String columnWidthPercentage = portalPageColumn.getString("columnWidthPercentage");
-        String columnWidthPixels = portalPageColumn.getString("columnWidthPixels");
+        String columnSeqId = portalPageColumn.getString(org.apache.ofbiz.persistence.entity.x.columnSeqId);
+        String columnWidthPercentage = portalPageColumn.getString(org.apache.ofbiz.persistence.entity.x.columnWidthPercentage);
+        String columnWidthPixels = portalPageColumn.getString(org.apache.ofbiz.persistence.entity.x.columnWidthPixels);
         String confMode = portalPage.getConfMode(context);
 
-        Map<String, String> uiLabelMap = UtilGenerics.cast(context.get("uiLabelMap"));
+        Map<String, String> uiLabelMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.uiLabelMap));
         String delColumnLabel = "";
         String delColumnHint = "";
         String addPortletLabel = "";
@@ -1003,21 +1003,21 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
                                              GenericValue portalPortlet) throws GeneralException, IOException {
         String portalPageId = portalPage.getActualPortalPageId(context);
         String originalPortalPageId = portalPage.getOriginalPortalPageId(context);
-        String portalPortletId = portalPortlet.getString("portalPortletId");
-        String portletSeqId = portalPortlet.getString("portletSeqId");
-        String columnSeqId = portalPortlet.getString("columnSeqId");
+        String portalPortletId = portalPortlet.getString(org.apache.ofbiz.persistence.entity.x.portalPortletId);
+        String portletSeqId = portalPortlet.getString(org.apache.ofbiz.persistence.entity.x.portletSeqId);
+        String columnSeqId = portalPortlet.getString(org.apache.ofbiz.persistence.entity.x.columnSeqId);
         String confMode = portalPage.getConfMode(context);
-        String editFormName = portalPortlet.getString("editFormName");
-        String editFormLocation = portalPortlet.getString("editFormLocation");
+        String editFormName = portalPortlet.getString(org.apache.ofbiz.persistence.entity.x.editFormName);
+        String editFormLocation = portalPortlet.getString(org.apache.ofbiz.persistence.entity.x.editFormLocation);
 
-        String prevPortletId = (String) context.get("prevPortletId");
-        String prevPortletSeqId = (String) context.get("prevPortletSeqId");
-        String nextPortletId = (String) context.get("nextPortletId");
-        String nextPortletSeqId = (String) context.get("nextPortletSeqId");
-        String prevColumnSeqId = (String) context.get("prevColumnSeqId");
-        String nextColumnSeqId = (String) context.get("nextColumnSeqId");
+        String prevPortletId = (String) context.get(org.apache.ofbiz.persistence.entity.x.prevPortletId);
+        String prevPortletSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.prevPortletSeqId);
+        String nextPortletId = (String) context.get(org.apache.ofbiz.persistence.entity.x.nextPortletId);
+        String nextPortletSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.nextPortletSeqId);
+        String prevColumnSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.prevColumnSeqId);
+        String nextColumnSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.nextColumnSeqId);
 
-        Map<String, String> uiLabelMap = UtilGenerics.cast(context.get("uiLabelMap"));
+        Map<String, String> uiLabelMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.uiLabelMap));
         String delPortletHint = "";
         String editAttributeHint = "";
         if (uiLabelMap == null) {
@@ -1081,15 +1081,15 @@ public class MacroScreenRenderer implements ScreenStringRenderer {
     @Override
     public void renderPortalPagePortletBody(Appendable writer, Map<String, Object> context, ModelScreenWidget.PortalPage portalPage,
                                             GenericValue portalPortlet) throws GeneralException, IOException {
-        String portalPortletId = portalPortlet.getString("portalPortletId");
-        String screenName = portalPortlet.getString("screenName");
-        String screenLocation = portalPortlet.getString("screenLocation");
+        String portalPortletId = portalPortlet.getString(org.apache.ofbiz.persistence.entity.x.portalPortletId);
+        String screenName = portalPortlet.getString(org.apache.ofbiz.persistence.entity.x.screenName);
+        String screenLocation = portalPortlet.getString(org.apache.ofbiz.persistence.entity.x.screenLocation);
 
         ModelScreen modelScreen = null;
         if (UtilValidate.isNotEmpty(screenName) && UtilValidate.isNotEmpty(screenLocation)) {
             try {
-                context.put("portalPortletId", portalPortlet.getString("portalPortletId"));
-                context.put("portletSeqId", portalPortlet.getString("portletSeqId"));
+                context.put(org.apache.ofbiz.persistence.entity.x.portalPortletId, portalPortlet.getString(org.apache.ofbiz.persistence.entity.x.portalPortletId));
+                context.put(org.apache.ofbiz.persistence.entity.x.portletSeqId, portalPortlet.getString(org.apache.ofbiz.persistence.entity.x.portletSeqId));
                 modelScreen = ScreenFactory.getScreenFromLocation(screenLocation, screenName);
             } catch (IOException | SAXException | ParserConfigurationException e) {
                 String errMsg = "Error rendering portlet ID [" + portalPortletId + "]: " + e.toString();

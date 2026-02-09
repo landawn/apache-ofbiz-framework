@@ -58,17 +58,17 @@ public class PartyRelationshipServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         try {
             List<GenericValue> partyRelationShipList = PartyRelationshipHelper.getActivePartyRelationships(delegator, context);
             if (UtilValidate.isEmpty(partyRelationShipList)) { // If already exists and active nothing to do: keep the current one
-                String partyId = (String) context.get("partyId");
-                String partyIdFrom = (String) context.get("partyIdFrom");
-                String partyIdTo = (String) context.get("partyIdTo");
-                String roleTypeIdFrom = (String) context.get("roleTypeIdFrom");
-                String roleTypeIdTo = (String) context.get("roleTypeIdTo");
-                String partyRelationshipTypeId = (String) context.get("partyRelationshipTypeId");
+                String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+                String partyIdFrom = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyIdFrom);
+                String partyIdTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyIdTo);
+                String roleTypeIdFrom = (String) context.get(org.apache.ofbiz.persistence.entity.x.roleTypeIdFrom);
+                String roleTypeIdTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.roleTypeIdTo);
+                String partyRelationshipTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyRelationshipTypeId);
 
                 // Before creating the partyRelationShip, create the partyRoles if they don't exist
                 GenericValue partyToRole = null;

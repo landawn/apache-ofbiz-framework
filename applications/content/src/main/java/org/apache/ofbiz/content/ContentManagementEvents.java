@@ -162,14 +162,14 @@ public class ContentManagementEvents {
         String authorId = null;
         GenericValue authorContent = ContentManagementWorker.getAuthorContent(delegator, targContentId);
         if (authorContent != null) {
-            authorId = authorContent.getString("contentId");
+            authorId = authorContent.getString(org.apache.ofbiz.persistence.entity.x.contentId);
         } else {
             request.setAttribute("_ERROR_MESSAGE_", "authorContent is empty.");
             return "error";
         }
 
         // Determine if user is owner of target content
-        String userLoginId = userLogin.getString("userLoginId");
+        String userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
         List<String> roleTypeList = null;
         if (authorId != null && userLoginId != null && authorId.equals(userLoginId)) {
             roles = "OWNER";
@@ -241,7 +241,7 @@ public class ContentManagementEvents {
                                             "thruDate", null)
                                     .queryList();
                             for (GenericValue cAssoc : oldActiveValues) {
-                                cAssoc.set("thruDate", nowTimestamp);
+                                cAssoc.set(org.apache.ofbiz.persistence.entity.x.thruDate, nowTimestamp);
                                 cAssoc.store();
                             }
                         }
@@ -284,7 +284,7 @@ public class ContentManagementEvents {
                         if (!statusIdUpdated) {
                             try {
                                 GenericValue targContent = EntityQuery.use(delegator).from("Content").where("contentId", targContentId).queryOne();
-                                targContent.set("statusId", "CTNT_PUBLISHED");
+                                targContent.set(org.apache.ofbiz.persistence.entity.x.statusId, "CTNT_PUBLISHED");
                                 targContent.store();
                                 statusIdUpdated = true;
                             } catch (GenericEntityException e) {
@@ -303,7 +303,7 @@ public class ContentManagementEvents {
                                     "thruDate", null)
                             .queryList();
                     for (GenericValue cAssoc : oldActiveValues) {
-                        cAssoc.set("thruDate", nowTimestamp);
+                        cAssoc.set(org.apache.ofbiz.persistence.entity.x.thruDate, nowTimestamp);
                         cAssoc.store();
                     }
                 }

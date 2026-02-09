@@ -107,7 +107,7 @@ public class EntityDataLoadContainer implements Container {
         if ("all-tenants".equals(overrideDelegator)) {
             // load data for all tenants
             for (GenericValue tenant : getTenantList(delegatorNameProp)) {
-                String tenantDelegator = delegatorNameProp.value() + "#" + tenant.getString("tenantId");
+                String tenantDelegator = delegatorNameProp.value() + "#" + tenant.getString(org.apache.ofbiz.persistence.entity.x.tenantId);
                 loadDataForDelegator(loadDataProps, configuration, delegatorNameProp, tenantDelegator);
             }
         } else {
@@ -278,8 +278,8 @@ public class EntityDataLoadContainer implements Container {
 
         for (ComponentConfig config : allComponents) {
             GenericValue componentEntry = baseDelegator.makeValue("Component");
-            componentEntry.set("componentName", config.getComponentName());
-            componentEntry.set("rootLocation", config.rootLocation().toString());
+            componentEntry.set(org.apache.ofbiz.persistence.entity.x.componentName, config.getComponentName());
+            componentEntry.set(org.apache.ofbiz.persistence.entity.x.rootLocation, config.rootLocation().toString());
             try {
                 GenericValue componentCheck = EntityQuery.use(baseDelegator)
                         .from("Component")

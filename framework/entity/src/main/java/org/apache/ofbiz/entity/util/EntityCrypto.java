@@ -177,11 +177,11 @@ public final class EntityCrypto {
         } catch (GenericEntityException e) {
             throw new EntityCryptoException(e);
         }
-        if (keyValue == null || keyValue.get("keyText") == null) {
+        if (keyValue == null || keyValue.get(org.apache.ofbiz.persistence.entity.x.keyText) == null) {
             return null;
         }
         try {
-            byte[] keyBytes = handler.decodeKeyBytes(keyValue.getString("keyText"));
+            byte[] keyBytes = handler.decodeKeyBytes(keyValue.getString(org.apache.ofbiz.persistence.entity.x.keyText));
             keyMap.putIfAbsent(keyMapName, keyBytes);
             // Do not remove the next line, it's there to handle the
             // case of multiple threads trying to find the same key
@@ -199,11 +199,11 @@ public final class EntityCrypto {
         Key key = handler.generateNewKey();
         final GenericValue newValue = delegator.makeValue("EntityKeyStore");
         try {
-            newValue.set("keyText", handler.encodeKey(key.getEncoded()));
+            newValue.set(org.apache.ofbiz.persistence.entity.x.keyText, handler.encodeKey(key.getEncoded()));
         } catch (GeneralException e) {
             throw new EntityCryptoException(e);
         }
-        newValue.set("keyName", hashedKeyName);
+        newValue.set(org.apache.ofbiz.persistence.entity.x.keyName, hashedKeyName);
 
         try {
             TransactionUtil.doNewTransaction(() -> {

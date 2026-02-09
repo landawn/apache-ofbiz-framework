@@ -64,27 +64,27 @@ public class ProductFeatureServices {
     public static Map<String, Object> getProductFeaturesByType(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> results;
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         /* because we might need to search either for product features or for product features of a product, the search code has to be generic.
          * we will determine which entity and field to search on based on what the user has supplied us with.
          */
-        String valueToSearch = (String) context.get("productFeatureCategoryId");
-        String productFeatureApplTypeId = (String) context.get("productFeatureApplTypeId");
+        String valueToSearch = (String) context.get(org.apache.ofbiz.persistence.entity.x.productFeatureCategoryId);
+        String productFeatureApplTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productFeatureApplTypeId);
 
         String entityToSearch = "ProductFeature";
         String fieldToSearch = "productFeatureCategoryId";
         List<String> orderBy = UtilMisc.toList("productFeatureTypeId", "description");
 
-        if (valueToSearch == null && context.get("productFeatureGroupId") != null) {
+        if (valueToSearch == null && context.get(org.apache.ofbiz.persistence.entity.x.productFeatureGroupId) != null) {
             entityToSearch = "ProductFeatureGroupAndAppl";
             fieldToSearch = "productFeatureGroupId";
-            valueToSearch = (String) context.get("productFeatureGroupId");
+            valueToSearch = (String) context.get(org.apache.ofbiz.persistence.entity.x.productFeatureGroupId);
             // use same orderBy as with a productFeatureCategoryId search
-        } else if (valueToSearch == null && context.get("productId") != null) {
+        } else if (valueToSearch == null && context.get(org.apache.ofbiz.persistence.entity.x.productId) != null) {
             entityToSearch = "ProductFeatureAndAppl";
             fieldToSearch = "productId";
-            valueToSearch = (String) context.get("productId");
+            valueToSearch = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
             orderBy = UtilMisc.toList("sequenceNum", "productFeatureApplTypeId", "productFeatureTypeId", "description");
         }
 
@@ -104,7 +104,7 @@ public class ProductFeatureServices {
             List<String> featureTypes = new LinkedList<>();
             Map<String, List<GenericValue>> featuresByType = new LinkedHashMap<>();
             for (GenericValue feature: allFeatures) {
-                String featureType = feature.getString("productFeatureTypeId");
+                String featureType = feature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId);
                 if (!featureTypes.contains(featureType)) {
                     featureTypes.add(featureType);
                 }
@@ -134,8 +134,8 @@ public class ProductFeatureServices {
         Map<String, Object> results;
         Delegator delegator = dctx.getDelegator();
 
-        String productId = (String) context.get("productId");
-        List<String> curProductFeatureAndAppls = UtilGenerics.cast(context.get("productFeatureAppls"));
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        List<String> curProductFeatureAndAppls = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.productFeatureAppls));
         List<String> existingVariantProductIds = new LinkedList<>();
 
         try {
@@ -151,7 +151,7 @@ public class ProductFeatureServices {
                 //for each associated product, if it has all standard features, display it's productId
                 boolean hasAllFeatures = true;
                 for (String productFeatureAndAppl: curProductFeatureAndAppls) {
-                    Map<String, String> findByMap = UtilMisc.toMap("productId", productAssoc.getString("productIdTo"),
+                    Map<String, String> findByMap = UtilMisc.toMap("productId", productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo),
                             "productFeatureId", productFeatureAndAppl,
                             "productFeatureApplTypeId", "STANDARD_FEATURE");
 
@@ -164,7 +164,7 @@ public class ProductFeatureServices {
                 }
                 if (hasAllFeatures) {
                     // add to list of existing variants: productId=productAssoc.productIdTo
-                    existingVariantProductIds.add(productAssoc.getString("productIdTo"));
+                    existingVariantProductIds.add(productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo));
                 }
             }
             results = ServiceUtil.returnSuccess();
@@ -186,7 +186,7 @@ public class ProductFeatureServices {
         Map<String, Object> results;
         LocalDispatcher dispatcher = dctx.getDispatcher();
 
-        String productId = (String) context.get("productId");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
 
         try {
             Map<String, Object> featuresResults = dispatcher.runSync("getProductFeaturesByType", UtilMisc.toMap("productId", productId));
@@ -222,17 +222,17 @@ public class ProductFeatureServices {
                 // existing list of features and id code or from scratch.
                 if (combinations.isEmpty()) {
                     for (GenericValue currentFeature: currentFeatures) {
-                        if ("SELECTABLE_FEATURE".equals(currentFeature.getString("productFeatureApplTypeId"))) {
+                        if ("SELECTABLE_FEATURE".equals(currentFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureApplTypeId))) {
                             Map<String, Object> newCombination = new HashMap<>();
                             List<GenericValue> newFeatures = new LinkedList<>();
                             List<String> newFeatureIds = new LinkedList<>();
-                            if (currentFeature.getString("idCode") != null) {
-                                newCombination.put("defaultVariantProductId", productId + currentFeature.getString("idCode"));
+                            if (currentFeature.getString(org.apache.ofbiz.persistence.entity.x.idCode) != null) {
+                                newCombination.put("defaultVariantProductId", productId + currentFeature.getString(org.apache.ofbiz.persistence.entity.x.idCode));
                             } else {
                                 newCombination.put("defaultVariantProductId", productId);
                             }
                             newFeatures.add(currentFeature);
-                            newFeatureIds.add(currentFeature.getString("productFeatureId"));
+                            newFeatureIds.add(currentFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId));
                             newCombination.put("curProductFeatureAndAppls", newFeatures);
                             newCombination.put("curProductFeatureIds", newFeatureIds);
                             newCombinations.add(newCombination);
@@ -241,21 +241,21 @@ public class ProductFeatureServices {
                 } else {
                     for (Map<String, Object> combination: combinations) {
                         for (GenericValue currentFeature: currentFeatures) {
-                            if ("SELECTABLE_FEATURE".equals(currentFeature.getString("productFeatureApplTypeId"))) {
+                            if ("SELECTABLE_FEATURE".equals(currentFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureApplTypeId))) {
                                 Map<String, Object> newCombination = new HashMap<>();
                                 // .clone() is important, or you'll keep adding to the same List for all the variants
                                 // have to cast twice: once from get() and once from clone()
                                 List<GenericValue> newFeatures = UtilMisc.makeListWritable(UtilGenerics.cast(combination
                                         .get("curProductFeatureAndAppls")));
                                 List<String> newFeatureIds = UtilMisc.makeListWritable(UtilGenerics.cast(combination.get("curProductFeatureIds")));
-                                if (currentFeature.getString("idCode") != null) {
+                                if (currentFeature.getString(org.apache.ofbiz.persistence.entity.x.idCode) != null) {
                                     newCombination.put("defaultVariantProductId", combination.get("defaultVariantProductId")
-                                            + currentFeature.getString("idCode"));
+                                            + currentFeature.getString(org.apache.ofbiz.persistence.entity.x.idCode));
                                 } else {
                                     newCombination.put("defaultVariantProductId", combination.get("defaultVariantProductId"));
                                 }
                                 newFeatures.add(currentFeature);
-                                newFeatureIds.add(currentFeature.getString("productFeatureId"));
+                                newFeatureIds.add(currentFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId));
                                 newCombination.put("curProductFeatureAndAppls", newFeatures);
                                 newCombination.put("curProductFeatureIds", newFeatureIds);
                                 newCombinations.add(newCombination);
@@ -303,9 +303,9 @@ public class ProductFeatureServices {
         Map<String, Object> results = new HashMap<>();
         LocalDispatcher dispatcher = dctx.getDispatcher();
 
-        List<GenericValue> productFeatures = UtilGenerics.cast(context.get("productFeatures"));
-        String productCategoryId = (String) context.get("productCategoryId");
-        Locale locale = (Locale) context.get("locale");
+        List<GenericValue> productFeatures = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.productFeatures));
+        String productCategoryId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productCategoryId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // get all the product members of the product category
         Map<String, Object> result;
@@ -321,7 +321,7 @@ public class ProductFeatureServices {
             // construct a Map of productFeatureTypeId -> productFeatureId from the productFeatures List
             Map<String, String> featuresByType = new HashMap<>();
             for (GenericValue nextFeature: productFeatures) {
-                featuresByType.put(nextFeature.getString("productFeatureTypeId"), nextFeature.getString("productFeatureId"));
+                featuresByType.put(nextFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId), nextFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId));
             }
 
             List<GenericValue> products = new LinkedList<>(); // final list of variant products
@@ -329,10 +329,10 @@ public class ProductFeatureServices {
                 // find variants for each member product of the category
 
                 try {
-                    result = dispatcher.runSync("getProductVariant", UtilMisc.toMap("productId", memberProduct.getString("productId"),
+                    result = dispatcher.runSync("getProductVariant", UtilMisc.toMap("productId", memberProduct.getString(org.apache.ofbiz.persistence.entity.x.productId),
                             "selectedFeatures", featuresByType));
                 } catch (GenericServiceException ex) {
-                    Debug.logError("Cannot get product variants for " + memberProduct.getString("productId") + " due to error: "
+                    Debug.logError("Cannot get product variants for " + memberProduct.getString(org.apache.ofbiz.persistence.entity.x.productId) + " due to error: "
                             + ex.getMessage(), MODULE);
                     return ServiceUtil.returnError(ex.getMessage());
                 }
@@ -341,7 +341,7 @@ public class ProductFeatureServices {
                 if ((variantProducts != null) && (!variantProducts.isEmpty())) {
                     products.addAll(variantProducts);
                 } else {
-                    Debug.logWarning("Product " + memberProduct.getString("productId") + " did not have any variants for the given features", MODULE);
+                    Debug.logWarning("Product " + memberProduct.getString(org.apache.ofbiz.persistence.entity.x.productId) + " did not have any variants for the given features", MODULE);
                 }
             }
 

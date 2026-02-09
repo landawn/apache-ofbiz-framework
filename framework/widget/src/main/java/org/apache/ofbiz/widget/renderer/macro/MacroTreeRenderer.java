@@ -122,7 +122,7 @@ public class MacroTreeRenderer implements TreeStringRenderer {
     @Override
     public void renderNodeBegin(Appendable writer, Map<String, Object> context, ModelTree.ModelNode node, int depth) throws IOException {
         String currentNodeTrailPiped = null;
-        Object obj = context.get("currentNodeTrail");
+        Object obj = context.get(org.apache.ofbiz.persistence.entity.x.currentNodeTrail);
         List<String> currentNodeTrail = (obj instanceof List) ? UtilGenerics.cast(obj) : null;
 
         String style = "";
@@ -156,7 +156,7 @@ public class MacroTreeRenderer implements TreeStringRenderer {
             // FIXME: Using a widget model in this way is an ugly hack.
             ModelTree.ModelNode.Link expandCollapseLink = null;
             String targetEntityId = null;
-            Object obj1 = context.get("targetNodeTrail");
+            Object obj1 = context.get(org.apache.ofbiz.persistence.entity.x.targetNodeTrail);
             List<String> targetNodeTrail = (obj1 instanceof List) ? UtilGenerics.cast(obj1) : null;
             if (targetNodeTrail != null && depth < targetNodeTrail.size()) {
                 targetEntityId = targetNodeTrail.get(depth);
@@ -166,7 +166,7 @@ public class MacroTreeRenderer implements TreeStringRenderer {
             if (depth >= openDepth && (targetEntityId == null || !targetEntityId.equals(entityId))) {
                 // Not on the trail
                 if (node.showPeers(depth, context)) {
-                    context.put("processChildren", Boolean.FALSE);
+                    context.put(org.apache.ofbiz.persistence.entity.x.processChildren, Boolean.FALSE);
                     currentNodeTrailPiped = StringUtil.join(currentNodeTrail, "|");
                     StringBuilder target = new StringBuilder(node.getModelTree().getExpandCollapseRequest(context));
                     String trailName = node.getModelTree().getTrailName(context);
@@ -174,7 +174,7 @@ public class MacroTreeRenderer implements TreeStringRenderer {
                             ImmutableList.of(new CommonWidgetModels.Parameter(trailName, currentNodeTrailPiped, false)));
                 }
             } else {
-                context.put("processChildren", Boolean.TRUE);
+                context.put(org.apache.ofbiz.persistence.entity.x.processChildren, Boolean.TRUE);
                 String lastContentId = currentNodeTrail.remove(currentNodeTrail.size() - 1);
                 currentNodeTrailPiped = StringUtil.join(currentNodeTrail, "|");
                 if (currentNodeTrailPiped == null) {
@@ -191,7 +191,7 @@ public class MacroTreeRenderer implements TreeStringRenderer {
                 renderLink(writer, context, expandCollapseLink);
             }
         } else if (!hasChildren) {
-            context.put("processChildren", Boolean.FALSE);
+            context.put(org.apache.ofbiz.persistence.entity.x.processChildren, Boolean.FALSE);
             ModelTree.ModelNode.Link expandCollapseLink = new ModelTree.ModelNode.Link("leafnode", "", " ");
             renderLink(writer, context, expandCollapseLink);
         }
@@ -199,7 +199,7 @@ public class MacroTreeRenderer implements TreeStringRenderer {
 
     @Override
     public void renderNodeEnd(Appendable writer, Map<String, Object> context, ModelTree.ModelNode node) throws IOException {
-        Boolean processChildren = (Boolean) context.get("processChildren");
+        Boolean processChildren = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.processChildren);
         StringWriter sr = new StringWriter();
         sr.append("<@renderNodeEnd ");
         sr.append(" processChildren=");
@@ -217,7 +217,7 @@ public class MacroTreeRenderer implements TreeStringRenderer {
 
     @Override
     public void renderLastElement(Appendable writer, Map<String, Object> context, ModelTree.ModelNode node) throws IOException {
-        Boolean processChildren = (Boolean) context.get("processChildren");
+        Boolean processChildren = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.processChildren);
         if (processChildren) {
             StringWriter sr = new StringWriter();
             sr.append("<@renderLastElement ");
@@ -250,8 +250,8 @@ public class MacroTreeRenderer implements TreeStringRenderer {
     public void renderLink(Appendable writer, Map<String, Object> context, ModelTree.ModelNode.Link link) throws IOException {
         String target = link.getTarget(context);
         StringBuilder linkUrl = new StringBuilder();
-        HttpServletResponse response = (HttpServletResponse) context.get("response");
-        HttpServletRequest request = (HttpServletRequest) context.get("request");
+        HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
+        HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
 
         if (UtilValidate.isNotEmpty(target)) {
             final URI uri = WidgetWorker.buildHyperlinkUri(target, link.getUrlMode(), link.getParameterMap(context),
@@ -302,8 +302,8 @@ public class MacroTreeRenderer implements TreeStringRenderer {
         if (image == null) {
             return;
         }
-        HttpServletResponse response = (HttpServletResponse) context.get("response");
-        HttpServletRequest request = (HttpServletRequest) context.get("request");
+        HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
+        HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
 
         String urlMode = image.getUrlMode();
         String src = image.getSrc(context);
@@ -360,7 +360,7 @@ public class MacroTreeRenderer implements TreeStringRenderer {
 
     @Override
     public ScreenStringRenderer getScreenStringRenderer(Map<String, Object> context) {
-        ScreenRenderer screenRenderer = (ScreenRenderer) context.get("screens");
+        ScreenRenderer screenRenderer = (ScreenRenderer) context.get(org.apache.ofbiz.persistence.entity.x.screens);
         if (screenRenderer != null) {
             return screenRenderer.getScreenStringRenderer();
         }

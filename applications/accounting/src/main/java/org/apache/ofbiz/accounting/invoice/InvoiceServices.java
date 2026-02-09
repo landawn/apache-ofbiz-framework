@@ -121,17 +121,17 @@ public class InvoiceServices {
     public static Map<String, Object> createInvoiceForOrderAllItems(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             List<GenericValue> orderItems = EntityQuery.use(delegator).from("OrderItem")
-                    .where("orderId", context.get("orderId")).orderBy("orderItemSeqId").queryList();
+                    .where("orderId", context.get(org.apache.ofbiz.persistence.entity.x.orderId)).orderBy("orderItemSeqId").queryList();
             if (!orderItems.isEmpty()) {
-                context.put("billItems", orderItems);
+                context.put(org.apache.ofbiz.persistence.entity.x.billItems, orderItems);
             }
             // get the system userid and store in context otherwise the invoice add service does not work
             GenericValue userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", "system").queryOne();
             if (userLogin != null) {
-                context.put("userLogin", userLogin);
+                context.put(org.apache.ofbiz.persistence.entity.x.userLogin, userLogin);
             }
 
             Map<String, Object> result = dispatcher.runSync("createInvoiceForOrder", context);
@@ -152,16 +152,16 @@ public class InvoiceServices {
     public static Map<String, Object> createInvoiceForOrder(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (DECIMALS == -1 || ROUNDING == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingAritmeticPropertiesNotConfigured", locale));
         }
 
-        String orderId = (String) context.get("orderId");
-        List<GenericValue> billItems = UtilGenerics.cast(context.get("billItems"));
-        String invoiceId = (String) context.get("invoiceId");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        List<GenericValue> billItems = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.billItems));
+        String invoiceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.invoiceId);
 
         if (UtilValidate.isEmpty(billItems)) {
             if (Debug.verboseOn()) {
@@ -181,7 +181,7 @@ public class InvoiceServices {
             // figure out the invoice type
             String invoiceType = null;
 
-            String orderType = orderHeader.getString("orderTypeId");
+            String orderType = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderTypeId);
             if ("SALES_ORDER".equals(orderType)) {
                 invoiceType = "SALES_INVOICE";
             } else if ("PURCHASE_ORDER".equals(orderType)) {
@@ -201,7 +201,7 @@ public class InvoiceServices {
             GenericValue productStore = orh.getProductStore();
 
             // get the shipping adjustment mode (Y = Pro-Rate; N = First-Invoice)
-            String prorateShipping = productStore != null ? productStore.getString("prorateShipping") : "Y";
+            String prorateShipping = productStore != null ? productStore.getString(org.apache.ofbiz.persistence.entity.x.prorateShipping) : "Y";
             if (prorateShipping == null) {
                 prorateShipping = "Y";
             }
@@ -222,10 +222,10 @@ public class InvoiceServices {
             BigDecimal invoiceSubTotal = BigDecimal.ZERO;
             BigDecimal invoiceQuantity = BigDecimal.ZERO;
 
-            GenericValue billingAccount = orderHeader.getRelatedOne("BillingAccount", false);
-            String billingAccountId = billingAccount != null ? billingAccount.getString("billingAccountId") : null;
+            GenericValue billingAccount = orderHeader.getRelatedOne(org.apache.ofbiz.persistence.entity.x.BillingAccount, false);
+            String billingAccountId = billingAccount != null ? billingAccount.getString(org.apache.ofbiz.persistence.entity.x.billingAccountId) : null;
 
-            Timestamp invoiceDate = (Timestamp) context.get("eventDate");
+            Timestamp invoiceDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.eventDate);
             if (UtilValidate.isEmpty(invoiceDate)) {
                 // TODO: ideally this should be the same time as when a shipment is sent and be passed in as a parameter
                 invoiceDate = UtilDateTime.nowTimestamp();
@@ -248,7 +248,7 @@ public class InvoiceServices {
                 createInvoiceContext.put("invoiceTypeId", invoiceType);
                 // start with INVOICE_IN_PROCESS, in the INVOICE_READY we can't change the invoice (or shouldn't be able to...)
                 createInvoiceContext.put("statusId", "INVOICE_IN_PROCESS");
-                createInvoiceContext.put("currencyUomId", orderHeader.getString("currencyUom"));
+                createInvoiceContext.put("currencyUomId", orderHeader.getString(org.apache.ofbiz.persistence.entity.x.currencyUom));
                 createInvoiceContext.put("userLogin", userLogin);
 
                 // store the invoice first
@@ -263,13 +263,13 @@ public class InvoiceServices {
             }
 
             // order roles to invoice roles
-            List<GenericValue> orderRoles = orderHeader.getRelated("OrderRole", null, null, false);
+            List<GenericValue> orderRoles = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderRole, null, null, false);
             Map<String, Object> createInvoiceRoleContext = new HashMap<>();
             createInvoiceRoleContext.put("invoiceId", invoiceId);
             createInvoiceRoleContext.put("userLogin", userLogin);
             for (GenericValue orderRole : orderRoles) {
-                createInvoiceRoleContext.put("partyId", orderRole.getString("partyId"));
-                createInvoiceRoleContext.put("roleTypeId", orderRole.getString("roleTypeId"));
+                createInvoiceRoleContext.put("partyId", orderRole.getString(org.apache.ofbiz.persistence.entity.x.partyId));
+                createInvoiceRoleContext.put("roleTypeId", orderRole.getString(org.apache.ofbiz.persistence.entity.x.roleTypeId));
                 Map<String, Object> createInvoiceRoleResult = dispatcher.runSync("createInvoiceRole", createInvoiceRoleContext);
                 if (ServiceUtil.isError(createInvoiceRoleResult)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -296,11 +296,11 @@ public class InvoiceServices {
                 createInvoiceTerms(delegator, dispatcher, invoiceId, billingAccountTerms, userLogin, locale);
                 */
                 // set the invoice bill_to_customer from the billing account
-                List<GenericValue> billToRoles = billingAccount.getRelated("BillingAccountRole", UtilMisc.toMap("roleTypeId", "BILL_TO_CUSTOMER"),
+                List<GenericValue> billToRoles = billingAccount.getRelated(org.apache.ofbiz.persistence.entity.x.BillingAccountRole, UtilMisc.toMap("roleTypeId", "BILL_TO_CUSTOMER"),
                         null, false);
                 for (GenericValue billToRole : billToRoles) {
-                    if (!(billToRole.getString("partyId").equals(billToCustomerPartyId))) {
-                        createInvoiceRoleContext = UtilMisc.toMap("invoiceId", invoiceId, "partyId", billToRole.get("partyId"),
+                    if (!(billToRole.getString(org.apache.ofbiz.persistence.entity.x.partyId).equals(billToCustomerPartyId))) {
+                        createInvoiceRoleContext = UtilMisc.toMap("invoiceId", invoiceId, "partyId", billToRole.get(org.apache.ofbiz.persistence.entity.x.partyId),
                                 "roleTypeId", "BILL_TO_CUSTOMER", "userLogin", userLogin);
                         Map<String, Object> createInvoiceRoleResult = dispatcher.runSync("createInvoiceRole", createInvoiceRoleContext);
                         if (ServiceUtil.isError(createInvoiceRoleResult)) {
@@ -311,9 +311,9 @@ public class InvoiceServices {
                 }
 
                 // set the bill-to contact mech as the contact mech of the billing account
-                if (UtilValidate.isNotEmpty(billingAccount.getString("contactMechId"))) {
+                if (UtilValidate.isNotEmpty(billingAccount.getString(org.apache.ofbiz.persistence.entity.x.contactMechId))) {
                     Map<String, Object> createBillToContactMechContext = UtilMisc.toMap("invoiceId", invoiceId, "contactMechId",
-                            billingAccount.getString("contactMechId"),
+                            billingAccount.getString(org.apache.ofbiz.persistence.entity.x.contactMechId),
                             "contactMechPurposeTypeId", "BILLING_LOCATION", "userLogin", userLogin);
                     Map<String, Object> createBillToContactMechResult = dispatcher.runSync("createInvoiceContactMech",
                             createBillToContactMechContext);
@@ -327,7 +327,7 @@ public class InvoiceServices {
                 if (UtilValidate.isNotEmpty(billingLocations)) {
                     for (GenericValue ocm : billingLocations) {
                         Map<String, Object> createBillToContactMechContext = UtilMisc.toMap("invoiceId", invoiceId, "contactMechId", ocm.getString(
-                                "contactMechId"),
+                                org.apache.ofbiz.persistence.entity.x.contactMechId),
                                 "contactMechPurposeTypeId", "BILLING_LOCATION", "userLogin", userLogin);
                         Map<String, Object> createBillToContactMechResult = dispatcher.runSync("createInvoiceContactMech",
                                 createBillToContactMechContext);
@@ -351,7 +351,7 @@ public class InvoiceServices {
                 // for purchase orders, the pay to address is the BILLING_LOCATION of the vendor
                 GenericValue billFromVendor = orh.getPartyFromRole("BILL_FROM_VENDOR");
                 if (billFromVendor != null) {
-                    List<GenericValue> billingContactMechs = billFromVendor.getRelatedOne("Party", false).getRelated("PartyContactMechPurpose",
+                    List<GenericValue> billingContactMechs = billFromVendor.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Party, false).getRelated("PartyContactMechPurpose",
                             UtilMisc.toMap("contactMechPurposeTypeId", "BILLING_LOCATION"), null, false);
                     if (UtilValidate.isNotEmpty(billingContactMechs)) {
                         payToAddress = EntityUtil.getFirst(EntityUtil.filterByDate(billingContactMechs));
@@ -359,11 +359,11 @@ public class InvoiceServices {
                 }
             } else {
                 // for sales orders, it is the payment address on file for the store
-                payToAddress = PaymentWorker.getPaymentAddress(delegator, productStore.getString("payToPartyId"));
+                payToAddress = PaymentWorker.getPaymentAddress(delegator, productStore.getString(org.apache.ofbiz.persistence.entity.x.payToPartyId));
             }
             if (payToAddress != null) {
                 Map<String, Object> createPayToContactMechContext = UtilMisc.toMap("invoiceId", invoiceId, "contactMechId", payToAddress.getString(
-                        "contactMechId"),
+                        org.apache.ofbiz.persistence.entity.x.contactMechId),
                         "contactMechPurposeTypeId", "PAYMENT_LOCATION", "userLogin", userLogin);
                 Map<String, Object> createPayToContactMechResult = dispatcher.runSync("createInvoiceContactMech", createPayToContactMechContext);
                 if (ServiceUtil.isError(createPayToContactMechResult)) {
@@ -392,9 +392,9 @@ public class InvoiceServices {
                 }
 
                 if (orderItem == null && itemIssuance != null) {
-                    orderItem = itemIssuance.getRelatedOne("OrderItem", false);
+                    orderItem = itemIssuance.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItem, false);
                 } else if ((orderItem == null) && (shipmentReceipt != null)) {
-                    orderItem = shipmentReceipt.getRelatedOne("OrderItem", false);
+                    orderItem = shipmentReceipt.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItem, false);
                 }
 
                 if (orderItem == null) {
@@ -404,21 +404,21 @@ public class InvoiceServices {
                 }
 
                 GenericValue product = null;
-                if (orderItem.get("productId") != null) {
-                    product = orderItem.getRelatedOne("Product", false);
+                if (orderItem.get(org.apache.ofbiz.persistence.entity.x.productId) != null) {
+                    product = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                 }
 
                 // get some quantities
                 BigDecimal billingQuantity = null;
                 if (itemIssuance != null) {
-                    billingQuantity = itemIssuance.getBigDecimal("quantity");
-                    BigDecimal cancelQty = itemIssuance.getBigDecimal("cancelQuantity");
+                    billingQuantity = itemIssuance.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                    BigDecimal cancelQty = itemIssuance.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
                     if (cancelQty == null) {
                         cancelQty = BigDecimal.ZERO;
                     }
                     billingQuantity = billingQuantity.subtract(cancelQty).setScale(DECIMALS, ROUNDING);
                 } else if (shipmentReceipt != null) {
-                    billingQuantity = shipmentReceipt.getBigDecimal("quantityAccepted");
+                    billingQuantity = shipmentReceipt.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityAccepted);
                 } else {
                     BigDecimal orderedQuantity = OrderReadHelper.getOrderItemQuantity(orderItem);
                     BigDecimal invoicedQuantity = OrderReadHelper.getOrderItemInvoicedQuantity(orderItem);
@@ -438,44 +438,44 @@ public class InvoiceServices {
                 }
 
                 BigDecimal billingAmount = BigDecimal.ZERO;
-                GenericValue orderAdj = EntityUtil.getFirst(orderItem.getRelated("OrderAdjustment", UtilMisc.toMap("orderAdjustmentTypeId",
+                GenericValue orderAdj = EntityUtil.getFirst(orderItem.getRelated(org.apache.ofbiz.persistence.entity.x.OrderAdjustment, UtilMisc.toMap("orderAdjustmentTypeId",
                         "VAT_TAX"), null, false));
                 /* Apply formula to get actual product price to set amount in invoice item
                     Formula is: productPrice = (productPriceWithTax.multiply(100)) / (orderAdj sourcePercentage + 100))
                     product price = (43*100) / (20+100) = 35.83 (Here product price is 43 with VAT)
                  */
-                if (UtilValidate.isNotEmpty(orderAdj) && (orderAdj.getBigDecimal("amount").signum() == 0)
-                        && UtilValidate.isNotEmpty(orderAdj.getBigDecimal("amountAlreadyIncluded"))
-                        && orderAdj.getBigDecimal("amountAlreadyIncluded").signum() != 0) {
-                    BigDecimal sourcePercentageTotal = orderAdj.getBigDecimal("sourcePercentage").add(new BigDecimal(100));
+                if (UtilValidate.isNotEmpty(orderAdj) && (orderAdj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).signum() == 0)
+                        && UtilValidate.isNotEmpty(orderAdj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountAlreadyIncluded))
+                        && orderAdj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountAlreadyIncluded).signum() != 0) {
+                    BigDecimal sourcePercentageTotal = orderAdj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.sourcePercentage).add(new BigDecimal(100));
                     billingAmount =
-                            orderItem.getBigDecimal("unitPrice").divide(sourcePercentageTotal, 100, ROUNDING)
+                            orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice).divide(sourcePercentageTotal, 100, ROUNDING)
                                     .multiply(new BigDecimal(100)).setScale(invoiceTypeDecimals, ROUNDING);
                 } else {
-                    billingAmount = orderItem.getBigDecimal("unitPrice").setScale(invoiceTypeDecimals, ROUNDING);
+                    billingAmount = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice).setScale(invoiceTypeDecimals, ROUNDING);
                 }
 
                 Map<String, Object> createInvoiceItemContext = new HashMap<>();
                 createInvoiceItemContext.put("invoiceId", invoiceId);
                 createInvoiceItemContext.put("invoiceItemSeqId", invoiceItemSeqId);
-                createInvoiceItemContext.put("invoiceItemTypeId", getInvoiceItemType(delegator, orderItem.getString("orderItemTypeId"),
-                        product == null ? null : product.getString("productTypeId"), invoiceType, "INV_FPROD_ITEM"));
-                createInvoiceItemContext.put("description", orderItem.get("itemDescription"));
+                createInvoiceItemContext.put("invoiceItemTypeId", getInvoiceItemType(delegator, orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemTypeId),
+                        product == null ? null : product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId), invoiceType, "INV_FPROD_ITEM"));
+                createInvoiceItemContext.put("description", orderItem.get(org.apache.ofbiz.persistence.entity.x.itemDescription));
                 createInvoiceItemContext.put("quantity", billingQuantity);
                 createInvoiceItemContext.put("amount", billingAmount);
-                createInvoiceItemContext.put("productId", orderItem.get("productId"));
-                createInvoiceItemContext.put("productFeatureId", orderItem.get("productFeatureId"));
-                createInvoiceItemContext.put("overrideGlAccountId", orderItem.get("overrideGlAccountId"));
+                createInvoiceItemContext.put("productId", orderItem.get(org.apache.ofbiz.persistence.entity.x.productId));
+                createInvoiceItemContext.put("productFeatureId", orderItem.get(org.apache.ofbiz.persistence.entity.x.productFeatureId));
+                createInvoiceItemContext.put("overrideGlAccountId", orderItem.get(org.apache.ofbiz.persistence.entity.x.overrideGlAccountId));
                 createInvoiceItemContext.put("userLogin", userLogin);
 
                 String itemIssuanceId = null;
-                if (itemIssuance != null && itemIssuance.get("inventoryItemId") != null) {
-                    itemIssuanceId = itemIssuance.getString("itemIssuanceId");
-                    createInvoiceItemContext.put("inventoryItemId", itemIssuance.get("inventoryItemId"));
+                if (itemIssuance != null && itemIssuance.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId) != null) {
+                    itemIssuanceId = itemIssuance.getString(org.apache.ofbiz.persistence.entity.x.itemIssuanceId);
+                    createInvoiceItemContext.put("inventoryItemId", itemIssuance.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId));
                 }
                 // similarly, tax only for purchase invoices
                 if ((product != null) && ("SALES_INVOICE".equals(invoiceType))) {
-                    createInvoiceItemContext.put("taxableFlag", product.get("taxable"));
+                    createInvoiceItemContext.put("taxableFlag", product.get(org.apache.ofbiz.persistence.entity.x.taxable));
                 }
 
                 Map<String, Object> createInvoiceItemResult = dispatcher.runSync("createInvoiceItem", createInvoiceItemContext);
@@ -503,14 +503,14 @@ public class InvoiceServices {
                 Map<String, Object> createOrderItemBillingContext = new HashMap<>();
                 createOrderItemBillingContext.put("invoiceId", invoiceId);
                 createOrderItemBillingContext.put("invoiceItemSeqId", invoiceItemSeqId);
-                createOrderItemBillingContext.put("orderId", orderItem.get("orderId"));
-                createOrderItemBillingContext.put("orderItemSeqId", orderItem.get("orderItemSeqId"));
+                createOrderItemBillingContext.put("orderId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderId));
+                createOrderItemBillingContext.put("orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                 createOrderItemBillingContext.put("itemIssuanceId", itemIssuanceId);
                 createOrderItemBillingContext.put("quantity", billingQuantity);
                 createOrderItemBillingContext.put("amount", billingAmount);
                 createOrderItemBillingContext.put("userLogin", userLogin);
-                if ((shipmentReceipt != null) && (shipmentReceipt.getString("receiptId") != null)) {
-                    createOrderItemBillingContext.put("shipmentReceiptId", shipmentReceipt.getString("receiptId"));
+                if ((shipmentReceipt != null) && (shipmentReceipt.getString(org.apache.ofbiz.persistence.entity.x.receiptId) != null)) {
+                    createOrderItemBillingContext.put("shipmentReceiptId", shipmentReceipt.getString(org.apache.ofbiz.persistence.entity.x.receiptId));
                 }
 
                 Map<String, Object> createOrderItemBillingResult = dispatcher.runSync("createOrderItemBilling", createOrderItemBillingContext);
@@ -525,7 +525,7 @@ public class InvoiceServices {
                        In that case ShipmentItemBilling was creating only for one invoice item. Fixed under OFBIZ-6806.
                     */
                     List<GenericValue> shipmentItemBillings = EntityQuery.use(delegator).from("ShipmentItemBilling")
-                            .where("shipmentId", currentValue.get("shipmentId"), "shipmentItemSeqId", currentValue.get("shipmentItemSeqId"),
+                            .where("shipmentId", currentValue.get(org.apache.ofbiz.persistence.entity.x.shipmentId), "shipmentItemSeqId", currentValue.get(org.apache.ofbiz.persistence.entity.x.shipmentItemSeqId),
                                     "invoiceId", invoiceId, "invoiceItemSeqId", invoiceItemSeqId)
                             .queryList();
                     if (UtilValidate.isEmpty(shipmentItemBillings)) {
@@ -534,8 +534,8 @@ public class InvoiceServices {
                         Map<String, Object> shipmentItemBillingCtx = new HashMap<>();
                         shipmentItemBillingCtx.put("invoiceId", invoiceId);
                         shipmentItemBillingCtx.put("invoiceItemSeqId", invoiceItemSeqId);
-                        shipmentItemBillingCtx.put("shipmentId", currentValue.get("shipmentId"));
-                        shipmentItemBillingCtx.put("shipmentItemSeqId", currentValue.get("shipmentItemSeqId"));
+                        shipmentItemBillingCtx.put("shipmentId", currentValue.get(org.apache.ofbiz.persistence.entity.x.shipmentId));
+                        shipmentItemBillingCtx.put("shipmentItemSeqId", currentValue.get(org.apache.ofbiz.persistence.entity.x.shipmentItemSeqId));
                         shipmentItemBillingCtx.put("userLogin", userLogin);
                         Map<String, Object> result = dispatcher.runSync("createShipmentItemBilling", shipmentItemBillingCtx);
                         if (ServiceUtil.isError(result)) {
@@ -551,7 +551,7 @@ public class InvoiceServices {
 
                 // Get the original order item from the DB, in case the quantity has been overridden
                 GenericValue originalOrderItem = EntityQuery.use(delegator).from("OrderItem").where("orderId", orderId, "orderItemSeqId",
-                        orderItem.get("orderItemSeqId")).queryOne();
+                        orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).queryOne();
 
                 // create the item adjustment as line items
                 List<GenericValue> itemAdjustments = OrderReadHelper.getOrderItemAdjustmentList(orderItem, orh.getAdjustments());
@@ -575,15 +575,15 @@ public class InvoiceServices {
                     }
 
                     // Set adjustment amount as amountAlreadyIncluded to continue invoice item creation process
-                    boolean isTaxIncludedInPrice = "VAT_TAX".equals(adj.getString("orderAdjustmentTypeId"))
-                                    && UtilValidate.isNotEmpty(adj.getBigDecimal("amountAlreadyIncluded"))
-                                    && adj.getBigDecimal("amountAlreadyIncluded").signum() != 0;
-                    if (isTaxIncludedInPrice && (adj.getBigDecimal("amount").signum() == 0)) {
-                        adj.set("amount", adj.getBigDecimal("amountAlreadyIncluded"));
+                    boolean isTaxIncludedInPrice = "VAT_TAX".equals(adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))
+                                    && UtilValidate.isNotEmpty(adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountAlreadyIncluded))
+                                    && adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountAlreadyIncluded).signum() != 0;
+                    if (isTaxIncludedInPrice && (adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).signum() == 0)) {
+                        adj.set(org.apache.ofbiz.persistence.entity.x.amount, adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountAlreadyIncluded));
                     }
                     // If the absolute invoiced amount >= the abs of the adjustment amount, the full amount has already been invoiced, so skip this
                     // adjustment
-                    if (isTaxIncludedInPrice && adjAlreadyInvoicedAmount.abs().compareTo(adj.getBigDecimal("amount").setScale(invoiceTypeDecimals,
+                    if (isTaxIncludedInPrice && adjAlreadyInvoicedAmount.abs().compareTo(adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(invoiceTypeDecimals,
                             ROUNDING).abs()) > 0) {
                         continue;
                     }
@@ -591,15 +591,15 @@ public class InvoiceServices {
                     BigDecimal originalOrderItemQuantity = OrderReadHelper.getOrderItemQuantity(originalOrderItem);
                     BigDecimal amount = BigDecimal.ZERO;
                     if (originalOrderItemQuantity.signum() != 0) {
-                        if (adj.get("amount") != null) {
-                            if ("PROMOTION_ADJUSTMENT".equals(adj.getString("orderAdjustmentTypeId")) && adj.get("productPromoId") != null) {
+                        if (adj.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
+                            if ("PROMOTION_ADJUSTMENT".equals(adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId)) && adj.get(org.apache.ofbiz.persistence.entity.x.productPromoId) != null) {
                                     /* Find negative amountAlreadyIncluded in OrderAdjustment to subtract it from discounted amount.
                                                                           As we stored negative sales tax amount in order adjustment for discounted
                                                                            item.
                                      */
                                 List<EntityExpr> exprs = UtilMisc.toList(EntityCondition.makeCondition("orderId", EntityOperator.EQUALS,
-                                        orderItem.getString("orderId")),
-                                        EntityCondition.makeCondition("orderItemSeqId", EntityOperator.EQUALS, orderItem.getString("orderItemSeqId")),
+                                        orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId)),
+                                        EntityCondition.makeCondition("orderItemSeqId", EntityOperator.EQUALS, orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)),
                                         EntityCondition.makeCondition("orderAdjustmentTypeId", EntityOperator.EQUALS, "VAT_TAX"),
                                         EntityCondition.makeCondition("amountAlreadyIncluded", EntityOperator.LESS_THAN, BigDecimal.ZERO));
                                 EntityCondition andCondition = EntityCondition.makeCondition(exprs, EntityOperator.AND);
@@ -607,16 +607,16 @@ public class InvoiceServices {
                                         null, false));
                                 if (UtilValidate.isNotEmpty(orderAdjustment)) {
                                     amount =
-                                            adj.getBigDecimal("amount").subtract(orderAdjustment.getBigDecimal("amountAlreadyIncluded")).setScale(100,
+                                            adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).subtract(orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountAlreadyIncluded)).setScale(100,
                                                     ROUNDING);
                                 } else {
-                                    amount = adj.getBigDecimal("amount");
+                                    amount = adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
                                 }
                             } else {
                                 // pro-rate the amount
                                 // set decimals = 100 means we don't round this intermediate value, which is very important
                                 if (isTaxIncludedInPrice) {
-                                    BigDecimal priceWithTax = originalOrderItem.getBigDecimal("unitPrice");
+                                    BigDecimal priceWithTax = originalOrderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice);
                                     // Get tax included in item price
                                     amount = priceWithTax.subtract(billingAmount);
                                     amount = amount.multiply(billingQuantity);
@@ -627,36 +627,36 @@ public class InvoiceServices {
                                          */
                                     BigDecimal otherInvoiceTaxAmount = BigDecimal.ZERO;
                                     GenericValue orderAdjBilling = EntityQuery.use(delegator).from("OrderAdjustmentBilling").where(
-                                            "orderAdjustmentId", adj.getString("orderAdjustmentId")).queryFirst();
+                                            "orderAdjustmentId", adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId)).queryFirst();
                                     if (UtilValidate.isNotEmpty(orderAdjBilling)) {
                                         //FIXME: Need to check here isTaxIncludedInPrice pass to use cache
                                         List<GenericValue> invoiceItems = EntityQuery.use(delegator).from("InvoiceItem").where("invoiceId",
-                                                orderAdjBilling.getString("invoiceId"), "invoiceItemTypeId", "ITM_SALES_TAX", "productId",
-                                                originalOrderItem.getString("productId")).cache(isTaxIncludedInPrice).queryList();
+                                                orderAdjBilling.getString(org.apache.ofbiz.persistence.entity.x.invoiceId), "invoiceItemTypeId", "ITM_SALES_TAX", "productId",
+                                                originalOrderItem.getString(org.apache.ofbiz.persistence.entity.x.productId)).cache(isTaxIncludedInPrice).queryList();
                                         for (GenericValue invoiceItem : invoiceItems) {
-                                            otherInvoiceTaxAmount = otherInvoiceTaxAmount.add(invoiceItem.getBigDecimal("amount"));
+                                            otherInvoiceTaxAmount = otherInvoiceTaxAmount.add(invoiceItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
                                         }
                                         if (otherInvoiceTaxAmount.compareTo(BigDecimal.ZERO) > 0) {
-                                            BigDecimal remainingAmount = adj.getBigDecimal("amountAlreadyIncluded").subtract(otherInvoiceTaxAmount);
+                                            BigDecimal remainingAmount = adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountAlreadyIncluded).subtract(otherInvoiceTaxAmount);
                                             amount = amount.min(remainingAmount);
                                         }
                                     }
-                                    amount = amount.min(adj.getBigDecimal("amountAlreadyIncluded")).setScale(100, ROUNDING);
+                                    amount = amount.min(adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountAlreadyIncluded)).setScale(100, ROUNDING);
                                 } else {
-                                    amount = adj.getBigDecimal("amount").divide(originalOrderItemQuantity, 100, ROUNDING);
+                                    amount = adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).divide(originalOrderItemQuantity, 100, ROUNDING);
                                     amount = amount.multiply(billingQuantity);
                                 }
                             }
                             // Tax needs to be rounded differently from other order adjustments
-                            if ("SALES_TAX".equals(adj.getString("orderAdjustmentTypeId"))) {
+                            if ("SALES_TAX".equals(adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
                                 amount = amount.setScale(TAX_DECIMALS, TAX_ROUNDING);
                             } else {
                                 amount = amount.setScale(invoiceTypeDecimals, ROUNDING);
                             }
-                        } else if (adj.get("sourcePercentage") != null) {
+                        } else if (adj.get(org.apache.ofbiz.persistence.entity.x.sourcePercentage) != null) {
                             // pro-rate the amount
                             // set decimals = 100 means we don't round this intermediate value, which is very important
-                            BigDecimal percent = adj.getBigDecimal("sourcePercentage");
+                            BigDecimal percent = adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.sourcePercentage);
                             percent = percent.divide(new BigDecimal(100), 100, ROUNDING);
                             amount = billingAmount.multiply(percent);
                             amount = amount.divide(originalOrderItemQuantity, 100, ROUNDING);
@@ -668,43 +668,43 @@ public class InvoiceServices {
                         Map<String, Object> createInvoiceItemAdjContext = new HashMap<>();
                         createInvoiceItemAdjContext.put("invoiceId", invoiceId);
                         createInvoiceItemAdjContext.put("invoiceItemSeqId", invoiceItemSeqId);
-                        createInvoiceItemAdjContext.put("invoiceItemTypeId", getInvoiceItemType(delegator, adj.getString("orderAdjustmentTypeId"),
+                        createInvoiceItemAdjContext.put("invoiceItemTypeId", getInvoiceItemType(delegator, adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId),
                                 null, invoiceType, "INVOICE_ITM_ADJ"));
                         createInvoiceItemAdjContext.put("quantity", BigDecimal.ONE);
                         createInvoiceItemAdjContext.put("amount", amount);
-                        createInvoiceItemAdjContext.put("productId", orderItem.get("productId"));
-                        createInvoiceItemAdjContext.put("productFeatureId", orderItem.get("productFeatureId"));
-                        createInvoiceItemAdjContext.put("overrideGlAccountId", adj.get("overrideGlAccountId"));
+                        createInvoiceItemAdjContext.put("productId", orderItem.get(org.apache.ofbiz.persistence.entity.x.productId));
+                        createInvoiceItemAdjContext.put("productFeatureId", orderItem.get(org.apache.ofbiz.persistence.entity.x.productFeatureId));
+                        createInvoiceItemAdjContext.put("overrideGlAccountId", adj.get(org.apache.ofbiz.persistence.entity.x.overrideGlAccountId));
                         createInvoiceItemAdjContext.put("parentInvoiceId", invoiceId);
                         createInvoiceItemAdjContext.put("parentInvoiceItemSeqId", parentInvoiceItemSeqId);
                         createInvoiceItemAdjContext.put("userLogin", userLogin);
-                        createInvoiceItemAdjContext.put("taxAuthPartyId", adj.get("taxAuthPartyId"));
-                        createInvoiceItemAdjContext.put("taxAuthGeoId", adj.get("taxAuthGeoId"));
-                        createInvoiceItemAdjContext.put("taxAuthorityRateSeqId", adj.get("taxAuthorityRateSeqId"));
+                        createInvoiceItemAdjContext.put("taxAuthPartyId", adj.get(org.apache.ofbiz.persistence.entity.x.taxAuthPartyId));
+                        createInvoiceItemAdjContext.put("taxAuthGeoId", adj.get(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId));
+                        createInvoiceItemAdjContext.put("taxAuthorityRateSeqId", adj.get(org.apache.ofbiz.persistence.entity.x.taxAuthorityRateSeqId));
 
                         // some adjustments fill out the comments field instead
-                        String description = (UtilValidate.isEmpty(adj.getString("description")) ? adj.getString("comments") : adj.getString(
-                                "description"));
+                        String description = (UtilValidate.isEmpty(adj.getString(org.apache.ofbiz.persistence.entity.x.description)) ? adj.getString(org.apache.ofbiz.persistence.entity.x.comments) : adj.getString(
+                                org.apache.ofbiz.persistence.entity.x.description));
                         createInvoiceItemAdjContext.put("description", description);
 
                         // invoice items for sales tax are not taxable themselves
                         // TODO: This is not an ideal solution. Instead, we need to use OrderAdjustment.includeInTax when it is implemented
-                        if (!("SALES_TAX".equals(adj.getString("orderAdjustmentTypeId")))) {
-                            createInvoiceItemAdjContext.put("taxableFlag", product.get("taxable"));
+                        if (!("SALES_TAX".equals(adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId)))) {
+                            createInvoiceItemAdjContext.put("taxableFlag", product.get(org.apache.ofbiz.persistence.entity.x.taxable));
                         }
 
                         // If the OrderAdjustment is associated to a ProductPromo,
                         // and the field ProductPromo.overrideOrgPartyId is set,
                         // copy the value to InvoiceItem.overrideOrgPartyId: this
                         // represent an organization override for the payToPartyId
-                        if (UtilValidate.isNotEmpty(adj.getString("productPromoId"))) {
+                        if (UtilValidate.isNotEmpty(adj.getString(org.apache.ofbiz.persistence.entity.x.productPromoId))) {
                             try {
-                                GenericValue productPromo = adj.getRelatedOne("ProductPromo", false);
-                                if (UtilValidate.isNotEmpty(productPromo.getString("overrideOrgPartyId"))) {
-                                    createInvoiceItemAdjContext.put("overrideOrgPartyId", productPromo.getString("overrideOrgPartyId"));
+                                GenericValue productPromo = adj.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductPromo, false);
+                                if (UtilValidate.isNotEmpty(productPromo.getString(org.apache.ofbiz.persistence.entity.x.overrideOrgPartyId))) {
+                                    createInvoiceItemAdjContext.put("overrideOrgPartyId", productPromo.getString(org.apache.ofbiz.persistence.entity.x.overrideOrgPartyId));
                                 }
                             } catch (GenericEntityException e) {
-                                Debug.logError(e, "Error looking up ProductPromo with id [" + adj.getString("productPromoId") + "]", MODULE);
+                                Debug.logError(e, "Error looking up ProductPromo with id [" + adj.getString(org.apache.ofbiz.persistence.entity.x.productPromoId) + "]", MODULE);
                             }
                         }
 
@@ -716,7 +716,7 @@ public class InvoiceServices {
 
                         // Create the OrderAdjustmentBilling record
                         Map<String, Object> createOrderAdjustmentBillingContext = new HashMap<>();
-                        createOrderAdjustmentBillingContext.put("orderAdjustmentId", adj.getString("orderAdjustmentId"));
+                        createOrderAdjustmentBillingContext.put("orderAdjustmentId", adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId));
                         createOrderAdjustmentBillingContext.put("invoiceId", invoiceId);
                         createOrderAdjustmentBillingContext.put("invoiceItemSeqId", invoiceItemSeqId);
                         createOrderAdjustmentBillingContext.put("amount", amount);
@@ -734,8 +734,8 @@ public class InvoiceServices {
                         BigDecimal thisAdjAmount = amount;
 
                         // adjustments only apply to totals when they are not tax or shipping adjustments
-                        if (!"SALES_TAX".equals(adj.getString("orderAdjustmentTypeId"))
-                                && !"SHIPPING_ADJUSTMENT".equals(adj.getString("orderAdjustmentTypeId"))) {
+                        if (!"SALES_TAX".equals(adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))
+                                && !"SHIPPING_ADJUSTMENT".equals(adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
                             // increment the invoice subtotal
                             invoiceSubTotal = invoiceSubTotal.add(thisAdjAmount).setScale(100, ROUNDING);
 
@@ -776,13 +776,13 @@ public class InvoiceServices {
 
                 // If the absolute invoiced amount >= the abs of the adjustment amount, the full amount has already been invoiced, so skip this
                 // adjustment
-                if (adjAlreadyInvoicedAmount.abs().compareTo(adj.getBigDecimal("amount").setScale(invoiceTypeDecimals, ROUNDING).abs()) >= 0) {
+                if (adjAlreadyInvoicedAmount.abs().compareTo(adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(invoiceTypeDecimals, ROUNDING).abs()) >= 0) {
                     continue;
                 }
 
-                if ("SHIPPING_CHARGES".equals(adj.getString("orderAdjustmentTypeId"))) {
+                if ("SHIPPING_CHARGES".equals(adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
                     shipAdjustments.put(adj, adjAlreadyInvoicedAmount);
-                } else if ("SALES_TAX".equals(adj.getString("orderAdjustmentTypeId"))) {
+                } else if ("SALES_TAX".equals(adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
                     taxAdjustments.put(adj, adjAlreadyInvoicedAmount);
                 } else {
                     // these will effect the shipping pro-rate (unless commented)
@@ -797,7 +797,7 @@ public class InvoiceServices {
                     }
 
                     calcHeaderAdj(delegator, adj, invoiceType, invoiceId, invoiceItemSeqId, divisor, multiplier,
-                            adj.getBigDecimal("amount").setScale(invoiceTypeDecimals, ROUNDING), invoiceTypeDecimals, ROUNDING, userLogin,
+                            adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(invoiceTypeDecimals, ROUNDING), invoiceTypeDecimals, ROUNDING, userLogin,
                             dispatcher, locale);
                     // invoiceShipProRateAmount += adjAmount;
                     // do adjustments compound or are they based off subtotal? Here we will (unless commented)
@@ -824,7 +824,7 @@ public class InvoiceServices {
 
                     // The base amount in this case is the adjustment amount minus the total already invoiced for that adjustment, since
                     //  it won't be prorated
-                    BigDecimal baseAmount = adj.getBigDecimal("amount").setScale(invoiceTypeDecimals, ROUNDING).subtract(adjAlreadyInvoicedAmount);
+                    BigDecimal baseAmount = adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(invoiceTypeDecimals, ROUNDING).subtract(adjAlreadyInvoicedAmount);
                     calcHeaderAdj(delegator, adj, invoiceType, invoiceId, invoiceItemSeqId, divisor, multiplier, baseAmount,
                             invoiceTypeDecimals, ROUNDING, userLogin, dispatcher, locale);
                 } else {
@@ -840,7 +840,7 @@ public class InvoiceServices {
                     }
 
                     // The base amount in this case is the adjustment amount, since we want to prorate based on the full amount
-                    BigDecimal baseAmount = adj.getBigDecimal("amount").setScale(invoiceTypeDecimals, ROUNDING);
+                    BigDecimal baseAmount = adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(invoiceTypeDecimals, ROUNDING);
                     calcHeaderAdj(delegator, adj, invoiceType, invoiceId, invoiceItemSeqId, divisor, multiplier,
                             baseAmount, invoiceTypeDecimals, ROUNDING, userLogin, dispatcher, locale);
                 }
@@ -851,7 +851,7 @@ public class InvoiceServices {
             }
 
             // last do the tax adjustments
-            String prorateTaxes = productStore != null ? productStore.getString("prorateTaxes") : "Y";
+            String prorateTaxes = productStore != null ? productStore.getString(org.apache.ofbiz.persistence.entity.x.prorateTaxes) : "Y";
             if (prorateTaxes == null) {
                 prorateTaxes = "Y";
             }
@@ -868,7 +868,7 @@ public class InvoiceServices {
 
                     // The base amount in this case is the adjustment amount minus the total already invoiced for that adjustment, since
                     //  it won't be prorated
-                    BigDecimal baseAmount = adj.getBigDecimal("amount").setScale(TAX_DECIMALS, TAX_ROUNDING).subtract(adjAlreadyInvoicedAmount);
+                    BigDecimal baseAmount = adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(TAX_DECIMALS, TAX_ROUNDING).subtract(adjAlreadyInvoicedAmount);
                     adjAmount = calcHeaderAdj(delegator, adj, invoiceType, invoiceId, invoiceItemSeqId,
                             divisor, multiplier, baseAmount, TAX_DECIMALS, TAX_ROUNDING, userLogin, dispatcher, locale);
                 } else {
@@ -878,7 +878,7 @@ public class InvoiceServices {
                     BigDecimal multiplier = invoiceSubTotal;
 
                     // The base amount in this case is the adjustment amount, since we want to prorate based on the full amount
-                    BigDecimal baseAmount = adj.getBigDecimal("amount");
+                    BigDecimal baseAmount = adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
                     adjAmount = calcHeaderAdj(delegator, adj, invoiceType, invoiceId, invoiceItemSeqId,
                             divisor, multiplier, baseAmount, TAX_DECIMALS, TAX_ROUNDING, userLogin, dispatcher, locale);
                 }
@@ -895,18 +895,18 @@ public class InvoiceServices {
                             EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "PAYMENT_CANCELLED")).queryList();
             List<GenericValue> currentPayments = new LinkedList<>();
             for (GenericValue paymentPref : orderPaymentPrefs) {
-                List<GenericValue> payments = paymentPref.getRelated("Payment", null, null, false);
+                List<GenericValue> payments = paymentPref.getRelated(org.apache.ofbiz.persistence.entity.x.Payment, null, null, false);
                 currentPayments.addAll(payments);
             }
             // apply these payments to the invoice if they have any remaining amount to apply
             for (GenericValue payment : currentPayments) {
-                if ("PMNT_VOID".equals(payment.getString("statusId")) || "PMNT_CANCELLED".equals(payment.getString("statusId"))) {
+                if ("PMNT_VOID".equals(payment.getString(org.apache.ofbiz.persistence.entity.x.statusId)) || "PMNT_CANCELLED".equals(payment.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                     continue;
                 }
                 BigDecimal notApplied = PaymentWorker.getPaymentNotApplied(payment);
                 if (notApplied.signum() > 0) {
                     Map<String, Object> appl = new HashMap<>();
-                    appl.put("paymentId", payment.get("paymentId"));
+                    appl.put("paymentId", payment.get(org.apache.ofbiz.persistence.entity.x.paymentId));
                     appl.put("invoiceId", invoiceId);
                     appl.put("billingAccountId", billingAccountId);
                     appl.put("amountApplied", notApplied);
@@ -921,7 +921,7 @@ public class InvoiceServices {
 
             // Should all be in place now. Depending on the ProductStore.autoApproveInvoice setting, set status to INVOICE_READY (unless it's a
             // purchase invoice, which we set to INVOICE_IN_PROCESS)
-            String autoApproveInvoice = productStore != null ? productStore.getString("autoApproveInvoice") : "Y";
+            String autoApproveInvoice = productStore != null ? productStore.getString(org.apache.ofbiz.persistence.entity.x.autoApproveInvoice) : "Y";
             if (!"N".equals(autoApproveInvoice)) {
                 String nextStatusId = "PURCHASE_INVOICE".equals(invoiceType) ? "INVOICE_IN_PROCESS" : "INVOICE_READY";
                 Map<String, Object> setInvoiceStatusResult = dispatcher.runSync("setInvoiceStatus", UtilMisc.<String, Object>toMap("invoiceId",
@@ -953,13 +953,13 @@ public class InvoiceServices {
     public static Map<String, Object> createCommissionInvoices(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
-        List<String> salesInvoiceIds = UtilGenerics.cast(context.get("invoiceIds"));
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        List<String> salesInvoiceIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.invoiceIds));
         List<Map<String, String>> invoicesCreated = new LinkedList<>();
         Map<String, List<Map<String, Object>>> commissionParties = new HashMap<>();
         for (String salesInvoiceId : salesInvoiceIds) {
-            List<String> salesRepPartyIds = UtilGenerics.cast(context.get("partyIds"));
+            List<String> salesRepPartyIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.partyIds));
             BigDecimal amountTotal = InvoiceWorker.getInvoiceTotal(delegator, salesInvoiceId);
             if (amountTotal.signum() == 0) {
                 Debug.logWarning("Invoice [" + salesInvoiceId + "] has an amount total of [" + amountTotal + "], so no commission invoice will be "
@@ -997,7 +997,7 @@ public class InvoiceServices {
                     }
                 }
                 invoice = EntityQuery.use(delegator).from("Invoice").where("invoiceId", salesInvoiceId).queryOne();
-                String invoiceTypeId = invoice.getString("invoiceTypeId");
+                String invoiceTypeId = invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceTypeId);
                 if ("CUST_RTN_INVOICE".equals(invoiceTypeId)) {
                     isReturn = true;
                 } else if (!"SALES_INVOICE".equals(invoiceTypeId)) {
@@ -1013,12 +1013,12 @@ public class InvoiceServices {
             // Determine commissions for various parties.
             for (GenericValue invoiceItem : invoiceItems) {
                 BigDecimal amount = BigDecimal.ZERO;
-                BigDecimal quantity = invoiceItem.getBigDecimal("quantity");
-                amount = invoiceItem.getBigDecimal("amount");
+                BigDecimal quantity = invoiceItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                amount = invoiceItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
                 amount = isReturn ? amount.negate() : amount;
-                String productId = invoiceItem.getString("productId");
-                String invoiceItemSeqId = invoiceItem.getString("invoiceItemSeqId");
-                String invoiceId = invoiceItem.getString("invoiceId");
+                String productId = invoiceItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
+                String invoiceItemSeqId = invoiceItem.getString(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId);
+                String invoiceId = invoiceItem.getString(org.apache.ofbiz.persistence.entity.x.invoiceId);
                 // Determine commission parties for this invoiceItem
                 if (UtilValidate.isNotEmpty(productId)) {
                     Map<String, Object> resultMap = null;
@@ -1027,7 +1027,7 @@ public class InvoiceServices {
                                 "productId", productId,
                                 "invoiceId", invoiceId,
                                 "invoiceItemSeqId", invoiceItemSeqId,
-                                "invoiceItemTypeId", invoiceItem.getString("invoiceItemTypeId"),
+                                "invoiceItemTypeId", invoiceItem.getString(org.apache.ofbiz.persistence.entity.x.invoiceItemTypeId),
                                 "amount", amount,
                                 "quantity", quantity,
                                 "userLogin", userLogin));
@@ -1088,7 +1088,7 @@ public class InvoiceServices {
             createInvoiceMap.put("invoiceTypeId", "COMMISSION_INVOICE");
             // start with INVOICE_IN_PROCESS, in the INVOICE_READY we can't change the invoice (or shouldn't be able to...)
             createInvoiceMap.put("statusId", "INVOICE_IN_PROCESS");
-            createInvoiceMap.put("currencyUomId", invoice.getString("currencyUomId"));
+            createInvoiceMap.put("currencyUomId", invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId));
             createInvoiceMap.put("userLogin", userLogin);
             // store the invoice first
             Map<String, Object> createInvoiceResult;
@@ -1114,7 +1114,7 @@ public class InvoiceServices {
             if (partyContactMechPurpose != null) {
                 GenericValue invoiceContactMech = delegator.makeValue("InvoiceContactMech", UtilMisc.toMap(
                         "invoiceId", invoiceId,
-                        "contactMechId", partyContactMechPurpose.getString("contactMechId"),
+                        "contactMechId", partyContactMechPurpose.getString(org.apache.ofbiz.persistence.entity.x.contactMechId),
                         "contactMechPurposeTypeId", "BILLING_LOCATION"));
                 toStore.add(invoiceContactMech);
             }
@@ -1127,7 +1127,7 @@ public class InvoiceServices {
             if (partyContactMechPurpose != null) {
                 GenericValue invoiceContactMech = delegator.makeValue("InvoiceContactMech", UtilMisc.toMap(
                         "invoiceId", invoiceId,
-                        "contactMechId", partyContactMechPurpose.getString("contactMechId"),
+                        "contactMechId", partyContactMechPurpose.getString(org.apache.ofbiz.persistence.entity.x.contactMechId),
                         "contactMechPurposeTypeId", "PAYMENT_LOCATION"));
                 toStore.add(invoiceContactMech);
             }
@@ -1190,10 +1190,10 @@ public class InvoiceServices {
 
     public static Map<String, Object> readyInvoices(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         // Get invoices to make ready
-        List<String> invoicesCreated = UtilGenerics.cast(context.get("invoicesCreated"));
+        List<String> invoicesCreated = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.invoicesCreated));
         String nextStatusId = "INVOICE_READY";
         try {
             for (String invoiceId : invoicesCreated) {
@@ -1217,8 +1217,8 @@ public class InvoiceServices {
         //Delegator delegator = dctx.getDelegator();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String shipmentId = (String) context.get("shipmentId");
-        Locale locale = (Locale) context.get("locale");
+        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         List<String> invoicesCreated;
         Map<String, Object> response = ServiceUtil.returnSuccess();
         GenericValue orderShipment = null;
@@ -1231,10 +1231,10 @@ public class InvoiceServices {
         }
 
         if (orderShipment != null) {
-            String orderId = orderShipment.getString("orderId");
+            String orderId = orderShipment.getString(org.apache.ofbiz.persistence.entity.x.orderId);
             try {
                 GenericValue orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
-                invoicePerShipment = orderHeader.getString("invoicePerShipment");
+                invoicePerShipment = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.invoicePerShipment);
             } catch (GenericEntityException e) {
                 return ServiceUtil.returnError(e.getMessage());
             }
@@ -1247,8 +1247,8 @@ public class InvoiceServices {
         }
 
         if ("Y".equals(invoicePerShipment)) {
-            Map<String, Object> serviceContext = UtilMisc.toMap("shipmentIds", UtilMisc.toList(shipmentId), "eventDate", context.get("eventDate"),
-                    "userLogin", context.get("userLogin"));
+            Map<String, Object> serviceContext = UtilMisc.toMap("shipmentIds", UtilMisc.toList(shipmentId), "eventDate", context.get(org.apache.ofbiz.persistence.entity.x.eventDate),
+                    "userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
             try {
                 Map<String, Object> result = dispatcher.runSync("createInvoicesFromShipments", serviceContext);
                 if (ServiceUtil.isError(result)) {
@@ -1272,9 +1272,9 @@ public class InvoiceServices {
     public static Map<String, Object> setInvoicesToReadyFromShipment(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String shipmentId = (String) context.get("shipmentId");
-        Locale locale = (Locale) context.get("locale");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
 
         // 1. Find all the orders for this shipment
         // 2. For every order check the invoice
@@ -1313,7 +1313,7 @@ public class InvoiceServices {
         Map<String, GenericValue> ordersWithInProcessInvoice = new HashMap<>();
 
         for (GenericValue itemIssuance : itemIssuances) {
-            String orderId = itemIssuance.getString("orderId");
+            String orderId = itemIssuance.getString(org.apache.ofbiz.persistence.entity.x.orderId);
             Map<String, Object> billFields = new HashMap<>();
             billFields.put("orderId", orderId);
 
@@ -1331,13 +1331,13 @@ public class InvoiceServices {
                 // orders already have an invoice
                 GenericValue invoice = null;
                 try {
-                    invoice = orderItemBilling.getRelatedOne("Invoice", false);
+                    invoice = orderItemBilling.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Invoice, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(e.getMessage());
                 }
                 if (invoice != null) {
-                    if ("INVOICE_IN_PROCESS".equals(invoice.getString("statusId"))) {
+                    if ("INVOICE_IN_PROCESS".equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                         ordersWithInProcessInvoice.put(orderId, invoice);
                     }
                 }
@@ -1346,7 +1346,7 @@ public class InvoiceServices {
 
         // For In-Process invoice, move the status to ready and capture the payment
         for (GenericValue invoice : ordersWithInProcessInvoice.values()) {
-            String invoiceId = invoice.getString("invoiceId");
+            String invoiceId = invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceId);
             Map<String, Object> setInvoiceStatusResult;
             try {
                 setInvoiceStatusResult = dispatcher.runSync("setInvoiceStatus", UtilMisc.<String, Object>toMap("invoiceId", invoiceId, "statusId",
@@ -1365,11 +1365,11 @@ public class InvoiceServices {
 
     public static Map<String, Object> createSalesInvoicesFromDropShipment(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String shipmentId = (String) context.get("shipmentId");
-        Locale locale = (Locale) context.get("locale");
+        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         Map<String, Object> serviceContext = UtilMisc.toMap("shipmentIds", UtilMisc.toList(shipmentId), "createSalesInvoicesForDropShipments",
-                Boolean.TRUE, "userLogin", context.get("userLogin"));
+                Boolean.TRUE, "userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
 
         Map<String, Object> serviceResult;
         try {
@@ -1392,9 +1392,9 @@ public class InvoiceServices {
     public static Map<String, Object> createInvoicesFromShipments(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        List<String> shipmentIds = UtilGenerics.cast(context.get("shipmentIds"));
-        Locale locale = (Locale) context.get("locale");
-        Boolean createSalesInvoicesForDropShipments = (Boolean) context.get("createSalesInvoicesForDropShipments");
+        List<String> shipmentIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.shipmentIds));
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Boolean createSalesInvoicesForDropShipments = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.createSalesInvoicesForDropShipments);
         if (UtilValidate.isEmpty(createSalesInvoicesForDropShipments)) {
             createSalesInvoicesForDropShipments = Boolean.FALSE;
         }
@@ -1409,9 +1409,9 @@ public class InvoiceServices {
         for (String tmpShipmentId : shipmentIds) {
             try {
                 GenericValue shipment = EntityQuery.use(delegator).from("Shipment").where("shipmentId", tmpShipmentId).queryOne();
-                if ((shipment.getString("shipmentTypeId") != null) && ("PURCHASE_SHIPMENT".equals(shipment.getString("shipmentTypeId")))) {
+                if ((shipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentTypeId) != null) && ("PURCHASE_SHIPMENT".equals(shipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentTypeId)))) {
                     purchaseShipmentFound = true;
-                } else if ((shipment.getString("shipmentTypeId") != null) && ("DROP_SHIPMENT".equals(shipment.getString("shipmentTypeId")))) {
+                } else if ((shipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentTypeId) != null) && ("DROP_SHIPMENT".equals(shipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentTypeId)))) {
                     dropShipmentFound = true;
                 } else {
                     salesShipmentFound = true;
@@ -1419,7 +1419,7 @@ public class InvoiceServices {
                 if (purchaseShipmentFound && salesShipmentFound && dropShipmentFound) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                             "AccountingShipmentsOfDifferentTypes",
-                            UtilMisc.toMap("tmpShipmentId", tmpShipmentId, "shipmentTypeId", shipment.getString("shipmentTypeId")),
+                            UtilMisc.toMap("tmpShipmentId", tmpShipmentId, "shipmentTypeId", shipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentTypeId)),
                             locale));
                 }
             } catch (GenericEntityException e) {
@@ -1445,9 +1445,9 @@ public class InvoiceServices {
                 Iterator<GenericValue> itemsIter = items.iterator();
                 while (itemsIter.hasNext()) {
                     GenericValue item = itemsIter.next();
-                    GenericValue inventoryItem = item.getRelatedOne("InventoryItem", false);
+                    GenericValue inventoryItem = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.InventoryItem, false);
                     GenericValue ownerPartyRole = EntityQuery.use(delegator).from("PartyRole")
-                            .where("partyId", inventoryItem.get("ownerPartyId"), "roleTypeId", "INTERNAL_ORGANIZATIO").cache().queryOne();
+                            .where("partyId", inventoryItem.get(org.apache.ofbiz.persistence.entity.x.ownerPartyId), "roleTypeId", "INTERNAL_ORGANIZATIO").cache().queryOne();
                     if (UtilValidate.isEmpty(ownerPartyRole)) {
                         itemsIter.remove();
                     }
@@ -1490,8 +1490,8 @@ public class InvoiceServices {
         // group items by order
         Map<String, List<GenericValue>> shippedOrderItems = new HashMap<>();
         for (GenericValue item : items) {
-            String orderId = item.getString("orderId");
-            String orderItemSeqId = item.getString("orderItemSeqId");
+            String orderId = item.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+            String orderItemSeqId = item.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
             List<GenericValue> itemsByOrder = shippedOrderItems.get(orderId);
             if (itemsByOrder == null) {
                 itemsByOrder = new LinkedList<>();
@@ -1510,9 +1510,9 @@ public class InvoiceServices {
                 shippedOrderItems.put(orderId, itemsByOrder);
                 continue;
             } else if ("ItemIssuance".equals(item.getEntityName())) {
-                billFields.add(EntityCondition.makeCondition("itemIssuanceId", item.get("itemIssuanceId")));
+                billFields.add(EntityCondition.makeCondition("itemIssuanceId", item.get(org.apache.ofbiz.persistence.entity.x.itemIssuanceId)));
             } else if ("ShipmentReceipt".equals(item.getEntityName())) {
-                billFields.add(EntityCondition.makeCondition("shipmentReceiptId", item.getString("receiptId")));
+                billFields.add(EntityCondition.makeCondition("shipmentReceiptId", item.getString(org.apache.ofbiz.persistence.entity.x.receiptId)));
             }
             List<GenericValue> itemBillings = null;
             try {
@@ -1550,34 +1550,34 @@ public class InvoiceServices {
                 BigDecimal issueQty = BigDecimal.ZERO;
 
                 if ("ShipmentReceipt".equals(issue.getEntityName())) {
-                    issueQty = issue.getBigDecimal("quantityAccepted");
+                    issueQty = issue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityAccepted);
                 } else {
-                    issueQty = issue.getBigDecimal("quantity");
+                    issueQty = issue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                 }
 
-                BigDecimal billAvail = itemQtyAvail.get(issue.getString("orderItemSeqId"));
+                BigDecimal billAvail = itemQtyAvail.get(issue.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
                 if (billAvail == null) {
                     List<EntityCondition> lookup = new LinkedList<>();
                     lookup.add(EntityCondition.makeCondition("orderId", orderId));
-                    lookup.add(EntityCondition.makeCondition("orderItemSeqId", issue.get("orderItemSeqId")));
+                    lookup.add(EntityCondition.makeCondition("orderItemSeqId", issue.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)));
                     lookup.add(EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "INVOICE_CANCELLED"));
                     GenericValue orderItem = null;
                     List<GenericValue> billed = null;
                     BigDecimal orderedQty = null;
                     try {
-                        orderItem = "OrderItem".equals(issue.getEntityName()) ? issue : issue.getRelatedOne("OrderItem", false);
+                        orderItem = "OrderItem".equals(issue.getEntityName()) ? issue : issue.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItem, false);
 
                         // total ordered
-                        orderedQty = orderItem.getBigDecimal("quantity");
+                        orderedQty = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
 
                         if (dropShipmentFound && createSalesInvoicesForDropShipments) {
 
                             // Override the issueQty with the quantity from the purchase order item
                             GenericValue orderItemAssoc = EntityUtil.getFirst(EntityUtil.filterByAnd(orderItemAssocs, UtilMisc.toMap("orderId",
-                                    issue.getString("orderId"), "orderItemSeqId", issue.getString("orderItemSeqId"))));
-                            GenericValue purchaseOrderItem = orderItemAssoc.getRelatedOne("ToOrderItem", false);
-                            orderItem.set("quantity", purchaseOrderItem.getBigDecimal("quantity"));
-                            issueQty = purchaseOrderItem.getBigDecimal("quantity");
+                                    issue.getString(org.apache.ofbiz.persistence.entity.x.orderId), "orderItemSeqId", issue.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId))));
+                            GenericValue purchaseOrderItem = orderItemAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ToOrderItem, false);
+                            orderItem.set(org.apache.ofbiz.persistence.entity.x.quantity, purchaseOrderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
+                            issueQty = purchaseOrderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                         }
                         billed = EntityQuery.use(delegator).from("OrderItemBillingAndInvoiceAndItem").where(lookup).queryList();
                     } catch (GenericEntityException e) {
@@ -1592,7 +1592,7 @@ public class InvoiceServices {
                     if (!billed.isEmpty()) {
                         BigDecimal billedQuantity = BigDecimal.ZERO;
                         for (GenericValue oib : billed) {
-                            BigDecimal qty = oib.getBigDecimal("quantity");
+                            BigDecimal qty = oib.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                             if (qty != null) {
                                 billedQuantity = billedQuantity.add(qty).setScale(DECIMALS, ROUNDING);
                             }
@@ -1609,9 +1609,9 @@ public class InvoiceServices {
                     if (issueQty != null && issueQty.compareTo(billAvail) > 0) {
                         // can only bill some of the issuance; others have been billed already
                         if ("ShipmentReceipt".equals(issue.getEntityName())) {
-                            issue.set("quantityAccepted", billAvail);
+                            issue.set(org.apache.ofbiz.persistence.entity.x.quantityAccepted, billAvail);
                         } else {
-                            issue.set("quantity", billAvail);
+                            issue.set(org.apache.ofbiz.persistence.entity.x.quantity, billAvail);
                         }
                         billAvail = BigDecimal.ZERO;
                     } else {
@@ -1627,13 +1627,13 @@ public class InvoiceServices {
                 }
 
                 // update the available to bill quantity for the next pass
-                itemQtyAvail.put(issue.getString("orderItemSeqId"), billAvail);
+                itemQtyAvail.put(issue.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), billAvail);
             }
 
             OrderReadHelper orh = new OrderReadHelper(delegator, orderId);
 
             GenericValue productStore = orh.getProductStore();
-            String prorateShipping = productStore != null ? productStore.getString("prorateShipping") : "N";
+            String prorateShipping = productStore != null ? productStore.getString(org.apache.ofbiz.persistence.entity.x.prorateShipping) : "N";
 
             // If shipping charges are not prorated, the shipments need to be examined for additional shipping charges
             if ("N".equalsIgnoreCase(prorateShipping)) {
@@ -1690,10 +1690,10 @@ public class InvoiceServices {
                 BigDecimal totalAdditionalShippingCharges = BigDecimal.ZERO;
                 if (UtilValidate.isNotEmpty(invoiceableShipments)) {
                     for (GenericValue shipment : invoiceableShipments) {
-                        if (shipment.get("additionalShippingCharge") == null) {
+                        if (shipment.get(org.apache.ofbiz.persistence.entity.x.additionalShippingCharge) == null) {
                             continue;
                         }
-                        BigDecimal shipmentAdditionalShippingCharges = shipment.getBigDecimal("additionalShippingCharge").setScale(DECIMALS,
+                        BigDecimal shipmentAdditionalShippingCharges = shipment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.additionalShippingCharge).setScale(DECIMALS,
                                 ROUNDING);
                         additionalShippingCharges.put(shipment, shipmentAdditionalShippingCharges);
                         totalAdditionalShippingCharges = totalAdditionalShippingCharges.add(shipmentAdditionalShippingCharges);
@@ -1707,11 +1707,11 @@ public class InvoiceServices {
                     for (Map.Entry<GenericValue, BigDecimal> entry : additionalShippingCharges.entrySet()) {
                         GenericValue shipment = entry.getKey();
                         BigDecimal additionalShippingCharge = entry.getValue();
-                        String shipmentId = shipment.getString("shipmentId");
+                        String shipmentId = shipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentId);
                         Map<String, Object> createOrderAdjustmentContext = new HashMap<>();
                         createOrderAdjustmentContext.put("orderId", orderId);
                         createOrderAdjustmentContext.put("orderAdjustmentTypeId", "SHIPPING_CHARGES");
-                        String addtlChargeDescription = shipment.getString("addtlShippingChargeDesc");
+                        String addtlChargeDescription = shipment.getString(org.apache.ofbiz.persistence.entity.x.addtlShippingChargeDesc);
                         if (UtilValidate.isEmpty(addtlChargeDescription)) {
                             addtlChargeDescription = UtilProperties.getMessage(RESOURCE, "AccountingAdditionalShippingChargeForShipment",
                                     UtilMisc.toMap("shipmentId", shipmentId), locale);
@@ -1719,7 +1719,7 @@ public class InvoiceServices {
                         createOrderAdjustmentContext.put("description", addtlChargeDescription);
                         createOrderAdjustmentContext.put("sourceReferenceId", shipmentId);
                         createOrderAdjustmentContext.put("amount", additionalShippingCharge);
-                        createOrderAdjustmentContext.put("userLogin", context.get("userLogin"));
+                        createOrderAdjustmentContext.put("userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
                         String shippingOrderAdjustmentId = null;
                         try {
                             Map<String, Object> createOrderAdjustmentResult = dispatcher.runSync("createOrderAdjustment",
@@ -1739,7 +1739,7 @@ public class InvoiceServices {
                         GenericValue payToParty = orh.getBillFromParty();
                         GenericValue destinationContactMech = null;
                         try {
-                            destinationContactMech = shipment.getRelatedOne("DestinationPostalAddress", false);
+                            destinationContactMech = shipment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestinationPostalAddress, false);
                         } catch (GenericEntityException e) {
                             Debug.logError(e, "Trouble calling createInvoicesFromShipment service; invoice not created for shipment " + shipmentId,
                                     MODULE);
@@ -1750,8 +1750,8 @@ public class InvoiceServices {
                         List<Object> emptyList = new LinkedList<>();
                         Map<String, Object> calcTaxContext = new HashMap<>();
                         calcTaxContext.put("productStoreId", orh.getProductStoreId());
-                        calcTaxContext.put("payToPartyId", payToParty.getString("partyId"));
-                        calcTaxContext.put("billToPartyId", billToParty.getString("partyId"));
+                        calcTaxContext.put("payToPartyId", payToParty.getString(org.apache.ofbiz.persistence.entity.x.partyId));
+                        calcTaxContext.put("billToPartyId", billToParty.getString(org.apache.ofbiz.persistence.entity.x.partyId));
                         calcTaxContext.put("orderShippingAmount", totalAdditionalShippingCharges);
                         calcTaxContext.put("shippingAddress", destinationContactMech);
 
@@ -1780,12 +1780,12 @@ public class InvoiceServices {
                         if (orderAdjustments != null) {
                             for (GenericValue orderAdjustment : orderAdjustments) {
                                 totalAdditionalShippingCharges =
-                                        totalAdditionalShippingCharges.add(orderAdjustment.getBigDecimal("amount").setScale(DECIMALS, ROUNDING));
-                                orderAdjustment.set("orderAdjustmentId", delegator.getNextSeqId("OrderAdjustment"));
-                                orderAdjustment.set("orderId", orderId);
-                                orderAdjustment.set("orderItemSeqId", "_NA_");
-                                orderAdjustment.set("shipGroupSeqId", shipment.getString("primaryShipGroupSeqId"));
-                                orderAdjustment.set("originalAdjustmentId", shippingOrderAdjustmentId);
+                                        totalAdditionalShippingCharges.add(orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(DECIMALS, ROUNDING));
+                                orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId, delegator.getNextSeqId("OrderAdjustment"));
+                                orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
+                                orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, "_NA_");
+                                orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId, shipment.getString(org.apache.ofbiz.persistence.entity.x.primaryShipGroupSeqId));
+                                orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.originalAdjustmentId, shippingOrderAdjustmentId);
                             }
                             try {
                                 delegator.storeAll(orderAdjustments);
@@ -1812,7 +1812,7 @@ public class InvoiceServices {
                         String paymentMethodId = null;
                         GenericValue cardOrderPaymentPref = EntityUtil.getFirst(orderPaymentPreferences);
                         if (cardOrderPaymentPref != null) {
-                            paymentMethodId = cardOrderPaymentPref.getString("paymentMethodId");
+                            paymentMethodId = cardOrderPaymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
                         }
 
                         if (paymentMethodId != null) {
@@ -1822,21 +1822,21 @@ public class InvoiceServices {
                             //  all at once.
                             BigDecimal totalNewAuthAmount = totalAdditionalShippingCharges.setScale(DECIMALS, ROUNDING);
                             for (GenericValue orderPaymentPreference : orderPaymentPreferences) {
-                                if (!("PAYMENT_SETTLED".equals(orderPaymentPreference.getString("statusId")) || "PAYMENT_CANCELLED"
-                                        .equals(orderPaymentPreference.getString("statusId")))) {
+                                if (!("PAYMENT_SETTLED".equals(orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.statusId)) || "PAYMENT_CANCELLED"
+                                        .equals(orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.statusId)))) {
                                     GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
-                                    if (authTransaction != null && authTransaction.get("amount") != null) {
+                                    if (authTransaction != null && authTransaction.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
 
                                         // Update the total authorized amount
-                                        totalNewAuthAmount = totalNewAuthAmount.add(authTransaction.getBigDecimal("amount").setScale(DECIMALS,
+                                        totalNewAuthAmount = totalNewAuthAmount.add(authTransaction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(DECIMALS,
                                                 ROUNDING));
 
                                         // Release the authorization for the OrderPaymentPreference
                                         Map<String, Object> prefReleaseResult = null;
                                         try {
                                             prefReleaseResult = dispatcher.runSync("releaseOrderPaymentPreference", UtilMisc.toMap(
-                                                    "orderPaymentPreferenceId", orderPaymentPreference.getString("orderPaymentPreferenceId"),
-                                                    "userLogin", context.get("userLogin")));
+                                                    "orderPaymentPreferenceId", orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId),
+                                                    "userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin)));
                                         } catch (GenericServiceException e) {
                                             Debug.logError(e, "Trouble calling releaseOrderPaymentPreference service", MODULE);
                                             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -1854,7 +1854,7 @@ public class InvoiceServices {
                             // Create a new OrderPaymentPreference for the order to handle the new (totalled) charge. Don't
                             //  set the maxAmount so that it doesn't interfere with other authorizations
                             Map<String, Object> serviceContext = UtilMisc.toMap("orderId", orderId, "paymentMethodId", paymentMethodId,
-                                    "paymentMethodTypeId", "CREDIT_CARD", "userLogin", context.get("userLogin"));
+                                    "paymentMethodTypeId", "CREDIT_CARD", "userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
                             String orderPaymentPreferenceId = null;
                             try {
                                 Map<String, Object> result = dispatcher.runSync("createOrderPaymentPreference", serviceContext);
@@ -1874,7 +1874,7 @@ public class InvoiceServices {
                             try {
                                 // Use an overrideAmount because the maxAmount wasn't set on the OrderPaymentPreference
                                 authResult = dispatcher.runSync("authOrderPaymentPreference", UtilMisc.toMap("orderPaymentPreferenceId",
-                                        orderPaymentPreferenceId, "overrideAmount", totalNewAuthAmount, "userLogin", context.get("userLogin")));
+                                        orderPaymentPreferenceId, "overrideAmount", totalNewAuthAmount, "userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin)));
                                 if (ServiceUtil.isError(authResult)) {
                                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                                             "AccountingTroubleCallingAuthOrderPaymentPreferenceService", locale));
@@ -1913,12 +1913,12 @@ public class InvoiceServices {
                         "AccountingProblemGettingShipmentItemBilling", locale));
             }
             if (shipmentItemBilling != null) {
-                invoiceId = shipmentItemBilling.getString("invoiceId");
+                invoiceId = shipmentItemBilling.getString(org.apache.ofbiz.persistence.entity.x.invoiceId);
             }
 
             // call the createInvoiceForOrder service for each order
             Map<String, Object> serviceContext = UtilMisc.toMap("orderId", orderId, "billItems", toBillItems, "invoiceId", invoiceId, "eventDate",
-                    context.get("eventDate"), "userLogin", context.get("userLogin"));
+                    context.get(org.apache.ofbiz.persistence.entity.x.eventDate), "userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
             try {
                 Map<String, Object> result = dispatcher.runSync("createInvoiceForOrder", serviceContext);
                 if (ServiceUtil.isError(result)) {
@@ -1956,7 +1956,7 @@ public class InvoiceServices {
             return defaultValue;
         }
         if (itemMap != null) {
-            return itemMap.getString("invoiceItemTypeId");
+            return itemMap.getString(org.apache.ofbiz.persistence.entity.x.invoiceItemTypeId);
         }
         return defaultValue;
     }
@@ -1964,9 +1964,9 @@ public class InvoiceServices {
     public static Map<String, Object> createInvoicesFromReturnShipment(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        String shipmentId = (String) context.get("shipmentId");
+        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
         String errorMsg = UtilProperties.getMessage(RESOURCE, "AccountingErrorCreatingInvoiceForShipment",
                 UtilMisc.toMap("shipmentId", shipmentId), locale);
         boolean salesReturnFound = false;
@@ -1981,9 +1981,9 @@ public class InvoiceServices {
                 return ServiceUtil.returnError(errorMsg + UtilProperties.getMessage(RESOURCE,
                         "AccountingShipmentNotFound", locale));
             }
-            if ("SALES_RETURN".equals(shipment.getString("shipmentTypeId"))) {
+            if ("SALES_RETURN".equals(shipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentTypeId))) {
                 salesReturnFound = true;
-            } else if ("PURCHASE_RETURN".equals(shipment.getString("shipmentTypeId"))) {
+            } else if ("PURCHASE_RETURN".equals(shipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentTypeId))) {
                 purchaseReturnFound = true;
             }
             if (!(salesReturnFound || purchaseReturnFound)) {
@@ -1994,9 +1994,9 @@ public class InvoiceServices {
             // were from a sales return
             List<GenericValue> shippedItems = null;
             if (salesReturnFound) {
-                shippedItems = shipment.getRelated("ShipmentReceipt", null, null, false);
+                shippedItems = shipment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentReceipt, null, null, false);
             } else if (purchaseReturnFound) {
-                shippedItems = shipment.getRelated("ItemIssuance", null, null, false);
+                shippedItems = shipment.getRelated(org.apache.ofbiz.persistence.entity.x.ItemIssuance, null, null, false);
             }
             if (shippedItems == null) {
                 Debug.logInfo("No items issued for shipments", MODULE);
@@ -2010,22 +2010,22 @@ public class InvoiceServices {
                 String returnId = null;
                 String returnItemSeqId = null;
                 if ("ShipmentReceipt".equals(item.getEntityName())) {
-                    returnId = item.getString("returnId");
+                    returnId = item.getString(org.apache.ofbiz.persistence.entity.x.returnId);
                 } else if ("ItemIssuance".equals(item.getEntityName())) {
                     GenericValue returnItemShipment = EntityQuery.use(delegator).from("ReturnItemShipment")
-                            .where("shipmentId", item.get("shipmentId"), "shipmentItemSeqId", item.get("shipmentItemSeqId"))
+                            .where("shipmentId", item.get(org.apache.ofbiz.persistence.entity.x.shipmentId), "shipmentItemSeqId", item.get(org.apache.ofbiz.persistence.entity.x.shipmentItemSeqId))
                             .queryFirst();
-                    returnId = returnItemShipment.getString("returnId");
-                    returnItemSeqId = returnItemShipment.getString("returnItemSeqId");
+                    returnId = returnItemShipment.getString(org.apache.ofbiz.persistence.entity.x.returnId);
+                    returnItemSeqId = returnItemShipment.getString(org.apache.ofbiz.persistence.entity.x.returnItemSeqId);
                 }
 
                 // see if there are ReturnItemBillings for this item
                 Long billingCount = 0L;
                 if ("ShipmentReceipt".equals(item.getEntityName())) {
                     billingCount = EntityQuery.use(delegator).from("ReturnItemBilling")
-                            .where("shipmentReceiptId", item.get("receiptId"),
+                            .where("shipmentReceiptId", item.get(org.apache.ofbiz.persistence.entity.x.receiptId),
                                     "returnId", returnId,
-                                    "returnItemSeqId", item.get("returnItemSeqId"))
+                                    "returnItemSeqId", item.get(org.apache.ofbiz.persistence.entity.x.returnItemSeqId))
                             .queryCount();
                 } else if ("ItemIssuance".equals(item.getEntityName())) {
                     billingCount = EntityQuery.use(delegator).from("ReturnItemBilling").where("returnId", returnId, "returnItemSeqId",
@@ -2054,7 +2054,7 @@ public class InvoiceServices {
                 if (Debug.verboseOn()) {
                     Debug.logVerbose("Creating invoice for return [" + returnId + "] with items: " + billItems.toString(), MODULE);
                 }
-                Map<String, Object> input = UtilMisc.toMap("returnId", returnId, "billItems", billItems, "userLogin", context.get("userLogin"));
+                Map<String, Object> input = UtilMisc.toMap("returnId", returnId, "billItems", billItems, "userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
                 Map<String, Object> serviceResults = dispatcher.runSync("createInvoiceFromReturn", input);
                 if (ServiceUtil.isError(serviceResults)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResults));
@@ -2076,11 +2076,11 @@ public class InvoiceServices {
     public static Map<String, Object> createInvoiceFromReturn(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        String returnId = (String) context.get("returnId");
-        List<GenericValue> billItems = UtilGenerics.cast(context.get("billItems"));
+        String returnId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnId);
+        List<GenericValue> billItems = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.billItems));
         String errorMsg = UtilProperties.getMessage(RESOURCE, "AccountingErrorCreatingInvoiceForReturn", UtilMisc.toMap("returnId", returnId),
                 locale);
         // List invoicesCreated = new ArrayList();
@@ -2089,11 +2089,11 @@ public class InvoiceServices {
             String description;
             // get the return header
             GenericValue returnHeader = EntityQuery.use(delegator).from("ReturnHeader").where("returnId", returnId).queryOne();
-            if (returnHeader == null || returnHeader.get("returnHeaderTypeId") == null) {
+            if (returnHeader == null || returnHeader.get(org.apache.ofbiz.persistence.entity.x.returnHeaderTypeId) == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingReturnTypeCannotBeNull", locale));
             }
 
-            if (returnHeader.getString("returnHeaderTypeId").startsWith("CUSTOMER_")) {
+            if (returnHeader.getString(org.apache.ofbiz.persistence.entity.x.returnHeaderTypeId).startsWith("CUSTOMER_")) {
                 invoiceTypeId = "CUST_RTN_INVOICE";
                 description = "Return Invoice for Customer Return #" + returnId;
             } else {
@@ -2101,18 +2101,18 @@ public class InvoiceServices {
                 description = "Return Invoice for Vendor Return #" + returnId;
             }
 
-            List<GenericValue> returnItems = returnHeader.getRelated("ReturnItem", null, null, false);
+            List<GenericValue> returnItems = returnHeader.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnItem, null, null, false);
             if (!returnItems.isEmpty()) {
                 for (GenericValue returnItem : returnItems) {
-                    if ("RETURN_COMPLETED".equals(returnItem.getString("statusId"))) {
-                        GenericValue product = returnItem.getRelatedOne("Product", false);
+                    if ("RETURN_COMPLETED".equals(returnItem.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
+                        GenericValue product = returnItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                         if (!ProductWorker.isPhysical(product)) {
                             boolean isNonPhysicalItemToReturn = false;
-                            List<GenericValue> returnItemBillings = returnItem.getRelated("ReturnItemBilling", null, null, false);
+                            List<GenericValue> returnItemBillings = returnItem.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnItemBilling, null, null, false);
 
                             if (!returnItemBillings.isEmpty()) {
                                 GenericValue invoice = EntityUtil.getFirst(returnItemBillings).getRelatedOne("Invoice", false);
-                                if ("INVOICE_CANCELLED".equals(invoice.getString("statusId"))) {
+                                if ("INVOICE_CANCELLED".equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                                     isNonPhysicalItemToReturn = true;
                                 }
                             } else {
@@ -2135,12 +2135,12 @@ public class InvoiceServices {
             if (UtilValidate.isNotEmpty(billItems)) {
                 // set the invoice data
                 Map<String, Object> input = UtilMisc.<String, Object>toMap("invoiceTypeId", invoiceTypeId, "statusId", "INVOICE_IN_PROCESS");
-                input.put("partyId", returnHeader.get("toPartyId"));
-                input.put("partyIdFrom", returnHeader.get("fromPartyId"));
-                input.put("currencyUomId", returnHeader.get("currencyUomId"));
+                input.put("partyId", returnHeader.get(org.apache.ofbiz.persistence.entity.x.toPartyId));
+                input.put("partyIdFrom", returnHeader.get(org.apache.ofbiz.persistence.entity.x.fromPartyId));
+                input.put("currencyUomId", returnHeader.get(org.apache.ofbiz.persistence.entity.x.currencyUomId));
                 input.put("invoiceDate", UtilDateTime.nowTimestamp());
                 input.put("description", description);
-                input.put("billingAccountId", returnHeader.get("billingAccountId"));
+                input.put("billingAccountId", returnHeader.get(org.apache.ofbiz.persistence.entity.x.billingAccountId));
                 input.put("userLogin", userLogin);
 
                 // call the service to create the invoice
@@ -2169,47 +2169,47 @@ public class InvoiceServices {
                     } else if ("ItemIssuance".equals(item.getEntityName())) {
                         itemIssuanceFound = true;
                     } else if ("ReturnItem".equals(item.getEntityName())) {
-                        quantity = item.getBigDecimal("returnQuantity");
+                        quantity = item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity);
                         returnItem = item;
                     } else {
                         Debug.logError("Unexpected entity " + item + " of type " + item.getEntityName(), MODULE);
                     }
                     // we need the related return item and product
                     if (shipmentReceiptFound) {
-                        returnItem = item.getRelatedOne("ReturnItem", true);
+                        returnItem = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ReturnItem, true);
                     } else if (itemIssuanceFound) {
-                        GenericValue shipmentItem = item.getRelatedOne("ShipmentItem", true);
-                        GenericValue returnItemShipment = EntityUtil.getFirst(shipmentItem.getRelated("ReturnItemShipment", null, null, false));
-                        returnItem = returnItemShipment.getRelatedOne("ReturnItem", true);
+                        GenericValue shipmentItem = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentItem, true);
+                        GenericValue returnItemShipment = EntityUtil.getFirst(shipmentItem.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnItemShipment, null, null, false));
+                        returnItem = returnItemShipment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ReturnItem, true);
                     }
                     if (returnItem == null) {
                         continue; // Just to prevent NPE
                     }
-                    GenericValue product = returnItem.getRelatedOne("Product", true);
+                    GenericValue product = returnItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, true);
 
                     // extract the return price as a big decimal for convenience
-                    BigDecimal returnPrice = returnItem.getBigDecimal("returnPrice");
+                    BigDecimal returnPrice = returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnPrice);
 
                     // determine invoice item type from the return item type
-                    String invoiceItemTypeId = getInvoiceItemType(delegator, returnItem.getString("returnItemTypeId"), null, invoiceTypeId, null);
+                    String invoiceItemTypeId = getInvoiceItemType(delegator, returnItem.getString(org.apache.ofbiz.persistence.entity.x.returnItemTypeId), null, invoiceTypeId, null);
                     if (invoiceItemTypeId == null) {
                         return ServiceUtil.returnError(errorMsg + UtilProperties.getMessage(RESOURCE,
                                 "AccountingNoKnownInvoiceItemTypeReturnItemType",
-                                UtilMisc.toMap("returnItemTypeId", returnItem.getString("returnItemTypeId")), locale));
+                                UtilMisc.toMap("returnItemTypeId", returnItem.getString(org.apache.ofbiz.persistence.entity.x.returnItemTypeId)), locale));
                     }
                     if (shipmentReceiptFound) {
-                        quantity = item.getBigDecimal("quantityAccepted");
+                        quantity = item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityAccepted);
                     } else if (itemIssuanceFound) {
-                        quantity = item.getBigDecimal("quantity");
+                        quantity = item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
                     }
 
                     // create the invoice item for this shipment receipt
                     input = UtilMisc.toMap("invoiceId", invoiceId, "invoiceItemTypeId", invoiceItemTypeId, "quantity", quantity);
                     input.put("invoiceItemSeqId", "" + invoiceItemSeqId); // turn the int into a string with ("" + int) hack
-                    input.put("amount", returnItem.get("returnPrice"));
-                    input.put("productId", returnItem.get("productId"));
-                    input.put("taxableFlag", product.get("taxable"));
-                    input.put("description", returnItem.get("description"));
+                    input.put("amount", returnItem.get(org.apache.ofbiz.persistence.entity.x.returnPrice));
+                    input.put("productId", returnItem.get(org.apache.ofbiz.persistence.entity.x.productId));
+                    input.put("taxableFlag", product.get(org.apache.ofbiz.persistence.entity.x.taxable));
+                    input.put("description", returnItem.get(org.apache.ofbiz.persistence.entity.x.description));
                     // TODO: what about the productFeatureId?
                     input.put("userLogin", userLogin);
                     serviceResults = dispatcher.runSync("createInvoiceItem", input);
@@ -2218,14 +2218,14 @@ public class InvoiceServices {
                     }
 
                     // copy the return item information into ReturnItemBilling
-                    input = UtilMisc.toMap("returnId", returnId, "returnItemSeqId", returnItem.get("returnItemSeqId"),
+                    input = UtilMisc.toMap("returnId", returnId, "returnItemSeqId", returnItem.get(org.apache.ofbiz.persistence.entity.x.returnItemSeqId),
                             "invoiceId", invoiceId);
                     input.put("invoiceItemSeqId", "" + invoiceItemSeqId); // turn the int into a string with ("" + int) hack
                     input.put("quantity", quantity);
-                    input.put("amount", returnItem.get("returnPrice"));
+                    input.put("amount", returnItem.get(org.apache.ofbiz.persistence.entity.x.returnPrice));
                     input.put("userLogin", userLogin);
                     if (shipmentReceiptFound) {
-                        input.put("shipmentReceiptId", item.get("receiptId"));
+                        input.put("shipmentReceiptId", item.get(org.apache.ofbiz.persistence.entity.x.receiptId));
                     }
                     serviceResults = dispatcher.runSync("createReturnItemBilling", input);
                     if (ServiceUtil.isError(serviceResults)) {
@@ -2233,7 +2233,7 @@ public class InvoiceServices {
                     }
                     if (Debug.verboseOn()) {
                         Debug.logVerbose("Creating Invoice Item with amount " + returnPrice + " and quantity " + quantity
-                                + " for shipment [" + item.getString("shipmentId") + ":" + item.getString("shipmentItemSeqId") + "]", MODULE);
+                                + " for shipment [" + item.getString(org.apache.ofbiz.persistence.entity.x.shipmentId) + ":" + item.getString(org.apache.ofbiz.persistence.entity.x.shipmentItemSeqId) + "]", MODULE);
                     }
 
                     String parentInvoiceItemSeqId = invoiceItemSeqId;
@@ -2245,9 +2245,9 @@ public class InvoiceServices {
                     // quantityAccepted + quantityRejected)
                     BigDecimal cancelQuantity = BigDecimal.ZERO;
                     if (shipmentReceiptFound) {
-                        cancelQuantity = item.getBigDecimal("quantityRejected");
+                        cancelQuantity = item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityRejected);
                     } else if (itemIssuanceFound) {
-                        cancelQuantity = item.getBigDecimal("cancelQuantity");
+                        cancelQuantity = item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
                     }
                     if (cancelQuantity == null) {
                         cancelQuantity = BigDecimal.ZERO;
@@ -2258,49 +2258,49 @@ public class InvoiceServices {
                     promisedTotal = promisedTotal.add(promisedAmount).setScale(DECIMALS, ROUNDING);
 
                     // for each adjustment related to this ReturnItem, create a separate invoice item
-                    List<GenericValue> adjustments = returnItem.getRelated("ReturnAdjustment", null, null, true);
+                    List<GenericValue> adjustments = returnItem.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnAdjustment, null, null, true);
                     for (GenericValue adjustment : adjustments) {
 
-                        if (adjustment.get("amount") == null) {
-                            Debug.logWarning("Return adjustment [" + adjustment.get("returnAdjustmentId")
+                        if (adjustment.get(org.apache.ofbiz.persistence.entity.x.amount) == null) {
+                            Debug.logWarning("Return adjustment [" + adjustment.get(org.apache.ofbiz.persistence.entity.x.returnAdjustmentId)
                                             + "] has null amount and will be skipped", MODULE);
                             continue;
                         }
 
                         // determine invoice item type from the return item type
-                        invoiceItemTypeId = getInvoiceItemType(delegator, adjustment.getString("returnAdjustmentTypeId"), null, invoiceTypeId, null);
+                        invoiceItemTypeId = getInvoiceItemType(delegator, adjustment.getString(org.apache.ofbiz.persistence.entity.x.returnAdjustmentTypeId), null, invoiceTypeId, null);
                         if (invoiceItemTypeId == null) {
                             return ServiceUtil.returnError(errorMsg + UtilProperties.getMessage(RESOURCE,
                                     "AccountingNoKnownInvoiceItemTypeReturnAdjustmentType",
-                                    UtilMisc.toMap("returnAdjustmentTypeId", adjustment.getString("returnAdjustmentTypeId")), locale));
+                                    UtilMisc.toMap("returnAdjustmentTypeId", adjustment.getString(org.apache.ofbiz.persistence.entity.x.returnAdjustmentTypeId)), locale));
                         }
 
                         // prorate the adjustment amount by the returned amount; do not round ratio
-                        BigDecimal ratio = quantity.divide(returnItem.getBigDecimal("returnQuantity"), 100, ROUNDING);
-                        BigDecimal amount = adjustment.getBigDecimal("amount");
+                        BigDecimal ratio = quantity.divide(returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity), 100, ROUNDING);
+                        BigDecimal amount = adjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
                         amount = amount.multiply(ratio).setScale(DECIMALS, ROUNDING);
                         if (Debug.verboseOn()) {
-                            Debug.logVerbose("Creating Invoice Item with amount " + adjustment.getBigDecimal("amount") + " prorated to " + amount
-                                    + " for return adjustment [" + adjustment.getString("returnAdjustmentId") + "]", MODULE);
+                            Debug.logVerbose("Creating Invoice Item with amount " + adjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount) + " prorated to " + amount
+                                    + " for return adjustment [" + adjustment.getString(org.apache.ofbiz.persistence.entity.x.returnAdjustmentId) + "]", MODULE);
                         }
 
                         // prepare invoice item data for this adjustment
                         input = UtilMisc.toMap("invoiceId", invoiceId, "invoiceItemTypeId", invoiceItemTypeId, "quantity", BigDecimal.ONE);
                         input.put("amount", amount);
                         input.put("invoiceItemSeqId", "" + invoiceItemSeqId); // turn the int into a string with ("" + int) hack
-                        input.put("productId", returnItem.get("productId"));
-                        input.put("description", adjustment.get("description"));
-                        input.put("overrideGlAccountId", adjustment.get("overrideGlAccountId"));
+                        input.put("productId", returnItem.get(org.apache.ofbiz.persistence.entity.x.productId));
+                        input.put("description", adjustment.get(org.apache.ofbiz.persistence.entity.x.description));
+                        input.put("overrideGlAccountId", adjustment.get(org.apache.ofbiz.persistence.entity.x.overrideGlAccountId));
                         input.put("parentInvoiceId", invoiceId);
                         input.put("parentInvoiceItemSeqId", parentInvoiceItemSeqId);
-                        input.put("taxAuthPartyId", adjustment.get("taxAuthPartyId"));
-                        input.put("taxAuthGeoId", adjustment.get("taxAuthGeoId"));
+                        input.put("taxAuthPartyId", adjustment.get(org.apache.ofbiz.persistence.entity.x.taxAuthPartyId));
+                        input.put("taxAuthGeoId", adjustment.get(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId));
                         input.put("userLogin", userLogin);
 
                         // only set taxable flag when the adjustment is not a tax
                         // TODO: Note that we use the value of Product.taxable here. This is not an ideal solution. Instead, use returnAdjustment
                         // .includeInTax
-                        if ("RET_SALES_TAX_ADJ".equals(adjustment.get("returnAdjustmentTypeId"))) {
+                        if ("RET_SALES_TAX_ADJ".equals(adjustment.get(org.apache.ofbiz.persistence.entity.x.returnAdjustmentTypeId))) {
                             input.put("taxableFlag", "N");
                         }
 
@@ -2327,37 +2327,37 @@ public class InvoiceServices {
                 }
 
                 // loop through return-wide adjustments and create invoice items for each
-                List<GenericValue> adjustments = returnHeader.getRelated("ReturnAdjustment", UtilMisc.toMap("returnItemSeqId", "_NA_"), null, true);
+                List<GenericValue> adjustments = returnHeader.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnAdjustment, UtilMisc.toMap("returnItemSeqId", "_NA_"), null, true);
                 for (GenericValue adjustment : adjustments) {
 
                     // determine invoice item type from the return item type
-                    String invoiceItemTypeId = getInvoiceItemType(delegator, adjustment.getString("returnAdjustmentTypeId"), null, invoiceTypeId,
+                    String invoiceItemTypeId = getInvoiceItemType(delegator, adjustment.getString(org.apache.ofbiz.persistence.entity.x.returnAdjustmentTypeId), null, invoiceTypeId,
                             null);
                     if (invoiceItemTypeId == null) {
                         return ServiceUtil.returnError(errorMsg + UtilProperties.getMessage(RESOURCE,
                                 "AccountingNoKnownInvoiceItemTypeReturnAdjustmentType",
-                                UtilMisc.toMap("returnAdjustmentTypeId", adjustment.getString("returnAdjustmentTypeId")), locale));
+                                UtilMisc.toMap("returnAdjustmentTypeId", adjustment.getString(org.apache.ofbiz.persistence.entity.x.returnAdjustmentTypeId)), locale));
                     }
 
                     // prorate the adjustment amount by the actual to promised ratio
-                    BigDecimal amount = adjustment.getBigDecimal("amount").multiply(actualToPromisedRatio).setScale(DECIMALS, ROUNDING);
+                    BigDecimal amount = adjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).multiply(actualToPromisedRatio).setScale(DECIMALS, ROUNDING);
                     if (Debug.verboseOn()) {
-                        Debug.logVerbose("Creating Invoice Item with amount " + adjustment.getBigDecimal("amount") + " prorated to " + amount
-                                + " for return adjustment [" + adjustment.getString("returnAdjustmentId") + "]", MODULE);
+                        Debug.logVerbose("Creating Invoice Item with amount " + adjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount) + " prorated to " + amount
+                                + " for return adjustment [" + adjustment.getString(org.apache.ofbiz.persistence.entity.x.returnAdjustmentId) + "]", MODULE);
                     }
 
                     // prepare the invoice item for the return-wide adjustment
                     input = UtilMisc.toMap("invoiceId", invoiceId, "invoiceItemTypeId", invoiceItemTypeId, "quantity", BigDecimal.ONE);
                     input.put("amount", amount);
                     input.put("invoiceItemSeqId", "" + invoiceItemSeqId); // turn the int into a string with ("" + int) hack
-                    input.put("description", adjustment.get("description"));
-                    input.put("overrideGlAccountId", adjustment.get("overrideGlAccountId"));
-                    input.put("taxAuthPartyId", adjustment.get("taxAuthPartyId"));
-                    input.put("taxAuthGeoId", adjustment.get("taxAuthGeoId"));
+                    input.put("description", adjustment.get(org.apache.ofbiz.persistence.entity.x.description));
+                    input.put("overrideGlAccountId", adjustment.get(org.apache.ofbiz.persistence.entity.x.overrideGlAccountId));
+                    input.put("taxAuthPartyId", adjustment.get(org.apache.ofbiz.persistence.entity.x.taxAuthPartyId));
+                    input.put("taxAuthGeoId", adjustment.get(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId));
                     input.put("userLogin", userLogin);
 
                     // XXX TODO Note: we need to implement ReturnAdjustment.includeInTax for this to work properly
-                    input.put("taxableFlag", adjustment.get("includeInTax"));
+                    input.put("taxableFlag", adjustment.get(org.apache.ofbiz.persistence.entity.x.includeInTax));
 
                     // create the invoice item
                     serviceResults = dispatcher.runSync("createInvoiceItem", input);
@@ -2390,15 +2390,15 @@ public class InvoiceServices {
     public static Map<String, Object> checkInvoicePaymentApplications(DispatchContext ctx, Map<String, Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         if (DECIMALS == -1 || ROUNDING == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingAritmeticPropertiesNotConfigured", locale));
         }
 
-        String invoiceId = (String) context.get("invoiceId");
+        String invoiceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.invoiceId);
         GenericValue invoice = null;
         try {
             invoice = EntityQuery.use(delegator).from("Invoice").where("invoiceId", invoiceId).queryOne();
@@ -2409,7 +2409,7 @@ public class InvoiceServices {
         }
 
         // Ignore invoices that aren't ready yet
-        if (!"INVOICE_READY".equals(invoice.getString("statusId"))) {
+        if (!"INVOICE_READY".equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
             return ServiceUtil.returnSuccess();
         }
 
@@ -2421,10 +2421,10 @@ public class InvoiceServices {
             // respectively
             for (Iterator<GenericValue> iter = paymentAppl.iterator(); iter.hasNext();) {
                 GenericValue payment = iter.next();
-                if ("PMNT_RECEIVED".equals(payment.get("statusId")) && UtilAccounting.isReceipt(payment)) {
+                if ("PMNT_RECEIVED".equals(payment.get(org.apache.ofbiz.persistence.entity.x.statusId)) && UtilAccounting.isReceipt(payment)) {
                     continue; // keep
                 }
-                if ("PMNT_SENT".equals(payment.get("statusId")) && UtilAccounting.isDisbursement(payment)) {
+                if ("PMNT_SENT".equals(payment.get(org.apache.ofbiz.persistence.entity.x.statusId)) && UtilAccounting.isDisbursement(payment)) {
                     continue; // keep
                 }
                 // all other cases, remove the payment application
@@ -2440,10 +2440,10 @@ public class InvoiceServices {
         Map<String, BigDecimal> payments = new HashMap<>();
         Timestamp paidDate = null;
         for (GenericValue payAppl : paymentAppl) {
-            payments.put(payAppl.getString("paymentId"), payAppl.getBigDecimal("amountApplied"));
+            payments.put(payAppl.getString(org.apache.ofbiz.persistence.entity.x.paymentId), payAppl.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied));
 
             // paidDate will be the last date (chronologically) of all the Payments applied to this invoice
-            Timestamp paymentDate = payAppl.getTimestamp("effectiveDate");
+            Timestamp paymentDate = payAppl.getTimestamp(org.apache.ofbiz.persistence.entity.x.effectiveDate);
             if (paymentDate != null) {
                 if ((paidDate == null) || (paidDate.before(paymentDate))) {
                     paidDate = paymentDate;
@@ -2494,11 +2494,11 @@ public class InvoiceServices {
                                             BigDecimal divisor, BigDecimal multiplier, BigDecimal baseAmount, int decimals, RoundingMode rounding,
                                             GenericValue userLogin, LocalDispatcher dispatcher, Locale locale) {
         BigDecimal adjAmount = BigDecimal.ZERO;
-        if (adj.get("amount") != null) {
+        if (adj.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
 
             // pro-rate the amount
             BigDecimal amount = BigDecimal.ZERO;
-            if ("DONATION_ADJUSTMENT".equals(adj.getString("orderAdjustmentTypeId"))) {
+            if ("DONATION_ADJUSTMENT".equals(adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
                 amount = baseAmount;
             } else if (divisor.signum() != 0) { // make sure the divisor is not 0 to avoid NaN problems; just leave the amount as 0 and skip it in
                 // essense
@@ -2509,15 +2509,15 @@ public class InvoiceServices {
                 Map<String, Object> createInvoiceItemContext = new HashMap<>();
                 createInvoiceItemContext.put("invoiceId", invoiceId);
                 createInvoiceItemContext.put("invoiceItemSeqId", invoiceItemSeqId);
-                createInvoiceItemContext.put("invoiceItemTypeId", getInvoiceItemType(delegator, adj.getString("orderAdjustmentTypeId"), null,
+                createInvoiceItemContext.put("invoiceItemTypeId", getInvoiceItemType(delegator, adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId), null,
                         invoiceTypeId, "INVOICE_ADJ"));
-                createInvoiceItemContext.put("description", adj.get("description"));
+                createInvoiceItemContext.put("description", adj.get(org.apache.ofbiz.persistence.entity.x.description));
                 createInvoiceItemContext.put("quantity", BigDecimal.ONE);
                 createInvoiceItemContext.put("amount", amount);
-                createInvoiceItemContext.put("overrideGlAccountId", adj.get("overrideGlAccountId"));
-                createInvoiceItemContext.put("taxAuthPartyId", adj.get("taxAuthPartyId"));
-                createInvoiceItemContext.put("taxAuthGeoId", adj.get("taxAuthGeoId"));
-                createInvoiceItemContext.put("taxAuthorityRateSeqId", adj.get("taxAuthorityRateSeqId"));
+                createInvoiceItemContext.put("overrideGlAccountId", adj.get(org.apache.ofbiz.persistence.entity.x.overrideGlAccountId));
+                createInvoiceItemContext.put("taxAuthPartyId", adj.get(org.apache.ofbiz.persistence.entity.x.taxAuthPartyId));
+                createInvoiceItemContext.put("taxAuthGeoId", adj.get(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId));
+                createInvoiceItemContext.put("taxAuthorityRateSeqId", adj.get(org.apache.ofbiz.persistence.entity.x.taxAuthorityRateSeqId));
                 createInvoiceItemContext.put("userLogin", userLogin);
 
                 Map<String, Object> createInvoiceItemResult = null;
@@ -2533,7 +2533,7 @@ public class InvoiceServices {
 
                 // Create the OrderAdjustmentBilling record
                 Map<String, Object> createOrderAdjustmentBillingContext = new HashMap<>();
-                createOrderAdjustmentBillingContext.put("orderAdjustmentId", adj.getString("orderAdjustmentId"));
+                createOrderAdjustmentBillingContext.put("orderAdjustmentId", adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId));
                 createOrderAdjustmentBillingContext.put("invoiceId", invoiceId);
                 createOrderAdjustmentBillingContext.put("invoiceItemSeqId", invoiceItemSeqId);
                 createOrderAdjustmentBillingContext.put("amount", amount);
@@ -2551,9 +2551,9 @@ public class InvoiceServices {
             }
             amount = amount.setScale(decimals, rounding);
             adjAmount = amount;
-        } else if (adj.get("sourcePercentage") != null) {
+        } else if (adj.get(org.apache.ofbiz.persistence.entity.x.sourcePercentage) != null) {
             // pro-rate the amount
-            BigDecimal percent = adj.getBigDecimal("sourcePercentage");
+            BigDecimal percent = adj.getBigDecimal(org.apache.ofbiz.persistence.entity.x.sourcePercentage);
             percent = percent.divide(new BigDecimal(100), 100, rounding);
             BigDecimal amount = BigDecimal.ZERO;
             // make sure the divisor is not 0 to avoid NaN problems; just leave the amount as 0 and skip it in essense
@@ -2565,15 +2565,15 @@ public class InvoiceServices {
                 Map<String, Object> createInvoiceItemContext = new HashMap<>();
                 createInvoiceItemContext.put("invoiceId", invoiceId);
                 createInvoiceItemContext.put("invoiceItemSeqId", invoiceItemSeqId);
-                createInvoiceItemContext.put("invoiceItemTypeId", getInvoiceItemType(delegator, adj.getString("orderAdjustmentTypeId"), null,
+                createInvoiceItemContext.put("invoiceItemTypeId", getInvoiceItemType(delegator, adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId), null,
                         invoiceTypeId, "INVOICE_ADJ"));
-                createInvoiceItemContext.put("description", adj.get("description"));
+                createInvoiceItemContext.put("description", adj.get(org.apache.ofbiz.persistence.entity.x.description));
                 createInvoiceItemContext.put("quantity", BigDecimal.ONE);
                 createInvoiceItemContext.put("amount", amount);
-                createInvoiceItemContext.put("overrideGlAccountId", adj.get("overrideGlAccountId"));
-                createInvoiceItemContext.put("taxAuthPartyId", adj.get("taxAuthPartyId"));
-                createInvoiceItemContext.put("taxAuthGeoId", adj.get("taxAuthGeoId"));
-                createInvoiceItemContext.put("taxAuthorityRateSeqId", adj.get("taxAuthorityRateSeqId"));
+                createInvoiceItemContext.put("overrideGlAccountId", adj.get(org.apache.ofbiz.persistence.entity.x.overrideGlAccountId));
+                createInvoiceItemContext.put("taxAuthPartyId", adj.get(org.apache.ofbiz.persistence.entity.x.taxAuthPartyId));
+                createInvoiceItemContext.put("taxAuthGeoId", adj.get(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId));
+                createInvoiceItemContext.put("taxAuthorityRateSeqId", adj.get(org.apache.ofbiz.persistence.entity.x.taxAuthorityRateSeqId));
                 createInvoiceItemContext.put("userLogin", userLogin);
 
                 Map<String, Object> createInvoiceItemResult = null;
@@ -2589,7 +2589,7 @@ public class InvoiceServices {
 
                 // Create the OrderAdjustmentBilling record
                 Map<String, Object> createOrderAdjustmentBillingContext = new HashMap<>();
-                createOrderAdjustmentBillingContext.put("orderAdjustmentId", adj.getString("orderAdjustmentId"));
+                createOrderAdjustmentBillingContext.put("orderAdjustmentId", adj.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId));
                 createOrderAdjustmentBillingContext.put("invoiceId", invoiceId);
                 createOrderAdjustmentBillingContext.put("invoiceItemSeqId", invoiceItemSeqId);
                 createOrderAdjustmentBillingContext.put("amount", amount);
@@ -2624,14 +2624,14 @@ public class InvoiceServices {
                 Map<String, Object> createInvoiceTermContext = new HashMap<>();
                 createInvoiceTermContext.put("invoiceId", invoiceId);
                 createInvoiceTermContext.put("invoiceItemSeqId", "_NA_");
-                createInvoiceTermContext.put("termTypeId", term.get("termTypeId"));
-                createInvoiceTermContext.put("termValue", term.get("termValue"));
-                createInvoiceTermContext.put("termDays", term.get("termDays"));
+                createInvoiceTermContext.put("termTypeId", term.get(org.apache.ofbiz.persistence.entity.x.termTypeId));
+                createInvoiceTermContext.put("termValue", term.get(org.apache.ofbiz.persistence.entity.x.termValue));
+                createInvoiceTermContext.put("termDays", term.get(org.apache.ofbiz.persistence.entity.x.termDays));
                 if (!"BillingAccountTerm".equals(term.getEntityName())) {
-                    createInvoiceTermContext.put("textValue", term.get("textValue"));
-                    createInvoiceTermContext.put("description", term.get("description"));
+                    createInvoiceTermContext.put("textValue", term.get(org.apache.ofbiz.persistence.entity.x.textValue));
+                    createInvoiceTermContext.put("description", term.get(org.apache.ofbiz.persistence.entity.x.description));
                 }
-                createInvoiceTermContext.put("uomId", term.get("uomId"));
+                createInvoiceTermContext.put("uomId", term.get(org.apache.ofbiz.persistence.entity.x.uomId));
                 createInvoiceTermContext.put("userLogin", userLogin);
 
                 Map<String, Object> createInvoiceTermResult = null;
@@ -2655,13 +2655,13 @@ public class InvoiceServices {
      */
     public static Map<String, Object> updatePaymentApplication(DispatchContext dctx, Map<String, Object> context) {
         if (!context.containsKey("useHighestAmount")) {
-            context.put("useHighestAmount", "N");
+            context.put(org.apache.ofbiz.persistence.entity.x.useHighestAmount, "N");
         }
-        BigDecimal amountApplied = (BigDecimal) context.get("amountApplied");
+        BigDecimal amountApplied = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amountApplied);
         if (amountApplied != null) {
-            context.put("amountApplied", amountApplied);
+            context.put(org.apache.ofbiz.persistence.entity.x.amountApplied, amountApplied);
         } else {
-            context.put("amountApplied", BigDecimal.ZERO);
+            context.put(org.apache.ofbiz.persistence.entity.x.amountApplied, BigDecimal.ZERO);
         }
 
         return updatePaymentApplicationDefBd(dctx, context);
@@ -2677,14 +2677,14 @@ public class InvoiceServices {
      */
     public static Map<String, Object> updatePaymentApplicationDef(DispatchContext dctx, Map<String, Object> context) {
         if (!context.containsKey("useHighestAmount")) {
-            context.put("useHighestAmount", "Y");
+            context.put(org.apache.ofbiz.persistence.entity.x.useHighestAmount, "Y");
         }
         return updatePaymentApplication(dctx, context);
     }
 
     public static Map<String, Object> updatePaymentApplicationDefBd(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         if (DECIMALS == -1 || ROUNDING == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -2692,7 +2692,7 @@ public class InvoiceServices {
         }
 
         if (!context.containsKey("useHighestAmount")) {
-            context.put("useHighestAmount", "Y");
+            context.put(org.apache.ofbiz.persistence.entity.x.useHighestAmount, "Y");
         }
 
         String defaultInvoiceProcessing = EntityUtilProperties.getPropertyValue("accounting", "invoiceProcessing", delegator);
@@ -2700,16 +2700,16 @@ public class InvoiceServices {
         boolean debug = true; // show processing messages in the log..or not....
 
         // a 'y' in invoiceProssesing will reverse the default processing
-        String changeProcessing = (String) context.get("invoiceProcessing");
-        String invoiceId = (String) context.get("invoiceId");
-        String invoiceItemSeqId = (String) context.get("invoiceItemSeqId");
-        String paymentId = (String) context.get("paymentId");
-        String toPaymentId = (String) context.get("toPaymentId");
-        String paymentApplicationId = (String) context.get("paymentApplicationId");
-        BigDecimal amountApplied = (BigDecimal) context.get("amountApplied");
-        String billingAccountId = (String) context.get("billingAccountId");
-        String taxAuthGeoId = (String) context.get("taxAuthGeoId");
-        String useHighestAmount = (String) context.get("useHighestAmount");
+        String changeProcessing = (String) context.get(org.apache.ofbiz.persistence.entity.x.invoiceProcessing);
+        String invoiceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.invoiceId);
+        String invoiceItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId);
+        String paymentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentId);
+        String toPaymentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.toPaymentId);
+        String paymentApplicationId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentApplicationId);
+        BigDecimal amountApplied = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amountApplied);
+        String billingAccountId = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingAccountId);
+        String taxAuthGeoId = (String) context.get(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId);
+        String useHighestAmount = (String) context.get(org.apache.ofbiz.persistence.entity.x.useHighestAmount);
 
         List<String> errorMessageList = new LinkedList<>();
 
@@ -2797,18 +2797,18 @@ public class InvoiceServices {
                         "AccountingPaymentRecordNotFound", UtilMisc.toMap("paymentId", paymentId), locale));
                 return ServiceUtil.returnError(errorMessageList);
             }
-            paymentApplyAvailable = payment.getBigDecimal("amount").subtract(PaymentWorker.getPaymentApplied(payment)).setScale(DECIMALS, ROUNDING);
+            paymentApplyAvailable = payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).subtract(PaymentWorker.getPaymentApplied(payment)).setScale(DECIMALS, ROUNDING);
 
-            if ("PMNT_CANCELLED".equals(payment.getString("statusId"))) {
+            if ("PMNT_CANCELLED".equals(payment.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                 errorMessageList.add(UtilProperties.getMessage(RESOURCE,
                         "AccountingPaymentCancelled", UtilMisc.toMap("paymentId", paymentId), locale));
             }
-            if ("PMNT_CONFIRMED".equals(payment.getString("statusId"))) {
+            if ("PMNT_CONFIRMED".equals(payment.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                 errorMessageList.add(UtilProperties.getMessage(RESOURCE,
                         "AccountingPaymentConfirmed", UtilMisc.toMap("paymentId", paymentId), locale));
             }
 
-            currencyUomId = payment.getString("currencyUomId");
+            currencyUomId = payment.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId);
 
         }
 
@@ -2826,14 +2826,14 @@ public class InvoiceServices {
                         "AccountingPaymentRecordNotFound", UtilMisc.toMap("paymentId", toPaymentId), locale));
                 return ServiceUtil.returnError(errorMessageList);
             }
-            toPaymentApplyAvailable = toPayment.getBigDecimal("amount").subtract(PaymentWorker.getPaymentApplied(toPayment)).setScale(DECIMALS,
+            toPaymentApplyAvailable = toPayment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).subtract(PaymentWorker.getPaymentApplied(toPayment)).setScale(DECIMALS,
                     ROUNDING);
 
-            if ("PMNT_CANCELLED".equals(toPayment.getString("statusId"))) {
+            if ("PMNT_CANCELLED".equals(toPayment.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                 errorMessageList.add(UtilProperties.getMessage(RESOURCE,
                         "AccountingPaymentCancelled", UtilMisc.toMap("paymentId", paymentId), locale));
             }
-            if ("PMNT_CONFIRMED".equals(toPayment.getString("statusId"))) {
+            if ("PMNT_CONFIRMED".equals(toPayment.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                 errorMessageList.add(UtilProperties.getMessage(RESOURCE,
                         "AccountingPaymentConfirmed", UtilMisc.toMap("paymentId", paymentId), locale));
             }
@@ -2857,8 +2857,8 @@ public class InvoiceServices {
             }
 
             // check if at least one send is the same as one receiver on the other payment
-            if (!payment.getString("partyIdFrom").equals(toPayment.getString("partyIdTo"))
-                    && !payment.getString("partyIdTo").equals(toPayment.getString("partyIdFrom"))) {
+            if (!payment.getString(org.apache.ofbiz.persistence.entity.x.partyIdFrom).equals(toPayment.getString(org.apache.ofbiz.persistence.entity.x.partyIdTo))
+                    && !payment.getString(org.apache.ofbiz.persistence.entity.x.partyIdTo).equals(toPayment.getString(org.apache.ofbiz.persistence.entity.x.partyIdFrom))) {
                 errorMessageList.add(UtilProperties.getMessage(RESOURCE,
                         "AccountingFromPartySameToParty", locale));
             }
@@ -2881,8 +2881,8 @@ public class InvoiceServices {
                 errorMessageList.add(UtilProperties.getMessage(RESOURCE,
                         "AccountingInvoiceNotFound", UtilMisc.toMap("invoiceId", invoiceId), locale));
             } else {
-                if (invoice.getString("billingAccountId") != null) {
-                    billingAccountId = invoice.getString("billingAccountId");
+                if (invoice.getString(org.apache.ofbiz.persistence.entity.x.billingAccountId) != null) {
+                    billingAccountId = invoice.getString(org.apache.ofbiz.persistence.entity.x.billingAccountId);
                 }
             }
         }
@@ -2901,11 +2901,11 @@ public class InvoiceServices {
                 return ServiceUtil.returnError(errorMessageList);
             }
             // check the currency
-            if (billingAccount.get("accountCurrencyUomId") != null && currencyUomId != null
-                    && !billingAccount.getString("accountCurrencyUomId").equals(currencyUomId)) {
+            if (billingAccount.get(org.apache.ofbiz.persistence.entity.x.accountCurrencyUomId) != null && currencyUomId != null
+                    && !billingAccount.getString(org.apache.ofbiz.persistence.entity.x.accountCurrencyUomId).equals(currencyUomId)) {
                 errorMessageList.add(UtilProperties.getMessage(RESOURCE, "AccountingBillingAccountCurrencyProblem",
                         UtilMisc.toMap("billingAccountId", billingAccountId,
-                                "accountCurrencyUomId", billingAccount.getString("accountCurrencyUomId"),
+                                "accountCurrencyUomId", billingAccount.getString(org.apache.ofbiz.persistence.entity.x.accountCurrencyUomId),
                                 "paymentId", paymentId, "paymentCurrencyUomId", currencyUomId), locale));
             }
 
@@ -2933,30 +2933,30 @@ public class InvoiceServices {
                         "AccountingInvoiceNotFound", UtilMisc.toMap("invoiceId", invoiceId), locale));
             } else { // check the invoice and when supplied the invoice item...
 
-                if ("INVOICE_CANCELLED".equals(invoice.getString("statusId"))) {
+                if ("INVOICE_CANCELLED".equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                     errorMessageList.add(UtilProperties.getMessage(RESOURCE,
                             "AccountingInvoiceCancelledCannotApplyTo", UtilMisc.toMap("invoiceId", invoiceId), locale));
                 }
 
                 // check the currency
-                if (currencyUomId != null && invoice.get("currencyUomId") != null
-                        && !currencyUomId.equals(invoice.getString("currencyUomId"))) {
+                if (currencyUomId != null && invoice.get(org.apache.ofbiz.persistence.entity.x.currencyUomId) != null
+                        && !currencyUomId.equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId))) {
                     Debug.logInfo(UtilProperties.getMessage(RESOURCE, "AccountingInvoicePaymentCurrencyProblem",
-                            UtilMisc.toMap("invoiceCurrency", invoice.getString("currencyUomId"), "paymentCurrency", payment.getString(
-                                    "currencyUomId")), locale), MODULE);
+                            UtilMisc.toMap("invoiceCurrency", invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId), "paymentCurrency", payment.getString(
+                                    org.apache.ofbiz.persistence.entity.x.currencyUomId)), locale), MODULE);
                     Debug.logInfo("will try to apply payment on the actualCurrency amount on payment", MODULE);
 
-                    if (payment.get("actualCurrencyAmount") == null || payment.get("actualCurrencyUomId") == null) {
+                    if (payment.get(org.apache.ofbiz.persistence.entity.x.actualCurrencyAmount) == null || payment.get(org.apache.ofbiz.persistence.entity.x.actualCurrencyUomId) == null) {
                         errorMessageList.add("Actual amounts are required in the currency of the invoice to make this work....");
                     } else {
-                        currencyUomId = payment.getString("actualCurrencyUomId");
-                        if (!currencyUomId.equals(invoice.getString("currencyUomId"))) {
+                        currencyUomId = payment.getString(org.apache.ofbiz.persistence.entity.x.actualCurrencyUomId);
+                        if (!currencyUomId.equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId))) {
                             errorMessageList.add("actual currency on payment (" + currencyUomId + ") not the same as original invoice currency ("
-                                    + invoice.getString("currencyUomId") + ")");
+                                    + invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId) + ")");
                         }
                     }
                     paymentApplyAvailable =
-                            payment.getBigDecimal("actualCurrencyAmount").subtract(PaymentWorker.getPaymentApplied(payment))
+                            payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualCurrencyAmount).subtract(PaymentWorker.getPaymentApplied(payment))
                                     .setScale(DECIMALS, ROUNDING);
                 }
 
@@ -2979,13 +2979,13 @@ public class InvoiceServices {
                                 UtilMisc.<String, Object>toMap("invoiceId", invoiceId,
                                         "invoiceApplyAvailable", invoiceApplyAvailable,
                                         "amountApplied", amountApplied,
-                                        "isoCode", invoice.getString("currencyUomId")), locale));
+                                        "isoCode", invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId)), locale));
                     }
                 }
 
                 // check if at least one sender is the same as one receiver on the invoice
-                if (!payment.getString("partyIdFrom").equals(invoice.getString("partyId"))
-                        && !payment.getString("partyIdTo").equals(invoice.getString("partyIdFrom"))) {
+                if (!payment.getString(org.apache.ofbiz.persistence.entity.x.partyIdFrom).equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.partyId))
+                        && !payment.getString(org.apache.ofbiz.persistence.entity.x.partyIdTo).equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.partyIdFrom))) {
                     errorMessageList.add(UtilProperties.getMessage(RESOURCE,
                             "AccountingFromPartySameToParty", locale));
                 }
@@ -3010,29 +3010,29 @@ public class InvoiceServices {
                             "AccountingInvoiceItemNotFound",
                             UtilMisc.toMap("invoiceId", invoiceId, "invoiceItemSeqId", invoiceItemSeqId), locale));
                 } else {
-                    if (invoice.get("currencyUomId") != null && currencyUomId != null && !invoice.getString("currencyUomId").equals(currencyUomId)) {
+                    if (invoice.get(org.apache.ofbiz.persistence.entity.x.currencyUomId) != null && currencyUomId != null && !invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId).equals(currencyUomId)) {
                         errorMessageList.add(UtilProperties.getMessage(RESOURCE,
                                 "AccountingInvoicePaymentCurrencyProblem",
                                 UtilMisc.toMap("paymentCurrencyId", currencyUomId,
-                                        "itemCurrency", invoice.getString("currencyUomId")), locale));
+                                        "itemCurrency", invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId)), locale));
                     }
 
                     // get the invoice item applied value
                     BigDecimal quantity = null;
-                    if (invoiceItem.get("quantity") == null) {
+                    if (invoiceItem.get(org.apache.ofbiz.persistence.entity.x.quantity) == null) {
                         quantity = BigDecimal.ONE;
                     } else {
-                        quantity = invoiceItem.getBigDecimal("quantity").setScale(DECIMALS, ROUNDING);
+                        quantity = invoiceItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity).setScale(DECIMALS, ROUNDING);
                     }
                     invoiceItemApplyAvailable =
-                            invoiceItem.getBigDecimal("amount").multiply(quantity).setScale(DECIMALS, ROUNDING)
+                            invoiceItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).multiply(quantity).setScale(DECIMALS, ROUNDING)
                                     .subtract(InvoiceWorker.getInvoiceItemApplied(invoiceItem));
                     // check here for too much application if a new record is added
                     if (paymentApplicationId == null && amountApplied.compareTo(invoiceItemApplyAvailable) > 0) {
                         // new record
                         errorMessageList.add("Invoice(" + invoiceId + ") item(" + invoiceItemSeqId + ") has  " + invoiceItemApplyAvailable + " to "
                                 + "apply but " + amountApplied + " is requested\n");
-                        String uomId = invoice.getString("currencyUomId");
+                        String uomId = invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId);
                         errorMessageList.add(UtilProperties.getMessage(RESOURCE, "AccountingInvoiceItemLessRequested",
                                 UtilMisc.<String, Object>toMap("invoiceId", invoiceId, "invoiceItemSeqId", invoiceItemSeqId,
                                         "invoiceItemApplyAvailable", invoiceItemApplyAvailable,
@@ -3094,21 +3094,21 @@ public class InvoiceServices {
                 // if both invoiceId and BillingId is entered there was
                 // obviously a change
                 // only take the newly entered item, same for tax authority and toPayment
-                if (paymentApplication.get("invoiceId") == null && invoiceId != null) {
+                if (paymentApplication.get(org.apache.ofbiz.persistence.entity.x.invoiceId) == null && invoiceId != null) {
                     billingAccountId = null;
                     taxAuthGeoId = null;
                     toPaymentId = null;
-                } else if (paymentApplication.get("toPaymentId") == null && toPaymentId != null) {
+                } else if (paymentApplication.get(org.apache.ofbiz.persistence.entity.x.toPaymentId) == null && toPaymentId != null) {
                     invoiceId = null;
                     invoiceItemSeqId = null;
                     taxAuthGeoId = null;
                     billingAccountId = null;
-                } else if (paymentApplication.get("billingAccountId") == null && billingAccountId != null) {
+                } else if (paymentApplication.get(org.apache.ofbiz.persistence.entity.x.billingAccountId) == null && billingAccountId != null) {
                     invoiceId = null;
                     invoiceItemSeqId = null;
                     toPaymentId = null;
                     taxAuthGeoId = null;
-                } else if (paymentApplication.get("taxAuthGeoId") == null && taxAuthGeoId != null) {
+                } else if (paymentApplication.get(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId) == null && taxAuthGeoId != null) {
                     invoiceId = null;
                     invoiceItemSeqId = null;
                     toPaymentId = null;
@@ -3119,7 +3119,7 @@ public class InvoiceServices {
                 // application record is changed
                 if (paymentApplyAvailable.compareTo(BigDecimal.ZERO) == 0) {
                     newPaymentApplyAvailable =
-                            paymentApplyAvailable.add(paymentApplication.getBigDecimal("amountApplied")).subtract(amountApplied).setScale(DECIMALS,
+                            paymentApplyAvailable.add(paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied)).subtract(amountApplied).setScale(DECIMALS,
                                     ROUNDING);
                 } else {
                     newPaymentApplyAvailable = paymentApplyAvailable.add(paymentApplyAvailable).subtract(amountApplied).setScale(DECIMALS, ROUNDING);
@@ -3128,19 +3128,19 @@ public class InvoiceServices {
                     errorMessageList.add(UtilProperties.getMessage(RESOURCE,
                             "AccountingPaymentNotEnough",
                             UtilMisc.<String, Object>toMap("paymentId", paymentId,
-                                    "paymentApplyAvailable", paymentApplyAvailable.add(paymentApplication.getBigDecimal("amountApplied")),
+                                    "paymentApplyAvailable", paymentApplyAvailable.add(paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied)),
                                     "amountApplied", amountApplied), locale));
                 }
 
                 if (invoiceId != null) {
                     // only when we are processing an invoice on existing paymentApplication check invoice item for to much application if the invoice
                     // number did not change
-                    if (invoiceId.equals(paymentApplication.getString("invoiceId"))) {
+                    if (invoiceId.equals(paymentApplication.getString(org.apache.ofbiz.persistence.entity.x.invoiceId))) {
                         // check if both the itemNumbers are null then this is a
                         // record for the whole invoice
-                        if (invoiceItemSeqId == null && paymentApplication.get("invoiceItemSeqId") == null) {
+                        if (invoiceItemSeqId == null && paymentApplication.get(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId) == null) {
                             newInvoiceApplyAvailable =
-                                    invoiceApplyAvailable.add(paymentApplication.getBigDecimal("amountApplied")).subtract(amountApplied)
+                                    invoiceApplyAvailable.add(paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied)).subtract(amountApplied)
                                             .setScale(DECIMALS, ROUNDING);
                             if (invoiceApplyAvailable.compareTo(BigDecimal.ZERO) < 0) {
                                 errorMessageList.add(UtilProperties.getMessage(RESOURCE,
@@ -3148,10 +3148,10 @@ public class InvoiceServices {
                                         UtilMisc.<String, Object>toMap("tooMuch", newInvoiceApplyAvailable.negate(),
                                                 "invoiceId", invoiceId), locale));
                             }
-                        } else if (invoiceItemSeqId == null && paymentApplication.get("invoiceItemSeqId") != null) {
+                        } else if (invoiceItemSeqId == null && paymentApplication.get(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId) != null) {
                             // check if the item number changed from a real Item number to a null value
                             newInvoiceApplyAvailable =
-                                    invoiceApplyAvailable.add(paymentApplication.getBigDecimal("amountApplied"))
+                                    invoiceApplyAvailable.add(paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied))
                                             .subtract(amountApplied).setScale(DECIMALS, ROUNDING);
                             if (invoiceApplyAvailable.compareTo(BigDecimal.ZERO) < 0) {
                                 errorMessageList.add(UtilProperties.getMessage(RESOURCE,
@@ -3159,7 +3159,7 @@ public class InvoiceServices {
                                         UtilMisc.<String, Object>toMap("tooMuch", newInvoiceApplyAvailable.negate(),
                                                 "invoiceId", invoiceId), locale));
                             }
-                        } else if (paymentApplication.get("invoiceItemSeqId") == null) {
+                        } else if (paymentApplication.get(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId) == null) {
                             // check if the item number changed from a null value to
                             // a real Item number
                             newInvoiceItemApplyAvailable = invoiceItemApplyAvailable.subtract(amountApplied).setScale(DECIMALS, ROUNDING);
@@ -3170,11 +3170,11 @@ public class InvoiceServices {
                                                 "invoiceId", invoiceId,
                                                 "invoiceItemSeqId", invoiceItemSeqId), locale));
                             }
-                        } else if (invoiceItemSeqId.equals(paymentApplication.getString("invoiceItemSeqId"))) {
+                        } else if (invoiceItemSeqId.equals(paymentApplication.getString(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId))) {
                             // check if the real item numbers the same
                             // item number the same numeric value
                             newInvoiceItemApplyAvailable =
-                                    invoiceItemApplyAvailable.add(paymentApplication.getBigDecimal("amountApplied"))
+                                    invoiceItemApplyAvailable.add(paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied))
                                             .subtract(amountApplied).setScale(DECIMALS, ROUNDING);
                             if (newInvoiceItemApplyAvailable.compareTo(BigDecimal.ZERO) < 0) {
                                 errorMessageList.add(UtilProperties.getMessage(RESOURCE,
@@ -3209,13 +3209,13 @@ public class InvoiceServices {
 
                         // check the invoice
                         newInvoiceApplyAvailable =
-                                invoiceApplyAvailable.add(paymentApplication.getBigDecimal("amountApplied")
+                                invoiceApplyAvailable.add(paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied)
                                         .subtract(amountApplied)).setScale(DECIMALS, ROUNDING);
                         if (newInvoiceApplyAvailable.compareTo(BigDecimal.ZERO) < 0) {
                             errorMessageList.add(UtilProperties.getMessage(RESOURCE,
                                     "AccountingInvoiceNotEnough",
                                     UtilMisc.<String, Object>toMap("tooMuch", invoiceApplyAvailable.add(paymentApplication.getBigDecimal(
-                                            "amountApplied")).subtract(amountApplied),
+                                            org.apache.ofbiz.persistence.entity.x.amountApplied)).subtract(amountApplied),
                                             "invoiceId", invoiceId), locale));
                         }
                     }
@@ -3223,9 +3223,9 @@ public class InvoiceServices {
 
                 // check the toPayment account when only the amountApplied has
                 // changed,
-                if (toPaymentId != null && toPaymentId.equals(paymentApplication.getString("toPaymentId"))) {
+                if (toPaymentId != null && toPaymentId.equals(paymentApplication.getString(org.apache.ofbiz.persistence.entity.x.toPaymentId))) {
                     newToPaymentApplyAvailable =
-                            toPaymentApplyAvailable.subtract(paymentApplication.getBigDecimal("amountApplied"))
+                            toPaymentApplyAvailable.subtract(paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied))
                                     .add(amountApplied).setScale(DECIMALS, ROUNDING);
                     if (newToPaymentApplyAvailable.compareTo(BigDecimal.ZERO) < 0) {
                         errorMessageList.add(UtilProperties.getMessage(RESOURCE,
@@ -3330,13 +3330,13 @@ public class InvoiceServices {
                 Debug.logInfo("Process an existing paymentApplication record: " + paymentApplicationId, MODULE);
             }
             // update the current record
-            paymentApplication.set("invoiceId", invoiceId);
-            paymentApplication.set("invoiceItemSeqId", invoiceItemSeqId);
-            paymentApplication.set("paymentId", paymentId);
-            paymentApplication.set("toPaymentId", toPaymentId);
-            paymentApplication.set("amountApplied", amountApplied);
-            paymentApplication.set("billingAccountId", billingAccountId);
-            paymentApplication.set("taxAuthGeoId", taxAuthGeoId);
+            paymentApplication.set(org.apache.ofbiz.persistence.entity.x.invoiceId, invoiceId);
+            paymentApplication.set(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId, invoiceItemSeqId);
+            paymentApplication.set(org.apache.ofbiz.persistence.entity.x.paymentId, paymentId);
+            paymentApplication.set(org.apache.ofbiz.persistence.entity.x.toPaymentId, toPaymentId);
+            paymentApplication.set(org.apache.ofbiz.persistence.entity.x.amountApplied, amountApplied);
+            paymentApplication.set(org.apache.ofbiz.persistence.entity.x.billingAccountId, billingAccountId);
+            paymentApplication.set(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId, taxAuthGeoId);
             return storePaymentApplication(delegator, paymentApplication, locale);
         }
 
@@ -3349,14 +3349,14 @@ public class InvoiceServices {
                 if (debug) {
                     Debug.logInfo("Try to allocate the payment to the invoice as a whole", MODULE);
                 }
-                paymentApplication.set("paymentId", paymentId);
-                paymentApplication.set("toPaymentId", null);
-                paymentApplication.set("invoiceId", invoiceId);
-                paymentApplication.set("invoiceItemSeqId", null);
-                paymentApplication.set("toPaymentId", null);
-                paymentApplication.set("amountApplied", amountApplied);
-                paymentApplication.set("billingAccountId", billingAccountId);
-                paymentApplication.set("taxAuthGeoId", null);
+                paymentApplication.set(org.apache.ofbiz.persistence.entity.x.paymentId, paymentId);
+                paymentApplication.set(org.apache.ofbiz.persistence.entity.x.toPaymentId, null);
+                paymentApplication.set(org.apache.ofbiz.persistence.entity.x.invoiceId, invoiceId);
+                paymentApplication.set(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId, null);
+                paymentApplication.set(org.apache.ofbiz.persistence.entity.x.toPaymentId, null);
+                paymentApplication.set(org.apache.ofbiz.persistence.entity.x.amountApplied, amountApplied);
+                paymentApplication.set(org.apache.ofbiz.persistence.entity.x.billingAccountId, billingAccountId);
+                paymentApplication.set(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId, null);
                 if (debug) {
                     Debug.logInfo("creating new paymentapplication", MODULE);
                 }
@@ -3386,20 +3386,20 @@ public class InvoiceServices {
                     break;
                 }
                 if (debug) {
-                    Debug.logInfo("Start processing item: " + currentInvoiceItem.getString("invoiceItemSeqId"), MODULE);
+                    Debug.logInfo("Start processing item: " + currentInvoiceItem.getString(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId), MODULE);
                 }
                 BigDecimal itemQuantity = BigDecimal.ONE;
-                if (currentInvoiceItem.get("quantity") != null && currentInvoiceItem.getBigDecimal("quantity").signum() != 0) {
-                    itemQuantity = new BigDecimal(currentInvoiceItem.getString("quantity")).setScale(DECIMALS, ROUNDING);
+                if (currentInvoiceItem.get(org.apache.ofbiz.persistence.entity.x.quantity) != null && currentInvoiceItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity).signum() != 0) {
+                    itemQuantity = new BigDecimal(currentInvoiceItem.getString(org.apache.ofbiz.persistence.entity.x.quantity)).setScale(DECIMALS, ROUNDING);
                 }
-                BigDecimal itemAmount = currentInvoiceItem.getBigDecimal("amount").setScale(DECIMALS, ROUNDING);
+                BigDecimal itemAmount = currentInvoiceItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(DECIMALS, ROUNDING);
                 BigDecimal itemTotal = itemAmount.multiply(itemQuantity).setScale(DECIMALS, ROUNDING);
 
                 // get the application(s) already allocated to this
                 // item, if available
                 List<GenericValue> paymentApplications = null;
                 try {
-                    paymentApplications = currentInvoiceItem.getRelated("PaymentApplication", null, null, false);
+                    paymentApplications = currentInvoiceItem.getRelated(org.apache.ofbiz.persistence.entity.x.PaymentApplication, null, null, false);
                 } catch (GenericEntityException e) {
                     return ServiceUtil.returnError(e.getMessage());
                 }
@@ -3411,7 +3411,7 @@ public class InvoiceServices {
                     Iterator<GenericValue> p = paymentApplications.iterator();
                     while (p.hasNext()) {
                         paymentApplication = p.next();
-                        alreadyApplied = alreadyApplied.add(paymentApplication.getBigDecimal("amountApplied").setScale(DECIMALS, ROUNDING));
+                        alreadyApplied = alreadyApplied.add(paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied).setScale(DECIMALS, ROUNDING));
                     }
                     tobeApplied = itemTotal.subtract(alreadyApplied).setScale(DECIMALS, ROUNDING);
                 } else {
@@ -3437,19 +3437,19 @@ public class InvoiceServices {
 
                 // create application payment record but check currency
                 // first if supplied
-                if (invoice.get("currencyUomId") != null && currencyUomId != null && !invoice.getString("currencyUomId").equals(currencyUomId)) {
-                    errorMessageList.add("Payment currency (" + currencyUomId + ") and invoice currency(" + invoice.getString("currencyUomId") + ")"
+                if (invoice.get(org.apache.ofbiz.persistence.entity.x.currencyUomId) != null && currencyUomId != null && !invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId).equals(currencyUomId)) {
+                    errorMessageList.add("Payment currency (" + currencyUomId + ") and invoice currency(" + invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId) + ")"
                             + " not the same\n");
                 } else {
-                    paymentApplication.set("paymentApplicationId", null);
+                    paymentApplication.set(org.apache.ofbiz.persistence.entity.x.paymentApplicationId, null);
                     // make sure we get a new record
-                    paymentApplication.set("invoiceId", invoiceId);
-                    paymentApplication.set("invoiceItemSeqId", currentInvoiceItem.getString("invoiceItemSeqId"));
-                    paymentApplication.set("paymentId", paymentId);
-                    paymentApplication.set("toPaymentId", toPaymentId);
-                    paymentApplication.set("amountApplied", tobeApplied);
-                    paymentApplication.set("billingAccountId", billingAccountId);
-                    paymentApplication.set("taxAuthGeoId", taxAuthGeoId);
+                    paymentApplication.set(org.apache.ofbiz.persistence.entity.x.invoiceId, invoiceId);
+                    paymentApplication.set(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId, currentInvoiceItem.getString(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId));
+                    paymentApplication.set(org.apache.ofbiz.persistence.entity.x.paymentId, paymentId);
+                    paymentApplication.set(org.apache.ofbiz.persistence.entity.x.toPaymentId, toPaymentId);
+                    paymentApplication.set(org.apache.ofbiz.persistence.entity.x.amountApplied, tobeApplied);
+                    paymentApplication.set(org.apache.ofbiz.persistence.entity.x.billingAccountId, billingAccountId);
+                    paymentApplication.set(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId, taxAuthGeoId);
                     storePaymentApplication(delegator, paymentApplication, locale);
                 }
 
@@ -3466,36 +3466,36 @@ public class InvoiceServices {
 
         // if no paymentApplicationId supplied create a new record with the data
         // supplied...
-        paymentApplication.set("paymentApplicationId", paymentApplicationId);
-        paymentApplication.set("invoiceId", invoiceId);
-        paymentApplication.set("invoiceItemSeqId", invoiceItemSeqId);
-        paymentApplication.set("paymentId", paymentId);
-        paymentApplication.set("toPaymentId", toPaymentId);
-        paymentApplication.set("amountApplied", amountApplied);
-        paymentApplication.set("billingAccountId", billingAccountId);
-        paymentApplication.set("taxAuthGeoId", taxAuthGeoId);
+        paymentApplication.set(org.apache.ofbiz.persistence.entity.x.paymentApplicationId, paymentApplicationId);
+        paymentApplication.set(org.apache.ofbiz.persistence.entity.x.invoiceId, invoiceId);
+        paymentApplication.set(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId, invoiceItemSeqId);
+        paymentApplication.set(org.apache.ofbiz.persistence.entity.x.paymentId, paymentId);
+        paymentApplication.set(org.apache.ofbiz.persistence.entity.x.toPaymentId, toPaymentId);
+        paymentApplication.set(org.apache.ofbiz.persistence.entity.x.amountApplied, amountApplied);
+        paymentApplication.set(org.apache.ofbiz.persistence.entity.x.billingAccountId, billingAccountId);
+        paymentApplication.set(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId, taxAuthGeoId);
         return storePaymentApplication(delegator, paymentApplication, locale);
 
     }
 
     public static Map<String, Object> calculateInvoicedAdjustmentTotal(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        GenericValue orderAdjustment = (GenericValue) context.get("orderAdjustment");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue orderAdjustment = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderAdjustment);
         Map<String, Object> result = ServiceUtil.returnSuccess();
 
         BigDecimal invoicedTotal = BigDecimal.ZERO;
         List<GenericValue> invoicedAdjustments = null;
         try {
             invoicedAdjustments = EntityQuery.use(delegator).from("OrderAdjustmentBilling").where("orderAdjustmentId",
-                    orderAdjustment.get("orderAdjustmentId")).queryList();
+                    orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId)).queryList();
         } catch (GenericEntityException e) {
             Debug.logError(e, "Accounting trouble calling calculateInvoicedAdjustmentTotal service", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingTroubleCallingCalculateInvoicedAdjustmentTotalService" + ": " + e.getMessage(), locale));
         }
         for (GenericValue invoicedAdjustment : invoicedAdjustments) {
-            invoicedTotal = invoicedTotal.add(invoicedAdjustment.getBigDecimal("amount").setScale(DECIMALS, ROUNDING));
+            invoicedTotal = invoicedTotal.add(invoicedAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).setScale(DECIMALS, ROUNDING));
         }
         result.put("invoicedTotal", invoicedTotal);
         return result;
@@ -3525,12 +3525,12 @@ public class InvoiceServices {
         List<GenericValue> checkAppls = null;
         try {
             checkAppls = EntityQuery.use(delegator).from("PaymentApplication")
-                    .where("invoiceId", paymentApplication.get("invoiceId"),
-                            "invoiceItemSeqId", paymentApplication.get("invoiceItemSeqId"),
-                            "billingAccountId", paymentApplication.get("billingAccountId"),
-                            "paymentId", paymentApplication.get("paymentId"),
-                            "toPaymentId", paymentApplication.get("toPaymentId"),
-                            "taxAuthGeoId", paymentApplication.get("taxAuthGeoId"))
+                    .where("invoiceId", paymentApplication.get(org.apache.ofbiz.persistence.entity.x.invoiceId),
+                            "invoiceItemSeqId", paymentApplication.get(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId),
+                            "billingAccountId", paymentApplication.get(org.apache.ofbiz.persistence.entity.x.billingAccountId),
+                            "paymentId", paymentApplication.get(org.apache.ofbiz.persistence.entity.x.paymentId),
+                            "toPaymentId", paymentApplication.get(org.apache.ofbiz.persistence.entity.x.toPaymentId),
+                            "taxAuthGeoId", paymentApplication.get(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId))
                     .queryList();
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(e.getMessage());
@@ -3542,25 +3542,25 @@ public class InvoiceServices {
             // 1 record exists just update and if different ID delete other record and add together.
             GenericValue checkAppl = checkAppls.get(0);
             // if new record  add to the already existing one.
-            if (paymentApplication.get("paymentApplicationId") == null) {
+            if (paymentApplication.get(org.apache.ofbiz.persistence.entity.x.paymentApplicationId) == null) {
                 // add 2 amounts together
-                checkAppl.set("amountApplied", paymentApplication.getBigDecimal("amountApplied")
-                        .add(checkAppl.getBigDecimal("amountApplied")).setScale(DECIMALS, ROUNDING));
+                checkAppl.set(org.apache.ofbiz.persistence.entity.x.amountApplied, paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied)
+                        .add(checkAppl.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied)).setScale(DECIMALS, ROUNDING));
                 if (debug) {
-                    Debug.logInfo("Update paymentApplication record: " + checkAppl.getString("paymentApplicationId") + " with appliedAmount:"
-                            + checkAppl.getBigDecimal("amountApplied"), MODULE);
+                    Debug.logInfo("Update paymentApplication record: " + checkAppl.getString(org.apache.ofbiz.persistence.entity.x.paymentApplicationId) + " with appliedAmount:"
+                            + checkAppl.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied), MODULE);
                 }
                 try {
                     checkAppl.store();
                 } catch (GenericEntityException e) {
                     return ServiceUtil.returnError(e.getMessage());
                 }
-            } else if (paymentApplication.getString("paymentApplicationId").equals(checkAppl.getString("paymentApplicationId"))) {
+            } else if (paymentApplication.getString(org.apache.ofbiz.persistence.entity.x.paymentApplicationId).equals(checkAppl.getString(org.apache.ofbiz.persistence.entity.x.paymentApplicationId))) {
                 // update existing record in-place
-                checkAppl.set("amountApplied", paymentApplication.getBigDecimal("amountApplied"));
+                checkAppl.set(org.apache.ofbiz.persistence.entity.x.amountApplied, paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied));
                 if (debug) {
-                    Debug.logInfo("Update paymentApplication record: " + checkAppl.getString("paymentApplicationId") + " with appliedAmount:"
-                            + checkAppl.getBigDecimal("amountApplied"), MODULE);
+                    Debug.logInfo("Update paymentApplication record: " + checkAppl.getString(org.apache.ofbiz.persistence.entity.x.paymentApplicationId) + " with appliedAmount:"
+                            + checkAppl.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied), MODULE);
                 }
                 try {
                     checkAppl.store();
@@ -3569,12 +3569,12 @@ public class InvoiceServices {
                 }
             } else { // two existing records, an updated one added to the existing one
                 // add 2 amounts together
-                checkAppl.set("amountApplied", paymentApplication.getBigDecimal("amountApplied")
-                        .add(checkAppl.getBigDecimal("amountApplied")).setScale(DECIMALS, ROUNDING));
+                checkAppl.set(org.apache.ofbiz.persistence.entity.x.amountApplied, paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied)
+                        .add(checkAppl.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied)).setScale(DECIMALS, ROUNDING));
                 // delete paymentApplication record and update the checkAppls one.
                 if (debug) {
-                    Debug.logInfo("Delete paymentApplication record: " + paymentApplication.getString("paymentApplicationId") + " with "
-                            + "appliedAmount:" + paymentApplication.getBigDecimal("amountApplied"), MODULE);
+                    Debug.logInfo("Delete paymentApplication record: " + paymentApplication.getString(org.apache.ofbiz.persistence.entity.x.paymentApplicationId) + " with "
+                            + "appliedAmount:" + paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied), MODULE);
                 }
                 try {
                     paymentApplication.remove();
@@ -3583,8 +3583,8 @@ public class InvoiceServices {
                 }
                 // update amount existing record
                 if (debug) {
-                    Debug.logInfo("Update paymentApplication record: " + checkAppl.getString("paymentApplicationId") + " with appliedAmount:"
-                            + checkAppl.getBigDecimal("amountApplied"), MODULE);
+                    Debug.logInfo("Update paymentApplication record: " + checkAppl.getString(org.apache.ofbiz.persistence.entity.x.paymentApplicationId) + " with appliedAmount:"
+                            + checkAppl.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied), MODULE);
                 }
                 try {
                     checkAppl.store();
@@ -3597,11 +3597,11 @@ public class InvoiceServices {
                 Debug.logInfo("No records found with paymentId, invoiceid..etc probaly changed one of them...", MODULE);
             }
             // create record if ID null;
-            if (paymentApplication.get("paymentApplicationId") == null) {
-                paymentApplication.set("paymentApplicationId", delegator.getNextSeqId("PaymentApplication"));
+            if (paymentApplication.get(org.apache.ofbiz.persistence.entity.x.paymentApplicationId) == null) {
+                paymentApplication.set(org.apache.ofbiz.persistence.entity.x.paymentApplicationId, delegator.getNextSeqId("PaymentApplication"));
                 if (debug) {
-                    Debug.logInfo("Create new paymentAppication record: " + paymentApplication.getString("paymentApplicationId") + " with "
-                            + "appliedAmount:" + paymentApplication.getBigDecimal("amountApplied"), MODULE);
+                    Debug.logInfo("Create new paymentAppication record: " + paymentApplication.getString(org.apache.ofbiz.persistence.entity.x.paymentApplicationId) + " with "
+                            + "appliedAmount:" + paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied), MODULE);
                 }
                 try {
                     paymentApplication.create();
@@ -3612,8 +3612,8 @@ public class InvoiceServices {
                 // update existing record (could not be found because a non existing combination of paymentId/invoiceId/invoiceSeqId/ etc... was
                 // provided
                 if (debug) {
-                    Debug.logInfo("Update existing paymentApplication record: " + paymentApplication.getString("paymentApplicationId") + " with "
-                            + "appliedAmount:" + paymentApplication.getBigDecimal("amountApplied"), MODULE);
+                    Debug.logInfo("Update existing paymentApplication record: " + paymentApplication.getString(org.apache.ofbiz.persistence.entity.x.paymentApplicationId) + " with "
+                            + "appliedAmount:" + paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied), MODULE);
                 }
                 try {
                     paymentApplication.store();
@@ -3628,16 +3628,16 @@ public class InvoiceServices {
     public static Map<String, Object> checkPaymentInvoices(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
 
-        String paymentId = (String) context.get("paymentId");
+        String paymentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentId);
         try {
             GenericValue payment = EntityQuery.use(delegator).from("Payment").where("paymentId", paymentId).queryOne();
             if (payment == null) {
                 throw new GenericServiceException("Payment with ID [" + paymentId + "] not found!");
             }
 
-            List<GenericValue> paymentApplications = payment.getRelated("PaymentApplication", null, null, false);
+            List<GenericValue> paymentApplications = payment.getRelated(org.apache.ofbiz.persistence.entity.x.PaymentApplication, null, null, false);
             if (UtilValidate.isEmpty(paymentApplications)) {
                 return ServiceUtil.returnSuccess();
             }
@@ -3645,7 +3645,7 @@ public class InvoiceServices {
             // TODO: this is inefficient -- instead use HashSet to construct a distinct Set of invoiceIds, then iterate over it and call
             // checkInvoicePaymentAppls
             for (GenericValue paymentApplication : paymentApplications) {
-                String invoiceId = paymentApplication.getString("invoiceId");
+                String invoiceId = paymentApplication.getString(org.apache.ofbiz.persistence.entity.x.invoiceId);
                 if (invoiceId != null) {
                     Map<String, Object> serviceResult = dispatcher.runSync("checkInvoicePaymentApplications", UtilMisc.<String, Object>toMap(
                             "invoiceId", invoiceId, "userLogin", userLogin));
@@ -3662,15 +3662,15 @@ public class InvoiceServices {
     }
 
     public static Map<String, Object> importInvoice(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        ByteBuffer fileBytes = (ByteBuffer) context.get("uploadedFile");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        ByteBuffer fileBytes = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.uploadedFile);
         if (fileBytes == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingUploadedFileDataNotFound", locale));
         }
-        String organizationPartyId = (String) context.get("organizationPartyId");
+        String organizationPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.organizationPartyId);
         String encoding = System.getProperty("file.encoding");
         String csvString = Charset.forName(encoding).decode(fileBytes).toString();
         Builder csvFormatBuilder = Builder.create().setHeader();
@@ -3709,41 +3709,41 @@ public class InvoiceServices {
                     // invoice validation
                     newErrMsgs = new LinkedList<>();
                     try {
-                        if (UtilValidate.isEmpty(invoice.get("partyIdFrom"))) {
+                        if (UtilValidate.isEmpty(invoice.get(org.apache.ofbiz.persistence.entity.x.partyIdFrom))) {
                             newErrMsgs.add("Line number " + rec.getRecordNumber() + ": Mandatory Party Id From and Party Id From Trans missing for "
                                     + "invoice: " + currentInvoiceId);
-                        } else if (EntityQuery.use(delegator).from("Party").where("partyId", invoice.get("partyIdFrom")).queryOne() == null) {
-                            newErrMsgs.add("Line number " + rec.getRecordNumber() + ": partyIdFrom: " + invoice.get("partyIdFrom") + " not found "
+                        } else if (EntityQuery.use(delegator).from("Party").where("partyId", invoice.get(org.apache.ofbiz.persistence.entity.x.partyIdFrom)).queryOne() == null) {
+                            newErrMsgs.add("Line number " + rec.getRecordNumber() + ": partyIdFrom: " + invoice.get(org.apache.ofbiz.persistence.entity.x.partyIdFrom) + " not found "
                                     + "for invoice: " + currentInvoiceId);
                         }
-                        if (UtilValidate.isEmpty(invoice.get("partyId"))) {
+                        if (UtilValidate.isEmpty(invoice.get(org.apache.ofbiz.persistence.entity.x.partyId))) {
                             newErrMsgs.add("Line number " + rec.getRecordNumber() + ": Mandatory Party Id and Party Id Trans missing for invoice: "
                                     + currentInvoiceId);
-                        } else if (EntityQuery.use(delegator).from("Party").where("partyId", invoice.get("partyId")).queryOne() == null) {
-                            newErrMsgs.add("Line number " + rec.getRecordNumber() + ": partyId: " + invoice.get("partyId") + " not found for "
+                        } else if (EntityQuery.use(delegator).from("Party").where("partyId", invoice.get(org.apache.ofbiz.persistence.entity.x.partyId)).queryOne() == null) {
+                            newErrMsgs.add("Line number " + rec.getRecordNumber() + ": partyId: " + invoice.get(org.apache.ofbiz.persistence.entity.x.partyId) + " not found for "
                                     + "invoice: " + currentInvoiceId);
                         }
-                        if (UtilValidate.isEmpty(invoice.get("invoiceTypeId"))) {
+                        if (UtilValidate.isEmpty(invoice.get(org.apache.ofbiz.persistence.entity.x.invoiceTypeId))) {
                             newErrMsgs.add("Line number " + rec.getRecordNumber() + ": Mandatory Invoice Type missing for invoice: "
                                     + currentInvoiceId);
                         } else if (EntityQuery.use(delegator).from("InvoiceType").where("invoiceTypeId",
-                                invoice.get("invoiceTypeId")).queryOne() == null) {
-                            newErrMsgs.add("Line number " + rec.getRecordNumber() + ": InvoiceItem type id: " + invoice.get("invoiceTypeId") + " "
+                                invoice.get(org.apache.ofbiz.persistence.entity.x.invoiceTypeId)).queryOne() == null) {
+                            newErrMsgs.add("Line number " + rec.getRecordNumber() + ": InvoiceItem type id: " + invoice.get(org.apache.ofbiz.persistence.entity.x.invoiceTypeId) + " "
                                     + "not found for invoice: " + currentInvoiceId);
                         }
 
                         boolean isPurchaseInvoice = EntityTypeUtil.hasParentType(delegator, "InvoiceType", "invoiceTypeId", (String) invoice.get(
-                                "invoiceTypeId"), "parentTypeId", "PURCHASE_INVOICE");
+                                org.apache.ofbiz.persistence.entity.x.invoiceTypeId), "parentTypeId", "PURCHASE_INVOICE");
                         boolean isSalesInvoice = EntityTypeUtil.hasParentType(delegator, "InvoiceType", "invoiceTypeId", (String) invoice.get(
-                                "invoiceTypeId"), "parentTypeId", "SALES_INVOICE");
-                        if (isPurchaseInvoice && !invoice.get("partyId").equals(organizationPartyId)) {
+                                org.apache.ofbiz.persistence.entity.x.invoiceTypeId), "parentTypeId", "SALES_INVOICE");
+                        if (isPurchaseInvoice && !invoice.get(org.apache.ofbiz.persistence.entity.x.partyId).equals(organizationPartyId)) {
                             newErrMsgs.add("Line number " + rec.getRecordNumber() + ": A purchase type invoice should have the partyId 'To' being "
-                                    + "the organizationPartyId(=" + organizationPartyId + ")! however is " + invoice.get("partyId") + "! invoice: "
+                                    + "the organizationPartyId(=" + organizationPartyId + ")! however is " + invoice.get(org.apache.ofbiz.persistence.entity.x.partyId) + "! invoice: "
                                     + currentInvoiceId);
                         }
-                        if (isSalesInvoice && !invoice.get("partyIdFrom").equals(organizationPartyId)) {
+                        if (isSalesInvoice && !invoice.get(org.apache.ofbiz.persistence.entity.x.partyIdFrom).equals(organizationPartyId)) {
                             newErrMsgs.add("Line number " + rec.getRecordNumber() + ": A sales type invoice should have the partyId 'from' being "
-                                    + "the organizationPartyId(=" + organizationPartyId + ")! however is " + invoice.get("partyIdFrom")
+                                    + "the organizationPartyId(=" + organizationPartyId + ")! however is " + invoice.get(org.apache.ofbiz.persistence.entity.x.partyIdFrom)
                                     + "! invoice: " + currentInvoiceId);
                         }
 
@@ -3797,30 +3797,30 @@ public class InvoiceServices {
                     // invoice item validation
                     newErrMsgs = new LinkedList<>();
                     try {
-                        if (UtilValidate.isEmpty(invoiceItem.get("invoiceItemSeqId"))) {
+                        if (UtilValidate.isEmpty(invoiceItem.get(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId))) {
                             newErrMsgs.add("Line number " + rec.getRecordNumber() + ": Mandatory item sequence Id missing for invoice: "
                                     + currentInvoiceId);
                         }
-                        if (UtilValidate.isEmpty(invoiceItem.get("invoiceItemTypeId"))) {
+                        if (UtilValidate.isEmpty(invoiceItem.get(org.apache.ofbiz.persistence.entity.x.invoiceItemTypeId))) {
                             newErrMsgs.add("Line number " + rec.getRecordNumber() + ": Mandatory invoice item type missing for invoice: "
                                     + currentInvoiceId);
                         } else if (EntityQuery.use(delegator).from("InvoiceItemType").where("invoiceItemTypeId",
-                                invoiceItem.get("invoiceItemTypeId")).queryOne() == null) {
+                                invoiceItem.get(org.apache.ofbiz.persistence.entity.x.invoiceItemTypeId)).queryOne() == null) {
                             newErrMsgs.add("Line number " + rec.getRecordNumber() + ": InvoiceItem Item type id: " + invoiceItem.get(
-                                    "invoiceItemTypeId") + " not found for invoice: " + currentInvoiceId + " Item seqId:" + invoiceItem.get(
-                                            "invoiceItemSeqId"));
+                                    org.apache.ofbiz.persistence.entity.x.invoiceItemTypeId) + " not found for invoice: " + currentInvoiceId + " Item seqId:" + invoiceItem.get(
+                                            org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId));
                         }
-                        if (UtilValidate.isEmpty(invoiceItem.get("productId")) && UtilValidate.isEmpty(invoiceItem.get("description"))) {
+                        if (UtilValidate.isEmpty(invoiceItem.get(org.apache.ofbiz.persistence.entity.x.productId)) && UtilValidate.isEmpty(invoiceItem.get(org.apache.ofbiz.persistence.entity.x.description))) {
                             newErrMsgs.add("Line number " + rec.getRecordNumber() + ": no Product Id given, no description given");
                         }
-                        if (UtilValidate.isNotEmpty(invoiceItem.get("productId")) && EntityQuery.use(delegator).from("Product").where("productId",
-                                invoiceItem.get("productId")).queryOne() == null) {
-                            newErrMsgs.add("Line number " + rec.getRecordNumber() + ": Product Id: " + invoiceItem.get("productId") + " not found "
-                                    + "for invoice: " + currentInvoiceId + " Item seqId:" + invoiceItem.get("invoiceItemSeqId"));
+                        if (UtilValidate.isNotEmpty(invoiceItem.get(org.apache.ofbiz.persistence.entity.x.productId)) && EntityQuery.use(delegator).from("Product").where("productId",
+                                invoiceItem.get(org.apache.ofbiz.persistence.entity.x.productId)).queryOne() == null) {
+                            newErrMsgs.add("Line number " + rec.getRecordNumber() + ": Product Id: " + invoiceItem.get(org.apache.ofbiz.persistence.entity.x.productId) + " not found "
+                                    + "for invoice: " + currentInvoiceId + " Item seqId:" + invoiceItem.get(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId));
                         }
-                        if (UtilValidate.isEmpty(invoiceItem.get("amount")) && UtilValidate.isEmpty(invoiceItem.get("quantity"))) {
+                        if (UtilValidate.isEmpty(invoiceItem.get(org.apache.ofbiz.persistence.entity.x.amount)) && UtilValidate.isEmpty(invoiceItem.get(org.apache.ofbiz.persistence.entity.x.quantity))) {
                             newErrMsgs.add("Line number " + rec.getRecordNumber() + ": Either or both quantity and amount is required for invoice: "
-                                    + currentInvoiceId + " Item seqId:" + invoiceItem.get("invoiceItemSeqId"));
+                                    + currentInvoiceId + " Item seqId:" + invoiceItem.get(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId));
                         }
                     } catch (GenericEntityException e) {
                         Debug.logError("Validation checking problem against database. due to " + e.getMessage(), MODULE);

@@ -72,16 +72,16 @@ public class QRCodeServices {
      * Streams QR Code to the result.
      */
     public static Map<String, Object> generateQRCodeImage(DispatchContext ctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
-        String message = (String) context.get("message");
-        Integer width = (Integer) context.get("width");
-        Integer height = (Integer) context.get("height");
-        String format = (String) context.get("format");
-        String encoding = (String) context.get("encoding");
-        Boolean verifyOutput = (Boolean) context.get("verifyOutput");
-        String logoImage = (String) context.get("logoImage");
-        Integer logoImageMaxWidth = (Integer) context.get("logoImageMaxWidth");
-        Integer logoImageMaxHeight = (Integer) context.get("logoImageMaxHeight");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String message = (String) context.get(org.apache.ofbiz.persistence.entity.x.message);
+        Integer width = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.width);
+        Integer height = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.height);
+        String format = (String) context.get(org.apache.ofbiz.persistence.entity.x.format);
+        String encoding = (String) context.get(org.apache.ofbiz.persistence.entity.x.encoding);
+        Boolean verifyOutput = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.verifyOutput);
+        String logoImage = (String) context.get(org.apache.ofbiz.persistence.entity.x.logoImage);
+        Integer logoImageMaxWidth = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.logoImageMaxWidth);
+        Integer logoImageMaxHeight = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.logoImageMaxHeight);
         Delegator delegator = ctx.getDelegator();
 
         if (UtilValidate.isEmpty(message)) {

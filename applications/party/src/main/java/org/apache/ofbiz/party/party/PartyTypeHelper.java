@@ -48,7 +48,7 @@ public final class PartyTypeHelper {
         try {
             party = EntityQuery.use(delegator).from("Party").where("partyId", partyId).queryOne();
             if (party != null) {
-                partyType = party.getRelatedOne("PartyType", true);
+                partyType = party.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PartyType, true);
                 checkedTypeOfParty = EntityQuery.use(delegator).from("PartyType").where("partyTypeId", checkedPartyType).cache().queryOne();
             } else {
                 return false;

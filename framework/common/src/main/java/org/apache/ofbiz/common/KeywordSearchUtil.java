@@ -240,9 +240,9 @@ public final class KeywordSearchUtil {
             List<GenericValue> thesaurusList = EntityQuery.use(delegator).from("KeywordThesaurus").where("enteredKeyword", enteredKeyword)
                     .cache(true).queryList();
             for (GenericValue keywordThesaurus: thesaurusList) {
-                String relationshipEnumId = (String) keywordThesaurus.get("relationshipEnumId");
+                String relationshipEnumId = (String) keywordThesaurus.get(org.apache.ofbiz.persistence.entity.x.relationshipEnumId);
                 if (thesaurusRelsToInclude.contains(relationshipEnumId)) {
-                    addToSet.addAll(makeKeywordSet(keywordThesaurus.getString("alternateKeyword"), null, true));
+                    addToSet.addAll(makeKeywordSet(keywordThesaurus.getString(org.apache.ofbiz.persistence.entity.x.alternateKeyword), null, true));
                     if (thesaurusRelsForReplace.contains(relationshipEnumId)) {
                         replaceEnteredKeyword = true;
                     }

@@ -46,19 +46,19 @@ public class EntityCryptoTestSuite extends EntityTestCase {
         getDelegator().removeByAnd("TestingCrypto", UtilMisc.toMap("testingCryptoTypeId", "BASIC"));
         getDelegator().create("TestingCrypto", UtilMisc.toMap("testingCryptoId", "1", "testingCryptoTypeId", "BASIC"));
         GenericValue entity = EntityQuery.use(getDelegator()).from("TestingCrypto").where("testingCryptoId", "1").queryOne();
-        assertNull(entity.getString("unencryptedValue"));
-        assertNull(entity.getString("encryptedValue"));
-        entity.setString("unencryptedValue", nanoTime);
-        entity.setString("encryptedValue", nanoTime);
-        entity.setString("saltedEncryptedValue", nanoTime);
-        assertEquals(nanoTime, entity.getString("unencryptedValue"));
-        assertEquals(nanoTime, entity.getString("encryptedValue"));
-        assertEquals(nanoTime, entity.getString("saltedEncryptedValue"));
+        assertNull(entity.getString(org.apache.ofbiz.persistence.entity.x.unencryptedValue));
+        assertNull(entity.getString(org.apache.ofbiz.persistence.entity.x.encryptedValue));
+        entity.setString(org.apache.ofbiz.persistence.entity.x.unencryptedValue, nanoTime);
+        entity.setString(org.apache.ofbiz.persistence.entity.x.encryptedValue, nanoTime);
+        entity.setString(org.apache.ofbiz.persistence.entity.x.saltedEncryptedValue, nanoTime);
+        assertEquals(nanoTime, entity.getString(org.apache.ofbiz.persistence.entity.x.unencryptedValue));
+        assertEquals(nanoTime, entity.getString(org.apache.ofbiz.persistence.entity.x.encryptedValue));
+        assertEquals(nanoTime, entity.getString(org.apache.ofbiz.persistence.entity.x.saltedEncryptedValue));
         entity.store();
         entity.refresh();
-        assertEquals(nanoTime, entity.getString("unencryptedValue"));
-        assertEquals(nanoTime, entity.getString("encryptedValue"));
-        assertEquals(nanoTime, entity.getString("saltedEncryptedValue"));
+        assertEquals(nanoTime, entity.getString(org.apache.ofbiz.persistence.entity.x.unencryptedValue));
+        assertEquals(nanoTime, entity.getString(org.apache.ofbiz.persistence.entity.x.encryptedValue));
+        assertEquals(nanoTime, entity.getString(org.apache.ofbiz.persistence.entity.x.saltedEncryptedValue));
     }
 
     /**
@@ -75,46 +75,46 @@ public class EntityCryptoTestSuite extends EntityTestCase {
         // Ensure that null values are passed thru unencrypted.
         delegator.create("TestingCrypto", UtilMisc.toMap("testingCryptoId", "1", "testingCryptoTypeId", "BASIC"));
         GenericValue entity = EntityQuery.use(delegator).from("TestingCrypto").where("testingCryptoId", "1").queryOne();
-        assertNull(entity.getString("unencryptedValue"));
-        assertNull(entity.getString("encryptedValue"));
-        assertNull(entity.getString("saltedEncryptedValue"));
+        assertNull(entity.getString(org.apache.ofbiz.persistence.entity.x.unencryptedValue));
+        assertNull(entity.getString(org.apache.ofbiz.persistence.entity.x.encryptedValue));
+        assertNull(entity.getString(org.apache.ofbiz.persistence.entity.x.saltedEncryptedValue));
         GenericValue view = EntityQuery.use(delegator).from("TestingCryptoRawView").where("testingCryptoId", "1").queryOne();
-        assertNull(view.getString("unencryptedValue"));
-        assertNull(view.getString("encryptedValue"));
-        assertNull(view.getString("saltedEncryptedValue"));
-        assertNull(view.getString("rawEncryptedValue"));
-        assertNull(view.getString("rawSaltedEncryptedValue"));
+        assertNull(view.getString(org.apache.ofbiz.persistence.entity.x.unencryptedValue));
+        assertNull(view.getString(org.apache.ofbiz.persistence.entity.x.encryptedValue));
+        assertNull(view.getString(org.apache.ofbiz.persistence.entity.x.saltedEncryptedValue));
+        assertNull(view.getString(org.apache.ofbiz.persistence.entity.x.rawEncryptedValue));
+        assertNull(view.getString(org.apache.ofbiz.persistence.entity.x.rawSaltedEncryptedValue));
 
         // Verify that encryption is taking place
-        entity.setString("unencryptedValue", nanoTime);
-        entity.setString("encryptedValue", nanoTime);
-        entity.setString("saltedEncryptedValue", nanoTime);
+        entity.setString(org.apache.ofbiz.persistence.entity.x.unencryptedValue, nanoTime);
+        entity.setString(org.apache.ofbiz.persistence.entity.x.encryptedValue, nanoTime);
+        entity.setString(org.apache.ofbiz.persistence.entity.x.saltedEncryptedValue, nanoTime);
         entity.store();
         view.refresh();
-        assertEquals(nanoTime, view.getString("unencryptedValue"));
-        assertEquals(nanoTime, view.getString("encryptedValue"));
-        assertEquals(nanoTime, view.getString("saltedEncryptedValue"));
-        String initialValue = view.getString("rawEncryptedValue");
-        String initialSaltedValue = view.getString("rawSaltedEncryptedValue");
+        assertEquals(nanoTime, view.getString(org.apache.ofbiz.persistence.entity.x.unencryptedValue));
+        assertEquals(nanoTime, view.getString(org.apache.ofbiz.persistence.entity.x.encryptedValue));
+        assertEquals(nanoTime, view.getString(org.apache.ofbiz.persistence.entity.x.saltedEncryptedValue));
+        String initialValue = view.getString(org.apache.ofbiz.persistence.entity.x.rawEncryptedValue);
+        String initialSaltedValue = view.getString(org.apache.ofbiz.persistence.entity.x.rawSaltedEncryptedValue);
         assertFalse(nanoTime.equals(initialValue));
         assertFalse(nanoTime.equals(initialSaltedValue));
         assertFalse(initialValue.equals(initialSaltedValue));
 
         // Verify that the same value stored repeatedly gives different raw encrypted values.
-        entity.setString("encryptedValue", nanoTime);
-        entity.setString("saltedEncryptedValue", nanoTime);
+        entity.setString(org.apache.ofbiz.persistence.entity.x.encryptedValue, nanoTime);
+        entity.setString(org.apache.ofbiz.persistence.entity.x.saltedEncryptedValue, nanoTime);
         entity.store();
         //entity.refresh(); // this is a bug; store() ends up setting the encrypted value *into* the entity
-        assertEquals(nanoTime, entity.getString("unencryptedValue"));
-        assertEquals(nanoTime, entity.getString("encryptedValue"));
+        assertEquals(nanoTime, entity.getString(org.apache.ofbiz.persistence.entity.x.unencryptedValue));
+        assertEquals(nanoTime, entity.getString(org.apache.ofbiz.persistence.entity.x.encryptedValue));
 
         view.refresh();
-        assertEquals(nanoTime, view.getString("unencryptedValue"));
-        assertEquals(nanoTime, view.getString("encryptedValue"));
-        assertEquals(nanoTime, view.getString("saltedEncryptedValue"));
+        assertEquals(nanoTime, view.getString(org.apache.ofbiz.persistence.entity.x.unencryptedValue));
+        assertEquals(nanoTime, view.getString(org.apache.ofbiz.persistence.entity.x.encryptedValue));
+        assertEquals(nanoTime, view.getString(org.apache.ofbiz.persistence.entity.x.saltedEncryptedValue));
 
-        String updatedValue = view.getString("rawEncryptedValue");
-        String updatedSaltedValue = view.getString("rawSaltedEncryptedValue");
+        String updatedValue = view.getString(org.apache.ofbiz.persistence.entity.x.rawEncryptedValue);
+        String updatedSaltedValue = view.getString(org.apache.ofbiz.persistence.entity.x.rawSaltedEncryptedValue);
 
         assertFalse(nanoTime.equals(updatedValue));
         assertFalse(nanoTime.equals(updatedSaltedValue));

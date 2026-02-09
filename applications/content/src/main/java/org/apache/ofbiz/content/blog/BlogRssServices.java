@@ -57,14 +57,14 @@ public class BlogRssServices {
     public static final String MAP_KEY = "SUMMARY";
 
     public static Map<String, Object> generateBlogRssFeed(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String contentId = (String) context.get("blogContentId");
-        String entryLink = (String) context.get("entryLink");
-        String feedType = (String) context.get("feedType");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.blogContentId);
+        String entryLink = (String) context.get(org.apache.ofbiz.persistence.entity.x.entryLink);
+        String feedType = (String) context.get(org.apache.ofbiz.persistence.entity.x.feedType);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         // create the main link
-        String mainLink = (String) context.get("mainLink");
+        String mainLink = (String) context.get(org.apache.ofbiz.persistence.entity.x.mainLink);
         mainLink = mainLink + "?blogContentId=" + contentId;
 
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -89,8 +89,8 @@ public class BlogRssServices {
         feed.setFeedType(feedType);
         feed.setLink(mainLink);
 
-        feed.setTitle(content.getString("contentName"));
-        feed.setDescription(content.getString("description"));
+        feed.setTitle(content.getString(org.apache.ofbiz.persistence.entity.x.contentName));
+        feed.setDescription(content.getString(org.apache.ofbiz.persistence.entity.x.description));
         feed.setEntries(generateEntryList(dispatcher, delegator, contentId, entryLink, locale, userLogin));
 
         Map<String, Object> resp = ServiceUtil.returnSuccess();
@@ -118,22 +118,22 @@ public class BlogRssServices {
                 String sub = null;
                 try {
                     Map<String, Object> dummy = new HashMap<>();
-                    sub = ContentWorker.renderSubContentAsText(dispatcher, v.getString("contentId"), MAP_KEY, dummy, locale, MIME_TYPE_ID, true);
+                    sub = ContentWorker.renderSubContentAsText(dispatcher, v.getString(org.apache.ofbiz.persistence.entity.x.contentId), MAP_KEY, dummy, locale, MIME_TYPE_ID, true);
                 } catch (GeneralException | IOException e) {
                     Debug.logError(e, MODULE);
                 }
                 if (sub != null) {
-                    String thisLink = entryLink + "?articleContentId=" + v.getString("contentId") + "&blogContentId=" + contentId;
+                    String thisLink = entryLink + "?articleContentId=" + v.getString(org.apache.ofbiz.persistence.entity.x.contentId) + "&blogContentId=" + contentId;
                     SyndContent desc = new SyndContentImpl();
                     desc.setType("text/plain");
                     desc.setValue(sub);
 
                     SyndEntry entry = new SyndEntryImpl();
-                    entry.setTitle(v.getString("contentName"));
-                    entry.setPublishedDate(v.getTimestamp("createdDate"));
+                    entry.setTitle(v.getString(org.apache.ofbiz.persistence.entity.x.contentName));
+                    entry.setPublishedDate(v.getTimestamp(org.apache.ofbiz.persistence.entity.x.createdDate));
                     entry.setDescription(desc);
                     entry.setLink(thisLink);
-                    entry.setAuthor((v.getString("createdByUserLogin")));
+                    entry.setAuthor((v.getString(org.apache.ofbiz.persistence.entity.x.createdByUserLogin)));
                     entries.add(entry);
                 }
             }

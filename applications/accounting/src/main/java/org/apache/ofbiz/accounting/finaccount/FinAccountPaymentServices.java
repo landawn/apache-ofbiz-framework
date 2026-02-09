@@ -59,21 +59,21 @@ public class FinAccountPaymentServices {
     public static Map<String, Object> finAccountPreAuth(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
-        GenericValue paymentPref = (GenericValue) context.get("orderPaymentPreference");
-        String finAccountCode = (String) context.get("finAccountCode");
-        String finAccountPin = (String) context.get("finAccountPin");
-        String finAccountId = (String) context.get("finAccountId");
-        String orderId = (String) context.get("orderId");
-        BigDecimal amount = (BigDecimal) context.get("processAmount");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        String finAccountCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.finAccountCode);
+        String finAccountPin = (String) context.get(org.apache.ofbiz.persistence.entity.x.finAccountPin);
+        String finAccountId = (String) context.get(org.apache.ofbiz.persistence.entity.x.finAccountId);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
 
         if (paymentPref != null) {
             // check for an existing auth trans and cancel it
             GenericValue authTrans = PaymentGatewayServices.getAuthTransaction(paymentPref);
             if (authTrans != null) {
                 Map<String, Object> input = UtilMisc.toMap("userLogin", userLogin, "finAccountAuthId",
-                        authTrans.get("referenceNum"));
+                        authTrans.get(org.apache.ofbiz.persistence.entity.x.referenceNum));
                 try {
                     Map<String, Object> result = dispatcher.runSync("expireFinAccountAuth", input);
                     if (ServiceUtil.isError(result)) {
@@ -85,7 +85,7 @@ public class FinAccountPaymentServices {
                 }
             }
             if (finAccountId == null) {
-                finAccountId = paymentPref.getString("finAccountId");
+                finAccountId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.finAccountId);
             }
         }
 
@@ -132,9 +132,9 @@ public class FinAccountPaymentServices {
                     "AccountingFinAccountIdInvalid", locale));
         }
 
-        String finAccountTypeId = finAccount.getString("finAccountTypeId");
-        finAccountId = finAccount.getString("finAccountId");
-        String statusId = finAccount.getString("statusId");
+        String finAccountTypeId = finAccount.getString(org.apache.ofbiz.persistence.entity.x.finAccountTypeId);
+        finAccountId = finAccount.getString(org.apache.ofbiz.persistence.entity.x.finAccountId);
+        String statusId = finAccount.getString(org.apache.ofbiz.persistence.entity.x.statusId);
 
         try {
             // fin the store requires a pin number; validate the PIN with the code
@@ -156,14 +156,14 @@ public class FinAccountPaymentServices {
             String allowAuthToNegative = "N";
 
             if (finAccountSettings != null) {
-                allowAuthToNegative = finAccountSettings.getString("allowAuthToNegative");
-                minBalance = finAccountSettings.getBigDecimal("minBalance");
+                allowAuthToNegative = finAccountSettings.getString(org.apache.ofbiz.persistence.entity.x.allowAuthToNegative);
+                minBalance = finAccountSettings.getBigDecimal(org.apache.ofbiz.persistence.entity.x.minBalance);
                 if (minBalance == null) {
                     minBalance = FinAccountHelper.getZero();
                 }
 
                 // validate the PIN if the store requires it
-                if ("Y".equals(finAccountSettings.getString("requirePinCode"))) {
+                if ("Y".equals(finAccountSettings.getString(org.apache.ofbiz.persistence.entity.x.requirePinCode))) {
                     if (!FinAccountHelper.validatePin(delegator, finAccountCode, finAccountPin)) {
                         Map<String, Object> result = ServiceUtil.returnSuccess();
                         result.put("authMessage", UtilProperties.getMessage(RES_ERROR,
@@ -180,12 +180,12 @@ public class FinAccountPaymentServices {
             }
 
             // check for expiration date
-            if ((finAccount.getTimestamp("thruDate") != null) && (finAccount.getTimestamp("thruDate").before(
+            if ((finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate) != null) && (finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate).before(
                     UtilDateTime.nowTimestamp()))) {
                 Map<String, Object> result = ServiceUtil.returnSuccess();
                 result.put("authMessage", UtilProperties.getMessage(RES_ERROR,
                         "AccountingFinAccountExpired",
-                        UtilMisc.toMap("thruDate", finAccount.getTimestamp("thruDate")), locale));
+                        UtilMisc.toMap("thruDate", finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate)), locale));
                 result.put("authResult", Boolean.FALSE);
                 result.put("processAmount", amount);
                 result.put("authFlag", "0");
@@ -200,7 +200,7 @@ public class FinAccountPaymentServices {
                     statusId)) {
                 // refresh the finaccount
                 finAccount.refresh();
-                statusId = finAccount.getString("statusId");
+                statusId = finAccount.getString(org.apache.ofbiz.persistence.entity.x.statusId);
 
                 if ("FNACT_NEGPENDREPL".equals(statusId) || "FNACT_MANFROZEN".equals(statusId) || "FNACT_CANCELLED"
                         .equals(statusId)) {
@@ -227,7 +227,7 @@ public class FinAccountPaymentServices {
 
             // check the amount to authorize against the available balance of fin account,
             // which includes active authorizations as well as transactions
-            BigDecimal availableBalance = finAccount.getBigDecimal("availableBalance");
+            BigDecimal availableBalance = finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.availableBalance);
             if (availableBalance == null) {
                 availableBalance = FinAccountHelper.getZero();
             } else {
@@ -256,8 +256,8 @@ public class FinAccountPaymentServices {
                     || (availableBalance.compareTo(amount) > -1)) {
                 Timestamp thruDate;
 
-                if (finAccountSettings != null && finAccountSettings.getLong("authValidDays") != null) {
-                    thruDate = UtilDateTime.getDayEnd(UtilDateTime.nowTimestamp(), finAccountSettings.getLong("authValidDays"));
+                if (finAccountSettings != null && finAccountSettings.getLong(org.apache.ofbiz.persistence.entity.x.authValidDays) != null) {
+                    thruDate = UtilDateTime.getDayEnd(UtilDateTime.nowTimestamp(), finAccountSettings.getLong(org.apache.ofbiz.persistence.entity.x.authValidDays));
                 } else {
                     thruDate = UtilDateTime.getDayEnd(UtilDateTime.nowTimestamp(), 30L); // default 30 days for an auth
                 }
@@ -300,9 +300,9 @@ public class FinAccountPaymentServices {
 
     public static Map<String, Object> finAccountReleaseAuth(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        GenericValue paymentPref = (GenericValue) context.get("orderPaymentPreference");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         String err = UtilProperties.getMessage(RES_ERROR, "AccountingFinAccountCannotBeExpired", locale);
         try {
@@ -314,7 +314,7 @@ public class FinAccountPaymentServices {
                         "AccountingFinAccountCannotFindAuthorization", locale));
             }
 
-            Map<String, Object> input = UtilMisc.toMap("userLogin", userLogin, "finAccountAuthId", authTransaction.get("referenceNum"));
+            Map<String, Object> input = UtilMisc.toMap("userLogin", userLogin, "finAccountAuthId", authTransaction.get(org.apache.ofbiz.persistence.entity.x.referenceNum));
             Map<String, Object> serviceResults = dispatcher.runSync("expireFinAccountAuth", input);
             // if there's an error, don't release
             if (ServiceUtil.isError(serviceResults)) {
@@ -322,8 +322,8 @@ public class FinAccountPaymentServices {
             }
 
             Map<String, Object> result = ServiceUtil.returnSuccess();
-            result.put("releaseRefNum", authTransaction.getString("referenceNum"));
-            result.put("releaseAmount", authTransaction.getBigDecimal("amount"));
+            result.put("releaseRefNum", authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
+            result.put("releaseAmount", authTransaction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
             result.put("releaseResult", Boolean.TRUE);
 
             return result;
@@ -336,13 +336,13 @@ public class FinAccountPaymentServices {
     public static Map<String, Object> finAccountCapture(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        GenericValue authTrans = (GenericValue) context.get("authTrans");
-        BigDecimal amount = (BigDecimal) context.get("captureAmount");
-        String currency = (String) context.get("currency");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue authTrans = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.captureAmount);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
 
         // get the authorization transaction
         if (authTrans == null) {
@@ -354,7 +354,7 @@ public class FinAccountPaymentServices {
         }
 
         // get the auth record
-        String finAccountAuthId = authTrans.getString("referenceNum");
+        String finAccountAuthId = authTrans.getString(org.apache.ofbiz.persistence.entity.x.referenceNum);
         GenericValue finAccountAuth;
         try {
             finAccountAuth = EntityQuery.use(delegator).from("FinAccountAuth").where("finAccountAuthId",
@@ -363,38 +363,38 @@ public class FinAccountPaymentServices {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
-        Debug.logInfo("Financial account capture [" + finAccountAuth.get("finAccountId") + "] for the amount of $"
-                + amount + " Tx #" + finAccountAuth.get("finAccountAuthId"), MODULE);
+        Debug.logInfo("Financial account capture [" + finAccountAuth.get(org.apache.ofbiz.persistence.entity.x.finAccountId) + "] for the amount of $"
+                + amount + " Tx #" + finAccountAuth.get(org.apache.ofbiz.persistence.entity.x.finAccountAuthId), MODULE);
 
         // get the financial account
         GenericValue finAccount;
         try {
-            finAccount = finAccountAuth.getRelatedOne("FinAccount", false);
+            finAccount = finAccountAuth.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FinAccount, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
 
         // make sure authorization has not expired
-        Timestamp authExpiration = finAccountAuth.getTimestamp("thruDate");
+        Timestamp authExpiration = finAccountAuth.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate);
         if ((authExpiration != null) && (authExpiration.before(UtilDateTime.nowTimestamp()))) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "AccountingFinAccountAuthorizationExpired",
-                    UtilMisc.toMap("paymentGatewayResponseId", authTrans.getString("paymentGatewayResponseId"),
+                    UtilMisc.toMap("paymentGatewayResponseId", authTrans.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId),
                             "authExpiration", authExpiration), locale));
         }
 
         // make sure the fin account itself has not expired
-        if ((finAccount.getTimestamp("thruDate") != null) && (finAccount.getTimestamp("thruDate").before(UtilDateTime
+        if ((finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate) != null) && (finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate).before(UtilDateTime
                 .nowTimestamp()))) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "AccountingFinAccountExpired",
-                    UtilMisc.toMap("thruDate", finAccount.getTimestamp("thruDate")), locale));
+                    UtilMisc.toMap("thruDate", finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate)), locale));
         }
-        String finAccountId = finAccount.getString("finAccountId");
+        String finAccountId = finAccount.getString(org.apache.ofbiz.persistence.entity.x.finAccountId);
 
         // need the product store ID & party ID
-        String orderId = orderPaymentPreference.getString("orderId");
+        String orderId = orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId);
         String productStoreId = null;
         String partyId = null;
         if (orderId != null) {
@@ -403,7 +403,7 @@ public class FinAccountPaymentServices {
 
             GenericValue billToParty = orh.getBillToParty();
             if (billToParty != null) {
-                partyId = billToParty.getString("partyId");
+                partyId = billToParty.getString(org.apache.ofbiz.persistence.entity.x.partyId);
             }
         }
 
@@ -465,31 +465,31 @@ public class FinAccountPaymentServices {
     public static Map<String, Object> finAccountRefund(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        BigDecimal amount = (BigDecimal) context.get("refundAmount");
-        String currency = (String) context.get("currency");
-        String finAccountId = (String) context.get("finAccountId");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.refundAmount);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        String finAccountId = (String) context.get(org.apache.ofbiz.persistence.entity.x.finAccountId);
 
         String productStoreId = null;
         String partyId = null;
 
         String orderId = null;
         if (orderPaymentPreference != null) {
-            orderId = orderPaymentPreference.getString("orderId");
+            orderId = orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId);
             if (orderId != null) {
                 OrderReadHelper orh = new OrderReadHelper(delegator, orderId);
                 productStoreId = orh.getProductStoreId();
 
                 GenericValue billToParty = orh.getBillToParty();
                 if (billToParty != null) {
-                    partyId = billToParty.getString("partyId");
+                    partyId = billToParty.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                 }
             }
             if (finAccountId == null) {
-                finAccountId = orderPaymentPreference.getString("finAccountId");
+                finAccountId = orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.finAccountId);
             }
         }
 
@@ -539,27 +539,27 @@ public class FinAccountPaymentServices {
     public static Map<String, Object> finAccountWithdraw(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String productStoreId = (String) context.get("productStoreId");
-        String finAccountId = (String) context.get("finAccountId");
-        String orderItemSeqId = (String) context.get("orderItemSeqId");
-        String reasonEnumId = (String) context.get("reasonEnumId");
-        String orderId = (String) context.get("orderId");
-        Boolean requireBalance = (Boolean) context.get("requireBalance");
-        BigDecimal amount = (BigDecimal) context.get("amount");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
+        String finAccountId = (String) context.get(org.apache.ofbiz.persistence.entity.x.finAccountId);
+        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+        String reasonEnumId = (String) context.get(org.apache.ofbiz.persistence.entity.x.reasonEnumId);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        Boolean requireBalance = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.requireBalance);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
         if (requireBalance == null) {
             requireBalance = Boolean.TRUE;
         }
 
         final String withdrawal = "WITHDRAWAL";
 
-        String partyId = (String) context.get("partyId");
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
         if (UtilValidate.isEmpty(partyId)) {
             partyId = "_NA_";
         }
-        String currencyUom = (String) context.get("currency");
+        String currencyUom = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
         if (UtilValidate.isEmpty(currencyUom)) {
             currencyUom = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
         }
@@ -585,16 +585,16 @@ public class FinAccountPaymentServices {
         }
 
         // make sure the fin account itself has not expired
-        if ((finAccount.getTimestamp("thruDate") != null) && (finAccount.getTimestamp("thruDate").before(UtilDateTime
+        if ((finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate) != null) && (finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate).before(UtilDateTime
                 .nowTimestamp()))) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "AccountingFinAccountExpired",
-                    UtilMisc.toMap("thruDate", finAccount.getTimestamp("thruDate")), locale));
+                    UtilMisc.toMap("thruDate", finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate)), locale));
         }
 
         // check the actual balance (excluding authorized amounts) and create the
         // transaction if it is sufficient
-        BigDecimal previousBalance = finAccount.getBigDecimal("actualBalance");
+        BigDecimal previousBalance = finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualBalance);
         if (previousBalance == null) {
             previousBalance = FinAccountHelper.getZero();
         }
@@ -613,7 +613,7 @@ public class FinAccountPaymentServices {
                         productStoreId, partyId, orderId, orderItemSeqId, currencyUom, withdrawal, finAccountId,
                         reasonEnumId);
                 finAccount.refresh();
-                balance = finAccount.getBigDecimal("actualBalance");
+                balance = finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualBalance);
                 procResult = Boolean.TRUE;
             } catch (GeneralException e) {
                 Debug.logError(e, MODULE);
@@ -639,24 +639,24 @@ public class FinAccountPaymentServices {
     public static Map<String, Object> finAccountDeposit(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String productStoreId = (String) context.get("productStoreId");
-        String finAccountId = (String) context.get("finAccountId");
-        String orderItemSeqId = (String) context.get("orderItemSeqId");
-        String reasonEnumId = (String) context.get("reasonEnumId");
-        String orderId = (String) context.get("orderId");
-        Boolean isRefund = (Boolean) context.get("isRefund");
-        BigDecimal amount = (BigDecimal) context.get("amount");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
+        String finAccountId = (String) context.get(org.apache.ofbiz.persistence.entity.x.finAccountId);
+        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+        String reasonEnumId = (String) context.get(org.apache.ofbiz.persistence.entity.x.reasonEnumId);
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        Boolean isRefund = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.isRefund);
+        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
 
         final String deposit = isRefund == null || !isRefund ? "DEPOSIT" : "ADJUSTMENT";
 
-        String partyId = (String) context.get("partyId");
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
         if (UtilValidate.isEmpty(partyId)) {
             partyId = "_NA_";
         }
-        String currencyUom = (String) context.get("currency");
+        String currencyUom = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
         if (UtilValidate.isEmpty(currencyUom)) {
             currencyUom = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
         }
@@ -677,16 +677,16 @@ public class FinAccountPaymentServices {
         }
 
         // make sure the fin account itself has not expired
-        if ((finAccount.getTimestamp("thruDate") != null) && (finAccount.getTimestamp("thruDate").before(UtilDateTime
+        if ((finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate) != null) && (finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate).before(UtilDateTime
                 .nowTimestamp()))) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "AccountingFinAccountExpired",
-                    UtilMisc.toMap("thruDate", finAccount.getTimestamp("thruDate")), locale));
+                    UtilMisc.toMap("thruDate", finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate)), locale));
         }
         Debug.logInfo("Deposit into financial account #" + finAccountId + " [" + amount + "]", MODULE);
 
         // get the previous balance
-        BigDecimal previousBalance = finAccount.getBigDecimal("actualBalance");
+        BigDecimal previousBalance = finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualBalance);
         if (previousBalance == null) {
             previousBalance = FinAccountHelper.getZero();
         }
@@ -698,7 +698,7 @@ public class FinAccountPaymentServices {
             refNum = FinAccountPaymentServices.createFinAcctPaymentTransaction(delegator, dispatcher, userLogin, amount,
                     productStoreId, partyId, orderId, orderItemSeqId, currencyUom, deposit, finAccountId, reasonEnumId);
             finAccount.refresh();
-            actualBalance = finAccount.getBigDecimal("actualBalance");
+            actualBalance = finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualBalance);
         } catch (GeneralException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -735,11 +735,11 @@ public class FinAccountPaymentServices {
     public static Map<String, Object> finAccountReplenish(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String productStoreId = (String) context.get("productStoreId");
-        String finAccountId = (String) context.get("finAccountId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
+        String finAccountId = (String) context.get(org.apache.ofbiz.persistence.entity.x.finAccountId);
 
         // lookup the FinAccount
         GenericValue finAccount;
@@ -753,18 +753,18 @@ public class FinAccountPaymentServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "AccountingFinAccountNotFound", UtilMisc.toMap("finAccountId", finAccountId), locale));
         }
-        String currency = finAccount.getString("currencyUomId");
-        String statusId = finAccount.getString("statusId");
+        String currency = finAccount.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId);
+        String statusId = finAccount.getString(org.apache.ofbiz.persistence.entity.x.statusId);
 
         // look up the type -- determine auto-replenish is active
         GenericValue finAccountType;
         try {
-            finAccountType = finAccount.getRelatedOne("FinAccountType", false);
+            finAccountType = finAccount.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FinAccountType, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
-        String replenishEnumId = finAccountType.getString("replenishEnumId");
+        String replenishEnumId = finAccountType.getString(org.apache.ofbiz.persistence.entity.x.replenishEnumId);
         if (!"FARP_AUTOMATIC".equals(replenishEnumId)) {
             // type does not support auto-replenish
             return ServiceUtil.returnSuccess();
@@ -782,7 +782,7 @@ public class FinAccountPaymentServices {
         // get the product store settings
         GenericValue finAccountSettings;
         Map<String, Object> psfasFindMap = UtilMisc.<String, Object>toMap("productStoreId", productStoreId,
-                "finAccountTypeId", finAccount.getString("finAccountTypeId"));
+                "finAccountTypeId", finAccount.getString(org.apache.ofbiz.persistence.entity.x.finAccountTypeId));
         try {
             finAccountSettings = EntityQuery.use(delegator).from("ProductStoreFinActSetting").where(psfasFindMap)
                     .cache().queryOne();
@@ -797,7 +797,7 @@ public class FinAccountPaymentServices {
             return ServiceUtil.returnSuccess();
         }
 
-        BigDecimal replenishThreshold = finAccountSettings.getBigDecimal("replenishThreshold");
+        BigDecimal replenishThreshold = finAccountSettings.getBigDecimal(org.apache.ofbiz.persistence.entity.x.replenishThreshold);
         if (replenishThreshold == null) {
             Debug.logWarning("finAccountReplenish Warning: not replenishing FinAccount [" + finAccountId
                     + "] because ProductStoreFinActSetting.replenishThreshold field was null for: " + psfasFindMap,
@@ -805,7 +805,7 @@ public class FinAccountPaymentServices {
             return ServiceUtil.returnSuccess();
         }
 
-        BigDecimal replenishLevel = finAccount.getBigDecimal("replenishLevel");
+        BigDecimal replenishLevel = finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.replenishLevel);
         if (replenishLevel == null || replenishLevel.compareTo(BigDecimal.ZERO) == 0) {
             Debug.logWarning("finAccountReplenish Warning: not replenishing FinAccount [" + finAccountId
                     + "] because FinAccount.replenishLevel field was null or 0", MODULE);
@@ -814,7 +814,7 @@ public class FinAccountPaymentServices {
         }
 
         // get the current balance
-        BigDecimal balance = finAccount.getBigDecimal("actualBalance");
+        BigDecimal balance = finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualBalance);
 
         // see if we are within the threshold for replenishment
         if (balance.compareTo(replenishThreshold) > -1) {
@@ -837,7 +837,7 @@ public class FinAccountPaymentServices {
             }
         }
 
-        String replenishMethod = finAccountSettings.getString("replenishMethodEnumId");
+        String replenishMethod = finAccountSettings.getString(org.apache.ofbiz.persistence.entity.x.replenishMethodEnumId);
         BigDecimal depositAmount;
         if (replenishMethod == null || "FARP_TOP_OFF".equals(replenishMethod)) {
             // the deposit is level - balance (500 - (-10) = 510 || 500 - (10) = 490)
@@ -851,7 +851,7 @@ public class FinAccountPaymentServices {
         }
 
         // get the owner party
-        String ownerPartyId = finAccount.getString("ownerPartyId");
+        String ownerPartyId = finAccount.getString(org.apache.ofbiz.persistence.entity.x.ownerPartyId);
         if (ownerPartyId == null) {
             // no owner cannot replenish; (not fatal, just not supported by this account)
             Debug.logWarning("finAccountReplenish Warning: No owner attached to financial account [" + finAccountId
@@ -860,7 +860,7 @@ public class FinAccountPaymentServices {
         }
 
         // get the payment method to use to replenish
-        String paymentMethodId = finAccount.getString("replenishPaymentId");
+        String paymentMethodId = finAccount.getString(org.apache.ofbiz.persistence.entity.x.replenishPaymentId);
         if (paymentMethodId == null) {
             Debug.logWarning(
                     "finAccountReplenish Warning: No payment method (replenishPaymentId) attached to financial account ["
@@ -889,7 +889,7 @@ public class FinAccountPaymentServices {
         Map<String, BigDecimal> orderItemMap = UtilMisc.toMap("Auto-Replenishment FA #" + finAccountId, depositAmount);
         Map<String, Object> replOrderCtx = new HashMap<>();
         replOrderCtx.put("productStoreId", productStoreId);
-        replOrderCtx.put("paymentMethodId", paymentMethod.getString("paymentMethodId"));
+        replOrderCtx.put("paymentMethodId", paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
         replOrderCtx.put("currency", currency);
         replOrderCtx.put("partyId", ownerPartyId);
         replOrderCtx.put("itemMap", orderItemMap);
@@ -958,7 +958,7 @@ public class FinAccountPaymentServices {
         }
 
         if (trans != null) {
-            String orderId = trans.getString("orderId");
+            String orderId = trans.getString(org.apache.ofbiz.persistence.entity.x.orderId);
             OrderReadHelper orh = new OrderReadHelper(delegator, orderId);
             return orh.getProductStoreId();
         }
@@ -967,7 +967,7 @@ public class FinAccountPaymentServices {
         try {
             GenericValue store = EntityQuery.use(delegator).from("ProductStore").orderBy("productStoreId").queryFirst();
             if (store != null) {
-                return store.getString("productStoreId");
+                return store.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);

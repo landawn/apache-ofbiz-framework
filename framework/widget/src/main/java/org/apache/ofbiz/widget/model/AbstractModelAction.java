@@ -505,7 +505,7 @@ public abstract class AbstractModelAction implements Serializable, ModelAction {
             String globalStr = this.globalExdr.expandString(context);
             // default to false
             boolean global = "true".equals(globalStr);
-            Locale locale = (Locale) context.get("locale");
+            Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
             String resource = this.resourceExdr.expandString(context, locale);
             ResourceBundleMapWrapper existingPropMap = this.mapNameAcsr.get(context);
             if (existingPropMap == null) {
@@ -519,7 +519,7 @@ public abstract class AbstractModelAction implements Serializable, ModelAction {
                 }
             }
             if (global) {
-                Map<String, Object> globalCtx = UtilGenerics.cast(context.get("globalContext"));
+                Map<String, Object> globalCtx = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.globalContext));
                 if (globalCtx != null) {
                     ResourceBundleMapWrapper globalExistingPropMap = this.mapNameAcsr.get(globalCtx);
                     if (globalExistingPropMap == null) {
@@ -597,7 +597,7 @@ public abstract class AbstractModelAction implements Serializable, ModelAction {
         public void runAction(Map<String, Object> context) {
             // default to false
             //boolean global = "true".equals(globalStr);
-            Locale locale = (Locale) context.get("locale");
+            Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
             String resource = this.resourceExdr.expandString(context, locale);
             String property = this.propertyExdr.expandString(context, locale);
             String value = null;
@@ -778,7 +778,7 @@ public abstract class AbstractModelAction implements Serializable, ModelAction {
                     DispatchContext dc = WidgetWorker.getDispatcher(context).getDispatchContext();
                     // try a map called "parameters", try it first so values from here are overriden by values in the main context
                     Map<String, Object> combinedMap = new HashMap<>();
-                    Object obj = context.get("parameters");
+                    Object obj = context.get(org.apache.ofbiz.persistence.entity.x.parameters);
                     Map<String, Object> parametersObj = (obj instanceof Map) ? UtilGenerics.cast(obj) : null;
                     if (parametersObj != null) {
                         combinedMap.putAll(parametersObj);
@@ -882,7 +882,7 @@ public abstract class AbstractModelAction implements Serializable, ModelAction {
         public Object getInMemoryPersistedFromField(Object storeAgent, Map<String, Object> context) {
             Object newValue = null;
             String originalName = this.fromField.getOriginalName();
-            Object obj = context.get("_WIDGETTRAIL_");
+            Object obj = context.get(org.apache.ofbiz.persistence.entity.x._WIDGETTRAIL_);
             List<String> currentWidgetTrail = (obj instanceof List) ? UtilGenerics.cast(obj) : null;
             List<String> trailList = new ArrayList<>();
             if (currentWidgetTrail != null) {
@@ -917,7 +917,7 @@ public abstract class AbstractModelAction implements Serializable, ModelAction {
             Object newValue = null;
             if (this.fromScope != null && "user".equals(this.fromScope)) {
                 if (!this.fromField.isEmpty()) {
-                    HttpSession session = (HttpSession) context.get("session");
+                    HttpSession session = (HttpSession) context.get(org.apache.ofbiz.persistence.entity.x.session);
                     newValue = getInMemoryPersistedFromField(session, context);
                     if (Debug.verboseOn()) {
                         Debug.logVerbose("In user getting value for field from [" + this.fromField.getOriginalName() + "]: " + newValue, MODULE);
@@ -927,7 +927,7 @@ public abstract class AbstractModelAction implements Serializable, ModelAction {
                 }
             } else if (this.fromScope != null && "application".equals(this.fromScope)) {
                 if (!this.fromField.isEmpty()) {
-                    ServletContext servletContext = (ServletContext) context.get("application");
+                    ServletContext servletContext = (ServletContext) context.get(org.apache.ofbiz.persistence.entity.x.application);
                     newValue = getInMemoryPersistedFromField(servletContext, context);
                     if (Debug.verboseOn()) {
                         Debug.logVerbose("In application getting value for field from [" + this.fromField.getOriginalName() + "]: " + newValue,
@@ -957,8 +957,8 @@ public abstract class AbstractModelAction implements Serializable, ModelAction {
                     newValue = new LinkedList();
                 } else {
                     try {
-                        newValue = ObjectType.simpleTypeOrObjectConvert(newValue, this.type, null, (TimeZone) context.get("timeZone"),
-                                (Locale) context.get("locale"), true);
+                        newValue = ObjectType.simpleTypeOrObjectConvert(newValue, this.type, null, (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone),
+                                (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale), true);
                     } catch (GeneralException e) {
                         String errMsg = "Could not convert field value for the field: [" + this.field.getOriginalName()
                                 + "] to the [" + this.type + "] type for the value [" + newValue + "]: " + e.toString();
@@ -983,7 +983,7 @@ public abstract class AbstractModelAction implements Serializable, ModelAction {
             }
             if (this.toScope != null && "user".equals(this.toScope)) {
                 String originalName = this.field.getOriginalName();
-                Object obj = context.get("_WIDGETTRAIL_");
+                Object obj = context.get(org.apache.ofbiz.persistence.entity.x._WIDGETTRAIL_);
                 List<String> currentWidgetTrail = (obj instanceof List) ? UtilGenerics.cast(obj) : null;
                 String newKey = "";
                 if (currentWidgetTrail != null) {
@@ -993,14 +993,14 @@ public abstract class AbstractModelAction implements Serializable, ModelAction {
                     newKey += "|";
                 }
                 newKey += originalName;
-                HttpSession session = (HttpSession) context.get("session");
+                HttpSession session = (HttpSession) context.get(org.apache.ofbiz.persistence.entity.x.session);
                 session.setAttribute(newKey, newValue);
                 if (Debug.verboseOn()) {
                     Debug.logVerbose("In user setting value for field from [" + this.field.getOriginalName() + "]: " + newValue, MODULE);
                 }
             } else if (this.toScope != null && "application".equals(this.toScope)) {
                 String originalName = this.field.getOriginalName();
-                Object obj = context.get("_WIDGETTRAIL_");
+                Object obj = context.get(org.apache.ofbiz.persistence.entity.x._WIDGETTRAIL_);
                 List<String> currentWidgetTrail = (obj instanceof List) ? UtilGenerics.cast(obj) : null;
                 String newKey = "";
                 if (currentWidgetTrail != null) {
@@ -1010,7 +1010,7 @@ public abstract class AbstractModelAction implements Serializable, ModelAction {
                     newKey += "|";
                 }
                 newKey += originalName;
-                ServletContext servletContext = (ServletContext) context.get("application");
+                ServletContext servletContext = (ServletContext) context.get(org.apache.ofbiz.persistence.entity.x.application);
                 servletContext.setAttribute(newKey, newValue);
                 if (Debug.verboseOn()) {
                     Debug.logVerbose("In application setting value for field from [" + this.field.getOriginalName() + "]: " + newValue, MODULE);
@@ -1025,7 +1025,7 @@ public abstract class AbstractModelAction implements Serializable, ModelAction {
                 }
             }
             if (global) {
-                Map<String, Object> globalCtx = UtilGenerics.cast(context.get("globalContext"));
+                Map<String, Object> globalCtx = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.globalContext));
                 if (globalCtx != null) {
                     this.field.put(globalCtx, newValue);
                 } else {

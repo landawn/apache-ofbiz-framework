@@ -62,54 +62,54 @@ public class IssuanceTest extends OFBizTestCase {
         GenericValue orderHeader = EntityQuery.use(getDelegator()).from("OrderHeader").where("orderId", orderId).queryOne();
 
         // Test the OrderShipment is correct
-        List<GenericValue> orderShipments = orderHeader.getRelated("OrderShipment", null, null, false);
+        List<GenericValue> orderShipments = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderShipment, null, null, false);
 
         assertFalse("No OrderShipment for order", UtilValidate.isEmpty(orderShipments));
         assertEquals("Incorrect number of OrderShipments for order", 1, orderShipments.size());
 
         GenericValue orderShipment = orderShipments.get(0);
-        assertEquals(orderItemSeqId, orderShipment.getString("orderItemSeqId"));
-        assertEquals(shipGroupSeqId, orderShipment.getString("shipGroupSeqId"));
-        assertEquals(shipmentId, orderShipment.getString("shipmentId"));
-        assertEquals(shipmentItemSeqId, orderShipment.getString("shipmentItemSeqId"));
-        BigDecimal actual = orderShipment.getBigDecimal("quantity");
+        assertEquals(orderItemSeqId, orderShipment.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+        assertEquals(shipGroupSeqId, orderShipment.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
+        assertEquals(shipmentId, orderShipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentId));
+        assertEquals(shipmentItemSeqId, orderShipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentItemSeqId));
+        BigDecimal actual = orderShipment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
         assertTrue("Incorrect quantity in OrderShipment. Expected 6.00000 actual " + actual, actual.compareTo(BigDecimal.valueOf(6L)) == 0);
 
         // Test the ItemIssuances are correct
-        List<GenericValue> itemIssuances = orderHeader.getRelated("ItemIssuance", null, UtilMisc.toList("inventoryItemId"), false);
+        List<GenericValue> itemIssuances = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.ItemIssuance, null, UtilMisc.toList("inventoryItemId"), false);
         assertFalse("No ItemIssuances for order", UtilValidate.isEmpty(itemIssuances));
         assertEquals("Incorrect number of ItemIssuances for order", 2, itemIssuances.size());
 
         GenericValue itemIssuance = itemIssuances.get(0);
-        assertEquals(orderItemSeqId, itemIssuance.getString("orderItemSeqId"));
-        assertEquals(shipGroupSeqId, itemIssuance.getString("shipGroupSeqId"));
-        assertEquals(shipmentId, itemIssuance.getString("shipmentId"));
-        assertEquals(shipmentItemSeqId, itemIssuance.getString("shipmentItemSeqId"));
-        assertEquals("9001", itemIssuance.getString("inventoryItemId"));
-        actual = itemIssuance.getBigDecimal("quantity");
+        assertEquals(orderItemSeqId, itemIssuance.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+        assertEquals(shipGroupSeqId, itemIssuance.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
+        assertEquals(shipmentId, itemIssuance.getString(org.apache.ofbiz.persistence.entity.x.shipmentId));
+        assertEquals(shipmentItemSeqId, itemIssuance.getString(org.apache.ofbiz.persistence.entity.x.shipmentItemSeqId));
+        assertEquals("9001", itemIssuance.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId));
+        actual = itemIssuance.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
         assertTrue("Incorrect quantity in ItemIssuance. Expected 5.00000 actual " + actual, actual.compareTo(BigDecimal.valueOf(5L)) == 0);
 
         itemIssuance = itemIssuances.get(1);
-        assertEquals(orderItemSeqId, itemIssuance.getString("orderItemSeqId"));
-        assertEquals(shipGroupSeqId, itemIssuance.getString("shipGroupSeqId"));
-        assertEquals(shipmentId, itemIssuance.getString("shipmentId"));
-        assertEquals(shipmentItemSeqId, itemIssuance.getString("shipmentItemSeqId"));
-        assertEquals("9025", itemIssuance.getString("inventoryItemId"));
-        actual = itemIssuance.getBigDecimal("quantity");
+        assertEquals(orderItemSeqId, itemIssuance.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+        assertEquals(shipGroupSeqId, itemIssuance.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
+        assertEquals(shipmentId, itemIssuance.getString(org.apache.ofbiz.persistence.entity.x.shipmentId));
+        assertEquals(shipmentItemSeqId, itemIssuance.getString(org.apache.ofbiz.persistence.entity.x.shipmentItemSeqId));
+        assertEquals("9025", itemIssuance.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId));
+        actual = itemIssuance.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
         assertTrue("Incorrect quantity in ItemIssuance. Expected 1.00000 actual " + actual, actual.compareTo(BigDecimal.valueOf(1L)) == 0);
 
         // Test reservations have been removed
-        List<GenericValue> reservations = orderHeader.getRelated("OrderItemShipGrpInvRes", null, null, false);
+        List<GenericValue> reservations = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItemShipGrpInvRes, null, null, false);
         assertTrue("Reservations exist for order - should have been deleted", UtilValidate.isEmpty(reservations));
 
         // Test order header status is now ORDER_COMPLETED
-        assertEquals(orderHeader.getString("statusId"), "ORDER_COMPLETED");
+        assertEquals(orderHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId), "ORDER_COMPLETED");
 
         // Test order items status are now ITEM_COMPLETED
-        List<GenericValue> orderItems = orderHeader.getRelated("OrderItem", null, null, false);
+        List<GenericValue> orderItems = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItem, null, null, false);
 
         for (GenericValue orderItem : orderItems) {
-            assertEquals("ITEM_COMPLETED", orderItem.getString("statusId"));
+            assertEquals("ITEM_COMPLETED", orderItem.getString(org.apache.ofbiz.persistence.entity.x.statusId));
         }
     }
 }

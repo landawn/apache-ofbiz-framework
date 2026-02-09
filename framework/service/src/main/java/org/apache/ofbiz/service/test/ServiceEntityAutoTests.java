@@ -102,7 +102,7 @@ public class ServiceEntityAutoTests extends OFBizTestCase {
                                  .where("testingId", "TESTING_2", "testingSeqId", results.get("testingSeqId"))
                                  .queryOne();
         assertNotNull(testingItem);
-        assertEquals("00002", testingItem.get("testingSeqId"));
+        assertEquals("00002", testingItem.get(org.apache.ofbiz.persistence.entity.x.testingSeqId));
 
         //test collision
         results = getDispatcher().runSync("testEntityAutoCreateTestingItemPkPresent", testingItemPkPresentMap, 10, true);
@@ -150,7 +150,7 @@ public class ServiceEntityAutoTests extends OFBizTestCase {
         Map<String, Object> results = getDispatcher().runSync("testEntityAutoUpdateTesting", testingUpdateMap);
         assertTrue(ServiceUtil.isSuccess(results));
         GenericValue testing = EntityQuery.use(delegator).from("Testing").where("testingId", "TESTING_4").queryOne();
-        assertEquals("entity auto testing updated", testing.getString("testingName"));
+        assertEquals("entity auto testing updated", testing.getString(org.apache.ofbiz.persistence.entity.x.testingName));
 
         //test update with bad pk
         Map<String, Object> testingUpdateFailedMap = UtilMisc.toMap("testingId", "TESTING_4_FAILED", "testingName", "entity auto testing updated");
@@ -198,15 +198,15 @@ public class ServiceEntityAutoTests extends OFBizTestCase {
         Map<String, Object> results = getDispatcher().runSync("testEntityAutoExpireTestingNodeMember", testingNodeMemberPkMap);
         assertTrue(ServiceUtil.isSuccess(results));
         GenericValue testingNodeMember = EntityQuery.use(delegator).from("TestingNodeMember").where(testingNodeMemberPkMap).queryOne();
-        Timestamp expireDate = testingNodeMember.getTimestamp("thruDate");
+        Timestamp expireDate = testingNodeMember.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate);
         assertNotNull("Expire thruDate set ", expireDate);
 
         //test expire to ensure the thruDate isn't update but extendThruDate is
         results = getDispatcher().runSync("testEntityAutoExpireTestingNodeMember", testingNodeMemberPkMap);
         assertTrue(ServiceUtil.isSuccess(results));
         testingNodeMember = EntityQuery.use(delegator).from("TestingNodeMember").where(testingNodeMemberPkMap).queryOne();
-        assertTrue(expireDate.compareTo(testingNodeMember.getTimestamp("thruDate")) == 0);
-        assertNotNull("Expire extendThruDate set ", testingNodeMember.getTimestamp("extendThruDate"));
+        assertTrue(expireDate.compareTo(testingNodeMember.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate)) == 0);
+        assertNotNull("Expire extendThruDate set ", testingNodeMember.getTimestamp(org.apache.ofbiz.persistence.entity.x.extendThruDate));
 
         //test expire a specific field
         delegator.create("TestFieldType", "testFieldTypeId", "TESTING_6");
@@ -214,7 +214,7 @@ public class ServiceEntityAutoTests extends OFBizTestCase {
         results = getDispatcher().runSync("testEntityAutoExpireTestFieldType", testingExpireMap);
         assertTrue(ServiceUtil.isSuccess(results));
         GenericValue testFieldType = EntityQuery.use(delegator).from("TestFieldType").where("testFieldTypeId", "TESTING_6").queryOne();
-        assertNotNull("Expire dateTimeField set", testFieldType.getTimestamp("dateTimeField"));
+        assertNotNull("Expire dateTimeField set", testFieldType.getTimestamp(org.apache.ofbiz.persistence.entity.x.dateTimeField));
 
         //test expire a specific field with in value
         delegator.create("TestFieldType", "testFieldTypeId", "TESTING_6bis");
@@ -222,7 +222,7 @@ public class ServiceEntityAutoTests extends OFBizTestCase {
         results = getDispatcher().runSync("testEntityAutoExpireTestFieldType", testingExpireMap);
         assertTrue(ServiceUtil.isSuccess(results));
         testFieldType = EntityQuery.use(delegator).from("TestFieldType").where("testFieldTypeId", "TESTING_6bis").queryOne();
-        assertTrue(now.compareTo(testFieldType.getTimestamp("dateTimeField")) == 0);
+        assertTrue(now.compareTo(testFieldType.getTimestamp(org.apache.ofbiz.persistence.entity.x.dateTimeField)) == 0);
     }
 
 
@@ -243,8 +243,8 @@ public class ServiceEntityAutoTests extends OFBizTestCase {
         Map<String, Object> results = getDispatcher().runSync("testEntityAutoCreateTestingStatus", testingStatusCreateMap);
         assertTrue(ServiceUtil.isSuccess(results));
         GenericValue testing = EntityQuery.use(delegator).from("TestingStatus").where("testingId", "TESTING_7").queryFirst();
-        assertNotNull(testing.getTimestamp("statusDate"));
-        assertEquals("system", testing.getString("changeByUserLoginId"));
+        assertNotNull(testing.getTimestamp(org.apache.ofbiz.persistence.entity.x.statusDate));
+        assertEquals("system", testing.getString(org.apache.ofbiz.persistence.entity.x.changeByUserLoginId));
 
         //test create testingStatus without userLogin
         try {
@@ -258,7 +258,7 @@ public class ServiceEntityAutoTests extends OFBizTestCase {
 
         //test update testingStatus
         try {
-            Map<String, Object> testingStatusUpdateMap = UtilMisc.toMap("testingStatusId", testing.get("testingStatusId"),
+            Map<String, Object> testingStatusUpdateMap = UtilMisc.toMap("testingStatusId", testing.get(org.apache.ofbiz.persistence.entity.x.testingStatusId),
                     "statusId", "TESTING_UPDATE", "userLogin", userLogin);
             results = getDispatcher().runSync("testEntityAutoUpdateTestingStatus", testingStatusUpdateMap, 10, true);
             assertTrue(ServiceUtil.isError(results));
@@ -269,7 +269,7 @@ public class ServiceEntityAutoTests extends OFBizTestCase {
 
         //test delete testingStatus
         try {
-            Map<String, Object> testingStatusDeleteMap = UtilMisc.toMap("testingStatusId", testing.get("testingStatusId"), "userLogin", userLogin);
+            Map<String, Object> testingStatusDeleteMap = UtilMisc.toMap("testingStatusId", testing.get(org.apache.ofbiz.persistence.entity.x.testingStatusId), "userLogin", userLogin);
             results = getDispatcher().runSync("testEntityAutoDeleteTestingStatus", testingStatusDeleteMap, 10, true);
             assertTrue(ServiceUtil.isError(results));
         } catch (GenericServiceException e) {

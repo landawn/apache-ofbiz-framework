@@ -71,15 +71,15 @@ public class MacroScreenViewHandler extends AbstractViewHandler {
         ScreenStringRenderer screenStringRenderer = new MacroScreenRenderer(modelTheme.getType(getName()), screenMacroLibraryPath);
         if (UtilValidate.isNotEmpty(formMacroLibraryPath)) {
             FormStringRenderer formStringRenderer = new MacroFormRenderer(formMacroLibraryPath, request, response);
-            context.put("formStringRenderer", formStringRenderer);
+            context.put(org.apache.ofbiz.persistence.entity.x.formStringRenderer, formStringRenderer);
         }
         if (UtilValidate.isNotEmpty(treeMacroLibraryPath)) {
             TreeStringRenderer treeStringRenderer = new MacroTreeRenderer(treeMacroLibraryPath, writer);
-            context.put("treeStringRenderer", treeStringRenderer);
+            context.put(org.apache.ofbiz.persistence.entity.x.treeStringRenderer, treeStringRenderer);
         }
         if (UtilValidate.isNotEmpty(menuMacroLibraryPath)) {
             MenuStringRenderer menuStringRenderer = new MacroMenuRenderer(menuMacroLibraryPath, request, response);
-            context.put("menuStringRenderer", menuStringRenderer);
+            context.put(org.apache.ofbiz.persistence.entity.x.menuStringRenderer, menuStringRenderer);
         }
         return screenStringRenderer;
     }
@@ -117,8 +117,8 @@ public class MacroScreenViewHandler extends AbstractViewHandler {
             }
             ScreenStringRenderer screenStringRenderer = loadRenderers(request, response, context, writer);
             ScreenRenderer screens = new ScreenRenderer(writer, MapStack.create(context), screenStringRenderer);
-            context.put("screens", screens);
-            context.put("simpleEncoder", UtilCodec.getEncoder(visualTheme.getModelTheme().getEncoder(getName())));
+            context.put(org.apache.ofbiz.persistence.entity.x.screens, screens);
+            context.put(org.apache.ofbiz.persistence.entity.x.simpleEncoder, UtilCodec.getEncoder(visualTheme.getModelTheme().getEncoder(getName())));
             screenStringRenderer.renderBegin(writer, context);
             screens.render(page);
             screenStringRenderer.renderEnd(writer, context);

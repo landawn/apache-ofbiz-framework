@@ -427,14 +427,14 @@ public final class EntityUtil {
         if (UtilValidate.isNotEmpty(entities)) {
             search = null;
             for (GenericValue entity : entities) {
-                if (now.equals(entity.get("fromDate"))) {
+                if (now.equals(entity.get(org.apache.ofbiz.persistence.entity.x.fromDate))) {
                     search = new HashMap<>();
                     for (Map.Entry<String, ? super Object> entry : entity.getPrimaryKey().entrySet()) {
                         search.put(entry.getKey(), entry.getValue());
                     }
                     entity.remove("thruDate");
                 } else {
-                    entity.set("thruDate", now);
+                    entity.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
                 }
                 entity.store();
             }
@@ -467,7 +467,7 @@ public final class EntityUtil {
             throws GenericEntityException {
         List<GenericValue> entities = findDatedInclusionEntity(delegator, entityName, search, now);
         for (GenericValue entity : entities) {
-            entity.set("thruDate", now);
+            entity.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
             entity.store();
         }
     }

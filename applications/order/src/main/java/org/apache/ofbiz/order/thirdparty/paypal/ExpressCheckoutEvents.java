@@ -96,7 +96,7 @@ public class ExpressCheckoutEvents {
         if (productStoreId != null) {
             GenericValue payPalPaymentSetting = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStoreId, "EXT_PAYPAL", null, true);
             if (payPalPaymentSetting != null) {
-                paymentGatewayConfigId = payPalPaymentSetting.getString("paymentGatewayConfigId");
+                paymentGatewayConfigId = payPalPaymentSetting.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
             }
         }
         if (paymentGatewayConfigId != null) {
@@ -111,7 +111,7 @@ public class ExpressCheckoutEvents {
             request.setAttribute("_EVENT_MESSAGE_", "Couldn't retrieve a PaymentGatewayConfigPayPal record for Express Checkout, cannot continue.");
             return "error";
         }
-        StringBuilder redirectUrl = new StringBuilder(payPalGatewayConfig.getString("redirectUrl"));
+        StringBuilder redirectUrl = new StringBuilder(payPalGatewayConfig.getString(org.apache.ofbiz.persistence.entity.x.redirectUrl));
         redirectUrl.append("?cmd=_express-checkout&token=");
         redirectUrl.append(token);
         try {
@@ -220,17 +220,17 @@ public class ExpressCheckoutEvents {
     public static CheckoutType determineCheckoutType(Delegator delegator, String productStoreId) {
         GenericValue payPalPaymentSetting = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStoreId,
                 "EXT_PAYPAL", null, true);
-        if (payPalPaymentSetting != null && payPalPaymentSetting.getString("paymentGatewayConfigId") != null) {
+        if (payPalPaymentSetting != null && payPalPaymentSetting.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId) != null) {
             try {
-                GenericValue paymentGatewayConfig = payPalPaymentSetting.getRelatedOne("PaymentGatewayConfig", false);
+                GenericValue paymentGatewayConfig = payPalPaymentSetting.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PaymentGatewayConfig, false);
                 if (paymentGatewayConfig != null) {
-                    String paymentGatewayConfigTypeId = paymentGatewayConfig.getString("paymentGatewayConfigTypeId");
+                    String paymentGatewayConfigTypeId = paymentGatewayConfig.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigTypeId);
                     if ("PAY_GATWY_PAYFLOWPRO".equals(paymentGatewayConfigTypeId)) {
                         return CheckoutType.PAYFLOW;
                     } else if ("PAY_GATWY_PAYPAL".equals(paymentGatewayConfigTypeId)) {
-                        GenericValue payPalConfig = paymentGatewayConfig.getRelatedOne("PaymentGatewayPayPal", false);
+                        GenericValue payPalConfig = paymentGatewayConfig.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PaymentGatewayPayPal, false);
                         // TODO: Probably better off with an indicator field to indicate Express Checkout use
-                        if (UtilValidate.isNotEmpty(payPalConfig.get("apiUserName"))) {
+                        if (UtilValidate.isNotEmpty(payPalConfig.get(org.apache.ofbiz.persistence.entity.x.apiUserName))) {
                             return CheckoutType.STANDARD;
                         }
                     }

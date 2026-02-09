@@ -77,12 +77,12 @@ public class PdfSurveyServices {
     public static Map<String, Object> buildSurveyFromPdf(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
         String surveyId = null;
         try {
-            String surveyName = (String) context.get("surveyName");
+            String surveyName = (String) context.get(org.apache.ofbiz.persistence.entity.x.surveyName);
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             ByteBuffer byteBuffer = getInputByteBuffer(context, delegator);
             PdfReader pdfReader = new PdfReader(byteBuffer.array());
@@ -90,16 +90,16 @@ public class PdfSurveyServices {
             AcroFields acroFields = pdfStamper.getAcroFields();
             Map<String, Object> acroFieldMap = UtilGenerics.cast(acroFields.getAllFields());
 
-            String contentId = (String) context.get("contentId");
+            String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
             GenericValue survey = null;
-            surveyId = (String) context.get("surveyId");
+            surveyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.surveyId);
             if (UtilValidate.isEmpty(surveyId)) {
                 survey = delegator.makeValue("Survey", UtilMisc.toMap("surveyName", surveyName));
-                survey.set("surveyId", surveyId);
-                survey.set("allowMultiple", "Y");
-                survey.set("allowUpdate", "Y");
+                survey.set(org.apache.ofbiz.persistence.entity.x.surveyId, surveyId);
+                survey.set(org.apache.ofbiz.persistence.entity.x.allowMultiple, "Y");
+                survey.set(org.apache.ofbiz.persistence.entity.x.allowUpdate, "Y");
                 survey = delegator.createSetNextSeqId(survey);
-                surveyId = survey.getString("surveyId");
+                surveyId = survey.getString(org.apache.ofbiz.persistence.entity.x.surveyId);
             }
 
             // create a SurveyQuestionCategory to put the questions in
@@ -121,18 +121,18 @@ public class PdfSurveyServices {
 
                 GenericValue surveyQuestion = delegator.makeValue("SurveyQuestion", UtilMisc.toMap("question", fieldName));
                 String surveyQuestionId = delegator.getNextSeqId("SurveyQuestion");
-                surveyQuestion.set("surveyQuestionId", surveyQuestionId);
-                surveyQuestion.set("surveyQuestionCategoryId", surveyQuestionCategoryId);
+                surveyQuestion.set(org.apache.ofbiz.persistence.entity.x.surveyQuestionId, surveyQuestionId);
+                surveyQuestion.set(org.apache.ofbiz.persistence.entity.x.surveyQuestionCategoryId, surveyQuestionCategoryId);
 
                 if (type == AcroFields.FIELD_TYPE_TEXT) {
-                    surveyQuestion.set("surveyQuestionTypeId", "TEXT_SHORT");
+                    surveyQuestion.set(org.apache.ofbiz.persistence.entity.x.surveyQuestionTypeId, "TEXT_SHORT");
                 } else if (type == AcroFields.FIELD_TYPE_RADIOBUTTON) {
-                    surveyQuestion.set("surveyQuestionTypeId", "OPTION");
+                    surveyQuestion.set(org.apache.ofbiz.persistence.entity.x.surveyQuestionTypeId, "OPTION");
                 } else if (type == AcroFields.FIELD_TYPE_LIST || type == AcroFields.FIELD_TYPE_COMBO) {
-                    surveyQuestion.set("surveyQuestionTypeId", "OPTION");
+                    surveyQuestion.set(org.apache.ofbiz.persistence.entity.x.surveyQuestionTypeId, "OPTION");
                     // TODO: handle these specially with the acroFields.getListOptionDisplay (and getListOptionExport?)
                 } else {
-                    surveyQuestion.set("surveyQuestionTypeId", "TEXT_SHORT");
+                    surveyQuestion.set(org.apache.ofbiz.persistence.entity.x.surveyQuestionTypeId, "TEXT_SHORT");
                     Debug.logWarning("Building Survey from PDF, fieldName=[" + fieldName + "]: don't know how to handle field type: "
                             + type + "; defaulting to short text", MODULE);
                 }
@@ -188,20 +188,20 @@ public class PdfSurveyServices {
                     }
                 }
 
-                surveyQuestion.set("description", fieldName);
+                surveyQuestion.set(org.apache.ofbiz.persistence.entity.x.description, fieldName);
                 if (UtilValidate.isNotEmpty(annotation)) {
-                    surveyQuestion.set("question", annotation);
+                    surveyQuestion.set(org.apache.ofbiz.persistence.entity.x.question, annotation);
                 } else {
-                    surveyQuestion.set("question", fieldName);
+                    surveyQuestion.set(org.apache.ofbiz.persistence.entity.x.question, fieldName);
                 }
 
                 GenericValue surveyQuestionAppl = delegator.makeValue("SurveyQuestionAppl",
                         UtilMisc.toMap("surveyId", surveyId, "surveyQuestionId", surveyQuestionId));
-                surveyQuestionAppl.set("fromDate", nowTimestamp);
-                surveyQuestionAppl.set("externalFieldRef", fieldName);
+                surveyQuestionAppl.set(org.apache.ofbiz.persistence.entity.x.fromDate, nowTimestamp);
+                surveyQuestionAppl.set(org.apache.ofbiz.persistence.entity.x.externalFieldRef, fieldName);
 
                 if (sequenceNum != null) {
-                    surveyQuestionAppl.set("sequenceNum", sequenceNum);
+                    surveyQuestionAppl.set(org.apache.ofbiz.persistence.entity.x.sequenceNum, sequenceNum);
                 }
 
                 surveyQuestion.create();
@@ -210,7 +210,7 @@ public class PdfSurveyServices {
             pdfStamper.close();
             if (UtilValidate.isNotEmpty(contentId)) {
                 survey = EntityQuery.use(delegator).from("Survey").where("surveyId", surveyId).queryOne();
-                survey.set("acroFormContentId", contentId);
+                survey.set(org.apache.ofbiz.persistence.entity.x.acroFormContentId, contentId);
                 survey.store();
             }
         } catch (GeneralException | DocumentException | IOException e) {
@@ -228,24 +228,24 @@ public class PdfSurveyServices {
      */
     public static Map<String, Object> buildSurveyResponseFromPdf(DispatchContext dctx, Map<String, ? extends Object> context) {
         String surveyResponseId = null;
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         try {
             Delegator delegator = dctx.getDelegator();
-            String partyId = (String) context.get("partyId");
-            String surveyId = (String) context.get("surveyId");
-            surveyResponseId = (String) context.get("surveyResponseId");
+            String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+            String surveyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.surveyId);
+            surveyResponseId = (String) context.get(org.apache.ofbiz.persistence.entity.x.surveyResponseId);
             if (UtilValidate.isNotEmpty(surveyResponseId)) {
                 GenericValue surveyResponse = EntityQuery.use(delegator).from("SurveyResponse")
                         .where("surveyResponseId", surveyResponseId).queryOne();
                 if (surveyResponse != null) {
-                    surveyId = surveyResponse.getString("surveyId");
+                    surveyId = surveyResponse.getString(org.apache.ofbiz.persistence.entity.x.surveyId);
                 }
             } else {
                 surveyResponseId = delegator.getNextSeqId("SurveyResponse");
                 GenericValue surveyResponse = delegator.makeValue("SurveyResponse",
                         UtilMisc.toMap("surveyResponseId", surveyResponseId, "surveyId", surveyId, "partyId", partyId));
-                surveyResponse.set("responseDate", UtilDateTime.nowTimestamp());
-                surveyResponse.set("lastModifiedDate", UtilDateTime.nowTimestamp());
+                surveyResponse.set(org.apache.ofbiz.persistence.entity.x.responseDate, UtilDateTime.nowTimestamp());
+                surveyResponse.set(org.apache.ofbiz.persistence.entity.x.lastModifiedDate, UtilDateTime.nowTimestamp());
                 surveyResponse.create();
             }
 
@@ -267,12 +267,12 @@ public class PdfSurveyServices {
                     continue;
                 }
 
-                String surveyQuestionId = (String) surveyQuestionAndAppl.get("surveyQuestionId");
-                String surveyQuestionTypeId = (String) surveyQuestionAndAppl.get("surveyQuestionTypeId");
+                String surveyQuestionId = (String) surveyQuestionAndAppl.get(org.apache.ofbiz.persistence.entity.x.surveyQuestionId);
+                String surveyQuestionTypeId = (String) surveyQuestionAndAppl.get(org.apache.ofbiz.persistence.entity.x.surveyQuestionTypeId);
                 GenericValue surveyResponseAnswer = delegator.makeValue("SurveyResponseAnswer",
                         UtilMisc.toMap("surveyResponseId", surveyResponseId, "surveyQuestionId", surveyQuestionId));
                 if (surveyQuestionTypeId == null || "TEXT_SHORT".equals(surveyQuestionTypeId)) {
-                    surveyResponseAnswer.set("textResponse", value);
+                    surveyResponseAnswer.set(org.apache.ofbiz.persistence.entity.x.textResponse, value);
                 }
 
                 delegator.create(surveyResponseAnswer);
@@ -324,7 +324,7 @@ public class PdfSurveyServices {
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Delegator delegator = dctx.getDelegator();
         try {
-            Map<String, Object> acroFieldMap = UtilGenerics.cast(context.get("acroFieldMap"));
+            Map<String, Object> acroFieldMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.acroFieldMap));
             ByteBuffer byteBuffer = getInputByteBuffer(context, delegator);
             PdfReader r = new PdfReader(byteBuffer.array());
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -372,8 +372,8 @@ public class PdfSurveyServices {
         Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> results = ServiceUtil.returnSuccess();
-        String surveyResponseId = (String) context.get("surveyResponseId");
-        String contentId = (String) context.get("contentId");
+        String surveyResponseId = (String) context.get(org.apache.ofbiz.persistence.entity.x.surveyResponseId);
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
         String surveyId = null;
 
         Document document = new Document();
@@ -382,15 +382,15 @@ public class PdfSurveyServices {
                 GenericValue surveyResponse = EntityQuery.use(delegator).from("SurveyResponse").where("surveyResponseId",
                         surveyResponseId).queryOne();
                 if (surveyResponse != null) {
-                    surveyId = surveyResponse.getString("surveyId");
+                    surveyId = surveyResponse.getString(org.apache.ofbiz.persistence.entity.x.surveyId);
                 }
             }
             if (UtilValidate.isNotEmpty(surveyId) && UtilValidate.isEmpty(contentId)) {
                 GenericValue survey = EntityQuery.use(delegator).from("Survey").where("surveyId", surveyId).queryOne();
                 if (survey != null) {
-                    String acroFormContentId = survey.getString("acroFormContentId");
+                    String acroFormContentId = survey.getString(org.apache.ofbiz.persistence.entity.x.acroFormContentId);
                     if (UtilValidate.isNotEmpty(acroFormContentId)) {
-                        context.put("contentId", acroFormContentId);
+                        context.put(org.apache.ofbiz.persistence.entity.x.contentId, acroFormContentId);
                     }
                 }
             }
@@ -402,18 +402,18 @@ public class PdfSurveyServices {
                     surveyResponseId).queryList();
             for (GenericValue surveyResponseAnswer : responses) {
                 String value = null;
-                String surveyQuestionId = (String) surveyResponseAnswer.get("surveyQuestionId");
+                String surveyQuestionId = (String) surveyResponseAnswer.get(org.apache.ofbiz.persistence.entity.x.surveyQuestionId);
                 GenericValue surveyQuestion = EntityQuery.use(delegator).from("SurveyQuestion").where("surveyQuestionId",
                         surveyQuestionId).queryOne();
-                String questionType = surveyQuestion.getString("surveyQuestionTypeId");
+                String questionType = surveyQuestion.getString(org.apache.ofbiz.persistence.entity.x.surveyQuestionTypeId);
                 // DEJ20060227 this isn't used, if needed in the future should get from SurveyQuestionAppl.externalFieldRef
                 // String fieldName = surveyQuestion.getString("description");
                 if ("OPTION".equals(questionType)) {
-                    value = surveyResponseAnswer.getString("surveyOptionSeqId");
+                    value = surveyResponseAnswer.getString(org.apache.ofbiz.persistence.entity.x.surveyOptionSeqId);
                 } else if ("BOOLEAN".equals(questionType)) {
-                    value = surveyResponseAnswer.getString("booleanResponse");
+                    value = surveyResponseAnswer.getString(org.apache.ofbiz.persistence.entity.x.booleanResponse);
                 } else if ("NUMBER_LONG".equals(questionType) || "NUMBER_CURRENCY".equals(questionType) || "NUMBER_FLOAT".equals(questionType)) {
-                    Double num = surveyResponseAnswer.getDouble("numericResponse");
+                    Double num = surveyResponseAnswer.getDouble(org.apache.ofbiz.persistence.entity.x.numericResponse);
                     if (num != null) {
                         value = num.toString();
                     }
@@ -421,9 +421,9 @@ public class PdfSurveyServices {
                     // not really a question; ignore completely, adding log statement to avoid checkstyle
                     Debug.logInfo("Not really a question; ignore completely. Question type:" + questionType, MODULE);
                 } else {
-                    value = surveyResponseAnswer.getString("textResponse");
+                    value = surveyResponseAnswer.getString(org.apache.ofbiz.persistence.entity.x.textResponse);
                 }
-                Chunk chunk = new Chunk(surveyQuestion.getString("question") + ": " + value);
+                Chunk chunk = new Chunk(surveyQuestion.getString(org.apache.ofbiz.persistence.entity.x.question) + ": " + value);
                 Paragraph p = new Paragraph(chunk);
                 document.add(p);
             }
@@ -443,14 +443,14 @@ public class PdfSurveyServices {
     public static Map<String, Object> buildSurveyQuestionsAndAnswers(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> results = ServiceUtil.returnSuccess();
-        String surveyResponseId = (String) context.get("surveyResponseId");
+        String surveyResponseId = (String) context.get(org.apache.ofbiz.persistence.entity.x.surveyResponseId);
         List<Object> qAndA = new LinkedList<>();
 
         try {
             List<GenericValue> responses = EntityQuery.use(delegator).from("SurveyResponseAnswer").where("surveyResponseId",
                     surveyResponseId).queryList();
             for (GenericValue surveyResponseAnswer : responses) {
-                String surveyQuestionId = (String) surveyResponseAnswer.get("surveyQuestionId");
+                String surveyQuestionId = (String) surveyResponseAnswer.get(org.apache.ofbiz.persistence.entity.x.surveyQuestionId);
                 GenericValue surveyQuestion = EntityQuery.use(delegator).from("SurveyQuestion").where("surveyQuestionId",
                         surveyQuestionId).queryOne();
                 qAndA.add(UtilMisc.toMap("question", surveyQuestion, "response", surveyResponseAnswer));
@@ -469,10 +469,10 @@ public class PdfSurveyServices {
     public static Map<String, Object> setAcroFieldsFromSurveyResponse(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Map<String, Object> acroFieldMap = new HashMap<>();
-        String surveyResponseId = (String) context.get("surveyResponseId");
+        String surveyResponseId = (String) context.get(org.apache.ofbiz.persistence.entity.x.surveyResponseId);
         String acroFormContentId = null;
 
         try {
@@ -481,14 +481,14 @@ public class PdfSurveyServices {
                 GenericValue surveyResponse = EntityQuery.use(delegator).from("SurveyResponse").where("surveyResponseId",
                         surveyResponseId).queryOne();
                 if (surveyResponse != null) {
-                    surveyId = surveyResponse.getString("surveyId");
+                    surveyId = surveyResponse.getString(org.apache.ofbiz.persistence.entity.x.surveyId);
                 }
             }
 
             if (UtilValidate.isNotEmpty(surveyId)) {
                 GenericValue survey = EntityQuery.use(delegator).from("Survey").where("surveyId", surveyId).queryOne();
                 if (survey != null) {
-                    acroFormContentId = survey.getString("acroFormContentId");
+                    acroFormContentId = survey.getString(org.apache.ofbiz.persistence.entity.x.acroFormContentId);
                 }
             }
 
@@ -496,7 +496,7 @@ public class PdfSurveyServices {
                     surveyResponseId).queryList();
             for (GenericValue surveyResponseAnswer : responses) {
                 String value = null;
-                String surveyQuestionId = (String) surveyResponseAnswer.get("surveyQuestionId");
+                String surveyQuestionId = (String) surveyResponseAnswer.get(org.apache.ofbiz.persistence.entity.x.surveyQuestionId);
 
                 GenericValue surveyQuestion = EntityQuery.use(delegator).from("SurveyQuestion").where("surveyQuestionId",
                         surveyQuestionId).cache().queryOne();
@@ -507,14 +507,14 @@ public class PdfSurveyServices {
                         .orderBy("-fromDate")
                         .filterByDate().cache().queryFirst();
 
-                String questionType = surveyQuestion.getString("surveyQuestionTypeId");
-                String fieldName = surveyQuestionAppl.getString("externalFieldRef");
+                String questionType = surveyQuestion.getString(org.apache.ofbiz.persistence.entity.x.surveyQuestionTypeId);
+                String fieldName = surveyQuestionAppl.getString(org.apache.ofbiz.persistence.entity.x.externalFieldRef);
                 if ("OPTION".equals(questionType)) {
-                    value = surveyResponseAnswer.getString("surveyOptionSeqId");
+                    value = surveyResponseAnswer.getString(org.apache.ofbiz.persistence.entity.x.surveyOptionSeqId);
                 } else if ("BOOLEAN".equals(questionType)) {
-                    value = surveyResponseAnswer.getString("booleanResponse");
+                    value = surveyResponseAnswer.getString(org.apache.ofbiz.persistence.entity.x.booleanResponse);
                 } else if ("NUMBER_LONG".equals(questionType) || "NUMBER_CURRENCY".equals(questionType) || "NUMBER_FLOAT".equals(questionType)) {
-                    Double num = surveyResponseAnswer.getDouble("numericResponse");
+                    Double num = surveyResponseAnswer.getDouble(org.apache.ofbiz.persistence.entity.x.numericResponse);
                     if (num != null) {
                         value = num.toString();
                     }
@@ -522,7 +522,7 @@ public class PdfSurveyServices {
                     // not really a question; ignore completely, adding log to ignore checkstyle issue
                     Debug.logInfo("Not really a question; ignore completely. Question type:" + questionType, MODULE);
                 } else {
-                    value = surveyResponseAnswer.getString("textResponse");
+                    value = surveyResponseAnswer.getString(org.apache.ofbiz.persistence.entity.x.textResponse);
                 }
                 acroFieldMap.put(fieldName, value);
             }
@@ -540,7 +540,7 @@ public class PdfSurveyServices {
             if (ServiceUtil.isError(map)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(map));
             }
-            String pdfFileNameOut = (String) context.get("pdfFileNameOut");
+            String pdfFileNameOut = (String) context.get(org.apache.ofbiz.persistence.entity.x.pdfFileNameOut);
             ByteBuffer outByteBuffer = (ByteBuffer) map.get("outByteBuffer");
             results.put("outByteBuffer", outByteBuffer);
             if (UtilValidate.isNotEmpty(pdfFileNameOut)) {
@@ -558,11 +558,11 @@ public class PdfSurveyServices {
     }
 
     public static ByteBuffer getInputByteBuffer(Map<String, ? extends Object> context, Delegator delegator) throws GeneralException {
-        ByteBuffer inputByteBuffer = (ByteBuffer) context.get("inputByteBuffer");
+        ByteBuffer inputByteBuffer = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.inputByteBuffer);
 
         if (inputByteBuffer == null) {
-            String pdfFileNameIn = (String) context.get("pdfFileNameIn");
-            String contentId = (String) context.get("contentId");
+            String pdfFileNameIn = (String) context.get(org.apache.ofbiz.persistence.entity.x.pdfFileNameIn);
+            String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
             if (UtilValidate.isNotEmpty(pdfFileNameIn)) {
                 try (FileInputStream fis = new FileInputStream(pdfFileNameIn)) {
                     int c;
@@ -576,12 +576,12 @@ public class PdfSurveyServices {
                 }
             } else if (UtilValidate.isNotEmpty(contentId)) {
                 try {
-                    Locale locale = (Locale) context.get("locale");
-                    String https = (String) context.get("https");
-                    String webSiteId = (String) context.get("webSiteId");
-                    String rootDir = (String) context.get("rootDir");
+                    Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+                    String https = (String) context.get(org.apache.ofbiz.persistence.entity.x.https);
+                    String webSiteId = (String) context.get(org.apache.ofbiz.persistence.entity.x.webSiteId);
+                    String rootDir = (String) context.get(org.apache.ofbiz.persistence.entity.x.rootDir);
                     GenericValue content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).cache().queryOne();
-                    String dataResourceId = content.getString("dataResourceId");
+                    String dataResourceId = content.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
                     inputByteBuffer = DataResourceWorker.getContentAsByteBuffer(delegator, dataResourceId, https, webSiteId, locale, rootDir);
                 } catch (GenericEntityException | IOException e) {
                     throw(new GeneralException(e.getMessage()));

@@ -52,17 +52,17 @@ public class LdapAuthenticationServices {
             Debug.logVerbose("Starting LDAP authentication", MODULE);
         }
         Properties env = UtilProperties.getProperties("jndiLdap");
-        String username = (String) context.get("login.username");
+        String username = (String) context.get(org.apache.ofbiz.persistence.entity.x.login_username);
         if (username == null) {
-            username = (String) context.get("username");
+            username = (String) context.get(org.apache.ofbiz.persistence.entity.x.username);
         }
-        String password = (String) context.get("login.password");
+        String password = (String) context.get(org.apache.ofbiz.persistence.entity.x.login_password);
         if (password == null) {
-            password = (String) context.get("password");
+            password = (String) context.get(org.apache.ofbiz.persistence.entity.x.password);
         }
         String dn = null;
         Delegator delegator = ctx.getDelegator();
-        boolean isServiceAuth = context.get("isServiceAuth") != null && (Boolean) context.get("isServiceAuth");
+        boolean isServiceAuth = context.get(org.apache.ofbiz.persistence.entity.x.isServiceAuth) != null && (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.isServiceAuth);
         GenericValue userLogin = null;
         try {
             userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", username).cache(isServiceAuth).queryOne();
@@ -70,7 +70,7 @@ public class LdapAuthenticationServices {
             Debug.logWarning(e, "", MODULE);
         }
         if (userLogin != null) {
-            dn = userLogin.getString("userLdapDn");
+            dn = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLdapDn);
         }
         if (UtilValidate.isEmpty(dn)) {
             String dnTemplate = (String) env.get("ldap.dn.template");
@@ -106,7 +106,7 @@ public class LdapAuthenticationServices {
         // Synchronize user's OFBiz password with user's LDAP password
         if (userLogin != null) {
             boolean useEncryption = "true".equals(EntityUtilProperties.getPropertyValue("security", "password.encrypt", delegator));
-            String currentPassword = userLogin.getString("currentPassword");
+            String currentPassword = userLogin.getString(org.apache.ofbiz.persistence.entity.x.currentPassword);
             boolean samePassword;
             if (useEncryption) {
                 samePassword = HashCrypt.comparePassword(currentPassword, LoginServices.getHashType(), password);
@@ -117,7 +117,7 @@ public class LdapAuthenticationServices {
                 if (Debug.verboseOn()) {
                     Debug.logVerbose("Starting password synchronization", MODULE);
                 }
-                userLogin.set("currentPassword", useEncryption ? HashCrypt.cryptUTF8(LoginServices.getHashType(), null, password) : password, false);
+                userLogin.set(org.apache.ofbiz.persistence.entity.x.currentPassword, useEncryption ? HashCrypt.cryptUTF8(LoginServices.getHashType(), null, password) : password, false);
                 Transaction parentTx = null;
                 boolean beganTransaction = false;
                 try {

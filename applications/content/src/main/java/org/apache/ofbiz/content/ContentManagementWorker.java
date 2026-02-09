@@ -282,8 +282,8 @@ public final class ContentManagementWorker {
 
         // Check that user has permission to admin sites
         for (GenericValue webSitePP : allPublishPoints) {
-            String contentId = (String) webSitePP.get("contentId");
-            String templateTitle = (String) webSitePP.get("templateTitle");
+            String contentId = (String) webSitePP.get(org.apache.ofbiz.persistence.entity.x.contentId);
+            String templateTitle = (String) webSitePP.get(org.apache.ofbiz.persistence.entity.x.templateTitle);
             GenericValue content = delegator.makeValue("Content", UtilMisc.toMap("contentId", contentId));
             // TODO check if we want statusId to be filled/used, else this should be removed
             String statusId = null;
@@ -328,7 +328,7 @@ public final class ContentManagementWorker {
         List<GenericValue> allPublishPoints = new LinkedList<>();
         GenericValue webSitePublishPoint = null;
         for (GenericValue contentAssoc : relatedPubPts) {
-            String pub = (String) contentAssoc.get("contentId");
+            String pub = (String) contentAssoc.get(org.apache.ofbiz.persistence.entity.x.contentId);
             webSitePublishPoint = getWebSitePublishPoint(delegator, pub, false);
             allPublishPoints.add(webSitePublishPoint);
         }
@@ -339,7 +339,7 @@ public final class ContentManagementWorker {
         List<GenericValue> publishPointList = getAllPublishPoints(delegator, pubPtId);
         Map<String, GenericValue> publishPointMap = new HashMap<>();
         for (GenericValue webSitePublishPoint : publishPointList) {
-            String pub = (String) webSitePublishPoint.get("contentId");
+            String pub = (String) webSitePublishPoint.get(org.apache.ofbiz.persistence.entity.x.contentId);
             publishPointMap.put(pub, webSitePublishPoint);
         }
         return publishPointMap;
@@ -349,7 +349,7 @@ public final class ContentManagementWorker {
     public static void getAllPublishPointMap(Delegator delegator, String pubPtId, Map<String, GenericValue> publishPointMap) throws GeneralException {
         List<GenericValue> publishPointList = getAllPublishPoints(delegator, pubPtId);
         for (GenericValue webSitePublishPoint : publishPointList) {
-            String pub = (String) webSitePublishPoint.get("contentId");
+            String pub = (String) webSitePublishPoint.get(org.apache.ofbiz.persistence.entity.x.contentId);
             publishPointMap.put(pub, webSitePublishPoint);
             getAllPublishPointMap(delegator, pub, publishPointMap);
         }
@@ -358,7 +358,7 @@ public final class ContentManagementWorker {
     public static Map<String, GenericValue> getPublishPointMap(Delegator delegator, List<GenericValue> publishPointList) {
         Map<String, GenericValue> publishPointMap = new HashMap<>();
         for (GenericValue webSitePublishPoint : publishPointList) {
-            String pub = (String) webSitePublishPoint.get("contentId");
+            String pub = (String) webSitePublishPoint.get(org.apache.ofbiz.persistence.entity.x.contentId);
             publishPointMap.put(pub, webSitePublishPoint);
         }
         return publishPointMap;
@@ -375,21 +375,21 @@ public final class ContentManagementWorker {
 
         List<Map<String, Object>> staticValueList = new LinkedList<>();
         for (GenericValue content : assocValueList) {
-            String contentId = (String) content.get("contentId");
-            String contentName = (String) content.get("contentName");
-            String description = (String) content.get("description");
+            String contentId = (String) content.get(org.apache.ofbiz.persistence.entity.x.contentId);
+            String contentName = (String) content.get(org.apache.ofbiz.persistence.entity.x.contentName);
+            String description = (String) content.get(org.apache.ofbiz.persistence.entity.x.description);
             Map<String, Object> map = new HashMap<>();
             map.put("contentId", contentId);
             map.put("contentName", contentName);
             map.put("description", description);
             for (String[] publishPointArray : permittedPublishPointList) {
                 String publishPointId = publishPointArray[0];
-                List<GenericValue> contentAssocList = content.getRelated("ToContentAssoc", UtilMisc.toMap("contentId", publishPointId), null, false);
+                List<GenericValue> contentAssocList = content.getRelated(org.apache.ofbiz.persistence.entity.x.ToContentAssoc, UtilMisc.toMap("contentId", publishPointId), null, false);
                 List<GenericValue> filteredList = EntityUtil.filterByDate(contentAssocList);
                 if (!filteredList.isEmpty()) {
                     map.put(publishPointId, "Y");
                     GenericValue assoc = filteredList.get(0);
-                    Timestamp fromDate = (Timestamp) assoc.get("fromDate");
+                    Timestamp fromDate = (Timestamp) assoc.get(org.apache.ofbiz.persistence.entity.x.fromDate);
                     map.put(publishPointId + "FromDate", fromDate);
                 } else {
                     map.put(publishPointId, "N");
@@ -422,7 +422,7 @@ public final class ContentManagementWorker {
     }
 
     public static GenericValue overrideWebSitePublishPoint(Delegator delegator, GenericValue passedValue) throws GenericEntityException {
-        String contentId = passedValue.getString("contentId");
+        String contentId = passedValue.getString(org.apache.ofbiz.persistence.entity.x.contentId);
         GenericValue webSitePublishPoint = passedValue;
         String contentIdTo = getParentWebSitePublishPointId(delegator, contentId);
         if (contentIdTo != null) {
@@ -451,7 +451,7 @@ public final class ContentManagementWorker {
                 .where("contentId", contentId, "contentAssocTypeId", "SUBSITE")
                 .filterByDate().cache().queryFirst();
         if (contentAssoc != null) {
-            contentIdTo = contentAssoc.getString("contentIdTo");
+            contentIdTo = contentAssoc.getString(org.apache.ofbiz.persistence.entity.x.contentIdTo);
         }
         return contentIdTo;
     }
@@ -489,8 +489,8 @@ public final class ContentManagementWorker {
             publishPointMapAll.put(contentId, contentId);
             List<GenericValue> subPublishPointList = getAllPublishPoints(delegator, contentId);
             for (GenericValue webSitePublishPoint2 : subPublishPointList) {
-                String contentId2 = (String) webSitePublishPoint2.get("contentId");
-                String description2 = (String) webSitePublishPoint2.get("templateTitle");
+                String contentId2 = (String) webSitePublishPoint2.get(org.apache.ofbiz.persistence.entity.x.contentId);
+                String description2 = (String) webSitePublishPoint2.get(org.apache.ofbiz.persistence.entity.x.templateTitle);
                 publishPointMapAll.put(contentId2, contentId);
                 Object[] subArr2 = {contentId2, description2, null};
                 subPointList.add(subArr2);
@@ -505,11 +505,11 @@ public final class ContentManagementWorker {
             throw new GeneralException(e.getMessage());
         }
         for (GenericValue contentAssoc : assocValueList) {
-            String contentIdTo = contentAssoc.getString("contentIdTo");
+            String contentIdTo = contentAssoc.getString(org.apache.ofbiz.persistence.entity.x.contentIdTo);
             String topContentId = (String) publishPointMapAll.get(contentIdTo);
             Object[] subArr = (Object[]) publishPointMap.get(topContentId);
             if (contentIdTo.equals(topContentId)) {
-                subArr[3] = contentAssoc.get("fromDate");
+                subArr[3] = contentAssoc.get(org.apache.ofbiz.persistence.entity.x.fromDate);
             } else {
                 if (subArr != null) {
                     List<Object[]> subPointList = UtilGenerics.cast(subArr[1]);
@@ -522,7 +522,7 @@ public final class ContentManagementWorker {
                             break;
                         }
                     }
-                    subArr2[2] = contentAssoc.get("fromDate");
+                    subArr2[2] = contentAssoc.get(org.apache.ofbiz.persistence.entity.x.fromDate);
                 }
             }
         }
@@ -565,8 +565,8 @@ public final class ContentManagementWorker {
 
         // Check that user has permission to admin sites
         for (GenericValue content : allDepartmentPoints) {
-            String contentId = (String) content.get("contentId");
-            String contentName = (String) content.get("contentName");
+            String contentId = (String) content.get(org.apache.ofbiz.persistence.entity.x.contentId);
+            String contentName = (String) content.get(org.apache.ofbiz.persistence.entity.x.contentName);
             // TODO check if we want statusId to be filled/used, else this should be removed
             String statusId = null;
             String entityAction = permittedAction;
@@ -611,7 +611,7 @@ public final class ContentManagementWorker {
         List<GenericValue> allDepartmentPoints = new LinkedList<>();
         GenericValue departmentContent = null;
         for (GenericValue contentAssoc : relatedPubPts) {
-            String pub = (String) contentAssoc.get("contentId");
+            String pub = (String) contentAssoc.get(org.apache.ofbiz.persistence.entity.x.contentId);
             departmentContent = EntityQuery.use(delegator).from("Content").where("contentId", pub).cache().queryOne();
             allDepartmentPoints.add(departmentContent);
         }
@@ -622,8 +622,8 @@ public final class ContentManagementWorker {
         String userName = null;
         Delegator delegator = (Delegator) request.getAttribute("delegator");
         GenericValue userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", userLoginId).cache().queryOne();
-        GenericValue person = userLogin.getRelatedOne("Person", true);
-        userName = person.getString("firstName") + " " + person.getString("lastName");
+        GenericValue person = userLogin.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Person, true);
+        userName = person.getString(org.apache.ofbiz.persistence.entity.x.firstName) + " " + person.getString(org.apache.ofbiz.persistence.entity.x.lastName);
         return userName;
     }
 
@@ -641,7 +641,7 @@ public final class ContentManagementWorker {
         List<GenericValue> contentAssocs = EntityQuery.use(delegator).from("ContentAssoc").where(conditionMain)
                 .filterByDate().cache().queryList();
         for (GenericValue contentAssoc : contentAssocs) {
-            String subContentId = contentAssoc.getString("contentId");
+            String subContentId = contentAssoc.getString(org.apache.ofbiz.persistence.entity.x.contentId);
             subLeafCount += updateStatsTopDown(delegator, subContentId, typeList);
         }
 
@@ -667,22 +667,22 @@ public final class ContentManagementWorker {
                         EntityCondition.makeCondition("contentId", EntityOperator.EQUALS, contentId))
                 .cache().filterByDate().queryList();
         for (GenericValue contentAssoc : contentAssocs) {
-            String contentIdTo = contentAssoc.getString("contentIdTo");
+            String contentIdTo = contentAssoc.getString(org.apache.ofbiz.persistence.entity.x.contentIdTo);
             GenericValue contentTo = EntityQuery.use(delegator).from("Content").where("contentId", contentIdTo).queryOne();
             int intLeafCount = 0;
-            Long leafCount = (Long) contentTo.get("childLeafCount");
+            Long leafCount = (Long) contentTo.get(org.apache.ofbiz.persistence.entity.x.childLeafCount);
             if (leafCount != null) {
                 intLeafCount = leafCount.intValue();
             }
-            contentTo.set("childLeafCount", (long) (intLeafCount + leafChangeAmount));
+            contentTo.set(org.apache.ofbiz.persistence.entity.x.childLeafCount, (long) (intLeafCount + leafChangeAmount));
 
             if (branchChangeAmount != 0) {
                 int intBranchCount = 0;
-                Long branchCount = (Long) contentTo.get("childBranchCount");
+                Long branchCount = (Long) contentTo.get(org.apache.ofbiz.persistence.entity.x.childBranchCount);
                 if (branchCount != null) {
                     intBranchCount = branchCount.intValue();
                 }
-                contentTo.set("childBranchCount", (long) (intBranchCount + branchChangeAmount));
+                contentTo.set(org.apache.ofbiz.persistence.entity.x.childBranchCount, (long) (intBranchCount + branchChangeAmount));
             }
             contentTo.store();
             updateStatsBottomUp(delegator, contentIdTo, typeList, 0, leafChangeAmount);

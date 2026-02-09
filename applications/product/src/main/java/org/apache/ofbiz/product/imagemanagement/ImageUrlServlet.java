@@ -92,11 +92,11 @@ public class ImageUrlServlet extends HttpServlet {
         if (content != null) {
             GenericValue dataResource = null;
             try {
-                dataResource = content.getRelatedOne("DataResource", false);
+                dataResource = content.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DataResource, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
-            String imageUrl = dataResource.getString("objectInfo");
+            String imageUrl = dataResource.getString(org.apache.ofbiz.persistence.entity.x.objectInfo);
             RequestDispatcher rd = request.getRequestDispatcher("/control/viewImage?drObjectInfo=" + imageUrl);
             rd.forward(request, response);
         } else {

@@ -51,16 +51,16 @@ public class RotateImage {
 
     public static Map<String, Object> imageRotate(DispatchContext dctx, Map<String, ? extends Object> context)
             throws IOException {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         String nameOfThumb = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
                 "image.management.nameofthumbnail", delegator), context);
 
-        String productId = (String) context.get("productId");
-        String imageName = (String) context.get("imageName");
-        String angle = (String) context.get("angle");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String imageName = (String) context.get(org.apache.ofbiz.persistence.entity.x.imageName);
+        String angle = (String) context.get(org.apache.ofbiz.persistence.entity.x.angle);
 
         if (UtilValidate.isNotEmpty(imageName)) {
             Map<String, Object> contentCtx = new HashMap<>();

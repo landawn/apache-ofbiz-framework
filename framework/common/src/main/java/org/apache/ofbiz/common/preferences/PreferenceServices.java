@@ -62,19 +62,19 @@ public class PreferenceServices {
      * @return Map with the result of the service, the output parameters.
      */
     public static Map<String, Object> getUserPreference(DispatchContext ctx, Map<String, ?> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (!PreferenceWorker.isValidGetId(ctx, context)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "getPreference.permissionError", locale));
         }
         Delegator delegator = ctx.getDelegator();
 
-        String userPrefTypeId = (String) context.get("userPrefTypeId");
+        String userPrefTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userPrefTypeId);
         if (UtilValidate.isEmpty(userPrefTypeId)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "getPreference.invalidArgument", locale));
         }
         String userLoginId = PreferenceWorker.getUserLoginId(context, true);
         Map<String, String> fieldMap = UtilMisc.toMap("userLoginId", userLoginId, "userPrefTypeId", userPrefTypeId);
-        String userPrefGroupTypeId = (String) context.get("userPrefGroupTypeId");
+        String userPrefGroupTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userPrefGroupTypeId);
         if (UtilValidate.isNotEmpty(userPrefGroupTypeId)) {
             fieldMap.put("userPrefGroupTypeId", userPrefGroupTypeId);
         }
@@ -112,13 +112,13 @@ public class PreferenceServices {
      * @return Map with the result of the service, the output parameters.
      */
     public static Map<String, Object> getUserPreferenceGroup(DispatchContext ctx, Map<String, ?> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (!PreferenceWorker.isValidGetId(ctx, context)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "getPreference.permissionError", locale));
         }
         Delegator delegator = ctx.getDelegator();
 
-        String userPrefGroupTypeId = (String) context.get("userPrefGroupTypeId");
+        String userPrefGroupTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userPrefGroupTypeId);
         if (UtilValidate.isEmpty(userPrefGroupTypeId)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "getPreference.invalidArgument", locale));
         }
@@ -164,16 +164,16 @@ public class PreferenceServices {
      */
     public static Map<String, Object> setUserPreference(DispatchContext ctx, Map<String, ?> context) {
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         String userLoginId = PreferenceWorker.getUserLoginId(context, false);
-        String userPrefTypeId = (String) context.get("userPrefTypeId");
-        Object userPrefValue = context.get("userPrefValue");
+        String userPrefTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userPrefTypeId);
+        Object userPrefValue = context.get(org.apache.ofbiz.persistence.entity.x.userPrefValue);
         if (UtilValidate.isEmpty(userLoginId) || UtilValidate.isEmpty(userPrefTypeId) || userPrefValue == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "setPreference.invalidArgument", locale));
         }
-        String userPrefGroupTypeId = (String) context.get("userPrefGroupTypeId");
-        String userPrefDataType = (String) context.get("userPrefDataType");
+        String userPrefGroupTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userPrefGroupTypeId);
+        String userPrefDataType = (String) context.get(org.apache.ofbiz.persistence.entity.x.userPrefDataType);
 
         try {
             if (UtilValidate.isNotEmpty(userPrefDataType)) {
@@ -192,10 +192,10 @@ public class PreferenceServices {
 
     public static Map<String, Object> removeUserPreference(DispatchContext ctx, Map<String, ?> context) {
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         String userLoginId = PreferenceWorker.getUserLoginId(context, false);
-        String userPrefTypeId = (String) context.get("userPrefTypeId");
+        String userPrefTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userPrefTypeId);
         if (UtilValidate.isEmpty(userLoginId) || UtilValidate.isEmpty(userPrefTypeId)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "setPreference.invalidArgument", locale));
         }
@@ -227,11 +227,11 @@ public class PreferenceServices {
      */
     public static Map<String, Object> setUserPreferenceGroup(DispatchContext ctx, Map<String, ?> context) {
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         String userLoginId = PreferenceWorker.getUserLoginId(context, false);
-        Map<String, Object> userPrefMap = checkMap(context.get("userPrefMap"), String.class, Object.class);
-        String userPrefGroupTypeId = (String) context.get("userPrefGroupTypeId");
+        Map<String, Object> userPrefMap = checkMap(context.get(org.apache.ofbiz.persistence.entity.x.userPrefMap), String.class, Object.class);
+        String userPrefGroupTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userPrefGroupTypeId);
         if (UtilValidate.isEmpty(userLoginId) || UtilValidate.isEmpty(userPrefGroupTypeId) || userPrefMap == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "setPreference.invalidArgument", locale));
         }
@@ -261,11 +261,11 @@ public class PreferenceServices {
      */
     public static Map<String, Object> copyUserPreferenceGroup(DispatchContext ctx, Map<String, ?> context) {
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         String userLoginId = PreferenceWorker.getUserLoginId(context, false);
-        String fromUserLoginId = (String) context.get("fromUserLoginId");
-        String userPrefGroupTypeId = (String) context.get("userPrefGroupTypeId");
+        String fromUserLoginId = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromUserLoginId);
+        String userPrefGroupTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userPrefGroupTypeId);
         if (UtilValidate.isEmpty(userLoginId) || UtilValidate.isEmpty(userPrefGroupTypeId) || UtilValidate.isEmpty(fromUserLoginId)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "copyPreference.invalidArgument", locale));
         }
@@ -277,7 +277,7 @@ public class PreferenceServices {
                                                        .queryList();
             if (resultList != null) {
                 for (GenericValue preference: resultList) {
-                    preference.set("userLoginId", userLoginId);
+                    preference.set(org.apache.ofbiz.persistence.entity.x.userLoginId, userLoginId);
                 }
                 delegator.storeAll(resultList);
             }

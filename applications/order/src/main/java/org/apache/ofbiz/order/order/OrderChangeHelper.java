@@ -58,14 +58,14 @@ public final class OrderChangeHelper {
         String digitalItemStatus = "ITEM_APPROVED";
 
         if (!holdOrder) {
-            if (productStore.get("headerApprovedStatus") != null) {
-                headerStatus = productStore.getString("headerApprovedStatus");
+            if (productStore.get(org.apache.ofbiz.persistence.entity.x.headerApprovedStatus) != null) {
+                headerStatus = productStore.getString(org.apache.ofbiz.persistence.entity.x.headerApprovedStatus);
             }
-            if (productStore.get("itemApprovedStatus") != null) {
-                itemStatus = productStore.getString("itemApprovedStatus");
+            if (productStore.get(org.apache.ofbiz.persistence.entity.x.itemApprovedStatus) != null) {
+                itemStatus = productStore.getString(org.apache.ofbiz.persistence.entity.x.itemApprovedStatus);
             }
-            if (productStore.get("digitalItemApprovedStatus") != null) {
-                digitalItemStatus = productStore.getString("digitalItemApprovedStatus");
+            if (productStore.get(org.apache.ofbiz.persistence.entity.x.digitalItemApprovedStatus) != null) {
+                digitalItemStatus = productStore.getString(org.apache.ofbiz.persistence.entity.x.digitalItemApprovedStatus);
             }
         }
 
@@ -83,11 +83,11 @@ public final class OrderChangeHelper {
         GenericValue productStore = OrderReadHelper.getProductStoreFromOrder(dispatcher.getDelegator(), orderId);
         String headerStatus = "ORDER_REJECTED";
         String itemStatus = "ITEM_REJECTED";
-        if (productStore.get("headerDeclinedStatus") != null) {
-            headerStatus = productStore.getString("headerDeclinedStatus");
+        if (productStore.get(org.apache.ofbiz.persistence.entity.x.headerDeclinedStatus) != null) {
+            headerStatus = productStore.getString(org.apache.ofbiz.persistence.entity.x.headerDeclinedStatus);
         }
-        if (productStore.get("itemDeclinedStatus") != null) {
-            itemStatus = productStore.getString("itemDeclinedStatus");
+        if (productStore.get(org.apache.ofbiz.persistence.entity.x.itemDeclinedStatus) != null) {
+            itemStatus = productStore.getString(org.apache.ofbiz.persistence.entity.x.itemDeclinedStatus);
         }
 
         try {
@@ -117,11 +117,11 @@ public final class OrderChangeHelper {
         GenericValue productStore = OrderReadHelper.getProductStoreFromOrder(dispatcher.getDelegator(), orderId);
         String headerStatus = "ORDER_CANCELLED";
         String itemStatus = "ITEM_CANCELLED";
-        if (productStore.get("headerCancelStatus") != null) {
-            headerStatus = productStore.getString("headerCancelStatus");
+        if (productStore.get(org.apache.ofbiz.persistence.entity.x.headerCancelStatus) != null) {
+            headerStatus = productStore.getString(org.apache.ofbiz.persistence.entity.x.headerCancelStatus);
         }
-        if (productStore.get("itemCancelStatus") != null) {
-            itemStatus = productStore.getString("itemCancelStatus");
+        if (productStore.get(org.apache.ofbiz.persistence.entity.x.itemCancelStatus) != null) {
+            itemStatus = productStore.getString(org.apache.ofbiz.persistence.entity.x.itemCancelStatus);
         }
 
         try {
@@ -170,29 +170,29 @@ public final class OrderChangeHelper {
             if (orderHeader != null) {
                 List<GenericValue> orderItems = null;
                 try {
-                    orderItems = orderHeader.getRelated("OrderItem", null, null, false);
+                    orderItems = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItem, null, null, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "ERROR: Unable to get OrderItem records for OrderHeader : " + orderId, MODULE);
                 }
                 if (UtilValidate.isNotEmpty(orderItems)) {
                     for (GenericValue orderItem : orderItems) {
-                        String orderItemSeqId = orderItem.getString("orderItemSeqId");
+                        String orderItemSeqId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
                         GenericValue product = null;
 
                         try {
-                            product = orderItem.getRelatedOne("Product", false);
+                            product = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                         } catch (GenericEntityException e) {
                             Debug.logError(e, "ERROR: Unable to get Product record for OrderItem : " + orderId + "/" + orderItemSeqId, MODULE);
                         }
                         if (product != null) {
                             GenericValue productType = null;
                             try {
-                                productType = product.getRelatedOne("ProductType", false);
+                                productType = product.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductType, false);
                             } catch (GenericEntityException e) {
                                 Debug.logError(e, "ERROR: Unable to get ProductType from Product : " + product, MODULE);
                             }
                             if (productType != null) {
-                                String isDigital = productType.getString("isDigital");
+                                String isDigital = productType.getString(org.apache.ofbiz.persistence.entity.x.isDigital);
                                 if (isDigital != null && "Y".equalsIgnoreCase(isDigital)) {
                                     // update the status
                                     Map<String, Object> digitalStatusFields = UtilMisc.<String, Object>toMap("orderId", orderId, "orderItemSeqId",
@@ -206,7 +206,7 @@ public final class OrderChangeHelper {
                                 }
                             }
                         } else {
-                            String orderItemType = orderItem.getString("orderItemTypeId");
+                            String orderItemType = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemTypeId);
                             if (!"PRODUCT_ORDER_ITEM".equals(orderItemType)) {
                                 // non-product items don't ship; treat as a digital item
                                 Map<String, Object> digitalStatusFields = UtilMisc.<String, Object>toMap("orderId", orderId, "orderItemSeqId",
@@ -260,18 +260,18 @@ public final class OrderChangeHelper {
             GenericValue btparty = orh.getBillToParty();
             String partyId = "_NA_";
             if (btparty != null) {
-                partyId = btparty.getString("partyId");
+                partyId = btparty.getString(org.apache.ofbiz.persistence.entity.x.partyId);
             }
 
             List<GenericValue> opps = orh.getPaymentPreferences();
             for (GenericValue opp : opps) {
-                if ("PAYMENT_RECEIVED".equals(opp.getString("statusId"))) {
+                if ("PAYMENT_RECEIVED".equals(opp.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
                     List<GenericValue> payments = orh.getOrderPayments(opp);
                     if (UtilValidate.isEmpty(payments)) {
                         // only do this one time; if we have payment already for this pref ignore.
                         Map<String, Object> results = dispatcher.runSync("createPaymentFromPreference",
                                 UtilMisc.<String, Object>toMap("userLogin", userLogin, "orderPaymentPreferenceId",
-                                        opp.getString("orderPaymentPreferenceId"),
+                                        opp.getString(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId),
                                 "paymentRefNum", UtilDateTime.nowTimestamp().toString(), "paymentFromId", partyId));
                         if (ServiceUtil.isError(results)) {
                             String errorMessage = ServiceUtil.getErrorMessage(results);

@@ -44,10 +44,10 @@ public class SecurePayPaymentServices {
     private static final String RESOURCE = "AccountingUiLabels";
 
     public static Map<String, Object> doAuth(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
-        String orderId = (String) context.get("orderId");
-        BigDecimal processAmount = (BigDecimal) context.get("processAmount");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        BigDecimal processAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
         // generate the request/properties
         Properties props = buildScProperties(context, delegator);
         if (props == null) {
@@ -60,7 +60,7 @@ public class SecurePayPaymentServices {
         String processtimeout = props.getProperty("processtimeout");
         String pwd = props.getProperty("pwd");
         String enableamountround = props.getProperty("enableamountround");
-        String currency = (String) context.get("currency");
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
         BigDecimal multiplyAmount = new BigDecimal(100);
         BigDecimal newAmount = null;
         int amont;
@@ -77,9 +77,9 @@ public class SecurePayPaymentServices {
             amont = newAmount.multiply(multiplyAmount).intValue();
         }
 
-        GenericValue creditCard = (GenericValue) context.get("creditCard");
-        String expiryDate = (String) creditCard.get("expireDate");
-        String cardSecurityCode = (String) context.get("cardSecurityCode");
+        GenericValue creditCard = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.creditCard);
+        String expiryDate = (String) creditCard.get(org.apache.ofbiz.persistence.entity.x.expireDate);
+        String cardSecurityCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardSecurityCode);
         Payment payment = new Payment();
         payment.setServerURL(serverURL);
         payment.setProcessTimeout(Integer.valueOf(processtimeout));
@@ -94,7 +94,7 @@ public class SecurePayPaymentServices {
             txn.setCurrencyCode("AUD");
         }
 
-        txn.setCardNumber((String) creditCard.get("cardNumber"));
+        txn.setCardNumber((String) creditCard.get(org.apache.ofbiz.persistence.entity.x.cardNumber));
         txn.setExpiryDate(expiryDate.substring(0, 3) + expiryDate.substring(5));
         if (UtilValidate.isNotEmpty(cardSecurityCode)) {
             txn.setCVV(cardSecurityCode);
@@ -131,10 +131,10 @@ public class SecurePayPaymentServices {
     }
 
     public static Map<String, Object> doCapture(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
-        GenericValue authTransaction = (GenericValue) context.get("authTrans");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        GenericValue authTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
         if (authTransaction == null) {
             authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         }
@@ -154,8 +154,8 @@ public class SecurePayPaymentServices {
         String processtimeout = props.getProperty("processtimeout");
         String pwd = props.getProperty("pwd");
         String enableamountround = props.getProperty("enableamountround");
-        String currency = authTransaction.getString("currencyUomId");
-        BigDecimal captureAmount = (BigDecimal) context.get("captureAmount");
+        String currency = authTransaction.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId);
+        BigDecimal captureAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.captureAmount);
         BigDecimal multiplyAmount = new BigDecimal(100);
         BigDecimal newAmount = null;
         int amont;
@@ -176,10 +176,10 @@ public class SecurePayPaymentServices {
         payment.setServerURL(serverURL);
         payment.setProcessTimeout(Integer.valueOf(processtimeout));
         payment.setMerchantId(merchantId);
-        Txn txn = payment.addTxn(11, (String) orderPaymentPreference.get("orderId"));
+        Txn txn = payment.addTxn(11, (String) orderPaymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderId));
         txn.setTxnSource(8);
         txn.setAmount(Integer.toString(amont));
-        txn.setPreauthId(authTransaction.getString("referenceNum"));
+        txn.setPreauthId(authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
 
         // Send payment to SecurePay for processing
         boolean processed = payment.process(pwd);
@@ -194,7 +194,7 @@ public class SecurePayPaymentServices {
                 boolean approved = resp.getApproved();
                 if (approved == false) {
                     result.put("captureResult", false);
-                    result.put("captureRefNum", authTransaction.getString("referenceNum"));
+                    result.put("captureRefNum", authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
                     result.put("captureAmount", BigDecimal.ZERO);
                 } else {
                     result.put("captureResult", true);
@@ -210,10 +210,10 @@ public class SecurePayPaymentServices {
     }
 
     public static Map<String, Object> doVoid(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
-        GenericValue authTransaction = (GenericValue) context.get("authTrans");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        GenericValue authTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
         if (authTransaction == null) {
             authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         }
@@ -233,8 +233,8 @@ public class SecurePayPaymentServices {
         String processtimeout = props.getProperty("processtimeout");
         String pwd = props.getProperty("pwd");
         String enableamountround = props.getProperty("enableamountround");
-        String currency = authTransaction.getString("currencyUomId");
-        BigDecimal releaseAmount = (BigDecimal) context.get("releaseAmount");
+        String currency = authTransaction.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId);
+        BigDecimal releaseAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.releaseAmount);
         BigDecimal multiplyAmount = new BigDecimal(100);
         BigDecimal newAmount = null;
         int amont;
@@ -255,10 +255,10 @@ public class SecurePayPaymentServices {
         payment.setServerURL(serverURL);
         payment.setProcessTimeout(Integer.valueOf(processtimeout));
         payment.setMerchantId(merchantId);
-        Txn txn = payment.addTxn(6, (String) orderPaymentPreference.get("orderId"));
+        Txn txn = payment.addTxn(6, (String) orderPaymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderId));
         txn.setTxnSource(8);
         txn.setAmount(Integer.toString(amont));
-        txn.setTxnId(authTransaction.getString("referenceNum"));
+        txn.setTxnId(authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
 
         // Send payment to SecurePay for processing
         boolean processed = payment.process(pwd);
@@ -273,7 +273,7 @@ public class SecurePayPaymentServices {
                 boolean approved = resp.getApproved();
                 if (approved == false) {
                     result.put("releaseResult", false);
-                    result.put("releaseRefNum", authTransaction.getString("referenceNum"));
+                    result.put("releaseRefNum", authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
                     result.put("releaseAmount", BigDecimal.ZERO);
                 } else {
                     result.put("releaseResult", true);
@@ -289,9 +289,9 @@ public class SecurePayPaymentServices {
     }
 
     public static Map<String, Object> doRefund(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get("orderPaymentPreference");
+        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -301,10 +301,10 @@ public class SecurePayPaymentServices {
         String referenceNum = null;
         try {
             GenericValue paymentGatewayResponse = EntityQuery.use(delegator).from("PaymentGatewayResponse")
-                    .where("orderPaymentPreferenceId", authTransaction.get("orderPaymentPreferenceId"),
+                    .where("orderPaymentPreferenceId", authTransaction.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId),
                             "paymentServiceTypeEnumId", "PRDS_PAY_CAPTURE")
                     .queryFirst();
-            referenceNum = paymentGatewayResponse != null ? paymentGatewayResponse.get("referenceNum") : authTransaction.getString("referenceNum");
+            referenceNum = paymentGatewayResponse != null ? paymentGatewayResponse.get(org.apache.ofbiz.persistence.entity.x.referenceNum) : authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
@@ -320,8 +320,8 @@ public class SecurePayPaymentServices {
         String processtimeout = props.getProperty("processtimeout");
         String pwd = props.getProperty("pwd");
         String enableamountround = props.getProperty("enableamountround");
-        String currency = authTransaction.getString("currencyUomId");
-        BigDecimal refundAmount = (BigDecimal) context.get("refundAmount");
+        String currency = authTransaction.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId);
+        BigDecimal refundAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.refundAmount);
         BigDecimal multiplyAmount = new BigDecimal(100);
         BigDecimal newAmount = null;
 
@@ -342,7 +342,7 @@ public class SecurePayPaymentServices {
         payment.setServerURL(serverURL);
         payment.setProcessTimeout(Integer.valueOf(processtimeout));
         payment.setMerchantId(merchantId);
-        Txn txn = payment.addTxn(4, (String) orderPaymentPreference.get("orderId"));
+        Txn txn = payment.addTxn(4, (String) orderPaymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderId));
         txn.setTxnSource(8);
         txn.setAmount(Integer.toString(amont));
         txn.setTxnId(referenceNum);
@@ -360,7 +360,7 @@ public class SecurePayPaymentServices {
                 boolean approved = resp.getApproved();
                 if (approved == false) {
                     result.put("refundResult", false);
-                    result.put("refundRefNum", authTransaction.getString("referenceNum"));
+                    result.put("refundRefNum", authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
                     result.put("refundAmount", BigDecimal.ZERO);
                 } else {
                     result.put("refundResult", true);
@@ -376,7 +376,7 @@ public class SecurePayPaymentServices {
     }
 
     public static Map<String, Object> doCredit(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Delegator delegator = dctx.getDelegator();
         // generate the request/properties
         Properties props = buildScProperties(context, delegator);
@@ -390,10 +390,10 @@ public class SecurePayPaymentServices {
         String processtimeout = props.getProperty("processtimeout");
         String pwd = props.getProperty("pwd");
         String enableamountround = props.getProperty("enableamountround");
-        String referenceCode = (String) context.get("referenceCode");
-        String currency = (String) context.get("currency");
-        String cardSecurityCode = (String) context.get("cardSecurityCode");
-        BigDecimal creditAmount = (BigDecimal) context.get("creditAmount");
+        String referenceCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.referenceCode);
+        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        String cardSecurityCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardSecurityCode);
+        BigDecimal creditAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.creditAmount);
         BigDecimal multiplyAmount = new BigDecimal(100);
         BigDecimal newAmount = null;
         int amont;
@@ -410,7 +410,7 @@ public class SecurePayPaymentServices {
             amont = newAmount.multiply(multiplyAmount).intValue();
         }
 
-        GenericValue creditCard = (GenericValue) context.get("creditCard");
+        GenericValue creditCard = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.creditCard);
         Payment payment = new Payment();
         payment.setServerURL(serverURL);
         payment.setProcessTimeout(Integer.valueOf(processtimeout));
@@ -419,8 +419,8 @@ public class SecurePayPaymentServices {
         Txn txn = payment.addTxn(0, referenceCode);
         txn.setTxnSource(8);
         txn.setAmount(Integer.toString(amont));
-        txn.setCardNumber((String) creditCard.get("cardNumber"));
-        String expiryDate = (String) creditCard.get("expireDate");
+        txn.setCardNumber((String) creditCard.get(org.apache.ofbiz.persistence.entity.x.cardNumber));
+        String expiryDate = (String) creditCard.get(org.apache.ofbiz.persistence.entity.x.expireDate);
         txn.setExpiryDate(expiryDate.substring(0, 3) + expiryDate.substring(5));
         if (UtilValidate.isNotEmpty(cardSecurityCode)) {
             txn.setCVV(cardSecurityCode);
@@ -454,8 +454,8 @@ public class SecurePayPaymentServices {
     }
 
     private static Properties buildScProperties(Map<String, ? extends Object> context, Delegator delegator) {
-        String paymentGatewayConfigId = (String) context.get("paymentGatewayConfigId");
-        String configString = (String) context.get("paymentConfig");
+        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        String configString = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
         if (configString == null) {
             configString = "payment.properties";
         }

@@ -78,9 +78,9 @@ public class VCard {
     public static Map<String, Object> importVCard(DispatchContext dctx, Map<String, ? extends Object> context) throws IOException {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        ByteBuffer byteBuffer = (ByteBuffer) context.get("infile");
+        ByteBuffer byteBuffer = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.infile);
         byte[] inputByteArray = byteBuffer.array();
         InputStream in = new ByteArrayInputStream(inputByteArray);
         Map<String, Object> serviceCtx = new HashMap<>();
@@ -99,7 +99,7 @@ public class VCard {
                     GenericValue partyIdentification = EntityQuery.use(delegator).from("PartyIdentification").where("partyIdentificationTypeId",
                             "VCARD_FN_ORIGIN", "idValue", refCardId).queryFirst();
                     if (partyIdentification != null) {
-                        partiesExist.add(UtilMisc.toMap("partyId", (String) partyIdentification.get("partyId")));
+                        partiesExist.add(UtilMisc.toMap("partyId", (String) partyIdentification.get(org.apache.ofbiz.persistence.entity.x.partyId)));
                         continue;
                     }
                     //TODO manage update
@@ -134,14 +134,14 @@ public class VCard {
                                     EntityCondition.makeCondition("geoName", EntityOperator.LIKE, address.getCountry()))
                             .cache().queryFirst();
                     if (countryGeo != null) {
-                        serviceCtx.put("countryGeoId", countryGeo.get("geoId"));
+                        serviceCtx.put("countryGeoId", countryGeo.get(org.apache.ofbiz.persistence.entity.x.geoId));
                     }
                     GenericValue stateGeo = EntityQuery.use(delegator).from("Geo")
                             .where(EntityCondition.makeCondition("geoTypeId", EntityOperator.EQUALS, "STATE"),
                                     EntityCondition.makeCondition("geoName", EntityOperator.LIKE, address.getRegion()))
                             .cache().queryFirst();
                     if (stateGeo != null) {
-                        serviceCtx.put("stateProvinceGeoId", stateGeo.get("geoId"));
+                        serviceCtx.put("stateProvinceGeoId", stateGeo.get(org.apache.ofbiz.persistence.entity.x.geoId));
                     }
                 }
 
@@ -196,10 +196,10 @@ public class VCard {
 
                 /* TODO improve this part to manage party organization */
 
-                GenericValue userLogin = (GenericValue) context.get("userLogin");
+                GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
                 serviceCtx.put("userLogin", userLogin);
-                String serviceName = (String) context.get("serviceName");
-                Map<String, Object> serviceContext = UtilGenerics.cast(context.get("serviceContext"));
+                String serviceName = (String) context.get(org.apache.ofbiz.persistence.entity.x.serviceName);
+                Map<String, Object> serviceContext = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.serviceContext));
                 if (UtilValidate.isNotEmpty(serviceContext)) {
                     for (Map.Entry<String, Object> entry : serviceContext.entrySet()) {
                         serviceCtx.put(entry.getKey(), entry.getValue());
@@ -236,19 +236,19 @@ public class VCard {
 
     public static Map<String, Object> exportVCard(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String partyId = (String) context.get("partyId");
-        Locale locale = (Locale) context.get("locale");
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         File file = null;
         try {
             ezvcard.VCard vcard = new ezvcard.VCard();
             StructuredName structuredName = new StructuredName();
             GenericValue person = EntityQuery.use(delegator).from("Person").where("partyId", partyId).queryOne();
             if (person != null) {
-                if (UtilValidate.isNotEmpty(person.getString("firstName"))) {
-                    structuredName.setGiven(person.getString("firstName"));
+                if (UtilValidate.isNotEmpty(person.getString(org.apache.ofbiz.persistence.entity.x.firstName))) {
+                    structuredName.setGiven(person.getString(org.apache.ofbiz.persistence.entity.x.firstName));
                 }
-                if (UtilValidate.isNotEmpty(person.getString("lastName"))) {
-                    structuredName.setFamily(person.getString("lastName"));
+                if (UtilValidate.isNotEmpty(person.getString(org.apache.ofbiz.persistence.entity.x.lastName))) {
+                    structuredName.setFamily(person.getString(org.apache.ofbiz.persistence.entity.x.lastName));
                 }
                 vcard.setStructuredName(structuredName);
             }
@@ -258,16 +258,16 @@ public class VCard {
             GenericValue postalAddress = PartyWorker.findPartyLatestPostalAddress(partyId, delegator);
             if (postalAddress != null) {
                 Address address = new Address();
-                address.setStreetAddress(postalAddress.getString("address1"));
-                address.setLocality(postalAddress.getString("city"));
-                address.setPostalCode(postalAddress.getString("postalCode"));
-                GenericValue state = postalAddress.getRelatedOne("StateProvinceGeo", false);
+                address.setStreetAddress(postalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1));
+                address.setLocality(postalAddress.getString(org.apache.ofbiz.persistence.entity.x.city));
+                address.setPostalCode(postalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode));
+                GenericValue state = postalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.StateProvinceGeo, false);
                 if (state != null) {
-                    address.setRegion(state.getString("geoName"));
+                    address.setRegion(state.getString(org.apache.ofbiz.persistence.entity.x.geoName));
                 }
-                GenericValue countryGeo = postalAddress.getRelatedOne("CountryGeo", false);
+                GenericValue countryGeo = postalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
                 if (countryGeo != null) {
-                    String country = postalAddress.getRelatedOne("CountryGeo", false).getString("geoName");
+                    String country = postalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false).getString("geoName");
                     address.setCountry(country);
                     address.getTypes().add(AddressType.WORK);
                     //TODO : this can be better set by checking contactMechPurposeTypeId
@@ -277,15 +277,15 @@ public class VCard {
 
             GenericValue telecomNumber = PartyWorker.findPartyLatestTelecomNumber(partyId, delegator);
             if (telecomNumber != null) {
-                Telephone tel = new Telephone(telecomNumber.getString("areaCode") + telecomNumber.getString("contactNumber"));
+                Telephone tel = new Telephone(telecomNumber.getString(org.apache.ofbiz.persistence.entity.x.areaCode) + telecomNumber.getString(org.apache.ofbiz.persistence.entity.x.contactNumber));
                 tel.getTypes().add(TelephoneType.WORK);
                 vcard.addTelephoneNumber(tel);
                 //TODO : this can be better set by checking contactMechPurposeTypeId
             }
 
             GenericValue emailAddress = PartyWorker.findPartyLatestContactMech(partyId, "EMAIL_ADDRESS", delegator);
-            if (emailAddress != null && UtilValidate.isNotEmpty(emailAddress.getString("infoString"))) {
-                vcard.addEmail(new Email(emailAddress.getString("infoString")));
+            if (emailAddress != null && UtilValidate.isNotEmpty(emailAddress.getString(org.apache.ofbiz.persistence.entity.x.infoString))) {
+                vcard.addEmail(new Email(emailAddress.getString(org.apache.ofbiz.persistence.entity.x.infoString)));
             }
 
             //TODO : convert to directdownload of a vcf file

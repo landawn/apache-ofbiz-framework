@@ -112,7 +112,7 @@ public class ProductContentWrapper implements ContentWrapper {
          * defined above to be.
          */
         String cacheKey = productContentTypeId + CACHE_KEY_SEPARATOR + locale + CACHE_KEY_SEPARATOR + mimeTypeId + CACHE_KEY_SEPARATOR
-                + product.get("productId") + CACHE_KEY_SEPARATOR + encoderType + CACHE_KEY_SEPARATOR + delegator;
+                + product.get(org.apache.ofbiz.persistence.entity.x.productId) + CACHE_KEY_SEPARATOR + encoderType + CACHE_KEY_SEPARATOR + delegator;
         String cachedValue = PRODUCT_CONTENT_CACHE.get(cacheKey);
         if (cachedValue != null || PRODUCT_CONTENT_CACHE.containsKey(cacheKey)) {
             return cachedValue;
@@ -160,7 +160,7 @@ public class ProductContentWrapper implements ContentWrapper {
                                                String partyId, String roleTypeId, Delegator delegator, LocalDispatcher dispatcher,
                                                Writer outWriter, boolean cache) throws GeneralException, IOException {
         if (product != null) {
-            productId = product.getString("productId");
+            productId = product.getString(org.apache.ofbiz.persistence.entity.x.productId);
         } else if (productId != null) {
             product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache(cache).queryOne();
         } else {
@@ -177,11 +177,11 @@ public class ProductContentWrapper implements ContentWrapper {
         GenericValue parentProduct = null;
         List<GenericValue> productContentList = EntityQuery.use(delegator).from("ProductContent").where("productId", productId,
                 "productContentTypeId", productContentTypeId).orderBy("-fromDate").cache(cache).filterByDate().queryList();
-        if (UtilValidate.isEmpty(productContentList) && ("Y".equals(product.get("isVariant")))) {
+        if (UtilValidate.isEmpty(productContentList) && ("Y".equals(product.get(org.apache.ofbiz.persistence.entity.x.isVariant)))) {
             parentProduct = ProductWorker.getParentProduct(productId, delegator);
             if (parentProduct != null) {
                 productContentList = EntityQuery.use(delegator).from("ProductContent").where("productId", parentProduct
-                        .get("productId"), "productContentTypeId", productContentTypeId).orderBy("-fromDate").cache(
+                        .get(org.apache.ofbiz.persistence.entity.x.productId), "productContentTypeId", productContentTypeId).orderBy("-fromDate").cache(
                                 cache).filterByDate().queryList();
             }
         }
@@ -191,7 +191,7 @@ public class ProductContentWrapper implements ContentWrapper {
             Map<String, Object> inContext = new HashMap<>();
             inContext.put("product", product);
             inContext.put("productContent", productContent);
-            ContentWorker.renderContentAsText(dispatcher, productContent.getString("contentId"), outWriter, inContext, locale, mimeTypeId,
+            ContentWorker.renderContentAsText(dispatcher, productContent.getString(org.apache.ofbiz.persistence.entity.x.contentId), outWriter, inContext, locale, mimeTypeId,
                     partyId, roleTypeId, cache);
         } else {
             String candidateValue = ContentWrapper.getCandidateFieldValue(product, productContentTypeId);

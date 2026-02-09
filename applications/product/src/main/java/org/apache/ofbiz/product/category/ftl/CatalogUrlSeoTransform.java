@@ -197,10 +197,10 @@ public class CatalogUrlSeoTransform implements TemplateTransformModel {
                 Collection<GenericValue> allCategories = delegator.findList("ProductCategory", null,
                         UtilMisc.toSet("productCategoryId", "categoryName"), null, null, false);
                 for (GenericValue category : allCategories) {
-                    String categoryName = category.getString("categoryName");
+                    String categoryName = category.getString(org.apache.ofbiz.persistence.entity.x.categoryName);
                     String categoryNameId = null;
                     String categoryIdName = null;
-                    String categoryId = category.getString("productCategoryId");
+                    String categoryId = category.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId);
                     if (UtilValidate.isNotEmpty(categoryName)) {
                         categoryName = SeoUrlUtil.replaceSpecialCharsUrl(categoryName.trim());
                         if (matcher.matches(categoryName, asciiPattern)) {
@@ -305,7 +305,7 @@ public class CatalogUrlSeoTransform implements TemplateTransformModel {
 
         if (UtilValidate.isNotEmpty(productId)) {
             if (product != null) {
-                String productName = product.getString("productName");
+                String productName = product.getString(org.apache.ofbiz.persistence.entity.x.productName);
                 productName = SeoUrlUtil.replaceSpecialCharsUrl(productName);
                 if (UtilValidate.isNotEmpty(productName)) {
                     urlBuilder.append(productName + URL_HYPHEN);
@@ -754,7 +754,7 @@ public class CatalogUrlSeoTransform implements TemplateTransformModel {
 
         if (UtilValidate.isNotEmpty(productId)) {
             if (product != null) {
-                String productName = product.getString("productName");
+                String productName = product.getString(org.apache.ofbiz.persistence.entity.x.productName);
                 productName = SeoUrlUtil.replaceSpecialCharsUrl(productName);
                 if (UtilValidate.isNotEmpty(productName)) {
                     urlBuilder.append(productName + URL_HYPHEN);

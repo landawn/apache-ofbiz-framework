@@ -75,8 +75,8 @@ public class ModelPermission implements Serializable {
      * @return the map
      */
     public Map<String, Object> evalPermission(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         Security security = dctx.getSecurity();
         if (userLogin == null) {
             Debug.logInfo("Secure service requested with no userLogin object", MODULE);
@@ -232,7 +232,7 @@ public class ModelPermission implements Serializable {
     private Map<String, Object> evalPermissionService(ModelService origService, DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         ModelService permission;
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (permissionServiceName == null) {
             Debug.logWarning("No ModelService found; no service name specified!", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ServicePermissionErrorDefinitionProblem", locale));

@@ -66,7 +66,7 @@ public final class UrlServletHelper {
                 GenericValue tenantDomainName = EntityQuery.use(baseDelegator).from("TenantDomainName").where("domainName", serverName).queryOne();
 
                 if (UtilValidate.isNotEmpty(tenantDomainName)) {
-                    String tenantId = tenantDomainName.getString("tenantId");
+                    String tenantId = tenantDomainName.getString(org.apache.ofbiz.persistence.entity.x.tenantId);
                     // make that tenant active, setup a new delegator and a new dispatcher
                     String tenantDelegatorName = delegator.getDelegatorBaseName() + "#" + tenantId;
                     httpRequest.getSession().setAttribute("delegatorName", tenantDelegatorName);
@@ -169,8 +169,8 @@ public final class UrlServletHelper {
             Debug.logError(e, MODULE);
         }
         if (pathAlias != null) {
-            String alias = pathAlias.getString("aliasTo");
-            String contentId = pathAlias.getString("contentId");
+            String alias = pathAlias.getString(org.apache.ofbiz.persistence.entity.x.aliasTo);
+            String contentId = pathAlias.getString(org.apache.ofbiz.persistence.entity.x.contentId);
             if (contentId == null && UtilValidate.isNotEmpty(alias)) {
                 if (!alias.startsWith("/")) {
                     alias = "/" + alias;

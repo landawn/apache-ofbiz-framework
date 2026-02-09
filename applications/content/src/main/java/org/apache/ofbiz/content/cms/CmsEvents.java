@@ -107,7 +107,7 @@ public final class CmsEvents {
                 GenericValue webSiteContent = EntityQuery.use(delegator).from("WebSiteContent").where("webSiteId", webSiteId,
                         "webSiteContentTypeId", "MAINTENANCE_PAGE").filterByDate().queryFirst();
                 if (webSiteContent != null) {
-                    ContentWorker.renderContentAsText(dispatcher, webSiteContent.getString("contentId"), writer, null, locale,
+                    ContentWorker.renderContentAsText(dispatcher, webSiteContent.getString(org.apache.ofbiz.persistence.entity.x.contentId), writer, null, locale,
                             "text/html", null, null, true);
                     return "success";
                 } else {
@@ -150,7 +150,7 @@ public final class CmsEvents {
                     Debug.logError(e, MODULE);
                 }
                 if (defaultContent != null) {
-                    pathInfo = defaultContent.getString("contentId");
+                    pathInfo = defaultContent.getString(org.apache.ofbiz.persistence.entity.x.contentId);
                 }
             }
 
@@ -173,9 +173,9 @@ public final class CmsEvents {
                     Debug.logError(e, MODULE);
                 }
                 if (pathAlias != null) {
-                    String alias = pathAlias.getString("aliasTo");
-                    contentId = pathAlias.getString("contentId");
-                    mapKey = pathAlias.getString("mapKey");
+                    String alias = pathAlias.getString(org.apache.ofbiz.persistence.entity.x.aliasTo);
+                    contentId = pathAlias.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+                    mapKey = pathAlias.getString(org.apache.ofbiz.persistence.entity.x.mapKey);
                     if (contentId == null && UtilValidate.isNotEmpty(alias)) {
                         if (!alias.startsWith("/")) {
                             alias = "/" + alias;
@@ -184,8 +184,8 @@ public final class CmsEvents {
                         String context = request.getContextPath();
                         String location = context + request.getServletPath();
                         GenericValue webSite = WebSiteWorker.getWebSite(request);
-                        if (webSite != null && webSite.getString("hostedPathAlias") != null && !"ROOT".equals(pathInfo)) {
-                            location += "/" + webSite.getString("hostedPathAlias");
+                        if (webSite != null && webSite.getString(org.apache.ofbiz.persistence.entity.x.hostedPathAlias) != null && !"ROOT".equals(pathInfo)) {
+                            location += "/" + webSite.getString(org.apache.ofbiz.persistence.entity.x.hostedPathAlias);
                         }
 
                         String uriWithContext = request.getRequestURI();
@@ -250,7 +250,7 @@ public final class CmsEvents {
                         GenericValue errorPage = null;
                         try {
                             errorPage = EntityQuery.use(delegator).from("ContentAssocViewTo")
-                                    .where("contentIdStart", errorContainer.getString("contentId"),
+                                    .where("contentIdStart", errorContainer.getString(org.apache.ofbiz.persistence.entity.x.contentId),
                                             "caContentAssocTypeId", "TREE_CHILD",
                                             "contentTypeId", "DOCUMENT",
                                             "caMapKey", String.valueOf(statusCode))
@@ -262,12 +262,12 @@ public final class CmsEvents {
                             if (Debug.verboseOn()) {
                                 Debug.logVerbose("Found error pages " + statusCode + " : " + errorPage, MODULE);
                             }
-                            contentId = errorPage.getString("contentId");
+                            contentId = errorPage.getString(org.apache.ofbiz.persistence.entity.x.contentId);
                         } else {
                             if (Debug.verboseOn()) {
                                 Debug.logVerbose("No specific error page, falling back to the Error Container for " + statusCode, MODULE);
                             }
-                            contentId = errorContainer.getString("contentId");
+                            contentId = errorContainer.getString(org.apache.ofbiz.persistence.entity.x.contentId);
                         }
                         mapKey = null;
                         hasErrorPage = true;
@@ -281,7 +281,7 @@ public final class CmsEvents {
                                 if (Debug.verboseOn()) {
                                     Debug.logVerbose("Found generic page " + statusCode, MODULE);
                                 }
-                                contentId = errorPage.getString("contentId");
+                                contentId = errorPage.getString(org.apache.ofbiz.persistence.entity.x.contentId);
                                 mapKey = null;
                                 hasErrorPage = true;
                             }
@@ -346,8 +346,8 @@ public final class CmsEvents {
                     String siteName = null;
                     try {
                         GenericValue content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).cache().queryOne();
-                        if (content != null && UtilValidate.isNotEmpty(content.getString("contentName"))) {
-                            contentName = content.getString("contentName");
+                        if (content != null && UtilValidate.isNotEmpty(content.getString(org.apache.ofbiz.persistence.entity.x.contentName))) {
+                            contentName = content.getString(org.apache.ofbiz.persistence.entity.x.contentName);
                         } else {
                             request.setAttribute("_ERROR_MESSAGE_", "Content: [" + contentId
                                     + "] is not a publish point for the current website: [" + webSiteId + "]");
@@ -368,7 +368,7 @@ public final class CmsEvents {
         try {
             webSite = EntityQuery.use(delegator).from("WebSite").where("webSiteId", webSiteId).cache().queryOne();
             if (webSite != null) {
-                siteName = webSite.getString("siteName");
+                siteName = webSite.getString(org.apache.ofbiz.persistence.entity.x.siteName);
             }
             if (siteName == null) {
                 siteName = "Not specified";
@@ -415,7 +415,7 @@ public final class CmsEvents {
 
             if (topLevelContentValues != null) {
                 for (GenericValue point : topLevelContentValues) {
-                    int subContentStatusCode = verifySubContent(delegator, contentId, point.getString("contentId"));
+                    int subContentStatusCode = verifySubContent(delegator, contentId, point.getString(org.apache.ofbiz.persistence.entity.x.contentId));
                     if (subContentStatusCode == HttpServletResponse.SC_OK) {
                         return HttpServletResponse.SC_OK;
                     } else if (subContentStatusCode == HttpServletResponse.SC_GONE) {
@@ -449,7 +449,7 @@ public final class CmsEvents {
                     .cache().filterByDate().queryList();
             if (assocs != null) {
                 for (GenericValue assoc : assocs) {
-                    int subContentStatusCode = verifySubContent(delegator, contentId, assoc.getString("contentIdTo"));
+                    int subContentStatusCode = verifySubContent(delegator, contentId, assoc.getString(org.apache.ofbiz.persistence.entity.x.contentIdTo));
                     if (subContentStatusCode == HttpServletResponse.SC_OK) {
                         return HttpServletResponse.SC_OK;
                     } else if (subContentStatusCode == HttpServletResponse.SC_GONE) {

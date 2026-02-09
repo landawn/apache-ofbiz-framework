@@ -68,7 +68,7 @@ public class ShipmentEvents {
             return "error";
         }
 
-        byte[] bytes = shipmentPackageRouteSeg.getBytes("labelImage");
+        byte[] bytes = shipmentPackageRouteSeg.getBytes(org.apache.ofbiz.persistence.entity.x.labelImage);
         if (bytes == null || bytes.length == 0) {
             request.setAttribute("_ERROR_MESSAGE_", "The ShipmentPackageRouteSeg was found where shipmentId=[" + shipmentId
                     + "], shipmentRouteSegmentId=[" + shipmentRouteSegmentId + "], shipmentPackageSeqId=[" + shipmentPackageSeqId

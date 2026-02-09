@@ -61,15 +61,15 @@ public class SubscriptionServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
 
-        String partyId = (String) context.get("partyId");
-        String subscriptionResourceId = (String) context.get("subscriptionResourceId");
-        String inventoryItemId = (String) context.get("inventoryItemId");
-        String roleTypeId = (String) context.get("useRoleTypeId");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        Integer useTime = (Integer) context.get("useTime");
-        String useTimeUomId = (String) context.get("useTimeUomId");
-        String alwaysCreateNewRecordStr = (String) context.get("alwaysCreateNewRecord");
-        Locale locale = (Locale) context.get("locale");
+        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String subscriptionResourceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.subscriptionResourceId);
+        String inventoryItemId = (String) context.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId);
+        String roleTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.useRoleTypeId);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Integer useTime = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.useTime);
+        String useTimeUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.useTimeUomId);
+        String alwaysCreateNewRecordStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.alwaysCreateNewRecord);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         boolean alwaysCreateNewRecord = !"N".equals(alwaysCreateNewRecordStr);
 
         GenericValue lastSubscription = null;
@@ -93,27 +93,27 @@ public class SubscriptionServices {
         GenericValue newSubscription = null;
         if (lastSubscription == null || alwaysCreateNewRecord) {
             newSubscription = delegator.makeValue("Subscription");
-            newSubscription.set("subscriptionResourceId", subscriptionResourceId);
-            newSubscription.set("partyId", partyId);
-            newSubscription.set("roleTypeId", roleTypeId);
-            newSubscription.set("productId", context.get("productId"));
-            newSubscription.set("orderId", context.get("orderId"));
-            newSubscription.set("orderItemSeqId", context.get("orderItemSeqId"));
-            newSubscription.set("automaticExtend", context.get("automaticExtend"));
-            newSubscription.set("canclAutmExtTimeUomId", context.get("canclAutmExtTimeUomId"));
-            newSubscription.set("canclAutmExtTime", context.get("canclAutmExtTime"));
+            newSubscription.set(org.apache.ofbiz.persistence.entity.x.subscriptionResourceId, subscriptionResourceId);
+            newSubscription.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
+            newSubscription.set(org.apache.ofbiz.persistence.entity.x.roleTypeId, roleTypeId);
+            newSubscription.set(org.apache.ofbiz.persistence.entity.x.productId, context.get(org.apache.ofbiz.persistence.entity.x.productId));
+            newSubscription.set(org.apache.ofbiz.persistence.entity.x.orderId, context.get(org.apache.ofbiz.persistence.entity.x.orderId));
+            newSubscription.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+            newSubscription.set(org.apache.ofbiz.persistence.entity.x.automaticExtend, context.get(org.apache.ofbiz.persistence.entity.x.automaticExtend));
+            newSubscription.set(org.apache.ofbiz.persistence.entity.x.canclAutmExtTimeUomId, context.get(org.apache.ofbiz.persistence.entity.x.canclAutmExtTimeUomId));
+            newSubscription.set(org.apache.ofbiz.persistence.entity.x.canclAutmExtTime, context.get(org.apache.ofbiz.persistence.entity.x.canclAutmExtTime));
         } else {
             newSubscription = lastSubscription;
         }
-        newSubscription.set("inventoryItemId", inventoryItemId);
+        newSubscription.set(org.apache.ofbiz.persistence.entity.x.inventoryItemId, inventoryItemId);
 
-        Timestamp thruDate = lastSubscription != null ? (Timestamp) lastSubscription.get("thruDate") : null;
+        Timestamp thruDate = lastSubscription != null ? (Timestamp) lastSubscription.get(org.apache.ofbiz.persistence.entity.x.thruDate) : null;
 
         // set the fromDate, one way or another
         if (thruDate == null) {
             // no thruDate? start with NOW
             thruDate = nowTimestamp;
-            newSubscription.set("fromDate", nowTimestamp);
+            newSubscription.set(org.apache.ofbiz.persistence.entity.x.fromDate, nowTimestamp);
         } else {
             // there is a thru date... if it is in the past, bring it up to NOW before adding on the time period
             // don't want to penalize for skipping time, in other words if they had a subscription last year for a
@@ -121,7 +121,7 @@ public class SubscriptionServices {
             if (thruDate.before(nowTimestamp)) {
                 thruDate = nowTimestamp;
             }
-            newSubscription.set("fromDate", thruDate);
+            newSubscription.set(org.apache.ofbiz.persistence.entity.x.fromDate, thruDate);
         }
 
         Calendar calendar = Calendar.getInstance();
@@ -135,7 +135,7 @@ public class SubscriptionServices {
         }
 
         thruDate = new Timestamp(calendar.getTimeInMillis());
-        newSubscription.set("thruDate", thruDate);
+        newSubscription.set(org.apache.ofbiz.persistence.entity.x.thruDate, thruDate);
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         try {
@@ -189,14 +189,14 @@ public class SubscriptionServices {
             throws GenericServiceException {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String productId = (String) context.get("productId");
-        Integer qty = (Integer) context.get("quantity");
-        Locale locale = (Locale) context.get("locale");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        Integer qty = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         if (qty == null) {
             qty = 1;
         }
 
-        Timestamp orderCreatedDate = (Timestamp) context.get("orderCreatedDate");
+        Timestamp orderCreatedDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.orderCreatedDate);
         if (orderCreatedDate == null) {
             orderCreatedDate = UtilDateTime.nowTimestamp();
         }
@@ -215,21 +215,21 @@ public class SubscriptionServices {
             }
 
             for (GenericValue productSubscriptionResource: productSubscriptionResourceList) {
-                Long useTime = productSubscriptionResource.getLong("useTime");
+                Long useTime = productSubscriptionResource.getLong(org.apache.ofbiz.persistence.entity.x.useTime);
                 Integer newUseTime = 0;
                 if (useTime != null) {
                     newUseTime = useTime.intValue() * qty;
                 }
                 Map<String, Object> subContext = UtilMisc.makeMapWritable(context);
                 subContext.put("useTime", newUseTime);
-                subContext.put("useTimeUomId", productSubscriptionResource.get("useTimeUomId"));
-                subContext.put("useRoleTypeId", productSubscriptionResource.get("useRoleTypeId"));
-                subContext.put("subscriptionResourceId", productSubscriptionResource.get("subscriptionResourceId"));
-                subContext.put("automaticExtend", productSubscriptionResource.get("automaticExtend"));
-                subContext.put("canclAutmExtTime", productSubscriptionResource.get("canclAutmExtTime"));
-                subContext.put("canclAutmExtTimeUomId", productSubscriptionResource.get("canclAutmExtTimeUomId"));
-                subContext.put("gracePeriodOnExpiry", productSubscriptionResource.get("gracePeriodOnExpiry"));
-                subContext.put("gracePeriodOnExpiryUomId", productSubscriptionResource.get("gracePeriodOnExpiryUomId"));
+                subContext.put("useTimeUomId", productSubscriptionResource.get(org.apache.ofbiz.persistence.entity.x.useTimeUomId));
+                subContext.put("useRoleTypeId", productSubscriptionResource.get(org.apache.ofbiz.persistence.entity.x.useRoleTypeId));
+                subContext.put("subscriptionResourceId", productSubscriptionResource.get(org.apache.ofbiz.persistence.entity.x.subscriptionResourceId));
+                subContext.put("automaticExtend", productSubscriptionResource.get(org.apache.ofbiz.persistence.entity.x.automaticExtend));
+                subContext.put("canclAutmExtTime", productSubscriptionResource.get(org.apache.ofbiz.persistence.entity.x.canclAutmExtTime));
+                subContext.put("canclAutmExtTimeUomId", productSubscriptionResource.get(org.apache.ofbiz.persistence.entity.x.canclAutmExtTimeUomId));
+                subContext.put("gracePeriodOnExpiry", productSubscriptionResource.get(org.apache.ofbiz.persistence.entity.x.gracePeriodOnExpiry));
+                subContext.put("gracePeriodOnExpiryUomId", productSubscriptionResource.get(org.apache.ofbiz.persistence.entity.x.gracePeriodOnExpiryUomId));
 
                 Map<String, Object> ctx = dctx.getModelService("processExtendSubscription").makeValid(subContext, ModelService.IN_PARAM);
                 Map<String, Object> processExtendSubscriptionResult = dispatcher.runSync("processExtendSubscription", ctx);
@@ -253,8 +253,8 @@ public class SubscriptionServices {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Map<String, Object> subContext = UtilMisc.makeMapWritable(context);
-        String orderId = (String) context.get("orderId");
-        Locale locale = (Locale) context.get("locale");
+        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         Debug.logInfo("In processExtendSubscriptionByOrder service with orderId: " + orderId, MODULE);
 
@@ -264,7 +264,7 @@ public class SubscriptionServices {
                     "roleTypeId", "END_USER_CUSTOMER").queryList();
             if (!orderRoleList.isEmpty()) {
                 GenericValue orderRole = orderRoleList.get(0);
-                String partyId = (String) orderRole.get("partyId");
+                String partyId = (String) orderRole.get(org.apache.ofbiz.persistence.entity.x.partyId);
                 subContext.put("partyId", partyId);
             } else {
                 return ServiceUtil.returnFailure(UtilProperties.getMessage(RES_ORDER_ERROR,
@@ -277,12 +277,12 @@ public class SubscriptionServices {
                         "OrderErrorNoValidOrderHeaderFoundForOrderId",
                         UtilMisc.toMap("orderId", orderId), locale));
             }
-            Timestamp orderCreatedDate = (Timestamp) orderHeader.get("orderDate");
+            Timestamp orderCreatedDate = (Timestamp) orderHeader.get(org.apache.ofbiz.persistence.entity.x.orderDate);
             subContext.put("orderCreatedDate", orderCreatedDate);
-            List<GenericValue> orderItemList = orderHeader.getRelated("OrderItem", null, null, false);
+            List<GenericValue> orderItemList = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItem, null, null, false);
             for (GenericValue orderItem: orderItemList) {
-                BigDecimal qty = orderItem.getBigDecimal("quantity");
-                String productId = orderItem.getString("productId");
+                BigDecimal qty = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                String productId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
                 if (UtilValidate.isEmpty(productId)) {
                     continue;
                 }
@@ -292,8 +292,8 @@ public class SubscriptionServices {
                     subContext.put("subscriptionTypeId", "PRODUCT_SUBSCR");
                     subContext.put("productId", productId);
                     subContext.put("orderId", orderId);
-                    subContext.put("orderItemSeqId", orderItem.get("orderItemSeqId"));
-                    subContext.put("inventoryItemId", orderItem.get("fromInventoryItemId"));
+                    subContext.put("orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                    subContext.put("inventoryItemId", orderItem.get(org.apache.ofbiz.persistence.entity.x.fromInventoryItemId));
                     subContext.put("quantity", qty.intValue());
                     Map<String, Object> ctx = dctx.getModelService("processExtendSubscriptionByProduct").makeValid(subContext,
                             ModelService.IN_PARAM);
@@ -316,8 +316,8 @@ public class SubscriptionServices {
     public static Map<String, Object> runServiceOnSubscriptionExpiry(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> expiryMap = new HashMap<>();
         String gracePeriodOnExpiry = null;
@@ -334,22 +334,22 @@ public class SubscriptionServices {
 
             if (subscriptionList != null) {
                 for (GenericValue subscription : subscriptionList) {
-                    expirationCompletedDate = subscription.getTimestamp("expirationCompletedDate");
+                    expirationCompletedDate = subscription.getTimestamp(org.apache.ofbiz.persistence.entity.x.expirationCompletedDate);
                     if (expirationCompletedDate == null) {
                         Calendar currentDate = Calendar.getInstance();
                         currentDate.setTime(UtilDateTime.nowTimestamp());
                         // check if the thruDate + grace period (if provided) is earlier than today's date
                         Calendar endDateSubscription = Calendar.getInstance();
                         int field = Calendar.MONTH;
-                        String subscriptionResourceId = subscription.getString("subscriptionResourceId");
+                        String subscriptionResourceId = subscription.getString(org.apache.ofbiz.persistence.entity.x.subscriptionResourceId);
                         GenericValue subscriptionResource = null;
                         subscriptionResource = EntityQuery.use(delegator).from("SubscriptionResource").where("subscriptionResourceId",
                                 subscriptionResourceId).queryOne();
-                        subscriptionId = subscription.getString("subscriptionId");
-                        gracePeriodOnExpiry = subscription.getString("gracePeriodOnExpiry");
-                        gracePeriodOnExpiryUomId = subscription.getString("gracePeriodOnExpiryUomId");
-                        String serviceNameOnExpiry = subscriptionResource.getString("serviceNameOnExpiry");
-                        endDateSubscription.setTime(subscription.getTimestamp("thruDate"));
+                        subscriptionId = subscription.getString(org.apache.ofbiz.persistence.entity.x.subscriptionId);
+                        gracePeriodOnExpiry = subscription.getString(org.apache.ofbiz.persistence.entity.x.gracePeriodOnExpiry);
+                        gracePeriodOnExpiryUomId = subscription.getString(org.apache.ofbiz.persistence.entity.x.gracePeriodOnExpiryUomId);
+                        String serviceNameOnExpiry = subscriptionResource.getString(org.apache.ofbiz.persistence.entity.x.serviceNameOnExpiry);
+                        endDateSubscription.setTime(subscription.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate));
 
                         if (gracePeriodOnExpiry != null && gracePeriodOnExpiryUomId != null) {
                             if ("TF_day".equals(gracePeriodOnExpiryUomId)) {
@@ -375,7 +375,7 @@ public class SubscriptionServices {
                             }
                             result = dispatcher.runSync(serviceNameOnExpiry, expiryMap);
                             if (ServiceUtil.isSuccess(result)) {
-                                subscription.set("expirationCompletedDate", UtilDateTime.nowTimestamp());
+                                subscription.set(org.apache.ofbiz.persistence.entity.x.expirationCompletedDate, UtilDateTime.nowTimestamp());
                                 delegator.store(subscription);
                                 Debug.logInfo("Subscription expired successfully for subscription ID:" + subscriptionId, MODULE);
                             } else if (ServiceUtil.isError(result)) {
@@ -406,8 +406,8 @@ public class SubscriptionServices {
     }
 
     public static Map<String, Object> runSubscriptionExpired(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get("locale");
-        String subscriptionId = (String) context.get("subscriptionId");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String subscriptionId = (String) context.get(org.apache.ofbiz.persistence.entity.x.subscriptionId);
         Map<String, Object> result = new HashMap<>();
         if (subscriptionId != null) {
             return ServiceUtil.returnSuccess(UtilProperties.getMessage(RESOURCE, "ProductRunSubscriptionExpiredServiceCalledSuccessfully", locale));

@@ -52,8 +52,8 @@ public class MacroCommonRenderer {
     public static String createAjaxParamsFromUpdateAreas(List<ModelForm.UpdateArea> updateAreas, Map<String, Object> extraParams,
                                                          ModelForm parentModelForm, String anchor, Map<String, ? extends Object> context) {
 
-        HttpServletRequest request = (HttpServletRequest) context.get("request");
-        HttpServletResponse response = (HttpServletResponse) context.get("response");
+        HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
+        HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
         Map<String, Object> ctx = UtilGenerics.cast(context);
         RequestHandler rh = RequestHandler.from(request);
 
@@ -104,7 +104,7 @@ public class MacroCommonRenderer {
                 sb.append(",");
             }
         }
-        Locale locale = UtilMisc.ensureLocale(context.get("locale"));
+        Locale locale = UtilMisc.ensureLocale(context.get(org.apache.ofbiz.persistence.entity.x.locale));
         return FlexibleStringExpander.expandString(sb.toString(), context, locale);
     }
 
@@ -126,8 +126,8 @@ public class MacroCommonRenderer {
     public static String getLinkUrl(CommonWidgetModels.Link link, String linkType, Map<String, Object> context) {
         String linkUrl = "";
 
-        HttpServletRequest request = (HttpServletRequest) context.get("request");
-        HttpServletResponse response = (HttpServletResponse) context.get("response");
+        HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
+        HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
         switch (linkType) {
         case "update-area":
             ModelForm.UpdateArea resolveUpdateArea = new ModelForm.UpdateArea("onclick",

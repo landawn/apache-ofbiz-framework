@@ -56,7 +56,7 @@ public class ProductStoreEvents {
                         parentGroupId).cache(true).filterByDate().queryList();
                 if (UtilValidate.isNotEmpty(children)) {
                     for (GenericValue child : children) {
-                        String productStoreGroupId = child.getString("productStoreGroupId");
+                        String productStoreGroupId = child.getString(org.apache.ofbiz.persistence.entity.x.productStoreGroupId);
                         Map<Object, Object> josonMap = new HashMap<>();
                         List<GenericValue> childList = null;
                         // Get the child list of chosen category
@@ -74,13 +74,13 @@ public class ProductStoreEvents {
                         dataAttrMap.put("href", hrefStr);
 
                         dataMap.put("attr", dataAttrMap);
-                        dataMap.put("title", child.get("productStoreGroupName") + " [" + child.get("productStoreGroupId") + "]");
+                        dataMap.put("title", child.get(org.apache.ofbiz.persistence.entity.x.productStoreGroupName) + " [" + child.get(org.apache.ofbiz.persistence.entity.x.productStoreGroupId) + "]");
                         josonMap.put("data", dataMap);
                         Map<String, String> attrMap = new HashMap<>();
                         attrMap.put("parentGroupId", productStoreGroupId);
                         josonMap.put("attr", attrMap);
-                        josonMap.put("sequenceNum", child.get("sequenceNum"));
-                        josonMap.put("title", child.get("productStoreGroupName"));
+                        josonMap.put("sequenceNum", child.get(org.apache.ofbiz.persistence.entity.x.sequenceNum));
+                        josonMap.put("title", child.get(org.apache.ofbiz.persistence.entity.x.productStoreGroupName));
 
                         productStoreGroupList.add(josonMap);
                     }

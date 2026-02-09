@@ -54,7 +54,7 @@ public final class EntityTypeUtil {
     private static GenericValue getParentType(GenericValue typeValue) {
         // assumes Parent relation is "Parent<entityName>"
         try {
-            return typeValue.getRelatedOne("Parent" + typeValue.getEntityName(), true);
+            return typeValue.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Parent + typeValue.getEntityName(), true);
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
             return null;
@@ -68,7 +68,7 @@ public final class EntityTypeUtil {
         // first get all childrenTypes ...
         List<GenericValue> childrenTypes = null;
         try {
-            childrenTypes = typeValue.getRelated("Child" + typeValue.getEntityName(), null, null, true);
+            childrenTypes = typeValue.getRelated(org.apache.ofbiz.persistence.entity.x.Child + typeValue.getEntityName(), null, null, true);
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
             return null;

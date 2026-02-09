@@ -59,8 +59,8 @@ public class CsrfUtilTests {
 
         // add userLogin to session
         GenericValue userLogin = mock(GenericValue.class);
-        when(userLogin.get("partyId")).thenReturn("10000");
-        when(userLogin.getString("partyId")).thenReturn("10000");
+        when(userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId)).thenReturn("10000");
+        when(userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId)).thenReturn("10000");
         when(session.getAttribute("userLogin")).thenReturn(userLogin);
 
         // with userLogin in session, test token map is not retrieved from session
@@ -101,8 +101,8 @@ public class CsrfUtilTests {
 
         // add userLogin to session
         GenericValue userLogin = mock(GenericValue.class);
-        when(userLogin.get("partyId")).thenReturn("10000");
-        when(userLogin.getString("partyId")).thenReturn("10000");
+        when(userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId)).thenReturn("10000");
+        when(userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId)).thenReturn("10000");
         when(session.getAttribute("userLogin")).thenReturn(userLogin);
 
         String token = CsrfUtil.generateTokenForNonAjax(request, "");

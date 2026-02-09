@@ -85,7 +85,7 @@ public final class EntityEcaCondition implements java.io.Serializable {
             try {
                 LocalDispatcher dispatcher = dctx.getDispatcher();
                 Map<String, Object> conditionServiceResult = dispatcher.runSync(conditionService,
-                        UtilMisc.<String, Object>toMap("serviceContext", context, "userLogin", context.get("userLogin")));
+                        UtilMisc.<String, Object>toMap("serviceContext", context, "userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin)));
 
                 Boolean conditionReply = Boolean.FALSE;
                 if (ServiceUtil.isError(conditionServiceResult)) {

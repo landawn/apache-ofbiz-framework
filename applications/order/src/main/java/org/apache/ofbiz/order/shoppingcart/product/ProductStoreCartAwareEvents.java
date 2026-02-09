@@ -84,10 +84,10 @@ public class ProductStoreCartAwareEvents {
         if (webSite == null) {
             throw new IllegalArgumentException("Cannot set session ProductStore, could not find WebSite record based on web.xml setting.");
         }
-        String allowProductStoreChange = webSite.getString("allowProductStoreChange");
+        String allowProductStoreChange = webSite.getString(org.apache.ofbiz.persistence.entity.x.allowProductStoreChange);
         if (!"Y".equals(allowProductStoreChange)) {
             throw new IllegalArgumentException("Cannot set session ProductStore, changing ProductStore not allowed for WebSite ["
-                    + webSite.getString("webSite") + "].");
+                    + webSite.getString(org.apache.ofbiz.persistence.entity.x.webSite) + "].");
         }
 
         // set the productStoreId in the session (we know is different by this point)
@@ -100,9 +100,9 @@ public class ProductStoreCartAwareEvents {
         // methods setSessionLocale and setSessionCurrencyUom because we don't want these to be put on the UserLogin entity
         // note that this is different from the normal default setting process because these will now override the settings on the UserLogin;
         // this is desired when changing stores and the user should be given a chance to change their personal settings after the store change
-        UtilHttp.setCurrencyUomIfNone(session, productStore.getString("defaultCurrencyUomId"));
-        UtilHttp.setLocaleIfNone(session, productStore.getString("defaultLocaleString"));
-        UtilHttp.setTimeZoneIfNone(session, productStore.getString("defaultTimeZoneString"));
+        UtilHttp.setCurrencyUomIfNone(session, productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultCurrencyUomId));
+        UtilHttp.setLocaleIfNone(session, productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultLocaleString));
+        UtilHttp.setTimeZoneIfNone(session, productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultTimeZoneString));
 
         // if a shoppingCart exists in the session and the productStoreId on it is different,
         // - leave the old cart as-is (don't clear it, want to leave the auto-save list intact)

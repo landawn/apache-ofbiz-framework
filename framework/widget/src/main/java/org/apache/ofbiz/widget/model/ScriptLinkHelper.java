@@ -91,7 +91,7 @@ public final class ScriptLinkHelper {
      * @return key used to store the script
      */
     private static String putScriptInCache(Map<String, Object> context, String fileName, String fileContent) {
-        HttpSession session = (HttpSession) context.get("session");
+        HttpSession session = (HttpSession) context.get(org.apache.ofbiz.persistence.entity.x.session);
         String sessionId = session.getId();
         Map<String, String> scriptMap = UtilGenerics.cast(scriptCache.get(sessionId));
         if (scriptMap == null) {
@@ -142,7 +142,7 @@ public final class ScriptLinkHelper {
     public static String prepareScriptLinkForBodyEnd(HttpServletRequest request, String fileName, String script) {
 
         Map<String, Object> context = new HashMap<>();
-        context.put("session", request.getSession());
+        context.put(org.apache.ofbiz.persistence.entity.x.session, request.getSession());
         String key = putScriptInCache(context, fileName, script);
 
         // construct script link

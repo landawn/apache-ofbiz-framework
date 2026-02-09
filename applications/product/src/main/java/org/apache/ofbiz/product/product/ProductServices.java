@@ -90,8 +90,8 @@ public class ProductServices {
      */
     public static Map<String, Object> prodFindSelectedVariant(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get("locale");
-        Map<String, String> selectedFeatures = UtilGenerics.cast(context.get("selectedFeatures"));
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Map<String, String> selectedFeatures = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.selectedFeatures));
         List<GenericValue> products = new LinkedList<>();
         // All the variants for this products are retrieved
         Map<String, Object> resVariants = prodFindAllVariants(dctx, context);
@@ -99,7 +99,7 @@ public class ProductServices {
         for (GenericValue oneVariant: variants) {
             // For every variant, all the standard features are retrieved
             Map<String, String> feaContext = new HashMap<>();
-            feaContext.put("productId", oneVariant.getString("productIdTo"));
+            feaContext.put("productId", oneVariant.getString(org.apache.ofbiz.persistence.entity.x.productIdTo));
             feaContext.put("type", "STANDARD_FEATURE");
             Map<String, Object> resFeatures = prodGetFeatures(dctx, feaContext);
             List<GenericValue> features = UtilGenerics.cast(resFeatures.get("productFeatures"));
@@ -113,8 +113,8 @@ public class ProductServices {
             // Variant3: (COLOR, Black), (SIZE, Small), (IMAGE, SkyLine) --> ok
             // Variant4: (COLOR, Black), (IMAGE, SkyLine) --> ok
             for (GenericValue oneFeature: features) {
-                if (selectedFeatures.containsKey(oneFeature.getString("productFeatureTypeId"))) {
-                    if (!selectedFeatures.containsValue(oneFeature.getString("productFeatureId"))) {
+                if (selectedFeatures.containsKey(oneFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId))) {
+                    if (!selectedFeatures.containsValue(oneFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId))) {
                         variantFound = false;
                         break;
                     }
@@ -122,7 +122,7 @@ public class ProductServices {
             }
             if (variantFound) {
                 try {
-                    products.add(EntityQuery.use(delegator).from("Product").where("productId", oneVariant.getString("productIdTo")).queryOne());
+                    products.add(EntityQuery.use(delegator).from("Product").where("productId", oneVariant.getString(org.apache.ofbiz.persistence.entity.x.productIdTo)).queryOne());
                 } catch (GenericEntityException e) {
                     Map<String, String> messageMap = UtilMisc.toMap("errProductFeatures", e.toString());
                     String errMsg = UtilProperties.getMessage(RES_ERROR, "productservices.problem_reading_product_features_errors",
@@ -143,12 +143,12 @@ public class ProductServices {
      */
     public static Map<String, Object> prodFindFeatureTypes(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String productId = (String) context.get("productId");
-        String productFeatureApplTypeId = (String) context.get("productFeatureApplTypeId");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String productFeatureApplTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productFeatureApplTypeId);
         if (UtilValidate.isEmpty(productFeatureApplTypeId)) {
             productFeatureApplTypeId = "SELECTABLE_FEATURE";
         }
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String errMsg = null;
         Set<String> featureSet = new LinkedHashSet<>();
 
@@ -157,7 +157,7 @@ public class ProductServices {
                     .where("productId", productId, "productFeatureApplTypeId", productFeatureApplTypeId).orderBy("sequenceNum",
                             "productFeatureTypeId").cache(true).filterByDate().queryList();
             for (GenericValue v: features) {
-                featureSet.add(v.getString("productFeatureTypeId"));
+                featureSet.add(v.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId));
             }
         } catch (GenericEntityException e) {
             Map<String, String> messageMap = UtilMisc.toMap("errProductFeatures", e.toString());
@@ -180,13 +180,13 @@ public class ProductServices {
      * Builds a variant feature tree.
      */
     public static Map<String, Object> prodMakeFeatureTree(DispatchContext dctx, Map<String, ? extends Object> context) {
-        String productStoreId = (String) context.get("productStoreId");
-        Locale locale = (Locale) context.get("locale");
+        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Map<String, Object> result = new HashMap<>();
-        List<String> featureOrder = UtilMisc.makeListWritable(UtilGenerics.cast(context.get("featureOrder")));
+        List<String> featureOrder = UtilMisc.makeListWritable(UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.featureOrder)));
 
         if (UtilValidate.isEmpty(featureOrder)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -203,7 +203,7 @@ public class ProductServices {
         List<GenericValue> outOfStockItems = new LinkedList<>();
 
         for (GenericValue variant: variants) {
-            String productIdTo = variant.getString("productIdTo");
+            String productIdTo = variant.getString(org.apache.ofbiz.persistence.entity.x.productIdTo);
 
             // first check to see if intro and discontinue dates are within range
             GenericValue productTo = null;
@@ -224,10 +224,10 @@ public class ProductServices {
             java.sql.Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
 
             // check to see if introductionDate hasn't passed yet
-            if (productTo.get("introductionDate") != null && nowTimestamp.before(productTo.getTimestamp("introductionDate"))) {
+            if (productTo.get(org.apache.ofbiz.persistence.entity.x.introductionDate) != null && nowTimestamp.before(productTo.getTimestamp(org.apache.ofbiz.persistence.entity.x.introductionDate))) {
                 if (Debug.verboseOn()) {
-                    String excMsg = "Tried to view the Product " + productTo.getString("productName")
-                            + " (productId: " + productTo.getString("productId")
+                    String excMsg = "Tried to view the Product " + productTo.getString(org.apache.ofbiz.persistence.entity.x.productName)
+                            + " (productId: " + productTo.getString(org.apache.ofbiz.persistence.entity.x.productId)
                             + ") as a variant. This product has not yet been made available for sale, so not adding for view.";
 
                     Debug.logVerbose(excMsg, MODULE);
@@ -236,10 +236,10 @@ public class ProductServices {
             }
 
             // check to see if salesDiscontinuationDate has passed
-            if (productTo.get("salesDiscontinuationDate") != null && nowTimestamp.after(productTo.getTimestamp("salesDiscontinuationDate"))) {
+            if (productTo.get(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate) != null && nowTimestamp.after(productTo.getTimestamp(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate))) {
                 if (Debug.verboseOn()) {
-                    String excMsg = "Tried to view the Product " + productTo.getString("productName")
-                            + " (productId: " + productTo.getString("productId")
+                    String excMsg = "Tried to view the Product " + productTo.getString(org.apache.ofbiz.persistence.entity.x.productName)
+                            + " (productId: " + productTo.getString(org.apache.ofbiz.persistence.entity.x.productId)
                             + ") as a variant. This product is no longer available for sale, so not adding for view.";
 
                     Debug.logVerbose(excMsg, MODULE);
@@ -248,7 +248,7 @@ public class ProductServices {
             }
 
             // next check inventory for each item: if inventory is not required or is available
-            Boolean checkInventory = (Boolean) context.get("checkInventory");
+            Boolean checkInventory = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.checkInventory);
             try {
                 if (checkInventory) {
                     Map<String, Object> invReqResult = dispatcher.runSync("isStoreInventoryAvailableOrNotRequired",
@@ -258,7 +258,7 @@ public class ProductServices {
                                 "ProductFeatureTreeCannotCallIsStoreInventoryRequired", locale), null, null, invReqResult);
                     } else if ("Y".equals(invReqResult.get("availableOrNotRequired"))) {
                         items.add(productIdTo);
-                        if (productTo.getString("isVirtual") != null && "Y".equals(productTo.getString("isVirtual"))) {
+                        if (productTo.getString(org.apache.ofbiz.persistence.entity.x.isVirtual) != null && "Y".equals(productTo.getString(org.apache.ofbiz.persistence.entity.x.isVirtual))) {
                             virtualVariant.add(productIdTo);
                         }
                     } else {
@@ -266,7 +266,7 @@ public class ProductServices {
                     }
                 } else {
                     items.add(productIdTo);
-                    if (productTo.getString("isVirtual") != null && "Y".equals(productTo.getString("isVirtual"))) {
+                    if (productTo.getString(org.apache.ofbiz.persistence.entity.x.isVirtual) != null && "Y".equals(productTo.getString(org.apache.ofbiz.persistence.entity.x.isVirtual))) {
                         virtualVariant.add(productIdTo);
                     }
                 }
@@ -277,7 +277,7 @@ public class ProductServices {
             }
         }
 
-        String productId = (String) context.get("productId");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
 
         // Make the selectable feature list
         List<GenericValue> selectableFeatures = null;
@@ -291,8 +291,8 @@ public class ProductServices {
         }
         Map<String, List<String>> features = new HashMap<>();
         for (GenericValue v: selectableFeatures) {
-            String featureType = v.getString("productFeatureTypeId");
-            String feature = v.getString("description");
+            String featureType = v.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId);
+            String feature = v.getString(org.apache.ofbiz.persistence.entity.x.description);
 
             if (!features.containsKey(featureType)) {
                 List<String> featureList = new LinkedList<>();
@@ -346,10 +346,10 @@ public class ProductServices {
         // String distinct      -- Distinct feature (SIZE, COLOR)
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> result = new HashMap<>();
-        String productId = (String) context.get("productId");
-        String distinct = (String) context.get("distinct");
-        String type = (String) context.get("type");
-        Locale locale = (Locale) context.get("locale");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String distinct = (String) context.get(org.apache.ofbiz.persistence.entity.x.distinct);
+        String type = (String) context.get(org.apache.ofbiz.persistence.entity.x.type);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String errMsg = null;
         List<GenericValue> features = null;
 
@@ -382,8 +382,8 @@ public class ProductServices {
     public static Map<String, Object> prodFindProduct(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> result = new HashMap<>();
-        String productId = (String) context.get("productId");
-        Locale locale = (Locale) context.get("locale");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String errMsg = null;
 
         if (UtilValidate.isEmpty(productId)) {
@@ -398,13 +398,13 @@ public class ProductServices {
             GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache().queryOne();
             GenericValue mainProduct = product;
 
-            if (product.get("isVariant") != null && "Y".equalsIgnoreCase(product.getString("isVariant"))) {
-                List<GenericValue> c = product.getRelated("AssocProductAssoc", UtilMisc.toMap("productAssocTypeId", "PRODUCT_VARIANT"),
+            if (product.get(org.apache.ofbiz.persistence.entity.x.isVariant) != null && "Y".equalsIgnoreCase(product.getString(org.apache.ofbiz.persistence.entity.x.isVariant))) {
+                List<GenericValue> c = product.getRelated(org.apache.ofbiz.persistence.entity.x.AssocProductAssoc, UtilMisc.toMap("productAssocTypeId", "PRODUCT_VARIANT"),
                         null, true);
                 c = EntityUtil.filterByDate(c);
                 if (!c.isEmpty()) {
                     GenericValue asV = c.iterator().next();
-                    mainProduct = asV.getRelatedOne("MainProduct", true);
+                    mainProduct = asV.getRelatedOne(org.apache.ofbiz.persistence.entity.x.MainProduct, true);
                 }
             }
             result.put("product", mainProduct);
@@ -428,18 +428,18 @@ public class ProductServices {
         // String type -- Type of association (ie PRODUCT_UPGRADE, PRODUCT_COMPLEMENT, PRODUCT_VARIANT)
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> result = new HashMap<>();
-        String productId = (String) context.get("productId");
-        String productIdTo = (String) context.get("productIdTo");
-        String type = (String) context.get("type");
-        Locale locale = (Locale) context.get("locale");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String productIdTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.productIdTo);
+        String type = (String) context.get(org.apache.ofbiz.persistence.entity.x.type);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String errMsg = null;
 
-        Boolean cvaBool = (Boolean) context.get("checkViewAllow");
+        Boolean cvaBool = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.checkViewAllow);
         boolean checkViewAllow = (cvaBool == null ? false : cvaBool);
-        String prodCatalogId = (String) context.get("prodCatalogId");
-        Boolean bidirectional = (Boolean) context.get("bidirectional");
+        String prodCatalogId = (String) context.get(org.apache.ofbiz.persistence.entity.x.prodCatalogId);
+        Boolean bidirectional = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.bidirectional);
         bidirectional = bidirectional == null ? Boolean.FALSE : bidirectional;
-        Boolean sortDescending = (Boolean) context.get("sortDescending");
+        Boolean sortDescending = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.sortDescending);
         sortDescending = sortDescending == null ? Boolean.FALSE : sortDescending;
 
         if (productId == null && productIdTo == null) {
@@ -499,9 +499,9 @@ public class ProductServices {
                         EntityCondition.makeCondition("productAssocTypeId", type))).orderBy(orderBy).cache(true).queryList();
             } else {
                 if (productIdTo == null) {
-                    productAssocs = product.getRelated("MainProductAssoc", UtilMisc.toMap("productAssocTypeId", type), orderBy, true);
+                    productAssocs = product.getRelated(org.apache.ofbiz.persistence.entity.x.MainProductAssoc, UtilMisc.toMap("productAssocTypeId", type), orderBy, true);
                 } else {
-                    productAssocs = product.getRelated("AssocProductAssoc", UtilMisc.toMap("productAssocTypeId", type), orderBy, true);
+                    productAssocs = product.getRelated(org.apache.ofbiz.persistence.entity.x.AssocProductAssoc, UtilMisc.toMap("productAssocTypeId", type), orderBy, true);
                 }
             }
             // filter the list by date
@@ -581,7 +581,7 @@ public class ProductServices {
 
             // -------------------------------
             for (GenericValue item: features) {
-                String itemKey = item.getString("description");
+                String itemKey = item.getString(org.apache.ofbiz.persistence.entity.x.description);
 
                 if (tempGroup.containsKey(itemKey)) {
                     List<String> itemList = tempGroup.get(itemKey);
@@ -662,7 +662,7 @@ public class ProductServices {
                 try {
                     GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache(true).queryOne();
 
-                    tempSample.put(featureAppl.getString("description"), product);
+                    tempSample.put(featureAppl.getString(org.apache.ofbiz.persistence.entity.x.description), product);
                 } catch (GenericEntityException e) {
                     throw new RuntimeException("Cannot get product entity: " + e.getMessage());
                 }
@@ -683,12 +683,12 @@ public class ProductServices {
     public static Map<String, Object> quickAddVariant(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> result = new HashMap<>();
-        Locale locale = (Locale) context.get("locale");
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
         String errMsg = null;
-        String productId = (String) context.get("productId");
-        String variantProductId = (String) context.get("productVariantId");
-        String productFeatureIds = (String) context.get("productFeatureIds");
-        Long prodAssocSeqNum = (Long) context.get("sequenceNum");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String variantProductId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productVariantId);
+        String productFeatureIds = (String) context.get(org.apache.ofbiz.persistence.entity.x.productFeatureIds);
+        Long prodAssocSeqNum = (Long) context.get(org.apache.ofbiz.persistence.entity.x.sequenceNum);
 
         try {
             // read the product, duplicate it with the given id
@@ -707,17 +707,17 @@ public class ProductServices {
             if (variantProduct == null) {
                 //if product does not exist
                 variantProduct = GenericValue.create(product);
-                variantProduct.set("productId", variantProductId);
-                variantProduct.set("isVirtual", "N");
-                variantProduct.set("isVariant", "Y");
-                variantProduct.set("primaryProductCategoryId", null);
+                variantProduct.set(org.apache.ofbiz.persistence.entity.x.productId, variantProductId);
+                variantProduct.set(org.apache.ofbiz.persistence.entity.x.isVirtual, "N");
+                variantProduct.set(org.apache.ofbiz.persistence.entity.x.isVariant, "Y");
+                variantProduct.set(org.apache.ofbiz.persistence.entity.x.primaryProductCategoryId, null);
                 //create new
                 variantProduct.create();
             } else {
                 //if product does exist
-                variantProduct.set("isVirtual", "N");
-                variantProduct.set("isVariant", "Y");
-                variantProduct.set("primaryProductCategoryId", null);
+                variantProduct.set(org.apache.ofbiz.persistence.entity.x.isVirtual, "N");
+                variantProduct.set(org.apache.ofbiz.persistence.entity.x.isVariant, "Y");
+                variantProduct.set(org.apache.ofbiz.persistence.entity.x.primaryProductCategoryId, null);
                 //update entry
                 variantProduct.store();
             }
@@ -753,7 +753,7 @@ public class ProductServices {
 
                 // set the default seq num if it's there...
                 if (productFeature != null) {
-                    productFeatureAppl.set("sequenceNum", productFeature.get("defaultSequenceNum"));
+                    productFeatureAppl.set(org.apache.ofbiz.persistence.entity.x.sequenceNum, productFeature.get(org.apache.ofbiz.persistence.entity.x.defaultSequenceNum));
                 }
 
                 productFeatureAppl.create();
@@ -781,34 +781,34 @@ public class ProductServices {
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
 
         // get the various IN attributes
-        String variantProductIdsBag = (String) context.get("variantProductIdsBag");
-        String productFeatureIdOne = (String) context.get("productFeatureIdOne");
-        String productFeatureIdTwo = (String) context.get("productFeatureIdTwo");
-        String productFeatureIdThree = (String) context.get("productFeatureIdThree");
-        Locale locale = (Locale) context.get("locale");
+        String variantProductIdsBag = (String) context.get(org.apache.ofbiz.persistence.entity.x.variantProductIdsBag);
+        String productFeatureIdOne = (String) context.get(org.apache.ofbiz.persistence.entity.x.productFeatureIdOne);
+        String productFeatureIdTwo = (String) context.get(org.apache.ofbiz.persistence.entity.x.productFeatureIdTwo);
+        String productFeatureIdThree = (String) context.get(org.apache.ofbiz.persistence.entity.x.productFeatureIdThree);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
         Map<String, Object> successResult = ServiceUtil.returnSuccess();
 
         try {
             // Generate new virtual productId, put in successResult
-            String productId = (String) context.get("productId");
+            String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
 
             if (UtilValidate.isEmpty(productId)) {
                 productId = delegator.getNextSeqId("Product");
                 // Create new virtual product...
                 GenericValue product = delegator.makeValue("Product");
-                product.set("productId", productId);
+                product.set(org.apache.ofbiz.persistence.entity.x.productId, productId);
                 // set: isVirtual=Y, isVariant=N, productTypeId=FINISHED_GOOD, introductionDate=now
-                product.set("isVirtual", "Y");
-                product.set("isVariant", "N");
-                product.set("productTypeId", "FINISHED_GOOD");
-                product.set("introductionDate", nowTimestamp);
+                product.set(org.apache.ofbiz.persistence.entity.x.isVirtual, "Y");
+                product.set(org.apache.ofbiz.persistence.entity.x.isVariant, "N");
+                product.set(org.apache.ofbiz.persistence.entity.x.productTypeId, "FINISHED_GOOD");
+                product.set(org.apache.ofbiz.persistence.entity.x.introductionDate, nowTimestamp);
                 // set all to Y: returnable, taxable, chargeShipping, autoCreateKeywords, includeInPromotions
-                product.set("returnable", "Y");
-                product.set("taxable", "Y");
-                product.set("chargeShipping", "Y");
-                product.set("autoCreateKeywords", "Y");
-                product.set("includeInPromotions", "Y");
+                product.set(org.apache.ofbiz.persistence.entity.x.returnable, "Y");
+                product.set(org.apache.ofbiz.persistence.entity.x.taxable, "Y");
+                product.set(org.apache.ofbiz.persistence.entity.x.chargeShipping, "Y");
+                product.set(org.apache.ofbiz.persistence.entity.x.autoCreateKeywords, "Y");
+                product.set(org.apache.ofbiz.persistence.entity.x.includeInPromotions, "Y");
                 // in it goes!
                 product.create();
             }
@@ -851,9 +851,9 @@ public class ProductServices {
                     }
 
                     for (GenericValue goodIdentification: goodIdentificationList) {
-                        GenericValue giProduct = goodIdentification.getRelatedOne("Product", false);
+                        GenericValue giProduct = goodIdentification.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
                         if (giProduct != null) {
-                            variantProductsById.put(giProduct.getString("productId"), giProduct);
+                            variantProductsById.put(giProduct.getString(org.apache.ofbiz.persistence.entity.x.productId), giProduct);
                         }
                     }
                 }
@@ -881,14 +881,14 @@ public class ProductServices {
 
             for (GenericValue variantProduct: variantProductsById.values()) {
                 // for each variant product set: isVirtual=N, isVariant=Y, introductionDate=now
-                variantProduct.set("isVirtual", "N");
-                variantProduct.set("isVariant", "Y");
-                variantProduct.set("introductionDate", nowTimestamp);
+                variantProduct.set(org.apache.ofbiz.persistence.entity.x.isVirtual, "N");
+                variantProduct.set(org.apache.ofbiz.persistence.entity.x.isVariant, "Y");
+                variantProduct.set(org.apache.ofbiz.persistence.entity.x.introductionDate, nowTimestamp);
                 variantProduct.store();
 
                 // for each variant product create associate with the new virtual as a PRODUCT_VARIANT
                 GenericValue productAssoc = delegator.makeValue("ProductAssoc",
-                        UtilMisc.toMap("productId", productId, "productIdTo", variantProduct.get("productId"),
+                        UtilMisc.toMap("productId", productId, "productIdTo", variantProduct.get(org.apache.ofbiz.persistence.entity.x.productId),
                                 "productAssocTypeId", "PRODUCT_VARIANT", "fromDate", nowTimestamp));
                 productAssoc.create();
             }
@@ -905,8 +905,8 @@ public class ProductServices {
         Delegator delegator = dctx.getDelegator();
         if ("Y".equals(EntityUtilProperties.getPropertyValue("catalog", "reactivate.product.from.receipt", "N", delegator))) {
             LocalDispatcher dispatcher = dctx.getDispatcher();
-            GenericValue userLogin = (GenericValue) context.get("userLogin");
-            String inventoryItemId = (String) context.get("inventoryItemId");
+            GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+            String inventoryItemId = (String) context.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId);
 
             GenericValue inventoryItem = null;
             try {
@@ -917,7 +917,7 @@ public class ProductServices {
             }
 
             if (inventoryItem != null) {
-                String productId = inventoryItem.getString("productId");
+                String productId = inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
                 GenericValue product = null;
                 try {
                     product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache().queryOne();
@@ -927,7 +927,7 @@ public class ProductServices {
                 }
 
                 if (product != null) {
-                    Timestamp salesDiscontinuationDate = product.getTimestamp("salesDiscontinuationDate");
+                    Timestamp salesDiscontinuationDate = product.getTimestamp(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate);
                     if (salesDiscontinuationDate != null && salesDiscontinuationDate.before(UtilDateTime.nowTimestamp())) {
                         Map<String, Object> invRes = null;
                         try {
@@ -953,7 +953,7 @@ public class ProductServices {
                             }
 
                             // set and save
-                            productToUpdate.set("salesDiscontinuationDate", null);
+                            productToUpdate.set(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate, null);
                             try {
                                 delegator.store(productToUpdate);
                             } catch (GenericEntityException e) {
@@ -974,12 +974,12 @@ public class ProductServices {
 
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        String productId = (String) context.get("productId");
-        String productContentTypeId = (String) context.get("productContentTypeId");
-        ByteBuffer imageData = (ByteBuffer) context.get("uploadedFile");
-        Locale locale = (Locale) context.get("locale");
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String productContentTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productContentTypeId);
+        ByteBuffer imageData = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.uploadedFile);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        if (UtilValidate.isNotEmpty(context.get("_uploadedFile_fileName"))) {
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x._uploadedFile_fileName))) {
             Map<String, Object> imageContext = new HashMap<>();
             imageContext.putAll(context);
             imageContext.put("delegator", delegator);
@@ -1013,7 +1013,7 @@ public class ProductServices {
             try {
                 fileExtension = EntityQuery.use(delegator)
                         .from("FileExtension")
-                        .where("mimeTypeId", context.get("_uploadedFile_contentType"))
+                        .where("mimeTypeId", context.get(org.apache.ofbiz.persistence.entity.x._uploadedFile_contentType))
                         .queryList();
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
@@ -1022,7 +1022,7 @@ public class ProductServices {
 
             GenericValue extension = EntityUtil.getFirst(fileExtension);
             if (extension != null) {
-                filenameToUse += "." + extension.getString("fileExtensionId");
+                filenameToUse += "." + extension.getString(org.apache.ofbiz.persistence.entity.x.fileExtensionId);
             }
 
             /* Write the new image file */
@@ -1074,7 +1074,7 @@ public class ProductServices {
             }
             // Write
             try {
-                String fileToCheck = imageServerPath + "/" + fileLocation + "." + extension.getString("fileExtensionId");
+                String fileToCheck = imageServerPath + "/" + fileLocation + "." + extension.getString(org.apache.ofbiz.persistence.entity.x.fileExtensionId);
                 File file = new File(fileToCheck);
                 try {
                     Path tempFile = Files.createTempFile(null, null);
@@ -1116,7 +1116,7 @@ public class ProductServices {
                         "ProductImageViewParsingError", UtilMisc.toMap("errorString", e.toString()), locale));
             }
 
-            String imageUrl = imageUrlPrefix + "/" + fileLocation + "." + extension.getString("fileExtensionId");
+            String imageUrl = imageUrlPrefix + "/" + fileLocation + "." + extension.getString(org.apache.ofbiz.persistence.entity.x.fileExtensionId);
             /* store the imageUrl version of the image, for backwards compatibility with code that does not use scaled versions */
             Map<String, Object> result = addImageResource(dispatcher, delegator, context, imageUrl, productContentTypeId);
 
@@ -1156,22 +1156,22 @@ public class ProductServices {
 
     private static Map<String, Object> addImageResource(LocalDispatcher dispatcher, Delegator delegator, Map<String, ? extends Object> context,
             String imageUrl, String productContentTypeId) {
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String productId = (String) context.get("productId");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
 
         if (UtilValidate.isNotEmpty(imageUrl) && !imageUrl.isEmpty()) {
-            String contentId = (String) context.get("contentId");
+            String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
 
             Map<String, Object> dataResourceCtx = new HashMap<>();
             dataResourceCtx.put("objectInfo", imageUrl);
-            dataResourceCtx.put("dataResourceName", context.get("_uploadedFile_fileName"));
+            dataResourceCtx.put("dataResourceName", context.get(org.apache.ofbiz.persistence.entity.x._uploadedFile_fileName));
             dataResourceCtx.put("userLogin", userLogin);
 
             Map<String, Object> productContentCtx = new HashMap<>();
             productContentCtx.put("productId", productId);
             productContentCtx.put("productContentTypeId", productContentTypeId);
-            productContentCtx.put("fromDate", context.get("fromDate"));
-            productContentCtx.put("thruDate", context.get("thruDate"));
+            productContentCtx.put("fromDate", context.get(org.apache.ofbiz.persistence.entity.x.fromDate));
+            productContentCtx.put("thruDate", context.get(org.apache.ofbiz.persistence.entity.x.thruDate));
             productContentCtx.put("userLogin", userLogin);
 
             if (UtilValidate.isNotEmpty(contentId)) {
@@ -1186,14 +1186,14 @@ public class ProductServices {
                 if (content != null) {
                     GenericValue dataResource = null;
                     try {
-                        dataResource = content.getRelatedOne("DataResource", false);
+                        dataResource = content.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DataResource, false);
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
                         return ServiceUtil.returnError(e.getMessage());
                     }
 
                     if (dataResource != null) {
-                        dataResourceCtx.put("dataResourceId", dataResource.getString("dataResourceId"));
+                        dataResourceCtx.put("dataResourceId", dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId));
                         try {
                             Map<String, Object> serviceResult = dispatcher.runSync("updateDataResource", dataResourceCtx);
                             if (ServiceUtil.isError(serviceResult)) {
@@ -1295,10 +1295,10 @@ public class ProductServices {
      */
     public static Map<String, Object> findProductById(DispatchContext ctx, Map<String, Object> context) {
         Delegator delegator = ctx.getDelegator();
-        String idToFind = (String) context.get("idToFind");
-        String goodIdentificationTypeId = (String) context.get("goodIdentificationTypeId");
-        String searchProductFirstContext = (String) context.get("searchProductFirst");
-        String searchAllIdContext = (String) context.get("searchAllId");
+        String idToFind = (String) context.get(org.apache.ofbiz.persistence.entity.x.idToFind);
+        String goodIdentificationTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.goodIdentificationTypeId);
+        String searchProductFirstContext = (String) context.get(org.apache.ofbiz.persistence.entity.x.searchProductFirst);
+        String searchAllIdContext = (String) context.get(org.apache.ofbiz.persistence.entity.x.searchAllId);
 
         boolean searchProductFirst = !UtilValidate.isNotEmpty(searchProductFirstContext) || !"N".equals(searchProductFirstContext);
         boolean searchAllId = UtilValidate.isNotEmpty(searchAllIdContext) && "Y".equals(searchAllIdContext);
@@ -1330,14 +1330,14 @@ public class ProductServices {
             Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String productPromoId = (String) context.get("productPromoId");
-        String productPromoContentTypeId = (String) context.get("productPromoContentTypeId");
-        ByteBuffer imageData = (ByteBuffer) context.get("uploadedFile");
-        String contentId = (String) context.get("contentId");
-        Locale locale = (Locale) context.get("locale");
+        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String productPromoId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productPromoId);
+        String productPromoContentTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productPromoContentTypeId);
+        ByteBuffer imageData = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.uploadedFile);
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
 
-        if (UtilValidate.isNotEmpty(context.get("_uploadedFile_fileName"))) {
+        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x._uploadedFile_fileName))) {
             Map<String, Object> imageContext = new HashMap<>();
             imageContext.putAll(context);
             imageContext.put("tenantId", delegator.getDelegatorTenantId());
@@ -1363,7 +1363,7 @@ public class ProductServices {
             try {
                 fileExtension = EntityQuery.use(delegator)
                         .from("FileExtension")
-                        .where("mimeTypeId", EntityOperator.EQUALS, context.get("_uploadedFile_contentType"))
+                        .where("mimeTypeId", EntityOperator.EQUALS, context.get(org.apache.ofbiz.persistence.entity.x._uploadedFile_contentType))
                         .queryList();
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
@@ -1372,7 +1372,7 @@ public class ProductServices {
 
             GenericValue extension = EntityUtil.getFirst(fileExtension);
             if (extension != null) {
-                filenameToUse += "." + extension.getString("fileExtensionId");
+                filenameToUse += "." + extension.getString(org.apache.ofbiz.persistence.entity.x.fileExtensionId);
             }
 
             File makeResourceDirectory = new File(imageServerPath + "/" + filePathPrefix);
@@ -1413,14 +1413,14 @@ public class ProductServices {
             if (UtilValidate.isNotEmpty(imageUrl) && !imageUrl.isEmpty()) {
                 Map<String, Object> dataResourceCtx = new HashMap<>();
                 dataResourceCtx.put("objectInfo", imageUrl);
-                dataResourceCtx.put("dataResourceName", context.get("_uploadedFile_fileName"));
+                dataResourceCtx.put("dataResourceName", context.get(org.apache.ofbiz.persistence.entity.x._uploadedFile_fileName));
                 dataResourceCtx.put("userLogin", userLogin);
 
                 Map<String, Object> productPromoContentCtx = new HashMap<>();
                 productPromoContentCtx.put("productPromoId", productPromoId);
                 productPromoContentCtx.put("productPromoContentTypeId", productPromoContentTypeId);
-                productPromoContentCtx.put("fromDate", context.get("fromDate"));
-                productPromoContentCtx.put("thruDate", context.get("thruDate"));
+                productPromoContentCtx.put("fromDate", context.get(org.apache.ofbiz.persistence.entity.x.fromDate));
+                productPromoContentCtx.put("thruDate", context.get(org.apache.ofbiz.persistence.entity.x.thruDate));
                 productPromoContentCtx.put("userLogin", userLogin);
 
                 if (UtilValidate.isNotEmpty(contentId)) {
@@ -1435,14 +1435,14 @@ public class ProductServices {
                     if (content != null) {
                         GenericValue dataResource = null;
                         try {
-                            dataResource = content.getRelatedOne("DataResource", false);
+                            dataResource = content.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DataResource, false);
                         } catch (GenericEntityException e) {
                             Debug.logError(e, MODULE);
                             return ServiceUtil.returnError(e.getMessage());
                         }
 
                         if (dataResource != null) {
-                            dataResourceCtx.put("dataResourceId", dataResource.getString("dataResourceId"));
+                            dataResourceCtx.put("dataResourceId", dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId));
                             try {
                                 Map<String, Object> serviceResult = dispatcher.runSync("updateDataResource", dataResourceCtx);
                                 if (ServiceUtil.isError(serviceResult)) {
@@ -1538,8 +1538,8 @@ public class ProductServices {
             productPromoContentCtx.put("productPromoId", productPromoId);
             productPromoContentCtx.put("productPromoContentTypeId", productPromoContentTypeId);
             productPromoContentCtx.put("contentId", contentId);
-            productPromoContentCtx.put("fromDate", context.get("fromDate"));
-            productPromoContentCtx.put("thruDate", context.get("thruDate"));
+            productPromoContentCtx.put("fromDate", context.get(org.apache.ofbiz.persistence.entity.x.fromDate));
+            productPromoContentCtx.put("thruDate", context.get(org.apache.ofbiz.persistence.entity.x.thruDate));
             productPromoContentCtx.put("userLogin", userLogin);
             try {
                 Map<String, Object> serviceResult = dispatcher.runSync("updateProductPromoContent", productPromoContentCtx);

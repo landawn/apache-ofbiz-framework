@@ -67,7 +67,7 @@ public final class ImportProductHelper {
         try {
             tmpProductGV = EntityQuery.use(delegator).from("Product").where("productId", productId).queryOne();
             if (tmpProductGV != null
-                    && productId.equals(tmpProductGV.getString("productId"))) {
+                    && productId.equals(tmpProductGV.getString(org.apache.ofbiz.persistence.entity.x.productId))) {
                 productExists = true;
             }
         } catch (GenericEntityException e) {

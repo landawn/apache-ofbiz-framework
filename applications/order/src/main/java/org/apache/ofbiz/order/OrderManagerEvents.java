@@ -82,16 +82,16 @@ public class OrderManagerEvents {
                 for (GenericValue ppref : paymentPrefs) {
                     // update the preference to received
                     // TODO: updating payment preferences should be done as a service
-                    ppref.set("statusId", "PAYMENT_RECEIVED");
-                    ppref.set("authDate", UtilDateTime.nowTimestamp());
+                    ppref.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_RECEIVED");
+                    ppref.set(org.apache.ofbiz.persistence.entity.x.authDate, UtilDateTime.nowTimestamp());
                     toBeStored.add(ppref);
 
                     // create a payment record
                     Map<String, Object> results = null;
                     try {
                         results = dispatcher.runSync("createPaymentFromPreference", UtilMisc.toMap("orderPaymentPreferenceId",
-                                ppref.get("orderPaymentPreferenceId"),
-                                "paymentFromId", placingCustomer.getString("partyId"), "comments", "Payment received offline and manually entered."));
+                                ppref.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId),
+                                "paymentFromId", placingCustomer.getString(org.apache.ofbiz.persistence.entity.x.partyId), "comments", "Payment received offline and manually entered."));
                         if (ServiceUtil.isError(results)) {
                             String errorMessage = ServiceUtil.getErrorMessage(results);
                             request.setAttribute("_ERROR_MESSAGE_", errorMessage);
@@ -143,7 +143,7 @@ public class OrderManagerEvents {
 
         BigDecimal grandTotal = BigDecimal.ZERO;
         if (orderHeader != null) {
-            grandTotal = orderHeader.getBigDecimal("grandTotal");
+            grandTotal = orderHeader.getBigDecimal(org.apache.ofbiz.persistence.entity.x.grandTotal);
         }
 
         // get the payment types to receive
@@ -183,7 +183,7 @@ public class OrderManagerEvents {
         }
 
         for (GenericValue paymentMethod : paymentMethods) {
-            String paymentMethodId = paymentMethod.getString("paymentMethodId");
+            String paymentMethodId = paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
             String paymentMethodAmountStr = request.getParameter(paymentMethodId + "_amount");
             String paymentMethodReference = request.getParameter(paymentMethodId + "_reference");
             if (UtilValidate.isNotEmpty(paymentMethodAmountStr)) {
@@ -223,7 +223,7 @@ public class OrderManagerEvents {
 
         List<GenericValue> toBeStored = new LinkedList<>();
         for (GenericValue paymentMethodType : paymentMethodTypes) {
-            String paymentMethodTypeId = paymentMethodType.getString("paymentMethodTypeId");
+            String paymentMethodTypeId = paymentMethodType.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
             String amountStr = request.getParameter(paymentMethodTypeId + "_amount");
             String paymentReference = request.getParameter(paymentMethodTypeId + "_reference");
             if (UtilValidate.isNotEmpty(amountStr)) {
@@ -240,13 +240,13 @@ public class OrderManagerEvents {
                     Map<String, String> prefFields = UtilMisc.<String, String>toMap("orderPaymentPreferenceId",
                             delegator.getNextSeqId("OrderPaymentPreference"));
                     GenericValue paymentPreference = delegator.makeValue("OrderPaymentPreference", prefFields);
-                    paymentPreference.set("paymentMethodTypeId", paymentMethodType.getString("paymentMethodTypeId"));
-                    paymentPreference.set("maxAmount", paymentTypeAmount);
-                    paymentPreference.set("statusId", "PAYMENT_RECEIVED");
-                    paymentPreference.set("orderId", orderId);
-                    paymentPreference.set("createdDate", UtilDateTime.nowTimestamp());
+                    paymentPreference.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, paymentMethodType.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
+                    paymentPreference.set(org.apache.ofbiz.persistence.entity.x.maxAmount, paymentTypeAmount);
+                    paymentPreference.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_RECEIVED");
+                    paymentPreference.set(org.apache.ofbiz.persistence.entity.x.orderId, orderId);
+                    paymentPreference.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
                     if (userLogin != null) {
-                        paymentPreference.set("createdByUserLogin", userLogin.getString("userLoginId"));
+                        paymentPreference.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
                     }
 
                     try {
@@ -255,8 +255,8 @@ public class OrderManagerEvents {
                             GenericValue currentPref = EntityQuery.use(delegator).from("OrderPaymentPreference").where("orderId",
                                     orderId).queryFirst();
                             if (currentPref != null) {
-                                paymentReference = (String) currentPref.get("manualRefNum");
-                                paymentPreference.set("manualRefNum", paymentReference);
+                                paymentReference = (String) currentPref.get(org.apache.ofbiz.persistence.entity.x.manualRefNum);
+                                paymentPreference.set(org.apache.ofbiz.persistence.entity.x.manualRefNum, paymentReference);
                             }
                         }
                         delegator.create(paymentPreference);
@@ -270,8 +270,8 @@ public class OrderManagerEvents {
                     Map<String, Object> results = null;
                     try {
                         results = dispatcher.runSync("createPaymentFromPreference", UtilMisc.toMap("userLogin", userLogin,
-                                "orderPaymentPreferenceId", paymentPreference.get("orderPaymentPreferenceId"), "paymentRefNum", paymentReference,
-                                "paymentFromId", placingCustomer.getString("partyId"), "comments", "Payment received offline and manually entered."));
+                                "orderPaymentPreferenceId", paymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId), "paymentRefNum", paymentReference,
+                                "paymentFromId", placingCustomer.getString(org.apache.ofbiz.persistence.entity.x.partyId), "comments", "Payment received offline and manually entered."));
                         if (ServiceUtil.isError(results)) {
                             String errorMessage = ServiceUtil.getErrorMessage(results);
                             request.setAttribute("_ERROR_MESSAGE_", errorMessage);
@@ -302,11 +302,11 @@ public class OrderManagerEvents {
         }
         if (UtilValidate.isNotEmpty(currentPrefs)) {
             for (GenericValue cp : currentPrefs) {
-                String paymentMethodType = cp.getString("paymentMethodTypeId");
+                String paymentMethodType = cp.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
                 if ("EXT_OFFLINE".equals(paymentMethodType)) {
                     offlineValue = cp;
                 } else {
-                    BigDecimal cpAmt = cp.getBigDecimal("maxAmount");
+                    BigDecimal cpAmt = cp.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount);
                     if (cpAmt != null) {
                         paymentTally = paymentTally.add(cpAmt);
                     }
@@ -320,7 +320,7 @@ public class OrderManagerEvents {
             // cancel the offline preference
             okayToApprove = true;
             if (offlineValue != null) {
-                offlineValue.set("statusId", "PAYMENT_CANCELLED");
+                offlineValue.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_CANCELLED");
                 toBeStored.add(offlineValue);
             }
         }

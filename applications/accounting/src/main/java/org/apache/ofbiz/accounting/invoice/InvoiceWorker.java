@@ -107,11 +107,11 @@ public final class InvoiceWorker {
      * @return the invoice total as BigDecimal
      */
     public static BigDecimal getInvoiceItemTotal(GenericValue invoiceItem) {
-        BigDecimal quantity = invoiceItem.getBigDecimal("quantity");
+        BigDecimal quantity = invoiceItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
         if (quantity == null) {
             quantity = BigDecimal.ONE;
         }
-        BigDecimal amount = invoiceItem.getBigDecimal("amount");
+        BigDecimal amount = invoiceItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
         if (amount == null) {
             amount = BigDecimal.ZERO;
         }
@@ -133,18 +133,18 @@ public final class InvoiceWorker {
     public static String getInvoiceItemDescription(LocalDispatcher dispatcher, GenericValue invoiceItem, Locale locale)
             throws GenericEntityException {
         Delegator delegator = invoiceItem.getDelegator();
-        String description = invoiceItem.getString("description");
+        String description = invoiceItem.getString(org.apache.ofbiz.persistence.entity.x.description);
         if (UtilValidate.isEmpty(description)) {
-            String taxAuthorityRateSeqId = invoiceItem.getString("taxAuthorityRateSeqId");
+            String taxAuthorityRateSeqId = invoiceItem.getString(org.apache.ofbiz.persistence.entity.x.taxAuthorityRateSeqId);
             if (UtilValidate.isNotEmpty(taxAuthorityRateSeqId)) {
-                GenericValue taxRate = invoiceItem.getRelatedOne("TaxAuthorityRateProduct", true);
+                GenericValue taxRate = invoiceItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.TaxAuthorityRateProduct, true);
                 if (taxRate != null) {
-                    description = (String) taxRate.get("description", locale);
+                    description = (String) taxRate.get(org.apache.ofbiz.persistence.entity.x.description, locale);
                 }
             }
         }
         if (UtilValidate.isEmpty(description)) {
-            String productId = invoiceItem.getString("productId");
+            String productId = invoiceItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
             if (UtilValidate.isNotEmpty(productId)) {
                 GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache().queryOne();
                 ProductContentWrapper productContentWrapper = new ProductContentWrapper(dispatcher, product, locale, "text/html");
@@ -153,12 +153,12 @@ public final class InvoiceWorker {
                     description = stringWrapper.toString();
                 }
                 if (UtilValidate.isEmpty(description)) {
-                    description = product.getString("brandName");
+                    description = product.getString(org.apache.ofbiz.persistence.entity.x.brandName);
                 }
             }
         }
         if (UtilValidate.isEmpty(description)) {
-            description = (String) invoiceItem.getRelatedOne("InvoiceItemType", true).get("description", locale);
+            description = (String) invoiceItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.InvoiceItemType, true).get("description", locale);
         }
         return description;
     }
@@ -170,7 +170,7 @@ public final class InvoiceWorker {
         List<GenericValue> invoiceItemTaxTypes = EntityQuery.use(delegator).from("Enumeration").where("enumTypeId", "TAXABLE_INV_ITM_TY")
                 .cache().queryList();
         for (GenericValue invoiceItemTaxType : invoiceItemTaxTypes) {
-            typeIds.add(invoiceItemTaxType.getString("enumId"));
+            typeIds.add(invoiceItemTaxType.getString(org.apache.ofbiz.persistence.entity.x.enumId));
         }
         return typeIds;
     }
@@ -215,7 +215,7 @@ public final class InvoiceWorker {
 
         List<GenericValue> invoiceItems = null;
         try {
-            invoiceItems = invoice.getRelated("InvoiceItem", null, null, false);
+            invoiceItems = invoice.getRelated(org.apache.ofbiz.persistence.entity.x.InvoiceItem, null, null, false);
             invoiceItems = EntityUtil.filterByAnd(
                     invoiceItems, UtilMisc.toList(
                     EntityCondition.makeCondition("invoiceItemTypeId", EntityOperator.NOT_IN, getTaxableInvoiceItemTypeIds(invoice.getDelegator()))));
@@ -241,7 +241,7 @@ public final class InvoiceWorker {
      */
     public static GenericValue getBillToParty(GenericValue invoice) {
         try {
-            GenericValue billToParty = invoice.getRelatedOne("Party", false);
+            GenericValue billToParty = invoice.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Party, false);
             if (billToParty != null) {
                 return billToParty;
             }
@@ -252,7 +252,7 @@ public final class InvoiceWorker {
         // remaining code is the old method, which we leave here for compatibility purposes
         List<GenericValue> billToRoles = null;
         try {
-            billToRoles = invoice.getRelated("InvoiceRole", UtilMisc.toMap("roleTypeId", "BILL_TO_CUSTOMER"),
+            billToRoles = invoice.getRelated(org.apache.ofbiz.persistence.entity.x.InvoiceRole, UtilMisc.toMap("roleTypeId", "BILL_TO_CUSTOMER"),
                     UtilMisc.toList("-datetimePerformed"), false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Trouble getting InvoiceRole list", MODULE);
@@ -262,7 +262,7 @@ public final class InvoiceWorker {
             GenericValue role = EntityUtil.getFirst(billToRoles);
             GenericValue party = null;
             try {
-                party = role.getRelatedOne("Party", false);
+                party = role.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Party, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Trouble getting Party from InvoiceRole", MODULE);
             }
@@ -276,7 +276,7 @@ public final class InvoiceWorker {
     /** Convenience method to obtain the bill from party for an invoice. Note that invoice.partyIdFrom is the bill from party. */
     public static GenericValue getBillFromParty(GenericValue invoice) {
         try {
-            return invoice.getRelatedOne("FromParty", false);
+            return invoice.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FromParty, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Trouble getting FromParty from Invoice", MODULE);
         }
@@ -297,7 +297,7 @@ public final class InvoiceWorker {
         // remaining code is the old method, which we leave here for compatibility purposes
         List<GenericValue> sendFromRoles = null;
         try {
-            sendFromRoles = invoice.getRelated("InvoiceRole", UtilMisc.toMap("roleTypeId", "BILL_FROM_VENDOR"),
+            sendFromRoles = invoice.getRelated(org.apache.ofbiz.persistence.entity.x.InvoiceRole, UtilMisc.toMap("roleTypeId", "BILL_FROM_VENDOR"),
                     UtilMisc.toList("-datetimePerformed"), false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Trouble getting InvoiceRole list", MODULE);
@@ -307,7 +307,7 @@ public final class InvoiceWorker {
             GenericValue role = EntityUtil.getFirst(sendFromRoles);
             GenericValue party = null;
             try {
-                party = role.getRelatedOne("Party", false);
+                party = role.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Party, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Trouble getting Party from InvoiceRole", MODULE);
             }
@@ -330,11 +330,11 @@ public final class InvoiceWorker {
         if (postalAddress == null) {
             try {
                 GenericValue shipmentView = EntityQuery.use(delegator).from("InvoiceItemAndShipmentView")
-                        .where("invoiceId", invoice.get("invoiceId")).queryFirst();
+                        .where("invoiceId", invoice.get(org.apache.ofbiz.persistence.entity.x.invoiceId)).queryFirst();
                 if (shipmentView != null) {
                     GenericValue shipment = EntityQuery.use(delegator).from("Shipment")
-                            .where("shipmentId", shipmentView.get("shipmentId")).queryOne();
-                    postalAddress = shipment.getRelatedOne("DestinationPostalAddress", false);
+                            .where("shipmentId", shipmentView.get(org.apache.ofbiz.persistence.entity.x.shipmentId)).queryOne();
+                    postalAddress = shipment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestinationPostalAddress, false);
                 }
             } catch (GenericEntityException e) {
                 Debug.logError("Touble getting ContactMech entity from OISG", MODULE);
@@ -370,7 +370,7 @@ public final class InvoiceWorker {
         List<GenericValue> locations = null;
         // first try InvoiceContactMech to see if we can find the address needed
         try {
-            locations = invoice.getRelated("InvoiceContactMech", UtilMisc.toMap("contactMechPurposeTypeId", contactMechPurposeTypeId), null, false);
+            locations = invoice.getRelated(org.apache.ofbiz.persistence.entity.x.InvoiceContactMech, UtilMisc.toMap("contactMechPurposeTypeId", contactMechPurposeTypeId), null, false);
         } catch (GenericEntityException e) {
             Debug.logError("Touble getting InvoiceContactMech entity list", MODULE);
         }
@@ -381,15 +381,15 @@ public final class InvoiceWorker {
             Timestamp now = UtilDateTime.nowTimestamp();
             GenericValue invoiceType = null;
             try {
-                invoiceType = EntityQuery.use(delegator).from("InvoiceType").where("invoiceTypeId", invoice.getString("invoiceTypeId")).queryFirst();
+                invoiceType = EntityQuery.use(delegator).from("InvoiceType").where("invoiceTypeId", invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceTypeId)).queryFirst();
             } catch (GenericEntityException e) {
                 Debug.logError("Trouble getting invoice type", MODULE);
             }
-            if ("SALES_INVOICE".equals(invoice.getString("invoiceTypeId")) || "SALES_INVOICE".equals(invoiceType.getString("parentTypeId"))) {
-                destinationPartyId = invoice.getString("partyId");
+            if ("SALES_INVOICE".equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceTypeId)) || "SALES_INVOICE".equals(invoiceType.getString(org.apache.ofbiz.persistence.entity.x.parentTypeId))) {
+                destinationPartyId = invoice.getString(org.apache.ofbiz.persistence.entity.x.partyId);
             }
-            if ("PURCHASE_INVOICE".equals(invoice.getString("invoiceTypeId")) || "PURCHASE_INVOICE".equals(invoiceType.getString("parentTypeId"))) {
-                destinationPartyId = invoice.getString("partyIdFrom");
+            if ("PURCHASE_INVOICE".equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceTypeId)) || "PURCHASE_INVOICE".equals(invoiceType.getString(org.apache.ofbiz.persistence.entity.x.parentTypeId))) {
+                destinationPartyId = invoice.getString(org.apache.ofbiz.persistence.entity.x.partyIdFrom);
             }
             try {
                 locations = EntityQuery.use(delegator).from("PartyContactWithPurpose")
@@ -422,12 +422,12 @@ public final class InvoiceWorker {
                 Debug.logError(e, "Trouble getting Contact for contactMechId: " + locations.get(0).getString("contactMechId"), MODULE);
             }
 
-            if (contactMech != null && "POSTAL_ADDRESS".equals(contactMech.getString("contactMechTypeId"))) {
+            if (contactMech != null && "POSTAL_ADDRESS".equals(contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechTypeId))) {
                 try {
-                    postalAddress = contactMech.getRelatedOne("PostalAddress", false);
+                    postalAddress = contactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
                     return postalAddress;
                 } catch (GenericEntityException e) {
-                    Debug.logError(e, "Trouble getting PostalAddress for contactMechId: " + contactMech.getString("contactMechId"), MODULE);
+                    Debug.logError(e, "Trouble getting PostalAddress for contactMechId: " + contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechId), MODULE);
                 }
             }
         }
@@ -507,7 +507,7 @@ public final class InvoiceWorker {
         }
         if (paymentApplications != null) {
             for (GenericValue paymentApplication : paymentApplications) {
-                invoiceApplied = invoiceApplied.add(paymentApplication.getBigDecimal("amountApplied")).setScale(DECIMALS, ROUNDING);
+                invoiceApplied = invoiceApplied.add(paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied)).setScale(DECIMALS, ROUNDING);
             }
         }
         if (UtilValidate.isNotEmpty(invoiceApplied) && !actualCurrency) {
@@ -531,10 +531,10 @@ public final class InvoiceWorker {
      * @return returns the amount applied to the invoice
      */
     public static BigDecimal getInvoiceApplied(GenericValue invoice, Boolean actualCurrency) {
-        return getInvoiceApplied(invoice.getDelegator(), invoice.getString("invoiceId"), UtilDateTime.nowTimestamp(), actualCurrency);
+        return getInvoiceApplied(invoice.getDelegator(), invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceId), UtilDateTime.nowTimestamp(), actualCurrency);
     }
     public static BigDecimal getInvoiceApplied(GenericValue invoice, Timestamp asOfDateTime) {
-        return getInvoiceApplied(invoice.getDelegator(), invoice.getString("invoiceId"), asOfDateTime, Boolean.TRUE);
+        return getInvoiceApplied(invoice.getDelegator(), invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceId), asOfDateTime, Boolean.TRUE);
     }
     /**
      * Method to return the amount of an invoiceItem which is applied to a payment
@@ -571,13 +571,13 @@ public final class InvoiceWorker {
         BigDecimal invoiceItemApplied = BigDecimal.ZERO;
         List<GenericValue> paymentApplications = null;
         try {
-            paymentApplications = invoiceItem.getRelated("PaymentApplication", null, null, false);
+            paymentApplications = invoiceItem.getRelated(org.apache.ofbiz.persistence.entity.x.PaymentApplication, null, null, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Trouble getting paymentApplicationlist", MODULE);
         }
         if (paymentApplications != null) {
             for (GenericValue paymentApplication : paymentApplications) {
-                invoiceItemApplied = invoiceItemApplied.add(paymentApplication.getBigDecimal("amountApplied")).setScale(DECIMALS, ROUNDING);
+                invoiceItemApplied = invoiceItemApplied.add(paymentApplication.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amountApplied)).setScale(DECIMALS, ROUNDING);
             }
         }
         return invoiceItemApplied;
@@ -588,44 +588,44 @@ public final class InvoiceWorker {
         String otherCurrencyUomId = null;
         // find the organization party currencyUomId which different from the invoice currency
         try {
-            GenericValue party = EntityQuery.use(delegator).from("PartyAcctgPreference").where("partyId", invoice.get("partyIdFrom")).queryOne();
-            if (UtilValidate.isEmpty(party) || party.getString("baseCurrencyUomId").equals(invoice.getString("currencyUomId"))) {
-                party = EntityQuery.use(delegator).from("PartyAcctgPreference").where("partyId", invoice.get("partyId")).queryOne();
+            GenericValue party = EntityQuery.use(delegator).from("PartyAcctgPreference").where("partyId", invoice.get(org.apache.ofbiz.persistence.entity.x.partyIdFrom)).queryOne();
+            if (UtilValidate.isEmpty(party) || party.getString(org.apache.ofbiz.persistence.entity.x.baseCurrencyUomId).equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId))) {
+                party = EntityQuery.use(delegator).from("PartyAcctgPreference").where("partyId", invoice.get(org.apache.ofbiz.persistence.entity.x.partyId)).queryOne();
             }
-            if (UtilValidate.isNotEmpty(party) && party.getString("baseCurrencyUomId") != null) {
-                otherCurrencyUomId = party.getString("baseCurrencyUomId");
+            if (UtilValidate.isNotEmpty(party) && party.getString(org.apache.ofbiz.persistence.entity.x.baseCurrencyUomId) != null) {
+                otherCurrencyUomId = party.getString(org.apache.ofbiz.persistence.entity.x.baseCurrencyUomId);
             } else {
                 otherCurrencyUomId = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, "Trouble getting database records....", MODULE);
         }
-        if (invoice.getString("currencyUomId").equals(otherCurrencyUomId)) {
+        if (invoice.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId).equals(otherCurrencyUomId)) {
             return BigDecimal.ONE;  // organization party has the same currency so conversion not required.
         }
 
         try {
             // check if the invoice is posted and get the conversion from there
-            List<GenericValue> acctgTransEntries = invoice.getRelated("AcctgTrans", null, null, false);
+            List<GenericValue> acctgTransEntries = invoice.getRelated(org.apache.ofbiz.persistence.entity.x.AcctgTrans, null, null, false);
             if (UtilValidate.isNotEmpty(acctgTransEntries)) {
                 GenericValue acctgTransEntry = (acctgTransEntries.get(0)).getRelated("AcctgTransEntry", null, null, false).get(0);
-                BigDecimal origAmount = acctgTransEntry.getBigDecimal("origAmount");
+                BigDecimal origAmount = acctgTransEntry.getBigDecimal(org.apache.ofbiz.persistence.entity.x.origAmount);
                 if (origAmount.compareTo(BigDecimal.ZERO) == 1) {
-                    conversionRate = acctgTransEntry.getBigDecimal("amount").divide(acctgTransEntry.getBigDecimal("origAmount"),
+                    conversionRate = acctgTransEntry.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).divide(acctgTransEntry.getBigDecimal(org.apache.ofbiz.persistence.entity.x.origAmount),
                             new MathContext(100)).setScale(DECIMALS, ROUNDING);
                 }
             }
             // check if a payment is applied and use the currency conversion from there
             if (UtilValidate.isEmpty(conversionRate)) {
-                List<GenericValue> paymentAppls = invoice.getRelated("PaymentApplication", null, null, false);
+                List<GenericValue> paymentAppls = invoice.getRelated(org.apache.ofbiz.persistence.entity.x.PaymentApplication, null, null, false);
                 for (GenericValue paymentAppl : paymentAppls) {
-                    GenericValue payment = paymentAppl.getRelatedOne("Payment", false);
-                    if (UtilValidate.isNotEmpty(payment.getBigDecimal("actualCurrencyAmount"))) {
+                    GenericValue payment = paymentAppl.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Payment, false);
+                    if (UtilValidate.isNotEmpty(payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualCurrencyAmount))) {
                         if (UtilValidate.isEmpty(conversionRate)) {
-                            conversionRate = payment.getBigDecimal("amount").divide(payment.getBigDecimal("actualCurrencyAmount"),
+                            conversionRate = payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).divide(payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualCurrencyAmount),
                                     new MathContext(100)).setScale(DECIMALS, ROUNDING);
                         } else {
-                            conversionRate = conversionRate.add(payment.getBigDecimal("amount").divide(payment.getBigDecimal("actualCurrencyAmount"),
+                            conversionRate = conversionRate.add(payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).divide(payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualCurrencyAmount),
                                     new MathContext(100))).divide(new BigDecimal("2"), new MathContext(100)).setScale(DECIMALS, ROUNDING);
                         }
                     }
@@ -633,12 +633,12 @@ public final class InvoiceWorker {
             }
             // use the dated conversion entity
             if (UtilValidate.isEmpty(conversionRate)) {
-                GenericValue rate = EntityQuery.use(delegator).from("UomConversionDated").where("uomIdTo", invoice.get("currencyUomId"),
-                        "uomId", otherCurrencyUomId).filterByDate(invoice.getTimestamp("invoiceDate")).queryFirst();
+                GenericValue rate = EntityQuery.use(delegator).from("UomConversionDated").where("uomIdTo", invoice.get(org.apache.ofbiz.persistence.entity.x.currencyUomId),
+                        "uomId", otherCurrencyUomId).filterByDate(invoice.getTimestamp(org.apache.ofbiz.persistence.entity.x.invoiceDate)).queryFirst();
                 if (rate != null) {
-                    conversionRate = BigDecimal.ONE.divide(rate.getBigDecimal("conversionFactor"), new MathContext(100)).setScale(DECIMALS, ROUNDING);
+                    conversionRate = BigDecimal.ONE.divide(rate.getBigDecimal(org.apache.ofbiz.persistence.entity.x.conversionFactor), new MathContext(100)).setScale(DECIMALS, ROUNDING);
                 } else {
-                    Debug.logError("Could not find conversionrate for invoice: " + invoice.getString("invoiceId"), MODULE);
+                    Debug.logError("Could not find conversionrate for invoice: " + invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceId), MODULE);
                     return new BigDecimal("1");
                 }
             }
@@ -680,16 +680,16 @@ public final class InvoiceWorker {
         List<GenericValue> invoiceItems = null;
         if (invoice != null) {
             try {
-                invoiceItems = invoice.getRelated("InvoiceItem", null, null, false);
+                invoiceItems = invoice.getRelated(org.apache.ofbiz.persistence.entity.x.InvoiceItem, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Trouble getting InvoiceItem list", MODULE);
             }
-            if ("SALES_INVOICE".equals(invoice.getString("invoiceTypeId"))) {
+            if ("SALES_INVOICE".equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceTypeId))) {
                 invoiceItems = EntityUtil.filterByOr(
                         invoiceItems, UtilMisc.toList(
                                 EntityCondition.makeCondition("invoiceItemTypeId", EntityOperator.EQUALS, "INV_SALES_TAX"),
                                 EntityCondition.makeCondition("invoiceItemTypeId", EntityOperator.EQUALS, "ITM_SALES_TAX")));
-            } else if (("PURCHASE_INVOICE".equals(invoice.getString("invoiceTypeId")))) {
+            } else if (("PURCHASE_INVOICE".equals(invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceTypeId)))) {
                 invoiceItems = EntityUtil.filterByOr(
                         invoiceItems, UtilMisc.toList(
                                 EntityCondition.makeCondition("invoiceItemTypeId", EntityOperator.EQUALS, "PINV_SALES_TAX"),
@@ -712,7 +712,7 @@ public final class InvoiceWorker {
                             BigDecimal totalAmount = BigDecimal.ZERO;
                             //Now for each invoiceItem record get and add amount.
                             for (GenericValue invoiceItem : invoiceItemsByTaxAuthGeoAndPartyIds) {
-                                BigDecimal amount = invoiceItem.getBigDecimal("amount");
+                                BigDecimal amount = invoiceItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
                                 if (amount == null) {
                                     amount = BigDecimal.ZERO;
                                 }
@@ -749,7 +749,7 @@ public final class InvoiceWorker {
         try {
             Delegator delegator = invoice.getDelegator();
             invoiceTaxItems = EntityQuery.use(delegator).from("InvoiceItem")
-                    .where(EntityCondition.makeCondition("invoiceId", invoice.getString("invoiceId")),
+                    .where(EntityCondition.makeCondition("invoiceId", invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceId)),
                     EntityCondition.makeCondition("invoiceItemTypeId", EntityOperator.IN, getTaxableInvoiceItemTypeIds(delegator))).queryList();
         } catch (GenericEntityException e) {
             Debug.logError(e, "Trouble getting InvoiceItem list", MODULE);
@@ -757,8 +757,8 @@ public final class InvoiceWorker {
         }
         if (invoiceTaxItems != null) {
             for (GenericValue invoiceItem : invoiceTaxItems) {
-                String taxAuthPartyId = invoiceItem.getString("taxAuthPartyId");
-                String taxAuthGeoId = invoiceItem.getString("taxAuthGeoId");
+                String taxAuthPartyId = invoiceItem.getString(org.apache.ofbiz.persistence.entity.x.taxAuthPartyId);
+                String taxAuthGeoId = invoiceItem.getString(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId);
                 if (UtilValidate.isNotEmpty(taxAuthPartyId)) {
                     if (!result.containsKey(taxAuthPartyId)) {
                         Set<String> taxAuthGeos = new HashSet<>();
@@ -785,7 +785,7 @@ public final class InvoiceWorker {
         try {
             Delegator delegator = invoice.getDelegator();
             invoiceTaxItems = EntityQuery.use(delegator).from("InvoiceItem")
-                    .where(EntityCondition.makeCondition("invoiceId", invoice.getString("invoiceId")),
+                    .where(EntityCondition.makeCondition("invoiceId", invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceId)),
                             EntityCondition.makeCondition("invoiceItemTypeId", EntityOperator.IN, getTaxableInvoiceItemTypeIds(delegator)),
                             EntityCondition.makeCondition("taxAuthPartyId", taxAuthPartyId),
                             EntityCondition.makeCondition("taxAuthGeoId", taxAuthGeoId)).queryList();
@@ -805,7 +805,7 @@ public final class InvoiceWorker {
         try {
             Delegator delegator = invoice.getDelegator();
             invoiceTaxItems = EntityQuery.use(delegator).from("InvoiceItem")
-                    .where(EntityCondition.makeCondition("invoiceId", invoice.get("invoiceId")),
+                    .where(EntityCondition.makeCondition("invoiceId", invoice.get(org.apache.ofbiz.persistence.entity.x.invoiceId)),
                             EntityCondition.makeCondition("invoiceItemTypeId", EntityOperator.IN, getTaxableInvoiceItemTypeIds(delegator)),
                             EntityCondition.makeCondition("taxAuthPartyId", null)).queryList();
         } catch (GenericEntityException e) {
@@ -825,11 +825,11 @@ public final class InvoiceWorker {
         }
         BigDecimal taxTotal = BigDecimal.ZERO;
         for (GenericValue taxInvoiceItem : taxInvoiceItems) {
-            BigDecimal amount = taxInvoiceItem.getBigDecimal("amount");
+            BigDecimal amount = taxInvoiceItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
             if (amount == null) {
                 amount = BigDecimal.ZERO;
             }
-            BigDecimal quantity = taxInvoiceItem.getBigDecimal("quantity");
+            BigDecimal quantity = taxInvoiceItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
             if (quantity == null) {
                 quantity = BigDecimal.ONE;
             }

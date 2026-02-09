@@ -67,8 +67,8 @@ public class ContentUrlTag {
 
     public static void appendContentPrefix(GenericValue webSite, boolean secure, Appendable urlBuffer) throws IOException {
         if (secure) {
-            if (webSite != null && UtilValidate.isNotEmpty(webSite.getString("secureContentPrefix"))) {
-                urlBuffer.append(webSite.getString("secureContentPrefix").trim());
+            if (webSite != null && UtilValidate.isNotEmpty(webSite.getString(org.apache.ofbiz.persistence.entity.x.secureContentPrefix))) {
+                urlBuffer.append(webSite.getString(org.apache.ofbiz.persistence.entity.x.secureContentPrefix).trim());
             } else {
                 String prefix = UtilProperties.getPropertyValue("url", "content.url.prefix.secure");
                 if (prefix != null) {
@@ -76,8 +76,8 @@ public class ContentUrlTag {
                 }
             }
         } else {
-            if (webSite != null && UtilValidate.isNotEmpty(webSite.getString("standardContentPrefix"))) {
-                urlBuffer.append(webSite.getString("standardContentPrefix").trim());
+            if (webSite != null && UtilValidate.isNotEmpty(webSite.getString(org.apache.ofbiz.persistence.entity.x.standardContentPrefix))) {
+                urlBuffer.append(webSite.getString(org.apache.ofbiz.persistence.entity.x.standardContentPrefix).trim());
             } else {
                 String prefix = UtilProperties.getPropertyValue("url", "content.url.prefix.standard");
                 if (prefix != null) {

@@ -53,13 +53,13 @@ public class FinAccountTest extends OFBizTestCase {
 
         account = FinAccountHelper.getFinAccountFromCode(finAccountCode, delegator);
         assertNotNull(account);
-        assertEquals(finAccountCode, account.get("finAccountCode"));
+        assertEquals(finAccountCode, account.get(org.apache.ofbiz.persistence.entity.x.finAccountCode));
         account = FinAccountHelper.getFinAccountFromCode(finAccountCode.toUpperCase(Locale.getDefault()), delegator);
         assertNotNull(account);
-        assertEquals(finAccountCode, account.get("finAccountCode"));
+        assertEquals(finAccountCode, account.get(org.apache.ofbiz.persistence.entity.x.finAccountCode));
         account = FinAccountHelper.getFinAccountFromCode(finAccountCode.toLowerCase(Locale.getDefault()), delegator);
         assertNotNull(account);
-        assertEquals(finAccountCode, account.get("finAccountCode"));
+        assertEquals(finAccountCode, account.get(org.apache.ofbiz.persistence.entity.x.finAccountCode));
 
         delegator.createSetNextSeqId(delegator.makeValue("FinAccount", UtilMisc.toMap("finAccountCode", finAccountCode)));
         account = FinAccountHelper.getFinAccountFromCode(finAccountCode, delegator);

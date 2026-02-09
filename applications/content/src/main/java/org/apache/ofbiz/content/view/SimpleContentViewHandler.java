@@ -87,14 +87,14 @@ public class SimpleContentViewHandler extends AbstractViewHandler {
         LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
         HttpSession session = request.getSession();
         GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
-        String contentId = (String) context.get("contentId");
-        String rootContentId = (String) context.get("rootContentId");
-        String mapKey = (String) context.get("mapKey");
-        String contentAssocTypeId = (String) context.get("contentAssocTypeId");
-        String fromDateStr = (String) context.get("fromDate");
-        String dataResourceId = (String) context.get("dataResourceId");
-        String contentRevisionSeqId = (String) context.get("contentRevisionSeqId");
-        String mimeTypeId = (String) context.get("mimeTypeId");
+        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String rootContentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.rootContentId);
+        String mapKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.mapKey);
+        String contentAssocTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId);
+        String fromDateStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
+        String dataResourceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+        String contentRevisionSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentRevisionSeqId);
+        String mimeTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
         Locale locale = UtilHttp.getLocale(request);
         String webSiteId = WebSiteWorker.getWebSiteId(request);
 
@@ -108,7 +108,7 @@ public class SimpleContentViewHandler extends AbstractViewHandler {
                     if (UtilValidate.isEmpty(mapKey) && UtilValidate.isEmpty(contentAssocTypeId)) {
                         if (UtilValidate.isNotEmpty(contentId)) {
                             GenericValue content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).cache().queryOne();
-                            dataResourceId = content.getString("dataResourceId");
+                            dataResourceId = content.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
                         }
                         if (Debug.verboseOn()) {
                             Debug.logVerbose("dataResourceId:" + dataResourceId, MODULE);
@@ -127,7 +127,7 @@ public class SimpleContentViewHandler extends AbstractViewHandler {
                             assocList = UtilMisc.toList(contentAssocTypeId);
                         }
                         GenericValue content = ContentWorker.getSubContent(delegator, contentId, mapKey, null, null, assocList, fromDate);
-                        dataResourceId = content.getString("dataResourceId");
+                        dataResourceId = content.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
                         if (Debug.verboseOn()) {
                             Debug.logVerbose("dataResourceId:" + dataResourceId, MODULE);
                         }
@@ -142,7 +142,7 @@ public class SimpleContentViewHandler extends AbstractViewHandler {
                         throw new ViewHandlerException("ContentRevisionItem record not found for contentId=" + rootContentId
                                 + ", contentRevisionSeqId=" + contentRevisionSeqId + ", itemContentId=" + contentId);
                     }
-                    dataResourceId = contentRevisionItem.getString("newDataResourceId");
+                    dataResourceId = contentRevisionItem.getString(org.apache.ofbiz.persistence.entity.x.newDataResourceId);
                     if (Debug.verboseOn()) {
                         Debug.logVerbose("contentRevisionItem:" + contentRevisionItem, MODULE);
                     }
@@ -162,7 +162,7 @@ public class SimpleContentViewHandler extends AbstractViewHandler {
                 ByteBuffer byteBuffer = DataResourceWorker.getContentAsByteBuffer(delegator, dataResourceId, https, webSiteId, locale, rootDir);
                 ByteArrayInputStream bais = new ByteArrayInputStream(byteBuffer.array());
                 // setup character encoding and content type
-                String charset = dataResource.getString("characterSetId");
+                String charset = dataResource.getString(org.apache.ofbiz.persistence.entity.x.characterSetId);
                 if (UtilValidate.isEmpty(charset)) {
                     charset = encoding;
                 }
@@ -175,12 +175,12 @@ public class SimpleContentViewHandler extends AbstractViewHandler {
                 // setup content type
                 String contentType2 = UtilValidate.isNotEmpty(mimeTypeId) ? mimeTypeId + "; charset=" + charset : contentType;
                 String fileName = null;
-                if (UtilValidate.isNotEmpty(dataResource.getString("dataResourceName"))) {
-                    fileName = dataResource.getString("dataResourceName").replace(" ", "_"); // spaces in filenames can be a problem
+                if (UtilValidate.isNotEmpty(dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceName))) {
+                    fileName = dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceName).replace(" ", "_"); // spaces in filenames can be a problem
                 }
 
                 // see if data RESOURCE is public or not
-                String isPublic = dataResource.getString("isPublic");
+                String isPublic = dataResource.getString(org.apache.ofbiz.persistence.entity.x.isPublic);
                 if (UtilValidate.isEmpty(isPublic)) {
                     isPublic = "N";
                 }

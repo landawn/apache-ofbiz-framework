@@ -69,8 +69,8 @@ public final class EntityUtilProperties implements Serializable {
             if (systemProperty != null) {
                 //property exists in database
                 results.put("isExistInDb", "Y");
-                results.put("value", (systemProperty.getString("systemPropertyValue") != null)
-                        ? systemProperty.getString("systemPropertyValue") : "");
+                results.put("value", (systemProperty.getString(org.apache.ofbiz.persistence.entity.x.systemPropertyValue) != null)
+                        ? systemProperty.getString(org.apache.ofbiz.persistence.entity.x.systemPropertyValue) : "");
             }
         } catch (GenericEntityException e) {
             Debug.logError("Could not get a system property for " + name + " : " + e.getMessage(), MODULE);
@@ -208,8 +208,8 @@ public final class EntityUtilProperties implements Serializable {
             if (UtilValidate.isNotEmpty(gvList)) {
                 for (Iterator<GenericValue> i = gvList.iterator(); i.hasNext();) {
                     GenericValue gv = i.next();
-                    if (UtilValidate.isNotEmpty(gv.getString("systemPropertyValue"))) {
-                        properties.setProperty(gv.getString("systemPropertyId"), gv.getString("systemPropertyValue"));
+                    if (UtilValidate.isNotEmpty(gv.getString(org.apache.ofbiz.persistence.entity.x.systemPropertyValue))) {
+                        properties.setProperty(gv.getString(org.apache.ofbiz.persistence.entity.x.systemPropertyId), gv.getString(org.apache.ofbiz.persistence.entity.x.systemPropertyValue));
                     }
                 }
             }
@@ -260,8 +260,8 @@ public final class EntityUtilProperties implements Serializable {
                     .where("systemResourceId", resourceName, "systemPropertyId", name)
                     .queryOne();
             if (gv != null) {
-                prevValue = gv.getString("systemPropertyValue");
-                gv.set("systemPropertyValue", value);
+                prevValue = gv.getString(org.apache.ofbiz.persistence.entity.x.systemPropertyValue);
+                gv.set(org.apache.ofbiz.persistence.entity.x.systemPropertyValue, value);
             } else {
                 gv = delegator.makeValue("SystemProperty", UtilMisc.toMap("systemResourceId", resourceName, "systemPropertyId",
                         name, "systemPropertyValue", value, "description", null));

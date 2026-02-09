@@ -1,3 +1,5 @@
+===========================================================================================================
+
 Generate Java entity classes annotated with Lombok and corresponding DAO classes based on the table definitions in mysql_ddl.sql.
 
 References and examples: 	
@@ -10,13 +12,15 @@ Sample DAO implementations:
 	C:\Users\haiyangl\Landawn\abacus-core
 	
 
+===========================================================================================================
+
 Modify generate-persistence-from-mysql-ddl.gradle so that, if x.java already exists, it reads all lines starting from (and including)
 // === Manually added fields === before regenerating x.java, and appends those lines to the newly generated x.java immediately before the final closing brace (}).
 
 Note: x must remain lowercase; do not change x.java to X.java.
 
 
-DispatchContext ctx, Map<String, ? extends Object> context
+===========================================================================================================
 
 Scan all Java classes and replace all string literals used in calls to GenericValue.getXXX(...), GenericValue.setXXX(...), and context.get(...) / context.put(...), where context is a variable or method parameter of type Map<String, ? extends Object>, with the corresponding fields defined in x.java.
 
@@ -25,3 +29,5 @@ If a referenced string literal does not exist in x.java, add a new field under t
 // === Manually added fields ===
 
 Note: x must remain lowercase; do not change x.java to X.java.
+
+put your generated scripts in folder: ./tools/ai_generated_scripts/ and don't delete them after task is completed. I want to keep them.

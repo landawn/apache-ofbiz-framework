@@ -130,7 +130,7 @@ public final class PartyWorker {
         GenericValue pcm = findPartyLatestContactMech(partyId, "POSTAL_ADDRESS", delegator);
         if (pcm != null) {
             try {
-                return pcm.getRelatedOne("PostalAddress", false);
+                return pcm.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Error while finding latest PostalAddress for party with ID [" + partyId + "]: " + e.toString(), MODULE);
             }
@@ -142,7 +142,7 @@ public final class PartyWorker {
         GenericValue latestPostalAddress = findPartyLatestPostalAddress(partyId, delegator);
         if (latestPostalAddress != null) {
             try {
-                GenericValue latestGeoPoint = latestPostalAddress.getRelatedOne("GeoPoint", false);
+                GenericValue latestGeoPoint = latestPostalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.GeoPoint, false);
                 if (latestGeoPoint != null) {
                     return latestGeoPoint;
                 }
@@ -158,7 +158,7 @@ public final class PartyWorker {
         GenericValue pcm = findPartyLatestContactMech(partyId, "TELECOM_NUMBER", delegator);
         if (pcm != null) {
             try {
-                return pcm.getRelatedOne("TelecomNumber", false);
+                return pcm.getRelatedOne(org.apache.ofbiz.persistence.entity.x.TelecomNumber, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Error while finding latest TelecomNumber for party with ID [" + partyId + "]: " + e.toString(), MODULE);
             }
@@ -179,7 +179,7 @@ public final class PartyWorker {
         try {
             GenericValue v = EntityQuery.use(delegator).from("UserLoginHistory").where("partyId", partyId).orderBy("-fromDate").queryFirst();
             if (v != null) {
-                return v.getTimestamp("fromDate");
+                return v.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate);
             } else {
                 return null;
             }
@@ -196,7 +196,7 @@ public final class PartyWorker {
         if (userLogin == null) {
             return null;
         }
-        String localeString = userLogin.getString("lastLocale");
+        String localeString = userLogin.getString(org.apache.ofbiz.persistence.entity.x.lastLocale);
         if (UtilValidate.isNotEmpty(localeString)) {
             return UtilMisc.parseLocale(localeString);
         } else {
@@ -224,7 +224,7 @@ public final class PartyWorker {
                 postalCodeExt, countryGeoId, firstName, middleName, lastName);
         GenericValue v = EntityUtil.getFirst(matching);
         if (v != null) {
-            return new String[] {v.getString("partyId"), v.getString("contactMechId") };
+            return new String[] {v.getString(org.apache.ofbiz.persistence.entity.x.partyId), v.getString(org.apache.ofbiz.persistence.entity.x.contactMechId) };
         }
         return null;
     }
@@ -270,13 +270,13 @@ public final class PartyWorker {
 
         if (UtilValidate.isNotEmpty(validFound)) {
             for (GenericValue partyAndAddr: validFound) {
-                String partyId = partyAndAddr.getString("partyId");
+                String partyId = partyAndAddr.getString(org.apache.ofbiz.persistence.entity.x.partyId);
                 if (UtilValidate.isNotEmpty(partyId)) {
                     GenericValue p = EntityQuery.use(delegator).from("Person").where("partyId", partyId).queryOne();
                     if (p != null) {
-                        String fName = p.getString("firstName");
-                        String lName = p.getString("lastName");
-                        String mName = p.getString("middleName");
+                        String fName = p.getString(org.apache.ofbiz.persistence.entity.x.firstName);
+                        String lName = p.getString(org.apache.ofbiz.persistence.entity.x.lastName);
+                        String mName = p.getString(org.apache.ofbiz.persistence.entity.x.middleName);
                         if (lName.toUpperCase(Locale.getDefault()).equals(lastName.toUpperCase(Locale.getDefault()))) {
                             if (fName.toUpperCase(Locale.getDefault()).equals(firstName.toUpperCase(Locale.getDefault()))) {
                                 if (mName != null && middleName != null) {
@@ -394,7 +394,7 @@ public final class PartyWorker {
         for (GenericValue address: addresses) {
             // address 1 field
             String addr1Source = PartyWorker.makeMatchingString(delegator, address1);
-            String addr1Target = PartyWorker.makeMatchingString(delegator, address.getString("address1"));
+            String addr1Target = PartyWorker.makeMatchingString(delegator, address.getString(org.apache.ofbiz.persistence.entity.x.address1));
 
             if (addr1Target != null) {
                 Debug.logInfo("Comparing address1 : " + addr1Source + " / " + addr1Target, MODULE);
@@ -403,7 +403,7 @@ public final class PartyWorker {
                     // address 2 field
                     if (address2 != null) {
                         String addr2Source = PartyWorker.makeMatchingString(delegator, address2);
-                        String addr2Target = PartyWorker.makeMatchingString(delegator, address.getString("address2"));
+                        String addr2Target = PartyWorker.makeMatchingString(delegator, address.getString(org.apache.ofbiz.persistence.entity.x.address2));
                         if (addr2Target != null) {
                             Debug.logInfo("Comparing address2 : " + addr2Source + " / " + addr2Target, MODULE);
 
@@ -413,7 +413,7 @@ public final class PartyWorker {
                             }
                         }
                     } else {
-                        if (address.get("address2") == null) {
+                        if (address.get(org.apache.ofbiz.persistence.entity.x.address2) == null) {
                             Debug.logInfo("No address2; adding valid address", MODULE);
                             validFound.add(address);
                         }
@@ -453,7 +453,7 @@ public final class PartyWorker {
 
         if (addressMap != null) {
             for (GenericValue v: addressMap) {
-                str = str.replaceAll(v.getString("mapKey").toUpperCase(Locale.getDefault()), v.getString("mapValue")
+                str = str.replaceAll(v.getString(org.apache.ofbiz.persistence.entity.x.mapKey).toUpperCase(Locale.getDefault()), v.getString(org.apache.ofbiz.persistence.entity.x.mapValue)
                         .toUpperCase(Locale.getDefault()));
             }
         }
@@ -475,7 +475,7 @@ public final class PartyWorker {
                 List<GenericValue> currentAssociatedParties = new LinkedList<>();
                 for (GenericValue associatedParty : associatedParties) {
                     EntityConditionList<EntityExpr> innerExprs = EntityCondition.makeCondition(UtilMisc.toList(
-                            EntityCondition.makeCondition("partyIdFrom", associatedParty.get("partyIdTo")),
+                            EntityCondition.makeCondition("partyIdFrom", associatedParty.get(org.apache.ofbiz.persistence.entity.x.partyIdTo)),
                             EntityCondition.makeCondition("partyRelationshipTypeId", partyRelationshipTypeId)), EntityOperator.AND);
                     List<GenericValue> associatedPartiesChilds = EntityQuery.use(delegator).from("PartyRelationship")
                             .where(innerExprs).cache(true).queryList();
@@ -558,7 +558,7 @@ public final class PartyWorker {
     public static String findPartyId(Delegator delegator, String idToFind, String partyIdentificationTypeId) throws GenericEntityException {
         GenericValue party = findParty(delegator, idToFind, partyIdentificationTypeId);
         if (party != null) {
-            return party.getString("partyId");
+            return party.getString(org.apache.ofbiz.persistence.entity.x.partyId);
         } else {
             return null;
         }
@@ -583,7 +583,7 @@ public final class PartyWorker {
                 GenericValue partyToAdd = party;
                 //retreive party GV if the actual genericValue came from viewEntity
                 if (!"Party".equals(party.getEntityName())) {
-                    partyToAdd = EntityQuery.use(delegator).from("Party").where("partyId", party.get("partyId")).cache().queryOne();
+                    partyToAdd = EntityQuery.use(delegator).from("Party").where("partyId", party.get(org.apache.ofbiz.persistence.entity.x.partyId)).cache().queryOne();
                 }
 
                 if (UtilValidate.isEmpty(parties)) {
