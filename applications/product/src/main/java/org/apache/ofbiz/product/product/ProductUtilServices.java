@@ -52,7 +52,10 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ProductUtilServicesContext;
 /**
  * Product Services
  */
@@ -68,7 +71,7 @@ public final class ProductUtilServices {
     /**
      * First expire all ProductAssocs for all disc variants, then disc all virtuals that have all expired variant ProductAssocs
      */
-    public static Map<String, Object> discVirtualsWithDiscVariants(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> discVirtualsWithDiscVariants(DispatchContext dctx, ProductUtilServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
         Locale locale = (Locale) context.get(x.locale);
@@ -146,7 +149,7 @@ public final class ProductUtilServices {
     /**
      * for all disc products, remove from category memberships
      */
-    public static Map<String, Object> removeCategoryMembersOfDiscProducts(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> removeCategoryMembersOfDiscProducts(DispatchContext dctx, ProductUtilServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
         Locale locale = (Locale) context.get(x.locale);
@@ -185,7 +188,7 @@ public final class ProductUtilServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> removeDuplicateOpenEndedCategoryMembers(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> removeDuplicateOpenEndedCategoryMembers(DispatchContext dctx, ProductUtilServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
         Locale locale = (Locale) context.get(x.locale);
@@ -234,7 +237,7 @@ public final class ProductUtilServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> makeStandAloneFromSingleVariantVirtuals(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> makeStandAloneFromSingleVariantVirtuals(DispatchContext dctx, ProductUtilServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -348,7 +351,7 @@ public final class ProductUtilServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> mergeVirtualWithSingleVariant(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> mergeVirtualWithSingleVariant(DispatchContext dctx, ProductUtilServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
 
@@ -518,7 +521,7 @@ public final class ProductUtilServices {
      * reset all product image names with a certain pattern, ex: /images/products/${size}/${productId}.jpg
      * NOTE: only works on fields of Product right now
      */
-    public static Map<String, Object> setAllProductImageNames(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setAllProductImageNames(DispatchContext dctx, ProductUtilServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String pattern = (String) context.get(x.pattern);
         Locale locale = (Locale) context.get(x.locale);
@@ -585,7 +588,7 @@ public final class ProductUtilServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> clearAllVirtualProductImageNames(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> clearAllVirtualProductImageNames(DispatchContext dctx, ProductUtilServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         String errMsg = null;
@@ -617,7 +620,7 @@ public final class ProductUtilServices {
     }
 
 
-    public static Map<String, Object> attachProductFeaturesToCategory(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> attachProductFeaturesToCategory(DispatchContext dctx, ProductUtilServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String productCategoryId = (String) context.get(x.productCategoryId);
         String doSubCategoriesStr = (String) context.get(x.doSubCategories);

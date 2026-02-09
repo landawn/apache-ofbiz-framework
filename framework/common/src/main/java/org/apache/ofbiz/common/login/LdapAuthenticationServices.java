@@ -41,14 +41,17 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
 import org.apache.ofbiz.service.DispatchContext;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.LdapAuthenticationServicesContext;
 /** LDAP Authentication Services.
  */
 public class LdapAuthenticationServices {
 
     private static final String MODULE = LdapAuthenticationServices.class.getName();
 
-    public static boolean userLogin(DispatchContext ctx, Map<String, ?> context) {
+    public static boolean userLogin(DispatchContext ctx, LdapAuthenticationServicesContext context) {
         if (Debug.verboseOn()) {
             Debug.logVerbose("Starting LDAP authentication", MODULE);
         }

@@ -51,7 +51,10 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ContentServicesContext;
 /**
  * ContentServices Class
  */
@@ -63,7 +66,7 @@ public class ContentServices {
     /**
      * findRelatedContent Finds the related
      */
-    public static Map<String, Object> findRelatedContent(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> findRelatedContent(DispatchContext dctx, ContentServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Map<String, Object> results = new HashMap<>();
 
@@ -127,7 +130,7 @@ public class ContentServices {
     /**
      * This is a generic service for traversing a Content tree, typical of a blog response tree. It calls the ContentWorker.traverse method.
      */
-    public static Map<String, Object> findContentParents(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> findContentParents(DispatchContext dctx, ContentServicesContext context) {
         Map<String, Object> results = new HashMap<>();
         List<Object> parentList = new LinkedList<>();
         results.put("parentList", parentList);
@@ -168,7 +171,7 @@ public class ContentServices {
     /**
      * This is a generic service for traversing a Content tree, typical of a blog response tree. It calls the ContentWorker.traverse method.
      */
-    public static Map<String, Object> traverseContent(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> traverseContent(DispatchContext dctx, ContentServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> results = new HashMap<>();
         Locale locale = (Locale) context.get(x.locale);
@@ -231,7 +234,7 @@ public class ContentServices {
      * functionality do not need to incur the reflection performance penalty.
      */
     public static Map<String, Object> deactivateContentAssoc(DispatchContext dctx, Map<String, ? extends Object> rcontext) {
-        Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
+        ServiceContext context = new ServiceContext(UtilMisc.makeMapWritable(rcontext));
         context.put(x.entityOperation, "_UPDATE");
         List<String> targetOperationList = ContentWorker.prepTargetOperationList(context, "_UPDATE");
 
@@ -249,7 +252,7 @@ public class ContentServices {
      * functionality do not need to incur the reflection performance penalty.
      */
     public static Map<String, Object> deactivateContentAssocMethod(DispatchContext dctx, Map<String, ? extends Object> rcontext) {
-        Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
+        ServiceContext context = new ServiceContext(UtilMisc.makeMapWritable(rcontext));
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Map<String, Object> result = new HashMap<>();
@@ -324,7 +327,7 @@ public class ContentServices {
     /**
      * Deactivates any active ContentAssoc (except the current one) that is associated with the passed in template/layout contentId and mapKey.
      */
-    public static Map<String, Object> deactivateAssocs(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> deactivateAssocs(DispatchContext dctx, ContentServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String contentIdTo = (String) context.get(x.contentIdTo);
         String mapKey = (String) context.get(x.mapKey);
@@ -388,7 +391,7 @@ public class ContentServices {
      * Get and render subcontent associated with template id and mapkey. If subContentId is supplied, that content will be rendered
      * without searching for other matching content.
      */
-    public static Map<String, Object> renderSubContentAsText(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> renderSubContentAsText(DispatchContext dctx, ContentServicesContext context) {
         Map<String, Object> results = new HashMap<>();
         LocalDispatcher dispatcher = dctx.getDispatcher();
 
@@ -435,7 +438,7 @@ public class ContentServices {
      * Get and render subcontent associated with template id and mapkey. If subContentId is supplied, that content will be rendered
      * without searching for other matching content.
      */
-    public static Map<String, Object> renderContentAsText(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> renderContentAsText(DispatchContext dctx, ContentServicesContext context) {
         Map<String, Object> results = new HashMap<>();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Writer out = (Writer) context.get(x.outWriter);
@@ -475,7 +478,7 @@ public class ContentServices {
         return results;
     }
 
-    public static Map<String, Object> linkContentToPubPt(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> linkContentToPubPt(DispatchContext dctx, ContentServicesContext context) {
         Map<String, Object> results = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -555,7 +558,7 @@ public class ContentServices {
         return results;
     }
 
-    public static Map<String, Object> publishContent(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
+    public static Map<String, Object> publishContent(DispatchContext dctx, ContentServicesContext context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         GenericValue content = (GenericValue) context.get(x.content);
 
@@ -569,7 +572,7 @@ public class ContentServices {
         return result;
     }
 
-    public static Map<String, Object> getPrefixedMembers(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
+    public static Map<String, Object> getPrefixedMembers(DispatchContext dctx, ContentServicesContext context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> mapIn = UtilGenerics.cast(context.get(x.mapIn));
         String prefix = (String) context.get(x.prefix);
@@ -588,7 +591,7 @@ public class ContentServices {
         return result;
     }
 
-    public static Map<String, Object> splitString(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
+    public static Map<String, Object> splitString(DispatchContext dctx, ContentServicesContext context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         List<String> outputList = new LinkedList<>();
         String delimiter = UtilFormatOut.checkEmpty((String) context.get(x.delimiter), "|");
@@ -600,7 +603,7 @@ public class ContentServices {
         return result;
     }
 
-    public static Map<String, Object> joinString(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
+    public static Map<String, Object> joinString(DispatchContext dctx, ContentServicesContext context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         String outputString = null;
         String delimiter = UtilFormatOut.checkEmpty((String) context.get(x.delimiter), "|");
@@ -612,7 +615,7 @@ public class ContentServices {
         return result;
     }
 
-    public static Map<String, Object> urlEncodeArgs(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
+    public static Map<String, Object> urlEncodeArgs(DispatchContext dctx, ContentServicesContext context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> mapFiltered = new HashMap<>();
         Map<String, Object> mapIn = UtilGenerics.cast(context.get(x.mapIn));

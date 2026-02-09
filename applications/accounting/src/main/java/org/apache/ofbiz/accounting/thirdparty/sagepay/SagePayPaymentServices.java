@@ -42,13 +42,16 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.SagePayPaymentServicesContext;
 public class SagePayPaymentServices {
 
     private static final String MODULE = SagePayPaymentServices.class.getName();
     private static final String RESOURCE = "AccountingUiLabels";
 
-    private static Map<String, String> buildCustomerBillingInfo(Map<String, Object> context) {
+    private static Map<String, String> buildCustomerBillingInfo(SagePayPaymentServicesContext context) {
         Debug.logInfo("SagePay - Entered buildCustomerBillingInfo", MODULE);
         Debug.logInfo("SagePay buildCustomerBillingInfo context : " + context, MODULE);
 
@@ -152,7 +155,7 @@ public class SagePayPaymentServices {
         return billingInfo;
     }
 
-    public static Map<String, Object> ccAuth(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> ccAuth(DispatchContext dctx, SagePayPaymentServicesContext context) {
         Debug.logInfo("SagePay - Entered ccAuth", MODULE);
         Debug.logInfo("SagePay ccAuth context : " + context, MODULE);
         Map<String, Object> response = null;
@@ -169,7 +172,7 @@ public class SagePayPaymentServices {
         Debug.logInfo("SagePay - Exiting ccAuth", MODULE);
         return response;
     }
-    private static Map<String, Object> processCardAuthorisationPayment(DispatchContext ctx, Map<String, Object> context) {
+    private static Map<String, Object> processCardAuthorisationPayment(DispatchContext ctx, SagePayPaymentServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -240,7 +243,7 @@ public class SagePayPaymentServices {
         return result;
     }
 
-    public static Map<String, Object> ccCapture(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> ccCapture(DispatchContext ctx, SagePayPaymentServicesContext context) {
         Debug.logInfo("SagePay - Entered ccCapture", MODULE);
         Debug.logInfo("SagePay ccCapture context : " + context, MODULE);
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
@@ -254,7 +257,7 @@ public class SagePayPaymentServices {
         return response;
     }
 
-    private static Map<String, Object> processCardCapturePayment(DispatchContext ctx, Map<String, Object> context) {
+    private static Map<String, Object> processCardCapturePayment(DispatchContext ctx, SagePayPaymentServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -296,7 +299,7 @@ public class SagePayPaymentServices {
         return result;
     }
 
-    public static Map<String, Object> ccRefund(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> ccRefund(DispatchContext ctx, SagePayPaymentServicesContext context) {
         Debug.logInfo("SagePay - Entered ccRefund", MODULE);
         Debug.logInfo("SagePay ccRefund context : " + context, MODULE);
         Locale locale = (Locale) context.get(x.locale);
@@ -360,7 +363,7 @@ public class SagePayPaymentServices {
         return response;
     }
 
-    private static Map<String, Object> processCardRefundPayment(DispatchContext ctx, Map<String, Object> context) {
+    private static Map<String, Object> processCardRefundPayment(DispatchContext ctx, SagePayPaymentServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -408,7 +411,7 @@ public class SagePayPaymentServices {
         return result;
     }
 
-    private static Map<String, Object> processCardVoidPayment(DispatchContext ctx, Map<String, Object> context) {
+    private static Map<String, Object> processCardVoidPayment(DispatchContext ctx, SagePayPaymentServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -453,7 +456,7 @@ public class SagePayPaymentServices {
         return result;
     }
 
-    public static Map<String, Object> ccRelease(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> ccRelease(DispatchContext ctx, SagePayPaymentServicesContext context) {
         Debug.logInfo("SagePay - Entered ccRelease", MODULE);
         Debug.logInfo("SagePay ccRelease context : " + context, MODULE);
         Locale locale = (Locale) context.get(x.locale);
@@ -471,7 +474,7 @@ public class SagePayPaymentServices {
         return response;
     }
 
-    private static Map<String, Object> processCardReleasePayment(DispatchContext ctx, Map<String, Object> context) {
+    private static Map<String, Object> processCardReleasePayment(DispatchContext ctx, SagePayPaymentServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Locale locale = (Locale) context.get(x.locale);
         LocalDispatcher dispatcher = ctx.getDispatcher();

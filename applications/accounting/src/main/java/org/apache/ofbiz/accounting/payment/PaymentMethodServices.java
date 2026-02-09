@@ -43,7 +43,10 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.PaymentMethodServicesContext;
 /**
  * Services for Payment maintenance
  */
@@ -60,7 +63,7 @@ public class PaymentMethodServices {
      * @param context Map containing the input parameters
      * @return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> deletePaymentMethod(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> deletePaymentMethod(DispatchContext ctx, PaymentMethodServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -111,7 +114,7 @@ public class PaymentMethodServices {
         return result;
     }
 
-    public static Map<String, Object> makeExpireDate(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> makeExpireDate(DispatchContext ctx, PaymentMethodServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         String expMonth = (String) context.get(x.expMonth);
         String expYear = (String) context.get(x.expYear);
@@ -132,7 +135,7 @@ public class PaymentMethodServices {
      * @param context Map containing the input parameters
      * @return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> createCreditCard(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> createCreditCard(DispatchContext ctx, PaymentMethodServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -258,7 +261,7 @@ public class PaymentMethodServices {
      * @param context Map containing the input parameters
      * @return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> updateCreditCard(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> updateCreditCard(DispatchContext ctx, PaymentMethodServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -452,7 +455,7 @@ public class PaymentMethodServices {
         return result;
     }
 
-    public static Map<String, Object> clearCreditCardData(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> clearCreditCardData(DispatchContext dctx, PaymentMethodServicesContext context) {
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         String paymentMethodId = (String) context.get(x.paymentMethodId);
 
@@ -494,7 +497,7 @@ public class PaymentMethodServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> createGiftCard(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createGiftCard(DispatchContext ctx, PaymentMethodServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -552,7 +555,7 @@ public class PaymentMethodServices {
         return result;
     }
 
-    public static Map<String, Object> updateGiftCard(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> updateGiftCard(DispatchContext ctx, PaymentMethodServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -688,7 +691,7 @@ public class PaymentMethodServices {
      * @param context Map containing the input parameters
      * @return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> createEftAccount(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createEftAccount(DispatchContext ctx, PaymentMethodServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -790,7 +793,7 @@ public class PaymentMethodServices {
      * @param context Map containing the input parameters
      * @return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> updateEftAccount(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateEftAccount(DispatchContext ctx, PaymentMethodServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -930,7 +933,7 @@ public class PaymentMethodServices {
         return result;
     }
 
-    public static Map<String, Object> createCheckAccount(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createCheckAccount(DispatchContext ctx, PaymentMethodServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -1019,7 +1022,7 @@ public class PaymentMethodServices {
         return result;
     }
 
-    public static Map<String, Object> updateCheckAccount(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateCheckAccount(DispatchContext ctx, PaymentMethodServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();

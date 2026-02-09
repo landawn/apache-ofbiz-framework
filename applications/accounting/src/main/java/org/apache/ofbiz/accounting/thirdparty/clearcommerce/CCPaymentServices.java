@@ -48,7 +48,10 @@ import org.apache.ofbiz.service.ServiceUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.CCPaymentServicesContext;
 /**
  * ClearCommerce Payment Services (CCE 5.4)
  */
@@ -60,7 +63,7 @@ public class CCPaymentServices {
     private static final RoundingMode ROUNDING_MODE = UtilNumber.getRoundingMode("invoice.rounding");
     private static final int MAX_SEV_COMP = 4;
 
-    public static Map<String, Object> ccAuth(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> ccAuth(DispatchContext dctx, CCPaymentServicesContext context) {
         String ccAction = (String) context.get(x.ccAction);
         Delegator delegator = dctx.getDelegator();
         if (ccAction == null) {
@@ -91,7 +94,7 @@ public class CCPaymentServices {
         return processAuthResponse(authResponseDoc);
     }
 
-    public static Map<String, Object> ccCredit(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> ccCredit(DispatchContext dctx, CCPaymentServicesContext context) {
         String action = "Credit";
         Delegator delegator = dctx.getDelegator();
         if (context.get(x.pbOrder) != null) {
@@ -122,7 +125,7 @@ public class CCPaymentServices {
         return processCreditResponse(creditResponseDoc);
     }
 
-    public static Map<String, Object> ccCapture(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> ccCapture(DispatchContext dctx, CCPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
@@ -157,7 +160,7 @@ public class CCPaymentServices {
         return processCaptureResponse(captureResponseDoc);
     }
 
-    public static Map<String, Object> ccRelease(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> ccRelease(DispatchContext dctx, CCPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
@@ -192,7 +195,7 @@ public class CCPaymentServices {
         return processReleaseResponse(releaseResponseDoc);
     }
 
-    public static Map<String, Object> ccReleaseNoop(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> ccReleaseNoop(DispatchContext dctx, CCPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
@@ -212,7 +215,7 @@ public class CCPaymentServices {
         return result;
     }
 
-    public static Map<String, Object> ccRefund(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> ccRefund(DispatchContext dctx, CCPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
@@ -249,7 +252,7 @@ public class CCPaymentServices {
         return processRefundResponse(refundResponseDoc);
     }
 
-    public static Map<String, Object> ccReAuth(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> ccReAuth(DispatchContext dctx, CCPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
@@ -285,7 +288,7 @@ public class CCPaymentServices {
 
     }
 
-    public static Map<String, Object> ccReport(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> ccReport(DispatchContext dctx, CCPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         // configuration file
@@ -650,7 +653,7 @@ public class CCPaymentServices {
         return referenceNum;
     }
 
-    private static Document buildPrimaryTxRequest(Map<String, Object> context, String type, BigDecimal amount, String refNum) {
+    private static Document buildPrimaryTxRequest(CCPaymentServicesContext context, String type, BigDecimal amount, String refNum) {
 
         String paymentConfig = (String) context.get(x.paymentConfig);
         if (UtilValidate.isEmpty(paymentConfig)) {
@@ -737,7 +740,7 @@ public class CCPaymentServices {
         return requestDocument;
     }
 
-    private static Document buildSecondaryTxRequest(Map<String, Object> context, String id, String type, BigDecimal amount, Delegator delegator) {
+    private static Document buildSecondaryTxRequest(CCPaymentServicesContext context, String id, String type, BigDecimal amount, Delegator delegator) {
 
         String paymentConfig = (String) context.get(x.paymentConfig);
         if (UtilValidate.isEmpty(paymentConfig)) {

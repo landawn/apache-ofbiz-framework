@@ -49,7 +49,10 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
-
+import org.apache.ofbiz.model.CalculateProductPriceContext;
+import org.apache.ofbiz.model.CalculatePurchasePriceContext;
+import org.apache.ofbiz.persistence.entity.ProductEntity;
+import org.apache.ofbiz.persistence.entity.UserLoginEntity;
 import org.apache.ofbiz.persistence.entity.x;
 /**
  * PriceServices - Workers and Services class for product price related functionality
@@ -82,29 +85,31 @@ public class PriceServices {
      *   <li>checkIncludeVat
      * </ul>
      */
-    public static Map<String, Object> calculateProductPrice(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> calculateProductPrice(DispatchContext dctx, CalculateProductPriceContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Map<String, Object> result = new HashMap<>();
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
 
-        GenericValue product = (GenericValue) context.get(x.product);
-        String productId = product.getString(x.productId);
-        String prodCatalogId = (String) context.get(x.prodCatalogId);
-        String webSiteId = (String) context.get(x.webSiteId);
-        String checkIncludeVat = (String) context.get(x.checkIncludeVat);
-        String surveyResponseId = (String) context.get(x.surveyResponseId);
-        Map<String, Object> customAttributes = UtilGenerics.cast(context.get(x.customAttributes));
+        ProductEntity product = context.getProduct();
+        GenericValue productGenericValue = null;
+        GenericValue userLoginGenericValue = null;
+        String productId = product.getProductId();
+        String prodCatalogId = context.getProdCatalogId();
+        String webSiteId = context.getWebSiteId();
+        String checkIncludeVat = context.getCheckIncludeVat();
+        String surveyResponseId = context.getSurveyResponseId();
+        Map<String, Object> customAttributes = context.getCustomAttributes();
 
-        String findAllQuantityPricesStr = (String) context.get(x.findAllQuantityPrices);
+        String findAllQuantityPricesStr = context.getFindAllQuantityPrices();
         boolean findAllQuantityPrices = "Y".equals(findAllQuantityPricesStr);
-        boolean optimizeForLargeRuleSet = "Y".equals(context.get(x.optimizeForLargeRuleSet));
+        boolean optimizeForLargeRuleSet = "Y".equals(context.getOptimizeForLargeRuleSet());
 
-        String agreementId = (String) context.get(x.agreementId);
+        String agreementId = context.getAgreementId();
 
-        String productStoreId = (String) context.get(x.productStoreId);
-        String productStoreGroupId = (String) context.get(x.productStoreGroupId);
-        Locale locale = (Locale) context.get(x.locale);
+        String productStoreId = context.getProductStoreId();
+        String productStoreGroupId = context.getProductStoreGroupId();
+        Locale locale = context.getLocale();
 
         GenericValue productStore = null;
         try {
@@ -144,8 +149,8 @@ public class PriceServices {
         }
 
         // if currencyUomId is null get from properties file, if nothing there assume USD (USD: American Dollar) for now
-        String currencyDefaultUomId = (String) context.get(x.currencyUomId);
-        String currencyUomIdTo = (String) context.get(x.currencyUomIdTo);
+        String currencyDefaultUomId = context.getCurrencyUomId();
+        String currencyUomIdTo = context.getCurrencyUomIdTo();
         if (UtilValidate.isEmpty(currencyDefaultUomId)) {
             if (productStore != null && UtilValidate.isNotEmpty(productStore.getString(x.defaultCurrencyUomId))) {
                 currencyDefaultUomId = productStore.getString(x.defaultCurrencyUomId);
@@ -155,20 +160,29 @@ public class PriceServices {
         }
 
         // productPricePurposeId is null assume "PURCHASE", which is equivalent to what prices were before the purpose concept
-        String productPricePurposeId = (String) context.get(x.productPricePurposeId);
+        String productPricePurposeId = context.getProductPricePurposeId();
         if (UtilValidate.isEmpty(productPricePurposeId)) {
             productPricePurposeId = "PURCHASE";
         }
 
         // termUomId, for things like recurring prices specifies the term (time/frequency measure for example) of the recurrence
         // if this is empty it will simply not be used to constrain the selection
-        String termUomId = (String) context.get(x.termUomId);
+        String termUomId = context.getTermUomId();
 
         // if this product is variant, find the virtual product and apply checks to it as well
         String virtualProductId = null;
-        if ("Y".equals(product.getString(x.isVariant))) {
+        if ("Y".equals(product.getIsVariant())) {
+            if (productGenericValue == null) {
+                try {
+                    productGenericValue = EntityQuery.use(delegator).from("Product")
+                            .where("productId", productId).cache().queryOne();
+                } catch (GenericEntityException e) {
+                    Debug.logError(e, "Error getting product from the database while calculating price" + e.toString(), MODULE);
+                    return ServiceUtil.returnError(e.getMessage());
+                }
+            }
             try {
-                virtualProductId = ProductWorker.getVariantVirtualId(product);
+                virtualProductId = ProductWorker.getVariantVirtualId(productGenericValue);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Error getting virtual product id from the database while calculating price" + e.toString(), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -189,22 +203,22 @@ public class PriceServices {
         }
 
         // NOTE: partyId CAN be null
-        String partyId = (String) context.get(x.partyId);
-        if (UtilValidate.isEmpty(partyId) && context.get(x.userLogin) != null) {
-            GenericValue userLogin = (GenericValue) context.get(x.userLogin);
-            partyId = userLogin.getString(x.partyId);
+        String partyId = context.getPartyId();
+        if (UtilValidate.isEmpty(partyId) && context.getUserLogin() != null) {
+            UserLoginEntity userLogin = context.getUserLogin();
+            partyId = userLogin.getPartyId();
         }
 
         // check for auto-userlogin for price rules
-        if (UtilValidate.isEmpty(partyId) && context.get(x.autoUserLogin) != null) {
-            GenericValue userLogin = (GenericValue) context.get(x.autoUserLogin);
-            partyId = userLogin.getString(x.partyId);
+        if (UtilValidate.isEmpty(partyId) && context.getAutoUserLogin() != null) {
+            UserLoginEntity userLogin = context.getAutoUserLogin();
+            partyId = userLogin.getPartyId();
         }
 
-        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
+        BigDecimal quantity = context.getQuantity();
         if (quantity == null) quantity = BigDecimal.ONE;
 
-        BigDecimal amount = (BigDecimal) context.get(x.amount);
+        BigDecimal amount = context.getAmount();
 
         List<EntityCondition> productPriceEcList = new LinkedList<>();
         productPriceEcList.add(EntityCondition.makeCondition("productId", EntityOperator.EQUALS, productId));
@@ -265,12 +279,12 @@ public class PriceServices {
         GenericValue specialPromoPriceValue = getPriceValueForType("SPECIAL_PROMO_PRICE", productPrices, virtualProductPrices);
 
         // now if this is a virtual product check each price type, if doesn't exist get from variant with lowest DEFAULT_PRICE
-        if ("Y".equals(product.getString(x.isVirtual))) {
+        if ("Y".equals(product.getIsVirtual())) {
             // only do this if there is no default price, consider the others optional for performance reasons
             if (defaultPriceValue == null) {
                 //use the cache to find the variant with the lowest default price
                 try {
-                    List<GenericValue> variantAssocList = EntityQuery.use(delegator).from("ProductAssoc").where("productId", product.get(x.productId),
+                    List<GenericValue> variantAssocList = EntityQuery.use(delegator).from("ProductAssoc").where("productId", productId,
                             "productAssocTypeId", "PRODUCT_VARIANT").orderBy("-fromDate").cache(true).filterByDate().queryList();
                     BigDecimal minDefaultPrice = null;
                     List<GenericValue> variantProductPrices = null;
@@ -358,7 +372,25 @@ public class PriceServices {
                     Debug.logError(gee, "An error occurred while getting the customPriceCalcService", MODULE);
                 }
                 if (customMethod != null && UtilValidate.isNotEmpty(customMethod.getString(x.customMethodName))) {
-                    Map<String, Object> inMap = UtilMisc.toMap("userLogin", context.get(x.userLogin), "product", product);
+                    if (productGenericValue == null) {
+                        try {
+                            productGenericValue = EntityQuery.use(delegator).from("Product")
+                                    .where("productId", productId).cache().queryOne();
+                        } catch (GenericEntityException gee) {
+                            Debug.logError(gee, "An error occurred while getting product for customPriceCalcService", MODULE);
+                        }
+                    }
+                    if (userLoginGenericValue == null && context.getUserLogin() != null
+                            && UtilValidate.isNotEmpty(context.getUserLogin().getUserLoginId())) {
+                        try {
+                            userLoginGenericValue = EntityQuery.use(delegator).from("UserLogin")
+                                    .where("userLoginId", context.getUserLogin().getUserLoginId()).cache().queryOne();
+                        } catch (GenericEntityException gee) {
+                            Debug.logError(gee, "An error occurred while getting userLogin for customPriceCalcService", MODULE);
+                        }
+                    }
+
+                    Map<String, Object> inMap = UtilMisc.toMap("userLogin", userLoginGenericValue, "product", productGenericValue);
                     inMap.put("initialPrice", defaultPriceValue.getBigDecimal(x.price));
                     inMap.put("currencyUomId", currencyDefaultUomId);
                     inMap.put("quantity", quantity);
@@ -1305,7 +1337,7 @@ public class PriceServices {
     /**
      * Calculates the purchase price of a product
      */
-    public static Map<String, Object> calculatePurchasePrice(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> calculatePurchasePrice(DispatchContext dctx, CalculatePurchasePriceContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Map<String, Object> result = new HashMap<>();
@@ -1314,13 +1346,13 @@ public class PriceServices {
         boolean validPriceFound = false;
         BigDecimal price = BigDecimal.ZERO;
 
-        GenericValue product = (GenericValue) context.get(x.product);
-        String productId = product.getString(x.productId);
-        String agreementId = (String) context.get(x.agreementId);
-        String currencyUomId = (String) context.get(x.currencyUomId);
-        String partyId = (String) context.get(x.partyId);
-        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
-        Locale locale = (Locale) context.get(x.locale);
+        ProductEntity product = context.getProduct();
+        String productId = product.getProductId();
+        String agreementId = context.getAgreementId();
+        String currencyUomId = context.getCurrencyUomId();
+        String partyId = context.getPartyId();
+        BigDecimal quantity = context.getQuantity();
+        Locale locale = context.getLocale();
 
         // a) Get the Price from the Agreement* data model
         if (Debug.infoOn()) {

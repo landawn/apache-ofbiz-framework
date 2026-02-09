@@ -63,7 +63,10 @@ import org.xml.sax.SAXException;
 
 import com.ibm.icu.util.Calendar;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.EntitySyncServicesContext;
 /**
  * Entity Engine Sync Services
  */
@@ -78,7 +81,7 @@ public class EntitySyncServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> runEntitySync(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> runEntitySync(DispatchContext dctx, EntitySyncServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         EntitySyncContext esc = null;
         try {
@@ -134,7 +137,7 @@ public class EntitySyncServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> storeEntitySyncData(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> storeEntitySyncData(DispatchContext dctx, EntitySyncServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String overrideDelegatorName = (String) context.get(x.delegatorName);
         Locale locale = (Locale) context.get(x.locale);
@@ -280,7 +283,7 @@ public class EntitySyncServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> runPullEntitySync(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> runPullEntitySync(DispatchContext dctx, EntitySyncServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
         String entitySyncId = (String) context.get(x.entitySyncId);
@@ -397,7 +400,7 @@ public class EntitySyncServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> pullAndReportEntitySyncData(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> pullAndReportEntitySyncData(DispatchContext dctx, EntitySyncServicesContext context) {
         EntitySyncContext esc = null;
         Locale locale = (Locale) context.get(x.locale);
         try {
@@ -472,7 +475,7 @@ public class EntitySyncServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> runOfflineEntitySync(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> runOfflineEntitySync(DispatchContext dctx, EntitySyncServicesContext context) {
         String fileName = (String) context.get(x.fileName);
         EntitySyncContext esc = null;
         long totalRowsExported = 0;
@@ -551,7 +554,7 @@ public class EntitySyncServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> loadOfflineSyncData(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> loadOfflineSyncData(DispatchContext dctx, EntitySyncServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -610,7 +613,7 @@ public class EntitySyncServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> updateOfflineEntitySync(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> updateOfflineEntitySync(DispatchContext dctx, EntitySyncServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtThisServiceIsNotYetImplemented", locale));
     }
@@ -621,7 +624,7 @@ public class EntitySyncServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> cleanSyncRemoveInfo(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> cleanSyncRemoveInfo(DispatchContext dctx, EntitySyncServicesContext context) {
         Debug.logInfo("Running cleanSyncRemoveInfo", MODULE);
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);

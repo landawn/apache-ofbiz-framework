@@ -38,7 +38,10 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.AgreementServicesContext;
 /**
  * Services for Agreement (Accounting)
  */
@@ -68,7 +71,7 @@ public class AgreementServices {
      *              currencyUomId   String  Currency
      *              productId       String  Product Id
      */
-    public static Map<String, Object> getCommissionForProduct(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> getCommissionForProduct(DispatchContext ctx, AgreementServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         String errMsg = null;

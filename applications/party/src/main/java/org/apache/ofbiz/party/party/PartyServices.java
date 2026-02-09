@@ -64,7 +64,10 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.PartyServicesContext;
 /**
  * Services for Party/Person/Group maintenance
  */
@@ -81,7 +84,7 @@ public class PartyServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> createPerson(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createPerson(DispatchContext ctx, PartyServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Timestamp now = UtilDateTime.nowTimestamp();
@@ -189,7 +192,7 @@ public class PartyServices {
      * Sets a party status.
      * <b>security check</b>: the status change must be defined in StatusValidChange.
      */
-    public static Map<String, Object> setPartyStatus(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setPartyStatus(DispatchContext ctx, PartyServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         GenericValue loggedInUserLogin = (GenericValue) context.get(x.userLogin);
@@ -262,7 +265,7 @@ public class PartyServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> updatePerson(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updatePerson(DispatchContext ctx, PartyServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -338,7 +341,7 @@ public class PartyServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> createPartyGroup(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createPartyGroup(DispatchContext ctx, PartyServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -449,7 +452,7 @@ public class PartyServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> updatePartyGroup(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updatePartyGroup(DispatchContext ctx, PartyServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -520,7 +523,7 @@ public class PartyServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> createAffiliate(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createAffiliate(DispatchContext ctx, PartyServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -595,7 +598,7 @@ public class PartyServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> updateAffiliate(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateAffiliate(DispatchContext ctx, PartyServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
 
@@ -639,7 +642,7 @@ public class PartyServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> createPartyNote(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createPartyNote(DispatchContext dctx, PartyServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -716,7 +719,7 @@ public class PartyServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> getPartiesFromExactEmail(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getPartiesFromExactEmail(DispatchContext dctx, PartyServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         Collection<Map<String, GenericValue>> parties = new LinkedList<>();
@@ -759,7 +762,7 @@ public class PartyServices {
         return result;
     }
 
-    public static Map<String, Object> getPartiesFromPartOfEmail(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getPartiesFromPartOfEmail(DispatchContext dctx, PartyServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         Collection<Map<String, GenericValue>> parties = new LinkedList<>();
@@ -808,7 +811,7 @@ public class PartyServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> getPartiesFromPartOfUserloginId(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getPartiesFromPartOfUserloginId(DispatchContext dctx, PartyServicesContext context) {
         Debug.logWarning("Running the getPartiesFromPartOfUserloginId Service...", MODULE);
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
@@ -856,7 +859,7 @@ public class PartyServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> getPartiesFromPerson(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getPartiesFromPerson(DispatchContext dctx, PartyServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         Collection<Map<String, GenericValue>> parties = new LinkedList<>();
@@ -912,7 +915,7 @@ public class PartyServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> getPartiesFromPartyGroup(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getPartiesFromPartyGroup(DispatchContext dctx, PartyServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         Collection<Map<String, GenericValue>> parties = new LinkedList<>();
@@ -959,7 +962,7 @@ public class PartyServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> getPartiesFromExternalId(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getPartiesFromExternalId(DispatchContext dctx, PartyServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = dctx.getDelegator();
         List<GenericValue> parties;
@@ -981,7 +984,7 @@ public class PartyServices {
         return result;
     }
 
-    public static Map<String, Object> getPerson(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getPerson(DispatchContext dctx, PartyServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         String partyId = (String) context.get(x.partyId);
@@ -1002,7 +1005,7 @@ public class PartyServices {
     }
 
     @Deprecated // migration from ftl to widget in process.
-    public static Map<String, Object> findParty(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> findParty(DispatchContext dctx, PartyServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -1519,7 +1522,7 @@ public class PartyServices {
         return result;
     }
 
-    public static Map<String, Object> performFindParty(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> performFindParty(DispatchContext dctx, PartyServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -1948,7 +1951,7 @@ public class PartyServices {
      * @param context the context
      * @return the result of the service execution
      */
-    public static Map<String, Object> linkParty(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> linkParty(DispatchContext dctx, PartyServicesContext context) {
         Delegator delegator = DelegatorFactory.getDelegator("default-no-eca");
         Locale locale = (Locale) context.get(x.locale);
 
@@ -2185,7 +2188,7 @@ public class PartyServices {
         return resp;
     }
 
-    public static Map<String, Object> importAddressMatchMapCsv(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> importAddressMatchMapCsv(DispatchContext dctx, PartyServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         ByteBuffer fileBytes = (ByteBuffer) context.get(x.uploadedFile);
@@ -2240,7 +2243,7 @@ public class PartyServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static String getPartyId(Map<String, ? extends Object> context) {
+    public static String getPartyId(PartyServicesContext context) {
         String partyId = (String) context.get(x.partyId);
         if (UtilValidate.isEmpty(partyId)) {
             GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -2256,7 +2259,7 @@ public class PartyServices {
      * @param context use to search with partyId or goodIdentification.idValue
      * @return a GenericValue with a partyId and a List of complementary partyId found
      */
-    public static Map<String, Object> findPartyById(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> findPartyById(DispatchContext ctx, PartyServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         String idToFind = (String) context.get(x.idToFind);
         String partyIdentificationTypeId = (String) context.get(x.partyIdentificationTypeId);
@@ -2289,7 +2292,7 @@ public class PartyServices {
         return result;
     }
 
-    public static Map<String, Object> importParty(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> importParty(DispatchContext dctx, PartyServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);

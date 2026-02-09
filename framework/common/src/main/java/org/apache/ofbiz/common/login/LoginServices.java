@@ -65,7 +65,11 @@ import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.webapp.control.LoginWorker;
 import org.apache.tomcat.util.res.StringManager;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.LdapAuthenticationServicesContext;
+import org.apache.ofbiz.model.LoginServicesContext;
 /**
  * <b>Title:</b> Login Services
  */
@@ -78,7 +82,7 @@ public class LoginServices {
      * Login service to authenticate username and password
      * @return Map of results including (userLogin) GenericValue object
      */
-    public static Map<String, Object> userLogin(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> userLogin(DispatchContext ctx, LoginServicesContext context) {
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = ctx.getDelegator();
@@ -96,7 +100,7 @@ public class LoginServices {
         // Authenticate to LDAP if configured to do so
         // TODO: this should be moved to using the NEW Authenticator API
         if ("true".equals(EntityUtilProperties.getPropertyValue("security", "security.ldap.enable", delegator))) {
-            if (!LdapAuthenticationServices.userLogin(ctx, context)) {
+            if (!LdapAuthenticationServices.userLogin(ctx, new LdapAuthenticationServicesContext(context))) {
                 String errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.ldap_authentication_failed", locale);
                 if ("true".equals(EntityUtilProperties.getPropertyValue("security", "security.ldap.fail.login", delegator))) {
                     return ServiceUtil.returnError(errMsg);
@@ -506,7 +510,7 @@ public class LoginServices {
      * Login service to authenticate a username without password, storing history
      * @return Map of results including (userLogin) GenericValue object
      */
-    public static Map<String, Object> userImpersonate(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> userImpersonate(DispatchContext ctx, LoginServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> result = ServiceUtil.returnSuccess();
@@ -670,7 +674,7 @@ public class LoginServices {
      *            Map containing the input parameters
      * @return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> createUserLogin(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> createUserLogin(DispatchContext ctx, LoginServicesContext context) {
         Map<String, Object> result = new LinkedHashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -774,7 +778,7 @@ public class LoginServices {
      *            Map containing the input parameters
      * @return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> updatePassword(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> updatePassword(DispatchContext ctx, LoginServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
         GenericValue loggedInUserLogin = (GenericValue) context.get(x.userLogin);
@@ -912,7 +916,7 @@ public class LoginServices {
      *            Map containing the input parameters
      * @return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> updateUserLoginId(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> updateUserLoginId(DispatchContext ctx, LoginServicesContext context) {
         Map<String, Object> result = new LinkedHashMap<>();
         Delegator delegator = ctx.getDelegator();
         GenericValue loggedInUserLogin = (GenericValue) context.get(x.userLogin);
@@ -1019,7 +1023,7 @@ public class LoginServices {
      *            Map containing the input parameters
      * @return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> updateUserLoginSecurity(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> updateUserLoginSecurity(DispatchContext ctx, LoginServicesContext context) {
         Map<String, Object> result = new LinkedHashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();

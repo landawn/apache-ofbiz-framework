@@ -35,7 +35,10 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.StatusServicesContext;
 /**
  * StatusServices
  */
@@ -44,7 +47,7 @@ public class StatusServices {
     private static final String MODULE = StatusServices.class.getName();
     private static final String RESOURCE = "CommonUiLabels";
 
-    public static Map<String, Object> getStatusItems(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> getStatusItems(DispatchContext ctx, StatusServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         List<String> statusTypes = checkCollection(context.get(x.statusTypeIds), String.class);
         Locale locale = (Locale) context.get(x.locale);
@@ -71,7 +74,7 @@ public class StatusServices {
         return ret;
     }
 
-    public static Map<String, Object> getStatusValidChangeToDetails(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> getStatusValidChangeToDetails(DispatchContext ctx, StatusServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         List<GenericValue> statusValidChangeToDetails = null;
         String statusId = (String) context.get(x.statusId);

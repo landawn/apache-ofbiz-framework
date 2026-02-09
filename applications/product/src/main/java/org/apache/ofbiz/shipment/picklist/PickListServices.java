@@ -35,12 +35,15 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.PickListServicesContext;
 public class PickListServices {
 
     private static final String MODULE = PickListServices.class.getName();
 
-    public static Map<String, Object> convertOrderIdListToHeaders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> convertOrderIdListToHeaders(DispatchContext dctx, PickListServicesContext context) {
         Delegator delegator = dctx.getDelegator();
 
         List<GenericValue> orderHeaderList = UtilGenerics.cast(context.get(x.orderHeaderList));

@@ -54,7 +54,10 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import com.ibm.icu.util.Calendar;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.InventoryServicesContext;
 /**
  * Inventory Services
  */
@@ -64,7 +67,7 @@ public class InventoryServices {
     private static final String RESOURCE = "ProductUiLabels";
     private static final MathContext GEN_ROUNDING = new MathContext(10);
 
-    public static Map<String, Object> prepareInventoryTransfer(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> prepareInventoryTransfer(DispatchContext dctx, InventoryServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String inventoryItemId = (String) context.get(x.inventoryItemId);
         BigDecimal xferQty = (BigDecimal) context.get(x.xferQty);
@@ -219,7 +222,7 @@ public class InventoryServices {
         }
     }
 
-    public static Map<String, Object> completeInventoryTransfer(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> completeInventoryTransfer(DispatchContext dctx, InventoryServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String inventoryTransferId = (String) context.get(x.inventoryTransferId);
         Timestamp receiveDate = (Timestamp) context.get(x.receiveDate);
@@ -334,7 +337,7 @@ public class InventoryServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> cancelInventoryTransfer(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> cancelInventoryTransfer(DispatchContext dctx, InventoryServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String inventoryTransferId = (String) context.get(x.inventoryTransferId);
         GenericValue inventoryTransfer = null;
@@ -414,7 +417,7 @@ public class InventoryServices {
     }
 
     /** In spite of the generic name this does the very specific task of checking availability of all back-ordered items and sends notices, etc */
-    public static Map<String, Object> checkInventoryAvailability(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> checkInventoryAvailability(DispatchContext dctx, InventoryServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -686,7 +689,7 @@ public class InventoryServices {
      * Get Inventory Available for a Product based on the list of associated products.  The final ATP and QOH will
      * be the minimum of all the associated products' inventory divided by their ProductAssoc.quantity
      * */
-    public static Map<String, Object> getProductInventoryAvailableFromAssocProducts(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getProductInventoryAvailableFromAssocProducts(DispatchContext dctx, InventoryServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         List<GenericValue> productAssocList = UtilGenerics.cast(context.get(x.assocProducts));
         String facilityId = (String) context.get(x.facilityId);
@@ -759,7 +762,7 @@ public class InventoryServices {
         return result;
     }
 
-    public static Map<String, Object> getProductInventorySummaryForItems(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getProductInventorySummaryForItems(DispatchContext dctx, InventoryServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         List<GenericValue> orderItems = UtilGenerics.cast(context.get(x.orderItems));
@@ -864,7 +867,7 @@ public class InventoryServices {
         results.put("mktgPkgQOHMap", mktgPkgQohMap);
         return results;
     }
-    public static Map<String, Object> getProductInventoryAndFacilitySummary(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getProductInventoryAndFacilitySummary(DispatchContext dctx, InventoryServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Timestamp checkTime = (Timestamp) context.get(x.checkTime);

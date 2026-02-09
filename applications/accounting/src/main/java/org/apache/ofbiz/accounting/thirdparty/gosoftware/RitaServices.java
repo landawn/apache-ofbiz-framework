@@ -45,7 +45,10 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.RitaServicesContext;
 public class RitaServices {
 
     private static final String MODULE = RitaServices.class.getName();
@@ -55,7 +58,7 @@ public class RitaServices {
     private static final int DECIMALS = UtilNumber.getBigDecimalScale("invoice.decimals");
     private static final RoundingMode ROUNDING = UtilNumber.getRoundingMode("invoice.rounding");
 
-    public static Map<String, Object> ccAuth(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> ccAuth(DispatchContext dctx, RitaServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         Properties props = buildPccProperties(context, delegator);
@@ -134,7 +137,7 @@ public class RitaServices {
         return result;
     }
 
-    public static Map<String, Object> ccCapture(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> ccCapture(DispatchContext dctx, RitaServicesContext context) {
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
@@ -187,15 +190,15 @@ public class RitaServices {
         return result;
     }
 
-    public static Map<String, Object> ccVoidRelease(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> ccVoidRelease(DispatchContext dctx, RitaServicesContext context) {
         return ccVoid(dctx, context, false);
     }
 
-    public static Map<String, Object> ccVoidRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> ccVoidRefund(DispatchContext dctx, RitaServicesContext context) {
         return ccVoid(dctx, context, true);
     }
 
-    private static Map<String, Object> ccVoid(DispatchContext dctx, Map<String, ? extends Object> context, boolean isRefund) {
+    private static Map<String, Object> ccVoid(DispatchContext dctx, RitaServicesContext context, boolean isRefund) {
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
@@ -257,7 +260,7 @@ public class RitaServices {
         return result;
     }
 
-    public static Map<String, Object> ccCreditRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> ccCreditRefund(DispatchContext dctx, RitaServicesContext context) {
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
@@ -318,7 +321,7 @@ public class RitaServices {
         return result;
     }
 
-    public static Map<String, Object> ccRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> ccRefund(DispatchContext dctx, RitaServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
@@ -374,7 +377,7 @@ public class RitaServices {
                 "OrderOrderNotFound", UtilMisc.toMap("orderId", orderPaymentPreference.getString(x.orderId)), locale));
     }
 
-    private static void setCreditCardInfo(RitaApi api, Delegator delegator, Map<String, ? extends Object> context) throws GeneralException {
+    private static void setCreditCardInfo(RitaApi api, Delegator delegator, RitaServicesContext context) throws GeneralException {
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         GenericValue creditCard = (GenericValue) context.get(x.creditCard);
         if (creditCard == null) {
@@ -479,7 +482,7 @@ public class RitaServices {
         return api;
     }
 
-    private static Properties buildPccProperties(Map<String, ? extends Object> context, Delegator delegator) {
+    private static Properties buildPccProperties(RitaServicesContext context, Delegator delegator) {
         String configString = (String) context.get(x.paymentConfig);
         if (configString == null) {
             configString = "payment.properties";
@@ -523,7 +526,7 @@ public class RitaServices {
         return props;
     }
 
-    private static String getAmountString(Map<String, ? extends Object> context, String amountField) {
+    private static String getAmountString(RitaServicesContext context, String amountField) {
         BigDecimal processAmount = (BigDecimal) context.get(amountField);
         return processAmount.setScale(DECIMALS, ROUNDING).toPlainString();
     }

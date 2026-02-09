@@ -37,13 +37,16 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.service.config.ServiceConfigUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.JobServicesContext;
 public class JobServices {
 
     private static final String MODULE = JobServices.class.getName();
     private static final String RESOURCE = "ServiceErrorUiLabels";
 
-    public static Map<String, Object> cancelJob(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> cancelJob(DispatchContext dctx, JobServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = ServiceUtil.getLocale(context);
 
@@ -75,7 +78,7 @@ public class JobServices {
         return ServiceUtil.returnError(errMsg);
     }
 
-    public static Map<String, Object> cancelJobRetries(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> cancelJobRetries(DispatchContext dctx, JobServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -108,7 +111,7 @@ public class JobServices {
         return ServiceUtil.returnError(errMsg);
     }
 
-    public static Map<String, Object> purgeOldJobs(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> purgeOldJobs(DispatchContext dctx, JobServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         String sendPool = (String) context.get(x.poolId);
         Integer daysToKeep = (Integer) context.get(x.daysToKeep);
@@ -134,7 +137,7 @@ public class JobServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> resetJob(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> resetJob(DispatchContext dctx, JobServicesContext context) {
         Delegator delegator = dctx.getDelegator();
 
         String jobId = (String) context.get(x.jobId);

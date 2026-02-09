@@ -59,7 +59,10 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ProductionRunServicesContext;
 /**
  * Services for Production Run maintenance
  */
@@ -80,7 +83,7 @@ public class ProductionRunServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> cancelProductionRun(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> cancelProductionRun(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -183,7 +186,7 @@ public class ProductionRunServices {
      * @param context Map containing the input parameters, productId, routingId, pRQuantity, startDate, workEffortName, description
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> createProductionRun(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createProductionRun(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -535,7 +538,7 @@ public class ProductionRunServices {
      * @param context Map containing the input parameters, productId, routingId, quantity, estimatedStartDate, workEffortName, description
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> updateProductionRun(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateProductionRun(DispatchContext ctx, ProductionRunServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -603,7 +606,7 @@ public class ProductionRunServices {
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingProductionRunNotUpdated", locale));
     }
 
-    public static Map<String, Object> changeProductionRunStatus(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> changeProductionRunStatus(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -818,7 +821,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> changeProductionRunTaskStatus(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> changeProductionRunTaskStatus(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -1094,7 +1097,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> getWorkEffortCosts(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getWorkEffortCosts(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         String workEffortId = (String) context.get(x.workEffortId);
@@ -1129,7 +1132,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> getProductionRunCost(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getProductionRunCost(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -1166,7 +1169,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> createProductionRunTaskCosts(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createProductionRunTaskCosts(DispatchContext ctx, ProductionRunServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -1342,7 +1345,7 @@ public class ProductionRunServices {
      *                estimatedMilliSeconds
      * @return Map with the result of the service, the output parameters, estimatedCompletionDate.
      */
-    public static Map<String, Object> checkUpdatePrunRoutingTask(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> checkUpdatePrunRoutingTask(DispatchContext ctx, ProductionRunServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -1418,7 +1421,7 @@ public class ProductionRunServices {
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingProductionRunNotUpdated", locale));
     }
 
-    public static Map<String, Object> addProductionRunComponent(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> addProductionRunComponent(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -1492,7 +1495,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> updateProductionRunComponent(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateProductionRunComponent(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -1570,7 +1573,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> addProductionRunRoutingTask(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> addProductionRunRoutingTask(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -1723,7 +1726,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> productionRunProduce(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> productionRunProduce(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -2026,7 +2029,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> productionRunDeclareAndProduce(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> productionRunDeclareAndProduce(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -2098,7 +2101,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> productionRunTaskProduce(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> productionRunTaskProduce(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -2240,7 +2243,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> productionRunTaskReturnMaterial(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> productionRunTaskReturnMaterial(DispatchContext ctx, ProductionRunServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -2308,7 +2311,7 @@ public class ProductionRunServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> updateProductionRunTask(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateProductionRunTask(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -2467,7 +2470,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> approveRequirement(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> approveRequirement(DispatchContext ctx, ProductionRunServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -2500,7 +2503,7 @@ public class ProductionRunServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> createProductionRunFromRequirement(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createProductionRunFromRequirement(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -2572,7 +2575,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> createProductionRunFromConfiguration(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createProductionRunFromConfiguration(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -2749,7 +2752,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> createProductionRunForMktgPkg(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createProductionRunForMktgPkg(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -2919,7 +2922,7 @@ public class ProductionRunServices {
         }
     }
 
-    public static Map<String, Object> createProductionRunsForOrder(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createProductionRunsForOrder(DispatchContext dctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -3057,7 +3060,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> createProductionRunsForProductBom(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createProductionRunsForProductBom(DispatchContext dctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -3103,7 +3106,7 @@ public class ProductionRunServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> quickRunProductionRunTask(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> quickRunProductionRunTask(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -3154,7 +3157,7 @@ public class ProductionRunServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> quickRunAllProductionRunTasks(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> quickRunAllProductionRunTasks(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -3190,7 +3193,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> quickStartAllProductionRunTasks(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> quickStartAllProductionRunTasks(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -3238,7 +3241,7 @@ public class ProductionRunServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> quickChangeProductionRunStatus(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> quickChangeProductionRunStatus(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -3321,7 +3324,7 @@ public class ProductionRunServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> getProductionRunTotResQty(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getProductionRunTotResQty(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -3366,7 +3369,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> checkDecomposeInventoryItem(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> checkDecomposeInventoryItem(DispatchContext ctx, ProductionRunServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -3406,7 +3409,7 @@ public class ProductionRunServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> decomposeInventoryItem(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> decomposeInventoryItem(DispatchContext ctx, ProductionRunServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
@@ -3535,7 +3538,7 @@ public class ProductionRunServices {
         return result;
     }
 
-    public static Map<String, Object> setEstimatedDeliveryDates(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setEstimatedDeliveryDates(DispatchContext ctx, ProductionRunServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Timestamp now = UtilDateTime.nowTimestamp();
         Locale locale = (Locale) context.get(x.locale);

@@ -62,7 +62,10 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.FedexServicesContext;
 /**
  * Fedex Shipment Services
  *
@@ -151,7 +154,7 @@ public class FedexServices {
      * @param context the context
      * @return the map
      */
-    public static Map<String, Object> fedexSubscriptionRequest(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> fedexSubscriptionRequest(DispatchContext dctx, FedexServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
         String resource = (String) context.get(x.configProps);
@@ -413,7 +416,7 @@ public class FedexServices {
     /**
      * Send a FDXShipRequest via the Ship Manager Direct API
      */
-    public static Map<String, Object> fedexShipRequest(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> fedexShipRequest(DispatchContext dctx, FedexServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);

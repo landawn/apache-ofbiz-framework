@@ -36,7 +36,10 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.CdyneServicesContext;
 /**
  * OFBIZ CDyne Services: for info see http://www.cdyne.com/developers/overview.aspx
  */
@@ -52,7 +55,7 @@ public class CdyneServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> cdyneReturnCityState(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> cdyneReturnCityState(DispatchContext dctx, CdyneServicesContext context) {
         String zipcode = (String) context.get(x.zipcode);
         Locale locale = (Locale) context.get(x.locale);
         String serviceUrl = "http://ws.cdyne.com/psaddress/addresslookup.asmx/ReturnCityState?zipcode=" + zipcode + "&LicenseKey=" + LICENSE_KEY;

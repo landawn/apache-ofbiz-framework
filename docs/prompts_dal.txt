@@ -29,7 +29,33 @@ If a referenced string literal does not exist in x.java, add a new field under t
 
 
 Notes:
-	- x must remain lowercase; do not rename x.java to X.java.
-	- Save all generated scripts under ./tools/ai_generated_scripts/.
-	- Do not delete the generated scripts after the task completes.
+- x must remain lowercase; do not rename x.java to X.java.
+- Save all generated scripts under folder: ./tools/ai_generated_scripts/.
+- Do NOT delete the generated scripts after the task completes.
+
+
+===========================================================================================================
+
+Follow the steps below strictly:
+
+Refactor all methods in all xxxServices classes to replace input parameters of type
+"Map<String, ? extends Object> context" or "ServiceContext context" with strongly typed entity classes from
+the org.apache.ofbiz.persistence.entity package.
+
+Requirements:
+- If no appropriate entity class exists in the org.apache.ofbiz.persistence.entity
+  package, create a new model class in the org.apache.ofbiz.model package.
+- Newly added classes in the org.apache.ofbiz.model package must NOT include the
+  "Entity" suffix in their class names.
+- Don't use "Map<String, ? extends Object> context" in any modified or new code.
+- Avoid using bridge classes whenever possible.
+
+Notes:
+- Save all generated scripts under folder: ./tools/ai_generated_scripts/.
+- Do NOT delete the generated scripts after the task completes.
+	
+	
+===========================================================================================================
+
+
 

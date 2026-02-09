@@ -47,7 +47,10 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import com.ibm.icu.util.Calendar;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.AIMPaymentServicesContext;
 public class AIMPaymentServices {
 
     private static final String MODULE = AIMPaymentServices.class.getName();
@@ -77,7 +80,7 @@ public class AIMPaymentServices {
             VOIDABLE_RESPONSES_NO_TIME_LIMIT.contains(responseCode) || VOIDABLE_RESPONSES_TIME_LIMIT.contains(responseCode);
     }
 
-    public static Map<String, Object> ccAuth(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> ccAuth(DispatchContext ctx, AIMPaymentServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> results = ServiceUtil.returnSuccess();
@@ -102,7 +105,7 @@ public class AIMPaymentServices {
         return results;
     }
 
-    public static Map<String, Object> ccCapture(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> ccCapture(DispatchContext ctx, AIMPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = ctx.getDelegator();
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
@@ -149,7 +152,7 @@ public class AIMPaymentServices {
         return results;
     }
 
-    public static Map<String, Object> ccRefund(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> ccRefund(DispatchContext ctx, AIMPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = ctx.getDelegator();
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
@@ -237,7 +240,7 @@ public class AIMPaymentServices {
         return results;
     }
 
-    public static Map<String, Object> ccRelease(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> ccRelease(DispatchContext ctx, AIMPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = ctx.getDelegator();
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
@@ -256,7 +259,7 @@ public class AIMPaymentServices {
         return results;
     }
 
-    private static Map<String, Object> voidTransaction(GenericValue authTransaction, Map<String, Object> context, Delegator delegator) {
+    private static Map<String, Object> voidTransaction(GenericValue authTransaction, AIMPaymentServicesContext context, Delegator delegator) {
         Locale locale = (Locale) context.get(x.locale);
         context.put(x.authTransaction, authTransaction);
         Map<String, Object> results = ServiceUtil.returnSuccess();
@@ -276,7 +279,7 @@ public class AIMPaymentServices {
         return processCard(request, props, locale);
     }
 
-    public static Map<String, Object> ccCredit(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> ccCredit(DispatchContext ctx, AIMPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> results = new HashMap<>();
         results.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
@@ -284,7 +287,7 @@ public class AIMPaymentServices {
         return results;
     }
 
-    public static Map<String, Object> ccAuthCapture(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> ccAuthCapture(DispatchContext ctx, AIMPaymentServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> results = ServiceUtil.returnSuccess();
@@ -366,7 +369,7 @@ public class AIMPaymentServices {
         return "true".equalsIgnoreCase((String) aimProperties.get("testReq"));
     }
 
-    private static Properties buildAIMProperties(Map<String, Object> context, Delegator delegator) {
+    private static Properties buildAIMProperties(AIMPaymentServicesContext context, Delegator delegator) {
         String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
         String configStr = (String) context.get(x.paymentConfig);
         if (configStr == null) {

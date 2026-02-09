@@ -49,7 +49,10 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.RequirementServicesContext;
 /**
  * Requirement Services
  */
@@ -59,7 +62,7 @@ public class RequirementServices {
     private static final String MODULE = RequirementServices.class.getName();
     private static final String RES_ERROR = "OrderErrorUiLabels";
 
-    public static Map<String, Object> getRequirementsForSupplier(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getRequirementsForSupplier(DispatchContext ctx, RequirementServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -214,7 +217,7 @@ public class RequirementServices {
 
     // note that this service is designed to work only when a sales order status changes from CREATED -> APPROVED because HOLD -> APPROVED is too
     // complex
-    public static Map<String, Object> createAutoRequirementsForOrder(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createAutoRequirementsForOrder(DispatchContext ctx, RequirementServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -269,7 +272,7 @@ public class RequirementServices {
 
     // note that this service is designed to work only when a sales order status changes from CREATED -> APPROVED because HOLD -> APPROVED is too
     // complex
-    public static Map<String, Object> createATPRequirementsForOrder(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createATPRequirementsForOrder(DispatchContext ctx, RequirementServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -371,7 +374,7 @@ public class RequirementServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> updateRequirementsToOrdered(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateRequirementsToOrdered(DispatchContext ctx, RequirementServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);

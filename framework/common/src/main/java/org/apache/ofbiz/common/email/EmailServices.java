@@ -84,7 +84,10 @@ import com.sun.mail.smtp.SMTPAddressFailedException;
 
 import freemarker.template.TemplateException;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.EmailServicesContext;
 /**
  * Email Services
  */
@@ -100,7 +103,7 @@ public class EmailServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> sendMail(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendMail(DispatchContext ctx, EmailServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         String communicationEventId = (String) context.get(x.communicationEventId);
         String orderId = (String) context.get(x.orderId);
@@ -689,7 +692,7 @@ public class EmailServices {
         serviceContext.put("hideInLog", true);
         return sendMailFromScreen(dctx, serviceContext);
     }
-    public static void sendFailureNotification(DispatchContext dctx, Map<String, ? extends Object> context, MimeMessage message,
+    public static void sendFailureNotification(DispatchContext dctx, EmailServicesContext context, MimeMessage message,
                                                List<SMTPAddressFailedException> failures) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> newContext = new LinkedHashMap<>();

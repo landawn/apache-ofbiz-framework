@@ -68,7 +68,10 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.FindServicesContext;
 /**
  * FindServices Class
  */
@@ -223,7 +226,7 @@ public class FindServices {
      * @return returns an EntityCondition list
      */
     public static List<EntityCondition> createConditionList(Map<String, ?> parameters, List<ModelField> fieldList, Map<String, Object> queryStringMap,
-                                                            Delegator delegator, Map<String, ?> context, String groupConditionOperator) {
+                                                            Delegator delegator, FindServicesContext context, String groupConditionOperator) {
         Set<String> processed = new LinkedHashSet<>();
         Set<String> keys = new LinkedHashSet<>();
         Map<String, ModelField> fieldMap = new LinkedHashMap<>();
@@ -322,7 +325,7 @@ public class FindServices {
      * @return return an EntityCondition
      */
     public static EntityCondition createSingleCondition(ModelField modelField, String operation, Object fieldValue, boolean ignoreCase,
-                                                        Delegator delegator, Map<String, ?> context) {
+                                                        Delegator delegator, FindServicesContext context) {
         EntityCondition cond = null;
         String fieldName = modelField.getName();
         Locale locale = (Locale) context.get(x.locale);
@@ -402,7 +405,7 @@ public class FindServices {
      * @return a arrayList usable to create an entityCondition
      */
     public static List<EntityCondition> createCondition(ModelEntity modelEntity, Map<String, Map<String, Map<String, Object>>> normalizedFields,
-            Map<String, Object> queryStringMap, Map<String, List<Object[]>> origValueMap, Delegator delegator, Map<String, ?> context) {
+            Map<String, Object> queryStringMap, Map<String, List<Object[]>> origValueMap, Delegator delegator, FindServicesContext context) {
         Map<String, Map<String, Object>> subMap = null;
         Map<String, Object> subMap2 = null;
         Object fieldValue = null; // If it is a "value" field, it will be the value to be used in the query.
@@ -461,7 +464,7 @@ public class FindServices {
      * @param context
      * @return Map
      */
-    public static Map<String, Object> performFindList(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> performFindList(DispatchContext dctx, FindServicesContext context) {
         Integer viewSize = (Integer) context.get(x.viewSize);
         if (viewSize == null) {
             viewSize = 20;       // default
@@ -496,7 +499,7 @@ public class FindServices {
      * This is a generic method that expects entity data affixed with special suffixes
      * to indicate their purpose in formulating an SQL query statement.
      */
-    public static Map<String, Object> performFind(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> performFind(DispatchContext dctx, FindServicesContext context) {
         String entityName = (String) context.get(x.entityName);
         DynamicViewEntity dynamicViewEntity = (DynamicViewEntity) context.get(x.dynamicViewEntity);
         String orderBy = (String) context.get(x.orderBy);
@@ -589,7 +592,7 @@ public class FindServices {
      * This is a generic method that expects entity data affixed with special suffixes
      * to indicate their purpose in formulating an SQL query statement.
      */
-    public static Map<String, Object> prepareFind(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> prepareFind(DispatchContext dctx, FindServicesContext context) {
         String entityName = (String) context.get(x.entityName);
         DynamicViewEntity dynamicViewEntity = (DynamicViewEntity) context.get(x.dynamicViewEntity);
         Delegator delegator = dctx.getDelegator();
@@ -680,7 +683,7 @@ public class FindServices {
      * executeFind
      * This is a generic method that returns an EntityListIterator.
      */
-    public static Map<String, Object> executeFind(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> executeFind(DispatchContext dctx, FindServicesContext context) {
         String entityName = (String) context.get(x.entityName);
         DynamicViewEntity dynamicViewEntity = (DynamicViewEntity) context.get(x.dynamicViewEntity);
         EntityConditionList<EntityCondition> entityConditionList = UtilGenerics.cast(context.get(x.entityConditionList));
@@ -813,7 +816,7 @@ public class FindServices {
      * @param context
      * @return returns the first item
      */
-    public static Map<String, Object> performFindItem(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> performFindItem(DispatchContext dctx, FindServicesContext context) {
         context.put(x.viewSize, 1);
         context.put(x.viewIndex, 0);
         Map<String, Object> result = org.apache.ofbiz.common.FindServices.performFind(dctx, context);

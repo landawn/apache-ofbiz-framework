@@ -31,12 +31,15 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.GeneralLedgerServicesContext;
 public class GeneralLedgerServices {
 
     private static final String MODULE = GeneralLedgerServices.class.getName();
 
-    public static Map<String, Object> createUpdateCostCenter(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createUpdateCostCenter(DispatchContext dctx, GeneralLedgerServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Map<String, Object> createGlAcctCatMemFromCostCentersMap = null;
         String glAccountId = (String) context.get(x.glAccountId);

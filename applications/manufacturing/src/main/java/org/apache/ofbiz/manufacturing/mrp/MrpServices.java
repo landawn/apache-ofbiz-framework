@@ -51,7 +51,10 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import com.ibm.icu.util.Calendar;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.MrpServicesContext;
 /**
  * Services for running MRP
  */
@@ -60,7 +63,7 @@ public class MrpServices {
     private static final String MODULE = MrpServices.class.getName();
     private static final String RESOURCE = "ManufacturingUiLabels";
 
-    public static Map<String, Object> initMrpEvents(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> initMrpEvents(DispatchContext ctx, MrpServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Timestamp now = UtilDateTime.nowTimestamp();
@@ -616,7 +619,7 @@ public class MrpServices {
      * @param context Map containing the input parameters, productId routingId, quantity, startDate.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> executeMrp(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> executeMrp(DispatchContext ctx, MrpServicesContext context) {
         Debug.logInfo("executeMrp called", MODULE);
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();

@@ -30,10 +30,13 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.VerifyPickServicesContext;
 public class VerifyPickServices {
 
-    public static Map<String, Object> verifySingleItem(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> verifySingleItem(DispatchContext dctx, VerifyPickServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         VerifyPickSession pickSession = (VerifyPickSession) context.get(x.verifyPickSession);
         String orderId = (String) context.get(x.orderId);
@@ -51,7 +54,7 @@ public class VerifyPickServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> verifyBulkItem(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> verifyBulkItem(DispatchContext dctx, VerifyPickServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         VerifyPickSession pickSession = (VerifyPickSession) context.get(x.verifyPickSession);
         String orderId = (String) context.get(x.orderId);
@@ -82,7 +85,7 @@ public class VerifyPickServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> completeVerifiedPick(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> completeVerifiedPick(DispatchContext dctx, VerifyPickServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         String shipmentId = null;
         VerifyPickSession pickSession = (VerifyPickSession) context.get(x.verifyPickSession);
@@ -98,7 +101,7 @@ public class VerifyPickServices {
         }
     }
 
-    public static Map<String, Object> cancelAllRows(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> cancelAllRows(DispatchContext dctx, VerifyPickServicesContext context) {
         VerifyPickSession session = (VerifyPickSession) context.get(x.verifyPickSession);
         session.clearAllRows();
         return ServiceUtil.returnSuccess();

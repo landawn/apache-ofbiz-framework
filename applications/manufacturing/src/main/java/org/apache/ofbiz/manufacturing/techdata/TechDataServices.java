@@ -44,7 +44,10 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import com.ibm.icu.util.Calendar;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.TechDataServicesContext;
 /**
  * TechDataServices - TechData related Services
  *
@@ -61,7 +64,7 @@ public class TechDataServices {
      * @return result a map containing lookupResult (list of RoutingTask &lt;=&gt; workEffortId with currentStatusId =
      * "ROU_ACTIVE" and workEffortTypeId = "ROU_TASK"
      */
-    public static Map<String, Object> lookupRoutingTask(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> lookupRoutingTask(DispatchContext ctx, TechDataServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> result = new HashMap<>();
         Locale locale = (Locale) context.get(x.locale);
@@ -107,7 +110,7 @@ public class TechDataServices {
      * @param context    a map containing workEffortIdFrom (routing) and SeqId, fromDate thruDate
      * @return result      a map containing sequenceNumNotOk which is equal to "Y" if it's not Ok
      */
-    public static Map<String, Object> checkRoutingTaskAssoc(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> checkRoutingTaskAssoc(DispatchContext ctx, TechDataServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> result = new HashMap<>();
         String sequenceNumNotOk = "N";

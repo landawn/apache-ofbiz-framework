@@ -68,13 +68,16 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.service.mail.MimeMessageWrapper;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.CommunicationEventServicesContext;
 public class CommunicationEventServices {
 
     private static final String MODULE = CommunicationEventServices.class.getName();
     private static final String RESOURCE = "PartyErrorUiLabels";
 
-    public static Map<String, Object> sendCommEventAsEmail(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendCommEventAsEmail(DispatchContext ctx, CommunicationEventServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -277,7 +280,7 @@ public class CommunicationEventServices {
      * @param context
      * @return
      */
-    public static Map<String, Object> sendCommEventAsFtp(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> sendCommEventAsFtp(DispatchContext ctx, CommunicationEventServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -411,7 +414,7 @@ public class CommunicationEventServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> sendEmailToContactList(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendEmailToContactList(DispatchContext ctx, CommunicationEventServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -656,7 +659,7 @@ public class CommunicationEventServices {
         return errorMessages.isEmpty() ? ServiceUtil.returnSuccess() : ServiceUtil.returnError(errorMessages);
     }
 
-    public static Map<String, Object> setCommEventComplete(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setCommEventComplete(DispatchContext dctx, CommunicationEventServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -691,7 +694,7 @@ public class CommunicationEventServices {
      * runs as a pre-invoke ECA on sendContentToFtp service
      * - service should run as the 'system' user
      */
-    public static Map<String, Object> createCommEventFromFtpTransfer(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createCommEventFromFtpTransfer(DispatchContext dctx, CommunicationEventServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
 
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -745,7 +748,7 @@ public class CommunicationEventServices {
      * runs as a pre-invoke ECA on sendMail and sendMultipartMail services
      * - service should run as the 'system' user
      */
-    public static Map<String, Object> createCommEventFromEmail(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createCommEventFromEmail(DispatchContext dctx, CommunicationEventServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
@@ -841,7 +844,7 @@ public class CommunicationEventServices {
      * runs as a post-commit ECA on sendMail and sendMultiPartMail services
      * - service should run as the 'system' user
      */
-    public static Map<String, Object> updateCommEventAfterEmail(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateCommEventAfterEmail(DispatchContext dctx, CommunicationEventServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
 
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -903,7 +906,7 @@ public class CommunicationEventServices {
      * @param context the context
      * @return returns the result of the service execution
      */
-    public static Map<String, Object> storeIncomingEmail(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> storeIncomingEmail(DispatchContext dctx, CommunicationEventServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         MimeMessageWrapper wrapper = (MimeMessageWrapper) context.get(x.messageWrapper);
@@ -1439,7 +1442,7 @@ public class CommunicationEventServices {
      * Service to process incoming email and look for a bounce message. If the email is indeed a bounce message
      * the CommunicationEvent will be updated with the proper COM_BOUNCED status.
      */
-    public static Map<String, Object> processBouncedMessage(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processBouncedMessage(DispatchContext dctx, CommunicationEventServicesContext context) {
         Debug.logInfo("Running process bounced message check...", MODULE);
         MimeMessageWrapper wrapper = (MimeMessageWrapper) context.get(x.messageWrapper);
 
@@ -1571,7 +1574,7 @@ public class CommunicationEventServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> logIncomingMessage(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> logIncomingMessage(DispatchContext dctx, CommunicationEventServicesContext context) {
         MimeMessageWrapper wrapper = (MimeMessageWrapper) context.get(x.messageWrapper);
         Debug.logInfo("Message recevied         : " + wrapper.getSubject(), MODULE);
         Debug.logInfo("-- Content Type          : " + wrapper.getContentType(), MODULE);

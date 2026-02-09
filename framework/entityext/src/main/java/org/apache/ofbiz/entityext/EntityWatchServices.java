@@ -27,7 +27,10 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.EntityWatchServicesContext;
 public class EntityWatchServices {
 
     private static final String MODULE = EntityWatchServices.class.getName();
@@ -38,7 +41,7 @@ public class EntityWatchServices {
      * @param context the context
      * @return the result of the service execution
      */
-    public static Map<String, Object> watchEntity(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> watchEntity(DispatchContext dctx, EntityWatchServicesContext context) {
         GenericValue newValue = (GenericValue) context.get(x.newValue);
         String fieldName = (String) context.get(x.fieldName);
 

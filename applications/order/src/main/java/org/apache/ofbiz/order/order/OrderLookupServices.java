@@ -54,7 +54,10 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.widget.renderer.Paginator;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.OrderLookupServicesContext;
 /**
  * OrderLookupServices
  */
@@ -62,7 +65,7 @@ public class OrderLookupServices {
 
     private static final String MODULE = OrderLookupServices.class.getName();
 
-    public static Map<String, Object> findOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> findOrders(DispatchContext dctx, OrderLookupServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
@@ -642,7 +645,7 @@ public class OrderLookupServices {
         return result;
     }
 
-    public static void filterInventoryProblems(Map<String, ? extends Object> context, Map<String, Object> result, List<GenericValue>
+    public static void filterInventoryProblems(OrderLookupServicesContext context, Map<String, Object> result, List<GenericValue>
             orderList, List<String> paramList) {
         List<String> filterInventoryProblems = new LinkedList<>();
 

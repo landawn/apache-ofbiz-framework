@@ -85,7 +85,10 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import com.ibm.icu.util.Calendar;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.OrderServicesContext;
 /**
  * Order Processing Services
  */
@@ -188,7 +191,7 @@ public class OrderServices {
     /**
      * Service for creating a new order
      */
-    public static Map<String, Object> createOrder(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createOrder(DispatchContext ctx, OrderServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Security security = ctx.getSecurity();
@@ -1162,7 +1165,7 @@ public class OrderServices {
         return successResult;
     }
 
-    public static Map<String, Object> countProductQuantityOrdered(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> countProductQuantityOrdered(DispatchContext ctx, OrderServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         List<GenericValue> productCalculatedInfoList = null;
@@ -1503,7 +1506,7 @@ public class OrderServices {
     /**
      * Service for resetting the OrderHeader grandTotal
      */
-    public static Map<String, Object> resetGrandTotal(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> resetGrandTotal(DispatchContext ctx, OrderServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         String orderId = (String) context.get(x.orderId);
@@ -1571,7 +1574,7 @@ public class OrderServices {
     /**
      * Service for setting the OrderHeader grandTotal for all OrderHeaders with no grandTotal
      */
-    public static Map<String, Object> setEmptyGrandTotals(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setEmptyGrandTotals(DispatchContext ctx, OrderServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -1623,7 +1626,7 @@ public class OrderServices {
     /**
      * Service for checking and re-calc the tax amount
      */
-    public static Map<String, Object> recalcOrderTax(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> recalcOrderTax(DispatchContext ctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Delegator delegator = ctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
@@ -1863,7 +1866,7 @@ public class OrderServices {
     /**
      * Service for checking and re-calc the shipping amount
      */
-    public static Map<String, Object> recalcOrderShipping(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> recalcOrderShipping(DispatchContext ctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Delegator delegator = ctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
@@ -1966,7 +1969,7 @@ public class OrderServices {
     /**
      * Service for checking to see if an order is fully completed or canceled
      */
-    public static Map<String, Object> checkItemStatus(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> checkItemStatus(DispatchContext ctx, OrderServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -2112,7 +2115,7 @@ public class OrderServices {
     /**
      * Service to cancel an order item quantity
      */
-    public static Map<String, Object> cancelOrderItem(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> cancelOrderItem(DispatchContext ctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -2393,7 +2396,7 @@ public class OrderServices {
     /**
      * Service for changing the status on order item(s)
      */
-    public static Map<String, Object> setItemStatus(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setItemStatus(DispatchContext ctx, OrderServicesContext context) {
         Delegator delegator = ctx.getDelegator();
 
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -2505,7 +2508,7 @@ public class OrderServices {
     /**
      * Service for changing the status on an order header
      */
-    public static Map<String, Object> setOrderStatus(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setOrderStatus(DispatchContext ctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Delegator delegator = ctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -2615,7 +2618,7 @@ public class OrderServices {
     /**
      * Service to update the order tracking number
      */
-    public static Map<String, Object> updateTrackingNumber(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateTrackingNumber(DispatchContext dctx, OrderServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
@@ -2645,7 +2648,7 @@ public class OrderServices {
     /**
      * Service to add a role type to an order
      */
-    public static Map<String, Object> addRoleType(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> addRoleType(DispatchContext ctx, OrderServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
@@ -2686,7 +2689,7 @@ public class OrderServices {
     /**
      * Service to remove a role type from an order
      */
-    public static Map<String, Object> removeRoleType(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> removeRoleType(DispatchContext ctx, OrderServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
@@ -2725,39 +2728,39 @@ public class OrderServices {
     /**
      * Service to email a customer with initial order confirmation
      */
-    public static Map<String, Object> sendOrderConfirmNotification(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendOrderConfirmNotification(DispatchContext ctx, OrderServicesContext context) {
         return sendOrderNotificationScreen(ctx, context, "PRDS_ODR_CONFIRM");
     }
 
     /**
      * Service to email a customer with order changes
      */
-    public static Map<String, Object> sendOrderCompleteNotification(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendOrderCompleteNotification(DispatchContext ctx, OrderServicesContext context) {
         return sendOrderNotificationScreen(ctx, context, "PRDS_ODR_COMPLETE");
     }
 
     /**
      * Service to email a customer with order changes
      */
-    public static Map<String, Object> sendOrderBackorderNotification(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendOrderBackorderNotification(DispatchContext ctx, OrderServicesContext context) {
         return sendOrderNotificationScreen(ctx, context, "PRDS_ODR_BACKORDER");
     }
 
     /**
      * Service to email a customer with order changes
      */
-    public static Map<String, Object> sendOrderChangeNotification(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendOrderChangeNotification(DispatchContext ctx, OrderServicesContext context) {
         return sendOrderNotificationScreen(ctx, context, "PRDS_ODR_CHANGE");
     }
 
     /**
      * Service to email a customer with order payment retry results
      */
-    public static Map<String, Object> sendOrderPayRetryNotification(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendOrderPayRetryNotification(DispatchContext ctx, OrderServicesContext context) {
         return sendOrderNotificationScreen(ctx, context, "PRDS_ODR_PAYRETRY");
     }
 
-    protected static Map<String, Object> sendOrderNotificationScreen(DispatchContext dctx, Map<String, ? extends Object> context, String emailType) {
+    protected static Map<String, Object> sendOrderNotificationScreen(DispatchContext dctx, OrderServicesContext context, String emailType) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -2928,7 +2931,7 @@ public class OrderServices {
     /**
      * Service to email order notifications for pending actions
      */
-    public static Map<String, Object> sendProcessNotification(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendProcessNotification(DispatchContext ctx, OrderServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         String adminEmailList = (String) context.get(x.adminEmailList);
@@ -3022,7 +3025,7 @@ public class OrderServices {
     /**
      * Service to get order header information as standard results.
      */
-    public static Map<String, Object> getOrderHeaderInformation(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getOrderHeaderInformation(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
         Locale locale = (Locale) context.get(x.locale);
@@ -3047,7 +3050,7 @@ public class OrderServices {
     /**
      * Service to get the total shipping for an order.
      */
-    public static Map<String, Object> getOrderShippingAmount(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getOrderShippingAmount(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
         Locale locale = (Locale) context.get(x.locale);
@@ -3082,7 +3085,7 @@ public class OrderServices {
     }
 
     /** Service to get an order contact mech. */
-    public static Map<String, Object> getOrderAddress(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getOrderAddress(DispatchContext dctx, OrderServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
@@ -3131,7 +3134,7 @@ public class OrderServices {
     }
 
     /** Service to create a order header note. */
-    public static Map<String, Object> createOrderNote(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createOrderNote(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -3170,7 +3173,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> allowOrderSplit(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> allowOrderSplit(DispatchContext ctx, OrderServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         String orderId = (String) context.get(x.orderId);
@@ -3220,7 +3223,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> cancelFlaggedSalesOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> cancelFlaggedSalesOrders(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -3339,7 +3342,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> checkDigitalItemFulfillment(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> checkDigitalItemFulfillment(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -3511,7 +3514,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> fulfillDigitalItems(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> fulfillDigitalItems(DispatchContext ctx, OrderServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         //appears to not be used: String orderId = (String) context.get("orderId");
@@ -3634,7 +3637,7 @@ public class OrderServices {
     }
 
     /** Service to invoice service items from order*/
-    public static Map<String, Object> invoiceServiceItems(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> invoiceServiceItems(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -3717,7 +3720,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> addItemToApprovedOrder(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> addItemToApprovedOrder(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -3876,7 +3879,7 @@ public class OrderServices {
         return result;
     }
 
-    public static Map<String, Object> updateApprovedOrderItems(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateApprovedOrderItems(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -4164,7 +4167,7 @@ public class OrderServices {
         return result;
     }
 
-    public static Map<String, Object> loadCartForUpdate(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> loadCartForUpdate(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
@@ -4373,7 +4376,7 @@ public class OrderServices {
         return cart;
     }
 
-    public static Map<String, Object> saveUpdatedCartToOrder(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> saveUpdatedCartToOrder(DispatchContext dctx, OrderServicesContext context) {
 
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
@@ -4766,7 +4769,7 @@ public class OrderServices {
         }
     }
 
-    public static Map<String, Object> processOrderPayments(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processOrderPayments(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -4806,7 +4809,7 @@ public class OrderServices {
     }
 
     // sample test services
-    public static Map<String, Object> shoppingCartTest(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> shoppingCartTest(DispatchContext dctx, OrderServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         ShoppingCart cart = new ShoppingCart(dctx.getDelegator(), "9000", "webStore", locale, "USD");
         try {
@@ -4825,7 +4828,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> shoppingCartRemoteTest(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> shoppingCartRemoteTest(DispatchContext dctx, OrderServicesContext context) {
         ShoppingCart cart = (ShoppingCart) context.get(x.cart);
         Debug.logInfo("Product ID : " + cart.findCartItem(0).getProductId(), MODULE);
         return ServiceUtil.returnSuccess();
@@ -4835,7 +4838,7 @@ public class OrderServices {
      * Service to create a payment using an order payment preference.
      * @return Map
      */
-    public static Map<String, Object> createPaymentFromPreference(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createPaymentFromPreference(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -4922,27 +4925,27 @@ public class OrderServices {
         }
     }
 
-    public static Map<String, Object> massChangeApproved(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> massChangeApproved(DispatchContext dctx, OrderServicesContext context) {
         return massChangeOrderStatus(dctx, context, "ORDER_APPROVED");
     }
 
-    public static Map<String, Object> massCancelOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> massCancelOrders(DispatchContext dctx, OrderServicesContext context) {
         return massChangeItemStatus(dctx, context, "ITEM_CANCELLED");
     }
 
-    public static Map<String, Object> massRejectOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> massRejectOrders(DispatchContext dctx, OrderServicesContext context) {
         return massChangeItemStatus(dctx, context, "ITEM_REJECTED");
     }
 
-    public static Map<String, Object> massHoldOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> massHoldOrders(DispatchContext dctx, OrderServicesContext context) {
         return massChangeOrderStatus(dctx, context, "ORDER_HOLD");
     }
 
-    public static Map<String, Object> massProcessOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> massProcessOrders(DispatchContext dctx, OrderServicesContext context) {
         return massChangeOrderStatus(dctx, context, "ORDER_PROCESSING");
     }
 
-    public static Map<String, Object> massChangeOrderStatus(DispatchContext dctx, Map<String, ? extends Object> context, String statusId) {
+    public static Map<String, Object> massChangeOrderStatus(DispatchContext dctx, OrderServicesContext context, String statusId) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -4984,7 +4987,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> massChangeItemStatus(DispatchContext dctx, Map<String, ? extends Object> context, String statusId) {
+    public static Map<String, Object> massChangeItemStatus(DispatchContext dctx, OrderServicesContext context, String statusId) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -5025,7 +5028,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> massQuickShipOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> massQuickShipOrders(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         List<String> orderIds = UtilGenerics.cast(context.get(x.orderIdList));
@@ -5053,7 +5056,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> massPickOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> massPickOrders(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -5113,7 +5116,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> massPrintOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> massPrintOrders(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         String screenLocation = (String) context.get(x.screenLocation);
@@ -5142,7 +5145,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> massCreateFileForOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> massCreateFileForOrders(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         String screenLocation = (String) context.get(x.screenLocation);
@@ -5168,7 +5171,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> massCancelRemainingPurchaseOrderItems(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> massCancelRemainingPurchaseOrderItems(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         List<String> orderIds = UtilGenerics.cast(context.get(x.orderIdList));
@@ -5207,7 +5210,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> checkCreateDropShipPurchaseOrders(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> checkCreateDropShipPurchaseOrders(DispatchContext ctx, OrderServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         // TODO (use the "system" user)
@@ -5303,7 +5306,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> updateOrderPaymentPreference(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateOrderPaymentPreference(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String orderPaymentPreferenceId = (String) context.get(x.orderPaymentPreferenceId);
         String checkOutPaymentId = (String) context.get(x.checkOutPaymentId);
@@ -5364,7 +5367,7 @@ public class OrderServices {
      * @param context the context
      * @return the result of the service execution
      */
-    public static Map<String, Object> generateReqsFromCancelledPOItems(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> generateReqsFromCancelledPOItems(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -5442,7 +5445,7 @@ public class OrderServices {
      * @param context the context
      * @return cancels remaining (unreceived) quantities for items of an order
      */
-    public static Map<String, Object> cancelRemainingPurchaseOrderItems(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> cancelRemainingPurchaseOrderItems(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -5522,7 +5525,7 @@ public class OrderServices {
     }
 
     // create simple non-product order
-    public static Map<String, Object> createSimpleNonProductSalesOrder(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createSimpleNonProductSalesOrder(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
@@ -5592,7 +5595,7 @@ public class OrderServices {
     }
 
     // generic method for creating an order from a shopping cart
-    public static Map<String, Object> createOrderFromShoppingCart(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createOrderFromShoppingCart(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
@@ -5613,7 +5616,7 @@ public class OrderServices {
     }
 
     // generic method for processing an order's payment(s)
-    public static Map<String, Object> callProcessOrderPayments(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> callProcessOrderPayments(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -5672,7 +5675,7 @@ public class OrderServices {
      * @param context Map
      * @return Map
      */
-    public static Map<String, Object> getOrderItemInvoicedAmountAndQuantity(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getOrderItemInvoicedAmountAndQuantity(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
 
@@ -5802,7 +5805,7 @@ public class OrderServices {
         return result;
     }
 
-    public static Map<String, Object> setOrderPaymentStatus(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setOrderPaymentStatus(DispatchContext ctx, OrderServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         String orderPaymentPreferenceId = (String) context.get(x.orderPaymentPreferenceId);
         String changeReason = (String) context.get(x.changeReason);
@@ -5853,7 +5856,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> runSubscriptionAutoReorders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> runSubscriptionAutoReorders(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
@@ -5993,7 +5996,7 @@ public class OrderServices {
      * @param context
      * @return
      */
-    public static Map<String, Object> addOrderItemShipGroup(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> addOrderItemShipGroup(DispatchContext dctx, OrderServicesContext context) {
         Map<String, Object> result;
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -6121,7 +6124,7 @@ public class OrderServices {
      * @return
      * @throws GenericEntityException
      */
-    public static Map<String, Object> addOrderItemShipGroupAssoc(DispatchContext dctx, Map<String, Object> context)
+    public static Map<String, Object> addOrderItemShipGroupAssoc(DispatchContext dctx, OrderServicesContext context)
             throws GenericEntityException {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -6213,7 +6216,7 @@ public class OrderServices {
      * @return
      * @throws GeneralException
      */
-    public static Map<String, Object> updateOrderItemShipGroupAssoc(DispatchContext dctx, Map<String, Object> context)
+    public static Map<String, Object> updateOrderItemShipGroupAssoc(DispatchContext dctx, OrderServicesContext context)
             throws GeneralException {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         String message = null;
@@ -6451,7 +6454,7 @@ public class OrderServices {
         return result;
     }
 
-    public static Map<String, Object> setShippingInstructions(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setShippingInstructions(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
         String shipGroupSeqId = (String) context.get(x.shipGroupSeqId);
@@ -6467,7 +6470,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> setGiftMessage(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setGiftMessage(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
         String shipGroupSeqId = (String) context.get(x.shipGroupSeqId);
@@ -6484,7 +6487,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> createAlsoBoughtProductAssocs(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createAlsoBoughtProductAssocs(DispatchContext dctx, OrderServicesContext context) {
         final Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         // All orders with an entryDate > orderEntryFromDateTime will be processed
@@ -6568,7 +6571,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> createAlsoBoughtProductAssocsForOrder(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createAlsoBoughtProductAssocsForOrder(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
@@ -6649,7 +6652,7 @@ public class OrderServices {
     /**
      * This service runs when you update shipping method of Order from order view page.
      */
-    public static Map<String, Object> updateShipGroupShipInfo(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateShipGroupShipInfo(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -6752,7 +6755,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> associateOrderWithAllocationPlans(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> associateOrderWithAllocationPlans(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -6873,7 +6876,7 @@ public class OrderServices {
         return serviceResult;
     }
 
-    public static Map<String, Object> approveAllocationPlanItems(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> approveAllocationPlanItems(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -6938,7 +6941,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> cancelAllocationPlanItems(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> cancelAllocationPlanItems(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -6975,7 +6978,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> changeAllocationPlanStatus(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> changeAllocationPlanStatus(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -7028,7 +7031,7 @@ public class OrderServices {
         return serviceResult;
     }
 
-    public static Map<String, Object> changeAllocationPlanItemStatus(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> changeAllocationPlanItemStatus(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -7081,7 +7084,7 @@ public class OrderServices {
         return serviceResult;
     }
 
-    public static Map<String, Object> completeAllocationPlanItemByOrderItem(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> completeAllocationPlanItemByOrderItem(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -7148,7 +7151,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> cancelAllocationPlanItemByOrderItem(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> cancelAllocationPlanItemByOrderItem(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -7215,7 +7218,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> updateAllocatedQuantityOnOrderItemChange(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateAllocatedQuantityOnOrderItemChange(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -7265,7 +7268,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> createAllocationPlanAndItems(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createAllocationPlanAndItems(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -7337,7 +7340,7 @@ public class OrderServices {
         return serviceResult;
     }
 
-    public static Map<String, Object> isInventoryAllocationRequired(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> isInventoryAllocationRequired(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Boolean allocateInventory = false;
         Map<String, Object> serviceContext = UtilGenerics.cast(context.get(x.serviceContext));
@@ -7353,7 +7356,7 @@ public class OrderServices {
         return serviceResult;
     }
 
-    public static Map<String, Object> updateAllocationPlanItems(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateAllocationPlanItems(DispatchContext dctx, OrderServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -7459,7 +7462,7 @@ public class OrderServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> sendPOEmail(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendPOEmail(DispatchContext dctx, OrderServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);

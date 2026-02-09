@@ -62,7 +62,10 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import com.ibm.icu.util.Calendar;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ContentManagementServicesContext;
 /**
  * ContentManagementServices Class
  */
@@ -76,7 +79,7 @@ public class ContentManagementServices {
      * Finds the related subContent given the template Content and the mapKey.
      * This service calls a same-named method in ContentWorker to do the work.
      */
-    public static Map<String, Object> getSubContent(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getSubContent(DispatchContext dctx, ContentManagementServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String contentId = (String) context.get(x.contentId);
         String subContentId = (String) context.get(x.subContentId);
@@ -113,7 +116,7 @@ public class ContentManagementServices {
      * getContent
      * This service calls a same-named method in ContentWorker to do the work.
      */
-    public static Map<String, Object> getContent(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getContent(DispatchContext dctx, ContentManagementServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String contentId = (String) context.get(x.contentId);
         GenericValue view = null;
@@ -146,7 +149,7 @@ public class ContentManagementServices {
             throws GenericServiceException {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
+        ContentManagementServicesContext context = new ContentManagementServicesContext(UtilMisc.makeMapWritable(rcontext));
         Locale locale = (Locale) context.get(x.locale);
 
         // Check if a webshell is not uploaded
@@ -430,7 +433,7 @@ public class ContentManagementServices {
     /**
      * Service for update publish sites with a ContentRole that will tie them to the passed in party.
      */
-    public static Map<String, Object> updateSiteRoles(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateSiteRoles(DispatchContext dctx, ContentManagementServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -520,7 +523,7 @@ public class ContentManagementServices {
         return results;
     }
 
-    public static Map<String, Object> persistDataResourceAndData(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> persistDataResourceAndData(DispatchContext dctx, ContentManagementServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result;
@@ -552,7 +555,7 @@ public class ContentManagementServices {
             throws GenericServiceException, GenericEntityException {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
+        ContentManagementServicesContext context = new ContentManagementServicesContext(UtilMisc.makeMapWritable(rcontext));
 
         String errorMessage = validateUploadedFile(dctx, context);
         if (errorMessage != null) {
@@ -729,7 +732,7 @@ public class ContentManagementServices {
         }
     }
 
-    public static Map<String, Object> updateSiteRolesDyn(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateSiteRolesDyn(DispatchContext dctx, ContentManagementServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> results = new HashMap<>();
@@ -798,7 +801,7 @@ public class ContentManagementServices {
         return results;
     }
 
-    public static Map<String, Object> updateOrRemove(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateOrRemove(DispatchContext dctx, ContentManagementServicesContext context) {
         Map<String, Object> results = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         String entityName = (String) context.get(x.entityName);
@@ -861,7 +864,7 @@ public class ContentManagementServices {
      * @return
      * @throws GenericServiceException
      */
-    public static Map<String, Object> resequence(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
+    public static Map<String, Object> resequence(DispatchContext dctx, ContentManagementServicesContext context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         String contentId = (String) context.get(x.contentId);
@@ -926,7 +929,7 @@ public class ContentManagementServices {
         return result;
     }
 
-    public static Map<String, Object> changeLeafToNode(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
+    public static Map<String, Object> changeLeafToNode(DispatchContext dctx, ContentManagementServicesContext context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -984,7 +987,7 @@ public class ContentManagementServices {
         return result;
     }
 
-    public static Map<String, Object> updateLeafCount(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
+    public static Map<String, Object> updateLeafCount(DispatchContext dctx, ContentManagementServicesContext context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         List<String> typeList = UtilGenerics.cast(context.get(x.typeList));
@@ -1011,7 +1014,7 @@ public class ContentManagementServices {
      */
     public static Map<String, Object> updatePageType(DispatchContext dctx, Map<String, ? extends Object> rcontext) throws GenericServiceException {
         Delegator delegator = dctx.getDelegator();
-        Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
+        ContentManagementServicesContext context = new ContentManagementServicesContext(UtilMisc.makeMapWritable(rcontext));
         Map<String, Object> results = new HashMap<>();
         Locale locale = (Locale) context.get(x.locale);
         Set<String> visitedSet = UtilGenerics.cast(context.get(x.visitedSet));
@@ -1054,7 +1057,7 @@ public class ContentManagementServices {
     public static Map<String, Object> resetToOutlineMode(DispatchContext dctx, Map<String, ? extends Object> rcontext)
             throws GenericServiceException {
         Delegator delegator = dctx.getDelegator();
-        Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
+        ContentManagementServicesContext context = new ContentManagementServicesContext(UtilMisc.makeMapWritable(rcontext));
         Map<String, Object> results = new HashMap<>();
         Locale locale = (Locale) context.get(x.locale);
         Set<String> visitedSet = UtilGenerics.cast(context.get(x.visitedSet));
@@ -1098,7 +1101,7 @@ public class ContentManagementServices {
         return results;
     }
 
-    public static Map<String, Object> clearContentAssocViewCache(DispatchContext dctx, Map<String, ? extends Object> context)
+    public static Map<String, Object> clearContentAssocViewCache(DispatchContext dctx, ContentManagementServicesContext context)
             throws GenericServiceException {
         Map<String, Object> results = new HashMap<>();
         UtilCache<?, ?> utilCache = UtilCache.findCache("entitycache.entity-list.default.ContentAssocViewFrom");
@@ -1115,7 +1118,7 @@ public class ContentManagementServices {
         return results;
     }
 
-    public static Map<String, Object> clearContentAssocDataResourceViewCache(DispatchContext dctx, Map<String, ? extends Object> context)
+    public static Map<String, Object> clearContentAssocDataResourceViewCache(DispatchContext dctx, ContentManagementServicesContext context)
             throws GenericServiceException {
         Map<String, Object> results = new HashMap<>();
 
@@ -1132,7 +1135,7 @@ public class ContentManagementServices {
         return results;
     }
 
-    public static void updatePageNodeChildren(GenericValue content, Map<String, Object> context) throws GenericEntityException {
+    public static void updatePageNodeChildren(GenericValue content, ContentManagementServicesContext context) throws GenericEntityException {
         String contentId = content.getString(x.contentId);
         Set<String> visitedSet = UtilGenerics.cast(context.get(x.visitedSet));
         if (visitedSet == null) {
@@ -1155,7 +1158,7 @@ public class ContentManagementServices {
         }
     }
 
-    public static void updateOutlineNodeChildren(GenericValue content, boolean forceOutline, Map<String, Object> context)
+    public static void updateOutlineNodeChildren(GenericValue content, boolean forceOutline, ContentManagementServicesContext context)
             throws GenericEntityException {
         String contentId = content.getString(x.contentId);
         Set<String> visitedSet = UtilGenerics.cast(context.get(x.visitedSet));
@@ -1197,7 +1200,7 @@ public class ContentManagementServices {
         }
     }
 
-    public static Map<String, Object> findSubNodes(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
+    public static Map<String, Object> findSubNodes(DispatchContext dctx, ContentManagementServicesContext context) throws GenericServiceException {
         Map<String, Object> results = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         String contentIdTo = (String) context.get(x.contentId);
@@ -1216,7 +1219,7 @@ public class ContentManagementServices {
         return results;
     }
 
-    public static String updateTypeAndFile(GenericValue dataResource, Map<String, Object> context) {
+    public static String updateTypeAndFile(GenericValue dataResource, ContentManagementServicesContext context) {
         String retVal = null;
         String mimeTypeId = (String) context.get(x._imageData_contentType);
         String fileName = (String) context.get(x._imageData_fileName);
@@ -1234,7 +1237,7 @@ public class ContentManagementServices {
         return retVal;
     }
 
-    public static Map<String, Object> initContentChildCounts(DispatchContext dctx, Map<String, ? extends Object> context)
+    public static Map<String, Object> initContentChildCounts(DispatchContext dctx, ContentManagementServicesContext context)
             throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Locale locale = (Locale) context.get(x.locale);
@@ -1254,7 +1257,7 @@ public class ContentManagementServices {
         return result;
     }
 
-    public static Map<String, Object> incrementContentChildStats(DispatchContext dctx, Map<String, ? extends Object> context)
+    public static Map<String, Object> incrementContentChildStats(DispatchContext dctx, ContentManagementServicesContext context)
             throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
@@ -1283,7 +1286,7 @@ public class ContentManagementServices {
         return result;
     }
 
-    public static Map<String, Object> decrementContentChildStats(DispatchContext dctx, Map<String, ? extends Object> context)
+    public static Map<String, Object> decrementContentChildStats(DispatchContext dctx, ContentManagementServicesContext context)
             throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
@@ -1312,7 +1315,7 @@ public class ContentManagementServices {
         return result;
     }
 
-    public static Map<String, Object> updateContentChildStats(DispatchContext dctx, Map<String, ? extends Object> context)
+    public static Map<String, Object> updateContentChildStats(DispatchContext dctx, ContentManagementServicesContext context)
             throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
@@ -1334,7 +1337,7 @@ public class ContentManagementServices {
         return result;
     }
 
-    public static Map<String, Object> updateContentSubscription(DispatchContext dctx, Map<String, ? extends Object> context)
+    public static Map<String, Object> updateContentSubscription(DispatchContext dctx, ContentManagementServicesContext context)
             throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
@@ -1421,7 +1424,7 @@ public class ContentManagementServices {
 
     public static Map<String, Object> updateContentSubscriptionByProduct(DispatchContext dctx, Map<String, ? extends Object> rcontext)
             throws GenericServiceException {
-        Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
+        ContentManagementServicesContext context = new ContentManagementServicesContext(UtilMisc.makeMapWritable(rcontext));
         Map<String, Object> result;
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -1475,7 +1478,7 @@ public class ContentManagementServices {
 
     public static Map<String, Object> updateContentSubscriptionByOrder(DispatchContext dctx, Map<String, ? extends Object> rcontext)
             throws GenericServiceException {
-        Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
+        ContentManagementServicesContext context = new ContentManagementServicesContext(UtilMisc.makeMapWritable(rcontext));
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -1529,7 +1532,7 @@ public class ContentManagementServices {
         return result;
     }
 
-    public static Map<String, Object> followNodeChildren(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
+    public static Map<String, Object> followNodeChildren(DispatchContext dctx, ContentManagementServicesContext context) throws GenericServiceException {
         Map<String, Object> result = null;
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -1549,7 +1552,7 @@ public class ContentManagementServices {
         if (contentAssocTypeIdList.isEmpty()) {
             contentAssocTypeIdList.add("SUB_CONTENT");
         }
-        Map<String, Object> ctx = new HashMap<>();
+        ContentManagementServicesContext ctx = new ContentManagementServicesContext();
         ctx.put("userLogin", userLogin);
         ctx.put("contentAssocTypeIdList", contentAssocTypeIdList);
         try {
@@ -1564,7 +1567,7 @@ public class ContentManagementServices {
     }
 
     public static Map<String, Object> followNodeChildrenMethod(GenericValue content, LocalDispatcher dispatcher, String serviceName,
-            Map<String, Object> context) throws GenericEntityException, GenericServiceException {
+            ContentManagementServicesContext context) throws GenericEntityException, GenericServiceException {
         Map<String, Object> result = null;
         String contentId = content.getString(x.contentId);
         List<String> contentAssocTypeIdList = UtilGenerics.cast(context.get(x.contentAssocTypeIdList));
@@ -1595,7 +1598,7 @@ public class ContentManagementServices {
         return result;
     }
 
-    private static String validateUploadedFile(DispatchContext dctx, Map<String, ? extends Object> context) {
+    private static String validateUploadedFile(DispatchContext dctx, ContentManagementServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         String objectInfo = (String) context.get(x.objectInfo);

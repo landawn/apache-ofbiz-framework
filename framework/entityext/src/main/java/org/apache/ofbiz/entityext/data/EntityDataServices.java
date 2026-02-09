@@ -58,7 +58,10 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.shiro.crypto.cipher.AesCipherService;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.EntityDataServicesContext;
 /**
  * Entity Data Import/Export Services
  *
@@ -68,12 +71,12 @@ public class EntityDataServices {
     private static final String MODULE = EntityDataServices.class.getName();
     private static final String RESOURCE = "EntityExtUiLabels";
 
-    public static Map<String, Object> exportDelimitedToDirectory(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> exportDelimitedToDirectory(DispatchContext dctx, EntityDataServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtThisServiceIsNotYetImplemented", locale));
     }
 
-    public static Map<String, Object> importDelimitedFromDirectory(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> importDelimitedFromDirectory(DispatchContext dctx, EntityDataServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Security security = dctx.getSecurity();
         Locale locale = (Locale) context.get(x.locale);
@@ -128,7 +131,7 @@ public class EntityDataServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> importDelimitedFile(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> importDelimitedFile(DispatchContext dctx, EntityDataServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
         Locale locale = (Locale) context.get(x.locale);
@@ -328,7 +331,7 @@ public class EntityDataServices {
         return newValue;
     }
 
-    public static Map<String, Object> rebuildAllIndexesAndKeys(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> rebuildAllIndexesAndKeys(DispatchContext dctx, EntityDataServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
         Locale locale = (Locale) context.get(x.locale);
@@ -426,7 +429,7 @@ public class EntityDataServices {
         return result;
     }
 
-    public static Map<String, Object> unwrapByteWrappers(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> unwrapByteWrappers(DispatchContext dctx, EntityDataServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String entityName = (String) context.get(x.entityName);
         String fieldName = (String) context.get(x.fieldName);
@@ -453,7 +456,7 @@ public class EntityDataServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> reencryptPrivateKeys(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> reencryptPrivateKeys(DispatchContext dctx, EntityDataServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
         Locale locale = (Locale) context.get(x.locale);
@@ -504,7 +507,7 @@ public class EntityDataServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> reencryptFields(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> reencryptFields(DispatchContext dctx, EntityDataServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
         Locale locale = (Locale) context.get(x.locale);

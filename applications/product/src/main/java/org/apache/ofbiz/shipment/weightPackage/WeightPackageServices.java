@@ -34,10 +34,13 @@ import org.apache.ofbiz.entity.util.EntityUtilProperties;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.WeightPackageServicesContext;
 public class WeightPackageServices {
 
-    public static Map<String, Object> setPackageInfo(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setPackageInfo(DispatchContext dctx, WeightPackageServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         WeightPackageSession weightPackageSession = (WeightPackageSession) context.get(x.weightPackageSession);
         Locale locale = (Locale) context.get(x.locale);
@@ -87,7 +90,7 @@ public class WeightPackageServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> updatePackedLine(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updatePackedLine(DispatchContext dctx, WeightPackageServicesContext context) {
         WeightPackageSession weightPackageSession = (WeightPackageSession) context.get(x.weightPackageSession);
         Locale locale = (Locale) context.get(x.locale);
 
@@ -128,7 +131,7 @@ public class WeightPackageServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> deletePackedLine(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> deletePackedLine(DispatchContext dctx, WeightPackageServicesContext context) {
         WeightPackageSession weightPackageSession = (WeightPackageSession) context.get(x.weightPackageSession);
         Integer weightPackageSeqId = (Integer) context.get(x.weightPackageSeqId);
 
@@ -136,7 +139,7 @@ public class WeightPackageServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> completePackage(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> completePackage(DispatchContext dctx, WeightPackageServicesContext context) {
         WeightPackageSession weightPackageSession = (WeightPackageSession) context.get(x.weightPackageSession);
         Locale locale = (Locale) context.get(x.locale);
 
@@ -178,7 +181,7 @@ public class WeightPackageServices {
         return response;
     }
 
-    public static Map<String, Object> completeShipment(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> completeShipment(DispatchContext dctx, WeightPackageServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         WeightPackageSession weightPackageSession = (WeightPackageSession) context.get(x.weightPackageSession);
@@ -201,7 +204,7 @@ public class WeightPackageServices {
         return response;
     }
 
-    public static Map<String, Object> savePackagesInfo(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> savePackagesInfo(DispatchContext dctx, WeightPackageServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         WeightPackageSession weightPackageSession = (WeightPackageSession) context.get(x.weightPackageSession);

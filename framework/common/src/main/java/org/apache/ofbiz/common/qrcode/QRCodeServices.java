@@ -56,7 +56,10 @@ import com.google.zxing.qrcode.detector.Detector;
 
 import freemarker.template.utility.StringUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.QRCodeServicesContext;
 /**
  * Services for QRCode.
  */
@@ -72,7 +75,7 @@ public class QRCodeServices {
     /**
      * Streams QR Code to the result.
      */
-    public static Map<String, Object> generateQRCodeImage(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> generateQRCodeImage(DispatchContext ctx, QRCodeServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         String message = (String) context.get(x.message);
         Integer width = (Integer) context.get(x.width);

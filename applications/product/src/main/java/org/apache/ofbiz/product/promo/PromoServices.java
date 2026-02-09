@@ -50,7 +50,10 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.PromoServicesContext;
 /**
  * Promotions Services
  */
@@ -61,7 +64,7 @@ public class PromoServices {
     private static final char[] SMART_CHARS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
             'X', 'Y', 'Z', '2', '3', '4', '5', '6', '7', '8', '9' };
 
-    public static Map<String, Object> createProductPromoCodeSet(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createProductPromoCodeSet(DispatchContext dctx, PromoServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -127,7 +130,7 @@ public class PromoServices {
         return ServiceUtil.returnSuccess(bankOfNumbers.toString());
     }
 
-    public static Map<String, Object> purgeOldStoreAutoPromos(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> purgeOldStoreAutoPromos(DispatchContext dctx, PromoServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String productStoreId = (String) context.get(x.productStoreId);
         Locale locale = (Locale) context.get(x.locale);
@@ -157,7 +160,7 @@ public class PromoServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> importPromoCodesFromFile(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> importPromoCodesFromFile(DispatchContext dctx, PromoServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
 
@@ -231,7 +234,7 @@ public class PromoServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> importPromoCodeEmailsFromFile(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> importPromoCodeEmailsFromFile(DispatchContext dctx, PromoServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         String productPromoCodeId = (String) context.get(x.productPromoCodeId);
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);

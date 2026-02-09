@@ -40,7 +40,10 @@ import java.util.Locale;
 import java.util.Map;
 
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.FtpServicesContext;
 /**
  * FtpServices class
  * This class provide Ftp transfer services for content
@@ -67,7 +70,7 @@ public class FtpServices {
         return ftpClient;
     }
 
-    public static Map<String, Object> sendContentToFtp(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> sendContentToFtp(DispatchContext dctx, FtpServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         String contactMechId = (String) context.get(x.contactMechId);

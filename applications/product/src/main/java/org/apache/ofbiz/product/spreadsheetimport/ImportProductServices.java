@@ -43,7 +43,10 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.CellType;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ImportProductServicesContext;
 public class ImportProductServices {
 
     private static final String MODULE = ImportProductServices.class.getName();
@@ -61,7 +64,7 @@ public class ImportProductServices {
      * @return the result of the service execution
      * @throws IOException
      */
-    public static Map<String, Object> productImportFromSpreadsheet(DispatchContext dctx, Map<String, ? extends Object> context) throws IOException {
+    public static Map<String, Object> productImportFromSpreadsheet(DispatchContext dctx, ImportProductServicesContext context) throws IOException {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         // System.getProperty("user.dir") returns the path upto ofbiz home

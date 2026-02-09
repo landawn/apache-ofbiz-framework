@@ -44,7 +44,10 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.BOMServicesContext;
 /** Bills of Materials' services implementation.
  * These services are useful when dealing with product's
  * bills of materials.
@@ -62,7 +65,7 @@ public class BOMServices {
      * @param context the context
      * @return returns the product's low level code (llc) i.e. the maximum depth
      */
-    public static Map<String, Object> getMaxDepth(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getMaxDepth(DispatchContext dctx, BOMServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         String productId = (String) context.get(x.productId);
@@ -122,7 +125,7 @@ public class BOMServices {
      * @param context the context
      * @return the results of the updates the product's low level code
     */
-    public static Map<String, Object> updateLowLevelCode(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateLowLevelCode(DispatchContext dctx, BOMServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -218,7 +221,7 @@ public class BOMServices {
      * @param context the context
      * @return the results of the updates the product's low level code
     */
-    public static Map<String, Object> initLowLevelCode(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> initLowLevelCode(DispatchContext dctx, BOMServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -264,7 +267,7 @@ public class BOMServices {
      * @param context the context
      * @return returns the ProductAssoc generic value for a duplicate productIdKey ancestor if present
      */
-    public static Map<String, Object> searchDuplicatedAncestor(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> searchDuplicatedAncestor(DispatchContext dctx, BOMServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -298,7 +301,7 @@ public class BOMServices {
      * @param context the context
      * @return return the bill of material tree
      */
-    public static Map<String, Object> getBOMTree(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getBOMTree(DispatchContext dctx, BOMServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -350,7 +353,7 @@ public class BOMServices {
      * @param context the context
      * @return return the list of manufacturing components
      */
-    public static Map<String, Object> getManufacturingComponents(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getManufacturingComponents(DispatchContext dctx, BOMServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -441,7 +444,7 @@ public class BOMServices {
         return result;
     }
 
-    public static Map<String, Object> getNotAssembledComponents(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getNotAssembledComponents(DispatchContext dctx, BOMServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -494,7 +497,7 @@ public class BOMServices {
     // ---------------------------------------------
     // Service for the Product (Shipment) component
     //
-    public static Map<String, Object> createShipmentPackages(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createShipmentPackages(DispatchContext dctx, BOMServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -777,7 +780,7 @@ public class BOMServices {
      * @param context the context
      * @return returns the list of products in packages
      */
-    public static Map<String, Object> getProductsInPackages(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getProductsInPackages(DispatchContext dctx, BOMServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();

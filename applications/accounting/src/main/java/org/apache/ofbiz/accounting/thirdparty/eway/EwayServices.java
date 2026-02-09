@@ -35,14 +35,17 @@ import org.apache.ofbiz.entity.util.EntityUtilProperties;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.EwayServicesContext;
 public class EwayServices {
 
     private static final String MODULE = EwayServices.class.getName();
     private static final String RESOURCE = "AccountingUiLabels";
 
     // eway charge (auth w/ capture)
-    public static Map<String, Object> ewayCharge(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> ewayCharge(DispatchContext dctx, EwayServicesContext context) {
         String orderId = (String) context.get(x.orderId);
         String cvv2 = (String) context.get(x.cardSecurityCode);
         String custIp = (String) context.get(x.customerIpAddress);
@@ -110,7 +113,7 @@ public class EwayServices {
     }
 
     // eway refund
-    public static Map<String, Object> ewayRefund(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> ewayRefund(DispatchContext dctx, EwayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
         BigDecimal refundAmount = (BigDecimal) context.get(x.refundAmount);
@@ -170,7 +173,7 @@ public class EwayServices {
     }
 
     // eway release (does a refund)
-    public static Map<String, Object> ewayRelease(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> ewayRelease(DispatchContext dctx, EwayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
         BigDecimal releaseAmount = (BigDecimal) context.get(x.releaseAmount);
@@ -228,7 +231,7 @@ public class EwayServices {
         result.put("releaseAmount", reply.getTransactionAmount());
         return result;
     }
-    private static GatewayRequest initRequest(DispatchContext dctx, Map<String, Object> context, boolean refund) {
+    private static GatewayRequest initRequest(DispatchContext dctx, EwayServicesContext context, boolean refund) {
         String pgcId = (String) context.get(x.paymentGatewayConfigId);
         String cfgStr = (String) context.get(x.paymentConfig);
         Delegator delegator = dctx.getDelegator();

@@ -32,11 +32,14 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.MigrationServicesContext;
 public class MigrationServices {
     private static final String MODULE = MigrationServices.class.getName();
 
-    public static Map<String, Object> migrateProductPromoCodeEmail(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> migrateProductPromoCodeEmail(DispatchContext dctx, MigrationServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         List<Object> errors = new LinkedList<>();
         EntityQuery eq = EntityQuery.use(delegator).from("OldProductPromoCodeEmail");

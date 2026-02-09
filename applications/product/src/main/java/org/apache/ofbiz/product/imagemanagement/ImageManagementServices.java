@@ -60,7 +60,10 @@ import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.jdom2.JDOMException;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ImageManagementServicesContext;
 /**
  * Product Services
  */
@@ -73,7 +76,7 @@ public class ImageManagementServices {
     private static String imagePath;
 
     public static Map<String, Object> addMultipleuploadForProduct(DispatchContext dctx,
-            Map<String, ? extends Object> context) throws ImageReadException {
+            ImageManagementServicesContext context) throws ImageReadException {
 
         Map<String, Object> result = new HashMap<>();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -302,7 +305,7 @@ public class ImageManagementServices {
         return result;
     }
 
-    public static Map<String, Object> removeImageFileForImageManagement(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> removeImageFileForImageManagement(DispatchContext dctx, ImageManagementServicesContext context) {
         String productId = (String) context.get(x.productId);
         String contentId = (String) context.get(x.contentId);
         String dataResourceName = (String) context.get(x.dataResourceName);
@@ -323,7 +326,7 @@ public class ImageManagementServices {
         return ServiceUtil.returnSuccess();
     }
 
-    private static Map<String, Object> scaleImageMangementInAllSize(DispatchContext dctx, Map<String, ? extends Object> context,
+    private static Map<String, Object> scaleImageMangementInAllSize(DispatchContext dctx, ImageManagementServicesContext context,
                                                                     String filenameToUse, String resizeType, String productId)
         throws IllegalArgumentException, ImagingOpException, IOException, JDOMException {
 
@@ -527,7 +530,7 @@ public class ImageManagementServices {
         return result;
     }
 
-    public static Map<String, Object> createContentThumbnail(DispatchContext dctx, Map<String, ? extends Object> context,
+    public static Map<String, Object> createContentThumbnail(DispatchContext dctx, ImageManagementServicesContext context,
             GenericValue userLogin, ByteBuffer imageData, String productId, String imageName) throws ImageReadException {
         Map<String, Object> result = new HashMap<>();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -716,7 +719,7 @@ public class ImageManagementServices {
         return result;
     }
 
-    public static Map<String, Object> createNewImageThumbnail(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createNewImageThumbnail(DispatchContext dctx, ImageManagementServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dispatcher.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -791,7 +794,7 @@ public class ImageManagementServices {
         return ServiceUtil.returnSuccess(successMsg);
     }
 
-    public static Map<String, Object> resizeImageOfProduct(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> resizeImageOfProduct(DispatchContext dctx, ImageManagementServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
@@ -819,7 +822,7 @@ public class ImageManagementServices {
         return ServiceUtil.returnSuccess(successMsg);
     }
 
-    public static Map<String, Object> renameImage(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> renameImage(DispatchContext dctx, ImageManagementServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);

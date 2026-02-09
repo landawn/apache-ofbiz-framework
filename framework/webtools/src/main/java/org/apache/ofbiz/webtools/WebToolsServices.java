@@ -97,7 +97,10 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.WebToolsServicesContext;
 /**
  * WebTools Services
  */
@@ -107,7 +110,7 @@ public class WebToolsServices {
     private static final String MODULE = WebToolsServices.class.getName();
     private static final String RESOURCE = "WebtoolsUiLabels";
 
-    public static Map<String, Object> entityImport(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> entityImport(DispatchContext dctx, WebToolsServicesContext context) {
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
@@ -237,7 +240,7 @@ public class WebToolsServices {
         return resp;
     }
 
-    public static Map<String, Object> entityImportDir(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> entityImportDir(DispatchContext dctx, WebToolsServicesContext context) {
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -349,7 +352,7 @@ public class WebToolsServices {
         return resp;
     }
 
-    public static Map<String, Object> entityImportReaders(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> entityImportReaders(DispatchContext dctx, WebToolsServicesContext context) {
         String readers = (String) context.get(x.readers);
         String overrideDelegator = (String) context.get(x.overrideDelegator);
         String overrideGroup = (String) context.get(x.overrideGroup);
@@ -460,7 +463,7 @@ public class WebToolsServices {
         return resultMap;
     }
 
-    public static Map<String, Object> parseEntityXmlFile(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> parseEntityXmlFile(DispatchContext dctx, WebToolsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         URL url = (URL) context.get(x.url);
@@ -501,7 +504,7 @@ public class WebToolsServices {
         return resp;
     }
 
-    public static Map<String, Object> entityExportAll(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> entityExportAll(DispatchContext dctx, WebToolsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         String outpath = (String) context.get(x.outpath); // mandatory
@@ -645,7 +648,7 @@ public class WebToolsServices {
      * </ul>
      * </li></ul>
      */
-    public static Map<String, Object> getEntityRefData(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getEntityRefData(DispatchContext dctx, WebToolsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
@@ -831,7 +834,7 @@ public class WebToolsServices {
         return resultMap;
     }
 
-    public static Map<String, Object> exportEntityEoModelBundle(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> exportEntityEoModelBundle(DispatchContext dctx, WebToolsServicesContext context) {
         String eomodeldFullPath = (String) context.get(x.eomodeldFullPath);
         String entityPackageNameOrig = (String) context.get(x.entityPackageName);
         String entityGroupId = (String) context.get(x.entityGroupId);
@@ -930,7 +933,7 @@ public class WebToolsServices {
      * @param context the context
      * @return return the result of the service execution
      */
-    public static Map<String, Object> entityMaintPermCheck(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> entityMaintPermCheck(DispatchContext dctx, WebToolsServicesContext context) {
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Locale locale = (Locale) context.get(x.locale);
         Security security = dctx.getSecurity();
@@ -946,7 +949,7 @@ public class WebToolsServices {
     }
 
 
-    public static Map<String, Object> exportServiceEoModelBundle(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> exportServiceEoModelBundle(DispatchContext dctx, WebToolsServicesContext context) {
         String eomodeldFullPath = (String) context.get(x.eomodeldFullPath);
         String serviceName = (String) context.get(x.serviceName);
         Locale locale = (Locale) context.get(x.locale);

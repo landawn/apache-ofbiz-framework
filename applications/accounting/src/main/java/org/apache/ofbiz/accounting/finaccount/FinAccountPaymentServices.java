@@ -47,7 +47,10 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.FinAccountPaymentServicesContext;
 /**
  * FinAccountPaymentServices - Financial account used as payment method
  */
@@ -57,7 +60,7 @@ public class FinAccountPaymentServices {
     private static final String RES_ERROR = "AccountingErrorUiLabels";
 
     // base payment integration services
-    public static Map<String, Object> finAccountPreAuth(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> finAccountPreAuth(DispatchContext dctx, FinAccountPaymentServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -299,7 +302,7 @@ public class FinAccountPaymentServices {
         }
     }
 
-    public static Map<String, Object> finAccountReleaseAuth(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> finAccountReleaseAuth(DispatchContext dctx, FinAccountPaymentServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
@@ -334,7 +337,7 @@ public class FinAccountPaymentServices {
         }
     }
 
-    public static Map<String, Object> finAccountCapture(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> finAccountCapture(DispatchContext dctx, FinAccountPaymentServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -463,7 +466,7 @@ public class FinAccountPaymentServices {
         return result;
     }
 
-    public static Map<String, Object> finAccountRefund(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> finAccountRefund(DispatchContext dctx, FinAccountPaymentServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -537,7 +540,7 @@ public class FinAccountPaymentServices {
     }
 
     // base account transaction services
-    public static Map<String, Object> finAccountWithdraw(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> finAccountWithdraw(DispatchContext dctx, FinAccountPaymentServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -637,7 +640,7 @@ public class FinAccountPaymentServices {
     }
 
     // base deposit service
-    public static Map<String, Object> finAccountDeposit(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> finAccountDeposit(DispatchContext dctx, FinAccountPaymentServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -733,7 +736,7 @@ public class FinAccountPaymentServices {
     }
 
     // auto-replenish service (deposit)
-    public static Map<String, Object> finAccountReplenish(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> finAccountReplenish(DispatchContext dctx, FinAccountPaymentServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);

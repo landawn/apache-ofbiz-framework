@@ -72,7 +72,10 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.UpsServicesContext;
 /**
  * UPS ShipmentServices
  */
@@ -97,7 +100,7 @@ public class UpsServices {
         }
     }
 
-    public static Map<String, Object> upsShipmentConfirm(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> upsShipmentConfirm(DispatchContext dctx, UpsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -873,7 +876,7 @@ public class UpsServices {
         }
     }
 
-    public static Map<String, Object> upsShipmentAccept(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> upsShipmentAccept(DispatchContext dctx, UpsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentId = (String) context.get(x.shipmentId);
         String shipmentRouteSegmentId = (String) context.get(x.shipmentRouteSegmentId);
@@ -1031,7 +1034,7 @@ public class UpsServices {
     public static Map<String, Object> handleUpsShipmentAcceptResponse(Document shipmentAcceptResponseDocument, GenericValue shipmentRouteSegment,
                                                                       List<GenericValue> shipmentPackageRouteSegs,
                                                                       Delegator delegator, String shipmentGatewayConfigId, String resource,
-                                                                      Map<String, ? extends Object> context, Locale locale)
+                                                                      UpsServicesContext context, Locale locale)
             throws GenericEntityException {
         boolean shipmentUpsSaveCertificationInfo = "true".equals(getShipmentGatewayConfigValue(delegator, shipmentGatewayConfigId, "saveCertInfo",
                 resource, "shipment.ups.save.certification.info", "true"));
@@ -1284,7 +1287,7 @@ public class UpsServices {
         }
     }
 
-    public static Map<String, Object> upsVoidShipment(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> upsVoidShipment(DispatchContext dctx, UpsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentId = (String) context.get(x.shipmentId);
         String shipmentRouteSegmentId = (String) context.get(x.shipmentRouteSegmentId);
@@ -1479,7 +1482,7 @@ public class UpsServices {
         }
     }
 
-    public static Map<String, Object> upsTrackShipment(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> upsTrackShipment(DispatchContext dctx, UpsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentId = (String) context.get(x.shipmentId);
         String shipmentRouteSegmentId = (String) context.get(x.shipmentRouteSegmentId);
@@ -1696,7 +1699,7 @@ public class UpsServices {
         }
     }
 
-    public static Map<String, Object> upsRateInquire(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> upsRateInquire(DispatchContext dctx, UpsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         // prepare the data
@@ -2001,7 +2004,7 @@ public class UpsServices {
         return response;
     }
 
-    public static Map<String, Object> upsRateInquireByPostalCode(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> upsRateInquireByPostalCode(DispatchContext dctx, UpsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         // prepare the data
@@ -2217,7 +2220,7 @@ public class UpsServices {
         return handleUpsRateInquireResponse(rateResponseDocument, locale);
     }
 
-    public static Map<String, Object> upsAddressValidation(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> upsAddressValidation(DispatchContext dctx, UpsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         String city = (String) context.get(x.city);
@@ -2357,7 +2360,7 @@ public class UpsServices {
         }
     }
 
-    public static Map<String, Object> upsEmailReturnLabel(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> upsEmailReturnLabel(DispatchContext dctx, UpsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         String shipmentId = (String) context.get(x.shipmentId);
@@ -2784,7 +2787,7 @@ public class UpsServices {
         return ServiceUtil.returnSuccess(UtilProperties.getMessage("OrderUiLabels", "OrderReturnLabelEmailSuccessful", locale));
     }
 
-    public static Map<String, Object> upsShipmentAlternateRatesInquiry(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> upsShipmentAlternateRatesInquiry(DispatchContext dctx, UpsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
 
         // prepare the data

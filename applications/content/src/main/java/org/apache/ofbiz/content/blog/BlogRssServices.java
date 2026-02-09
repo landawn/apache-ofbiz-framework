@@ -46,7 +46,10 @@ import com.rometools.rome.feed.synd.SyndEntryImpl;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.feed.synd.SyndFeedImpl;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.BlogRssServicesContext;
 /**
  * BlogRssServices
  */
@@ -57,7 +60,7 @@ public class BlogRssServices {
     public static final String MIME_TYPE_ID = "text/html";
     public static final String MAP_KEY = "SUMMARY";
 
-    public static Map<String, Object> generateBlogRssFeed(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> generateBlogRssFeed(DispatchContext dctx, BlogRssServicesContext context) {
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         String contentId = (String) context.get(x.blogContentId);
         String entryLink = (String) context.get(x.entryLink);

@@ -40,7 +40,10 @@ import org.apache.ofbiz.entity.util.EntityUtilProperties;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.PcChargeServicesContext;
 public class PcChargeServices {
 
     private static final String MODULE = PcChargeServices.class.getName();
@@ -48,7 +51,7 @@ public class PcChargeServices {
     private static final int DECIMALS = UtilNumber.getBigDecimalScale("invoice.decimals");
     private static final RoundingMode ROUNDING_MODE = UtilNumber.getRoundingMode("invoice.rounding");
 
-    public static Map<String, Object> ccAuth(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> ccAuth(DispatchContext dctx, PcChargeServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         // setup the PCCharge Interface
@@ -131,7 +134,7 @@ public class PcChargeServices {
 
     }
 
-    public static Map<String, Object> ccCapture(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> ccCapture(DispatchContext dctx, PcChargeServicesContext context) {
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
@@ -183,7 +186,7 @@ public class PcChargeServices {
         return result;
     }
 
-    public static Map<String, Object> ccRelease(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> ccRelease(DispatchContext dctx, PcChargeServicesContext context) {
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         Delegator delegator = dctx.getDelegator();
         // lets see if there is a auth transaction already in context
@@ -241,7 +244,7 @@ public class PcChargeServices {
         return result;
     }
 
-    public static Map<String, Object> ccRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> ccRefund(DispatchContext dctx, PcChargeServicesContext context) {
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         Delegator delegator = dctx.getDelegator();
         // lets see if there is a auth transaction already in context
@@ -293,7 +296,7 @@ public class PcChargeServices {
         return result;
     }
 
-    private static void setCreditCardInfo(PcChargeApi api, Map<String, ? extends Object> context) throws GeneralException {
+    private static void setCreditCardInfo(PcChargeApi api, PcChargeServicesContext context) throws GeneralException {
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         GenericValue creditCard = (GenericValue) context.get(x.creditCard);
         if (creditCard != null) {
@@ -376,7 +379,7 @@ public class PcChargeServices {
         return api;
     }
 
-    private static Properties buildPccProperties(Map<String, ? extends Object> context, Delegator delegator) {
+    private static Properties buildPccProperties(PcChargeServicesContext context, Delegator delegator) {
         String configString = (String) context.get(x.paymentConfig);
         if (configString == null) {
             configString = "payment.properties";
@@ -416,7 +419,7 @@ public class PcChargeServices {
         return props;
     }
 
-    private static String getAmountString(Map<String, ? extends Object> context, String amountField) {
+    private static String getAmountString(PcChargeServicesContext context, String amountField) {
         BigDecimal processAmount = (BigDecimal) context.get(amountField);
         return processAmount.setScale(DECIMALS, ROUNDING_MODE).toPlainString();
     }

@@ -32,7 +32,10 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.CertificateServicesContext;
 /**
  * CertificateServices
  */
@@ -40,7 +43,7 @@ public class CertificateServices {
 
     private static final String MODULE = CertificateServices.class.getName();
 
-    public static Map<String, Object> importIssuerCertificate(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> importIssuerCertificate(DispatchContext dctx, CertificateServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String certString = (String) context.get(x.certString);
         String componentName = (String) context.get(x.componentName);

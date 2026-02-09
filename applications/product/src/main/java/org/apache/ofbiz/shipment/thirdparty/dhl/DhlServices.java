@@ -58,7 +58,10 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.DhlServicesContext;
 /**
  * DHL ShipmentServices
  *
@@ -152,7 +155,7 @@ public class DhlServices {
      * Service to obtain a rate estimate from DHL for a shipment. Notes: Only one package per shipment currently supported by DHL ShipIT.
      * If this service returns a null shippingEstimateAmount, then the shipment has not been processed
      */
-    public static Map<String, Object> dhlRateEstimate(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> dhlRateEstimate(DispatchContext dctx, DhlServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -379,7 +382,7 @@ public class DhlServices {
     /*
      * Register a DHL account for shipping by obtaining the DHL shipping key
      */
-    public static Map<String, Object> dhlRegisterInquire(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> dhlRegisterInquire(DispatchContext dctx, DhlServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String resource = (String) context.get(x.serviceConfigProps);
         String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
@@ -469,7 +472,7 @@ public class DhlServices {
      * Pass a shipment request to DHL via ShipIT and get a tracking number and a label back, among other things
      */
 
-    public static Map<String, Object> dhlShipmentConfirm(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> dhlShipmentConfirm(DispatchContext dctx, DhlServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);

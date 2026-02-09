@@ -48,7 +48,10 @@ import org.apache.ofbiz.product.product.ProductWorker;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.TaxAuthorityServicesContext;
 /**
  * Tax Authority tax calculation and other misc services
  */
@@ -65,7 +68,7 @@ public class TaxAuthorityServices {
     private static final int TAX_SCALE = UtilNumber.getBigDecimalScale("salestax.calc.decimals");
     private static final RoundingMode TAX_ROUNDING = UtilNumber.getRoundingMode("salestax.rounding");
 
-    public static Map<String, Object> rateProductTaxCalcForDisplay(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> rateProductTaxCalcForDisplay(DispatchContext dctx, TaxAuthorityServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String productStoreId = (String) context.get(x.productStoreId);
         String billToPartyId = (String) context.get(x.billToPartyId);
@@ -165,7 +168,7 @@ public class TaxAuthorityServices {
         return result;
     }
 
-    public static Map<String, Object> rateProductTaxCalc(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> rateProductTaxCalc(DispatchContext dctx, TaxAuthorityServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String productStoreId = (String) context.get(x.productStoreId);
         String facilityId = (String) context.get(x.facilityId);

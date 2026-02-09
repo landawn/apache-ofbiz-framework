@@ -43,7 +43,10 @@ import org.apache.ofbiz.webapp.WebAppUtil;
 
 import freemarker.template.TemplateException;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.NotificationServicesContext;
 /**
  * Provides generic services related to preparing and delivering notifications
  * via email.
@@ -119,7 +122,7 @@ public class NotificationServices {
      * the sevice
      * @return A Map with the service response messages in it
      */
-    public static Map<String, Object> sendNotification(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendNotification(DispatchContext ctx, NotificationServicesContext context) {
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = null;
@@ -184,7 +187,7 @@ public class NotificationServices {
      * @return A new Map indicating success or error containing the
      * body generated from the template and the input parameters.
      */
-    private static Map<String, Object> prepareNotification(DispatchContext ctx, Map<String, ? extends Object> context) {
+    private static Map<String, Object> prepareNotification(DispatchContext ctx, NotificationServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         String templateName = (String) context.get(x.templateName);
         Map<String, Object> templateData = UtilGenerics.cast(context.get(x.templateData));
@@ -251,9 +254,9 @@ public class NotificationServices {
      * @param context   The context to check and, if necessary, set the
      * <code>baseUrl</code>.
      */
-    public static void setBaseUrl(Delegator delegator, String webSiteId, Map<String, Object> context) {
+    public static void setBaseUrl(Delegator delegator, String webSiteId, Map<String, Object> templateData) {
         // If the baseUrl was not specified we can do a best effort instead
-        if (!context.containsKey("baseUrl")) {
+        if (!templateData.containsKey("baseUrl")) {
             try {
                 WebappInfo webAppInfo = null;
                 if (webSiteId != null) {
@@ -262,10 +265,10 @@ public class NotificationServices {
                 OfbizUrlBuilder builder = OfbizUrlBuilder.from(webAppInfo, delegator);
                 StringBuilder newURL = new StringBuilder();
                 builder.buildHostPart(newURL, "", false);
-                context.put(x.baseUrl, newURL.toString());
+                templateData.put(x.baseUrl, newURL.toString());
                 newURL = new StringBuilder();
                 builder.buildHostPart(newURL, "", true);
-                context.put(x.baseSecureUrl, newURL.toString());
+                templateData.put(x.baseSecureUrl, newURL.toString());
             } catch (Exception e) {
                 Debug.logWarning(e, "Exception thrown while adding baseUrl to context: ", MODULE);
             }

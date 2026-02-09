@@ -48,13 +48,16 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.FinAccountServicesContext;
 public class FinAccountServices {
 
     private static final String MODULE = FinAccountServices.class.getName();
     private static final String RES_ERROR = "AccountingErrorUiLabels";
 
-    public static Map<String, Object> createAccountAndCredit(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> createAccountAndCredit(DispatchContext dctx, FinAccountServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         String finAccountTypeId = (String) context.get(x.finAccountTypeId);
@@ -180,7 +183,7 @@ public class FinAccountServices {
         return result;
     }
 
-    public static Map<String, Object> createFinAccountForStore(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> createFinAccountForStore(DispatchContext dctx, FinAccountServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -248,7 +251,7 @@ public class FinAccountServices {
         }
     }
 
-    public static Map<String, Object> checkFinAccountBalance(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> checkFinAccountBalance(DispatchContext dctx, FinAccountServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String finAccountId = (String) context.get(x.finAccountId);
         String finAccountCode = (String) context.get(x.finAccountCode);
@@ -297,7 +300,7 @@ public class FinAccountServices {
         return result;
     }
 
-    public static Map<String, Object> checkFinAccountStatus(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> checkFinAccountStatus(DispatchContext dctx, FinAccountServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String finAccountId = (String) context.get(x.finAccountId);
         Locale locale = (Locale) context.get(x.locale);
@@ -346,7 +349,7 @@ public class FinAccountServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> refundFinAccount(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> refundFinAccount(DispatchContext dctx, FinAccountServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);

@@ -63,7 +63,10 @@ import com.lowagie.text.pdf.PdfStamper;
 import com.lowagie.text.pdf.PdfWriter;
 
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.PdfSurveyServicesContext;
 /**
  * PdfSurveyServices Class
  */
@@ -75,7 +78,7 @@ public class PdfSurveyServices {
 
     /**
      */
-    public static Map<String, Object> buildSurveyFromPdf(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> buildSurveyFromPdf(DispatchContext dctx, PdfSurveyServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -227,7 +230,7 @@ public class PdfSurveyServices {
 
     /**
      */
-    public static Map<String, Object> buildSurveyResponseFromPdf(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> buildSurveyResponseFromPdf(DispatchContext dctx, PdfSurveyServicesContext context) {
         String surveyResponseId = null;
         Locale locale = (Locale) context.get(x.locale);
         try {
@@ -293,7 +296,7 @@ public class PdfSurveyServices {
     /**
      * @throws GeneralException if getInputByteBuffer fails
      */
-    public static Map<String, Object> getAcroFieldsFromPdf(DispatchContext dctx, Map<String, ? extends Object> context) throws GeneralException {
+    public static Map<String, Object> getAcroFieldsFromPdf(DispatchContext dctx, PdfSurveyServicesContext context) throws GeneralException {
         Map<String, Object> acroFieldMap = new HashMap<>();
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         Delegator delegator = dctx.getDelegator();
@@ -321,7 +324,7 @@ public class PdfSurveyServices {
 
     /**
      */
-    public static Map<String, Object> setAcroFields(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setAcroFields(DispatchContext dctx, PdfSurveyServicesContext context) {
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Delegator delegator = dctx.getDelegator();
         try {
@@ -370,7 +373,7 @@ public class PdfSurveyServices {
     /**
      */
     public static Map<String, Object> buildPdfFromSurveyResponse(DispatchContext dctx, Map<String, ? extends Object> rcontext) {
-        Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
+        ServiceContext context = new ServiceContext(UtilMisc.makeMapWritable(rcontext));
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> results = ServiceUtil.returnSuccess();
         String surveyResponseId = (String) context.get(x.surveyResponseId);
@@ -441,7 +444,7 @@ public class PdfSurveyServices {
     /**
      * Returns list of maps with "question" -&gt; SurveyQuestion and "response" -&gt; SurveyResponseAnswer
      */
-    public static Map<String, Object> buildSurveyQuestionsAndAnswers(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> buildSurveyQuestionsAndAnswers(DispatchContext dctx, PdfSurveyServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> results = ServiceUtil.returnSuccess();
         String surveyResponseId = (String) context.get(x.surveyResponseId);
@@ -467,7 +470,7 @@ public class PdfSurveyServices {
 
     /**
      */
-    public static Map<String, Object> setAcroFieldsFromSurveyResponse(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setAcroFieldsFromSurveyResponse(DispatchContext dctx, PdfSurveyServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -558,7 +561,7 @@ public class PdfSurveyServices {
         return results;
     }
 
-    public static ByteBuffer getInputByteBuffer(Map<String, ? extends Object> context, Delegator delegator) throws GeneralException {
+    public static ByteBuffer getInputByteBuffer(PdfSurveyServicesContext context, Delegator delegator) throws GeneralException {
         ByteBuffer inputByteBuffer = (ByteBuffer) context.get(x.inputByteBuffer);
 
         if (inputByteBuffer == null) {

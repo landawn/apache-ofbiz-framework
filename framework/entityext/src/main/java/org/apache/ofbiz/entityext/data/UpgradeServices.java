@@ -41,7 +41,10 @@ import org.apache.ofbiz.security.Security;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.UpgradeServicesContext;
 /**
  * Entity Data Upgrade Services
  *
@@ -69,7 +72,7 @@ public class UpgradeServices {
      * @param context
      * @return Map with the success result of the service,
      */
-    public static Map<String, Object> generateMySqlFileWithAlterTableForTimestamps(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> generateMySqlFileWithAlterTableForTimestamps(DispatchContext dctx, UpgradeServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
         Locale locale = (Locale) context.get(x.locale);

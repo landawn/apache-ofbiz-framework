@@ -48,7 +48,10 @@ import com.paymentech.orbital.sdk.transactionProcessor.TransactionException;
 import com.paymentech.orbital.sdk.transactionProcessor.TransactionProcessor;
 import com.paymentech.orbital.sdk.util.exceptions.InitializationException;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.OrbitalPaymentServicesContext;
 public class OrbitalPaymentServices {
 
     private static final String MODULE = OrbitalPaymentServices.class.getName();
@@ -64,7 +67,7 @@ public class OrbitalPaymentServices {
     public static ResponseIF response = null;
     public static RequestIF request = null;
 
-    public static Map<String, Object> ccAuth(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> ccAuth(DispatchContext ctx, OrbitalPaymentServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Map<String, Object> props = buildOrbitalProperties(context, delegator);
@@ -90,7 +93,7 @@ public class OrbitalPaymentServices {
         return results;
     }
 
-    public static Map<String, Object> ccAuthCapture(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> ccAuthCapture(DispatchContext ctx, OrbitalPaymentServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Map<String, Object> props = buildOrbitalProperties(context, delegator);
@@ -116,7 +119,7 @@ public class OrbitalPaymentServices {
         return results;
     }
 
-    public static Map<String, Object> ccCapture(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> ccCapture(DispatchContext ctx, OrbitalPaymentServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Map<String, Object> props = buildOrbitalProperties(context, delegator);
@@ -161,7 +164,7 @@ public class OrbitalPaymentServices {
         return results;
     }
 
-    public static Map<String, Object> ccRefund(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> ccRefund(DispatchContext ctx, OrbitalPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> results = ServiceUtil.returnSuccess();
@@ -205,7 +208,7 @@ public class OrbitalPaymentServices {
         return results;
     }
 
-    public static Map<String, Object> ccRelease(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> ccRelease(DispatchContext ctx, OrbitalPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> results = ServiceUtil.returnSuccess();
@@ -249,7 +252,7 @@ public class OrbitalPaymentServices {
     }
 
 
-    private static Map<String, Object> buildOrbitalProperties(Map<String, Object> context, Delegator delegator) {
+    private static Map<String, Object> buildOrbitalProperties(OrbitalPaymentServicesContext context, Delegator delegator) {
         //TODO: Will move this to property file and then will read it from there.
         String configFile = "/applications/accounting/config/linehandler.properties";
         String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);

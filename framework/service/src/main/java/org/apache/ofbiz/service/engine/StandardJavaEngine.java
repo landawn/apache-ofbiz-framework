@@ -64,7 +64,10 @@ public final class StandardJavaEngine extends GenericAsyncEngine {
 
     // Invoke the static java method service.
     private Object serviceInvoker(String localName, ModelService modelService, Map<String, Object> context) throws GenericServiceException {
-        // static java service methods should be: public Map<String, Object> methodName(DispatchContext dctx, Map<String, Object> context)
+        // Java service methods can use either:
+        //   public Map<String, Object> methodName(DispatchContext dctx, Map<String, Object> context)
+        // or:
+        //   public Map<String, Object> methodName(DispatchContext dctx, TypedContext context)
         DispatchContext dctx = getDispatcher().getLocalContext(localName);
 
         if (modelService == null) {
@@ -96,11 +99,12 @@ public final class StandardJavaEngine extends GenericAsyncEngine {
 
         try {
             Class<?> c = cl.loadClass(this.getLocation(modelService));
-            Method m = c.getMethod(modelService.getInvoke(), DispatchContext.class, Map.class);
+            Method m = resolveMethod(c, modelService.getInvoke(), modelService.getName());
+            Object contextArg = buildContextArg(m, context, modelService.getName());
             if (Modifier.isStatic(m.getModifiers())) {
-                result = m.invoke(null, dctx, context);
+                result = m.invoke(null, dctx, contextArg);
             } else {
-                result = m.invoke(c.getDeclaredConstructor().newInstance(), dctx, context);
+                result = m.invoke(c.getDeclaredConstructor().newInstance(), dctx, contextArg);
             }
         } catch (ClassNotFoundException cnfe) {
             throw new GenericServiceException("Cannot find service [" + modelService.getName() + "] location class", cnfe);
@@ -125,6 +129,41 @@ public final class StandardJavaEngine extends GenericAsyncEngine {
         }
 
         return result;
+    }
+
+    private Method resolveMethod(Class<?> serviceClass, String invokeName, String serviceName) throws NoSuchMethodException {
+        try {
+            return serviceClass.getMethod(invokeName, DispatchContext.class, Map.class);
+        } catch (NoSuchMethodException e) {
+            Method found = null;
+            for (Method candidate : serviceClass.getMethods()) {
+                if (!invokeName.equals(candidate.getName())) {
+                    continue;
+                }
+                Class<?>[] parameterTypes = candidate.getParameterTypes();
+                if (parameterTypes.length != 2 || !DispatchContext.class.equals(parameterTypes[0])) {
+                    continue;
+                }
+                if (found != null) {
+                    throw new NoSuchMethodException(
+                            "Multiple Java service methods named [" + invokeName + "] with DispatchContext + typed context for service ["
+                                    + serviceName + "]");
+                }
+                found = candidate;
+            }
+            if (found == null) {
+                throw e;
+            }
+            return found;
+        }
+    }
+
+    private Object buildContextArg(Method method, Map<String, Object> context, String serviceName) throws GenericServiceException {
+        Class<?> contextParamType = method.getParameterTypes()[1];
+        if (contextParamType.isInstance(context)) {
+            return context;
+        }
+        return ServiceContextBinder.bindContext(context, contextParamType, serviceName);
     }
 }
 

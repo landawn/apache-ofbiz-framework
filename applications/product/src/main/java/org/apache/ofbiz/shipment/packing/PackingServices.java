@@ -31,13 +31,16 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.PackingServicesContext;
 public class PackingServices {
 
     private static final String MODULE = PackingServices.class.getName();
     private static final String RESOURCE = "ProductUiLabels";
 
-    public static Map<String, Object> addPackLine(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> addPackLine(DispatchContext dctx, PackingServicesContext context) {
         PackingSession session = (PackingSession) context.get(x.packingSession);
         String shipGroupSeqId = (String) context.get(x.shipGroupSeqId);
         String orderId = (String) context.get(x.orderId);
@@ -94,7 +97,7 @@ public class PackingServices {
      * @param context the context
      * @return returns the result of the service execution
      */
-    public static Map<String, Object> packBulk(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> packBulk(DispatchContext dctx, PackingServicesContext context) {
         PackingSession session = (PackingSession) context.get(x.packingSession);
         String orderId = (String) context.get(x.orderId);
         String shipGroupSeqId = (String) context.get(x.shipGroupSeqId);
@@ -213,7 +216,7 @@ public class PackingServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> incrementPackageSeq(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> incrementPackageSeq(DispatchContext dctx, PackingServicesContext context) {
         PackingSession session = (PackingSession) context.get(x.packingSession);
         int nextSeq = session.nextPackageSeq();
         Map<String, Object> result = ServiceUtil.returnSuccess();
@@ -221,7 +224,7 @@ public class PackingServices {
         return result;
     }
 
-    public static Map<String, Object> clearLastPackage(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> clearLastPackage(DispatchContext dctx, PackingServicesContext context) {
         PackingSession session = (PackingSession) context.get(x.packingSession);
         int nextSeq = session.clearLastPackage();
         Map<String, Object> result = ServiceUtil.returnSuccess();
@@ -229,7 +232,7 @@ public class PackingServices {
         return result;
     }
 
-    public static Map<String, Object> clearPackLine(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> clearPackLine(DispatchContext dctx, PackingServicesContext context) {
         PackingSession session = (PackingSession) context.get(x.packingSession);
         String orderId = (String) context.get(x.orderId);
         String orderItemSeqId = (String) context.get(x.orderItemSeqId);
@@ -253,14 +256,14 @@ public class PackingServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> clearPackAll(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> clearPackAll(DispatchContext dctx, PackingServicesContext context) {
         PackingSession session = (PackingSession) context.get(x.packingSession);
         session.clearAllLines();
 
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> calcPackSessionAdditionalShippingCharge(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> calcPackSessionAdditionalShippingCharge(DispatchContext dctx, PackingServicesContext context) {
         PackingSession session = (PackingSession) context.get(x.packingSession);
         Map<String, String> packageWeights = UtilGenerics.cast(context.get(x.packageWeights));
         String weightUomId = (String) context.get(x.weightUomId);
@@ -282,7 +285,7 @@ public class PackingServices {
     }
 
 
-    public static Map<String, Object> completePack(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> completePack(DispatchContext dctx, PackingServicesContext context) {
         PackingSession session = (PackingSession) context.get(x.packingSession);
         Locale locale = (Locale) context.get(x.locale);
         // set the instructions -- will clear out previous if now null

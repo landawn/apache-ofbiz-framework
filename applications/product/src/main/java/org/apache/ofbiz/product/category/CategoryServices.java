@@ -50,7 +50,10 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.CategoryServicesContext;
 /**
  * CategoryServices - Category Services
  */
@@ -59,7 +62,7 @@ public class CategoryServices {
     private static final String MODULE = CategoryServices.class.getName();
     private static final String RES_ERROR = "ProductErrorUiLabels";
 
-    public static Map<String, Object> getCategoryMembers(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getCategoryMembers(DispatchContext dctx, CategoryServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String categoryId = (String) context.get(x.categoryId);
         Locale locale = (Locale) context.get(x.locale);
@@ -85,7 +88,7 @@ public class CategoryServices {
         return result;
     }
 
-    public static Map<String, Object> getPreviousNextProducts(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getPreviousNextProducts(DispatchContext dctx, CategoryServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String categoryId = (String) context.get(x.categoryId);
         String productId = (String) context.get(x.productId);
@@ -219,7 +222,7 @@ public class CategoryServices {
         return entityName;
     }
 
-    public static Map<String, Object> getProductCategoryAndLimitedMembers(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getProductCategoryAndLimitedMembers(DispatchContext dctx, CategoryServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         String productCategoryId = (String) context.get(x.productCategoryId);

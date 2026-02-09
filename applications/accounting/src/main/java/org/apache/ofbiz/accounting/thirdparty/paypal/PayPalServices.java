@@ -77,7 +77,10 @@ import com.paypal.sdk.profiles.APIProfile;
 import com.paypal.sdk.profiles.ProfileFactory;
 import com.paypal.sdk.services.NVPCallerServices;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.PayPalServicesContext;
 /**
  * PayPalServices for NVP API communication
  */
@@ -93,7 +96,7 @@ public class PayPalServices {
     // session (i.e. on cart clear or successful checkout) or when the session is destroyed
     private static Map<TokenWrapper, WeakReference<ShoppingCart>> tokenCartMap = new WeakHashMap<>();
 
-    public static Map<String, Object> setExpressCheckout(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setExpressCheckout(DispatchContext dctx, PayPalServicesContext context) {
         ShoppingCart cart = (ShoppingCart) context.get(x.cart);
         Locale locale = cart.getLocale();
         if (cart == null || cart.items().size() <= 0) {
@@ -171,7 +174,7 @@ public class PayPalServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> payPalCheckoutUpdate(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> payPalCheckoutUpdate(DispatchContext dctx, PayPalServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         HttpServletRequest request = (HttpServletRequest) context.get(x.request);
@@ -346,7 +349,7 @@ public class PayPalServices {
         encoder.add("MAXAMT", cart.getSubTotal().add(otherAdjustments).setScale(2).toPlainString());
     }
 
-    public static Map<String, Object> getExpressCheckout(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> getExpressCheckout(DispatchContext dctx, PayPalServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
@@ -665,7 +668,7 @@ public class PayPalServices {
     // Note we're not doing a lot of error checking here as this method is really only used
     // to confirm the order with PayPal, the subsequent authorizations will handle any errors
     // that may occur.
-    public static Map<String, Object> doExpressCheckout(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> doExpressCheckout(DispatchContext dctx, PayPalServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -745,7 +748,7 @@ public class PayPalServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> doAuthorization(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> doAuthorization(DispatchContext dctx, PayPalServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
         BigDecimal processAmount = (BigDecimal) context.get(x.processAmount);
@@ -801,7 +804,7 @@ public class PayPalServices {
         return result;
     }
 
-    public static Map<String, Object> doCapture(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> doCapture(DispatchContext dctx, PayPalServicesContext context) {
         GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
         BigDecimal captureAmount = (BigDecimal) context.get(x.captureAmount);
         GenericValue payPalConfig = getPaymentMethodGatewayPayPal(dctx, context, PaymentGatewayServices.AUTH_SERVICE_TYPE);
@@ -854,7 +857,7 @@ public class PayPalServices {
         return result;
     }
 
-    public static Map<String, Object> doVoid(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> doVoid(DispatchContext dctx, PayPalServicesContext context) {
         GenericValue payPalConfig = getPaymentMethodGatewayPayPal(dctx, context, null);
         Locale locale = (Locale) context.get(x.locale);
         if (payPalConfig == null) {
@@ -903,7 +906,7 @@ public class PayPalServices {
         return result;
     }
 
-    public static Map<String, Object> doRefund (DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> doRefund (DispatchContext dctx, PayPalServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         GenericValue payPalConfig = getPaymentMethodGatewayPayPal(dctx, context, null);
         if (payPalConfig == null) {
@@ -955,7 +958,7 @@ public class PayPalServices {
         return result;
     }
 
-    private static GenericValue getPaymentMethodGatewayPayPal(DispatchContext dctx, Map<String, ? extends Object> context, String paymentServiceTypeEnumId) {
+    private static GenericValue getPaymentMethodGatewayPayPal(DispatchContext dctx, PayPalServicesContext context, String paymentServiceTypeEnumId) {
         Delegator delegator = dctx.getDelegator();
         String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
         GenericValue payPalGatewayConfig = null;

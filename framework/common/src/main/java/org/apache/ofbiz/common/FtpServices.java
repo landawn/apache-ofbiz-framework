@@ -39,7 +39,10 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.CommonFtpServicesContext;
 /**
  * FTP Services.
  *
@@ -49,7 +52,7 @@ public class FtpServices {
     private static final String MODULE = FtpServices.class.getName();
     private static final String RESOURCE = "CommonUiLabels";
 
-    public static Map<String, Object> putFile(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> putFile(DispatchContext dctx, CommonFtpServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Debug.logInfo("[putFile] starting...", MODULE);
         InputStream localFile = null;
@@ -133,7 +136,7 @@ public class FtpServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> getFile(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> getFile(DispatchContext dctx, CommonFtpServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         String localFilename = (String) context.get(x.localFilename);
         OutputStream localFile = null;

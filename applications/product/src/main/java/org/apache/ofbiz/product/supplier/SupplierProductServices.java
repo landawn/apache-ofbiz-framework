@@ -40,7 +40,10 @@ import org.apache.ofbiz.product.product.ProductWorker;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.SupplierProductServicesContext;
 /**
  * Services for suppliers of products
  */
@@ -54,7 +57,7 @@ public class SupplierProductServices {
      * Result: a List of SupplierProduct entities for productId,
      *         filtered by date and optionally by partyId, ordered with lowest price first
      */
-    public static Map<String, Object> getSuppliersForProduct(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getSuppliersForProduct(DispatchContext dctx, SupplierProductServicesContext context) {
         Map<String, Object> results;
         Delegator delegator = dctx.getDelegator();
 
@@ -130,7 +133,7 @@ public class SupplierProductServices {
      * Service will convert each feature in the Collection, changing their idCode and description based on the
      * SupplierProduct entity for that supplier party and feature, and return it as convertedProductFeatures
      */
-    public static Map<String, Object> convertFeaturesForSupplier(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> convertFeaturesForSupplier(DispatchContext dctx, SupplierProductServicesContext context) {
         Map<String, Object> results;
         String partyId = (String) context.get(x.partyId);
         Collection<GenericValue> features = UtilGenerics.cast(context.get(x.productFeatures));

@@ -46,7 +46,10 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.GiftCertificateServicesContext;
 public class GiftCertificateServices {
 
     private static final String MODULE = GiftCertificateServices.class.getName();
@@ -61,7 +64,7 @@ public class GiftCertificateServices {
 
 
     // Base Gift Certificate Services
-    public static Map<String, Object> createGiftCertificate(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createGiftCertificate(DispatchContext dctx, GiftCertificateServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -166,7 +169,7 @@ public class GiftCertificateServices {
         return result;
     }
 
-    public static Map<String, Object> addFundsToGiftCertificate(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> addFundsToGiftCertificate(DispatchContext dctx, GiftCertificateServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -257,7 +260,7 @@ public class GiftCertificateServices {
         return result;
     }
 
-    public static Map<String, Object> redeemGiftCertificate(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> redeemGiftCertificate(DispatchContext dctx, GiftCertificateServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         final String withdrawl = "WITHDRAWAL";
@@ -343,7 +346,7 @@ public class GiftCertificateServices {
         return result;
     }
 
-    public static Map<String, Object> checkGiftCertificateBalance(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> checkGiftCertificateBalance(DispatchContext dctx, GiftCertificateServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String cardNumber = (String) context.get(x.cardNumber);
         String pinNumber = (String) context.get(x.pinNumber);
@@ -374,7 +377,7 @@ public class GiftCertificateServices {
     }
 
     // Fullfilment Services
-    public static Map<String, Object> giftCertificateProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> giftCertificateProcessor(DispatchContext dctx, GiftCertificateServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -468,7 +471,7 @@ public class GiftCertificateServices {
     }
 
 
-    public static Map<String, Object> giftCertificateAuthorize(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> giftCertificateAuthorize(DispatchContext dctx, GiftCertificateServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -577,7 +580,7 @@ public class GiftCertificateServices {
         }
     }
 
-    public static Map<String, Object> giftCertificateRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> giftCertificateRefund(DispatchContext dctx, GiftCertificateServicesContext context) {
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
         String currency = (String) context.get(x.currency);
@@ -586,7 +589,7 @@ public class GiftCertificateServices {
         return giftCertificateRestore(dctx, userLogin, paymentPref, amount, currency, "refund", locale);
     }
 
-    public static Map<String, Object> giftCertificateRelease(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> giftCertificateRelease(DispatchContext dctx, GiftCertificateServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
@@ -690,7 +693,7 @@ public class GiftCertificateServices {
         return result;
     }
 
-    public static Map<String, Object> giftCertificatePurchase(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> giftCertificatePurchase(DispatchContext dctx, GiftCertificateServicesContext context) {
         // this service should always be called via FULFILLMENT_EXTASYNC
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
@@ -930,7 +933,7 @@ public class GiftCertificateServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> giftCertificateReload(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> giftCertificateReload(DispatchContext dctx, GiftCertificateServicesContext context) {
         // this service should always be called via FULFILLMENT_EXTSYNC
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
@@ -1153,7 +1156,7 @@ public class GiftCertificateServices {
     }
 
     // Tracking Service
-    public static Map<String, Object> createFulfillmentRecord(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createFulfillmentRecord(DispatchContext dctx, GiftCertificateServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
 
@@ -1185,7 +1188,7 @@ public class GiftCertificateServices {
     }
 
     // Refund Service
-    public static Map<String, Object> refundGcPurchase(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> refundGcPurchase(DispatchContext dctx, GiftCertificateServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);

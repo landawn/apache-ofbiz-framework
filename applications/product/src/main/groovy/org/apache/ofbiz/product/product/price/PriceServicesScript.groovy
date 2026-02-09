@@ -27,6 +27,7 @@ import org.apache.ofbiz.entity.GenericValue
 import org.apache.ofbiz.entity.condition.EntityCondition
 import org.apache.ofbiz.entity.condition.EntityOperator
 import org.apache.ofbiz.party.party.PartyHelper
+import org.apache.ofbiz.persistence.entity.x
 
 /**
  * Create a Product Price

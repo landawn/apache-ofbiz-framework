@@ -43,7 +43,10 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ProductFeatureServicesContext;
 /**
  * Services for product features
  */
@@ -62,7 +65,7 @@ public class ProductFeatureServices {
      * the results are from ProductFeatureGroupAndAppl.  Otherwise, if there is a productId, the results are from ProductFeatureAndAppl.
      * The optional productFeatureApplTypeId causes results to be filtered by this parameter--only used in conjunction with productId.
      */
-    public static Map<String, Object> getProductFeaturesByType(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getProductFeaturesByType(DispatchContext dctx, ProductFeatureServicesContext context) {
         Map<String, Object> results;
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -131,7 +134,7 @@ public class ProductFeatureServices {
      * Parameter: productId, productFeatureAppls (a List of ProductFeatureAndAppl entities of features applied to productId)
      * Result: variantProductIds: a List of productIds of variants with those features
      */
-    public static Map<String, Object> getAllExistingVariants(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getAllExistingVariants(DispatchContext dctx, ProductFeatureServicesContext context) {
         Map<String, Object> results;
         Delegator delegator = dctx.getDelegator();
 
@@ -183,7 +186,7 @@ public class ProductFeatureServices {
      * {defaultVariantProductId: id of this variant; curProductFeatureAndAppls: features applied to this variant;
      * existingVariantProductIds: List of productIds which are already variants with these features }
      */
-    public static Map<String, Object> getVariantCombinations(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getVariantCombinations(DispatchContext dctx, ProductFeatureServicesContext context) {
         Map<String, Object> results;
         LocalDispatcher dispatcher = dctx.getDispatcher();
 
@@ -300,7 +303,7 @@ public class ProductFeatureServices {
      * Parameters: productCategoryId (String) and productFeatures (a List of ProductFeature GenericValues)
      * Result: products (a List of Product GenericValues)
      */
-    public static Map<String, Object> getCategoryVariantProducts(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getCategoryVariantProducts(DispatchContext dctx, ProductFeatureServicesContext context) {
         Map<String, Object> results = new HashMap<>();
         LocalDispatcher dispatcher = dctx.getDispatcher();
 

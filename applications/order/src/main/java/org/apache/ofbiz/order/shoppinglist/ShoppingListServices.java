@@ -62,7 +62,10 @@ import org.apache.ofbiz.service.calendar.RecurrenceInfoException;
 import javax.transaction.Transaction;
 import org.apache.ofbiz.base.util.collections.PagedList;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ShoppingListServicesContext;
 /**
  * Shopping List Services
  */
@@ -71,7 +74,7 @@ public class ShoppingListServices {
     private static final String MODULE = ShoppingListServices.class.getName();
     private static final String RES_ERROR = "OrderErrorUiLabels";
 
-    public static Map<String, Object> setShoppingListRecurrence(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> setShoppingListRecurrence(DispatchContext dctx, ShoppingListServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Timestamp startDate = (Timestamp) context.get(x.startDateTime);
         Timestamp endDate = (Timestamp) context.get(x.endDateTime);
@@ -121,7 +124,7 @@ public class ShoppingListServices {
         return result;
     }
 
-    public static Map<String, Object> createListReorders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createListReorders(DispatchContext dctx, ShoppingListServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
@@ -231,7 +234,7 @@ public class ShoppingListServices {
         }
     }
 
-    public static Map<String, Object> splitShipmentMethodString(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> splitShipmentMethodString(DispatchContext dctx, ShoppingListServicesContext context) {
         String shipmentMethodString = (String) context.get(x.shippingMethodString);
         Map<String, Object> result = ServiceUtil.returnSuccess();
 
@@ -250,7 +253,7 @@ public class ShoppingListServices {
         return result;
     }
 
-    public static Map<String, Object> makeListFromOrder(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> makeListFromOrder(DispatchContext dctx, ShoppingListServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
@@ -556,7 +559,7 @@ public class ShoppingListServices {
      * @param context - Map containing the input parameters
      * @return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> updateShoppingListQuantitiesFromOrder(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateShoppingListQuantitiesFromOrder(DispatchContext ctx, ShoppingListServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
@@ -586,7 +589,7 @@ public class ShoppingListServices {
         return result;
     }
 
-    public static Map<String, Object> autoDeleteAutoSaveShoppingList(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> autoDeleteAutoSaveShoppingList(DispatchContext dctx, ShoppingListServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);

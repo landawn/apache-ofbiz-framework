@@ -43,7 +43,10 @@ import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ContentPermissionServicesContext;
 /**
  * ContentPermissionServices Class
  *
@@ -86,7 +89,7 @@ public class ContentPermissionServices {
      * ownerContentId, then the last step is recusively applied, using the ContentRoles
      * associated with the ownerContent entity.
      */
-    public static Map<String, Object> checkContentPermission(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> checkContentPermission(DispatchContext dctx, ContentPermissionServicesContext context) {
         Debug.logWarning(new Exception(), "This service has been depricated in favor of [genericContentPermission]", MODULE);
 
         Security security = dctx.getSecurity();
@@ -251,7 +254,7 @@ public class ContentPermissionServices {
         return results;
     }
 
-    public static Map<String, Object> checkAssocPermission(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> checkAssocPermission(DispatchContext dctx, ContentPermissionServicesContext context) {
         Map<String, Object> results = new HashMap<>();
         // Security security = dctx.getSecurity();
         Delegator delegator = dctx.getDelegator();

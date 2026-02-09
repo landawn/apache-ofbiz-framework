@@ -45,7 +45,10 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ValueLinkServicesContext;
 /**
  * ValueLinkServices - Integration with ValueLink Gift Cards
  */
@@ -57,7 +60,7 @@ public class ValueLinkServices {
     private static final String RES_ORDER = "OrderUiLabels";
 
     // generate/display new public/private/kek keys
-    public static Map<String, Object> createKeys(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> createKeys(DispatchContext dctx, ValueLinkServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
         ValueLinkApi vl = ValueLinkApi.getInstance(delegator, props);
@@ -77,7 +80,7 @@ public class ValueLinkServices {
     }
 
     // test the KEK encryption
-    public static Map<String, Object> testKekEncryption(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> testKekEncryption(DispatchContext dctx, ValueLinkServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         //GenericValue userLogin = (GenericValue) context.get("userLogin");
         Properties props = getProperties(context);
@@ -127,7 +130,7 @@ public class ValueLinkServices {
     }
 
     // change working key service
-    public static Map<String, Object> assignWorkingKey(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> assignWorkingKey(DispatchContext dctx, ValueLinkServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Properties props = getProperties(context);
@@ -192,7 +195,7 @@ public class ValueLinkServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> activate(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> activate(DispatchContext dctx, ValueLinkServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
         String vlPromoCode = (String) context.get(x.vlPromoCode);
@@ -268,7 +271,7 @@ public class ValueLinkServices {
 
     }
 
-    public static Map<String, Object> linkPhysicalCard(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> linkPhysicalCard(DispatchContext dctx, ValueLinkServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
         String virtualCard = (String) context.get(x.virtualCard);
@@ -317,7 +320,7 @@ public class ValueLinkServices {
         return result;
     }
 
-    public static Map<String, Object> disablePin(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> disablePin(DispatchContext dctx, ValueLinkServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
         String cardNumber = (String) context.get(x.cardNumber);
@@ -369,7 +372,7 @@ public class ValueLinkServices {
         return result;
     }
 
-    public static Map<String, Object> redeem(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> redeem(DispatchContext dctx, ValueLinkServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
         String cardNumber = (String) context.get(x.cardNumber);
@@ -432,7 +435,7 @@ public class ValueLinkServices {
 
     }
 
-    public static Map<String, Object> reload(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> reload(DispatchContext dctx, ValueLinkServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
         String cardNumber = (String) context.get(x.cardNumber);
@@ -494,7 +497,7 @@ public class ValueLinkServices {
 
     }
 
-    public static Map<String, Object> balanceInquire(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> balanceInquire(DispatchContext dctx, ValueLinkServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
         String cardNumber = (String) context.get(x.cardNumber);
@@ -546,7 +549,7 @@ public class ValueLinkServices {
 
     }
 
-    public static Map<String, Object> transactionHistory(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> transactionHistory(DispatchContext dctx, ValueLinkServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
         String cardNumber = (String) context.get(x.cardNumber);
@@ -597,7 +600,7 @@ public class ValueLinkServices {
 
     }
 
-    public static Map<String, Object> refund(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> refund(DispatchContext dctx, ValueLinkServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Properties props = getProperties(context);
         String cardNumber = (String) context.get(x.cardNumber);
@@ -659,27 +662,27 @@ public class ValueLinkServices {
 
     }
 
-    public static Map<String, Object> voidRedeem(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> voidRedeem(DispatchContext dctx, ValueLinkServicesContext context) {
         context.put(x.Interface, "Redeem/Void");
         return redeem(dctx, context);
     }
 
-    public static Map<String, Object> voidRefund(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> voidRefund(DispatchContext dctx, ValueLinkServicesContext context) {
         context.put(x.Interface, "Refund/Void");
         return refund(dctx, context);
     }
 
-    public static Map<String, Object> voidReload(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> voidReload(DispatchContext dctx, ValueLinkServicesContext context) {
         context.put(x.Interface, "Reload/Void");
         return reload(dctx, context);
     }
 
-    public static Map<String, Object> voidActivate(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> voidActivate(DispatchContext dctx, ValueLinkServicesContext context) {
         context.put(x.Interface, "Activate/Void");
         return activate(dctx, context);
     }
 
-    public static Map<String, Object> timeOutReversal(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> timeOutReversal(DispatchContext dctx, ValueLinkServicesContext context) {
         String vlInterface = (String) context.get(x.Interface);
         Locale locale = (Locale) context.get(x.locale);
         Debug.logInfo("704 Interface : " + vlInterface, MODULE);
@@ -707,7 +710,7 @@ public class ValueLinkServices {
     private static void setTimeoutReversal(DispatchContext dctx, Map<String, Object> ctx, Map<String, Object> request) {
         String vlInterface = (String) request.get("Interface");
         // clone the context
-        Map<String, Object> context = new HashMap<>();
+        ServiceContext context = new ServiceContext();
         context.putAll(ctx);
 
         // append the rollback interface
@@ -735,7 +738,7 @@ public class ValueLinkServices {
         }
     }
 
-    private static Properties getProperties(Map<String, Object> context) {
+    private static Properties getProperties(ValueLinkServicesContext context) {
         String paymentProperties = (String) context.get(x.paymentConfig);
         if (paymentProperties == null) {
             paymentProperties = "payment.properties";
@@ -746,7 +749,7 @@ public class ValueLinkServices {
 
     // payment processing wrappers (process/release/refund)
 
-    public static Map<String, Object> giftCardProcessor(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> giftCardProcessor(DispatchContext dctx, ValueLinkServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -823,7 +826,7 @@ public class ValueLinkServices {
         return result;
     }
 
-    public static Map<String, Object> giftCardRelease(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> giftCardRelease(DispatchContext dctx, ValueLinkServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -888,7 +891,7 @@ public class ValueLinkServices {
         return result;
     }
 
-    public static Map<String, Object> giftCardRefund(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> giftCardRefund(DispatchContext dctx, ValueLinkServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -955,7 +958,7 @@ public class ValueLinkServices {
 
     // item fulfillment wrappers (purchase/reload)
 
-    public static Map<String, Object> giftCardPurchase(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> giftCardPurchase(DispatchContext dctx, ValueLinkServicesContext context) {
         // this service should always be called via FULFILLMENT_EXTASYNC
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
@@ -1236,7 +1239,7 @@ public class ValueLinkServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> giftCardReload(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> giftCardReload(DispatchContext dctx, ValueLinkServicesContext context) {
         // this service should always be called via FULFILLMENT_EXTSYNC
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();

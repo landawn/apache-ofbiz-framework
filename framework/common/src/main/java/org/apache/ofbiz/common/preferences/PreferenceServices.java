@@ -38,7 +38,10 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.PreferenceServicesContext;
 /**
  * User preference services.<p>User preferences are stored as key-value pairs.
  * <p>User preferences can be grouped - so that multiple preference pairs can be
@@ -62,7 +65,7 @@ public class PreferenceServices {
      * @param context Map containing the input arguments.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> getUserPreference(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> getUserPreference(DispatchContext ctx, PreferenceServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         if (!PreferenceWorker.isValidGetId(ctx, context)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "getPreference.permissionError", locale));
@@ -112,7 +115,7 @@ public class PreferenceServices {
      * @param context Map containing the input arguments.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> getUserPreferenceGroup(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> getUserPreferenceGroup(DispatchContext ctx, PreferenceServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         if (!PreferenceWorker.isValidGetId(ctx, context)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "getPreference.permissionError", locale));
@@ -163,7 +166,7 @@ public class PreferenceServices {
      * @param context Map containing the input arguments.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> setUserPreference(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> setUserPreference(DispatchContext ctx, PreferenceServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
 
@@ -191,7 +194,7 @@ public class PreferenceServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> removeUserPreference(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> removeUserPreference(DispatchContext ctx, PreferenceServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
 
@@ -226,7 +229,7 @@ public class PreferenceServices {
      * @param context Map containing the input arguments.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> setUserPreferenceGroup(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> setUserPreferenceGroup(DispatchContext ctx, PreferenceServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
 
@@ -260,7 +263,7 @@ public class PreferenceServices {
      * @param context Map containing the input arguments.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> copyUserPreferenceGroup(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> copyUserPreferenceGroup(DispatchContext ctx, PreferenceServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
 

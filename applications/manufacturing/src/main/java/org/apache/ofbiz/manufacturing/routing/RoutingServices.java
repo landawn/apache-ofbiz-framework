@@ -34,7 +34,10 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.RoutingServicesContext;
 /**
  * Routing related services
  *
@@ -50,7 +53,7 @@ public class RoutingServices {
      * @param context Map containing the input parameters.
      * @return Map with the result of the service, the output parameters.
      */
-    public static Map<String, Object> getEstimatedTaskTime(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getEstimatedTaskTime(DispatchContext ctx, RoutingServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();

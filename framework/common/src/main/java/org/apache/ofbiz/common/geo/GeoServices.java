@@ -25,13 +25,16 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.GeoServicesContext;
 public class GeoServices {
 
     private static final double RADIUS_OF_EARTH = 6371; // Radius of the earth in km
     private static final double MILES_PER_KILOMETER = 0.621371192; // TODO: Think upon using convertUom service
 
-    public static Map<String, Object> getDistanceBetweenGeoPoints(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getDistanceBetweenGeoPoints(DispatchContext dctx, GeoServicesContext context) {
         Map<String, Object> serviceResponse = new HashMap<>();
 
         double fromLatitude = UtilMisc.toDouble(context.get(x.fromLatitude));

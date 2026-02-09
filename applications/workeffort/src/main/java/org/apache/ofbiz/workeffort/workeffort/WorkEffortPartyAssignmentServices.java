@@ -32,7 +32,9 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
 /**
  * WorkEffortPartyAssignmentServices - Services to handle form input and other data changes.
  */
@@ -54,9 +56,8 @@ public class WorkEffortPartyAssignmentServices {
             // TODO: restrict status transitions
 
             String statusId = (String) wepa.get(x.statusId);
-            Map<String, Object> context = UtilMisc.toMap("workEffortId", wepa.get(x.workEffortId), "partyId", wepa.get(x.partyId),
-                    "roleTypeId", wepa.get(x.roleTypeId), "fromDate", wepa.get(x.fromDate),
-                    "userLogin", userLogin);
+            ServiceContext context = new ServiceContext(UtilMisc.toMap("workEffortId", wepa.get(x.workEffortId), "partyId",
+                    wepa.get(x.partyId), "roleTypeId", wepa.get(x.roleTypeId), "fromDate", wepa.get(x.fromDate), "userLogin", userLogin));
 
             if ("CAL_ACCEPTED".equals(statusId)) {
                 // accept the activity assignment

@@ -36,7 +36,10 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.EntityCacheServicesContext;
 /**
  * Entity Engine Cache Services
  */
@@ -193,7 +196,7 @@ public class EntityCacheServices implements DistributedCacheClear {
      * @param context Map containing the input parameters
      * @return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> clearAllEntityCaches(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> clearAllEntityCaches(DispatchContext dctx, EntityCacheServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Boolean distributeBool = (Boolean) context.get(x.distribute);
         boolean distribute = false;
@@ -210,7 +213,7 @@ public class EntityCacheServices implements DistributedCacheClear {
      * @param context Map containing the input parameters
      * @return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> clearCacheLine(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> clearCacheLine(DispatchContext dctx, EntityCacheServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Boolean distributeBool = (Boolean) context.get(x.distribute);
         boolean distribute = false;

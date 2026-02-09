@@ -57,7 +57,10 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ShoppingCartServicesContext;
 /**
  * Shopping Cart Services
  */
@@ -67,7 +70,7 @@ public class ShoppingCartServices {
     private static final String MODULE = ShoppingCartServices.class.getName();
     private static final String RES_ERROR = "OrderErrorUiLabels";
 
-    public static Map<String, Object> assignItemShipGroup(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> assignItemShipGroup(DispatchContext dctx, ShoppingCartServicesContext context) {
         ShoppingCart cart = (ShoppingCart) context.get(x.shoppingCart);
         Integer fromGroupIndex = (Integer) context.get(x.fromGroupIndex);
         Integer toGroupIndex = (Integer) context.get(x.toGroupIndex);
@@ -92,7 +95,7 @@ public class ShoppingCartServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> setShippingOptions(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> setShippingOptions(DispatchContext dctx, ShoppingCartServicesContext context) {
         ShoppingCart cart = (ShoppingCart) context.get(x.shoppingCart);
         Integer groupIndex = (Integer) context.get(x.groupIndex);
         String shippingContactMechId = (String) context.get(x.shippingContactMechId);
@@ -138,13 +141,13 @@ public class ShoppingCartServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> setPaymentOptions(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> setPaymentOptions(DispatchContext dctx, ShoppingCartServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
 
         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderServiceNotYetImplemented", locale));
     }
 
-    public static Map<String, Object> setOtherOptions(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> setOtherOptions(DispatchContext dctx, ShoppingCartServicesContext context) {
         ShoppingCart cart = (ShoppingCart) context.get(x.shoppingCart);
         String orderAdditionalEmails = (String) context.get(x.orderAdditionalEmails);
         String correspondingPoId = (String) context.get(x.correspondingPoId);
@@ -159,7 +162,7 @@ public class ShoppingCartServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> loadCartFromOrder(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> loadCartFromOrder(DispatchContext dctx, ShoppingCartServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
@@ -696,7 +699,7 @@ public class ShoppingCartServices {
         return result;
     }
 
-    public static Map<String, Object> loadCartFromQuote(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> loadCartFromQuote(DispatchContext dctx, ShoppingCartServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
@@ -1006,7 +1009,7 @@ public class ShoppingCartServices {
         return "PROMOTION_ADJUSTMENT".equals(adjType);
     }
 
-    public static Map<String, Object> loadCartFromShoppingList(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> loadCartFromShoppingList(DispatchContext dctx, ShoppingCartServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
@@ -1142,7 +1145,7 @@ public class ShoppingCartServices {
         return result;
     }
 
-    public static Map<String, Object> getShoppingCartData(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> getShoppingCartData(DispatchContext dctx, ShoppingCartServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Locale locale = (Locale) context.get(x.locale);
         ShoppingCart shoppingCart = (ShoppingCart) context.get(x.shoppingCart);
@@ -1184,7 +1187,7 @@ public class ShoppingCartServices {
         return result;
     }
 
-    public static Map<String, Object> getShoppingCartItemIndex(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> getShoppingCartItemIndex(DispatchContext dctx, ShoppingCartServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         ShoppingCart shoppingCart = (ShoppingCart) context.get(x.shoppingCart);
         String productId = (String) context.get(x.productId);
@@ -1199,7 +1202,7 @@ public class ShoppingCartServices {
         return result;
     }
 
-    public static Map<String, Object> resetShipGroupItems(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> resetShipGroupItems(DispatchContext dctx, ShoppingCartServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         ShoppingCart cart = (ShoppingCart) context.get(x.shoppingCart);
         for (ShoppingCartItem item : cart) {
@@ -1209,7 +1212,7 @@ public class ShoppingCartServices {
         return result;
     }
 
-    public static Map<String, Object> prepareVendorShipGroups(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> prepareVendorShipGroups(DispatchContext dctx, ShoppingCartServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         ShoppingCart cart = (ShoppingCart) context.get(x.shoppingCart);

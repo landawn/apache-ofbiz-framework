@@ -62,7 +62,10 @@ import org.apache.ofbiz.service.ServiceSynchronization;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.service.mail.MimeMessageWrapper;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.CommonServicesContext;
 /**
  * Common Services
  */
@@ -77,7 +80,7 @@ public class CommonServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> testService(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> testService(DispatchContext dctx, CommonServicesContext context) {
         Map<String, Object> response = ServiceUtil.returnSuccess();
 
         if (!context.isEmpty()) {
@@ -105,7 +108,7 @@ public class CommonServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> testSOAPService(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> testSOAPService(DispatchContext dctx, CommonServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> response = ServiceUtil.returnSuccess();
 
@@ -121,7 +124,7 @@ public class CommonServices {
         return response;
     }
 
-    public static Map<String, Object> blockingTestService(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> blockingTestService(DispatchContext dctx, CommonServicesContext context) {
         Long duration = (Long) context.get(x.duration);
         if (duration == null) {
             duration = 30000L;
@@ -134,7 +137,7 @@ public class CommonServices {
         return CommonServices.testService(dctx, context);
     }
 
-    public static Map<String, Object> testRollbackListener(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> testRollbackListener(DispatchContext dctx, CommonServicesContext context) {
         try {
             ServiceSynchronization.registerRollbackService(dctx, "testScv", null, context, false, false);
         } catch (GenericServiceException e) {
@@ -144,7 +147,7 @@ public class CommonServices {
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonTestRollingBack", locale));
     }
 
-    public static Map<String, Object> testCommitListener(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> testCommitListener(DispatchContext dctx, CommonServicesContext context) {
         try {
             ServiceSynchronization.registerCommitService(dctx, "testScv", null, context, false, false);
         } catch (GenericServiceException e) {
@@ -159,7 +162,7 @@ public class CommonServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> createNote(DispatchContext ctx, Map<String, ?> context) {
+    public static Map<String, Object> createNote(DispatchContext ctx, CommonServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Timestamp noteDate = (Timestamp) context.get(x.noteDate);
@@ -204,7 +207,7 @@ public class CommonServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> adjustDebugLevels(DispatchContext dctc, Map<String, ?> context) {
+    public static Map<String, Object> adjustDebugLevels(DispatchContext dctc, CommonServicesContext context) {
         Debug.set(Debug.FATAL, "Y".equalsIgnoreCase((String) context.get(x.fatal)));
         Debug.set(Debug.ERROR, "Y".equalsIgnoreCase((String) context.get(x.error)));
         Debug.set(Debug.WARNING, "Y".equalsIgnoreCase((String) context.get(x.warning)));
@@ -216,7 +219,7 @@ public class CommonServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> forceGc(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> forceGc(DispatchContext dctx, CommonServicesContext context) {
         System.gc();
         return ServiceUtil.returnSuccess();
     }
@@ -225,7 +228,7 @@ public class CommonServices {
      * Echo service; returns exactly what was sent.
      * This service does not have required parameters and does not validate
      */
-    public static Map<String, Object> echoService(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> echoService(DispatchContext dctx, CommonServicesContext context) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.putAll(context);
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
@@ -235,7 +238,7 @@ public class CommonServices {
     /**
      * Return Error Service; Used for testing error handling
      */
-    public static Map<String, Object> returnErrorService(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> returnErrorService(DispatchContext dctx, CommonServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonServiceReturnError", locale));
     }
@@ -243,7 +246,7 @@ public class CommonServices {
     /**
      * Return TRUE Service; ECA Condition Service
      */
-    public static Map<String, Object> conditionTrueService(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> conditionTrueService(DispatchContext dctx, CommonServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         result.put("conditionReply", Boolean.TRUE);
         return result;
@@ -252,14 +255,14 @@ public class CommonServices {
     /**
      * Return FALSE Service; ECA Condition Service
      */
-    public static Map<String, Object> conditionFalseService(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> conditionFalseService(DispatchContext dctx, CommonServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         result.put("conditionReply", Boolean.FALSE);
         return result;
     }
 
     /** Cause a Referential Integrity Error */
-    public static Map<String, Object> entityFailTest(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> entityFailTest(DispatchContext dctx, CommonServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
 
@@ -279,7 +282,7 @@ public class CommonServices {
     }
 
     /** Test entity sorting */
-    public static Map<String, Object> entitySortTest(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> entitySortTest(DispatchContext dctx, CommonServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Set<ModelEntity> set = new TreeSet<>();
 
@@ -301,7 +304,7 @@ public class CommonServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> makeALotOfVisits(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> makeALotOfVisits(DispatchContext dctx, CommonServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         int count = (Integer) context.get(x.count);
 
@@ -333,7 +336,7 @@ public class CommonServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> displayXaDebugInfo(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> displayXaDebugInfo(DispatchContext dctx, CommonServicesContext context) {
         if (TransactionUtil.debugResources()) {
             if (UtilValidate.isNotEmpty(TransactionUtil.DEBUG_RES_MAP)) {
                 TransactionUtil.logRunningTx();
@@ -347,7 +350,7 @@ public class CommonServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> byteBufferTest(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> byteBufferTest(DispatchContext dctx, CommonServicesContext context) {
         ByteBuffer buffer1 = (ByteBuffer) context.get(x.byteBuffer1);
         ByteBuffer buffer2 = (ByteBuffer) context.get(x.byteBuffer2);
         String fileName1 = (String) context.get(x.saveAsFileName1);
@@ -377,7 +380,7 @@ public class CommonServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> uploadTest(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> uploadTest(DispatchContext dctx, CommonServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
 
@@ -431,7 +434,7 @@ public class CommonServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> mcaTest(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> mcaTest(DispatchContext dctx, CommonServicesContext context) {
         MimeMessageWrapper wrapper = (MimeMessageWrapper) context.get(x.messageWrapper);
         MimeMessage message = wrapper.getMessage();
         try {
@@ -454,7 +457,7 @@ public class CommonServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> streamTest(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> streamTest(DispatchContext dctx, CommonServicesContext context) {
         InputStream in = (InputStream) context.get(x.inputStream);
         OutputStream out = (OutputStream) context.get(x.outputStream);
 
@@ -476,7 +479,7 @@ public class CommonServices {
         return result;
     }
 
-    public static Map<String, Object> ping(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> ping(DispatchContext dctx, CommonServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String message = (String) context.get(x.message);
         Locale locale = (Locale) context.get(x.locale);
@@ -500,7 +503,7 @@ public class CommonServices {
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonPingDatasourceInvalidCount", locale));
     }
 
-    public static Map<String, Object> getAllMetrics(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> getAllMetrics(DispatchContext dctx, CommonServicesContext context) {
         List<Map<String, Object>> metricsMapList = new LinkedList<>();
         Collection<Metrics> metricsList = MetricsFactory.getMetrics();
         for (Metrics metrics : metricsList) {
@@ -516,7 +519,7 @@ public class CommonServices {
         return result;
     }
 
-    public static Map<String, Object> resetMetric(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> resetMetric(DispatchContext dctx, CommonServicesContext context) {
         String originalName = (String) context.get(x.name);
         Locale locale = (Locale) context.get(x.locale);
         String name = UtilCodec.getDecoder("url").decode(originalName);

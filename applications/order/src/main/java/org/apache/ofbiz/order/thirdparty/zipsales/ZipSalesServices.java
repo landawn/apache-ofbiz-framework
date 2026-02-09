@@ -50,7 +50,10 @@ import org.apache.ofbiz.security.Security;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ZipSalesServicesContext;
 /**
  * Zip-Sales Database Services
  */
@@ -66,7 +69,7 @@ public class ZipSalesServices {
     private static final String DATE_PATTERN = "yyyyMMdd";
 
     // import table service
-    public static Map<String, Object> importFlatTable(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> importFlatTable(DispatchContext dctx, ZipSalesServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -216,7 +219,7 @@ public class ZipSalesServices {
     }
 
     // tax calc service
-    public static Map<String, Object> flatTaxCalc(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> flatTaxCalc(DispatchContext dctx, ZipSalesServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         List<GenericValue> itemProductList = UtilGenerics.cast(context.get(x.itemProductList));
         List<BigDecimal> itemAmountList = UtilGenerics.cast(context.get(x.itemAmountList));

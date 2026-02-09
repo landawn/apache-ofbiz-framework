@@ -42,12 +42,15 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.SagePayServicesContext;
 public class SagePayServices {
     private static final String MODULE = SagePayServices.class.getName();
     private static final String RESOURCE = "AccountingUiLabels";
 
-    private static Map<String, String> buildSagePayProperties(Map<String, Object> context, Delegator delegator) {
+    private static Map<String, String> buildSagePayProperties(SagePayServicesContext context, Delegator delegator) {
 
         Map<String, String> sagePayConfig = new HashMap<>();
 
@@ -75,7 +78,7 @@ public class SagePayServices {
         return sagePayConfig;
     }
 
-    public static Map<String, Object> paymentAuthentication(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> paymentAuthentication(DispatchContext ctx, SagePayServicesContext context) {
         Debug.logInfo("SagePay - Entered paymentAuthentication", MODULE);
         Debug.logInfo("SagePay paymentAuthentication context : " + context, MODULE);
 
@@ -377,7 +380,7 @@ public class SagePayServices {
         return resultMap;
     }
 
-    public static Map<String, Object> paymentAuthorisation(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> paymentAuthorisation(DispatchContext ctx, SagePayServicesContext context) {
         Debug.logInfo("SagePay - Entered paymentAuthorisation", MODULE);
         Debug.logInfo("SagePay paymentAuthorisation context : " + context, MODULE);
 
@@ -472,7 +475,7 @@ public class SagePayServices {
         return resultMap;
     }
 
-    public static Map<String, Object> paymentRelease(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> paymentRelease(DispatchContext ctx, SagePayServicesContext context) {
         Debug.logInfo("SagePay - Entered paymentRelease", MODULE);
         Debug.logInfo("SagePay paymentRelease context : " + context, MODULE);
 
@@ -564,7 +567,7 @@ public class SagePayServices {
         return resultMap;
     }
 
-    public static Map<String, Object> paymentVoid(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> paymentVoid(DispatchContext ctx, SagePayServicesContext context) {
         Debug.logInfo("SagePay - Entered paymentVoid", MODULE);
         Debug.logInfo("SagePay paymentVoid context : " + context, MODULE);
 
@@ -653,7 +656,7 @@ public class SagePayServices {
         return resultMap;
     }
 
-    public static Map<String, Object> paymentRefund(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> paymentRefund(DispatchContext ctx, SagePayServicesContext context) {
         Debug.logInfo("SagePay - Entered paymentRefund", MODULE);
         Debug.logInfo("SagePay paymentRefund context : " + context, MODULE);
 

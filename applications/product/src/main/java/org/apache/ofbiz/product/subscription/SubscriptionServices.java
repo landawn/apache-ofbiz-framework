@@ -46,7 +46,10 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import com.ibm.icu.util.Calendar;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.SubscriptionServicesContext;
 /**
  * Subscription Services
  */
@@ -57,7 +60,7 @@ public class SubscriptionServices {
     private static final String RES_ERROR = "ProductErrorUiLabels";
     private static final String RES_ORDER_ERROR = "OrderErrorUiLabels";
 
-    public static Map<String, Object> processExtendSubscription(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processExtendSubscription(DispatchContext dctx, SubscriptionServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
@@ -186,7 +189,7 @@ public class SubscriptionServices {
         return result;
     }
 
-    public static Map<String, Object> processExtendSubscriptionByProduct(DispatchContext dctx, Map<String, ? extends Object> context)
+    public static Map<String, Object> processExtendSubscriptionByProduct(DispatchContext dctx, SubscriptionServicesContext context)
             throws GenericServiceException {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -249,7 +252,7 @@ public class SubscriptionServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> processExtendSubscriptionByOrder(DispatchContext dctx, Map<String, ? extends Object> context)
+    public static Map<String, Object> processExtendSubscriptionByOrder(DispatchContext dctx, SubscriptionServicesContext context)
             throws GenericServiceException {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -314,7 +317,7 @@ public class SubscriptionServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> runServiceOnSubscriptionExpiry(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> runServiceOnSubscriptionExpiry(DispatchContext dctx, SubscriptionServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -406,7 +409,7 @@ public class SubscriptionServices {
         return result;
     }
 
-    public static Map<String, Object> runSubscriptionExpired(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> runSubscriptionExpired(DispatchContext dctx, SubscriptionServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         String subscriptionId = (String) context.get(x.subscriptionId);
         Map<String, Object> result = new HashMap<>();

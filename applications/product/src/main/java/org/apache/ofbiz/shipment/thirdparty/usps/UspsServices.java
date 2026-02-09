@@ -68,7 +68,10 @@ import org.apache.ofbiz.shipment.shipment.ShipmentWorker;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.UspsServicesContext;
 /**
  * USPS Webtools API Services
  */
@@ -86,7 +89,7 @@ public class UspsServices {
         domesticCountries = Collections.unmodifiableList(domesticCountries);
     }
 
-    public static Map<String, Object> uspsRateInquire(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> uspsRateInquire(DispatchContext dctx, UspsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
         String resource = (String) context.get(x.configProps);
@@ -280,7 +283,7 @@ public class UspsServices {
      * 16 - Priority Mail Small Flat Rate Box
      * 21 - PostCards
      */
-    public static Map<String, Object> uspsInternationalRateInquire(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> uspsInternationalRateInquire(DispatchContext dctx, UspsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
         String resource = (String) context.get(x.configProps);
@@ -458,7 +461,7 @@ public class UspsServices {
 
     */
 
-    public static Map<String, Object> uspsTrackConfirm(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> uspsTrackConfirm(DispatchContext dctx, UspsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
         String resource = (String) context.get(x.configProps);
@@ -534,7 +537,7 @@ public class UspsServices {
 
     */
 
-    public static Map<String, Object> uspsAddressValidation(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> uspsAddressValidation(DispatchContext dctx, UspsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
         String resource = (String) context.get(x.configProps);
@@ -638,7 +641,7 @@ public class UspsServices {
 
     */
 
-    public static Map<String, Object> uspsCityStateLookup(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> uspsCityStateLookup(DispatchContext dctx, UspsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
         String resource = (String) context.get(x.configProps);
@@ -737,19 +740,19 @@ public class UspsServices {
 
     */
 
-    public static Map<String, Object> uspsPriorityMailStandard(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Map<String, Object> subContext = UtilMisc.makeMapWritable(context);
+    public static Map<String, Object> uspsPriorityMailStandard(DispatchContext dctx, UspsServicesContext context) {
+        UspsServicesContext subContext = new UspsServicesContext(UtilMisc.makeMapWritable(context));
         subContext.put("serviceType", "PriorityMail");
         return uspsServiceStandards(dctx, subContext);
     }
 
-    public static Map<String, Object> uspsPackageServicesStandard(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Map<String, Object> subContext = UtilMisc.makeMapWritable(context);
+    public static Map<String, Object> uspsPackageServicesStandard(DispatchContext dctx, UspsServicesContext context) {
+        UspsServicesContext subContext = new UspsServicesContext(UtilMisc.makeMapWritable(context));
         subContext.put("serviceType", "StandardB");
         return uspsServiceStandards(dctx, subContext);
     }
 
-    private static Map<String, Object> uspsServiceStandards(DispatchContext dctx, Map<String, ? extends Object> context) {
+    private static Map<String, Object> uspsServiceStandards(DispatchContext dctx, UspsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
         String resource = (String) context.get(x.configProps);
@@ -838,7 +841,7 @@ public class UspsServices {
 
     */
 
-    public static Map<String, Object> uspsDomesticRate(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> uspsDomesticRate(DispatchContext dctx, UspsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
         String resource = (String) context.get(x.configProps);
@@ -929,7 +932,7 @@ public class UspsServices {
 
     /* --- ShipmentRouteSegment services --------------------------------------------------------------------------- */
 
-    public static Map<String, Object> uspsUpdateShipmentRateInfo(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> uspsUpdateShipmentRateInfo(DispatchContext dctx, UspsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         String shipmentId = (String) context.get(x.shipmentId);
@@ -1232,7 +1235,7 @@ public class UspsServices {
 
     */
 
-    public static Map<String, Object> uspsDeliveryConfirmation(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> uspsDeliveryConfirmation(DispatchContext dctx, UspsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentId = (String) context.get(x.shipmentId);
         String shipmentRouteSegmentId = (String) context.get(x.shipmentRouteSegmentId);
@@ -1451,7 +1454,7 @@ public class UspsServices {
     /* ------------------------------------------------------------------------------------------------------------- */
 
     // testing utility service - remove this
-    public static Map<String, Object> uspsDumpShipmentLabelImages(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> uspsDumpShipmentLabelImages(DispatchContext dctx, UspsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
 
         try {
@@ -1486,7 +1489,7 @@ public class UspsServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> uspsPriorityMailInternationalLabel(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> uspsPriorityMailInternationalLabel(DispatchContext dctx, UspsServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);

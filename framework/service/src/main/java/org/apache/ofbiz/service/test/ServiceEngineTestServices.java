@@ -37,13 +37,16 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ServiceEngineTestServicesContext;
 public class ServiceEngineTestServices {
 
     private static final String MODULE = ServiceEngineTestServices.class.getName();
     private static final String RESOURCE = "ServiceErrorUiLabels";
 
-    public static Map<String, Object> testServiceDeadLockRetry(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testServiceDeadLockRetry(DispatchContext dctx, ServiceEngineTestServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         try {
@@ -74,7 +77,7 @@ public class ServiceEngineTestServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> testServiceDeadLockRetryThreadA(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testServiceDeadLockRetryThreadA(DispatchContext dctx, ServiceEngineTestServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         try {
@@ -110,7 +113,7 @@ public class ServiceEngineTestServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> testServiceDeadLockRetryThreadB(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testServiceDeadLockRetryThreadB(DispatchContext dctx, ServiceEngineTestServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         try {
@@ -148,7 +151,7 @@ public class ServiceEngineTestServices {
 
     // ==================================================
 
-    public static Map<String, Object> testServiceLockWaitTimeoutRetry(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testServiceLockWaitTimeoutRetry(DispatchContext dctx, ServiceEngineTestServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
         try {
@@ -177,7 +180,7 @@ public class ServiceEngineTestServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> testServiceLockWaitTimeoutRetryGrabber(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testServiceLockWaitTimeoutRetryGrabber(DispatchContext dctx, ServiceEngineTestServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         try {
@@ -205,7 +208,7 @@ public class ServiceEngineTestServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> testServiceLockWaitTimeoutRetryWaiter(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testServiceLockWaitTimeoutRetryWaiter(DispatchContext dctx, ServiceEngineTestServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         try {
@@ -250,7 +253,7 @@ public class ServiceEngineTestServices {
      * @param context the context
      * @return returns the results of the service execution
      */
-    public static Map<String, Object> testServiceLockWaitTimeoutRetryCantRecover(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testServiceLockWaitTimeoutRetryCantRecover(DispatchContext dctx, ServiceEngineTestServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -285,7 +288,7 @@ public class ServiceEngineTestServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> testServiceLockWaitTimeoutRetryCantRecoverWaiter(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testServiceLockWaitTimeoutRetryCantRecoverWaiter(DispatchContext dctx, ServiceEngineTestServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         try {
@@ -309,8 +312,7 @@ public class ServiceEngineTestServices {
 
     // ==================================================
 
-    public static Map<String, Object> testServiceOwnTxSubServiceAfterSetRollbackOnlyInParentErrorCatchWrapper(DispatchContext dctx, Map<String, ?
-            extends Object> context) {
+    public static Map<String, Object> testServiceOwnTxSubServiceAfterSetRollbackOnlyInParentErrorCatchWrapper(DispatchContext dctx, ServiceEngineTestServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
         try {
@@ -329,7 +331,7 @@ public class ServiceEngineTestServices {
     }
 
     public static Map<String, Object> testServiceOwnTxSubServiceAfterSetRollbackOnlyInParent(DispatchContext dctx,
-                                                                                             Map<String, ? extends Object> context) {
+                                                                                             ServiceEngineTestServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -356,8 +358,7 @@ public class ServiceEngineTestServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> testServiceOwnTxSubServiceAfterSetRollbackOnlyInParentSubService(DispatchContext dctx, Map<String, ?
-            extends Object> context) {
+    public static Map<String, Object> testServiceOwnTxSubServiceAfterSetRollbackOnlyInParentSubService(DispatchContext dctx, ServiceEngineTestServicesContext context) {
         // this service doesn't actually have to do anything, the problem was in just pausing and resuming the transaciton with setRollbackOnly
         return ServiceUtil.returnSuccess();
     }
@@ -365,7 +366,7 @@ public class ServiceEngineTestServices {
 
     // ==================================================
 
-    public static Map<String, Object> testServiceEcaGlobalEventExec(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testServiceEcaGlobalEventExec(DispatchContext dctx, ServiceEngineTestServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
         try {
@@ -383,7 +384,7 @@ public class ServiceEngineTestServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> testServiceEcaGlobalEventExecOnCommit(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testServiceEcaGlobalEventExecOnCommit(DispatchContext dctx, ServiceEngineTestServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         try {
@@ -399,13 +400,13 @@ public class ServiceEngineTestServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> testServiceEcaGlobalEventExecToRollback(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testServiceEcaGlobalEventExecToRollback(DispatchContext dctx, ServiceEngineTestServicesContext context) {
         // this service doesn't actually have to do anything, just a placeholder for ECA rules, this one should rollback
         Locale locale = (Locale) context.get(x.locale);
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ServiceTestRollback", locale));
     }
 
-    public static Map<String, Object> testServiceEcaGlobalEventExecOnRollback(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testServiceEcaGlobalEventExecOnRollback(DispatchContext dctx, ServiceEngineTestServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         try {

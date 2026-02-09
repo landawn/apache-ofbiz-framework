@@ -38,7 +38,10 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.MarketingServicesContext;
 /**
  * MarketingServices contains static service methods for Marketing Campaigns and Contact Lists.
  * See the documentation in marketing/servicedef/services.xml and use the service reference in
@@ -50,7 +53,7 @@ public class MarketingServices {
     public static final String RESOURCE = "MarketingUiLabels";
     private static final String RES_ORDER = "OrderUiLabels";
 
-    public static Map<String, Object> signUpForContactList(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> signUpForContactList(DispatchContext dctx, MarketingServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -156,7 +159,7 @@ public class MarketingServices {
         return ServiceUtil.returnSuccess(successMessage);
     }
 
-    public static Map<String, Object> deleteContactListParty(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> deleteContactListParty(DispatchContext dctx, MarketingServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
 

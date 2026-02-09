@@ -49,7 +49,10 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ShipmentServicesContext;
 /**
  * ShipmentServices
  */
@@ -63,7 +66,7 @@ public class ShipmentServices {
     private static final RoundingMode ROUNDING = UtilNumber.getRoundingMode("order.rounding");
     private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(DECIMALS, ROUNDING);
 
-    public static Map<String, Object> createShipmentEstimate(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createShipmentEstimate(DispatchContext dctx, ShipmentServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -139,7 +142,7 @@ public class ShipmentServices {
         return result;
     }
 
-    public static Map<String, Object> removeShipmentEstimate(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> removeShipmentEstimate(DispatchContext dctx, ShipmentServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentCostEstimateId = (String) context.get(x.shipmentCostEstimateId);
         Locale locale = (Locale) context.get(x.locale);
@@ -158,7 +161,7 @@ public class ShipmentServices {
         return ServiceUtil.returnSuccess();
     }
 
-    private static boolean applyQuantityBreak(Map<String, ? extends Object> context, Map<String, Object> result, List<GenericValue> storeAll,
+    private static boolean applyQuantityBreak(ShipmentServicesContext context, Map<String, Object> result, List<GenericValue> storeAll,
             Delegator delegator, GenericValue estimate, String breakType) {
         String prefix = breakType.substring(0, 1);
         BigDecimal min = (BigDecimal) context.get(prefix + "min");
@@ -198,7 +201,7 @@ public class ShipmentServices {
     }
 
     // ShippingEstimate Calc Service
-    public static Map<String, Object> calcShipmentCostEstimate(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> calcShipmentCostEstimate(DispatchContext dctx, ShipmentServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
 
@@ -468,7 +471,7 @@ public class ShipmentServices {
         return qty.compareTo(min) >= 0 && (max.compareTo(BigDecimal.ZERO) == 0 || qty.compareTo(max) <= 0);
     }
 
-    public static Map<String, Object> fillShipmentStagingTables(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> fillShipmentStagingTables(DispatchContext dctx, ShipmentServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentId = (String) context.get(x.shipmentId);
         Locale locale = (Locale) context.get(x.locale);
@@ -571,7 +574,7 @@ public class ShipmentServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> updateShipmentsFromStaging(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateShipmentsFromStaging(DispatchContext dctx, ShipmentServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -701,7 +704,7 @@ public class ShipmentServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> clearShipmentStagingInfo(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> clearShipmentStagingInfo(DispatchContext dctx, ShipmentServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String shipmentId = (String) context.get(x.shipmentId);
         try {
@@ -722,7 +725,7 @@ public class ShipmentServices {
      * products shipped (from ShipmentAndItem) and matching them with the
      * products received (from ShipmentReceipt).
      */
-    public static Map<String, Object> updatePurchaseShipmentFromReceipt(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updatePurchaseShipmentFromReceipt(DispatchContext dctx, ShipmentServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         String shipmentId = (String) context.get(x.shipmentId);
@@ -785,7 +788,7 @@ public class ShipmentServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> duplicateShipmentRouteSegment(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> duplicateShipmentRouteSegment(DispatchContext dctx, ShipmentServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -831,7 +834,7 @@ public class ShipmentServices {
     /**
      * Service to call a ShipmentRouteSegment.carrierPartyId's confirm shipment method asynchronously
      */
-    public static Map<String, Object> quickScheduleShipmentRouteSegment(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> quickScheduleShipmentRouteSegment(DispatchContext dctx, ShipmentServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -880,7 +883,7 @@ public class ShipmentServices {
      * @param context Map
      * @return Map
      */
-    public static Map<String, Object> getShipmentPackageValueFromOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getShipmentPackageValueFromOrders(DispatchContext dctx, ShipmentServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -958,7 +961,7 @@ public class ShipmentServices {
         return result;
     }
 
-    public static Map<String, Object> sendShipmentCompleteNotification(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendShipmentCompleteNotification(DispatchContext dctx, ShipmentServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);

@@ -63,7 +63,10 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import com.ibm.icu.util.Calendar;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.OrderReturnServicesContext;
 /**
  * OrderReturnServices
  */
@@ -80,7 +83,7 @@ public class OrderReturnServices {
     private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(DECIMALS, ROUNDING);
 
     // locate the return item's initial inventory item cost
-    public static Map<String, Object> getReturnItemInitialCost(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getReturnItemInitialCost(DispatchContext dctx, OrderReturnServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String returnId = (String) context.get(x.returnId);
         String returnItemSeqId = (String) context.get(x.returnItemSeqId);
@@ -91,7 +94,7 @@ public class OrderReturnServices {
     }
 
     // obtain order/return total information
-    public static Map<String, Object> getOrderAvailableReturnedTotal(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getOrderAvailableReturnedTotal(DispatchContext dctx, OrderReturnServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
         OrderReadHelper orh = null;
@@ -185,7 +188,7 @@ public class OrderReturnServices {
     }
 
     // helper method for sending return notifications
-    private static Map<String, Object> sendReturnNotificationScreen(DispatchContext dctx, Map<String, ? extends Object> context, String emailType) {
+    private static Map<String, Object> sendReturnNotificationScreen(DispatchContext dctx, OrderReturnServicesContext context, String emailType) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -295,22 +298,22 @@ public class OrderReturnServices {
     }
 
     // return request notification
-    public static Map<String, Object> sendReturnAcceptNotification(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendReturnAcceptNotification(DispatchContext dctx, OrderReturnServicesContext context) {
         return sendReturnNotificationScreen(dctx, context, "PRDS_RTN_ACCEPT");
     }
 
     // return complete notification
-    public static Map<String, Object> sendReturnCompleteNotification(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendReturnCompleteNotification(DispatchContext dctx, OrderReturnServicesContext context) {
         return sendReturnNotificationScreen(dctx, context, "PRDS_RTN_COMPLETE");
     }
 
     // return cancel notification
-    public static Map<String, Object> sendReturnCancelNotification(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendReturnCancelNotification(DispatchContext dctx, OrderReturnServicesContext context) {
         return sendReturnNotificationScreen(dctx, context, "PRDS_RTN_CANCEL");
     }
 
     // cancel replacement order if return not received within 30 days and send notification
-    public static Map<String, Object> autoCancelReplacementOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> autoCancelReplacementOrders(DispatchContext dctx, OrderReturnServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -374,7 +377,7 @@ public class OrderReturnServices {
     }
 
     // get the returnable quantiy for an order item
-    public static Map<String, Object> getReturnableQuantity(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getReturnableQuantity(DispatchContext dctx, OrderReturnServicesContext context) {
         GenericValue orderItem = (GenericValue) context.get(x.orderItem);
         GenericValue product = null;
         Locale locale = (Locale) context.get(x.locale);
@@ -455,7 +458,7 @@ public class OrderReturnServices {
     }
 
     // get a map of returnable items (items not already returned) and quantities
-    public static Map<String, Object> getReturnableItems(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getReturnableItems(DispatchContext dctx, OrderReturnServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
@@ -590,7 +593,7 @@ public class OrderReturnServices {
     }
 
     // check return items status and update return header status
-    public static Map<String, Object> checkReturnComplete(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> checkReturnComplete(DispatchContext dctx, OrderReturnServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -694,7 +697,7 @@ public class OrderReturnServices {
     }
 
     // credit (billingAccount) return
-    public static Map<String, Object> processCreditReturn(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processCreditReturn(DispatchContext dctx, OrderReturnServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         String returnId = (String) context.get(x.returnId);
@@ -1043,7 +1046,7 @@ public class OrderReturnServices {
      * calculated as accountLimit + sum of Payments - sum of Invoices.
      */
     private static Map<String, Object> createBillingAccountFromReturn(GenericValue returnHeader, List<GenericValue> returnItems,
-                                                                      DispatchContext dctx, Map<String, ? extends Object> context) {
+                                                                      DispatchContext dctx, OrderReturnServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Locale locale = (Locale) context.get(x.locale);
@@ -1108,7 +1111,7 @@ public class OrderReturnServices {
         }
     }
 
-    public static Map<String, Object> processRefundReturnForReplacement(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processRefundReturnForReplacement(DispatchContext dctx, OrderReturnServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -1169,7 +1172,7 @@ public class OrderReturnServices {
     }
 
     // refund (cash/charge) return
-    public static Map<String, Object> processRefundReturn(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processRefundReturn(DispatchContext dctx, OrderReturnServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         String returnId = (String) context.get(x.returnId);
@@ -1541,7 +1544,7 @@ public class OrderReturnServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> refundBillingAccountPayment(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> refundBillingAccountPayment(DispatchContext dctx, OrderReturnServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -1639,7 +1642,7 @@ public class OrderReturnServices {
         return result;
     }
 
-    public static Map<String, Object> createPaymentApplicationsFromReturnItemResponse(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createPaymentApplicationsFromReturnItemResponse(DispatchContext dctx, OrderReturnServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -1723,7 +1726,7 @@ public class OrderReturnServices {
     }
 
     // replacement return (create new order adjusted to be at no charge)
-    public static Map<String, Object> processReplacementReturn(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processReplacementReturn(DispatchContext dctx, OrderReturnServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         String returnId = (String) context.get(x.returnId);
@@ -2218,7 +2221,7 @@ public class OrderReturnServices {
         return ServiceUtil.returnSuccess(successMessage.toString());
     }
 
-    public static Map<String, Object> processSubscriptionReturn(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processSubscriptionReturn(DispatchContext dctx, OrderReturnServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String returnId = (String) context.get(x.returnId);
         Timestamp now = UtilDateTime.nowTimestamp();
@@ -2338,7 +2341,7 @@ public class OrderReturnServices {
     }
 
 
-    public static Map<String, Object> getReturnAmountByOrder(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getReturnAmountByOrder(DispatchContext dctx, OrderReturnServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String returnId = (String) context.get(x.returnId);
         Locale locale = (Locale) context.get(x.locale);
@@ -2377,7 +2380,7 @@ public class OrderReturnServices {
         return UtilMisc.<String, Object>toMap("orderReturnAmountMap", returnAmountByOrder);
     }
 
-    public static Map<String, Object> checkPaymentAmountForRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> checkPaymentAmountForRefund(DispatchContext dctx, OrderReturnServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         String returnId = (String) context.get(x.returnId);
@@ -2420,7 +2423,7 @@ public class OrderReturnServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> createReturnAdjustment(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> createReturnAdjustment(DispatchContext dctx, OrderReturnServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String orderAdjustmentId = (String) context.get(x.orderAdjustmentId);
         String returnAdjustmentTypeId = (String) context.get(x.returnAdjustmentTypeId);
@@ -2536,7 +2539,7 @@ public class OrderReturnServices {
         }
     }
 
-    public static Map<String, Object> updateReturnAdjustment(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> updateReturnAdjustment(DispatchContext dctx, OrderReturnServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         GenericValue returnItem = null;
@@ -2595,7 +2598,7 @@ public class OrderReturnServices {
     }
 
     //  used as a dispatch service, invoke different service based on the parameters passed in
-    public static Map<String, Object> createReturnItemOrAdjustment(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createReturnItemOrAdjustment(DispatchContext dctx, OrderReturnServicesContext context) {
         Debug.logInfo("createReturnItemOrAdjustment's context:" + context, MODULE);
         String orderItemSeqId = (String) context.get(x.orderItemSeqId);
         Debug.logInfo("orderItemSeqId:" + orderItemSeqId + "#", MODULE);
@@ -2622,7 +2625,7 @@ public class OrderReturnServices {
     }
 
     //  used as a dispatch service, invoke different service based on the parameters passed in
-    public static Map<String, Object> updateReturnItemOrAdjustment(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateReturnItemOrAdjustment(DispatchContext dctx, OrderReturnServicesContext context) {
         Debug.logInfo("updateReturnItemOrAdjustment's context:" + context, MODULE);
         String returnAdjustmentId = (String) context.get(x.returnAdjustmentId);
         Debug.logInfo("returnAdjustmentId:" + returnAdjustmentId + "#", MODULE);
@@ -2687,7 +2690,7 @@ public class OrderReturnServices {
      * @deprecated - Use DispatchContext.makeValidContext(String, String, Map) instead
      */
     @Deprecated
-    public static Map<String, Object> filterServiceContext(DispatchContext dctx, String serviceName, Map<String, ? extends Object> context)
+    public static Map<String, Object> filterServiceContext(DispatchContext dctx, String serviceName, OrderReturnServicesContext context)
             throws GenericServiceException {
         return dctx.makeValidContext(serviceName, ModelService.IN_PARAM, context);
     }

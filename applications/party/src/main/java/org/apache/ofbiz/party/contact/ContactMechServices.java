@@ -52,7 +52,10 @@ import org.apache.ofbiz.service.ServiceUtil;
 import com.ibm.icu.util.Calendar;
 
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.ContactMechServicesContext;
 /**
  * Services for Contact Mechanism maintenance
  */
@@ -71,7 +74,7 @@ public class ContactMechServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> createContactMech(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createContactMech(DispatchContext ctx, ContactMechServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -137,7 +140,7 @@ public class ContactMechServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> updateContactMech(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateContactMech(DispatchContext ctx, ContactMechServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -276,7 +279,7 @@ public class ContactMechServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> deleteContactMech(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> deleteContactMech(DispatchContext ctx, ContactMechServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -335,7 +338,7 @@ public class ContactMechServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> createPostalAddress(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createPostalAddress(DispatchContext ctx, ContactMechServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -409,7 +412,7 @@ public class ContactMechServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> updatePostalAddress(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updatePostalAddress(DispatchContext ctx, ContactMechServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -582,7 +585,7 @@ public class ContactMechServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> createTelecomNumber(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createTelecomNumber(DispatchContext ctx, ContactMechServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -639,7 +642,7 @@ public class ContactMechServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> updateTelecomNumber(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> updateTelecomNumber(DispatchContext ctx, ContactMechServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -788,8 +791,8 @@ public class ContactMechServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> createEmailAddress(DispatchContext ctx, Map<String, ? extends Object> context) {
-        Map<String, Object> newContext = UtilMisc.makeMapWritable(context);
+    public static Map<String, Object> createEmailAddress(DispatchContext ctx, ContactMechServicesContext context) {
+        ContactMechServicesContext newContext = new ContactMechServicesContext(UtilMisc.makeMapWritable(context));
 
         newContext.put("infoString", newContext.get("emailAddress"));
         newContext.remove("emailAddress");
@@ -805,8 +808,8 @@ public class ContactMechServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> updateEmailAddress(DispatchContext ctx, Map<String, ? extends Object> context) {
-        Map<String, Object> newContext = UtilMisc.makeMapWritable(context);
+    public static Map<String, Object> updateEmailAddress(DispatchContext ctx, ContactMechServicesContext context) {
+        ContactMechServicesContext newContext = new ContactMechServicesContext(UtilMisc.makeMapWritable(context));
 
         newContext.put("infoString", newContext.get("emailAddress"));
         newContext.remove("emailAddress");
@@ -823,7 +826,7 @@ public class ContactMechServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> createPartyContactMechPurpose(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createPartyContactMechPurpose(DispatchContext ctx, ContactMechServicesContext context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
@@ -889,7 +892,7 @@ public class ContactMechServices {
      *@param context Map containing the input parameters
      *@return Map with the result of the service, the output parameters
      */
-    public static Map<String, Object> getPartyContactMechValueMaps(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getPartyContactMechValueMaps(DispatchContext ctx, ContactMechServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = ctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -914,7 +917,7 @@ public class ContactMechServices {
     /**
      * Copies all contact mechs from one party to another. Does not delete or overwrite any contact mechs.
      */
-    public static Map<String, Object> copyPartyContactMechs(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> copyPartyContactMechs(DispatchContext dctx, ContactMechServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -967,7 +970,7 @@ public class ContactMechServices {
     /**
      * Creates an EmailAddressVerification
      */
-    public static Map<String, Object> createEmailAddressVerification(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createEmailAddressVerification(DispatchContext dctx, ContactMechServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String emailAddress = (String) context.get(x.emailAddress);
         String verifyHash = null;

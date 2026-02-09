@@ -39,7 +39,10 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.QuoteServicesContext;
 public class QuoteServices {
 
     private static final String MODULE = QuoteServices.class.getName();
@@ -47,7 +50,7 @@ public class QuoteServices {
     private static final String RES_ERROR = "OrderErrorUiLabels";
     private static final String RES_PRODUCT = "ProductUiLabels";
 
-    public static Map<String, Object> sendQuoteReportMail(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendQuoteReportMail(DispatchContext dctx, QuoteServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -144,7 +147,7 @@ public class QuoteServices {
         return sendResp;
     }
 
-    public static Map<String, Object> storeQuote(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> storeQuote(DispatchContext dctx, QuoteServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         String quoteTypeId = (String) context.get(x.quoteTypeId);

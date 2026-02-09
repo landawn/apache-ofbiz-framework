@@ -36,12 +36,15 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.TelecomServicesContext;
 public class TelecomServices {
 
     private static final String MODULE = TelecomServices.class.getName();
 
-    public static Map<String, Object> sendTelecomMessage(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> sendTelecomMessage(DispatchContext ctx, TelecomServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Map<String, Object> results = ServiceUtil.returnSuccess();

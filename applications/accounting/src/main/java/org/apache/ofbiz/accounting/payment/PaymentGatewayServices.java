@@ -70,7 +70,10 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import com.ibm.icu.util.Calendar;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.PaymentGatewayServicesContext;
 /**
  * PaymentGatewayServices
  */
@@ -102,7 +105,7 @@ public class PaymentGatewayServices {
      * amount processed.
      * TODO: it might be nice to return the paymentGatewayResponseId
      */
-    public static Map<String, Object> authOrderPaymentPreference(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> authOrderPaymentPreference(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -322,7 +325,7 @@ public class PaymentGatewayServices {
      * Processes payments through service calls to the defined processing service for the ProductStore/PaymentMethodType
      * @return APPROVED|FAILED|ERROR for complete processing of ALL payment methods.
      */
-    public static Map<String, Object> authOrderPayments(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> authOrderPayments(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         String orderId = (String) context.get(x.orderId);
@@ -737,7 +740,7 @@ public class PaymentGatewayServices {
      * Releases authorizations through service calls to the defined processing service for the ProductStore/PaymentMethodType
      * @return COMPLETE|FAILED|ERROR for complete processing of ALL payments.
      */
-    public static Map<String, Object> releaseOrderPayments(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> releaseOrderPayments(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -823,7 +826,7 @@ public class PaymentGatewayServices {
         return result;
     }
 
-    public static Map<String, Object> processCreditResult(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processCreditResult(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -909,7 +912,7 @@ public class PaymentGatewayServices {
      * ProductStore/PaymentMethodType
      * @return SUCCESS|FAILED|ERROR for complete processing of payment.
      */
-    public static Map<String, Object> releaseOrderPaymentPreference(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> releaseOrderPaymentPreference(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -1028,7 +1031,7 @@ public class PaymentGatewayServices {
         return result;
     }
 
-    public static Map<String, Object> processReleaseResult(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processReleaseResult(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -1114,7 +1117,7 @@ public class PaymentGatewayServices {
      * Captures payments through service calls to the defined processing service for the ProductStore/PaymentMethodType
      * @return COMPLETE|FAILED|ERROR for complete processing of ALL payment methods.
      */
-    public static Map<String, Object> capturePaymentsByInvoice(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> capturePaymentsByInvoice(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -1206,7 +1209,7 @@ public class PaymentGatewayServices {
      * Captures payments through service calls to the defined processing service for the ProductStore/PaymentMethodType
      * @return COMPLETE|FAILED|ERROR for complete processing of ALL payment methods.
      */
-    public static Map<String, Object> captureOrderPayments(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> captureOrderPayments(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -1493,7 +1496,7 @@ public class PaymentGatewayServices {
         }
     }
 
-    public static Map<String, Object> processCaptureSplitPayment(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processCaptureSplitPayment(DispatchContext dctx, PaymentGatewayServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -1566,7 +1569,7 @@ public class PaymentGatewayServices {
         }
         return ServiceUtil.returnSuccess();
     }
-    public static Map<String, Object> captureBillingAccountPayments(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> captureBillingAccountPayments(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String invoiceId = (String) context.get(x.invoiceId);
         String billingAccountId = (String) context.get(x.billingAccountId);
@@ -1794,7 +1797,7 @@ public class PaymentGatewayServices {
         }
     }
 
-    public static Map<String, Object> storePaymentErrorMessage(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> storePaymentErrorMessage(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
         String serviceType = (String) context.get(x.paymentServiceTypeEnumId);
@@ -1857,7 +1860,7 @@ public class PaymentGatewayServices {
         result.put("userLogin", userLogin);
         result.put("orderPaymentPreference", paymentPreference);
         ModelService model = dctx.getModelService("processAuthResult");
-        Map<String, Object> context = model.makeValid(result, ModelService.IN_PARAM);
+        ServiceContext context = new ServiceContext(model.makeValid(result, ModelService.IN_PARAM));
 
         // in case we rollback make sure this service gets called
         dispatcher.addRollbackService(model.getName(), context, true);
@@ -1875,7 +1878,7 @@ public class PaymentGatewayServices {
         }
     }
 
-    public static Map<String, Object> processAuthResult(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processAuthResult(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         Boolean authResult = (Boolean) context.get(x.authResult);
@@ -2107,7 +2110,7 @@ public class PaymentGatewayServices {
         result.put("serviceTypeEnum", authServiceType);
 
         ModelService model = dctx.getModelService("processCaptureResult");
-        Map<String, Object> context = model.makeValid(result, ModelService.IN_PARAM);
+        ServiceContext context = new ServiceContext(model.makeValid(result, ModelService.IN_PARAM));
         Map<String, Object> capRes;
         try {
             capRes = dispatcher.runSync("processCaptureResult", context);
@@ -2194,7 +2197,7 @@ public class PaymentGatewayServices {
         }
     }
 
-    public static Map<String, Object> processCaptureResult(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processCaptureResult(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -2380,7 +2383,7 @@ public class PaymentGatewayServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> refundOrderPaymentPreference(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> refundOrderPaymentPreference(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -2418,7 +2421,7 @@ public class PaymentGatewayServices {
         return refundResponse;
     }
 
-    public static Map<String, Object> refundPayment(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> refundPayment(DispatchContext dctx, PaymentGatewayServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
@@ -2529,7 +2532,7 @@ public class PaymentGatewayServices {
         }
     }
 
-    public static Map<String, Object> processRefundResult(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processRefundResult(DispatchContext dctx, PaymentGatewayServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
@@ -2634,7 +2637,7 @@ public class PaymentGatewayServices {
         }
     }
 
-    public static Map<String, Object> retryFailedOrderAuth(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> retryFailedOrderAuth(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         String orderId = (String) context.get(x.orderId);
@@ -2701,7 +2704,7 @@ public class PaymentGatewayServices {
     }
 
 
-    public static Map<String, Object> retryFailedAuths(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> retryFailedAuths(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -2736,7 +2739,7 @@ public class PaymentGatewayServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> retryFailedAuthNsfs(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> retryFailedAuthNsfs(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -2936,7 +2939,7 @@ public class PaymentGatewayServices {
         }
     }
 
-    public static Map<String, Object> savePaymentGatewayResponse(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> savePaymentGatewayResponse(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         GenericValue pgr = (GenericValue) context.get(x.paymentGatewayResponse);
         if ("PaymentGatewayResponse".equals(pgr.getEntityName())) {
@@ -2955,7 +2958,7 @@ public class PaymentGatewayServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> savePaymentGatewayResponseAndMessages(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> savePaymentGatewayResponseAndMessages(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         GenericValue pgr = (GenericValue) context.get(x.paymentGatewayResponse);
         String gatewayMessage = pgr.getString(x.gatewayMessage);
@@ -2978,7 +2981,7 @@ public class PaymentGatewayServices {
     }
 
     // manual auth service
-    public static Map<String, Object> processManualCcAuth(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processManualCcAuth(DispatchContext dctx, PaymentGatewayServicesContext context) {
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Locale locale = (Locale) context.get(x.locale);
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -3116,7 +3119,7 @@ public class PaymentGatewayServices {
     }
 
     // manual processing service
-    public static Map<String, Object> processManualCcTx(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processManualCcTx(DispatchContext dctx, PaymentGatewayServicesContext context) {
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Locale locale = (Locale) context.get(x.locale);
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -3302,7 +3305,7 @@ public class PaymentGatewayServices {
     }
 
     // Verify Credit Card (Manually) Service
-    public static Map<String, Object> verifyCreditCard(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> verifyCreditCard(DispatchContext dctx, PaymentGatewayServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         String productStoreId = (String) context.get(x.productStoreId);
@@ -3368,7 +3371,7 @@ public class PaymentGatewayServices {
     /**
      * Simple test processor; declines all orders &lt; 100.00; approves all orders &gt;= 100.00
      */
-    public static Map<String, Object> testProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testProcessor(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = new HashMap<>();
         BigDecimal processAmount = (BigDecimal) context.get(x.processAmount);
@@ -3401,7 +3404,7 @@ public class PaymentGatewayServices {
     /**
      * Simple test processor; declines all orders &lt; 100.00; approves all orders &gt; 100.00
      */
-    public static Map<String, Object> testProcessorWithCapture(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testProcessorWithCapture(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = new HashMap<>();
         BigDecimal processAmount = (BigDecimal) context.get(x.processAmount);
@@ -3440,7 +3443,7 @@ public class PaymentGatewayServices {
     /**
      *  Test authorize - does random declines
      */
-    public static Map<String, Object> testRandomAuthorize(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testRandomAuthorize(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         String refNum = UtilDateTime.nowAsString();
@@ -3466,7 +3469,7 @@ public class PaymentGatewayServices {
     /**
      * Always approve processor.
      */
-    public static Map<String, Object> alwaysApproveProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> alwaysApproveProcessor(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = new HashMap<>();
         Debug.logInfo("Test Processor Approving Credit Card", MODULE);
@@ -3484,7 +3487,7 @@ public class PaymentGatewayServices {
         return result;
     }
 
-    public static Map<String, Object> alwaysApproveWithCapture(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> alwaysApproveWithCapture(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = new HashMap<>();
         String refNum = UtilDateTime.nowAsString();
@@ -3509,7 +3512,7 @@ public class PaymentGatewayServices {
     /**
      * Always decline processor
      */
-    public static Map<String, Object> alwaysDeclineProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> alwaysDeclineProcessor(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         BigDecimal processAmount = (BigDecimal) context.get(x.processAmount);
@@ -3530,7 +3533,7 @@ public class PaymentGatewayServices {
     /**
      * Always NSF (not sufficient funds) processor
      */
-    public static Map<String, Object> alwaysNsfProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> alwaysNsfProcessor(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         BigDecimal processAmount = (BigDecimal) context.get(x.processAmount);
@@ -3552,7 +3555,7 @@ public class PaymentGatewayServices {
     /**
      * Always fail/bad expire date processor
      */
-    public static Map<String, Object> alwaysBadExpireProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> alwaysBadExpireProcessor(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         BigDecimal processAmount = (BigDecimal) context.get(x.processAmount);
@@ -3574,7 +3577,7 @@ public class PaymentGatewayServices {
     /**
      * Fail/bad expire date when year is even processor
      */
-    public static Map<String, Object> badExpireEvenProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> badExpireEvenProcessor(DispatchContext dctx, PaymentGatewayServicesContext context) {
         GenericValue creditCard = (GenericValue) context.get(x.creditCard);
         String expireDate = creditCard.getString(x.expireDate);
         String lastNumberStr = expireDate.substring(expireDate.length() - 1);
@@ -3590,7 +3593,7 @@ public class PaymentGatewayServices {
     /**
      * Always bad card number processor
      */
-    public static Map<String, Object> alwaysBadCardNumberProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> alwaysBadCardNumberProcessor(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         BigDecimal processAmount = (BigDecimal) context.get(x.processAmount);
@@ -3611,13 +3614,13 @@ public class PaymentGatewayServices {
     /**
      * Always fail (error) processor
      */
-    public static Map<String, Object> alwaysFailProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> alwaysFailProcessor(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                 "AccountingPaymentTestAuthorizationAlwaysFailed", locale));
     }
 
-    public static Map<String, Object> testRelease(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testRelease(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
 
@@ -3635,7 +3638,7 @@ public class PaymentGatewayServices {
     /**
      * Test capture service (returns true)
      */
-    public static Map<String, Object> testCapture(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testCapture(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Debug.logInfo("Test Capture Process", MODULE);
@@ -3654,7 +3657,7 @@ public class PaymentGatewayServices {
     /**
      * Always decline processor
      */
-    public static Map<String, Object> testCCProcessorCaptureAlwaysDecline(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testCCProcessorCaptureAlwaysDecline(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         BigDecimal processAmount = (BigDecimal) context.get(x.captureAmount);
@@ -3671,7 +3674,7 @@ public class PaymentGatewayServices {
         return result;
     }
 
-    public static Map<String, Object> testCaptureWithReAuth(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testCaptureWithReAuth(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         GenericValue authTransaction = (GenericValue) context.get(x.authTrans);
@@ -3714,7 +3717,7 @@ public class PaymentGatewayServices {
     /**
      * Test refund service (returns true)
      */
-    public static Map<String, Object> testRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testRefund(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Debug.logInfo("Test Refund Process", MODULE);
@@ -3727,7 +3730,7 @@ public class PaymentGatewayServices {
         return result;
     }
 
-    public static Map<String, Object> testRefundFailure(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> testRefundFailure(DispatchContext dctx, PaymentGatewayServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Debug.logInfo("Test Refund Process", MODULE);

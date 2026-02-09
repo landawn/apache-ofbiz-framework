@@ -43,7 +43,10 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.OrderTestServicesContext;
 /**
  * Order Processing Services
  */
@@ -53,7 +56,7 @@ public class OrderTestServices {
     private static final String MODULE = OrderTestServices.class.getName();
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    public static Map<String, Object> createTestSalesOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createTestSalesOrders(DispatchContext dctx, OrderTestServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Integer numberOfOrders = (Integer) context.get(x.numberOfOrders);
 
@@ -76,7 +79,7 @@ public class OrderTestServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> createTestSalesOrderSingle(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createTestSalesOrderSingle(DispatchContext dctx, OrderTestServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);

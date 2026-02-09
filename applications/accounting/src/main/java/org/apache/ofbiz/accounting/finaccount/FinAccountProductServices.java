@@ -44,7 +44,10 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.FinAccountProductServicesContext;
 /**
  * FinAccountProductServices - Financial Accounts created from product purchases
  * (i.e. gift certificates)
@@ -55,7 +58,7 @@ public class FinAccountProductServices {
     private static final String RES_ORDER_ERROR = "OrderErrorUiLabels";
     private static final String RES_ERROR = "AccountingErrorUiLabels";
 
-    public static Map<String, Object> createPartyFinAccountFromPurchase(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> createPartyFinAccountFromPurchase(DispatchContext dctx, FinAccountProductServicesContext context) {
         // this service should always be called via FULFILLMENT_EXTASYNC
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();

@@ -67,7 +67,10 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.InvoiceServicesContext;
 /**
  * InvoiceServices - Services for creating invoices
  * <p>
@@ -119,7 +122,7 @@ public class InvoiceServices {
     private static final String RESOURCE = "AccountingUiLabels";
 
     // service to create an invoice for a complete order by the system userid
-    public static Map<String, Object> createInvoiceForOrderAllItems(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> createInvoiceForOrderAllItems(DispatchContext dctx, InvoiceServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -150,7 +153,7 @@ public class InvoiceServices {
     }
 
     /** Service to create an invoice for an order */
-    public static Map<String, Object> createInvoiceForOrder(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> createInvoiceForOrder(DispatchContext dctx, InvoiceServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -951,7 +954,7 @@ public class InvoiceServices {
     }
 
     // Service for creating commission invoices
-    public static Map<String, Object> createCommissionInvoices(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> createCommissionInvoices(DispatchContext dctx, InvoiceServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -1189,7 +1192,7 @@ public class InvoiceServices {
         return result;
     }
 
-    public static Map<String, Object> readyInvoices(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> readyInvoices(DispatchContext dctx, InvoiceServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Locale locale = (Locale) context.get(x.locale);
@@ -1214,7 +1217,7 @@ public class InvoiceServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> createInvoicesFromShipment(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> createInvoicesFromShipment(DispatchContext dctx, InvoiceServicesContext context) {
         //Delegator delegator = dctx.getDelegator();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -1270,7 +1273,7 @@ public class InvoiceServices {
         return response;
     }
 
-    public static Map<String, Object> setInvoicesToReadyFromShipment(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> setInvoicesToReadyFromShipment(DispatchContext dctx, InvoiceServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         String shipmentId = (String) context.get(x.shipmentId);
@@ -1364,7 +1367,7 @@ public class InvoiceServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> createSalesInvoicesFromDropShipment(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> createSalesInvoicesFromDropShipment(DispatchContext dctx, InvoiceServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         String shipmentId = (String) context.get(x.shipmentId);
         Locale locale = (Locale) context.get(x.locale);
@@ -1390,7 +1393,7 @@ public class InvoiceServices {
         return serviceResult;
     }
 
-    public static Map<String, Object> createInvoicesFromShipments(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createInvoicesFromShipments(DispatchContext dctx, InvoiceServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         List<String> shipmentIds = UtilGenerics.cast(context.get(x.shipmentIds));
@@ -1962,7 +1965,7 @@ public class InvoiceServices {
         return defaultValue;
     }
 
-    public static Map<String, Object> createInvoicesFromReturnShipment(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> createInvoicesFromReturnShipment(DispatchContext dctx, InvoiceServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Locale locale = (Locale) context.get(x.locale);
@@ -2074,7 +2077,7 @@ public class InvoiceServices {
         return result;
     }
 
-    public static Map<String, Object> createInvoiceFromReturn(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> createInvoiceFromReturn(DispatchContext dctx, InvoiceServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -2388,7 +2391,7 @@ public class InvoiceServices {
         }
     }
 
-    public static Map<String, Object> checkInvoicePaymentApplications(DispatchContext ctx, Map<String, Object> context) {
+    public static Map<String, Object> checkInvoicePaymentApplications(DispatchContext ctx, InvoiceServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -2654,7 +2657,7 @@ public class InvoiceServices {
      * the invoice level when 'invoiceProcessing' parameter is set to "Y" else
      * it works on the invoice item level.
      */
-    public static Map<String, Object> updatePaymentApplication(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> updatePaymentApplication(DispatchContext dctx, InvoiceServicesContext context) {
         if (!context.containsKey("useHighestAmount")) {
             context.put(x.useHighestAmount, "N");
         }
@@ -2676,14 +2679,14 @@ public class InvoiceServices {
      * <p>
      * This version will apply as much as possible when no amountApplied is provided.
      */
-    public static Map<String, Object> updatePaymentApplicationDef(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> updatePaymentApplicationDef(DispatchContext dctx, InvoiceServicesContext context) {
         if (!context.containsKey("useHighestAmount")) {
             context.put(x.useHighestAmount, "Y");
         }
         return updatePaymentApplication(dctx, context);
     }
 
-    public static Map<String, Object> updatePaymentApplicationDefBd(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> updatePaymentApplicationDefBd(DispatchContext dctx, InvoiceServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
 
@@ -3479,7 +3482,7 @@ public class InvoiceServices {
 
     }
 
-    public static Map<String, Object> calculateInvoicedAdjustmentTotal(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> calculateInvoicedAdjustmentTotal(DispatchContext dctx, InvoiceServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         GenericValue orderAdjustment = (GenericValue) context.get(x.orderAdjustment);
@@ -3626,7 +3629,7 @@ public class InvoiceServices {
         return results;
     }
 
-    public static Map<String, Object> checkPaymentInvoices(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> checkPaymentInvoices(DispatchContext dctx, InvoiceServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -3662,7 +3665,7 @@ public class InvoiceServices {
         }
     }
 
-    public static Map<String, Object> importInvoice(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> importInvoice(DispatchContext dctx, InvoiceServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();

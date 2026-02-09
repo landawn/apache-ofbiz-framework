@@ -38,13 +38,16 @@ import org.apache.ofbiz.service.ServiceUtil;
 import securepay.jxa.api.Payment;
 import securepay.jxa.api.Txn;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.SecurePayPaymentServicesContext;
 public class SecurePayPaymentServices {
 
     private static final String MODULE = SecurePayPaymentServices.class.getName();
     private static final String RESOURCE = "AccountingUiLabels";
 
-    public static Map<String, Object> doAuth(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> doAuth(DispatchContext dctx, SecurePayPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         String orderId = (String) context.get(x.orderId);
@@ -127,11 +130,11 @@ public class SecurePayPaymentServices {
         return result;
     }
 
-    public static Map<String, Object> ccReAuth(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> ccReAuth(DispatchContext dctx, SecurePayPaymentServicesContext context) {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> doCapture(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> doCapture(DispatchContext dctx, SecurePayPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
@@ -210,7 +213,7 @@ public class SecurePayPaymentServices {
         return result;
     }
 
-    public static Map<String, Object> doVoid(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> doVoid(DispatchContext dctx, SecurePayPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
@@ -289,7 +292,7 @@ public class SecurePayPaymentServices {
         return result;
     }
 
-    public static Map<String, Object> doRefund(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> doRefund(DispatchContext dctx, SecurePayPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
@@ -376,7 +379,7 @@ public class SecurePayPaymentServices {
         return result;
     }
 
-    public static Map<String, Object> doCredit(DispatchContext dctx, Map<String, Object> context) {
+    public static Map<String, Object> doCredit(DispatchContext dctx, SecurePayPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         // generate the request/properties
@@ -454,7 +457,7 @@ public class SecurePayPaymentServices {
         return result;
     }
 
-    private static Properties buildScProperties(Map<String, ? extends Object> context, Delegator delegator) {
+    private static Properties buildScProperties(SecurePayPaymentServicesContext context, Delegator delegator) {
         String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
         String configString = (String) context.get(x.paymentConfig);
         if (configString == null) {

@@ -33,7 +33,10 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.InventoryEventPlannedServicesContext;
 public class InventoryEventPlannedServices {
 
     private static final String MODULE = InventoryEventPlannedServices.class.getName();
@@ -46,7 +49,7 @@ public class InventoryEventPlannedServices {
      * @param context a map containing the parameters used to create an MrpEvent
      * @return result a map with service status
      */
-    public static Map<String, Object> createMrpEvent(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> createMrpEvent(DispatchContext ctx, InventoryEventPlannedServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> parameters = UtilMisc.<String, Object>toMap("mrpId", context.get(x.mrpId),

@@ -37,7 +37,10 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.PeriodServicesContext;
 public class PeriodServices {
 
     private static final String MODULE = PeriodServices.class.getName();
@@ -47,7 +50,7 @@ public class PeriodServices {
      * find the date of the last closed CustomTimePeriod, or, if none available, the
      * earliest date available of any CustomTimePeriod
      */
-    public static Map<String, Object> findLastClosedDate(DispatchContext dctx, Map<String, ?> context) {
+    public static Map<String, Object> findLastClosedDate(DispatchContext dctx, PeriodServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         String organizationPartyId = (String) context.get(x.organizationPartyId); // input parameters
         String periodTypeId = (String) context.get(x.periodTypeId);

@@ -61,7 +61,10 @@ import org.apache.ofbiz.service.calendar.TemporalExpressionWorker;
 
 import com.ibm.icu.util.Calendar;
 
+
 import org.apache.ofbiz.persistence.entity.x;
+import org.apache.ofbiz.model.ServiceContext;
+import org.apache.ofbiz.model.WorkEffortServicesContext;
 /**
  * WorkEffortServices - WorkEffort related Services
  */
@@ -70,7 +73,7 @@ public class WorkEffortServices {
     private static final String MODULE = WorkEffortServices.class.getName();
     private static final String RES_ERROR = "WorkEffortUiLabels";
 
-    public static Map<String, Object> getWorkEffortAssignedEventsForRole(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getWorkEffortAssignedEventsForRole(DispatchContext ctx, WorkEffortServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         String roleTypeId = (String) context.get(x.roleTypeId);
@@ -106,7 +109,7 @@ public class WorkEffortServices {
         return result;
     }
 
-    public static Map<String, Object> getWorkEffortAssignedEventsForRoleOfAllParties(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getWorkEffortAssignedEventsForRoleOfAllParties(DispatchContext ctx, WorkEffortServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         String roleTypeId = (String) context.get(x.roleTypeId);
         Locale locale = (Locale) context.get(x.locale);
@@ -139,7 +142,7 @@ public class WorkEffortServices {
         return result;
     }
 
-    public static Map<String, Object> getWorkEffortAssignedTasks(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getWorkEffortAssignedTasks(DispatchContext ctx, WorkEffortServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Locale locale = (Locale) context.get(x.locale);
@@ -184,7 +187,7 @@ public class WorkEffortServices {
         return result;
     }
 
-    public static Map<String, Object> getWorkEffortAssignedActivities(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getWorkEffortAssignedActivities(DispatchContext ctx, WorkEffortServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Locale locale = (Locale) context.get(x.locale);
@@ -223,7 +226,7 @@ public class WorkEffortServices {
         return result;
     }
 
-    public static Map<String, Object> getWorkEffortAssignedActivitiesByRole(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getWorkEffortAssignedActivitiesByRole(DispatchContext ctx, WorkEffortServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Locale locale = (Locale) context.get(x.locale);
@@ -262,7 +265,7 @@ public class WorkEffortServices {
         return result;
     }
 
-    public static Map<String, Object> getWorkEffortAssignedActivitiesByGroup(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getWorkEffortAssignedActivitiesByGroup(DispatchContext ctx, WorkEffortServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Locale locale = (Locale) context.get(x.locale);
@@ -301,7 +304,7 @@ public class WorkEffortServices {
         return result;
     }
 
-    public static Map<String, Object> getWorkEffort(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getWorkEffort(DispatchContext ctx, WorkEffortServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Security security = ctx.getSecurity();
@@ -496,7 +499,7 @@ public class WorkEffortServices {
      * </ul>
      */
 
-    public static Map<String, Object> getWorkEffortEventsByPeriod(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getWorkEffortEventsByPeriod(DispatchContext ctx, WorkEffortServicesContext context) {
 
         /*
          To create testdata for  this function for  fixedasset/facility
@@ -776,7 +779,7 @@ public class WorkEffortServices {
         return result;
     }
 
-    public static Map<String, Object> getProductManufacturingSummaryByFacility(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> getProductManufacturingSummaryByFacility(DispatchContext ctx, WorkEffortServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         String productId = (String) context.get(x.productId);
         String facilityId = (String) context.get(x.facilityId); // optional
@@ -919,7 +922,7 @@ public class WorkEffortServices {
      * @param context the context
      * @return returns the result of the service execution
      */
-    public static Map<String, Object> processWorkEffortEventReminders(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processWorkEffortEventReminders(DispatchContext ctx, WorkEffortServicesContext context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Locale localePar = (Locale) context.get(x.locale);
@@ -1063,7 +1066,7 @@ public class WorkEffortServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> processWorkEffortEventReminder(DispatchContext dctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> processWorkEffortEventReminder(DispatchContext dctx, WorkEffortServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> parameters = UtilGenerics.cast(context.get(x.bodyParameters));
@@ -1104,7 +1107,7 @@ public class WorkEffortServices {
         return ServiceUtil.returnSuccess();
     }
 
-    public static Map<String, Object> removeDuplicateWorkEfforts(DispatchContext ctx, Map<String, ? extends Object> context) {
+    public static Map<String, Object> removeDuplicateWorkEfforts(DispatchContext ctx, WorkEffortServicesContext context) {
         List<GenericValue> resultList = null;
         try (EntityListIterator eli = (EntityListIterator) context.get(x.workEffortIterator)) {
             if (eli != null) {
