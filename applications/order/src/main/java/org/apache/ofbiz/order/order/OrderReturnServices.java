@@ -63,6 +63,7 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import com.ibm.icu.util.Calendar;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * OrderReturnServices
  */
@@ -81,8 +82,8 @@ public class OrderReturnServices {
     // locate the return item's initial inventory item cost
     public static Map<String, Object> getReturnItemInitialCost(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String returnId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnId);
-        String returnItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnItemSeqId);
+        String returnId = (String) context.get(x.returnId);
+        String returnItemSeqId = (String) context.get(x.returnItemSeqId);
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         result.put("initialItemCost", getReturnItemInitialCost(delegator, returnId, returnItemSeqId));
@@ -92,7 +93,7 @@ public class OrderReturnServices {
     // obtain order/return total information
     public static Map<String, Object> getOrderAvailableReturnedTotal(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderId = (String) context.get(x.orderId);
         OrderReadHelper orh = null;
         try {
             orh = new OrderReadHelper(delegator, orderId);
@@ -101,12 +102,12 @@ public class OrderReturnServices {
         }
 
         // an adjustment value to test
-        BigDecimal adj = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.adjustment);
+        BigDecimal adj = (BigDecimal) context.get(x.adjustment);
         if (adj == null) {
             adj = ZERO;
         }
 
-        Boolean countNewReturnItems = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.countNewReturnItems);
+        Boolean countNewReturnItems = (Boolean) context.get(x.countNewReturnItems);
         if (countNewReturnItems == null) {
             countNewReturnItems = Boolean.FALSE;
         }
@@ -144,8 +145,8 @@ public class OrderReturnServices {
 
         // check for an orderItem association
         if (returnItem != null) {
-            String orderId = returnItem.getString(org.apache.ofbiz.persistence.entity.x.orderId);
-            String orderItemSeqId = returnItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+            String orderId = returnItem.getString(x.orderId);
+            String orderItemSeqId = returnItem.getString(x.orderItemSeqId);
             if (orderItemSeqId != null && orderId != null) {
                 Debug.logInfo("Found order item reference", MODULE);
                 // locate the item issuance(s) for this order item
@@ -162,15 +163,15 @@ public class OrderReturnServices {
                     // actual item being returned; maybe by serial number
                     GenericValue inventoryItem = null;
                     try {
-                        inventoryItem = issue.getRelatedOne(org.apache.ofbiz.persistence.entity.x.InventoryItem, false);
+                        inventoryItem = issue.getRelatedOne(x.InventoryItem, false);
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
                         throw new GeneralRuntimeException(e.getMessage());
                     }
                     if (inventoryItem != null) {
-                        Debug.logInfo("Located inventory item - " + inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId), MODULE);
-                        if (inventoryItem.get(org.apache.ofbiz.persistence.entity.x.unitCost) != null) {
-                            itemCost = inventoryItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitCost);
+                        Debug.logInfo("Located inventory item - " + inventoryItem.getString(x.inventoryItemId), MODULE);
+                        if (inventoryItem.get(x.unitCost) != null) {
+                            itemCost = inventoryItem.getBigDecimal(x.unitCost);
                         } else {
                             Debug.logInfo("Found item cost; but cost was null. Returning default amount (0.00)", MODULE);
                         }
@@ -187,9 +188,9 @@ public class OrderReturnServices {
     private static Map<String, Object> sendReturnNotificationScreen(DispatchContext dctx, Map<String, ? extends Object> context, String emailType) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String returnId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String returnId = (String) context.get(x.returnId);
+        Locale locale = (Locale) context.get(x.locale);
 
         // get the return header
         GenericValue returnHeader = null;
@@ -205,7 +206,7 @@ public class OrderReturnServices {
         List<GenericValue> returnItems = null;
         List<GenericValue> returnAdjustments;
         try {
-            returnItems = returnHeader.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnItem, null, null, false);
+            returnItems = returnHeader.getRelated(x.ReturnItem, null, null, false);
             returnAdjustments = EntityQuery.use(delegator).from("ReturnAdjustment")
                     .where("returnId", returnId, "returnItemSeqId", "_NA_")
                     .orderBy("returnAdjustmentTypeId")
@@ -224,14 +225,14 @@ public class OrderReturnServices {
             GenericValue firstItem = EntityUtil.getFirst(returnItems);
             GenericValue orderHeader = null;
             try {
-                orderHeader = firstItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
+                orderHeader = firstItem.getRelatedOne(x.OrderHeader, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "OrderErrorUnableToGetOrderHeaderFromReturnItem", locale));
             }
 
-            if (orderHeader != null && UtilValidate.isNotEmpty(orderHeader.getString(org.apache.ofbiz.persistence.entity.x.productStoreId))) {
+            if (orderHeader != null && UtilValidate.isNotEmpty(orderHeader.getString(x.productStoreId))) {
                 OrderReadHelper orh = new OrderReadHelper(orderHeader);
                 productStoreId = orh.getProductStoreId();
                 emailAddress = orh.getOrderEmailString();
@@ -251,21 +252,21 @@ public class OrderReturnServices {
             }
 
             if (productStoreEmail != null && emailAddress != null) {
-                sendMap.put("bodyScreenUri", productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.bodyScreenLocation));
-                String xslfoAttachScreenLocation = productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.xslfoAttachScreenLocation);
+                sendMap.put("bodyScreenUri", productStoreEmail.getString(x.bodyScreenLocation));
+                String xslfoAttachScreenLocation = productStoreEmail.getString(x.xslfoAttachScreenLocation);
                 sendMap.put("xslfoAttachScreenLocation", xslfoAttachScreenLocation);
 
                 Map<String, Object> bodyParameters = UtilMisc.<String, Object>toMap("returnHeader", returnHeader, "returnItems", returnItems,
                         "returnAdjustments", returnAdjustments, "locale", locale, "userLogin", userLogin);
                 sendMap.put("bodyParameters", bodyParameters);
 
-                sendMap.put("subject", productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.subject));
-                sendMap.put("contentType", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.contentType));
-                sendMap.put("sendFrom", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.fromAddress));
-                sendMap.put("sendCc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.ccAddress));
-                sendMap.put("sendBcc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.bccAddress));
+                sendMap.put("subject", productStoreEmail.getString(x.subject));
+                sendMap.put("contentType", productStoreEmail.get(x.contentType));
+                sendMap.put("sendFrom", productStoreEmail.get(x.fromAddress));
+                sendMap.put("sendCc", productStoreEmail.get(x.ccAddress));
+                sendMap.put("sendBcc", productStoreEmail.get(x.bccAddress));
                 sendMap.put("sendTo", emailAddress);
-                sendMap.put("partyId", returnHeader.getString(org.apache.ofbiz.persistence.entity.x.fromPartyId));
+                sendMap.put("partyId", returnHeader.getString(x.fromPartyId));
                 sendMap.put("returnId", returnId);
 
                 sendMap.put("userLogin", userLogin);
@@ -312,7 +313,7 @@ public class OrderReturnServices {
     public static Map<String, Object> autoCancelReplacementOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         List<GenericValue> returnHeaders = null;
         try {
             returnHeaders = EntityQuery.use(delegator).from("ReturnHeader")
@@ -323,8 +324,8 @@ public class OrderReturnServices {
             Debug.logError(e, "Problem getting Return headers", MODULE);
         }
         for (GenericValue returnHeader : returnHeaders) {
-            String returnId = returnHeader.getString(org.apache.ofbiz.persistence.entity.x.returnId);
-            Timestamp entryDate = returnHeader.getTimestamp(org.apache.ofbiz.persistence.entity.x.entryDate);
+            String returnId = returnHeader.getString(x.returnId);
+            Timestamp entryDate = returnHeader.getTimestamp(x.entryDate);
             String daysTillCancelStr = EntityUtilProperties.getPropertyValue("order", "daysTillCancelReplacementOrder", "30", delegator);
             int daysTillCancel = 0;
             try {
@@ -345,13 +346,13 @@ public class OrderReturnServices {
                                 .orderBy("createdStamp")
                                 .queryList();
                         for (GenericValue returnItem : returnItems) {
-                            GenericValue returnItemResponse = returnItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ReturnItemResponse, false);
+                            GenericValue returnItemResponse = returnItem.getRelatedOne(x.ReturnItemResponse, false);
                             if (returnItemResponse != null) {
-                                String replacementOrderId = returnItemResponse.getString(org.apache.ofbiz.persistence.entity.x.replacementOrderId);
+                                String replacementOrderId = returnItemResponse.getString(x.replacementOrderId);
                                 Map<String, Object> svcCtx = UtilMisc.<String, Object>toMap("orderId", replacementOrderId, "userLogin", userLogin);
                                 GenericValue orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId",
                                         replacementOrderId).queryOne();
-                                if ("ORDER_HOLD".equals(orderHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
+                                if ("ORDER_HOLD".equals(orderHeader.getString(x.statusId))) {
                                     try {
                                         Map<String, Object> result = dispatcher.runSync("cancelOrderItem", svcCtx);
                                         if (ServiceUtil.isError(result)) {
@@ -374,12 +375,12 @@ public class OrderReturnServices {
 
     // get the returnable quantiy for an order item
     public static Map<String, Object> getReturnableQuantity(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue orderItem = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderItem);
+        GenericValue orderItem = (GenericValue) context.get(x.orderItem);
         GenericValue product = null;
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        if (orderItem.get(org.apache.ofbiz.persistence.entity.x.productId) != null) {
+        Locale locale = (Locale) context.get(x.locale);
+        if (orderItem.get(x.productId) != null) {
             try {
-                product = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
+                product = orderItem.getRelatedOne(x.Product, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "ERROR: Unable to get Product from OrderItem", MODULE);
             }
@@ -389,23 +390,23 @@ public class OrderReturnServices {
         boolean returnable = true;
 
         // first check returnable flag
-        if (product != null && product.get(org.apache.ofbiz.persistence.entity.x.returnable) != null
-                && "N".equalsIgnoreCase(product.getString(org.apache.ofbiz.persistence.entity.x.returnable))) {
+        if (product != null && product.get(x.returnable) != null
+                && "N".equalsIgnoreCase(product.getString(x.returnable))) {
             // the product is not returnable at all
             returnable = false;
         }
 
         // next check support discontinuation
-        if (product != null && product.get(org.apache.ofbiz.persistence.entity.x.supportDiscontinuationDate) != null
-                && !UtilDateTime.nowTimestamp().before(product.getTimestamp(org.apache.ofbiz.persistence.entity.x.supportDiscontinuationDate))) {
+        if (product != null && product.get(x.supportDiscontinuationDate) != null
+                && !UtilDateTime.nowTimestamp().before(product.getTimestamp(x.supportDiscontinuationDate))) {
             // support discontinued either now or in the past
             returnable = false;
         }
 
-        String itemStatus = orderItem.getString(org.apache.ofbiz.persistence.entity.x.statusId);
-        BigDecimal orderQty = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
-        if (orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity) != null) {
-            orderQty = orderQty.subtract(orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity));
+        String itemStatus = orderItem.getString(x.statusId);
+        BigDecimal orderQty = orderItem.getBigDecimal(x.quantity);
+        if (orderItem.getBigDecimal(x.cancelQuantity) != null) {
+            orderQty = orderQty.subtract(orderItem.getBigDecimal(x.cancelQuantity));
         }
 
         // get the returnable quantity
@@ -413,7 +414,7 @@ public class OrderReturnServices {
         if (returnable && ("ITEM_APPROVED".equals(itemStatus) || "ITEM_COMPLETED".equals(itemStatus))) {
             List<GenericValue> returnedItems = null;
             try {
-                returnedItems = orderItem.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnItem, null, null, false);
+                returnedItems = orderItem.getRelated(x.ReturnItem, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -426,16 +427,16 @@ public class OrderReturnServices {
                 for (GenericValue returnItem : returnedItems) {
                     GenericValue returnHeader = null;
                     try {
-                        returnHeader = returnItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ReturnHeader, false);
+                        returnHeader = returnItem.getRelatedOne(x.ReturnHeader, false);
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                                 "OrderErrorUnableToGetReturnHeaderFromItem", locale));
                     }
-                    String returnStatus = returnHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId);
+                    String returnStatus = returnHeader.getString(x.statusId);
                     if (!"RETURN_CANCELLED".equals(returnStatus)) {
-                        if (UtilValidate.isNotEmpty(returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity))) {
-                            returnedQty = returnedQty.add(returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity));
+                        if (UtilValidate.isNotEmpty(returnItem.getBigDecimal(x.returnQuantity))) {
+                            returnedQty = returnedQty.add(returnItem.getBigDecimal(x.returnQuantity));
                         }
                     }
                 }
@@ -449,7 +450,7 @@ public class OrderReturnServices {
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         result.put("returnableQuantity", returnableQuantity);
-        result.put("returnablePrice", orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice));
+        result.put("returnablePrice", orderItem.getBigDecimal(x.unitPrice));
         return result;
     }
 
@@ -457,8 +458,8 @@ public class OrderReturnServices {
     public static Map<String, Object> getReturnableItems(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String orderId = (String) context.get(x.orderId);
+        Locale locale = (Locale) context.get(x.locale);
 
         GenericValue orderHeader = null;
         try {
@@ -473,7 +474,7 @@ public class OrderReturnServices {
         if (orderHeader != null) {
             // OrderItems which have been issued may be returned.
             EntityConditionList<EntityExpr> whereConditions = EntityCondition.makeCondition(UtilMisc.toList(
-                    EntityCondition.makeCondition("orderId", EntityOperator.EQUALS, orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId)),
+                    EntityCondition.makeCondition("orderId", EntityOperator.EQUALS, orderHeader.getString(x.orderId)),
                     EntityCondition.makeCondition("orderItemStatusId", EntityOperator.IN, UtilMisc.toList("ITEM_APPROVED", "ITEM_COMPLETED"))),
                     EntityOperator.AND);
             List<GenericValue> orderItemQuantitiesIssued = null;
@@ -490,7 +491,7 @@ public class OrderReturnServices {
                 for (GenericValue orderItemQuantityIssued : orderItemQuantitiesIssued) {
                     GenericValue item = null;
                     try {
-                        item = orderItemQuantityIssued.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItem, false);
+                        item = orderItemQuantityIssued.getRelatedOne(x.OrderItem, false);
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -498,11 +499,11 @@ public class OrderReturnServices {
                     }
                     // items not issued/shipped are considered as returnable only if they are
                     // not physical items
-                    if ("SALES_ORDER".equals(orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderTypeId))) {
-                        BigDecimal quantityIssued = orderItemQuantityIssued.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityIssued);
+                    if ("SALES_ORDER".equals(orderHeader.getString(x.orderTypeId))) {
+                        BigDecimal quantityIssued = orderItemQuantityIssued.getBigDecimal(x.quantityIssued);
                         if (UtilValidate.isEmpty(quantityIssued) || quantityIssued.compareTo(BigDecimal.ZERO) == 0) {
                             try {
-                                GenericValue itemProduct = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
+                                GenericValue itemProduct = item.getRelatedOne(x.Product, false);
                                 if (ProductWorker.isPhysical(itemProduct)) {
                                     continue;
                                 }
@@ -536,9 +537,9 @@ public class OrderReturnServices {
                     // now the product type information
                     String itemTypeKey = "FINISHED_GOOD"; // default item type (same as invoice)
                     GenericValue product = null;
-                    if (item.get(org.apache.ofbiz.persistence.entity.x.productId) != null) {
+                    if (item.get(x.productId) != null) {
                         try {
-                            product = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
+                            product = item.getRelatedOne(x.Product, false);
                         } catch (GenericEntityException e) {
                             Debug.logError(e, MODULE);
                             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -546,9 +547,9 @@ public class OrderReturnServices {
                         }
                     }
                     if (product != null) {
-                        itemTypeKey = product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId);
-                    } else if (item.getString(org.apache.ofbiz.persistence.entity.x.orderItemTypeId) != null) {
-                        itemTypeKey = item.getString(org.apache.ofbiz.persistence.entity.x.orderItemTypeId);
+                        itemTypeKey = product.getString(x.productTypeId);
+                    } else if (item.getString(x.orderItemTypeId) != null) {
+                        itemTypeKey = item.getString(x.orderItemTypeId);
                     }
                     returnInfo.put("itemTypeKey", itemTypeKey);
 
@@ -557,7 +558,7 @@ public class OrderReturnServices {
                     // Order item adjustments
                     List<GenericValue> itemAdjustments = null;
                     try {
-                        itemAdjustments = item.getRelated(org.apache.ofbiz.persistence.entity.x.OrderAdjustment, null, null, false);
+                        itemAdjustments = item.getRelated(x.OrderAdjustment, null, null, false);
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -568,7 +569,7 @@ public class OrderReturnServices {
                             returnInfo = new HashMap<>();
                             returnInfo.put("returnableQuantity", BigDecimal.ONE);
                             // TODO: the returnablePrice should be set to the amount minus the already returned amount
-                            returnInfo.put("returnablePrice", itemAdjustment.get(org.apache.ofbiz.persistence.entity.x.amount));
+                            returnInfo.put("returnablePrice", itemAdjustment.get(x.amount));
                             returnInfo.put("itemTypeKey", itemTypeKey);
                             returnable.put(itemAdjustment, returnInfo);
                         }
@@ -592,9 +593,9 @@ public class OrderReturnServices {
     public static Map<String, Object> checkReturnComplete(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String returnId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String returnId = (String) context.get(x.returnId);
+        Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> serviceResult = new HashMap<>();
 
         GenericValue returnHeader = null;
@@ -602,7 +603,7 @@ public class OrderReturnServices {
         try {
             returnHeader = EntityQuery.use(delegator).from("ReturnHeader").where("returnId", returnId).queryOne();
             if (returnHeader != null) {
-                returnItems = returnHeader.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnItem, null, null, false);
+                returnItems = returnHeader.getRelated(x.ReturnItem, null, null, false);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, "Problems looking up return information", MODULE);
@@ -612,8 +613,8 @@ public class OrderReturnServices {
 
         // if already completed just return
         String currentStatus = null;
-        if (returnHeader != null && returnHeader.get(org.apache.ofbiz.persistence.entity.x.statusId) != null) {
-            currentStatus = returnHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId);
+        if (returnHeader != null && returnHeader.get(x.statusId) != null) {
+            currentStatus = returnHeader.getString(x.statusId);
             if ("RETURN_COMPLETED".equals(currentStatus) || "RETURN_CANCELLED".equals(currentStatus)) {
                 return ServiceUtil.returnSuccess();
             }
@@ -622,7 +623,7 @@ public class OrderReturnServices {
         List<GenericValue> completedItems = new LinkedList<>();
         if (returnHeader != null && UtilValidate.isNotEmpty(returnItems)) {
             for (GenericValue item : returnItems) {
-                String itemStatus = item != null ? item.getString(org.apache.ofbiz.persistence.entity.x.statusId) : null;
+                String itemStatus = item != null ? item.getString(x.statusId) : null;
                 if (itemStatus != null) {
                     // both completed and cancelled items qualify for completed status change
                     if ("RETURN_COMPLETED".equals(itemStatus) || "RETURN_CANCELLED".equals(itemStatus)) {
@@ -630,9 +631,9 @@ public class OrderReturnServices {
                     } else {
                         // Non-physical items don't need an inventory receive and so are
                         // considered completed after the return is accepted
-                        if ("RETURN_ACCEPTED".equals(returnHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
+                        if ("RETURN_ACCEPTED".equals(returnHeader.getString(x.statusId))) {
                             try {
-                                GenericValue itemProduct = item.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
+                                GenericValue itemProduct = item.getRelatedOne(x.Product, false);
                                 if (!ProductWorker.isPhysical(itemProduct)) {
                                     completedItems.add(item);
                                 }
@@ -687,7 +688,7 @@ public class OrderReturnServices {
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         if (returnHeader != null) {
-            result.put("statusId", returnHeader.get(org.apache.ofbiz.persistence.entity.x.statusId));
+            result.put("statusId", returnHeader.get(x.statusId));
         }
         return result;
     }
@@ -696,16 +697,16 @@ public class OrderReturnServices {
     public static Map<String, Object> processCreditReturn(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        String returnId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnId);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String returnId = (String) context.get(x.returnId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         GenericValue returnHeader = null;
         List<GenericValue> returnItems = null;
         try {
             returnHeader = EntityQuery.use(delegator).from("ReturnHeader").where("returnId", returnId).queryOne();
             if (returnHeader != null) {
-                returnItems = returnHeader.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnItem, UtilMisc.toMap("returnTypeId", "RTN_CREDIT"), null, false);
+                returnItems = returnHeader.getRelated(x.ReturnItem, UtilMisc.toMap("returnTypeId", "RTN_CREDIT"), null, false);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, "Problems looking up return information", MODULE);
@@ -716,10 +717,10 @@ public class OrderReturnServices {
         BigDecimal adjustments = getReturnAdjustmentTotal(delegator, UtilMisc.toMap("returnId", returnId, "returnTypeId", "RTN_CREDIT"));
 
         if (returnHeader != null && (UtilValidate.isNotEmpty(returnItems) || adjustments.compareTo(ZERO) > 0)) {
-            String finAccountId = returnHeader.getString(org.apache.ofbiz.persistence.entity.x.finAccountId);
-            String billingAccountId = returnHeader.getString(org.apache.ofbiz.persistence.entity.x.billingAccountId);
-            String fromPartyId = returnHeader.getString(org.apache.ofbiz.persistence.entity.x.fromPartyId);
-            String toPartyId = returnHeader.getString(org.apache.ofbiz.persistence.entity.x.toPartyId);
+            String finAccountId = returnHeader.getString(x.finAccountId);
+            String billingAccountId = returnHeader.getString(x.billingAccountId);
+            String fromPartyId = returnHeader.getString(x.fromPartyId);
+            String toPartyId = returnHeader.getString(x.toPartyId);
 
             // make sure total refunds on a return don't exceed amount of returned orders
             Map<String, Object> serviceResult = null;
@@ -743,7 +744,7 @@ public class OrderReturnServices {
             }
             if (returnItem != null) {
                 try {
-                    orderHeader = returnItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
+                    orderHeader = returnItem.getRelatedOne(x.OrderHeader, false);
                 } catch (GenericEntityException e) {
                     return ServiceUtil.returnError(e.getMessage());
                 }
@@ -755,10 +756,10 @@ public class OrderReturnServices {
 
             // if both billingAccountId and finAccountId are supplied, look for productStore.storeCreditAccountEnumId preference
             if (finAccountId != null && billingAccountId != null && productStore != null
-                    && productStore.getString(org.apache.ofbiz.persistence.entity.x.storeCreditAccountEnumId) != null) {
+                    && productStore.getString(x.storeCreditAccountEnumId) != null) {
                 Debug.logWarning("You have entered both financial account and billing account for store credit. Based on the configuration on"
                         + "product store, only one of them will be selected.", MODULE);
-                if ("BILLING_ACCOUNT".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.storeCreditAccountEnumId))) {
+                if ("BILLING_ACCOUNT".equals(productStore.getString(x.storeCreditAccountEnumId))) {
                     finAccountId = null;
                     Debug.logWarning("Default setting on product store is billing account. Store credit will goes to billing account ["
                             + billingAccountId + "]", MODULE);
@@ -801,8 +802,8 @@ public class OrderReturnServices {
 
                 // if no billing account with negative balance is found, look for productStore.storeCreditAccountEnumId settings
                 if (billingAccountId == null) {
-                    if (productStore != null && productStore.getString(org.apache.ofbiz.persistence.entity.x.storeCreditAccountEnumId) != null
-                            && "BILLING_ACCOUNT".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.storeCreditAccountEnumId))) {
+                    if (productStore != null && productStore.getString(x.storeCreditAccountEnumId) != null
+                            && "BILLING_ACCOUNT".equals(productStore.getString(x.storeCreditAccountEnumId))) {
                         if (UtilValidate.isNotEmpty(billingAccounts)) {
                             billingAccountId = EntityUtil.getFirst(billingAccounts).getString("billingAccountId");
                         } else {
@@ -827,7 +828,7 @@ public class OrderReturnServices {
                         try {
                             finAccount = EntityQuery.use(delegator).from("FinAccountAndRole")
                                     .where("partyId", fromPartyId, "finAccountTypeId", "STORE_CREDIT_ACCT", "roleTypeId", "OWNER", "statusId",
-                                            "FNACT_ACTIVE", "currencyUomId", returnHeader.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId))
+                                            "FNACT_ACTIVE", "currencyUomId", returnHeader.getString(x.currencyUomId))
                                     .filterByDate()
                                     .orderBy("-fromDate")
                                     .queryFirst();
@@ -835,15 +836,15 @@ public class OrderReturnServices {
                             return ServiceUtil.returnError(e.getMessage());
                         }
                         if (finAccount != null) {
-                            finAccountId = finAccount.getString(org.apache.ofbiz.persistence.entity.x.finAccountId);
+                            finAccountId = finAccount.getString(x.finAccountId);
                         }
 
                         if (finAccountId == null) {
                             Map<String, Object> createAccountCtx = new HashMap<>();
                             createAccountCtx.put("ownerPartyId", fromPartyId);
                             createAccountCtx.put("finAccountTypeId", "STORE_CREDIT_ACCT");
-                            createAccountCtx.put("productStoreId", productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId));
-                            createAccountCtx.put("currencyUomId", returnHeader.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId));
+                            createAccountCtx.put("productStoreId", productStore.getString(x.productStoreId));
+                            createAccountCtx.put("currencyUomId", returnHeader.getString(x.currencyUomId));
                             createAccountCtx.put("finAccountName", "Store Credit Account for party [" + fromPartyId + "]");
                             createAccountCtx.put("userLogin", userLogin);
                             Map<String, Object> createAccountResult = null;
@@ -889,8 +890,8 @@ public class OrderReturnServices {
             // first, compute the total credit from the return items
             BigDecimal creditTotal = ZERO;
             for (GenericValue item : returnItems) {
-                BigDecimal quantity = item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity);
-                BigDecimal price = item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnPrice);
+                BigDecimal quantity = item.getBigDecimal(x.returnQuantity);
+                BigDecimal price = item.getBigDecimal(x.returnPrice);
                 if (quantity == null) {
                     quantity = ZERO;
                 }
@@ -927,17 +928,17 @@ public class OrderReturnServices {
             // it is of type "Other (Non-posting)"
             String paymentId = delegator.getNextSeqId("Payment");
             GenericValue payment = delegator.makeValue("Payment", UtilMisc.toMap("paymentId", paymentId));
-            payment.set(org.apache.ofbiz.persistence.entity.x.paymentTypeId, "CUSTOMER_REFUND");
-            payment.set(org.apache.ofbiz.persistence.entity.x.partyIdFrom, toPartyId);  // if you receive a return FROM someone, then you'd have to give a return TO that person
-            payment.set(org.apache.ofbiz.persistence.entity.x.partyIdTo, fromPartyId);
-            payment.set(org.apache.ofbiz.persistence.entity.x.effectiveDate, now);
-            payment.set(org.apache.ofbiz.persistence.entity.x.amount, creditTotal);
-            payment.set(org.apache.ofbiz.persistence.entity.x.comments, "Return Credit");
-            payment.set(org.apache.ofbiz.persistence.entity.x.statusId, "PMNT_CONFIRMED");  // set the status to confirmed so nothing else can happen to the payment
+            payment.set(x.paymentTypeId, "CUSTOMER_REFUND");
+            payment.set(x.partyIdFrom, toPartyId);  // if you receive a return FROM someone, then you'd have to give a return TO that person
+            payment.set(x.partyIdTo, fromPartyId);
+            payment.set(x.effectiveDate, now);
+            payment.set(x.amount, creditTotal);
+            payment.set(x.comments, "Return Credit");
+            payment.set(x.statusId, "PMNT_CONFIRMED");  // set the status to confirmed so nothing else can happen to the payment
             if (billingAccountId != null) {
-                payment.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, "EXT_BILLACT");
+                payment.set(x.paymentMethodTypeId, "EXT_BILLACT");
             } else {
-                payment.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, "FIN_ACCOUNT");
+                payment.set(x.paymentMethodTypeId, "FIN_ACCOUNT");
             }
             try {
                 delegator.create(payment);
@@ -976,7 +977,7 @@ public class OrderReturnServices {
             // loop through the items again to update them and store a status change history
             for (GenericValue item : returnItems) {
                 Map<String, Object> returnItemMap = UtilMisc.<String, Object>toMap("returnItemResponseId", itemResponseId, "returnId",
-                        item.get(org.apache.ofbiz.persistence.entity.x.returnId), "returnItemSeqId", item.get(org.apache.ofbiz.persistence.entity.x.returnItemSeqId), "statusId", "RETURN_COMPLETED", "userLogin",
+                        item.get(x.returnId), "returnItemSeqId", item.get(x.returnItemSeqId), "statusId", "RETURN_COMPLETED", "userLogin",
                         userLogin);
                 // store the item changes (attached responseId)
                 try {
@@ -996,9 +997,9 @@ public class OrderReturnServices {
                 // create the PaymentApplication for the billing account
                 String paId = delegator.getNextSeqId("PaymentApplication");
                 GenericValue pa = delegator.makeValue("PaymentApplication", UtilMisc.toMap("paymentApplicationId", paId));
-                pa.set(org.apache.ofbiz.persistence.entity.x.paymentId, paymentId);
-                pa.set(org.apache.ofbiz.persistence.entity.x.billingAccountId, billingAccountId);
-                pa.set(org.apache.ofbiz.persistence.entity.x.amountApplied, creditTotal);
+                pa.set(x.paymentId, paymentId);
+                pa.set(x.billingAccountId, billingAccountId);
+                pa.set(x.amountApplied, creditTotal);
                 try {
                     delegator.create(pa);
                 } catch (GenericEntityException e) {
@@ -1044,8 +1045,8 @@ public class OrderReturnServices {
     private static Map<String, Object> createBillingAccountFromReturn(GenericValue returnHeader, List<GenericValue> returnItems,
                                                                       DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         try {
             // get the related product stores via the orders related to this return
@@ -1055,7 +1056,7 @@ public class OrderReturnServices {
             // find the minimum storeCreditValidDays of all the ProductStores associated with all the Orders on the Return, skipping null ones
             Long storeCreditValidDays = null;
             for (GenericValue productStore : productStores) {
-                Long thisStoreValidDays = productStore.getLong(org.apache.ofbiz.persistence.entity.x.storeCreditValidDays);
+                Long thisStoreValidDays = productStore.getLong(x.storeCreditValidDays);
                 if (thisStoreValidDays == null) {
                     continue;
                 }
@@ -1076,8 +1077,8 @@ public class OrderReturnServices {
 
             // create the billing account
             Map<String, Object> input = UtilMisc.<String, Object>toMap("accountLimit", BigDecimal.ZERO, "description", "Credit Account for Return #"
-                    + returnHeader.get(org.apache.ofbiz.persistence.entity.x.returnId), "userLogin", userLogin);
-            input.put("accountCurrencyUomId", returnHeader.get(org.apache.ofbiz.persistence.entity.x.currencyUomId));
+                    + returnHeader.get(x.returnId), "userLogin", userLogin);
+            input.put("accountCurrencyUomId", returnHeader.get(x.currencyUomId));
             input.put("thruDate", thruDate);
             Map<String, Object> results = dispatcher.runSync("createBillingAccount", input);
             if (ServiceUtil.isError(results)) {
@@ -1086,7 +1087,7 @@ public class OrderReturnServices {
             String billingAccountId = (String) results.get("billingAccountId");
 
             // set the role on the account
-            input = UtilMisc.toMap("billingAccountId", billingAccountId, "partyId", returnHeader.get(org.apache.ofbiz.persistence.entity.x.fromPartyId), "roleTypeId",
+            input = UtilMisc.toMap("billingAccountId", billingAccountId, "partyId", returnHeader.get(x.fromPartyId), "roleTypeId",
                     "BILL_TO_CUSTOMER", "userLogin", userLogin);
             Map<String, Object> roleResults = dispatcher.runSync("createBillingAccountRole", input);
             if (ServiceUtil.isError(roleResults)) {
@@ -1110,16 +1111,16 @@ public class OrderReturnServices {
     public static Map<String, Object> processRefundReturnForReplacement(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String orderId = (String) context.get(x.orderId);
         Map<String, Object> serviceResult = new HashMap<>();
 
         GenericValue orderHeader = null;
         List<GenericValue> orderPayPrefs;
         try {
             orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
-            orderPayPrefs = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderPaymentPreference, null, UtilMisc.toList("-maxAmount"), false);
+            orderPayPrefs = orderHeader.getRelated(x.OrderPaymentPreference, null, UtilMisc.toList("-maxAmount"), false);
         } catch (GenericEntityException e) {
             Debug.logError("Problem looking up order information for orderId #" + orderId, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -1130,7 +1131,7 @@ public class OrderReturnServices {
         if (UtilValidate.isEmpty(orderPayPrefs)) {
             List<GenericValue> returnItemResponses;
             try {
-                returnItemResponses = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.ReplacementReturnItemResponse, null, null, false);
+                returnItemResponses = orderHeader.getRelated(x.ReplacementReturnItemResponse, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logError("Problem getting ReturnItemResponses", MODULE);
                 return ServiceUtil.returnError(e.getMessage());
@@ -1140,16 +1141,16 @@ public class OrderReturnServices {
                 GenericValue returnItem = null;
                 GenericValue returnHeader = null;
                 try {
-                    returnItem = EntityUtil.getFirst(returnItemResponse.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnItem, null, null, false));
-                    returnHeader = returnItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ReturnHeader, false);
+                    returnItem = EntityUtil.getFirst(returnItemResponse.getRelated(x.ReturnItem, null, null, false));
+                    returnHeader = returnItem.getRelatedOne(x.ReturnHeader, false);
                 } catch (GenericEntityException e) {
                     Debug.logError("Problem getting ReturnItem", MODULE);
                     return ServiceUtil.returnError(e.getMessage());
                 }
 
-                if ("RETURN_RECEIVED".equals(returnHeader.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
-                    String returnId = returnItem.getString(org.apache.ofbiz.persistence.entity.x.returnId);
-                    String returnTypeId = returnItem.getString(org.apache.ofbiz.persistence.entity.x.returnTypeId);
+                if ("RETURN_RECEIVED".equals(returnHeader.getString(x.statusId))) {
+                    String returnId = returnItem.getString(x.returnId);
+                    String returnTypeId = returnItem.getString(x.returnTypeId);
                     try {
                         serviceResult = dispatcher.runSync("processRefundReturn", UtilMisc.toMap("returnId", returnId, "returnTypeId",
                                 returnTypeId, "userLogin", userLogin));
@@ -1171,17 +1172,17 @@ public class OrderReturnServices {
     public static Map<String, Object> processRefundReturn(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String returnId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnId);
-        String returnTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnTypeId);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String returnId = (String) context.get(x.returnId);
+        String returnTypeId = (String) context.get(x.returnTypeId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         GenericValue returnHeader = null;
         List<GenericValue> returnItems = null;
         try {
             returnHeader = EntityQuery.use(delegator).from("ReturnHeader").where("returnId", returnId).queryOne();
             if (returnHeader != null) {
-                returnItems = returnHeader.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnItem, UtilMisc.toMap("returnTypeId", returnTypeId), null, false);
+                returnItems = returnHeader.getRelated(x.ReturnItem, UtilMisc.toMap("returnTypeId", returnTypeId), null, false);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, "Problems looking up return information", MODULE);
@@ -1222,7 +1223,7 @@ public class OrderReturnServices {
                 try {
                     orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
                     // sort these desending by maxAmount
-                    orderPayPrefs = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderPaymentPreference, null, UtilMisc.toList("-maxAmount"), false);
+                    orderPayPrefs = orderHeader.getRelated(x.OrderPaymentPreference, null, UtilMisc.toList("-maxAmount"), false);
 
                     List<EntityExpr> exprs = UtilMisc.toList(EntityCondition.makeCondition("statusId", EntityOperator.EQUALS, "PAYMENT_SETTLED"),
                             EntityCondition.makeCondition("statusId", EntityOperator.EQUALS, "PAYMENT_RECEIVED"));
@@ -1234,9 +1235,9 @@ public class OrderReturnServices {
                                 .where("toOrderId", orderId, "orderItemAssocTypeId", "REPLACEMENT")
                                 .queryFirst();
                         if (orderItemAssoc != null) {
-                            String originalOrderId = orderItemAssoc.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+                            String originalOrderId = orderItemAssoc.getString(x.orderId);
                             orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", originalOrderId).queryOne();
-                            orderPayPrefs = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderPaymentPreference, null, UtilMisc.toList("-maxAmount"), false);
+                            orderPayPrefs = orderHeader.getRelated(x.OrderPaymentPreference, null, UtilMisc.toList("-maxAmount"), false);
                             orderPayPrefs = EntityUtil.filterByOr(orderPayPrefs, exprs);
                             orderId = originalOrderId;
                         }
@@ -1249,19 +1250,19 @@ public class OrderReturnServices {
 
                 // Determine the fall-through refund paymentMethodId from the PartyAcctgPreference of the owner of the productStore for the order
                 GenericValue productStore = orderReadHelper.getProductStore();
-                if (UtilValidate.isEmpty(productStore) || UtilValidate.isEmpty(productStore.get(org.apache.ofbiz.persistence.entity.x.payToPartyId))) {
+                if (UtilValidate.isEmpty(productStore) || UtilValidate.isEmpty(productStore.get(x.payToPartyId))) {
                     Debug.logError("No payToPartyId found for orderId " + orderId, MODULE);
                 } else {
                     GenericValue orgAcctgPref = null;
                     Map<String, Object> acctgPreferencesResult = null;
                     try {
                         acctgPreferencesResult = dispatcher.runSync("getPartyAccountingPreferences", UtilMisc.toMap("organizationPartyId",
-                                productStore.get(org.apache.ofbiz.persistence.entity.x.payToPartyId), "userLogin", userLogin));
+                                productStore.get(x.payToPartyId), "userLogin", userLogin));
                         if (ServiceUtil.isError(acctgPreferencesResult)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(acctgPreferencesResult));
                         }
                     } catch (GenericServiceException e) {
-                        Debug.logError(e, "Error retrieving PartyAcctgPreference for partyId " + productStore.get(org.apache.ofbiz.persistence.entity.x.payToPartyId), MODULE);
+                        Debug.logError(e, "Error retrieving PartyAcctgPreference for partyId " + productStore.get(x.payToPartyId), MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                                 "OrderProblemsWithGetPartyAcctgPreferences", locale));
                     }
@@ -1269,10 +1270,10 @@ public class OrderReturnServices {
 
                     if (orgAcctgPref != null) {
                         try {
-                            orgAcctgPref.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PaymentMethod, false);
+                            orgAcctgPref.getRelatedOne(x.PaymentMethod, false);
                         } catch (GenericEntityException e) {
                             Debug.logError("Error retrieving related refundPaymentMethod from PartyAcctgPreference for partyId "
-                                    + productStore.get(org.apache.ofbiz.persistence.entity.x.payToPartyId), MODULE);
+                                    + productStore.get(x.payToPartyId), MODULE);
                         }
                     }
                 }
@@ -1298,9 +1299,9 @@ public class OrderReturnServices {
                  */
                 Map<String, List<Map<String, Object>>> prefSplitMap = new HashMap<>();
                 for (GenericValue orderPayPref : orderPayPrefs) {
-                    String paymentMethodTypeId = orderPayPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
-                    String orderPayPrefKey = orderPayPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId) != null ? orderPayPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId)
-                            : orderPayPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
+                    String paymentMethodTypeId = orderPayPref.getString(x.paymentMethodTypeId);
+                    String orderPayPrefKey = orderPayPref.getString(x.paymentMethodId) != null ? orderPayPref.getString(x.paymentMethodId)
+                            : orderPayPref.getString(x.paymentMethodTypeId);
 
                     // See how much we can refund to the payment method
                     BigDecimal orderPayPrefReceivedTotal = ZERO;
@@ -1342,7 +1343,7 @@ public class OrderReturnServices {
                 // Figure out if EXT_PAYPAL should be considered as an electronic type
                 if (productStore != null) {
                     ExpressCheckoutEvents.CheckoutType payPalType = ExpressCheckoutEvents.determineCheckoutType(delegator,
-                            productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId));
+                            productStore.getString(x.productStoreId));
                     if (!payPalType.equals(ExpressCheckoutEvents.CheckoutType.NONE)) {
                         electronicTypes.add("EXT_PAYPAL");
                     }
@@ -1396,10 +1397,10 @@ public class OrderReturnServices {
                             // Call the refund service to refund the payment
                             if (electronicTypes.contains(paymentMethodTypeId)) {
                                 try {
-                                    Map<String, Object> serviceContext = UtilMisc.toMap("orderId", orderId, "userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
-                                    serviceContext.put("paymentMethodId", orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
-                                    serviceContext.put("paymentMethodTypeId", orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
-                                    serviceContext.put("statusId", orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.statusId));
+                                    Map<String, Object> serviceContext = UtilMisc.toMap("orderId", orderId, "userLogin", context.get(x.userLogin));
+                                    serviceContext.put("paymentMethodId", orderPaymentPreference.getString(x.paymentMethodId));
+                                    serviceContext.put("paymentMethodTypeId", orderPaymentPreference.getString(x.paymentMethodTypeId));
+                                    serviceContext.put("statusId", orderPaymentPreference.getString(x.statusId));
                                     serviceContext.put("maxAmount", amountToRefund.setScale(DECIMALS, ROUNDING));
                                     String orderPaymentPreferenceNewId = null;
                                     Map<String, Object> result = dispatcher.runSync("createOrderPaymentPreference", serviceContext);
@@ -1448,12 +1449,12 @@ public class OrderReturnServices {
                                 try {
                                     Map<String, Object> input = UtilMisc.<String, Object>toMap("userLogin", userLogin, "amount", amountLeftToRefund,
                                             "statusId", "PMNT_NOT_PAID");
-                                    input.put("partyIdTo", returnHeader.get(org.apache.ofbiz.persistence.entity.x.fromPartyId));
-                                    input.put("partyIdFrom", returnHeader.get(org.apache.ofbiz.persistence.entity.x.toPartyId));
+                                    input.put("partyIdTo", returnHeader.get(x.fromPartyId));
+                                    input.put("partyIdFrom", returnHeader.get(x.toPartyId));
                                     input.put("paymentTypeId", "CUSTOMER_REFUND");
-                                    input.put("paymentMethodId", orderPaymentPreference.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
-                                    input.put("paymentMethodTypeId", orderPaymentPreference.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
-                                    input.put("paymentPreferenceId", orderPaymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
+                                    input.put("paymentMethodId", orderPaymentPreference.get(x.paymentMethodId));
+                                    input.put("paymentMethodTypeId", orderPaymentPreference.get(x.paymentMethodTypeId));
+                                    input.put("paymentPreferenceId", orderPaymentPreference.get(x.orderPaymentPreferenceId));
 
                                     serviceResult = dispatcher.runSync("createPayment", input);
 
@@ -1471,9 +1472,9 @@ public class OrderReturnServices {
                             // Fill out the data for the new ReturnItemResponse
                             Map<String, Object> response = new HashMap<>();
                             if (refundOrderPaymentPreference != null) {
-                                response.put("orderPaymentPreferenceId", refundOrderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
+                                response.put("orderPaymentPreferenceId", refundOrderPaymentPreference.getString(x.orderPaymentPreferenceId));
                             } else {
-                                response.put("orderPaymentPreferenceId", orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
+                                response.put("orderPaymentPreferenceId", orderPaymentPreference.getString(x.orderPaymentPreferenceId));
                             }
                             response.put("responseAmount", amountRefunded.setScale(DECIMALS, ROUNDING));
                             response.put("responseDate", now);
@@ -1499,8 +1500,8 @@ public class OrderReturnServices {
                             // Set the response on each item
                             for (GenericValue item : items) {
                                 Map<String, Object> returnItemMap = UtilMisc.<String, Object>toMap("returnItemResponseId", responseId, "returnId",
-                                        item.get(org.apache.ofbiz.persistence.entity.x.returnId),
-                                        "returnItemSeqId", item.get(org.apache.ofbiz.persistence.entity.x.returnItemSeqId), "statusId", returnItemStatusId, "userLogin", userLogin);
+                                        item.get(x.returnId),
+                                        "returnItemSeqId", item.get(x.returnItemSeqId), "statusId", returnItemStatusId, "userLogin", userLogin);
                                 try {
                                     serviceResults = dispatcher.runSync("updateReturnItem", returnItemMap);
                                     if (ServiceUtil.isError(serviceResults)) {
@@ -1543,14 +1544,14 @@ public class OrderReturnServices {
     public static Map<String, Object> refundBillingAccountPayment(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        BigDecimal refundAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.refundAmount);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
+        BigDecimal refundAmount = (BigDecimal) context.get(x.refundAmount);
+        Locale locale = (Locale) context.get(x.locale);
 
         GenericValue orderHeader = null;
         try {
-            orderHeader = paymentPref.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
+            orderHeader = paymentPref.getRelatedOne(x.OrderHeader, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Cannot get OrderHeader from OrderPaymentPreference", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -1565,14 +1566,14 @@ public class OrderReturnServices {
         // Create the PaymentGatewayResponse record
         String responseId = delegator.getNextSeqId("PaymentGatewayResponse");
         GenericValue response = delegator.makeValue("PaymentGatewayResponse");
-        response.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, responseId);
-        response.set(org.apache.ofbiz.persistence.entity.x.paymentServiceTypeEnumId, "PRDS_PAY_REFUND");
-        response.set(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
-        response.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
-        response.set(org.apache.ofbiz.persistence.entity.x.transCodeEnumId, "PGT_REFUND");
-        response.set(org.apache.ofbiz.persistence.entity.x.amount, refundAmount);
-        response.set(org.apache.ofbiz.persistence.entity.x.transactionDate, UtilDateTime.nowTimestamp());
-        response.set(org.apache.ofbiz.persistence.entity.x.currencyUomId, orh.getCurrency());
+        response.set(x.paymentGatewayResponseId, responseId);
+        response.set(x.paymentServiceTypeEnumId, "PRDS_PAY_REFUND");
+        response.set(x.orderPaymentPreferenceId, paymentPref.get(x.orderPaymentPreferenceId));
+        response.set(x.paymentMethodTypeId, paymentPref.get(x.paymentMethodTypeId));
+        response.set(x.transCodeEnumId, "PGT_REFUND");
+        response.set(x.amount, refundAmount);
+        response.set(x.transactionDate, UtilDateTime.nowTimestamp());
+        response.set(x.currencyUomId, orh.getCurrency());
         try {
             delegator.create(response);
         } catch (GenericEntityException e) {
@@ -1583,12 +1584,12 @@ public class OrderReturnServices {
 
         // Create the Payment record (parties reversed)
         Map<String, Object> paymentCtx = UtilMisc.<String, Object>toMap("paymentTypeId", "CUSTOMER_REFUND");
-        paymentCtx.put("paymentMethodTypeId", paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
+        paymentCtx.put("paymentMethodTypeId", paymentPref.get(x.paymentMethodTypeId));
         paymentCtx.put("paymentGatewayResponseId", responseId);
         paymentCtx.put("partyIdTo", payToPartyId);
         paymentCtx.put("partyIdFrom", payFromPartyId);
         paymentCtx.put("statusId", "PMNT_CONFIRMED");
-        paymentCtx.put("paymentPreferenceId", paymentPref.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
+        paymentCtx.put("paymentPreferenceId", paymentPref.get(x.orderPaymentPreferenceId));
         paymentCtx.put("currencyUomId", orh.getCurrency());
         paymentCtx.put("amount", refundAmount);
         paymentCtx.put("userLogin", userLogin);
@@ -1615,12 +1616,12 @@ public class OrderReturnServices {
         // if the original order was paid with a billing account, then go find the billing account from the order and associate this
         // refund with that billing account
         // thus returning value to the billing account
-        if ("EXT_BILLACT".equals(paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+        if ("EXT_BILLACT".equals(paymentPref.getString(x.paymentMethodTypeId))) {
             GenericValue billingAccount = orh.getBillingAccount();
-            if (UtilValidate.isNotEmpty(billingAccount.getString(org.apache.ofbiz.persistence.entity.x.billingAccountId))) {
+            if (UtilValidate.isNotEmpty(billingAccount.getString(x.billingAccountId))) {
                 try {
                     Map<String, Object> paymentApplResult = dispatcher.runSync("createPaymentApplication",
-                            UtilMisc.<String, Object>toMap("paymentId", paymentId, "billingAccountId", billingAccount.getString(org.apache.ofbiz.persistence.entity.x.billingAccountId),
+                            UtilMisc.<String, Object>toMap("paymentId", paymentId, "billingAccountId", billingAccount.getString(x.billingAccountId),
                             "amountApplied", refundAmount, "userLogin", userLogin));
                     if (ServiceUtil.isError(paymentApplResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(paymentApplResult));
@@ -1641,12 +1642,12 @@ public class OrderReturnServices {
     public static Map<String, Object> createPaymentApplicationsFromReturnItemResponse(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
 
         // the strategy for this service is to get a list of return invoices via the return items -> return item billing relationships
         // then split up the responseAmount among the invoices evenly
-        String responseId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnItemResponseId);
+        String responseId = (String) context.get(x.returnItemResponseId);
         String errorMsg = "Failed to create payment applications for return item response [" + responseId + "]. ";
         try {
             GenericValue response = EntityQuery.use(delegator).from("ReturnItemResponse").where("returnItemResponseId", responseId).queryOne();
@@ -1654,20 +1655,20 @@ public class OrderReturnServices {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderReturnItemResponseNotFound",
                         UtilMisc.toMap("errorMsg", errorMsg, "responseId", responseId), locale));
             }
-            BigDecimal responseAmount = response.getBigDecimal(org.apache.ofbiz.persistence.entity.x.responseAmount).setScale(DECIMALS, ROUNDING);
-            String paymentId = response.getString(org.apache.ofbiz.persistence.entity.x.paymentId);
+            BigDecimal responseAmount = response.getBigDecimal(x.responseAmount).setScale(DECIMALS, ROUNDING);
+            String paymentId = response.getString(x.paymentId);
 
             // for each return item in the response, get the list of return item billings and then a list of invoices
             Map<String, GenericValue> returnInvoices = new HashMap<>(); // key is invoiceId, value is Invoice GenericValue
-            List<GenericValue> items = response.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnItem, null, null, false);
+            List<GenericValue> items = response.getRelated(x.ReturnItem, null, null, false);
             for (GenericValue item : items) {
-                List<GenericValue> billings = item.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnItemBilling, null, null, false);
+                List<GenericValue> billings = item.getRelated(x.ReturnItemBilling, null, null, false);
                 for (GenericValue billing : billings) {
-                    GenericValue invoice = billing.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Invoice, false);
+                    GenericValue invoice = billing.getRelatedOne(x.Invoice, false);
 
                     // put the invoice in the map if it doesn't already exist (a very loopy way of doing group by invoiceId without creating a view)
-                    if (returnInvoices.get(invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceId)) == null) {
-                        returnInvoices.put(invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceId), invoice);
+                    if (returnInvoices.get(invoice.getString(x.invoiceId)) == null) {
+                        returnInvoices.put(invoice.getString(x.invoiceId), invoice);
                     }
                 }
             }
@@ -1676,33 +1677,33 @@ public class OrderReturnServices {
             Map<String, BigDecimal> invoiceTotals = new HashMap<>(); // key is invoiceId, value is the sum of all billings for that invoice
             BigDecimal grandTotal = ZERO; // The sum of all return invoice totals
             for (GenericValue invoice : returnInvoices.values()) {
-                List<GenericValue> billings = invoice.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnItemBilling, null, null, false);
+                List<GenericValue> billings = invoice.getRelated(x.ReturnItemBilling, null, null, false);
                 BigDecimal runningTotal = ZERO;
                 for (GenericValue billing : billings) {
-                    runningTotal = runningTotal.add(billing.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).multiply(billing.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity))
+                    runningTotal = runningTotal.add(billing.getBigDecimal(x.amount).multiply(billing.getBigDecimal(x.quantity))
                             .setScale(DECIMALS, ROUNDING));
                 }
 
-                invoiceTotals.put(invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceId), runningTotal);
+                invoiceTotals.put(invoice.getString(x.invoiceId), runningTotal);
                 grandTotal = grandTotal.add(runningTotal);
             }
 
             // now allocate responseAmount * invoiceTotal / grandTotal to each invoice
             for (GenericValue invoice : returnInvoices.values()) {
-                String invoiceId = invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceId);
+                String invoiceId = invoice.getString(x.invoiceId);
                 BigDecimal invoiceTotal = invoiceTotals.get(invoiceId);
 
                 BigDecimal amountApplied = responseAmount.multiply(invoiceTotal).divide(grandTotal, DECIMALS, ROUNDING).setScale(DECIMALS, ROUNDING);
 
                 if (paymentId != null) {
                     // create a payment application for the invoice
-                    Map<String, Object> input = UtilMisc.<String, Object>toMap("paymentId", paymentId, "invoiceId", invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceId));
+                    Map<String, Object> input = UtilMisc.<String, Object>toMap("paymentId", paymentId, "invoiceId", invoice.getString(x.invoiceId));
                     input.put("amountApplied", amountApplied);
                     input.put("userLogin", userLogin);
-                    if (response.get(org.apache.ofbiz.persistence.entity.x.billingAccountId) != null) {
-                        GenericValue billingAccount = response.getRelatedOne(org.apache.ofbiz.persistence.entity.x.BillingAccount, false);
+                    if (response.get(x.billingAccountId) != null) {
+                        GenericValue billingAccount = response.getRelatedOne(x.BillingAccount, false);
                         if (billingAccount != null) {
-                            input.put("billingAccountId", response.get(org.apache.ofbiz.persistence.entity.x.billingAccountId));
+                            input.put("billingAccountId", response.get(x.billingAccountId));
                         }
                     }
                     Map<String, Object> serviceResults = dispatcher.runSync("createPaymentApplication", input);
@@ -1725,10 +1726,10 @@ public class OrderReturnServices {
     public static Map<String, Object> processReplacementReturn(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        String returnId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnId);
-        String returnTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnTypeId);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String returnId = (String) context.get(x.returnId);
+        String returnTypeId = (String) context.get(x.returnTypeId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
 
         GenericValue returnHeader = null;
@@ -1736,7 +1737,7 @@ public class OrderReturnServices {
         try {
             returnHeader = EntityQuery.use(delegator).from("ReturnHeader").where("returnId", returnId).queryOne();
             if (returnHeader != null) {
-                returnItems = returnHeader.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnItem, UtilMisc.toMap("returnTypeId", returnTypeId), null, false);
+                returnItems = returnHeader.getRelated(x.ReturnItem, UtilMisc.toMap("returnTypeId", returnTypeId), null, false);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, "Problems looking up return information", MODULE);
@@ -1745,7 +1746,7 @@ public class OrderReturnServices {
         }
         List<String> createdOrderIds = new LinkedList<>();
         if (returnHeader != null && UtilValidate.isNotEmpty(returnItems)) {
-            String returnHeaderTypeId = returnHeader.getString(org.apache.ofbiz.persistence.entity.x.returnHeaderTypeId);
+            String returnHeaderTypeId = returnHeader.getString(x.returnHeaderTypeId);
             Map<String, List<GenericValue>> returnItemsByOrderId = new HashMap<>();
             Map<String, BigDecimal> totalByOrder = new HashMap<>();
             groupReturnItemsByOrder(returnItems, returnItemsByOrderId, totalByOrder, delegator, returnId, returnTypeId);
@@ -1774,28 +1775,28 @@ public class OrderReturnServices {
                 if ("CUSTOMER_RETURN".equals(returnHeaderTypeId)) {
                     placingParty = orh.getPlacingParty();
                     if (placingParty != null) {
-                        placingPartyId = placingParty.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+                        placingPartyId = placingParty.getString(x.partyId);
                     }
                     orderMap.put("orderTypeId", "SALES_ORDER");
                 } else {
                     placingParty = orh.getSupplierAgent();
                     if (placingParty != null) {
-                        placingPartyId = placingParty.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+                        placingPartyId = placingParty.getString(x.partyId);
                     }
                     orderMap.put("orderTypeId", "PURCHASE_ORDER");
                 }
                 orderMap.put("partyId", placingPartyId);
-                orderMap.put("productStoreId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.productStoreId));
-                orderMap.put("webSiteId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.webSiteId));
-                orderMap.put("visitId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.visitId));
-                orderMap.put("currencyUom", orderHeader.get(org.apache.ofbiz.persistence.entity.x.currencyUom));
+                orderMap.put("productStoreId", orderHeader.get(x.productStoreId));
+                orderMap.put("webSiteId", orderHeader.get(x.webSiteId));
+                orderMap.put("visitId", orderHeader.get(x.visitId));
+                orderMap.put("currencyUom", orderHeader.get(x.currencyUom));
                 orderMap.put("grandTotal", BigDecimal.ZERO);
 
                 // make the contact mechs
                 List<GenericValue> contactMechs = new LinkedList<>();
                 List<GenericValue> orderCm = null;
                 try {
-                    orderCm = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderContactMech, null, null, false);
+                    orderCm = orderHeader.getRelated(x.OrderContactMech, null, null, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                 }
@@ -1820,14 +1821,14 @@ public class OrderReturnServices {
                         GenericValue orderItem = null;
                         GenericValue product = null;
                         try {
-                            orderItem = returnItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItem, false);
-                            product = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
+                            orderItem = returnItem.getRelatedOne(x.OrderItem, false);
+                            product = orderItem.getRelatedOne(x.Product, false);
                         } catch (GenericEntityException e) {
                             Debug.logError(e, MODULE);
                             continue;
                         }
-                        BigDecimal quantity = returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity);
-                        BigDecimal unitPrice = returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnPrice);
+                        BigDecimal quantity = returnItem.getBigDecimal(x.returnQuantity);
+                        BigDecimal unitPrice = returnItem.getBigDecimal(x.returnPrice);
                         if (quantity != null && unitPrice != null) {
                             orderPriceTotal = orderPriceTotal.add(quantity.multiply(unitPrice));
                             // Check if the product being returned has a Refurbished Equivalent and if so
@@ -1837,10 +1838,10 @@ public class OrderReturnServices {
                                 try {
                                     if (product != null) {
                                         GenericValue refurbItemAssoc = EntityUtil.getFirst(EntityUtil.filterByDate(
-                                                product.getRelated(org.apache.ofbiz.persistence.entity.x.MainProductAssoc, UtilMisc.toMap("productAssocTypeId", "PRODUCT_REFURB"),
+                                                product.getRelated(x.MainProductAssoc, UtilMisc.toMap("productAssocTypeId", "PRODUCT_REFURB"),
                                                         UtilMisc.toList("sequenceNum"), false)));
                                         if (refurbItemAssoc != null) {
-                                            refurbItem = refurbItemAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.AssocProduct, false);
+                                            refurbItem = refurbItemAssoc.getRelatedOne(x.AssocProduct, false);
                                         }
                                     }
                                 } catch (GenericEntityException e) {
@@ -1850,8 +1851,8 @@ public class OrderReturnServices {
                                     boolean inventoryAvailable = false;
                                     try {
                                         Map<String, Object> invReqResult = dispatcher.runSync("isStoreInventoryAvailable",
-                                                UtilMisc.toMap("productStoreId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.productStoreId),
-                                                "productId", refurbItem.getString(org.apache.ofbiz.persistence.entity.x.productId),
+                                                UtilMisc.toMap("productStoreId", orderHeader.get(x.productStoreId),
+                                                "productId", refurbItem.getString(x.productId),
                                                 "product", refurbItem, "quantity", quantity));
                                         if (ServiceUtil.isError(invReqResult)) {
                                             Debug.logError("Error calling isStoreInventoryAvailable service, result is: " + invReqResult, MODULE);
@@ -1871,23 +1872,23 @@ public class OrderReturnServices {
                                 GenericValue newItem = delegator.makeValue("OrderItem", UtilMisc.toMap("orderItemSeqId",
                                         UtilFormatOut.formatPaddedNumber(itemCount++, 5)));
                                 if (UtilValidate.isEmpty(refurbItem)) {
-                                    newItem.set(org.apache.ofbiz.persistence.entity.x.productId, orderItem.get(org.apache.ofbiz.persistence.entity.x.productId));
-                                    newItem.set(org.apache.ofbiz.persistence.entity.x.itemDescription, orderItem.get(org.apache.ofbiz.persistence.entity.x.itemDescription));
+                                    newItem.set(x.productId, orderItem.get(x.productId));
+                                    newItem.set(x.itemDescription, orderItem.get(x.itemDescription));
                                 } else {
-                                    newItem.set(org.apache.ofbiz.persistence.entity.x.productId, refurbItem.get(org.apache.ofbiz.persistence.entity.x.productId));
-                                    newItem.set(org.apache.ofbiz.persistence.entity.x.itemDescription, ProductContentWrapper.getProductContentAsText(refurbItem, "PRODUCT_NAME", locale,
+                                    newItem.set(x.productId, refurbItem.get(x.productId));
+                                    newItem.set(x.itemDescription, ProductContentWrapper.getProductContentAsText(refurbItem, "PRODUCT_NAME", locale,
                                             dispatcher, "html"));
                                 }
-                                newItem.set(org.apache.ofbiz.persistence.entity.x.orderItemTypeId, orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemTypeId));
-                                newItem.set(org.apache.ofbiz.persistence.entity.x.productFeatureId, orderItem.get(org.apache.ofbiz.persistence.entity.x.productFeatureId));
-                                newItem.set(org.apache.ofbiz.persistence.entity.x.prodCatalogId, orderItem.get(org.apache.ofbiz.persistence.entity.x.prodCatalogId));
-                                newItem.set(org.apache.ofbiz.persistence.entity.x.productCategoryId, orderItem.get(org.apache.ofbiz.persistence.entity.x.productCategoryId));
-                                newItem.set(org.apache.ofbiz.persistence.entity.x.quantity, quantity);
-                                newItem.set(org.apache.ofbiz.persistence.entity.x.unitPrice, unitPrice);
-                                newItem.set(org.apache.ofbiz.persistence.entity.x.unitListPrice, orderItem.get(org.apache.ofbiz.persistence.entity.x.unitListPrice));
-                                newItem.set(org.apache.ofbiz.persistence.entity.x.comments, orderItem.get(org.apache.ofbiz.persistence.entity.x.comments));
-                                newItem.set(org.apache.ofbiz.persistence.entity.x.correspondingPoId, orderItem.get(org.apache.ofbiz.persistence.entity.x.correspondingPoId));
-                                newItem.set(org.apache.ofbiz.persistence.entity.x.statusId, "ITEM_CREATED");
+                                newItem.set(x.orderItemTypeId, orderItem.get(x.orderItemTypeId));
+                                newItem.set(x.productFeatureId, orderItem.get(x.productFeatureId));
+                                newItem.set(x.prodCatalogId, orderItem.get(x.prodCatalogId));
+                                newItem.set(x.productCategoryId, orderItem.get(x.productCategoryId));
+                                newItem.set(x.quantity, quantity);
+                                newItem.set(x.unitPrice, unitPrice);
+                                newItem.set(x.unitListPrice, orderItem.get(x.unitListPrice));
+                                newItem.set(x.comments, orderItem.get(x.comments));
+                                newItem.set(x.correspondingPoId, orderItem.get(x.correspondingPoId));
+                                newItem.set(x.statusId, "ITEM_CREATED");
                                 orderItems.add(newItem);
 
                                 // Set the order item ship group information
@@ -1897,18 +1898,18 @@ public class OrderReturnServices {
                                 //
                                 GenericValue orderItemShipGroupAssoc = null;
                                 try {
-                                    orderItemShipGroupAssoc = EntityUtil.getFirst(orderItem.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItemShipGroupAssoc, null, null, false));
+                                    orderItemShipGroupAssoc = EntityUtil.getFirst(orderItem.getRelated(x.OrderItemShipGroupAssoc, null, null, false));
                                     if (orderItemShipGroupAssoc != null) {
-                                        if (!orderItemShipGroupIds.contains(orderItemShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId))) {
-                                            GenericValue orderItemShipGroup = orderItemShipGroupAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItemShipGroup, false);
+                                        if (!orderItemShipGroupIds.contains(orderItemShipGroupAssoc.getString(x.shipGroupSeqId))) {
+                                            GenericValue orderItemShipGroup = orderItemShipGroupAssoc.getRelatedOne(x.OrderItemShipGroup, false);
                                             GenericValue newOrderItemShipGroup = (GenericValue) orderItemShipGroup.clone();
-                                            newOrderItemShipGroup.set(org.apache.ofbiz.persistence.entity.x.orderId, null);
+                                            newOrderItemShipGroup.set(x.orderId, null);
                                             orderItemShipGroupInfo.add(newOrderItemShipGroup);
-                                            orderItemShipGroupIds.add(orderItemShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId));
+                                            orderItemShipGroupIds.add(orderItemShipGroupAssoc.getString(x.shipGroupSeqId));
                                         }
                                         GenericValue newOrderItemShipGroupAssoc = delegator.makeValue("OrderItemShipGroupAssoc",
-                                                UtilMisc.toMap("orderItemSeqId", newItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "shipGroupSeqId",
-                                                        orderItemShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId), "quantity", quantity));
+                                                UtilMisc.toMap("orderItemSeqId", newItem.getString(x.orderItemSeqId), "shipGroupSeqId",
+                                                        orderItemShipGroupAssoc.getString(x.shipGroupSeqId), "quantity", quantity));
                                         orderItemShipGroupInfo.add(newOrderItemShipGroupAssoc);
                                     }
                                 } catch (GenericEntityException e) {
@@ -1918,9 +1919,9 @@ public class OrderReturnServices {
                                 }
                                 // Create an association between the replacement order item and the order item of the original order
                                 GenericValue newOrderItemAssoc = delegator.makeValue("OrderItemAssoc", UtilMisc.toMap("orderId",
-                                        orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId),
-                                        "orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "shipGroupSeqId", "_NA_",
-                                        "toOrderItemSeqId", newItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "toShipGroupSeqId", "_NA_", "orderItemAssocTypeId",
+                                        orderHeader.getString(x.orderId),
+                                        "orderItemSeqId", orderItem.getString(x.orderItemSeqId), "shipGroupSeqId", "_NA_",
+                                        "toOrderItemSeqId", newItem.getString(x.orderItemSeqId), "toShipGroupSeqId", "_NA_", "orderItemAssocTypeId",
                                         "REPLACEMENT"));
                                 orderItemAssocs.add(newOrderItemAssoc);
 
@@ -1929,7 +1930,7 @@ public class OrderReturnServices {
                                     List<GenericValue> repairItems = null;
                                     try {
                                         if (product != null) {
-                                            repairItems = EntityUtil.filterByDate(product.getRelated(org.apache.ofbiz.persistence.entity.x.MainProductAssoc,
+                                            repairItems = EntityUtil.filterByDate(product.getRelated(x.MainProductAssoc,
                                                     UtilMisc.toMap("productAssocTypeId", "PRODUCT_REPAIR_SRV"), UtilMisc.toList("sequenceNum"),
                                                     false));
                                         }
@@ -1941,13 +1942,13 @@ public class OrderReturnServices {
                                         for (GenericValue repairItem : repairItems) {
                                             GenericValue repairItemProduct = null;
                                             try {
-                                                repairItemProduct = repairItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.AssocProduct, false);
+                                                repairItemProduct = repairItem.getRelatedOne(x.AssocProduct, false);
                                             } catch (GenericEntityException e) {
                                                 Debug.logError(e, MODULE);
                                                 continue;
                                             }
                                             if (repairItemProduct != null) {
-                                                BigDecimal repairUnitQuantity = repairItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                                                BigDecimal repairUnitQuantity = repairItem.getBigDecimal(x.quantity);
                                                 if (UtilValidate.isEmpty(repairUnitQuantity)) {
                                                     repairUnitQuantity = BigDecimal.ONE;
                                                 }
@@ -1957,14 +1958,14 @@ public class OrderReturnServices {
 
                                                 // price
                                                 Map<String, Object> priceContext = new HashMap<>();
-                                                priceContext.put("currencyUomId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.currencyUom));
+                                                priceContext.put("currencyUomId", orderHeader.get(x.currencyUom));
                                                 if (placingPartyId != null) {
                                                     priceContext.put("partyId", placingPartyId);
                                                 }
                                                 priceContext.put("quantity", repairUnitQuantity);
                                                 priceContext.put("product", repairItemProduct);
-                                                priceContext.put("webSiteId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.webSiteId));
-                                                priceContext.put("productStoreId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.productStoreId));
+                                                priceContext.put("webSiteId", orderHeader.get(x.webSiteId));
+                                                priceContext.put("productStoreId", orderHeader.get(x.productStoreId));
                                                 // TODO: prodCatalogId, agreementId
                                                 priceContext.put("productPricePurposeId", "PURCHASE");
                                                 priceContext.put("checkIncludeVat", "Y");
@@ -1982,12 +1983,12 @@ public class OrderReturnServices {
                                                 Boolean validPriceFound = (Boolean) priceResult.get("validPriceFound");
                                                 if (Boolean.FALSE.equals(validPriceFound)) {
                                                     Debug.logError("Could not find a valid price for the product with ID ["
-                                                            + repairItemProduct.get(org.apache.ofbiz.persistence.entity.x.productId) + "].", MODULE);
+                                                            + repairItemProduct.get(x.productId) + "].", MODULE);
                                                     continue;
                                                 }
 
                                                 if (priceResult.get("listPrice") != null) {
-                                                    newItem.set(org.apache.ofbiz.persistence.entity.x.unitListPrice, priceResult.get("listPrice"));
+                                                    newItem.set(x.unitListPrice, priceResult.get("listPrice"));
                                                 }
 
                                                 BigDecimal repairUnitPrice = null;
@@ -1996,27 +1997,27 @@ public class OrderReturnServices {
                                                 } else {
                                                     repairUnitPrice = BigDecimal.ZERO;
                                                 }
-                                                newItem.set(org.apache.ofbiz.persistence.entity.x.unitPrice, repairUnitPrice);
+                                                newItem.set(x.unitPrice, repairUnitPrice);
 
-                                                newItem.set(org.apache.ofbiz.persistence.entity.x.productId, repairItemProduct.get(org.apache.ofbiz.persistence.entity.x.productId));
+                                                newItem.set(x.productId, repairItemProduct.get(x.productId));
                                                 // TODO: orderItemTypeId, prodCatalogId, productCategoryId
-                                                newItem.set(org.apache.ofbiz.persistence.entity.x.quantity, repairQuantity);
-                                                newItem.set(org.apache.ofbiz.persistence.entity.x.itemDescription, ProductContentWrapper.getProductContentAsText(repairItemProduct,
+                                                newItem.set(x.quantity, repairQuantity);
+                                                newItem.set(x.itemDescription, ProductContentWrapper.getProductContentAsText(repairItemProduct,
                                                         "PRODUCT_NAME", locale, dispatcher, "html"));
-                                                newItem.set(org.apache.ofbiz.persistence.entity.x.statusId, "ITEM_CREATED");
+                                                newItem.set(x.statusId, "ITEM_CREATED");
                                                 orderItems.add(newItem);
                                                 additionalItemTotal = additionalItemTotal.add(repairQuantity.multiply(repairUnitPrice));
                                                 if (orderItemShipGroupAssoc != null) {
                                                     GenericValue newOrderItemShipGroupAssoc = delegator.makeValue("OrderItemShipGroupAssoc",
-                                                            UtilMisc.toMap("orderItemSeqId", newItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "shipGroupSeqId",
-                                                                    orderItemShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId), "quantity", repairQuantity));
+                                                            UtilMisc.toMap("orderItemSeqId", newItem.getString(x.orderItemSeqId), "shipGroupSeqId",
+                                                                    orderItemShipGroupAssoc.getString(x.shipGroupSeqId), "quantity", repairQuantity));
                                                     orderItemShipGroupInfo.add(newOrderItemShipGroupAssoc);
                                                 }
                                                 // Create an association between the repair order item and the order item of the original order
                                                 newOrderItemAssoc = delegator.makeValue("OrderItemAssoc", UtilMisc.toMap("orderId",
-                                                        orderHeader.getString(org.apache.ofbiz.persistence.entity.x.orderId),
-                                                        "orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "shipGroupSeqId", "_NA_",
-                                                        "toOrderItemSeqId", newItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "toShipGroupSeqId", "_NA_",
+                                                        orderHeader.getString(x.orderId),
+                                                        "orderItemSeqId", orderItem.getString(x.orderItemSeqId), "shipGroupSeqId", "_NA_",
+                                                        "toOrderItemSeqId", newItem.getString(x.orderItemSeqId), "toShipGroupSeqId", "_NA_",
                                                         "orderItemAssocTypeId", "REPLACEMENT"));
                                                 orderItemAssocs.add(newOrderItemAssoc);
                                             }
@@ -2040,11 +2041,11 @@ public class OrderReturnServices {
 
                 // create the replacement adjustment
                 GenericValue adj = delegator.makeValue("OrderAdjustment");
-                adj.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId, "REPLACE_ADJUSTMENT");
-                adj.set(org.apache.ofbiz.persistence.entity.x.amount, orderPriceTotal.negate());
-                adj.set(org.apache.ofbiz.persistence.entity.x.comments, "Replacement Item Return #" + returnId);
-                adj.set(org.apache.ofbiz.persistence.entity.x.createdDate, nowTimestamp);
-                adj.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
+                adj.set(x.orderAdjustmentTypeId, "REPLACE_ADJUSTMENT");
+                adj.set(x.amount, orderPriceTotal.negate());
+                adj.set(x.comments, "Replacement Item Return #" + returnId);
+                adj.set(x.createdDate, nowTimestamp);
+                adj.set(x.createdByUserLogin, userLogin.getString(x.userLoginId));
                 orderMap.put("orderAdjustments", UtilMisc.toList(adj));
 
                 // Payment preference
@@ -2052,30 +2053,30 @@ public class OrderReturnServices {
                         || ("RTN_CSREPLACE".equals(returnTypeId) && orderPriceTotal.compareTo(ZERO) > 0)) {
                     GenericValue paymentMethod = null;
                     try {
-                        paymentMethod = returnHeader.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PaymentMethod, false);
+                        paymentMethod = returnHeader.getRelatedOne(x.PaymentMethod, false);
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
                     }
                     if (paymentMethod != null) {
-                        String paymentMethodId = paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
-                        String paymentMethodTypeId = paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId);
+                        String paymentMethodId = paymentMethod.getString(x.paymentMethodId);
+                        String paymentMethodTypeId = paymentMethod.getString(x.paymentMethodTypeId);
                         GenericValue opp = delegator.makeValue("OrderPaymentPreference");
-                        opp.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, paymentMethodTypeId);
-                        opp.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, paymentMethodId);
+                        opp.set(x.paymentMethodTypeId, paymentMethodTypeId);
+                        opp.set(x.paymentMethodId, paymentMethodId);
                         // TODO: manualRefNum, manualAuthCode, securityCode, presentFlag, overflowFlag
                         if (paymentMethodId != null || "FIN_ACCOUNT".equals(paymentMethodTypeId)) {
-                            opp.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_NOT_AUTH");
+                            opp.set(x.statusId, "PAYMENT_NOT_AUTH");
                         } else if (paymentMethodTypeId != null) {
                             // external payment method types require notification when received
                             // internal payment method types are assumed to be in-hand
                             if (paymentMethodTypeId.startsWith("EXT_")) {
-                                opp.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_NOT_RECEIVED");
+                                opp.set(x.statusId, "PAYMENT_NOT_RECEIVED");
                             } else {
-                                opp.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_RECEIVED");
+                                opp.set(x.statusId, "PAYMENT_RECEIVED");
                             }
                         }
                         if ("RTN_CSREPLACE".equals(returnTypeId)) {
-                            opp.set(org.apache.ofbiz.persistence.entity.x.maxAmount, orderPriceTotal);
+                            opp.set(x.maxAmount, orderPriceTotal);
                         }
                         orderMap.put("orderPaymentInfo", UtilMisc.toList(opp));
                     }
@@ -2083,22 +2084,22 @@ public class OrderReturnServices {
 
                 // we'll assume new order is under same terms as original.  note orderTerms is a required parameter of storeOrder
                 try {
-                    orderMap.put("orderTerms", orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderTerm, null, null, false));
+                    orderMap.put("orderTerms", orderHeader.getRelated(x.OrderTerm, null, null, false));
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Cannot create replacement order because order terms for original order are not available", MODULE);
                 }
                 // we'll assume the new order has the same order roles of the original one
                 try {
-                    List<GenericValue> orderRoles = orderHeader.getRelated(org.apache.ofbiz.persistence.entity.x.OrderRole, null, null, false);
+                    List<GenericValue> orderRoles = orderHeader.getRelated(x.OrderRole, null, null, false);
                     Map<String, List<String>> orderRolesMap = new HashMap<>();
                     if (orderRoles != null) {
                         for (GenericValue orderRole : orderRoles) {
-                            List<String> parties = orderRolesMap.get(orderRole.getString(org.apache.ofbiz.persistence.entity.x.roleTypeId));
+                            List<String> parties = orderRolesMap.get(orderRole.getString(x.roleTypeId));
                             if (parties == null) {
                                 parties = new LinkedList<>();
-                                orderRolesMap.put(orderRole.getString(org.apache.ofbiz.persistence.entity.x.roleTypeId), parties);
+                                orderRolesMap.put(orderRole.getString(x.roleTypeId), parties);
                             }
-                            parties.add(orderRole.getString(org.apache.ofbiz.persistence.entity.x.partyId));
+                            parties.add(orderRole.getString(x.partyId));
                         }
                     }
                     if (!orderRolesMap.isEmpty()) {
@@ -2126,7 +2127,7 @@ public class OrderReturnServices {
 
                 // since there is no payments required; order is ready for processing/shipment
                 if (createdOrderId != null) {
-                    if ("RETURN_ACCEPTED".equals(returnHeader.get(org.apache.ofbiz.persistence.entity.x.statusId)) && "RTN_WAIT_REPLACE_RES".equals(returnTypeId)) {
+                    if ("RETURN_ACCEPTED".equals(returnHeader.get(x.statusId)) && "RTN_WAIT_REPLACE_RES".equals(returnTypeId)) {
                         Map<String, Object> serviceResult = null;
                         try {
                             serviceResult = dispatcher.runSync("changeOrderStatus", UtilMisc.toMap("orderId", createdOrderId, "statusId",
@@ -2180,7 +2181,7 @@ public class OrderReturnServices {
                     for (GenericValue returnItem : returnItemList) {
                         Map<String, Object> updateReturnItemCtx = new HashMap<>();
                         updateReturnItemCtx.put("returnId", returnId);
-                        updateReturnItemCtx.put("returnItemSeqId", returnItem.get(org.apache.ofbiz.persistence.entity.x.returnItemSeqId));
+                        updateReturnItemCtx.put("returnItemSeqId", returnItem.get(x.returnItemSeqId));
                         updateReturnItemCtx.put("returnItemResponseId", returnItemResponseId);
                         updateReturnItemCtx.put("userLogin", userLogin);
                         try {
@@ -2219,7 +2220,7 @@ public class OrderReturnServices {
 
     public static Map<String, Object> processSubscriptionReturn(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String returnId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnId);
+        String returnId = (String) context.get(x.returnId);
         Timestamp now = UtilDateTime.nowTimestamp();
 
         GenericValue returnHeader;
@@ -2227,7 +2228,7 @@ public class OrderReturnServices {
         try {
             returnHeader = EntityQuery.use(delegator).from("ReturnHeader").where("returnId", returnId).queryOne();
             if (returnHeader != null) {
-                returnItems = returnHeader.getRelated(org.apache.ofbiz.persistence.entity.x.ReturnItem, UtilMisc.toMap("returnTypeId", "RTN_REFUND"), null, false);
+                returnItems = returnHeader.getRelated(x.ReturnItem, UtilMisc.toMap("returnTypeId", "RTN_REFUND"), null, false);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -2236,8 +2237,8 @@ public class OrderReturnServices {
 
         if (returnItems != null) {
             for (GenericValue returnItem : returnItems) {
-                String orderItemSeqId = returnItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
-                String orderId = returnItem.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+                String orderItemSeqId = returnItem.getString(x.orderItemSeqId);
+                String orderId = returnItem.getString(x.orderId);
 
                 // lookup subscriptions
                 List<GenericValue> subscriptions;
@@ -2252,9 +2253,9 @@ public class OrderReturnServices {
                 // cancel all current subscriptions
                 if (subscriptions != null) {
                     for (GenericValue subscription : subscriptions) {
-                        Timestamp thruDate = subscription.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate);
+                        Timestamp thruDate = subscription.getTimestamp(x.thruDate);
                         if (thruDate == null || thruDate.after(now)) {
-                            subscription.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
+                            subscription.set(x.thruDate, now);
                             try {
                                 delegator.store(subscription);
                             } catch (GenericEntityException e) {
@@ -2282,7 +2283,7 @@ public class OrderReturnServices {
     public static void groupReturnItemsByOrder(List<GenericValue> returnItems, Map<String, List<GenericValue>> returnItemsByOrderId,
                                                Map<String, BigDecimal> totalByOrder, Delegator delegator, String returnId, String returnTypeId) {
         for (GenericValue returnItem : returnItems) {
-            String orderId = returnItem.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+            String orderId = returnItem.getString(x.orderId);
             if (orderId != null) {
                 if (returnItemsByOrderId != null) {
                     BigDecimal totalForOrder = null;
@@ -2304,8 +2305,8 @@ public class OrderReturnServices {
 
                     if (totalByOrder != null) {
                         // add on the total for this line
-                        BigDecimal quantity = returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity);
-                        BigDecimal amount = returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnPrice);
+                        BigDecimal quantity = returnItem.getBigDecimal(x.returnQuantity);
+                        BigDecimal amount = returnItem.getBigDecimal(x.returnPrice);
                         if (quantity == null) {
                             quantity = BigDecimal.ZERO;
                         }
@@ -2314,8 +2315,8 @@ public class OrderReturnServices {
                         }
                         BigDecimal thisTotal = amount.multiply(quantity);
                         BigDecimal existingTotal = totalForOrder;
-                        Map<String, Object> condition = UtilMisc.toMap("returnId", returnItem.get(org.apache.ofbiz.persistence.entity.x.returnId), "returnItemSeqId",
-                                returnItem.get(org.apache.ofbiz.persistence.entity.x.returnItemSeqId));
+                        Map<String, Object> condition = UtilMisc.toMap("returnId", returnItem.get(x.returnId), "returnItemSeqId",
+                                returnItem.get(x.returnItemSeqId));
                         BigDecimal newTotal = existingTotal.add(thisTotal).add(getReturnAdjustmentTotal(delegator, condition));
                         totalByOrder.put(orderId, newTotal);
                     }
@@ -2339,8 +2340,8 @@ public class OrderReturnServices {
 
     public static Map<String, Object> getReturnAmountByOrder(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String returnId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String returnId = (String) context.get(x.returnId);
+        Locale locale = (Locale) context.get(x.locale);
         List<GenericValue> returnItems = null;
         Map<String, Object> returnAmountByOrder = new HashMap<>();
         try {
@@ -2354,16 +2355,16 @@ public class OrderReturnServices {
         if ((returnItems != null) && (!returnItems.isEmpty())) {
             List<String> paymentList = new LinkedList<>();
             for (GenericValue returnItem : returnItems) {
-                String orderId = returnItem.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+                String orderId = returnItem.getString(x.orderId);
                 try {
-                    GenericValue returnItemResponse = returnItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ReturnItemResponse, false);
+                    GenericValue returnItemResponse = returnItem.getRelatedOne(x.ReturnItemResponse, false);
                     if ((returnItemResponse != null) && (orderId != null)) {
                         // TODO should we filter on payment's status (PMNT_SENT, PMNT_RECEIVED)
-                        GenericValue payment = returnItemResponse.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Payment, false);
-                        if ((payment != null) && (payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount) != null)
-                                && !paymentList.contains(payment.get(org.apache.ofbiz.persistence.entity.x.paymentId))) {
-                            UtilMisc.addToBigDecimalInMap(returnAmountByOrder, orderId, payment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
-                            paymentList.add(payment.getString(org.apache.ofbiz.persistence.entity.x.paymentId));  // make sure we don't add duplicated payment amount
+                        GenericValue payment = returnItemResponse.getRelatedOne(x.Payment, false);
+                        if ((payment != null) && (payment.getBigDecimal(x.amount) != null)
+                                && !paymentList.contains(payment.get(x.paymentId))) {
+                            UtilMisc.addToBigDecimalInMap(returnAmountByOrder, orderId, payment.getBigDecimal(x.amount));
+                            paymentList.add(payment.getString(x.paymentId));  // make sure we don't add duplicated payment amount
                         }
                     }
                 } catch (GenericEntityException e) {
@@ -2379,8 +2380,8 @@ public class OrderReturnServices {
     public static Map<String, Object> checkPaymentAmountForRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        String returnId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String returnId = (String) context.get(x.returnId);
+        Locale locale = (Locale) context.get(x.locale);
         Map<String, BigDecimal> returnAmountByOrder = null;
         Map<String, Object> serviceResult = null;
         try {
@@ -2421,13 +2422,13 @@ public class OrderReturnServices {
 
     public static Map<String, Object> createReturnAdjustment(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String orderAdjustmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentId);
-        String returnAdjustmentTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnAdjustmentTypeId);
-        String returnId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnId);
-        String returnItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnItemSeqId);
-        String description = (String) context.get(org.apache.ofbiz.persistence.entity.x.description);
-        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String orderAdjustmentId = (String) context.get(x.orderAdjustmentId);
+        String returnAdjustmentTypeId = (String) context.get(x.returnAdjustmentTypeId);
+        String returnId = (String) context.get(x.returnId);
+        String returnItemSeqId = (String) context.get(x.returnItemSeqId);
+        String description = (String) context.get(x.description);
+        BigDecimal amount = (BigDecimal) context.get(x.amount);
+        Locale locale = (Locale) context.get(x.locale);
 
         GenericValue returnItemTypeMap = null;
         GenericValue orderAdjustment = null;
@@ -2447,31 +2448,31 @@ public class OrderReturnServices {
                 }
                 // get returnHeaderTypeId from ReturnHeader and then use it to figure out return item type mapping
                 returnHeader = EntityQuery.use(delegator).from("ReturnHeader").where("returnId", returnId).queryOne();
-                String returnHeaderTypeId = ((returnHeader != null) && (returnHeader.getString(org.apache.ofbiz.persistence.entity.x.returnHeaderTypeId) != null))
-                        ? returnHeader.getString(org.apache.ofbiz.persistence.entity.x.returnHeaderTypeId) : "CUSTOMER_RETURN";
+                String returnHeaderTypeId = ((returnHeader != null) && (returnHeader.getString(x.returnHeaderTypeId) != null))
+                        ? returnHeader.getString(x.returnHeaderTypeId) : "CUSTOMER_RETURN";
                 returnItemTypeMap = EntityQuery.use(delegator).from("ReturnItemTypeMap").where("returnHeaderTypeId", returnHeaderTypeId,
-                        "returnItemMapKey", orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId)).queryOne();
-                returnAdjustmentType = returnItemTypeMap.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ReturnAdjustmentType, false);
+                        "returnItemMapKey", orderAdjustment.get(x.orderAdjustmentTypeId)).queryOne();
+                returnAdjustmentType = returnItemTypeMap.getRelatedOne(x.ReturnAdjustmentType, false);
                 if (returnAdjustmentType != null && UtilValidate.isEmpty(description)) {
-                    description = returnAdjustmentType.getString(org.apache.ofbiz.persistence.entity.x.description);
+                    description = returnAdjustmentType.getString(x.description);
                 }
                 if ((returnItemSeqId != null) && !("_NA_".equals(returnItemSeqId))) {
                     returnItem = EntityQuery.use(delegator).from("ReturnItem").where("returnId", returnId, "returnItemSeqId", returnItemSeqId)
                             .queryOne();
                     Debug.logInfo("returnId:" + returnId + ", returnItemSeqId:" + returnItemSeqId, MODULE);
-                    orderItem = returnItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItem, false);
+                    orderItem = returnItem.getRelatedOne(x.OrderItem, false);
                 } else {
                     // we don't have the returnItemSeqId but before we consider this
                     // an header adjustment we try to get a return item in this return
                     // associated to the same order item to which the adjustments refers (if any)
-                    if (UtilValidate.isNotEmpty(orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId))
-                            && !"_NA_".equals(orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId))) {
+                    if (UtilValidate.isNotEmpty(orderAdjustment.getString(x.orderItemSeqId))
+                            && !"_NA_".equals(orderAdjustment.getString(x.orderItemSeqId))) {
                         returnItem = EntityQuery.use(delegator).from("ReturnItem")
-                                .where("returnId", returnId, "orderId", orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderId), "orderItemSeqId",
-                                        orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId))
+                                .where("returnId", returnId, "orderId", orderAdjustment.getString(x.orderId), "orderItemSeqId",
+                                        orderAdjustment.getString(x.orderItemSeqId))
                                 .queryFirst();
                         if (returnItem != null) {
-                            orderItem = returnItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItem, false);
+                            orderItem = returnItem.getRelatedOne(x.OrderItem, false);
                         }
                     }
                 }
@@ -2481,31 +2482,31 @@ public class OrderReturnServices {
             }
             context.putAll(orderAdjustment.getAllFields());
             if (UtilValidate.isNotEmpty(amount)) {
-                context.put(org.apache.ofbiz.persistence.entity.x.amount, amount);
+                context.put(x.amount, amount);
             }
         }
 
         // if orderAdjustmentTypeId is empty, ie not found from orderAdjustmentId, then try to get returnAdjustmentTypeId from returnItemTypeMap,
         // if still empty, use default RET_MAN_ADJ
         if (returnAdjustmentTypeId == null) {
-            String mappingTypeId = returnItemTypeMap != null ? returnItemTypeMap.get(org.apache.ofbiz.persistence.entity.x.returnItemTypeId).toString() : null;
+            String mappingTypeId = returnItemTypeMap != null ? returnItemTypeMap.get(x.returnItemTypeId).toString() : null;
             returnAdjustmentTypeId = mappingTypeId != null ? mappingTypeId : "RET_MAN_ADJ";
         }
         // calculate the returnAdjustment amount
         if (returnItem != null) {  // returnAdjustment for returnItem
             if (needRecalculate(returnAdjustmentTypeId)) {
-                Debug.logInfo("returnPrice:" + returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnPrice) + ", returnQuantity:"
-                        + returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity) + ", sourcePercentage:" + orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.sourcePercentage),
+                Debug.logInfo("returnPrice:" + returnItem.getBigDecimal(x.returnPrice) + ", returnQuantity:"
+                        + returnItem.getBigDecimal(x.returnQuantity) + ", sourcePercentage:" + orderAdjustment.getBigDecimal(x.sourcePercentage),
                         MODULE);
-                BigDecimal returnTotal = returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnPrice).multiply(returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity));
-                BigDecimal orderTotal = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity).multiply(orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice));
+                BigDecimal returnTotal = returnItem.getBigDecimal(x.returnPrice).multiply(returnItem.getBigDecimal(x.returnQuantity));
+                BigDecimal orderTotal = orderItem.getBigDecimal(x.quantity).multiply(orderItem.getBigDecimal(x.unitPrice));
                 amount = getAdjustmentAmount("RET_SALES_TAX_ADJ".equals(returnAdjustmentTypeId), returnTotal, orderTotal,
-                        orderAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
+                        orderAdjustment.getBigDecimal(x.amount));
             } else {
-                amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
+                amount = (BigDecimal) context.get(x.amount);
             }
         } else { // returnAdjustment for returnHeader
-            amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
+            amount = (BigDecimal) context.get(x.amount);
         }
 
         // store the return adjustment
@@ -2515,13 +2516,13 @@ public class OrderReturnServices {
 
         try {
             newReturnAdjustment.setNonPKFields(context);
-            if (orderAdjustment != null && orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.taxAuthorityRateSeqId) != null) {
-                newReturnAdjustment.set(org.apache.ofbiz.persistence.entity.x.taxAuthorityRateSeqId, orderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.taxAuthorityRateSeqId));
+            if (orderAdjustment != null && orderAdjustment.get(x.taxAuthorityRateSeqId) != null) {
+                newReturnAdjustment.set(x.taxAuthorityRateSeqId, orderAdjustment.getString(x.taxAuthorityRateSeqId));
             }
-            newReturnAdjustment.set(org.apache.ofbiz.persistence.entity.x.amount, amount == null ? BigDecimal.ZERO : amount);
-            newReturnAdjustment.set(org.apache.ofbiz.persistence.entity.x.returnAdjustmentTypeId, returnAdjustmentTypeId);
-            newReturnAdjustment.set(org.apache.ofbiz.persistence.entity.x.description, description);
-            newReturnAdjustment.set(org.apache.ofbiz.persistence.entity.x.returnItemSeqId, UtilValidate.isEmpty(returnItemSeqId) ? "_NA_" : returnItemSeqId);
+            newReturnAdjustment.set(x.amount, amount == null ? BigDecimal.ZERO : amount);
+            newReturnAdjustment.set(x.returnAdjustmentTypeId, returnAdjustmentTypeId);
+            newReturnAdjustment.set(x.description, description);
+            newReturnAdjustment.set(x.returnItemSeqId, UtilValidate.isEmpty(returnItemSeqId) ? "_NA_" : returnItemSeqId);
 
             delegator.create(newReturnAdjustment);
             Map<String, Object> result = ServiceUtil.returnSuccess(UtilProperties.getMessage(RESOURCE,
@@ -2537,7 +2538,7 @@ public class OrderReturnServices {
 
     public static Map<String, Object> updateReturnAdjustment(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         GenericValue returnItem = null;
         GenericValue returnAdjustment = null;
         String returnAdjustmentTypeId = null;
@@ -2545,43 +2546,43 @@ public class OrderReturnServices {
 
 
         try {
-            returnAdjustment = EntityQuery.use(delegator).from("ReturnAdjustment").where("returnAdjustmentId", context.get(org.apache.ofbiz.persistence.entity.x.returnAdjustmentId))
+            returnAdjustment = EntityQuery.use(delegator).from("ReturnAdjustment").where("returnAdjustmentId", context.get(x.returnAdjustmentId))
                     .queryOne();
             if (returnAdjustment != null) {
-                returnItem = EntityQuery.use(delegator).from("ReturnItem").where("returnId", returnAdjustment.get(org.apache.ofbiz.persistence.entity.x.returnId), "returnItemSeqId",
-                        returnAdjustment.get(org.apache.ofbiz.persistence.entity.x.returnItemSeqId)).queryOne();
-                returnAdjustmentTypeId = returnAdjustment.getString(org.apache.ofbiz.persistence.entity.x.returnAdjustmentTypeId);
+                returnItem = EntityQuery.use(delegator).from("ReturnItem").where("returnId", returnAdjustment.get(x.returnId), "returnItemSeqId",
+                        returnAdjustment.get(x.returnItemSeqId)).queryOne();
+                returnAdjustmentTypeId = returnAdjustment.getString(x.returnAdjustmentTypeId);
             }
 
             // calculate the returnAdjustment amount
             if (returnItem != null) {  // returnAdjustment for returnItem
-                BigDecimal originalReturnPrice = (context.get(org.apache.ofbiz.persistence.entity.x.originalReturnPrice) != null) ? ((BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.originalReturnPrice))
-                        : returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnPrice);
-                BigDecimal originalReturnQuantity = (context.get(org.apache.ofbiz.persistence.entity.x.originalReturnQuantity) != null)
-                        ? ((BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.originalReturnQuantity)) : returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity);
+                BigDecimal originalReturnPrice = (context.get(x.originalReturnPrice) != null) ? ((BigDecimal) context.get(x.originalReturnPrice))
+                        : returnItem.getBigDecimal(x.returnPrice);
+                BigDecimal originalReturnQuantity = (context.get(x.originalReturnQuantity) != null)
+                        ? ((BigDecimal) context.get(x.originalReturnQuantity)) : returnItem.getBigDecimal(x.returnQuantity);
 
                 if (needRecalculate(returnAdjustmentTypeId)) {
-                    BigDecimal returnTotal = returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnPrice).multiply(returnItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.returnQuantity));
+                    BigDecimal returnTotal = returnItem.getBigDecimal(x.returnPrice).multiply(returnItem.getBigDecimal(x.returnQuantity));
                     BigDecimal originalReturnTotal = originalReturnPrice.multiply(originalReturnQuantity);
                     amount = getAdjustmentAmount("RET_SALES_TAX_ADJ".equals(returnAdjustmentTypeId), returnTotal, originalReturnTotal,
-                            returnAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
+                            returnAdjustment.getBigDecimal(x.amount));
                 } else {
-                    amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
+                    amount = (BigDecimal) context.get(x.amount);
                 }
             } else { // returnAdjustment for returnHeader
-                amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
+                amount = (BigDecimal) context.get(x.amount);
             }
 
             Map<String, Object> result = null;
             if (UtilValidate.isNotEmpty(amount)) {
                 returnAdjustment.setNonPKFields(context);
-                returnAdjustment.set(org.apache.ofbiz.persistence.entity.x.amount, amount);
+                returnAdjustment.set(x.amount, amount);
                 delegator.store(returnAdjustment);
-                Debug.logInfo("Update ReturnAdjustment with Id:" + context.get(org.apache.ofbiz.persistence.entity.x.returnAdjustmentId) + " to amount " + amount + " successfully.",
+                Debug.logInfo("Update ReturnAdjustment with Id:" + context.get(x.returnAdjustmentId) + " to amount " + amount + " successfully.",
                         MODULE);
                 result = ServiceUtil.returnSuccess(UtilProperties.getMessage(RESOURCE,
                         "OrderUpdateReturnAdjustment",
-                        UtilMisc.toMap("returnAdjustmentId", context.get(org.apache.ofbiz.persistence.entity.x.returnAdjustmentId), "amount", amount), locale));
+                        UtilMisc.toMap("returnAdjustmentId", context.get(x.returnAdjustmentId), "amount", amount), locale));
             } else {
                 result = ServiceUtil.returnSuccess();
             }
@@ -2596,7 +2597,7 @@ public class OrderReturnServices {
     //  used as a dispatch service, invoke different service based on the parameters passed in
     public static Map<String, Object> createReturnItemOrAdjustment(DispatchContext dctx, Map<String, ? extends Object> context) {
         Debug.logInfo("createReturnItemOrAdjustment's context:" + context, MODULE);
-        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+        String orderItemSeqId = (String) context.get(x.orderItemSeqId);
         Debug.logInfo("orderItemSeqId:" + orderItemSeqId + "#", MODULE);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         //if the request is to create returnItem, orderItemSeqId should not be empty
@@ -2623,7 +2624,7 @@ public class OrderReturnServices {
     //  used as a dispatch service, invoke different service based on the parameters passed in
     public static Map<String, Object> updateReturnItemOrAdjustment(DispatchContext dctx, Map<String, ? extends Object> context) {
         Debug.logInfo("updateReturnItemOrAdjustment's context:" + context, MODULE);
-        String returnAdjustmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnAdjustmentId);
+        String returnAdjustmentId = (String) context.get(x.returnAdjustmentId);
         Debug.logInfo("returnAdjustmentId:" + returnAdjustmentId + "#", MODULE);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         //if the request is to create returnItem, orderItemSeqId should not be empty
@@ -2665,8 +2666,8 @@ public class OrderReturnServices {
             adjustments = EntityQuery.use(delegator).from("ReturnAdjustment").where(condition).queryList();
             if (adjustments != null) {
                 for (GenericValue returnAdjustment : adjustments) {
-                    if ((returnAdjustment != null) && (returnAdjustment.get(org.apache.ofbiz.persistence.entity.x.amount) != null)) {
-                        total = total.add(returnAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
+                    if ((returnAdjustment != null) && (returnAdjustment.get(x.amount) != null)) {
+                        total = total.add(returnAdjustment.getBigDecimal(x.amount));
                     }
                 }
             }

@@ -27,6 +27,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.order.finaccount.FinAccountHelper;
 import org.apache.ofbiz.service.testtools.OFBizTestCase;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class FinAccountTest extends OFBizTestCase {
     private static final String MODULE = FinAccountTest.class.getName();
     public FinAccountTest(String name) {
@@ -53,13 +54,13 @@ public class FinAccountTest extends OFBizTestCase {
 
         account = FinAccountHelper.getFinAccountFromCode(finAccountCode, delegator);
         assertNotNull(account);
-        assertEquals(finAccountCode, account.get(org.apache.ofbiz.persistence.entity.x.finAccountCode));
+        assertEquals(finAccountCode, account.get(x.finAccountCode));
         account = FinAccountHelper.getFinAccountFromCode(finAccountCode.toUpperCase(Locale.getDefault()), delegator);
         assertNotNull(account);
-        assertEquals(finAccountCode, account.get(org.apache.ofbiz.persistence.entity.x.finAccountCode));
+        assertEquals(finAccountCode, account.get(x.finAccountCode));
         account = FinAccountHelper.getFinAccountFromCode(finAccountCode.toLowerCase(Locale.getDefault()), delegator);
         assertNotNull(account);
-        assertEquals(finAccountCode, account.get(org.apache.ofbiz.persistence.entity.x.finAccountCode));
+        assertEquals(finAccountCode, account.get(x.finAccountCode));
 
         delegator.createSetNextSeqId(delegator.makeValue("FinAccount", UtilMisc.toMap("finAccountCode", finAccountCode)));
         account = FinAccountHelper.getFinAccountFromCode(finAccountCode, delegator);

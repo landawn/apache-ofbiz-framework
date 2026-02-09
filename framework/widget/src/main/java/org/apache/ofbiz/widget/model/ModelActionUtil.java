@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.base.util.collections.FlexibleMapAccessor;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class ModelActionUtil {
 
     /**
@@ -35,11 +36,11 @@ public class ModelActionUtil {
         if (!resultMapNameAcsr.isEmpty()) {
             resultMapNameAcsr.put(context, result);
             String queryString = (String) result.get("queryString");
-            context.put(org.apache.ofbiz.persistence.entity.x.queryString, queryString);
-            context.put(org.apache.ofbiz.persistence.entity.x.queryStringMap, result.get("queryStringMap"));
+            context.put(x.queryString, queryString);
+            context.put(x.queryStringMap, result.get("queryStringMap"));
             if (UtilValidate.isNotEmpty(queryString)) {
                 String queryStringEncoded = queryString.replace("&", "%26");
-                context.put(org.apache.ofbiz.persistence.entity.x.queryStringEncoded, queryStringEncoded);
+                context.put(x.queryStringEncoded, queryStringEncoded);
             }
         } else {
             context.putAll(result);

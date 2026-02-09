@@ -36,6 +36,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ShippingEvents - Events used for processing shipping fees
  */
@@ -68,7 +69,7 @@ public class ShipmentEvents {
             return "error";
         }
 
-        byte[] bytes = shipmentPackageRouteSeg.getBytes(org.apache.ofbiz.persistence.entity.x.labelImage);
+        byte[] bytes = shipmentPackageRouteSeg.getBytes(x.labelImage);
         if (bytes == null || bytes.length == 0) {
             request.setAttribute("_ERROR_MESSAGE_", "The ShipmentPackageRouteSeg was found where shipmentId=[" + shipmentId
                     + "], shipmentRouteSegmentId=[" + shipmentRouteSegmentId + "], shipmentPackageSeqId=[" + shipmentPackageSeqId

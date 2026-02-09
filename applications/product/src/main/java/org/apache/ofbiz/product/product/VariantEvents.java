@@ -36,6 +36,7 @@ import org.apache.ofbiz.entity.transaction.GenericTransactionException;
 import org.apache.ofbiz.entity.transaction.TransactionUtil;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Product Variant Related Events
  */
@@ -100,17 +101,17 @@ public class VariantEvents {
                 if (variantProduct == null) {
                     //if product does not exist
                     variantProduct = GenericValue.create(product);
-                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.productId, variantProductId);
-                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.isVirtual, "N");
-                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.isVariant, "Y");
-                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.primaryProductCategoryId, null);
+                    variantProduct.set(x.productId, variantProductId);
+                    variantProduct.set(x.isVirtual, "N");
+                    variantProduct.set(x.isVariant, "Y");
+                    variantProduct.set(x.primaryProductCategoryId, null);
                     //create new
                     variantProduct.create();
                 } else {
                     //if product does exist
-                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.isVirtual, "N");
-                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.isVariant, "Y");
-                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.primaryProductCategoryId, null);
+                    variantProduct.set(x.isVirtual, "N");
+                    variantProduct.set(x.isVariant, "Y");
+                    variantProduct.set(x.primaryProductCategoryId, null);
                     //update entry
                     variantProduct.store();
                 }
@@ -142,7 +143,7 @@ public class VariantEvents {
 
                     // set the default seq num if it's there...
                     if (productFeature != null) {
-                        productFeatureAppl.set(org.apache.ofbiz.persistence.entity.x.sequenceNum, productFeature.get(org.apache.ofbiz.persistence.entity.x.defaultSequenceNum));
+                        productFeatureAppl.set(x.sequenceNum, productFeature.get(x.defaultSequenceNum));
                     }
 
                     productFeatureAppl.create();

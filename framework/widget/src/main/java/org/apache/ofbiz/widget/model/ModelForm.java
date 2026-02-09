@@ -63,6 +63,7 @@ import org.codehaus.groovy.control.CompilationFailedException;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Abstract base class for the &lt;form&gt; and &lt;grid&gt; elements.
  *
@@ -1324,7 +1325,7 @@ public abstract class ModelForm extends ModelWidget {
      * @return the paginate first label
      */
     public String getPaginateFirstLabel(Map<String, Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         String field = this.paginateFirstLabel.expandString(context);
         if (UtilValidate.isEmpty(field)) {
             field = UtilProperties.getMessage("CommonUiLabels", "CommonFirst", locale);
@@ -1375,7 +1376,7 @@ public abstract class ModelForm extends ModelWidget {
      * @return the paginate last label
      */
     public String getPaginateLastLabel(Map<String, Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         String field = this.paginateLastLabel.expandString(context);
         if (UtilValidate.isEmpty(field)) {
             field = UtilProperties.getMessage("CommonUiLabels", "CommonLast", locale);
@@ -1407,7 +1408,7 @@ public abstract class ModelForm extends ModelWidget {
     public String getPaginateNextLabel(Map<String, Object> context) {
         String field = this.paginateNextLabel.expandString(context);
         if (field.isEmpty()) {
-            Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+            Locale locale = (Locale) context.get(x.locale);
             return UtilProperties.getMessage("CommonUiLabels", "CommonNext", locale);
         }
         return field;
@@ -1437,7 +1438,7 @@ public abstract class ModelForm extends ModelWidget {
     public String getPaginatePreviousLabel(Map<String, Object> context) {
         String field = this.paginatePreviousLabel.expandString(context);
         if (field.isEmpty()) {
-            Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+            Locale locale = (Locale) context.get(x.locale);
             field = UtilProperties.getMessage("CommonUiLabels", "CommonPrevious", locale);
         }
         return field;
@@ -1496,7 +1497,7 @@ public abstract class ModelForm extends ModelWidget {
     public String getPaginateTarget(Map<String, Object> context) {
         String targ = this.paginateTarget.expandString(context);
         if (targ.isEmpty()) {
-            Map<String, ?> parameters = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.parameters));
+            Map<String, ?> parameters = UtilGenerics.cast(context.get(x.parameters));
             if (parameters != null && parameters.containsKey("targetRequestUri")) {
                 targ = (String) parameters.get("targetRequestUri");
             }
@@ -1528,7 +1529,7 @@ public abstract class ModelForm extends ModelWidget {
     public String getPaginateViewSizeLabel(Map<String, Object> context) {
         String field = this.paginateViewSizeLabel.expandString(context);
         if (field.isEmpty()) {
-            Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+            Locale locale = (Locale) context.get(x.locale);
             return UtilProperties.getMessage("CommonUiLabels", "CommonItemsPerPage", locale);
         }
         return field;
@@ -1620,7 +1621,7 @@ public abstract class ModelForm extends ModelWidget {
         try {
             value = (String) context.get(this.sortFieldParameterName);
             if (value == null) {
-                Map<String, String> parameters = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.parameters));
+                Map<String, String> parameters = UtilGenerics.cast(context.get(x.parameters));
                 if (parameters != null) {
                     value = parameters.get(this.sortFieldParameterName);
                 }
@@ -1688,7 +1689,7 @@ public abstract class ModelForm extends ModelWidget {
      */
     public String getTarget(Map<String, Object> context, String targetType) {
         Map<String, Object> expanderContext = context;
-        UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
+        UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(x.simpleEncoder);
         if (simpleEncoder != null) {
             expanderContext = UtilCodec.HtmlEncodingMapWrapper.getHtmlEncodingMapWrapper(context, simpleEncoder);
         }
@@ -2487,7 +2488,7 @@ public abstract class ModelForm extends ModelWidget {
          * @return the Jwt token
          */
         public String toJwtToken(Map<String, Object> context) {
-            Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
+            Delegator delegator = (Delegator) context.get(x.delegator);
 
             Map<String, String> claims = UtilMisc.toMap(
                     "areaId", WidgetWorker.getScreenStack(context).resolveScreenAreaId(getAreaId()),
@@ -2514,7 +2515,7 @@ public abstract class ModelForm extends ModelWidget {
          * @return UpdateArea object
          */
         public static ModelForm.UpdateArea fromJwtToken(Map<String, Object> context) {
-            Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
+            Delegator delegator = (Delegator) context.get(x.delegator);
 
             String jwtToken = WidgetWorker.getJwtCallback(context);
             if (UtilValidate.isEmpty(jwtToken)) return null;

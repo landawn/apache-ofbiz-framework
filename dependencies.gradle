@@ -112,7 +112,7 @@ dependencies {
     runtimeOnly 'org.apache.logging.log4j:log4j-web:2.24.2' //???
     runtimeOnly 'org.apache.logging.log4j:log4j-jcl:2.24.2' // need to constrain to version to avoid classpath conflict (ReflectionUtil)
 
-    // specify last codenarc version for java 17 compliance
+    // pin codenarc version compatible with current Java 21 build toolchain
     codenarc('org.codenarc:CodeNarc:3.6.0-groovy-4.0')
 
     // use constraints to update transitive dependencies

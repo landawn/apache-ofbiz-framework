@@ -43,6 +43,7 @@ import org.apache.ofbiz.webapp.control.RequestHandlerException;
 import org.apache.ofbiz.webapp.control.RequestHandlerExceptionAllowExternalRequests;
 import org.apache.ofbiz.webapp.control.WebAppConfigurationException;
 
+import org.apache.ofbiz.persistence.entity.x;
 public final class CsrfUtil {
 
     private static final String MODULE = CsrfUtil.class.getName();
@@ -82,8 +83,8 @@ public final class CsrfUtil {
         HttpSession session = request.getSession();
         GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
         String partyId = null;
-        if (userLogin != null && userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId) != null) {
-            partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+        if (userLogin != null && userLogin.get(x.partyId) != null) {
+            partyId = userLogin.getString(x.partyId);
         }
 
         Map<String, String> tokenMap = null;
@@ -354,8 +355,8 @@ public final class CsrfUtil {
     public static void cleanupTokenMap(HttpSession session) {
         GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
         String partyId = null;
-        if (userLogin != null && userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId) != null) {
-            partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+        if (userLogin != null && userLogin.get(x.partyId) != null) {
+            partyId = userLogin.getString(x.partyId);
             Map<String, Map<String, String>> partyTokenMap = csrfTokenCache.get(partyId);
             if (partyTokenMap != null) {
                 String contextPath = session.getServletContext().getContextPath();

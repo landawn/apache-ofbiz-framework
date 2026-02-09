@@ -67,6 +67,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * <p><b>Title:</b> ShoppingCartItem.java
  * <p><b>Description:</b> Shopping cart item object.
@@ -317,16 +318,16 @@ public class ShoppingCartItem implements java.io.Serializable {
         this.delegator = product.getDelegator();
         this.dispatcher = dispatcher;
         this.delegatorName = product.getDelegator().getDelegatorName();
-        this.productId = product.getString(org.apache.ofbiz.persistence.entity.x.productId);
+        this.productId = product.getString(x.productId);
         this.parentProduct = parentProduct;
         if (parentProduct != null) {
-            this.parentProductId = parentProduct.getString(org.apache.ofbiz.persistence.entity.x.productId);
+            this.parentProductId = parentProduct.getString(x.productId);
         }
         if (UtilValidate.isEmpty(itemType)) {
-            if (UtilValidate.isNotEmpty(product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId))) {
-                if ("ASSET_USAGE".equals(product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId))) {
+            if (UtilValidate.isNotEmpty(product.getString(x.productTypeId))) {
+                if ("ASSET_USAGE".equals(product.getString(x.productTypeId))) {
                     this.itemType = "RENTAL_ORDER_ITEM";  // will create additional workeffort/asset usage records
-                } else if ("ASSET_USAGE_OUT_IN".equals(product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId))) {
+                } else if ("ASSET_USAGE_OUT_IN".equals(product.getString(x.productTypeId))) {
                     this.itemType = "RENTAL_ORDER_ITEM";
                 } else {
                     this.itemType = "PRODUCT_ORDER_ITEM";
@@ -430,9 +431,9 @@ public class ShoppingCartItem implements java.io.Serializable {
                 cart.getLocale(), itemType, itemGroup, null, dispatcher);
 
         // check to see if product is virtual
-        if ("Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.isVirtual))) {
-            Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("productName", product.getString(org.apache.ofbiz.persistence.entity.x.productName), "productId",
-                    product.getString(org.apache.ofbiz.persistence.entity.x.productId));
+        if ("Y".equals(product.getString(x.isVirtual))) {
+            Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("productName", product.getString(x.productName), "productId",
+                    product.getString(x.productId));
 
             String excMsg = UtilProperties.getMessage(RES_ERROR, "item.cannot_add_product_virtual", messageMap, cart.getLocale());
 
@@ -441,10 +442,10 @@ public class ShoppingCartItem implements java.io.Serializable {
         }
 
         // check to see if the product is fully configured
-        if ("AGGREGATED".equals(product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId)) || "AGGREGATED_SERVICE".equals(product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId))) {
+        if ("AGGREGATED".equals(product.getString(x.productTypeId)) || "AGGREGATED_SERVICE".equals(product.getString(x.productTypeId))) {
             if (configWrapper == null || !configWrapper.isCompleted()) {
-                Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("productName", product.getString(org.apache.ofbiz.persistence.entity.x.productName), "productId",
-                        product.getString(org.apache.ofbiz.persistence.entity.x.productId));
+                Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("productName", product.getString(x.productName), "productId",
+                        product.getString(x.productId));
 
                 String excMsg = UtilProperties.getMessage(RES_ERROR, "item.cannot_add_product_not_configured_correctly", messageMap,
                         cart.getLocale());
@@ -484,13 +485,13 @@ public class ShoppingCartItem implements java.io.Serializable {
         // specific for purchase orders - description is set to supplierProductId + supplierProductName, price set to lastPrice of SupplierProduct
         // if supplierProduct has no supplierProductName, use the regular supplierProductId
         if (supplierProduct != null) {
-            newItem.setSupplierProductId(supplierProduct.getString(org.apache.ofbiz.persistence.entity.x.supplierProductId));
+            newItem.setSupplierProductId(supplierProduct.getString(x.supplierProductId));
             newItem.setName(getPurchaseOrderItemDescription(product, supplierProduct, cart.getLocale(), dispatcher));
             if (newItem.getBasePrice().compareTo(BigDecimal.ZERO) == 0) {
-                newItem.setBasePrice(supplierProduct.getBigDecimal(org.apache.ofbiz.persistence.entity.x.lastPrice));
+                newItem.setBasePrice(supplierProduct.getBigDecimal(x.lastPrice));
             }
         } else {
-            newItem.setName(product.getString(org.apache.ofbiz.persistence.entity.x.internalName));
+            newItem.setName(product.getString(x.internalName));
         }
         return newItem;
 
@@ -714,9 +715,9 @@ public class ShoppingCartItem implements java.io.Serializable {
         boolean triggerExternalOps = triggerExternalOpsBool == null ? true : triggerExternalOpsBool;
 
         // check to see if product is virtual
-        if ("Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.isVirtual))) {
-            Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("productName", product.getString(org.apache.ofbiz.persistence.entity.x.productName), "productId",
-                    product.getString(org.apache.ofbiz.persistence.entity.x.productId));
+        if ("Y".equals(product.getString(x.isVirtual))) {
+            Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("productName", product.getString(x.productName), "productId",
+                    product.getString(x.productId));
 
             String excMsg = UtilProperties.getMessage(RES_ERROR, "item.cannot_add_product_virtual", messageMap, cart.getLocale());
 
@@ -731,7 +732,7 @@ public class ShoppingCartItem implements java.io.Serializable {
         }
 
         // check to see if the product is a rental item
-        if ("ASSET_USAGE".equals(product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId)) || "ASSET_USAGE_OUT_IN".equals(product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId))) {
+        if ("ASSET_USAGE".equals(product.getString(x.productTypeId)) || "ASSET_USAGE_OUT_IN".equals(product.getString(x.productTypeId))) {
             if (reservStart == null) {
                 String excMsg = UtilProperties.getMessage(RES_ERROR, "item.missing_reservation_starting_date", cart.getLocale());
                 throw new CartItemModifyException(excMsg);
@@ -749,10 +750,10 @@ public class ShoppingCartItem implements java.io.Serializable {
             }
             newItem.setReservLength(reservLength);
 
-            if (product.get(org.apache.ofbiz.persistence.entity.x.reservMaxPersons) != null) {
-                BigDecimal reservMaxPersons = product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.reservMaxPersons);
+            if (product.get(x.reservMaxPersons) != null) {
+                BigDecimal reservMaxPersons = product.getBigDecimal(x.reservMaxPersons);
                 if (reservMaxPersons.compareTo(reservPersons) < 0) {
-                    Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("reservMaxPersons", product.getString(org.apache.ofbiz.persistence.entity.x.reservMaxPersons),
+                    Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("reservMaxPersons", product.getString(x.reservMaxPersons),
                             "reservPersons", reservPersons);
                     String excMsg = UtilProperties.getMessage(RES_ERROR, "item.maximum_number_of_person_renting", messageMap, cart.getLocale());
 
@@ -762,12 +763,12 @@ public class ShoppingCartItem implements java.io.Serializable {
             }
             newItem.setReservPersons(reservPersons);
 
-            if (product.get(org.apache.ofbiz.persistence.entity.x.reserv2ndPPPerc) != null) {
-                newItem.setReserv2ndPPPerc(product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.reserv2ndPPPerc));
+            if (product.get(x.reserv2ndPPPerc) != null) {
+                newItem.setReserv2ndPPPerc(product.getBigDecimal(x.reserv2ndPPPerc));
             }
 
-            if (product.get(org.apache.ofbiz.persistence.entity.x.reservNthPPPerc) != null) {
-                newItem.setReservNthPPPerc(product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.reservNthPPPerc));
+            if (product.get(x.reservNthPPPerc) != null) {
+                newItem.setReservNthPPPerc(product.getBigDecimal(x.reservNthPPPerc));
             }
 
             if ((accommodationMapId != null) && (accommodationSpotId != null)) {
@@ -775,9 +776,9 @@ public class ShoppingCartItem implements java.io.Serializable {
             }
 
             // check to see if the related fixed asset is available for rent
-            String isAvailable = checkAvailability(product.getString(org.apache.ofbiz.persistence.entity.x.productId), quantity, reservStart, reservLength, cart);
+            String isAvailable = checkAvailability(product.getString(x.productId), quantity, reservStart, reservLength, cart);
             if (isAvailable.compareTo("OK") != 0) {
-                Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId), "availableMessage",
+                Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("productId", product.getString(x.productId), "availableMessage",
                         isAvailable);
                 String excMsg = UtilProperties.getMessage(RES_ERROR, "item.product_not_available", messageMap, cart.getLocale());
                 Debug.logInfo(excMsg, MODULE);
@@ -837,7 +838,7 @@ public class ShoppingCartItem implements java.io.Serializable {
             // first see if there is a purchase allow category and if this product is in it or not
             String purchaseProductCategoryId = CatalogWorker.getCatalogPurchaseAllowCategoryId(delegator, prodCatalogId);
             if (!skipProductChecks && product != null && purchaseProductCategoryId != null) {
-                if (!CategoryWorker.isProductInCategory(delegator, product.getString(org.apache.ofbiz.persistence.entity.x.productId), purchaseProductCategoryId)) {
+                if (!CategoryWorker.isProductInCategory(delegator, product.getString(x.productId), purchaseProductCategoryId)) {
                     // a Purchase allow productCategoryId was found, but the product is not in the category, axe it...
                     Debug.logWarning("Product [" + productId + "] is not in the purchase allow category [" + purchaseProductCategoryId
                             + "] and cannot be purchased", MODULE);
@@ -862,9 +863,9 @@ public class ShoppingCartItem implements java.io.Serializable {
     public static void isValidCartProduct(ProductConfigWrapper configWrapper, GenericValue product, Timestamp nowTimestamp, Locale locale)
             throws CartItemModifyException {
         // check to see if introductionDate hasn't passed yet
-        if (product.get(org.apache.ofbiz.persistence.entity.x.introductionDate) != null && nowTimestamp.before(product.getTimestamp(org.apache.ofbiz.persistence.entity.x.introductionDate))) {
-            Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("productName", product.getString(org.apache.ofbiz.persistence.entity.x.productName),
-                    "productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId));
+        if (product.get(x.introductionDate) != null && nowTimestamp.before(product.getTimestamp(x.introductionDate))) {
+            Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("productName", product.getString(x.productName),
+                    "productId", product.getString(x.productId));
 
             String excMsg = UtilProperties.getMessage(RES_ERROR, "item.cannot_add_product_not_yet_available",
                     messageMap, locale);
@@ -874,9 +875,9 @@ public class ShoppingCartItem implements java.io.Serializable {
         }
 
         // check to see if salesDiscontinuationDate has passed
-        if (product.get(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate) != null && nowTimestamp.after(product.getTimestamp(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate))) {
-            Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("productName", product.getString(org.apache.ofbiz.persistence.entity.x.productName),
-                    "productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId));
+        if (product.get(x.salesDiscontinuationDate) != null && nowTimestamp.after(product.getTimestamp(x.salesDiscontinuationDate))) {
+            Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("productName", product.getString(x.productName),
+                    "productId", product.getString(x.productId));
 
             String excMsg = UtilProperties.getMessage(RES_ERROR, "item.cannot_add_product_no_longer_available",
                     messageMap, locale);
@@ -886,10 +887,10 @@ public class ShoppingCartItem implements java.io.Serializable {
         }
 
         // check to see if the product is fully configured
-        if ("AGGREGATED".equals(product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId)) || "AGGREGATED_SERVICE".equals(product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId))) {
+        if ("AGGREGATED".equals(product.getString(x.productTypeId)) || "AGGREGATED_SERVICE".equals(product.getString(x.productTypeId))) {
             if (configWrapper == null || !configWrapper.isCompleted()) {
-                Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("productName", product.getString(org.apache.ofbiz.persistence.entity.x.productName),
-                        "productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId));
+                Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("productName", product.getString(x.productName),
+                        "productId", product.getString(x.productId));
                 String excMsg = UtilProperties.getMessage(RES_ERROR, "item.cannot_add_product_not_configured_correctly",
                         messageMap, locale);
                 Debug.logWarning(excMsg, MODULE);
@@ -977,14 +978,14 @@ public class ShoppingCartItem implements java.io.Serializable {
         // find the fixed asset itself
         GenericValue fixedAsset = null;
         try {
-            fixedAsset = fixedAssetProduct.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FixedAsset, false);
+            fixedAsset = fixedAssetProduct.getRelatedOne(x.FixedAsset, false);
         } catch (GenericEntityException e) {
-            Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("fixedAssetId", fixedAssetProduct.getString(org.apache.ofbiz.persistence.entity.x.fixedAssetId));
+            Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("fixedAssetId", fixedAssetProduct.getString(x.fixedAssetId));
             String msg = UtilProperties.getMessage(RES_ERROR, "item.fixed_Asset_not_found", messageMap, cart.getLocale());
             return msg;
         }
         if (fixedAsset == null) {
-            Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("fixedAssetId", fixedAssetProduct.getString(org.apache.ofbiz.persistence.entity.x.fixedAssetId));
+            Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("fixedAssetId", fixedAssetProduct.getString(x.fixedAssetId));
             String msg = UtilProperties.getMessage(RES_ERROR, "item.fixed_Asset_not_found", messageMap, cart.getLocale());
             return msg;
         }
@@ -994,18 +995,18 @@ public class ShoppingCartItem implements java.io.Serializable {
         // GenericValue techDataCalendar = null;
         GenericValue techDataCalendar = null;
         try {
-            techDataCalendar = fixedAsset.getRelatedOne(org.apache.ofbiz.persistence.entity.x.TechDataCalendar, false);
+            techDataCalendar = fixedAsset.getRelatedOne(x.TechDataCalendar, false);
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
         }
         if (techDataCalendar == null) {
             // no calendar ok, when not more that total capacity
-            if (fixedAsset.getBigDecimal(org.apache.ofbiz.persistence.entity.x.productionCapacity).compareTo(quantity) >= 0) {
+            if (fixedAsset.getBigDecimal(x.productionCapacity).compareTo(quantity) >= 0) {
                 String msg = UtilProperties.getMessage(RES_ERROR, "item.availableOk", cart.getLocale());
                 return msg;
             }
             Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("quantityReq", quantity,
-                    "quantityAvail", fixedAsset.getString(org.apache.ofbiz.persistence.entity.x.productionCapacity));
+                    "quantityAvail", fixedAsset.getString(x.productionCapacity));
             String msg = UtilProperties.getMessage(RES_ERROR, "item.availableQnt", messageMap, cart.getLocale());
             return msg;
         }
@@ -1018,13 +1019,13 @@ public class ShoppingCartItem implements java.io.Serializable {
             // find an existing Day exception record
             Timestamp exceptionDateStartTime = new Timestamp((reservStart.getTime() + (dayCount++ * 86400000)));
             try {
-                techDataCalendarExcDay = EntityQuery.use(delegator).from("TechDataCalendarExcDay").where("calendarId", fixedAsset.get(org.apache.ofbiz.persistence.entity.x.calendarId),
+                techDataCalendarExcDay = EntityQuery.use(delegator).from("TechDataCalendarExcDay").where("calendarId", fixedAsset.get(x.calendarId),
                         "exceptionDateStartTime", exceptionDateStartTime).queryOne();
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, MODULE);
             }
             if (techDataCalendarExcDay == null) {
-                if (fixedAsset.get(org.apache.ofbiz.persistence.entity.x.productionCapacity) != null && fixedAsset.getBigDecimal(org.apache.ofbiz.persistence.entity.x.productionCapacity).compareTo(quantity) < 0) {
+                if (fixedAsset.get(x.productionCapacity) != null && fixedAsset.getBigDecimal(x.productionCapacity).compareTo(quantity) < 0) {
                     resultMessage = resultMessage.concat(exceptionDateStartTime.toString().substring(0, 10) + ", ");
                 }
             } else {
@@ -1032,16 +1033,16 @@ public class ShoppingCartItem implements java.io.Serializable {
                 // first try techDataCalendarExcDay(exceptionCapacity) and then FixedAsset(productionCapacity)
                 // if still zero, do not check availability
                 BigDecimal exceptionCapacity = BigDecimal.ZERO;
-                if (techDataCalendarExcDay.get(org.apache.ofbiz.persistence.entity.x.exceptionCapacity) != null) {
-                    exceptionCapacity = techDataCalendarExcDay.getBigDecimal(org.apache.ofbiz.persistence.entity.x.exceptionCapacity);
+                if (techDataCalendarExcDay.get(x.exceptionCapacity) != null) {
+                    exceptionCapacity = techDataCalendarExcDay.getBigDecimal(x.exceptionCapacity);
                 }
-                if (exceptionCapacity.compareTo(BigDecimal.ZERO) == 0 && fixedAsset.get(org.apache.ofbiz.persistence.entity.x.productionCapacity) != null) {
-                    exceptionCapacity = fixedAsset.getBigDecimal(org.apache.ofbiz.persistence.entity.x.productionCapacity);
+                if (exceptionCapacity.compareTo(BigDecimal.ZERO) == 0 && fixedAsset.get(x.productionCapacity) != null) {
+                    exceptionCapacity = fixedAsset.getBigDecimal(x.productionCapacity);
                 }
                 if (exceptionCapacity.compareTo(BigDecimal.ZERO) != 0) {
                     BigDecimal usedCapacity = BigDecimal.ZERO;
-                    if (techDataCalendarExcDay.get(org.apache.ofbiz.persistence.entity.x.usedCapacity) != null) {
-                        usedCapacity = techDataCalendarExcDay.getBigDecimal(org.apache.ofbiz.persistence.entity.x.usedCapacity);
+                    if (techDataCalendarExcDay.get(x.usedCapacity) != null) {
+                        usedCapacity = techDataCalendarExcDay.getBigDecimal(x.usedCapacity);
                     }
                     if (exceptionCapacity.compareTo(quantity.add(usedCapacity)) < 0) {
                         resultMessage = resultMessage.concat(exceptionDateStartTime.toString().substring(0, 10) + ", ");
@@ -1066,7 +1067,7 @@ public class ShoppingCartItem implements java.io.Serializable {
         String itemDescription = null;
 
         if (supplierProduct != null) {
-            itemDescription = supplierProduct.getString(org.apache.ofbiz.persistence.entity.x.supplierProductName);
+            itemDescription = supplierProduct.getString(x.supplierProductName);
         }
 
         if (UtilValidate.isEmpty(itemDescription)) {
@@ -1269,19 +1270,19 @@ public class ShoppingCartItem implements java.io.Serializable {
                     .filterByDate().queryFirst();
             if (UtilValidate.isNotEmpty(depositAmount)) {
                 Boolean updatedDepositAmount = false;
-                BigDecimal adjustmentAmount = depositAmount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price).multiply(this.getQuantity(), GEN_ROUNDING);
+                BigDecimal adjustmentAmount = depositAmount.getBigDecimal(x.price).multiply(this.getQuantity(), GEN_ROUNDING);
                 // itemAdjustments is a reference so directly setting updated amount to the same.
                 for (GenericValue itemAdjustment : itemAdjustments) {
-                    if ("DEPOSIT_ADJUSTMENT".equals(itemAdjustment.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
-                        itemAdjustment.set(org.apache.ofbiz.persistence.entity.x.amount, adjustmentAmount);
+                    if ("DEPOSIT_ADJUSTMENT".equals(itemAdjustment.getString(x.orderAdjustmentTypeId))) {
+                        itemAdjustment.set(x.amount, adjustmentAmount);
                         updatedDepositAmount = true;
                     }
                 }
                 if (!updatedDepositAmount) {
                     GenericValue orderAdjustment = delegator.makeValue("OrderAdjustment");
-                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId, "DEPOSIT_ADJUSTMENT");
-                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.description, "Surcharge Adjustment");
-                    orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.amount, adjustmentAmount);
+                    orderAdjustment.set(x.orderAdjustmentTypeId, "DEPOSIT_ADJUSTMENT");
+                    orderAdjustment.set(x.description, "Surcharge Adjustment");
+                    orderAdjustment.set(x.amount, adjustmentAmount);
                     this.addAdjustment(orderAdjustment);
                 }
             }
@@ -1321,7 +1322,7 @@ public class ShoppingCartItem implements java.io.Serializable {
                 if (isAlternativePacking && UtilValidate.isNotEmpty(this.getParentProduct())) {
                     GenericValue originalProduct = this.getParentProduct();
                     if (originalProduct != null) {
-                        pieces = new BigDecimal(originalProduct.getLong(org.apache.ofbiz.persistence.entity.x.piecesIncluded));
+                        pieces = new BigDecimal(originalProduct.getLong(x.piecesIncluded));
                     }
                     priceContext.put("product", originalProduct);
                     this.parentProduct = null;
@@ -1450,7 +1451,7 @@ public class ShoppingCartItem implements java.io.Serializable {
                         this.setBasePrice(configWrapper.getTotalPrice());
                         // Check if price display with taxes
                         GenericValue productStore = ProductStoreWorker.getProductStore(cart.getProductStoreId(), delegator);
-                        if (productStore != null && "Y".equals(productStore.get(org.apache.ofbiz.persistence.entity.x.showPricesWithVatTax))) {
+                        if (productStore != null && "Y".equals(productStore.get(x.showPricesWithVatTax))) {
                             BigDecimal totalPrice = configWrapper.getTotalPrice();
                             // Get Taxes
                             Map<String, Object> totalPriceWithTaxMap = dispatcher.runSync("calcTaxForDisplay", UtilMisc.toMap("basePrice",
@@ -1674,8 +1675,8 @@ public class ShoppingCartItem implements java.io.Serializable {
      */
     public BigDecimal getPromoQuantityCandidateUseActionAndAllConds(GenericValue productPromoAction) {
         BigDecimal totalUse = BigDecimal.ZERO;
-        String productPromoId = productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.productPromoId);
-        String productPromoRuleId = productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.productPromoRuleId);
+        String productPromoId = productPromoAction.getString(x.productPromoId);
+        String productPromoRuleId = productPromoAction.getString(x.productPromoRuleId);
 
         GenericPK productPromoActionPK = productPromoAction.getPrimaryKey();
         BigDecimal existingValue = this.quantityUsedPerPromoCandidate.get(productPromoActionPK);
@@ -1940,7 +1941,7 @@ public class ShoppingCartItem implements java.io.Serializable {
             }
         }
         if (orderItemType != null) {
-            return orderItemType.getString(org.apache.ofbiz.persistence.entity.x.description);
+            return orderItemType.getString(x.description);
         }
         return null;
     }
@@ -2242,13 +2243,13 @@ public class ShoppingCartItem implements java.io.Serializable {
     public long getPiecesIncluded() {
         GenericValue product = getProduct();
         if (product != null) {
-            Long pieces = product.getLong(org.apache.ofbiz.persistence.entity.x.piecesIncluded);
+            Long pieces = product.getLong(x.piecesIncluded);
 
             // if the piecesIncluded is null, see if there is an associated virtual product and get the piecesIncluded of that product
             if (pieces == null) {
                 GenericValue parentProduct = this.getParentProduct();
                 if (parentProduct != null) {
-                    pieces = parentProduct.getLong(org.apache.ofbiz.persistence.entity.x.piecesIncluded);
+                    pieces = parentProduct.getLong(x.piecesIncluded);
                 }
             }
 
@@ -2270,23 +2271,23 @@ public class ShoppingCartItem implements java.io.Serializable {
         if (product != null) {
             List<GenericValue> featureAppls = null;
             try {
-                featureAppls = product.getRelated(org.apache.ofbiz.persistence.entity.x.ProductFeatureAppl, null, null, false);
+                featureAppls = product.getRelated(x.ProductFeatureAppl, null, null, false);
                 List<EntityExpr> filterExprs = UtilMisc.toList(EntityCondition.makeCondition("productFeatureApplTypeId",
                         EntityOperator.EQUALS, "STANDARD_FEATURE"));
                 filterExprs.add(EntityCondition.makeCondition("productFeatureApplTypeId", EntityOperator.EQUALS, "REQUIRED_FEATURE"));
                 featureAppls = EntityUtil.filterByOr(featureAppls, filterExprs);
             } catch (GenericEntityException e) {
-                Debug.logError(e, "Unable to get features from product : " + product.get(org.apache.ofbiz.persistence.entity.x.productId), MODULE);
+                Debug.logError(e, "Unable to get features from product : " + product.get(x.productId), MODULE);
             }
             if (featureAppls != null) {
                 for (GenericValue appl : featureAppls) {
-                    featureSet.add(appl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId));
+                    featureSet.add(appl.getString(x.productFeatureId));
                 }
             }
         }
         if (this.additionalProductFeatureAndAppls != null) {
             for (GenericValue appl : this.additionalProductFeatureAndAppls.values()) {
-                featureSet.add(appl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId));
+                featureSet.add(appl.getString(x.productFeatureId));
             }
         }
         return featureSet;
@@ -2300,10 +2301,10 @@ public class ShoppingCartItem implements java.io.Serializable {
         GenericValue product = this.getProduct();
         if (product != null) {
             try {
-                List<GenericValue> featureAppls = product.getRelated(org.apache.ofbiz.persistence.entity.x.ProductFeatureAndAppl, null, null, false);
+                List<GenericValue> featureAppls = product.getRelated(x.ProductFeatureAndAppl, null, null, false);
                 features = EntityUtil.filterByAnd(featureAppls, UtilMisc.toMap("productFeatureApplTypeId", "STANDARD_FEATURE"));
             } catch (GenericEntityException e) {
-                Debug.logError(e, "Unable to get features from product : " + product.get(org.apache.ofbiz.persistence.entity.x.productId), MODULE);
+                Debug.logError(e, "Unable to get features from product : " + product.get(x.productId), MODULE);
             }
         }
         return features;
@@ -2336,17 +2337,17 @@ public class ShoppingCartItem implements java.io.Serializable {
     public BigDecimal getSize() {
         GenericValue product = getProduct();
         if (product != null) {
-            BigDecimal height = product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingHeight);
-            BigDecimal width = product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingWidth);
-            BigDecimal depth = product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingDepth);
+            BigDecimal height = product.getBigDecimal(x.shippingHeight);
+            BigDecimal width = product.getBigDecimal(x.shippingWidth);
+            BigDecimal depth = product.getBigDecimal(x.shippingDepth);
 
             // if all are null, see if there is an associated virtual product and get the info of that product
             if (height == null && width == null && depth == null) {
                 GenericValue parentProduct = this.getParentProduct();
                 if (parentProduct != null) {
-                    height = parentProduct.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingHeight);
-                    width = parentProduct.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingWidth);
-                    depth = parentProduct.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingDepth);
+                    height = parentProduct.getBigDecimal(x.shippingHeight);
+                    width = parentProduct.getBigDecimal(x.shippingWidth);
+                    depth = parentProduct.getBigDecimal(x.shippingDepth);
                 }
             }
 
@@ -2384,11 +2385,11 @@ public class ShoppingCartItem implements java.io.Serializable {
         itemInfo.put("featureSet", this.getFeatureSet());
         GenericValue product = getProduct();
         if (product != null) {
-            itemInfo.put("inShippingBox", product.getString(org.apache.ofbiz.persistence.entity.x.inShippingBox));
-            if (product.getString(org.apache.ofbiz.persistence.entity.x.inShippingBox) != null && "Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.inShippingBox))) {
-                itemInfo.put("shippingHeight", product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingHeight));
-                itemInfo.put("shippingWidth", product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingWidth));
-                itemInfo.put("shippingDepth", product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingDepth));
+            itemInfo.put("inShippingBox", product.getString(x.inShippingBox));
+            if (product.getString(x.inShippingBox) != null && "Y".equals(product.getString(x.inShippingBox))) {
+                itemInfo.put("shippingHeight", product.getBigDecimal(x.shippingHeight));
+                itemInfo.put("shippingWidth", product.getBigDecimal(x.shippingWidth));
+                itemInfo.put("shippingDepth", product.getBigDecimal(x.shippingDepth));
             }
         }
         return itemInfo;
@@ -2695,28 +2696,28 @@ public class ShoppingCartItem implements java.io.Serializable {
         }
 
         // if one already exists with the given type, remove it with the corresponding adjustment
-        removeAdditionalProductFeatureAndAppl(additionalProductFeatureAndAppl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId));
+        removeAdditionalProductFeatureAndAppl(additionalProductFeatureAndAppl.getString(x.productFeatureTypeId));
 
         // adds to additional map and creates an adjustment with given price
-        String featureType = additionalProductFeatureAndAppl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId);
+        String featureType = additionalProductFeatureAndAppl.getString(x.productFeatureTypeId);
         this.additionalProductFeatureAndAppls.put(featureType, additionalProductFeatureAndAppl);
 
         GenericValue orderAdjustment = this.getDelegator().makeValue("OrderAdjustment");
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId, "ADDITIONAL_FEATURE");
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.description, additionalProductFeatureAndAppl.get(org.apache.ofbiz.persistence.entity.x.description));
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.productFeatureId, additionalProductFeatureAndAppl.get(org.apache.ofbiz.persistence.entity.x.productFeatureId));
+        orderAdjustment.set(x.orderAdjustmentTypeId, "ADDITIONAL_FEATURE");
+        orderAdjustment.set(x.description, additionalProductFeatureAndAppl.get(x.description));
+        orderAdjustment.set(x.productFeatureId, additionalProductFeatureAndAppl.get(x.productFeatureId));
 
         // NOTE: this is a VERY simple pricing scheme for additional features and will likely need to be extended for most real applications
-        BigDecimal amount = (BigDecimal) additionalProductFeatureAndAppl.get(org.apache.ofbiz.persistence.entity.x.amount);
+        BigDecimal amount = (BigDecimal) additionalProductFeatureAndAppl.get(x.amount);
         if (amount != null) {
             amount = amount.multiply(this.getQuantity());
-            orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.amount, amount);
+            orderAdjustment.set(x.amount, amount);
         }
 
-        BigDecimal recurringAmount = (BigDecimal) additionalProductFeatureAndAppl.get(org.apache.ofbiz.persistence.entity.x.recurringAmount);
+        BigDecimal recurringAmount = (BigDecimal) additionalProductFeatureAndAppl.get(x.recurringAmount);
         if (recurringAmount != null) {
             recurringAmount = recurringAmount.multiply(this.getQuantity());
-            orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.recurringAmount, recurringAmount);
+            orderAdjustment.set(x.recurringAmount, recurringAmount);
         }
 
         if (amount == null && recurringAmount == null) {
@@ -2752,7 +2753,7 @@ public class ShoppingCartItem implements java.io.Serializable {
         GenericValue oldAdditionalProductFeatureAndAppl = this.additionalProductFeatureAndAppls.remove(productFeatureTypeId);
 
         if (oldAdditionalProductFeatureAndAppl != null) {
-            removeFeatureAdjustment(oldAdditionalProductFeatureAndAppl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId));
+            removeFeatureAdjustment(oldAdditionalProductFeatureAndAppl.getString(x.productFeatureId));
         }
 
         return oldAdditionalProductFeatureAndAppl;
@@ -2778,23 +2779,23 @@ public class ShoppingCartItem implements java.io.Serializable {
             List<GenericValue> featureAppls = ProductWorker.getProductFeaturesApplIncludeMarketingPackage(product);
             if (featureAppls != null) {
                 for (GenericValue appl : featureAppls) {
-                    BigDecimal lastQuantity = featureMap.get(appl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId));
+                    BigDecimal lastQuantity = featureMap.get(appl.getString(x.productFeatureId));
                     if (lastQuantity == null) {
                         lastQuantity = BigDecimal.ZERO;
                     }
                     BigDecimal newQuantity = lastQuantity.add(quantity);
-                    featureMap.put(appl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId), newQuantity);
+                    featureMap.put(appl.getString(x.productFeatureId), newQuantity);
                 }
             }
         }
         if (this.additionalProductFeatureAndAppls != null) {
             for (GenericValue appl : this.additionalProductFeatureAndAppls.values()) {
-                BigDecimal lastQuantity = featureMap.get(appl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId));
+                BigDecimal lastQuantity = featureMap.get(appl.getString(x.productFeatureId));
                 if (lastQuantity == null) {
                     lastQuantity = BigDecimal.ZERO;
                 }
                 BigDecimal newQuantity = lastQuantity.add(quantity);
-                featureMap.put(appl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId), newQuantity);
+                featureMap.put(appl.getString(x.productFeatureId), newQuantity);
             }
         }
         return featureMap;
@@ -2897,7 +2898,7 @@ public class ShoppingCartItem implements java.io.Serializable {
             return;
         }
 
-        itemAdjustments.removeIf(itemAdjustment -> productFeatureId.equals(itemAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId)));
+        itemAdjustments.removeIf(itemAdjustment -> productFeatureId.equals(itemAdjustment.getString(x.productFeatureId)));
     }
 
     /**
@@ -3164,7 +3165,7 @@ public class ShoppingCartItem implements java.io.Serializable {
     public String getParentProductId() {
         GenericValue parentProduct = this.getParentProduct();
         if (parentProduct != null) {
-            return parentProduct.getString(org.apache.ofbiz.persistence.entity.x.productId);
+            return parentProduct.getString(x.productId);
         }
         return null;
     }
@@ -3222,11 +3223,11 @@ public class ShoppingCartItem implements java.io.Serializable {
                         if (adjustment != null) {
                             item.removeAdjustment(adjustment);
                             GenericValue newAdjustment = GenericValue.create(adjustment);
-                            BigDecimal adjAmount = newAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
+                            BigDecimal adjAmount = newAdjustment.getBigDecimal(x.amount);
 
                             // we use != because adjustments can be +/-
                             if (adjAmount != null && adjAmount.compareTo(BigDecimal.ZERO) != 0) {
-                                newAdjustment.set(org.apache.ofbiz.persistence.entity.x.amount, adjAmount.divide(baseQuantity, GEN_ROUNDING));
+                                newAdjustment.set(x.amount, adjAmount.divide(baseQuantity, GEN_ROUNDING));
                             }
                             Debug.logInfo("Cloned adj: " + newAdjustment, MODULE);
                             item.addAdjustment(newAdjustment);
@@ -3252,11 +3253,11 @@ public class ShoppingCartItem implements java.io.Serializable {
                     if (adjustment != null) {
                         this.removeAdjustment(adjustment);
                         GenericValue newAdjustment = GenericValue.create(adjustment);
-                        BigDecimal adjAmount = newAdjustment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
+                        BigDecimal adjAmount = newAdjustment.getBigDecimal(x.amount);
 
                         // we use != becuase adjustments can be +/-
                         if (adjAmount != null && adjAmount.compareTo(BigDecimal.ZERO) != 0) {
-                            newAdjustment.set(org.apache.ofbiz.persistence.entity.x.amount, adjAmount.divide(baseQuantity, GEN_ROUNDING));
+                            newAdjustment.set(x.amount, adjAmount.divide(baseQuantity, GEN_ROUNDING));
                         }
                         Debug.logInfo("Updated adj: " + newAdjustment, MODULE);
                         this.addAdjustment(newAdjustment);

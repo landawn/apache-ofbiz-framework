@@ -43,6 +43,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Services for Payment maintenance
  */
@@ -63,13 +64,13 @@ public class PaymentMethodServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         Timestamp now = UtilDateTime.nowTimestamp();
 
         // never delete a PaymentMethod, just put a to date on the link to the party
-        String paymentMethodId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
+        String paymentMethodId = (String) context.get(x.paymentMethodId);
         GenericValue paymentMethod = null;
 
         try {
@@ -88,7 +89,7 @@ public class PaymentMethodServices {
         }
 
         // <b>security check</b>: userLogin partyId must equal paymentMethod partyId, or must have PAY_INFO_DELETE permission
-        if (paymentMethod.get(org.apache.ofbiz.persistence.entity.x.partyId) == null || !paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.partyId).equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId))) {
+        if (paymentMethod.get(x.partyId) == null || !paymentMethod.getString(x.partyId).equals(userLogin.getString(x.partyId))) {
             if (!security.hasEntityPermission("PAY_INFO", "_DELETE", userLogin)
                     && !security.hasEntityPermission("ACCOUNTING", "_DELETE", userLogin)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -96,7 +97,7 @@ public class PaymentMethodServices {
             }
         }
 
-        paymentMethod.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
+        paymentMethod.set(x.thruDate, now);
         try {
             paymentMethod.store();
         } catch (GenericEntityException e) {
@@ -112,8 +113,8 @@ public class PaymentMethodServices {
 
     public static Map<String, Object> makeExpireDate(DispatchContext ctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = new HashMap<>();
-        String expMonth = (String) context.get(org.apache.ofbiz.persistence.entity.x.expMonth);
-        String expYear = (String) context.get(org.apache.ofbiz.persistence.entity.x.expYear);
+        String expMonth = (String) context.get(x.expMonth);
+        String expYear = (String) context.get(x.expYear);
 
         StringBuilder expDate = new StringBuilder();
         expDate.append(expMonth);
@@ -135,8 +136,8 @@ public class PaymentMethodServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         Timestamp now = UtilDateTime.nowTimestamp();
 
@@ -150,18 +151,18 @@ public class PaymentMethodServices {
         List<String> messages = new LinkedList<>();
 
         // first remove all spaces from the credit card number
-        context.put(org.apache.ofbiz.persistence.entity.x.cardNumber, StringUtil.removeSpaces((String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber)));
-        if (!UtilValidate.isCardMatch((String) context.get(org.apache.ofbiz.persistence.entity.x.cardType), (String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber))) {
+        context.put(x.cardNumber, StringUtil.removeSpaces((String) context.get(x.cardNumber)));
+        if (!UtilValidate.isCardMatch((String) context.get(x.cardType), (String) context.get(x.cardNumber))) {
             messages.add(
                     UtilProperties.getMessage(RESOURCE, "AccountingCreditCardNumberInvalid",
-                            UtilMisc.toMap("cardType", (String) context.get(org.apache.ofbiz.persistence.entity.x.cardType),
-                                    "validCardType", UtilValidate.getCardType((String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber))), locale));
+                            UtilMisc.toMap("cardType", (String) context.get(x.cardType),
+                                    "validCardType", UtilValidate.getCardType((String) context.get(x.cardNumber))), locale));
         }
 
-        if (!UtilValidate.isDateAfterToday((String) context.get(org.apache.ofbiz.persistence.entity.x.expireDate))) {
+        if (!UtilValidate.isDateAfterToday((String) context.get(x.expireDate))) {
             messages.add(
                     UtilProperties.getMessage(RESOURCE, "AccountingCreditCardExpireDateBeforeToday",
-                            UtilMisc.toMap("expireDate", (String) context.get(org.apache.ofbiz.persistence.entity.x.expireDate)), locale));
+                            UtilMisc.toMap("expireDate", (String) context.get(x.expireDate)), locale));
         }
 
         if (!messages.isEmpty()) {
@@ -176,7 +177,7 @@ public class PaymentMethodServices {
 
         toBeStored.add(newCc);
 
-        String newPmId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
+        String newPmId = (String) context.get(x.paymentMethodId);
         if (UtilValidate.isEmpty(newPmId)) {
             try {
                 newPmId = delegator.getNextSeqId("PaymentMethod");
@@ -186,30 +187,30 @@ public class PaymentMethodServices {
             }
         }
 
-        newPm.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.description, context.get(org.apache.ofbiz.persistence.entity.x.description));
-        newPm.set(org.apache.ofbiz.persistence.entity.x.fromDate, (context.get(org.apache.ofbiz.persistence.entity.x.fromDate) != null ? context.get(org.apache.ofbiz.persistence.entity.x.fromDate) : now));
-        newPm.set(org.apache.ofbiz.persistence.entity.x.thruDate, context.get(org.apache.ofbiz.persistence.entity.x.thruDate));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.companyNameOnCard, context.get(org.apache.ofbiz.persistence.entity.x.companyNameOnCard));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.titleOnCard, context.get(org.apache.ofbiz.persistence.entity.x.titleOnCard));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.firstNameOnCard, context.get(org.apache.ofbiz.persistence.entity.x.firstNameOnCard));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.middleNameOnCard, context.get(org.apache.ofbiz.persistence.entity.x.middleNameOnCard));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.lastNameOnCard, context.get(org.apache.ofbiz.persistence.entity.x.lastNameOnCard));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.suffixOnCard, context.get(org.apache.ofbiz.persistence.entity.x.suffixOnCard));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.cardType, context.get(org.apache.ofbiz.persistence.entity.x.cardType));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.cardNumber, context.get(org.apache.ofbiz.persistence.entity.x.cardNumber));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.expireDate, context.get(org.apache.ofbiz.persistence.entity.x.expireDate));
+        newPm.set(x.partyId, partyId);
+        newPm.set(x.description, context.get(x.description));
+        newPm.set(x.fromDate, (context.get(x.fromDate) != null ? context.get(x.fromDate) : now));
+        newPm.set(x.thruDate, context.get(x.thruDate));
+        newCc.set(x.companyNameOnCard, context.get(x.companyNameOnCard));
+        newCc.set(x.titleOnCard, context.get(x.titleOnCard));
+        newCc.set(x.firstNameOnCard, context.get(x.firstNameOnCard));
+        newCc.set(x.middleNameOnCard, context.get(x.middleNameOnCard));
+        newCc.set(x.lastNameOnCard, context.get(x.lastNameOnCard));
+        newCc.set(x.suffixOnCard, context.get(x.suffixOnCard));
+        newCc.set(x.cardType, context.get(x.cardType));
+        newCc.set(x.cardNumber, context.get(x.cardNumber));
+        newCc.set(x.expireDate, context.get(x.expireDate));
 
-        newPm.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, "CREDIT_CARD");
-        newCc.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
+        newPm.set(x.paymentMethodId, newPmId);
+        newPm.set(x.paymentMethodTypeId, "CREDIT_CARD");
+        newCc.set(x.paymentMethodId, newPmId);
 
         GenericValue newPartyContactMechPurpose = null;
-        String contactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechId);
+        String contactMechId = (String) context.get(x.contactMechId);
 
         if (UtilValidate.isNotEmpty(contactMechId) && !"_NEW_".equals(contactMechId)) {
             // set the contactMechId on the credit card
-            newCc.set(org.apache.ofbiz.persistence.entity.x.contactMechId, context.get(org.apache.ofbiz.persistence.entity.x.contactMechId));
+            newCc.set(x.contactMechId, context.get(x.contactMechId));
             // add a PartyContactMechPurpose of BILLING_LOCATION if necessary
             String contactMechPurposeTypeId = "BILLING_LOCATION";
 
@@ -245,7 +246,7 @@ public class PaymentMethodServices {
                     "AccountingCreditCardCreateWriteFailure", locale) + e.getMessage());
         }
 
-        result.put("paymentMethodId", newCc.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        result.put("paymentMethodId", newCc.getString(x.paymentMethodId));
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
     }
@@ -261,8 +262,8 @@ public class PaymentMethodServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         Timestamp now = UtilDateTime.nowTimestamp();
 
@@ -280,7 +281,7 @@ public class PaymentMethodServices {
         GenericValue newPm = null;
         GenericValue creditCard = null;
         GenericValue newCc = null;
-        String paymentMethodId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
+        String paymentMethodId = (String) context.get(x.paymentMethodId);
 
         try {
             creditCard = EntityQuery.use(delegator).from("CreditCard").where("paymentMethodId", paymentMethodId).queryOne();
@@ -295,7 +296,7 @@ public class PaymentMethodServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingCreditCardUpdateWithPaymentMethodId", locale) + paymentMethodId);
         }
-        if (!paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.partyId).equals(partyId) && !security.hasEntityPermission("PAY_INFO", "_UPDATE",
+        if (!paymentMethod.getString(x.partyId).equals(partyId) && !security.hasEntityPermission("PAY_INFO", "_UPDATE",
                 userLogin) && !security.hasEntityPermission("ACCOUNTING", "_UPDATE", userLogin)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingCreditCardUpdateWithoutPermission", UtilMisc.toMap("partyId", partyId,
@@ -306,10 +307,10 @@ public class PaymentMethodServices {
         List<String> messages = new LinkedList<>();
 
         // first remove all spaces from the credit card number
-        String updatedCardNumber = StringUtil.removeSpaces((String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber));
+        String updatedCardNumber = StringUtil.removeSpaces((String) context.get(x.cardNumber));
         if (updatedCardNumber.startsWith("*")) {
             // get the masked card number from the db
-            String origCardNumber = creditCard.getString(org.apache.ofbiz.persistence.entity.x.cardNumber);
+            String origCardNumber = creditCard.getString(x.cardNumber);
             int cardLength = origCardNumber.length() - 4;
             // use builder for better performance
             StringBuilder builder = new StringBuilder();
@@ -323,19 +324,19 @@ public class PaymentMethodServices {
                 updatedCardNumber = origCardNumber;
             }
         }
-        context.put(org.apache.ofbiz.persistence.entity.x.cardNumber, updatedCardNumber);
+        context.put(x.cardNumber, updatedCardNumber);
 
-        if (!UtilValidate.isCardMatch((String) context.get(org.apache.ofbiz.persistence.entity.x.cardType), (String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber))) {
+        if (!UtilValidate.isCardMatch((String) context.get(x.cardType), (String) context.get(x.cardNumber))) {
             messages.add(
                     UtilProperties.getMessage(RESOURCE, "AccountingCreditCardNumberInvalid",
-                            UtilMisc.toMap("cardType", (String) context.get(org.apache.ofbiz.persistence.entity.x.cardType),
-                                    "validCardType", UtilValidate.getCardType((String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber))), locale));
+                            UtilMisc.toMap("cardType", (String) context.get(x.cardType),
+                                    "validCardType", UtilValidate.getCardType((String) context.get(x.cardNumber))), locale));
         }
 
-        if (!UtilValidate.isDateAfterToday((String) context.get(org.apache.ofbiz.persistence.entity.x.expireDate))) {
+        if (!UtilValidate.isDateAfterToday((String) context.get(x.expireDate))) {
             messages.add(
                     UtilProperties.getMessage(RESOURCE, "AccountingCreditCardExpireDateBeforeToday",
-                            UtilMisc.toMap("expireDate", (String) context.get(org.apache.ofbiz.persistence.entity.x.expireDate)), locale));
+                            UtilMisc.toMap("expireDate", (String) context.get(x.expireDate)), locale));
         }
 
         if (!messages.isEmpty()) {
@@ -356,37 +357,37 @@ public class PaymentMethodServices {
 
         }
 
-        newPm.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.fromDate, context.get(org.apache.ofbiz.persistence.entity.x.fromDate), false);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.description, context.get(org.apache.ofbiz.persistence.entity.x.description));
+        newPm.set(x.partyId, partyId);
+        newPm.set(x.fromDate, context.get(x.fromDate), false);
+        newPm.set(x.description, context.get(x.description));
         // The following check is needed to avoid to reactivate an expired pm
-        if (newPm.get(org.apache.ofbiz.persistence.entity.x.thruDate) == null) {
-            newPm.set(org.apache.ofbiz.persistence.entity.x.thruDate, context.get(org.apache.ofbiz.persistence.entity.x.thruDate));
+        if (newPm.get(x.thruDate) == null) {
+            newPm.set(x.thruDate, context.get(x.thruDate));
         }
-        newCc.set(org.apache.ofbiz.persistence.entity.x.companyNameOnCard, context.get(org.apache.ofbiz.persistence.entity.x.companyNameOnCard));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.titleOnCard, context.get(org.apache.ofbiz.persistence.entity.x.titleOnCard));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.firstNameOnCard, context.get(org.apache.ofbiz.persistence.entity.x.firstNameOnCard));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.middleNameOnCard, context.get(org.apache.ofbiz.persistence.entity.x.middleNameOnCard));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.lastNameOnCard, context.get(org.apache.ofbiz.persistence.entity.x.lastNameOnCard));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.suffixOnCard, context.get(org.apache.ofbiz.persistence.entity.x.suffixOnCard));
+        newCc.set(x.companyNameOnCard, context.get(x.companyNameOnCard));
+        newCc.set(x.titleOnCard, context.get(x.titleOnCard));
+        newCc.set(x.firstNameOnCard, context.get(x.firstNameOnCard));
+        newCc.set(x.middleNameOnCard, context.get(x.middleNameOnCard));
+        newCc.set(x.lastNameOnCard, context.get(x.lastNameOnCard));
+        newCc.set(x.suffixOnCard, context.get(x.suffixOnCard));
 
-        newCc.set(org.apache.ofbiz.persistence.entity.x.cardType, context.get(org.apache.ofbiz.persistence.entity.x.cardType));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.cardNumber, context.get(org.apache.ofbiz.persistence.entity.x.cardNumber));
-        newCc.set(org.apache.ofbiz.persistence.entity.x.expireDate, context.get(org.apache.ofbiz.persistence.entity.x.expireDate));
+        newCc.set(x.cardType, context.get(x.cardType));
+        newCc.set(x.cardNumber, context.get(x.cardNumber));
+        newCc.set(x.expireDate, context.get(x.expireDate));
 
         GenericValue newPartyContactMechPurpose = null;
-        String contactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechId);
+        String contactMechId = (String) context.get(x.contactMechId);
 
         if (UtilValidate.isNotEmpty(contactMechId) && !"_NEW_".equals(contactMechId)) {
             // set the contactMechId on the credit card
-            newCc.set(org.apache.ofbiz.persistence.entity.x.contactMechId, contactMechId);
+            newCc.set(x.contactMechId, contactMechId);
         }
 
         if (!newCc.equals(creditCard) || !newPm.equals(paymentMethod)) {
-            newPm.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
-            newCc.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
+            newPm.set(x.paymentMethodId, newPmId);
+            newCc.set(x.paymentMethodId, newPmId);
 
-            newPm.set(org.apache.ofbiz.persistence.entity.x.fromDate, (context.get(org.apache.ofbiz.persistence.entity.x.fromDate) != null ? context.get(org.apache.ofbiz.persistence.entity.x.fromDate) : now));
+            newPm.set(x.fromDate, (context.get(x.fromDate) != null ? context.get(x.fromDate) : now));
             isModified = true;
         }
 
@@ -422,7 +423,7 @@ public class PaymentMethodServices {
             }
 
             // set thru date on old paymentMethod
-            paymentMethod.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
+            paymentMethod.set(x.thruDate, now);
             toBeStored.add(paymentMethod);
 
             try {
@@ -445,15 +446,15 @@ public class PaymentMethodServices {
         }
 
         result.put("oldPaymentMethodId", paymentMethodId);
-        result.put("paymentMethodId", newCc.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        result.put("paymentMethodId", newCc.getString(x.paymentMethodId));
 
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
     }
 
     public static Map<String, Object> clearCreditCardData(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String paymentMethodId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String paymentMethodId = (String) context.get(x.paymentMethodId);
 
         // get the cc object
         Delegator delegator = dctx.getDelegator();
@@ -466,8 +467,8 @@ public class PaymentMethodServices {
         }
 
         // clear the info and store it
-        creditCard.set(org.apache.ofbiz.persistence.entity.x.cardNumber, "0000000000000000"); // set so it doesn't blow up in UIs
-        creditCard.set(org.apache.ofbiz.persistence.entity.x.expireDate, "01/1970"); // same here
+        creditCard.set(x.cardNumber, "0000000000000000"); // set so it doesn't blow up in UIs
+        creditCard.set(x.expireDate, "01/1970"); // same here
         try {
             delegator.store(creditCard);
         } catch (GenericEntityException e) {
@@ -497,8 +498,8 @@ public class PaymentMethodServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         Timestamp now = UtilDateTime.nowTimestamp();
 
@@ -514,7 +515,7 @@ public class PaymentMethodServices {
         GenericValue newGc = delegator.makeValue("GiftCard");
         toBeStored.add(newGc);
 
-        String newPmId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
+        String newPmId = (String) context.get(x.paymentMethodId);
         if (UtilValidate.isEmpty(newPmId)) {
             try {
                 newPmId = delegator.getNextSeqId("PaymentMethod");
@@ -524,18 +525,18 @@ public class PaymentMethodServices {
             }
         }
 
-        newPm.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.fromDate, (context.get(org.apache.ofbiz.persistence.entity.x.fromDate) != null ? context.get(org.apache.ofbiz.persistence.entity.x.fromDate) : now));
-        newPm.set(org.apache.ofbiz.persistence.entity.x.thruDate, context.get(org.apache.ofbiz.persistence.entity.x.thruDate));
-        newPm.set(org.apache.ofbiz.persistence.entity.x.description, context.get(org.apache.ofbiz.persistence.entity.x.description));
+        newPm.set(x.partyId, partyId);
+        newPm.set(x.fromDate, (context.get(x.fromDate) != null ? context.get(x.fromDate) : now));
+        newPm.set(x.thruDate, context.get(x.thruDate));
+        newPm.set(x.description, context.get(x.description));
 
-        newGc.set(org.apache.ofbiz.persistence.entity.x.cardNumber, context.get(org.apache.ofbiz.persistence.entity.x.cardNumber));
-        newGc.set(org.apache.ofbiz.persistence.entity.x.pinNumber, context.get(org.apache.ofbiz.persistence.entity.x.pinNumber));
-        newGc.set(org.apache.ofbiz.persistence.entity.x.expireDate, context.get(org.apache.ofbiz.persistence.entity.x.expireDate));
+        newGc.set(x.cardNumber, context.get(x.cardNumber));
+        newGc.set(x.pinNumber, context.get(x.pinNumber));
+        newGc.set(x.expireDate, context.get(x.expireDate));
 
-        newPm.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, "GIFT_CARD");
-        newGc.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
+        newPm.set(x.paymentMethodId, newPmId);
+        newPm.set(x.paymentMethodTypeId, "GIFT_CARD");
+        newGc.set(x.paymentMethodId, newPmId);
 
         try {
             delegator.storeAll(toBeStored);
@@ -546,7 +547,7 @@ public class PaymentMethodServices {
                     UtilMisc.toMap("errorString", e.getMessage()), locale));
         }
 
-        result.put("paymentMethodId", newGc.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        result.put("paymentMethodId", newGc.getString(x.paymentMethodId));
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
     }
@@ -555,8 +556,8 @@ public class PaymentMethodServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         Timestamp now = UtilDateTime.nowTimestamp();
 
@@ -573,7 +574,7 @@ public class PaymentMethodServices {
         GenericValue newPm = null;
         GenericValue giftCard = null;
         GenericValue newGc = null;
-        String paymentMethodId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
+        String paymentMethodId = (String) context.get(x.paymentMethodId);
 
         try {
             giftCard = EntityQuery.use(delegator).from("GiftCard").where("paymentMethodId", paymentMethodId).queryOne();
@@ -590,7 +591,7 @@ public class PaymentMethodServices {
                     "AccountingGiftCardCannotBeUpdated",
                     UtilMisc.toMap("errorString", paymentMethodId), locale));
         }
-        if (!paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.partyId).equals(partyId) && !security.hasEntityPermission("PAY_INFO", "_UPDATE", userLogin)
+        if (!paymentMethod.getString(x.partyId).equals(partyId) && !security.hasEntityPermission("PAY_INFO", "_UPDATE", userLogin)
                 && !security.hasEntityPermission("ACCOUNTING", "_UPDATE", userLogin)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "AccountingGiftCardPartyNotAuthorized",
@@ -599,10 +600,10 @@ public class PaymentMethodServices {
 
 
         // card number (masked)
-        String cardNumber = StringUtil.removeSpaces((String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber));
+        String cardNumber = StringUtil.removeSpaces((String) context.get(x.cardNumber));
         if (cardNumber.startsWith("*")) {
             // get the masked card number from the db
-            String origCardNumber = giftCard.getString(org.apache.ofbiz.persistence.entity.x.cardNumber);
+            String origCardNumber = giftCard.getString(x.cardNumber);
             StringBuilder origMaskedNumber = new StringBuilder("");
             int cardLength = origCardNumber.length() - 4;
             if (cardLength > 0) {
@@ -619,7 +620,7 @@ public class PaymentMethodServices {
                 cardNumber = origCardNumber;
             }
         }
-        context.put(org.apache.ofbiz.persistence.entity.x.cardNumber, cardNumber);
+        context.put(x.cardNumber, cardNumber);
 
         newPm = GenericValue.create(paymentMethod);
         toBeStored.add(newPm);
@@ -634,26 +635,26 @@ public class PaymentMethodServices {
                     "AccountingGiftCardCannotBeCreated", locale));
         }
 
-        newPm.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.fromDate, context.get(org.apache.ofbiz.persistence.entity.x.fromDate), false);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.thruDate, context.get(org.apache.ofbiz.persistence.entity.x.thruDate));
-        newPm.set(org.apache.ofbiz.persistence.entity.x.description, context.get(org.apache.ofbiz.persistence.entity.x.description));
+        newPm.set(x.partyId, partyId);
+        newPm.set(x.fromDate, context.get(x.fromDate), false);
+        newPm.set(x.thruDate, context.get(x.thruDate));
+        newPm.set(x.description, context.get(x.description));
 
-        newGc.set(org.apache.ofbiz.persistence.entity.x.cardNumber, context.get(org.apache.ofbiz.persistence.entity.x.cardNumber));
-        newGc.set(org.apache.ofbiz.persistence.entity.x.pinNumber, context.get(org.apache.ofbiz.persistence.entity.x.pinNumber));
-        newGc.set(org.apache.ofbiz.persistence.entity.x.expireDate, context.get(org.apache.ofbiz.persistence.entity.x.expireDate));
+        newGc.set(x.cardNumber, context.get(x.cardNumber));
+        newGc.set(x.pinNumber, context.get(x.pinNumber));
+        newGc.set(x.expireDate, context.get(x.expireDate));
 
         if (!newGc.equals(giftCard) || !newPm.equals(paymentMethod)) {
-            newPm.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
-            newGc.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
+            newPm.set(x.paymentMethodId, newPmId);
+            newGc.set(x.paymentMethodId, newPmId);
 
-            newPm.set(org.apache.ofbiz.persistence.entity.x.fromDate, (context.get(org.apache.ofbiz.persistence.entity.x.fromDate) != null ? context.get(org.apache.ofbiz.persistence.entity.x.fromDate) : now));
+            newPm.set(x.fromDate, (context.get(x.fromDate) != null ? context.get(x.fromDate) : now));
             isModified = true;
         }
 
         if (isModified) {
             // set thru date on old paymentMethod
-            paymentMethod.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
+            paymentMethod.set(x.thruDate, now);
             toBeStored.add(paymentMethod);
 
             try {
@@ -674,7 +675,7 @@ public class PaymentMethodServices {
             return result;
         }
 
-        result.put("paymentMethodId", newGc.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        result.put("paymentMethodId", newGc.getString(x.paymentMethodId));
         result.put("oldPaymentMethodId", paymentMethodId);
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
@@ -691,8 +692,8 @@ public class PaymentMethodServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         Timestamp now = UtilDateTime.nowTimestamp();
 
@@ -710,7 +711,7 @@ public class PaymentMethodServices {
 
         toBeStored.add(newEa);
 
-        String newPmId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
+        String newPmId = (String) context.get(x.paymentMethodId);
         if (UtilValidate.isEmpty(newPmId)) {
             try {
                 newPmId = delegator.getNextSeqId("PaymentMethod");
@@ -720,24 +721,24 @@ public class PaymentMethodServices {
             }
         }
 
-        newPm.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.fromDate, (context.get(org.apache.ofbiz.persistence.entity.x.fromDate) != null ? context.get(org.apache.ofbiz.persistence.entity.x.fromDate) : now));
-        newPm.set(org.apache.ofbiz.persistence.entity.x.thruDate, context.get(org.apache.ofbiz.persistence.entity.x.thruDate));
-        newPm.set(org.apache.ofbiz.persistence.entity.x.description, context.get(org.apache.ofbiz.persistence.entity.x.description));
-        newEa.set(org.apache.ofbiz.persistence.entity.x.bankName, context.get(org.apache.ofbiz.persistence.entity.x.bankName));
-        newEa.set(org.apache.ofbiz.persistence.entity.x.routingNumber, context.get(org.apache.ofbiz.persistence.entity.x.routingNumber));
-        newEa.set(org.apache.ofbiz.persistence.entity.x.accountType, context.get(org.apache.ofbiz.persistence.entity.x.accountType));
-        newEa.set(org.apache.ofbiz.persistence.entity.x.accountNumber, context.get(org.apache.ofbiz.persistence.entity.x.accountNumber));
-        newEa.set(org.apache.ofbiz.persistence.entity.x.nameOnAccount, context.get(org.apache.ofbiz.persistence.entity.x.nameOnAccount));
-        newEa.set(org.apache.ofbiz.persistence.entity.x.companyNameOnAccount, context.get(org.apache.ofbiz.persistence.entity.x.companyNameOnAccount));
-        newEa.set(org.apache.ofbiz.persistence.entity.x.contactMechId, context.get(org.apache.ofbiz.persistence.entity.x.contactMechId));
+        newPm.set(x.partyId, partyId);
+        newPm.set(x.fromDate, (context.get(x.fromDate) != null ? context.get(x.fromDate) : now));
+        newPm.set(x.thruDate, context.get(x.thruDate));
+        newPm.set(x.description, context.get(x.description));
+        newEa.set(x.bankName, context.get(x.bankName));
+        newEa.set(x.routingNumber, context.get(x.routingNumber));
+        newEa.set(x.accountType, context.get(x.accountType));
+        newEa.set(x.accountNumber, context.get(x.accountNumber));
+        newEa.set(x.nameOnAccount, context.get(x.nameOnAccount));
+        newEa.set(x.companyNameOnAccount, context.get(x.companyNameOnAccount));
+        newEa.set(x.contactMechId, context.get(x.contactMechId));
 
-        newPm.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, "EFT_ACCOUNT");
-        newEa.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
+        newPm.set(x.paymentMethodId, newPmId);
+        newPm.set(x.paymentMethodTypeId, "EFT_ACCOUNT");
+        newEa.set(x.paymentMethodId, newPmId);
 
         GenericValue newPartyContactMechPurpose = null;
-        String contactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechId);
+        String contactMechId = (String) context.get(x.contactMechId);
 
         if (UtilValidate.isNotEmpty(contactMechId)) {
             // add a PartyContactMechPurpose of BILLING_LOCATION if necessary
@@ -777,7 +778,7 @@ public class PaymentMethodServices {
                     UtilMisc.toMap("errorString", e.getMessage()), locale));
         }
 
-        result.put("paymentMethodId", newEa.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        result.put("paymentMethodId", newEa.getString(x.paymentMethodId));
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
     }
@@ -793,8 +794,8 @@ public class PaymentMethodServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         Timestamp now = UtilDateTime.nowTimestamp();
 
@@ -811,7 +812,7 @@ public class PaymentMethodServices {
         GenericValue newPm = null;
         GenericValue eftAccount = null;
         GenericValue newEa = null;
-        String paymentMethodId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
+        String paymentMethodId = (String) context.get(x.paymentMethodId);
 
         try {
             eftAccount = EntityQuery.use(delegator).from("EftAccount").where("paymentMethodId", paymentMethodId).queryOne();
@@ -829,7 +830,7 @@ public class PaymentMethodServices {
                     "AccountingEftAccountCannotBeUpdated",
                     UtilMisc.toMap("errorString", paymentMethodId), locale));
         }
-        if (!paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.partyId).equals(partyId) && !security.hasEntityPermission("PAY_INFO", "_UPDATE", userLogin)
+        if (!paymentMethod.getString(x.partyId).equals(partyId) && !security.hasEntityPermission("PAY_INFO", "_UPDATE", userLogin)
                 && !security.hasEntityPermission("ACCOUNTING", "_UPDATE", userLogin)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "AccountingEftAccountCannotBeUpdated",
@@ -849,27 +850,27 @@ public class PaymentMethodServices {
                     "AccountingEftAccountCannotBeCreated", locale));
         }
 
-        newPm.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.fromDate, context.get(org.apache.ofbiz.persistence.entity.x.fromDate), false);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.thruDate, context.get(org.apache.ofbiz.persistence.entity.x.thruDate));
-        newPm.set(org.apache.ofbiz.persistence.entity.x.description, context.get(org.apache.ofbiz.persistence.entity.x.description));
-        newEa.set(org.apache.ofbiz.persistence.entity.x.bankName, context.get(org.apache.ofbiz.persistence.entity.x.bankName));
-        newEa.set(org.apache.ofbiz.persistence.entity.x.routingNumber, context.get(org.apache.ofbiz.persistence.entity.x.routingNumber));
-        newEa.set(org.apache.ofbiz.persistence.entity.x.accountType, context.get(org.apache.ofbiz.persistence.entity.x.accountType));
-        newEa.set(org.apache.ofbiz.persistence.entity.x.accountNumber, context.get(org.apache.ofbiz.persistence.entity.x.accountNumber));
-        newEa.set(org.apache.ofbiz.persistence.entity.x.nameOnAccount, context.get(org.apache.ofbiz.persistence.entity.x.nameOnAccount));
-        newEa.set(org.apache.ofbiz.persistence.entity.x.companyNameOnAccount, context.get(org.apache.ofbiz.persistence.entity.x.companyNameOnAccount));
-        newEa.set(org.apache.ofbiz.persistence.entity.x.contactMechId, context.get(org.apache.ofbiz.persistence.entity.x.contactMechId));
+        newPm.set(x.partyId, partyId);
+        newPm.set(x.fromDate, context.get(x.fromDate), false);
+        newPm.set(x.thruDate, context.get(x.thruDate));
+        newPm.set(x.description, context.get(x.description));
+        newEa.set(x.bankName, context.get(x.bankName));
+        newEa.set(x.routingNumber, context.get(x.routingNumber));
+        newEa.set(x.accountType, context.get(x.accountType));
+        newEa.set(x.accountNumber, context.get(x.accountNumber));
+        newEa.set(x.nameOnAccount, context.get(x.nameOnAccount));
+        newEa.set(x.companyNameOnAccount, context.get(x.companyNameOnAccount));
+        newEa.set(x.contactMechId, context.get(x.contactMechId));
 
         if (!newEa.equals(eftAccount) || !newPm.equals(paymentMethod)) {
-            newPm.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
-            newEa.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
-            newPm.set(org.apache.ofbiz.persistence.entity.x.fromDate, (context.get(org.apache.ofbiz.persistence.entity.x.fromDate) != null ? context.get(org.apache.ofbiz.persistence.entity.x.fromDate) : now));
+            newPm.set(x.paymentMethodId, newPmId);
+            newEa.set(x.paymentMethodId, newPmId);
+            newPm.set(x.fromDate, (context.get(x.fromDate) != null ? context.get(x.fromDate) : now));
             isModified = true;
         }
 
         GenericValue newPartyContactMechPurpose = null;
-        String contactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechId);
+        String contactMechId = (String) context.get(x.contactMechId);
 
         if (UtilValidate.isNotEmpty(contactMechId)) {
             // add a PartyContactMechPurpose of BILLING_LOCATION if necessary
@@ -902,7 +903,7 @@ public class PaymentMethodServices {
             }
 
             // set thru date on old paymentMethod
-            paymentMethod.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
+            paymentMethod.set(x.thruDate, now);
             toBeStored.add(paymentMethod);
 
             try {
@@ -923,7 +924,7 @@ public class PaymentMethodServices {
             return result;
         }
 
-        result.put("paymentMethodId", newEa.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        result.put("paymentMethodId", newEa.getString(x.paymentMethodId));
         result.put("oldPaymentMethodId", paymentMethodId);
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
@@ -933,8 +934,8 @@ public class PaymentMethodServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
         Timestamp now = UtilDateTime.nowTimestamp();
 
         String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, "PAY_INFO", "_CREATE", "ACCOUNTING", "_CREATE");
@@ -949,7 +950,7 @@ public class PaymentMethodServices {
         GenericValue newCa = delegator.makeValue("CheckAccount");
 
         toBeStored.add(newCa);
-        String newPmId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
+        String newPmId = (String) context.get(x.paymentMethodId);
         if (UtilValidate.isEmpty(newPmId)) {
             try {
                 newPmId = delegator.getNextSeqId("PaymentMethod");
@@ -958,23 +959,23 @@ public class PaymentMethodServices {
             }
         }
 
-        newPm.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.description, context.get(org.apache.ofbiz.persistence.entity.x.description));
-        newPm.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
-        newPm.set(org.apache.ofbiz.persistence.entity.x.fromDate, now);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
+        newPm.set(x.partyId, partyId);
+        newPm.set(x.description, context.get(x.description));
+        newPm.set(x.paymentMethodTypeId, context.get(x.paymentMethodTypeId));
+        newPm.set(x.fromDate, now);
+        newPm.set(x.paymentMethodId, newPmId);
 
-        newCa.set(org.apache.ofbiz.persistence.entity.x.bankName, context.get(org.apache.ofbiz.persistence.entity.x.bankName));
-        newCa.set(org.apache.ofbiz.persistence.entity.x.routingNumber, context.get(org.apache.ofbiz.persistence.entity.x.routingNumber));
-        newCa.set(org.apache.ofbiz.persistence.entity.x.accountType, context.get(org.apache.ofbiz.persistence.entity.x.accountType));
-        newCa.set(org.apache.ofbiz.persistence.entity.x.accountNumber, context.get(org.apache.ofbiz.persistence.entity.x.accountNumber));
-        newCa.set(org.apache.ofbiz.persistence.entity.x.nameOnAccount, context.get(org.apache.ofbiz.persistence.entity.x.nameOnAccount));
-        newCa.set(org.apache.ofbiz.persistence.entity.x.companyNameOnAccount, context.get(org.apache.ofbiz.persistence.entity.x.companyNameOnAccount));
-        newCa.set(org.apache.ofbiz.persistence.entity.x.contactMechId, context.get(org.apache.ofbiz.persistence.entity.x.contactMechId));
-        newCa.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
+        newCa.set(x.bankName, context.get(x.bankName));
+        newCa.set(x.routingNumber, context.get(x.routingNumber));
+        newCa.set(x.accountType, context.get(x.accountType));
+        newCa.set(x.accountNumber, context.get(x.accountNumber));
+        newCa.set(x.nameOnAccount, context.get(x.nameOnAccount));
+        newCa.set(x.companyNameOnAccount, context.get(x.companyNameOnAccount));
+        newCa.set(x.contactMechId, context.get(x.contactMechId));
+        newCa.set(x.paymentMethodId, newPmId);
 
         GenericValue newPartyContactMechPurpose = null;
-        String contactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechId);
+        String contactMechId = (String) context.get(x.contactMechId);
 
         if (UtilValidate.isNotEmpty(contactMechId)) {
             // add a PartyContactMechPurpose of BILLING_LOCATION if necessary
@@ -1013,7 +1014,7 @@ public class PaymentMethodServices {
                     UtilMisc.toMap("errorString", e.getMessage()), locale));
         }
 
-        result.put("paymentMethodId", newPm.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        result.put("paymentMethodId", newPm.getString(x.paymentMethodId));
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
     }
@@ -1022,8 +1023,8 @@ public class PaymentMethodServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         Timestamp now = UtilDateTime.nowTimestamp();
 
@@ -1040,7 +1041,7 @@ public class PaymentMethodServices {
         GenericValue newPm = null;
         GenericValue checkAccount = null;
         GenericValue newCa = null;
-        String paymentMethodId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId);
+        String paymentMethodId = (String) context.get(x.paymentMethodId);
 
         try {
             checkAccount = EntityQuery.use(delegator).from("CheckAccount").where("paymentMethodId", paymentMethodId).queryOne();
@@ -1058,7 +1059,7 @@ public class PaymentMethodServices {
                     "AccountingCheckAccountCannotBeUpdated",
                     UtilMisc.toMap("errorString", paymentMethodId), locale));
         }
-        if (!paymentMethod.getString(org.apache.ofbiz.persistence.entity.x.partyId).equals(partyId) && !security.hasEntityPermission("PAY_INFO", "_UPDATE", userLogin)
+        if (!paymentMethod.getString(x.partyId).equals(partyId) && !security.hasEntityPermission("PAY_INFO", "_UPDATE", userLogin)
                 && !security.hasEntityPermission("ACCOUNTING", "_UPDATE", userLogin)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "AccountingCheckAccountCannotBeUpdated",
@@ -1078,27 +1079,27 @@ public class PaymentMethodServices {
                     "AccountingCheckAccountCannotBeUpdated", locale));
         }
 
-        newPm.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, context.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
-        newPm.set(org.apache.ofbiz.persistence.entity.x.fromDate, context.get(org.apache.ofbiz.persistence.entity.x.fromDate), false);
-        newPm.set(org.apache.ofbiz.persistence.entity.x.description, context.get(org.apache.ofbiz.persistence.entity.x.description));
-        newCa.set(org.apache.ofbiz.persistence.entity.x.bankName, context.get(org.apache.ofbiz.persistence.entity.x.bankName));
-        newCa.set(org.apache.ofbiz.persistence.entity.x.routingNumber, context.get(org.apache.ofbiz.persistence.entity.x.routingNumber));
-        newCa.set(org.apache.ofbiz.persistence.entity.x.accountType, context.get(org.apache.ofbiz.persistence.entity.x.accountType));
-        newCa.set(org.apache.ofbiz.persistence.entity.x.accountNumber, context.get(org.apache.ofbiz.persistence.entity.x.accountNumber));
-        newCa.set(org.apache.ofbiz.persistence.entity.x.nameOnAccount, context.get(org.apache.ofbiz.persistence.entity.x.nameOnAccount));
-        newCa.set(org.apache.ofbiz.persistence.entity.x.companyNameOnAccount, context.get(org.apache.ofbiz.persistence.entity.x.companyNameOnAccount));
-        newCa.set(org.apache.ofbiz.persistence.entity.x.contactMechId, context.get(org.apache.ofbiz.persistence.entity.x.contactMechId));
+        newPm.set(x.partyId, partyId);
+        newPm.set(x.paymentMethodTypeId, context.get(x.paymentMethodTypeId));
+        newPm.set(x.fromDate, context.get(x.fromDate), false);
+        newPm.set(x.description, context.get(x.description));
+        newCa.set(x.bankName, context.get(x.bankName));
+        newCa.set(x.routingNumber, context.get(x.routingNumber));
+        newCa.set(x.accountType, context.get(x.accountType));
+        newCa.set(x.accountNumber, context.get(x.accountNumber));
+        newCa.set(x.nameOnAccount, context.get(x.nameOnAccount));
+        newCa.set(x.companyNameOnAccount, context.get(x.companyNameOnAccount));
+        newCa.set(x.contactMechId, context.get(x.contactMechId));
 
         if (!newCa.equals(checkAccount) || !newPm.equals(paymentMethod)) {
-            newPm.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
-            newCa.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, newPmId);
-            newPm.set(org.apache.ofbiz.persistence.entity.x.fromDate, (context.get(org.apache.ofbiz.persistence.entity.x.fromDate) != null ? context.get(org.apache.ofbiz.persistence.entity.x.fromDate) : now));
+            newPm.set(x.paymentMethodId, newPmId);
+            newCa.set(x.paymentMethodId, newPmId);
+            newPm.set(x.fromDate, (context.get(x.fromDate) != null ? context.get(x.fromDate) : now));
             isModified = true;
         }
 
         GenericValue newPartyContactMechPurpose = null;
-        String contactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechId);
+        String contactMechId = (String) context.get(x.contactMechId);
 
         if (UtilValidate.isNotEmpty(contactMechId)) {
             // add a PartyContactMechPurpose of BILLING_LOCATION if necessary
@@ -1131,7 +1132,7 @@ public class PaymentMethodServices {
             }
 
             // set thru date on old paymentMethod
-            paymentMethod.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
+            paymentMethod.set(x.thruDate, now);
             toBeStored.add(paymentMethod);
 
             try {
@@ -1152,7 +1153,7 @@ public class PaymentMethodServices {
             return result;
         }
 
-        result.put("paymentMethodId", newCa.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        result.put("paymentMethodId", newCa.getString(x.paymentMethodId));
         result.put("oldPaymentMethodId", paymentMethodId);
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;

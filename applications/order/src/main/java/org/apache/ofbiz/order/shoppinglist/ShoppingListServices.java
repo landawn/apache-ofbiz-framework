@@ -62,6 +62,7 @@ import org.apache.ofbiz.service.calendar.RecurrenceInfoException;
 import javax.transaction.Transaction;
 import org.apache.ofbiz.base.util.collections.PagedList;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Shopping List Services
  */
@@ -72,11 +73,11 @@ public class ShoppingListServices {
 
     public static Map<String, Object> setShoppingListRecurrence(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Timestamp startDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.startDateTime);
-        Timestamp endDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.endDateTime);
-        Integer frequency = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.frequency);
-        Integer interval = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.intervalNumber);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Timestamp startDate = (Timestamp) context.get(x.startDateTime);
+        Timestamp endDate = (Timestamp) context.get(x.endDateTime);
+        Integer frequency = (Integer) context.get(x.frequency);
+        Integer interval = (Integer) context.get(x.intervalNumber);
+        Locale locale = (Locale) context.get(x.locale);
 
         if (frequency == null || interval == null) {
             Debug.logWarning(UtilProperties.getMessage(RES_ERROR, "OrderFrequencyOrIntervalWasNotSpecified", locale), MODULE);
@@ -124,8 +125,8 @@ public class ShoppingListServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         boolean beganTransaction = false;
         EntityQuery eq = EntityQuery.use(delegator)
@@ -142,11 +143,11 @@ public class ShoppingListServices {
             if (eli != null) {
                 GenericValue shoppingList;
                 while (((shoppingList = eli.next()) != null)) {
-                    Timestamp lastOrder = shoppingList.getTimestamp(org.apache.ofbiz.persistence.entity.x.lastOrderedDate);
+                    Timestamp lastOrder = shoppingList.getTimestamp(x.lastOrderedDate);
                     RecurrenceInfo recurrence = null;
 
-                    GenericValue recurrenceInfo = shoppingList.getRelatedOne(org.apache.ofbiz.persistence.entity.x.RecurrenceInfo, false);
-                    Timestamp startDateTime = recurrenceInfo.getTimestamp(org.apache.ofbiz.persistence.entity.x.startDateTime);
+                    GenericValue recurrenceInfo = shoppingList.getRelatedOne(x.RecurrenceInfo, false);
+                    Timestamp startDateTime = recurrenceInfo.getTimestamp(x.startDateTime);
 
                     try {
                         recurrence = new RecurrenceInfo(recurrenceInfo);
@@ -191,7 +192,7 @@ public class ShoppingListServices {
                             Debug.logError("Payment processing problems with shopping list - " + shoppingList, MODULE);
                         }
 
-                        shoppingList.set(org.apache.ofbiz.persistence.entity.x.lastOrderedDate, UtilDateTime.nowTimestamp());
+                        shoppingList.set(x.lastOrderedDate, UtilDateTime.nowTimestamp());
                         shoppingList.store();
 
                         // send notification
@@ -231,7 +232,7 @@ public class ShoppingListServices {
     }
 
     public static Map<String, Object> splitShipmentMethodString(DispatchContext dctx, Map<String, ? extends Object> context) {
-        String shipmentMethodString = (String) context.get(org.apache.ofbiz.persistence.entity.x.shippingMethodString);
+        String shipmentMethodString = (String) context.get(x.shippingMethodString);
         Map<String, Object> result = ServiceUtil.returnSuccess();
 
         if (UtilValidate.isNotEmpty(shipmentMethodString)) {
@@ -253,18 +254,18 @@ public class ShoppingListServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
-        String shoppingListTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shoppingListTypeId);
-        String shoppingListId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shoppingListId);
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String shoppingListTypeId = (String) context.get(x.shoppingListTypeId);
+        String shoppingListId = (String) context.get(x.shoppingListId);
+        String orderId = (String) context.get(x.orderId);
+        String partyId = (String) context.get(x.partyId);
 
-        Timestamp startDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.startDateTime);
-        Timestamp endDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.endDateTime);
-        Integer frequency = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.frequency);
-        Integer interval = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.intervalNumber);
+        Timestamp startDate = (Timestamp) context.get(x.startDateTime);
+        Timestamp endDate = (Timestamp) context.get(x.endDateTime);
+        Integer frequency = (Integer) context.get(x.frequency);
+        Integer interval = (Integer) context.get(x.intervalNumber);
 
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         boolean beganTransaction = false;
         try {
@@ -277,12 +278,12 @@ public class ShoppingListServices {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderUnableToLocateOrder", UtilMisc.toMap("orderId", orderId),
                         locale));
             }
-            String productStoreId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
+            String productStoreId = orderHeader.getString(x.productStoreId);
 
             if (UtilValidate.isEmpty(shoppingListId)) {
                 // create a new shopping list
                 if (partyId == null) {
-                    partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+                    partyId = userLogin.getString(x.partyId);
                 }
 
                 Map<String, Object> serviceCtx = UtilMisc.<String, Object>toMap("userLogin", userLogin, "partyId", partyId,
@@ -318,7 +319,7 @@ public class ShoppingListServices {
             if (shoppingList == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderNoShoppingListAvailable", locale));
             }
-            shoppingListTypeId = shoppingList.getString(org.apache.ofbiz.persistence.entity.x.shoppingListTypeId);
+            shoppingListTypeId = shoppingList.getString(x.shoppingListTypeId);
 
             OrderReadHelper orh;
             try {
@@ -331,15 +332,15 @@ public class ShoppingListServices {
 
             List<GenericValue> orderItems = orh.getOrderItems();
             for (GenericValue orderItem : orderItems) {
-                String productId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
+                String productId = orderItem.getString(x.productId);
                 if (UtilValidate.isNotEmpty(productId)) {
                     Map<String, Object> ctx = UtilMisc.<String, Object>toMap("userLogin", userLogin, "shoppingListId", shoppingListId, "productId",
-                            orderItem.get(org.apache.ofbiz.persistence.entity.x.productId), "quantity", orderItem.get(org.apache.ofbiz.persistence.entity.x.quantity));
+                            orderItem.get(x.productId), "quantity", orderItem.get(x.quantity));
                     if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", ProductWorker.getProductTypeId(delegator,
                             productId), "parentTypeId", "AGGREGATED")) {
                         try {
                             GenericValue instanceProduct = EntityQuery.use(delegator).from("Product").where("productId", productId).queryOne();
-                            String configId = instanceProduct.getString(org.apache.ofbiz.persistence.entity.x.configId);
+                            String configId = instanceProduct.getString(x.configId);
                             ctx.put("configId", configId);
                             String aggregatedProductId = ProductWorker.getInstanceAggregatedId(delegator, productId);
                             //override the instance productId with aggregated productId
@@ -366,11 +367,11 @@ public class ShoppingListServices {
                 GenericValue shipGroup = EntityUtil.getFirst(orh.getOrderItemShipGroups());
 
                 Map<String, Object> slCtx = new HashMap<>();
-                slCtx.put("shipmentMethodTypeId", shipGroup.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId));
-                slCtx.put("carrierRoleTypeId", shipGroup.get(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId));
-                slCtx.put("carrierPartyId", shipGroup.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId));
-                slCtx.put("contactMechId", shipGroup.get(org.apache.ofbiz.persistence.entity.x.contactMechId));
-                slCtx.put("paymentMethodId", paymentPref.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+                slCtx.put("shipmentMethodTypeId", shipGroup.get(x.shipmentMethodTypeId));
+                slCtx.put("carrierRoleTypeId", shipGroup.get(x.carrierRoleTypeId));
+                slCtx.put("carrierPartyId", shipGroup.get(x.carrierPartyId));
+                slCtx.put("contactMechId", shipGroup.get(x.contactMechId));
+                slCtx.put("paymentMethodId", paymentPref.get(x.paymentMethodId));
                 slCtx.put("currencyUom", orh.getCurrency());
                 slCtx.put("startDateTime", startDate);
                 slCtx.put("endDateTime", endDate);
@@ -440,15 +441,15 @@ public class ShoppingListServices {
      */
     public static ShoppingCart makeShoppingListCart(ShoppingCart listCart, LocalDispatcher dispatcher, GenericValue shoppingList, Locale locale) {
         Delegator delegator = dispatcher.getDelegator();
-        if (shoppingList != null && shoppingList.get(org.apache.ofbiz.persistence.entity.x.productStoreId) != null) {
-            String productStoreId = shoppingList.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
-            String currencyUom = shoppingList.getString(org.apache.ofbiz.persistence.entity.x.currencyUom);
+        if (shoppingList != null && shoppingList.get(x.productStoreId) != null) {
+            String productStoreId = shoppingList.getString(x.productStoreId);
+            String currencyUom = shoppingList.getString(x.currencyUom);
             if (currencyUom == null) {
                 GenericValue productStore = ProductStoreWorker.getProductStore(productStoreId, delegator);
                 if (productStore == null) {
                     return null;
                 }
-                currencyUom = productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultCurrencyUomId);
+                currencyUom = productStore.getString(x.defaultCurrencyUomId);
             }
             if (locale == null) {
                 locale = Locale.getDefault();
@@ -456,7 +457,7 @@ public class ShoppingListServices {
 
             List<GenericValue> items = null;
             try {
-                items = shoppingList.getRelated(org.apache.ofbiz.persistence.entity.x.ShoppingListItem, null, UtilMisc.toList("shoppingListItemSeqId"), false);
+                items = shoppingList.getRelated(x.ShoppingListItem, null, UtilMisc.toList("shoppingListItemSeqId"), false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
@@ -464,12 +465,12 @@ public class ShoppingListServices {
             if (UtilValidate.isNotEmpty(items)) {
                 if (listCart == null) {
                     listCart = new ShoppingCart(delegator, productStoreId, locale, currencyUom);
-                    listCart.setOrderPartyId(shoppingList.getString(org.apache.ofbiz.persistence.entity.x.partyId));
-                    listCart.setAutoOrderShoppingListId(shoppingList.getString(org.apache.ofbiz.persistence.entity.x.shoppingListId));
+                    listCart.setOrderPartyId(shoppingList.getString(x.partyId));
+                    listCart.setAutoOrderShoppingListId(shoppingList.getString(x.shoppingListId));
                 } else {
-                    if (!listCart.getPartyId().equals(shoppingList.getString(org.apache.ofbiz.persistence.entity.x.partyId))) {
-                        Debug.logError("CANNOT add shoppingList: " + shoppingList.getString(org.apache.ofbiz.persistence.entity.x.shoppingListId)
-                                + " of partyId: " + shoppingList.getString(org.apache.ofbiz.persistence.entity.x.partyId)
+                    if (!listCart.getPartyId().equals(shoppingList.getString(x.partyId))) {
+                        Debug.logError("CANNOT add shoppingList: " + shoppingList.getString(x.shoppingListId)
+                                + " of partyId: " + shoppingList.getString(x.partyId)
                                 + " to a shoppingcart with a different orderPartyId: "
                                 + listCart.getPartyId(), MODULE);
                         return listCart;
@@ -479,18 +480,18 @@ public class ShoppingListServices {
 
                 ProductConfigWrapper configWrapper = null;
                 for (GenericValue shoppingListItem : items) {
-                    String productId = shoppingListItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
-                    BigDecimal quantity = shoppingListItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
-                    Timestamp reservStart = shoppingListItem.getTimestamp(org.apache.ofbiz.persistence.entity.x.reservStart);
+                    String productId = shoppingListItem.getString(x.productId);
+                    BigDecimal quantity = shoppingListItem.getBigDecimal(x.quantity);
+                    Timestamp reservStart = shoppingListItem.getTimestamp(x.reservStart);
                     BigDecimal reservLength = null;
-                    String configId = shoppingListItem.getString(org.apache.ofbiz.persistence.entity.x.configId);
+                    String configId = shoppingListItem.getString(x.configId);
 
-                    if (shoppingListItem.get(org.apache.ofbiz.persistence.entity.x.reservLength) != null) {
-                        reservLength = shoppingListItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.reservLength);
+                    if (shoppingListItem.get(x.reservLength) != null) {
+                        reservLength = shoppingListItem.getBigDecimal(x.reservLength);
                     }
                     BigDecimal reservPersons = null;
-                    if (shoppingListItem.get(org.apache.ofbiz.persistence.entity.x.reservPersons) != null) {
-                        reservPersons = shoppingListItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.reservPersons);
+                    if (shoppingListItem.get(x.reservPersons) != null) {
+                        reservPersons = shoppingListItem.getBigDecimal(x.reservPersons);
                     }
                     if (UtilValidate.isNotEmpty(productId) && quantity != null) {
                         if (UtilValidate.isNotEmpty(configId)) {
@@ -499,8 +500,8 @@ public class ShoppingListServices {
                                     listCart.getAutoUserLogin());
                         }
                         // list items are noted in the shopping cart
-                        String listId = shoppingListItem.getString(org.apache.ofbiz.persistence.entity.x.shoppingListId);
-                        String itemId = shoppingListItem.getString(org.apache.ofbiz.persistence.entity.x.shoppingListItemSeqId);
+                        String listId = shoppingListItem.getString(x.shoppingListId);
+                        String itemId = shoppingListItem.getString(x.shoppingListItemSeqId);
                         Map<String, Object> attributes = UtilMisc.<String, Object>toMap("shoppingListId", listId, "shoppingListItemSeqId", itemId);
 
                         try {
@@ -515,20 +516,20 @@ public class ShoppingListServices {
                 }
 
                 if (listCart.size() > 0) {
-                    if (UtilValidate.isNotEmpty(shoppingList.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId))) {
-                        listCart.addPayment(shoppingList.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+                    if (UtilValidate.isNotEmpty(shoppingList.get(x.paymentMethodId))) {
+                        listCart.addPayment(shoppingList.getString(x.paymentMethodId));
                     }
-                    if (UtilValidate.isNotEmpty(shoppingList.get(org.apache.ofbiz.persistence.entity.x.contactMechId))) {
-                        listCart.setAllShippingContactMechId(shoppingList.getString(org.apache.ofbiz.persistence.entity.x.contactMechId));
+                    if (UtilValidate.isNotEmpty(shoppingList.get(x.contactMechId))) {
+                        listCart.setAllShippingContactMechId(shoppingList.getString(x.contactMechId));
                     }
-                    if (UtilValidate.isNotEmpty(shoppingList.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId))) {
-                        listCart.setAllShipmentMethodTypeId(shoppingList.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId));
+                    if (UtilValidate.isNotEmpty(shoppingList.get(x.shipmentMethodTypeId))) {
+                        listCart.setAllShipmentMethodTypeId(shoppingList.getString(x.shipmentMethodTypeId));
                     }
-                    if (UtilValidate.isNotEmpty(shoppingList.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId))) {
-                        listCart.setAllCarrierPartyId(shoppingList.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId));
+                    if (UtilValidate.isNotEmpty(shoppingList.get(x.carrierPartyId))) {
+                        listCart.setAllCarrierPartyId(shoppingList.getString(x.carrierPartyId));
                     }
-                    if (UtilValidate.isNotEmpty(shoppingList.getString(org.apache.ofbiz.persistence.entity.x.productPromoCodeId))) {
-                        listCart.addProductPromoCode(shoppingList.getString(org.apache.ofbiz.persistence.entity.x.productPromoCodeId), dispatcher);
+                    if (UtilValidate.isNotEmpty(shoppingList.getString(x.productPromoCodeId))) {
+                        listCart.addProductPromoCode(shoppingList.getString(x.productPromoCodeId), dispatcher);
                     }
                 }
             }
@@ -558,22 +559,22 @@ public class ShoppingListServices {
     public static Map<String, Object> updateShoppingListQuantitiesFromOrder(DispatchContext ctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderId = (String) context.get(x.orderId);
         try {
             List<GenericValue> orderItems = EntityQuery.use(delegator).from("OrderItem").where("orderId", orderId).queryList();
             for (GenericValue orderItem : orderItems) {
-                String shoppingListId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.shoppingListId);
-                String shoppingListItemSeqId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.shoppingListItemSeqId);
+                String shoppingListId = orderItem.getString(x.shoppingListId);
+                String shoppingListItemSeqId = orderItem.getString(x.shoppingListItemSeqId);
                 if (UtilValidate.isNotEmpty(shoppingListId)) {
                     GenericValue shoppingListItem = EntityQuery.use(delegator).from("ShoppingListItem").where("shoppingListId", shoppingListId,
                             "shoppingListItemSeqId", shoppingListItemSeqId).queryOne();
                     if (shoppingListItem != null) {
-                        BigDecimal quantityPurchased = shoppingListItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityPurchased);
-                        BigDecimal orderQuantity = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                        BigDecimal quantityPurchased = shoppingListItem.getBigDecimal(x.quantityPurchased);
+                        BigDecimal orderQuantity = orderItem.getBigDecimal(x.quantity);
                         if (quantityPurchased != null) {
-                            shoppingListItem.set(org.apache.ofbiz.persistence.entity.x.quantityPurchased, orderQuantity.add(quantityPurchased));
+                            shoppingListItem.set(x.quantityPurchased, orderQuantity.add(quantityPurchased));
                         } else {
-                            shoppingListItem.set(org.apache.ofbiz.persistence.entity.x.quantityPurchased, orderQuantity);
+                            shoppingListItem.set(x.quantityPurchased, orderQuantity);
                         }
                         shoppingListItem.store();
                     }
@@ -588,7 +589,7 @@ public class ShoppingListServices {
     public static Map<String, Object> autoDeleteAutoSaveShoppingList(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
 
         //set an upper limit for the number of pages to delete each run
         final int maxDeletePages = 50;
@@ -698,7 +699,7 @@ public class ShoppingListServices {
 
                             List<GenericValue> shoppingListItems = null;
                             try {
-                                shoppingListItems = sl.getRelated(org.apache.ofbiz.persistence.entity.x.ShoppingListItem, null, null, false);
+                                shoppingListItems = sl.getRelated(x.ShoppingListItem, null, null, false);
                             } catch (GenericEntityException e) {
                                 Debug.logError(e.getMessage(), MODULE);
                                 TransactionUtil.rollback();
@@ -708,8 +709,8 @@ public class ShoppingListServices {
                             for (GenericValue sli : shoppingListItems) {
                                 try {
                                     dispatcher.runSync("removeShoppingListItem",
-                                            UtilMisc.toMap("shoppingListId", sl.getString(org.apache.ofbiz.persistence.entity.x.shoppingListId),
-                                                    "shoppingListItemSeqId", sli.getString(org.apache.ofbiz.persistence.entity.x.shoppingListItemSeqId),
+                                            UtilMisc.toMap("shoppingListId", sl.getString(x.shoppingListId),
+                                                    "shoppingListItemSeqId", sli.getString(x.shoppingListItemSeqId),
                                                     "userLogin", userLogin));
                                 } catch (GenericServiceException e) {
                                     Debug.logError(e.getMessage(), MODULE);
@@ -719,7 +720,7 @@ public class ShoppingListServices {
                             }
                             try {
                                 dispatcher.runSync("removeShoppingList",
-                                        UtilMisc.toMap("shoppingListId", sl.getString(org.apache.ofbiz.persistence.entity.x.shoppingListId),
+                                        UtilMisc.toMap("shoppingListId", sl.getString(x.shoppingListId),
                                                 "userLogin", userLogin));
                                 deleted++;
                             } catch (GenericServiceException e) {

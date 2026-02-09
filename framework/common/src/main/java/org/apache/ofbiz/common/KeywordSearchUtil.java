@@ -35,6 +35,7 @@ import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * A few utility methods related to Keyword Search.
  */
@@ -240,9 +241,9 @@ public final class KeywordSearchUtil {
             List<GenericValue> thesaurusList = EntityQuery.use(delegator).from("KeywordThesaurus").where("enteredKeyword", enteredKeyword)
                     .cache(true).queryList();
             for (GenericValue keywordThesaurus: thesaurusList) {
-                String relationshipEnumId = (String) keywordThesaurus.get(org.apache.ofbiz.persistence.entity.x.relationshipEnumId);
+                String relationshipEnumId = (String) keywordThesaurus.get(x.relationshipEnumId);
                 if (thesaurusRelsToInclude.contains(relationshipEnumId)) {
-                    addToSet.addAll(makeKeywordSet(keywordThesaurus.getString(org.apache.ofbiz.persistence.entity.x.alternateKeyword), null, true));
+                    addToSet.addAll(makeKeywordSet(keywordThesaurus.getString(x.alternateKeyword), null, true));
                     if (thesaurusRelsForReplace.contains(relationshipEnumId)) {
                         replaceEnteredKeyword = true;
                     }

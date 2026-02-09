@@ -35,6 +35,7 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 
 import com.ibm.icu.util.Calendar;
 
+import org.apache.ofbiz.persistence.entity.x;
 /** TemporalExpression UI artifacts worker. */
 public final class ExpressionUiHelper {
 
@@ -149,13 +150,13 @@ public final class ExpressionUiHelper {
                                                  .queryList();
         Set<String> excludedIds = new HashSet<>();
         for (GenericValue value : findList) {
-            excludedIds.add(value.getString(org.apache.ofbiz.persistence.entity.x.toTempExprId));
+            excludedIds.add(value.getString(x.toTempExprId));
         }
         excludedIds.add(tempExprId);
         findList = EntityQuery.use(delegator).from("TemporalExpression").cache(true).queryList();
         Set<String> candidateIds = new HashSet<>();
         for (GenericValue value : findList) {
-            candidateIds.add(value.getString(org.apache.ofbiz.persistence.entity.x.tempExprId));
+            candidateIds.add(value.getString(x.tempExprId));
         }
         candidateIds.removeAll(excludedIds);
         return candidateIds;

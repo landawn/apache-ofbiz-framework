@@ -47,6 +47,7 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import com.ibm.icu.util.Calendar;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class AIMPaymentServices {
 
     private static final String MODULE = AIMPaymentServices.class.getName();
@@ -78,7 +79,7 @@ public class AIMPaymentServices {
 
     public static Map<String, Object> ccAuth(DispatchContext ctx, Map<String, Object> context) {
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Map<String, Object> request = new HashMap<>();
         Properties props = buildAIMProperties(context, delegator);
@@ -102,9 +103,9 @@ public class AIMPaymentServices {
     }
 
     public static Map<String, Object> ccCapture(DispatchContext ctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = ctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         GenericValue creditCard = null;
         try {
             creditCard = delegator.getRelatedOne("CreditCard", orderPaymentPreference, false);
@@ -118,8 +119,8 @@ public class AIMPaymentServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPaymentTransactionAuthorizationNotFoundCannotCapture", locale));
         }
-        context.put(org.apache.ofbiz.persistence.entity.x.creditCard, creditCard);
-        context.put(org.apache.ofbiz.persistence.entity.x.authTransaction, authTransaction);
+        context.put(x.creditCard, creditCard);
+        context.put(x.authTransaction, authTransaction);
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Map<String, Object> request = new HashMap<>();
         Properties props = buildAIMProperties(context, delegator);
@@ -127,11 +128,11 @@ public class AIMPaymentServices {
         buildGatewayResponeConfig(context, props, request);
         buildCustomerBillingInfo(context, props, request);
         buildEmailSettings(context, props, request);
-        request.put("x_Invoice_Num", "Order " + orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+        request.put("x_Invoice_Num", "Order " + orderPaymentPreference.getString(x.orderId));
         // PRIOR_AUTH_CAPTURE is the right one to use, since we already have an authorization from the authTransaction.
         // CAPTURE_ONLY is a "force" transaction to be used if there is no prior authorization
         props.put("transType", "PRIOR_AUTH_CAPTURE");
-        props.put("cardtype", creditCard.get(org.apache.ofbiz.persistence.entity.x.cardType));
+        props.put("cardtype", creditCard.get(x.cardType));
         buildCaptureTransaction(context, props, request);
         Map<String, Object> validateResults = validateRequest(context, props, request);
         String respMsg = (String) validateResults.get(ModelService.RESPONSE_MESSAGE);
@@ -149,9 +150,9 @@ public class AIMPaymentServices {
     }
 
     public static Map<String, Object> ccRefund(DispatchContext ctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = ctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         GenericValue creditCard = null;
         try {
             creditCard = delegator.getRelatedOne("CreditCard", orderPaymentPreference, false);
@@ -165,8 +166,8 @@ public class AIMPaymentServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPaymentTransactionAuthorizationNotFoundCannotRefund", locale));
         }
-        context.put(org.apache.ofbiz.persistence.entity.x.creditCard, creditCard);
-        context.put(org.apache.ofbiz.persistence.entity.x.authTransaction, authTransaction);
+        context.put(x.creditCard, creditCard);
+        context.put(x.authTransaction, authTransaction);
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Map<String, Object> request = new HashMap<>();
         Properties props = buildAIMProperties(context, delegator);
@@ -176,7 +177,7 @@ public class AIMPaymentServices {
         buildEmailSettings(context, props, request);
         buildInvoiceInfo(context, props, request);
         props.put("transType", "CREDIT");
-        props.put("cardtype", creditCard.get(org.apache.ofbiz.persistence.entity.x.cardType));
+        props.put("cardtype", creditCard.get(x.cardType));
         buildRefundTransaction(context, props, request);
         Map<String, Object> validateResults = validateRequest(context, props, request);
         String respMsg = (String) validateResults.get(ModelService.RESPONSE_MESSAGE);
@@ -201,7 +202,7 @@ public class AIMPaymentServices {
                 Calendar startCalendar = UtilDateTime.toCalendar(UtilDateTime.nowTimestamp());
                 startCalendar.add(Calendar.DATE, -TIME_LIMIT_VERIFICATION_DAYS);
                 Timestamp startTimestamp = new java.sql.Timestamp(startCalendar.getTime().getTime());
-                Timestamp authTimestamp = authTransaction.getTimestamp(org.apache.ofbiz.persistence.entity.x.transactionDate);
+                Timestamp authTimestamp = authTransaction.getTimestamp(x.transactionDate);
                 if (startTimestamp.before(authTimestamp)) {
                     canDoVoid = true;
                 }
@@ -212,8 +213,8 @@ public class AIMPaymentServices {
             }
             if (canDoVoid) {
                 Debug.logWarning("Refund was unsuccessful; will now attempt a VOID transaction.", MODULE);
-                BigDecimal authAmountObj = authTransaction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
-                BigDecimal refundAmountObj = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.refundAmount);
+                BigDecimal authAmountObj = authTransaction.getBigDecimal(x.amount);
+                BigDecimal refundAmountObj = (BigDecimal) context.get(x.refundAmount);
                 BigDecimal authAmount = authAmountObj != null ? authAmountObj : BigDecimal.ZERO;
                 BigDecimal refundAmount = refundAmountObj != null ? refundAmountObj : BigDecimal.ZERO;
                 if (authAmount.compareTo(refundAmount) == 0) {
@@ -237,9 +238,9 @@ public class AIMPaymentServices {
     }
 
     public static Map<String, Object> ccRelease(DispatchContext ctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = ctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -250,14 +251,14 @@ public class AIMPaymentServices {
             return reply;
         }
         Map<String, Object> results = ServiceUtil.returnSuccess();
-        context.put(org.apache.ofbiz.persistence.entity.x.x_Amount, ((BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.releaseAmount)).toPlainString()); // hack for releaseAmount
+        context.put(x.x_Amount, ((BigDecimal) context.get(x.releaseAmount)).toPlainString()); // hack for releaseAmount
         results.putAll(processReleaseTransResult(context, reply));
         return results;
     }
 
     private static Map<String, Object> voidTransaction(GenericValue authTransaction, Map<String, Object> context, Delegator delegator) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        context.put(org.apache.ofbiz.persistence.entity.x.authTransaction, authTransaction);
+        Locale locale = (Locale) context.get(x.locale);
+        context.put(x.authTransaction, authTransaction);
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Map<String, Object> request = new HashMap<>();
         Properties props = buildAIMProperties(context, delegator);
@@ -276,7 +277,7 @@ public class AIMPaymentServices {
     }
 
     public static Map<String, Object> ccCredit(DispatchContext ctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> results = new HashMap<>();
         results.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
         results.put(ModelService.ERROR_MESSAGE, UtilProperties.getMessage(RESOURCE, "AccountingAuthorizeNetccCreditUnsupported", locale));
@@ -285,7 +286,7 @@ public class AIMPaymentServices {
 
     public static Map<String, Object> ccAuthCapture(DispatchContext ctx, Map<String, Object> context) {
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Map<String, Object> request = new HashMap<>();
         Properties props = buildAIMProperties(context, delegator);
@@ -366,12 +367,12 @@ public class AIMPaymentServices {
     }
 
     private static Properties buildAIMProperties(Map<String, Object> context, Delegator delegator) {
-        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
-        String configStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
+        String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
+        String configStr = (String) context.get(x.paymentConfig);
         if (configStr == null) {
             configStr = "payment.properties";
         }
-        GenericValue cc = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.creditCard);
+        GenericValue cc = (GenericValue) context.get(x.creditCard);
         String url = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "transactionUrl", configStr,
                 "payment.authorizedotnet.url");
         String certificateAlias = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "certificateAlias", configStr,
@@ -441,7 +442,7 @@ public class AIMPaymentServices {
         props.put("trankey", tranKey);
         props.put("duplicateWindow", duplicateWindow);
         if (cc != null) {
-            props.put("cardtype", cc.get(org.apache.ofbiz.persistence.entity.x.cardType));
+            props.put("cardtype", cc.get(x.cardType));
         }
         if (aimProperties == null) {
             aimProperties = props;
@@ -508,23 +509,23 @@ public class AIMPaymentServices {
             // this would be used in the case of a capture, where one of the parameters is an OrderPaymentPreference
             if (params.get("orderPaymentPreference") != null) {
                 GenericValue opp = (GenericValue) params.get("orderPaymentPreference");
-                if ("CREDIT_CARD".equals(opp.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+                if ("CREDIT_CARD".equals(opp.getString(x.paymentMethodTypeId))) {
                     // sometimes the ccAuthCapture interface is used, in which case the creditCard is passed directly
                     GenericValue creditCard = (GenericValue) params.get("creditCard");
-                    if (creditCard == null || !(opp.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId).equals(creditCard.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId)))) {
-                        creditCard = opp.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CreditCard, false);
+                    if (creditCard == null || !(opp.get(x.paymentMethodId).equals(creditCard.get(x.paymentMethodId)))) {
+                        creditCard = opp.getRelatedOne(x.CreditCard, false);
                     }
-                    aimRequest.put("x_First_Name", UtilFormatOut.checkNull(creditCard.getString(org.apache.ofbiz.persistence.entity.x.firstNameOnCard)));
-                    aimRequest.put("x_Last_Name", UtilFormatOut.checkNull(creditCard.getString(org.apache.ofbiz.persistence.entity.x.lastNameOnCard)));
-                    aimRequest.put("x_Company", UtilFormatOut.checkNull(creditCard.getString(org.apache.ofbiz.persistence.entity.x.companyNameOnCard)));
-                    if (UtilValidate.isNotEmpty(creditCard.getString(org.apache.ofbiz.persistence.entity.x.contactMechId))) {
-                        GenericValue address = creditCard.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
+                    aimRequest.put("x_First_Name", UtilFormatOut.checkNull(creditCard.getString(x.firstNameOnCard)));
+                    aimRequest.put("x_Last_Name", UtilFormatOut.checkNull(creditCard.getString(x.lastNameOnCard)));
+                    aimRequest.put("x_Company", UtilFormatOut.checkNull(creditCard.getString(x.companyNameOnCard)));
+                    if (UtilValidate.isNotEmpty(creditCard.getString(x.contactMechId))) {
+                        GenericValue address = creditCard.getRelatedOne(x.PostalAddress, false);
                         if (address != null) {
-                            aimRequest.put("x_Address", UtilFormatOut.checkNull(address.getString(org.apache.ofbiz.persistence.entity.x.address1)));
-                            aimRequest.put("x_City", UtilFormatOut.checkNull(address.getString(org.apache.ofbiz.persistence.entity.x.city)));
-                            aimRequest.put("x_State", UtilFormatOut.checkNull(address.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId)));
-                            aimRequest.put("x_Zip", UtilFormatOut.checkNull(address.getString(org.apache.ofbiz.persistence.entity.x.postalCode)));
-                            aimRequest.put("x_Country", UtilFormatOut.checkNull(address.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId)));
+                            aimRequest.put("x_Address", UtilFormatOut.checkNull(address.getString(x.address1)));
+                            aimRequest.put("x_City", UtilFormatOut.checkNull(address.getString(x.city)));
+                            aimRequest.put("x_State", UtilFormatOut.checkNull(address.getString(x.stateProvinceGeoId)));
+                            aimRequest.put("x_Zip", UtilFormatOut.checkNull(address.getString(x.postalCode)));
+                            aimRequest.put("x_Country", UtilFormatOut.checkNull(address.getString(x.countryGeoId)));
                         }
                     }
                 } else {
@@ -534,13 +535,13 @@ public class AIMPaymentServices {
                 // this would be the case for an authorization
                 GenericValue cp = (GenericValue) params.get("billToParty");
                 GenericValue ba = (GenericValue) params.get("billingAddress");
-                aimRequest.put("x_First_Name", UtilFormatOut.checkNull(cp.getString(org.apache.ofbiz.persistence.entity.x.firstName)));
-                aimRequest.put("x_Last_Name", UtilFormatOut.checkNull(cp.getString(org.apache.ofbiz.persistence.entity.x.lastName)));
-                aimRequest.put("x_Address", UtilFormatOut.checkNull(ba.getString(org.apache.ofbiz.persistence.entity.x.address1)));
-                aimRequest.put("x_City", UtilFormatOut.checkNull(ba.getString(org.apache.ofbiz.persistence.entity.x.city)));
-                aimRequest.put("x_State", UtilFormatOut.checkNull(ba.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId)));
-                aimRequest.put("x_Zip", UtilFormatOut.checkNull(ba.getString(org.apache.ofbiz.persistence.entity.x.postalCode)));
-                aimRequest.put("x_Country", UtilFormatOut.checkNull(ba.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId)));
+                aimRequest.put("x_First_Name", UtilFormatOut.checkNull(cp.getString(x.firstName)));
+                aimRequest.put("x_Last_Name", UtilFormatOut.checkNull(cp.getString(x.lastName)));
+                aimRequest.put("x_Address", UtilFormatOut.checkNull(ba.getString(x.address1)));
+                aimRequest.put("x_City", UtilFormatOut.checkNull(ba.getString(x.city)));
+                aimRequest.put("x_State", UtilFormatOut.checkNull(ba.getString(x.stateProvinceGeoId)));
+                aimRequest.put("x_Zip", UtilFormatOut.checkNull(ba.getString(x.postalCode)));
+                aimRequest.put("x_Country", UtilFormatOut.checkNull(ba.getString(x.countryGeoId)));
             }
             return;
         } catch (GenericEntityException ex) {
@@ -554,7 +555,7 @@ public class AIMPaymentServices {
         aimRequest.put("x_Email_Customer", props.getProperty("emailCustomer"));
         aimRequest.put("x_Email_Merchant", props.getProperty("emailMerchant"));
         if (ea != null) {
-            aimRequest.put("x_Email", UtilFormatOut.checkNull(ea.getString(org.apache.ofbiz.persistence.entity.x.infoString)));
+            aimRequest.put("x_Email", UtilFormatOut.checkNull(ea.getString(x.infoString)));
         }
     }
 
@@ -564,7 +565,7 @@ public class AIMPaymentServices {
         if (UtilValidate.isEmpty(orderId)) {
             GenericValue orderPaymentPreference = (GenericValue) params.get("orderPaymentPreference");
             if (orderPaymentPreference != null) {
-                orderId = (String) orderPaymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderId);
+                orderId = (String) orderPaymentPreference.get(x.orderId);
             }
         }
         aimRequest.put("x_Invoice_Num", "Order " + orderId);
@@ -575,8 +576,8 @@ public class AIMPaymentServices {
         GenericValue cc = (GenericValue) params.get("creditCard");
         String currency = (String) params.get("currency");
         String amount = ((BigDecimal) params.get("processAmount")).toString();
-        String number = UtilFormatOut.checkNull(cc.getString(org.apache.ofbiz.persistence.entity.x.cardNumber));
-        String expDate = UtilFormatOut.checkNull(cc.getString(org.apache.ofbiz.persistence.entity.x.expireDate));
+        String number = UtilFormatOut.checkNull(cc.getString(x.cardNumber));
+        String expDate = UtilFormatOut.checkNull(cc.getString(x.expireDate));
         String cardSecurityCode = (String) params.get("cardSecurityCode");
         aimRequest.put("x_Amount", amount);
         aimRequest.put("x_Currency_Code", currency);
@@ -588,7 +589,7 @@ public class AIMPaymentServices {
             aimRequest.put("x_card_code", cardSecurityCode);
         }
         if (aimRequest.get("x_market_type") != null) {
-            aimRequest.put("x_card_type", getCardType(UtilFormatOut.checkNull(cc.getString(org.apache.ofbiz.persistence.entity.x.cardType))));
+            aimRequest.put("x_card_type", getCardType(UtilFormatOut.checkNull(cc.getString(x.cardType))));
         }
     }
 
@@ -597,19 +598,19 @@ public class AIMPaymentServices {
         GenericValue cc = (GenericValue) params.get("creditCard");
         String currency = (String) params.get("currency");
         String amount = ((BigDecimal) params.get("captureAmount")).toString();
-        String number = UtilFormatOut.checkNull(cc.getString(org.apache.ofbiz.persistence.entity.x.cardNumber));
-        String expDate = UtilFormatOut.checkNull(cc.getString(org.apache.ofbiz.persistence.entity.x.expireDate));
+        String number = UtilFormatOut.checkNull(cc.getString(x.cardNumber));
+        String expDate = UtilFormatOut.checkNull(cc.getString(x.expireDate));
         aimRequest.put("x_Amount", amount);
         aimRequest.put("x_Currency_Code", currency);
         aimRequest.put("x_Method", props.getProperty("method"));
         aimRequest.put("x_Type", props.getProperty("transType"));
         aimRequest.put("x_Card_Num", number);
         aimRequest.put("x_Exp_Date", expDate);
-        aimRequest.put("x_Trans_ID", at.get(org.apache.ofbiz.persistence.entity.x.referenceNum));
-        aimRequest.put("x_ref_trans_id", at.get(org.apache.ofbiz.persistence.entity.x.referenceNum));
-        aimRequest.put("x_Auth_Code", at.get(org.apache.ofbiz.persistence.entity.x.gatewayCode));
+        aimRequest.put("x_Trans_ID", at.get(x.referenceNum));
+        aimRequest.put("x_ref_trans_id", at.get(x.referenceNum));
+        aimRequest.put("x_Auth_Code", at.get(x.gatewayCode));
         if (aimRequest.get("x_market_type") != null) {
-            aimRequest.put("x_card_type", getCardType(UtilFormatOut.checkNull(cc.getString(org.apache.ofbiz.persistence.entity.x.cardType))));
+            aimRequest.put("x_card_type", getCardType(UtilFormatOut.checkNull(cc.getString(x.cardType))));
         }
     }
 
@@ -618,19 +619,19 @@ public class AIMPaymentServices {
         GenericValue cc = (GenericValue) params.get("creditCard");
         String currency = (String) params.get("currency");
         String amount = ((BigDecimal) params.get("refundAmount")).toString();
-        String number = UtilFormatOut.checkNull(cc.getString(org.apache.ofbiz.persistence.entity.x.cardNumber));
-        String expDate = UtilFormatOut.checkNull(cc.getString(org.apache.ofbiz.persistence.entity.x.expireDate));
+        String number = UtilFormatOut.checkNull(cc.getString(x.cardNumber));
+        String expDate = UtilFormatOut.checkNull(cc.getString(x.expireDate));
         aimRequest.put("x_Amount", amount);
         aimRequest.put("x_Currency_Code", currency);
         aimRequest.put("x_Method", props.getProperty("method"));
         aimRequest.put("x_Type", props.getProperty("transType"));
         aimRequest.put("x_Card_Num", number);
         aimRequest.put("x_Exp_Date", expDate);
-        aimRequest.put("x_Trans_ID", at.get(org.apache.ofbiz.persistence.entity.x.referenceNum));
-        aimRequest.put("x_Auth_Code", at.get(org.apache.ofbiz.persistence.entity.x.gatewayCode));
-        aimRequest.put("x_ref_trans_id", at.get(org.apache.ofbiz.persistence.entity.x.referenceNum));
+        aimRequest.put("x_Trans_ID", at.get(x.referenceNum));
+        aimRequest.put("x_Auth_Code", at.get(x.gatewayCode));
+        aimRequest.put("x_ref_trans_id", at.get(x.referenceNum));
         if (aimRequest.get("x_market_type") != null) {
-            aimRequest.put("x_card_type", getCardType(UtilFormatOut.checkNull(cc.getString(org.apache.ofbiz.persistence.entity.x.cardType))));
+            aimRequest.put("x_card_type", getCardType(UtilFormatOut.checkNull(cc.getString(x.cardType))));
         }
         Debug.logInfo("buildCaptureTransaction. " + at.toString(), MODULE);
     }
@@ -641,9 +642,9 @@ public class AIMPaymentServices {
         aimRequest.put("x_Currency_Code", currency);
         aimRequest.put("x_Method", props.getProperty("method"));
         aimRequest.put("x_Type", props.getProperty("transType"));
-        aimRequest.put("x_ref_trans_id", at.get(org.apache.ofbiz.persistence.entity.x.referenceNum));
-        aimRequest.put("x_Trans_ID", at.get(org.apache.ofbiz.persistence.entity.x.referenceNum));
-        aimRequest.put("x_Auth_Code", at.get(org.apache.ofbiz.persistence.entity.x.gatewayCode));
+        aimRequest.put("x_ref_trans_id", at.get(x.referenceNum));
+        aimRequest.put("x_Trans_ID", at.get(x.referenceNum));
+        aimRequest.put("x_Auth_Code", at.get(x.gatewayCode));
         Debug.logInfo("buildVoidTransaction. " + at.toString(), MODULE);
     }
 

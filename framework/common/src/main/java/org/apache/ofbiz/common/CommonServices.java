@@ -62,6 +62,7 @@ import org.apache.ofbiz.service.ServiceSynchronization;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.service.mail.MimeMessageWrapper;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Common Services
  */
@@ -90,7 +91,7 @@ public class CommonServices {
         if (!context.containsKey("message")) {
             response.put("resp", "no message found");
         } else {
-            Debug.logInfo("-----SERVICE TEST----- : " + (String) context.get(org.apache.ofbiz.persistence.entity.x.message), MODULE);
+            Debug.logInfo("-----SERVICE TEST----- : " + (String) context.get(x.message), MODULE);
             response.put("resp", "service done");
         }
 
@@ -121,7 +122,7 @@ public class CommonServices {
     }
 
     public static Map<String, Object> blockingTestService(DispatchContext dctx, Map<String, ?> context) {
-        Long duration = (Long) context.get(org.apache.ofbiz.persistence.entity.x.duration);
+        Long duration = (Long) context.get(x.duration);
         if (duration == null) {
             duration = 30000L;
         }
@@ -139,7 +140,7 @@ public class CommonServices {
         } catch (GenericServiceException e) {
             Debug.logError(e, MODULE);
         }
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonTestRollingBack", locale));
     }
 
@@ -160,13 +161,13 @@ public class CommonServices {
      */
     public static Map<String, Object> createNote(DispatchContext ctx, Map<String, ?> context) {
         Delegator delegator = ctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Timestamp noteDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.noteDate);
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
-        String noteName = (String) context.get(org.apache.ofbiz.persistence.entity.x.noteName);
-        String note = (String) context.get(org.apache.ofbiz.persistence.entity.x.note);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Timestamp noteDate = (Timestamp) context.get(x.noteDate);
+        String partyId = (String) context.get(x.partyId);
+        String noteName = (String) context.get(x.noteName);
+        String note = (String) context.get(x.note);
         String noteId = delegator.getNextSeqId("NoteData");
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         if (noteDate == null) {
             noteDate = UtilDateTime.nowTimestamp();
         }
@@ -174,8 +175,8 @@ public class CommonServices {
 
         // check for a party id
         if (partyId == null) {
-            if (userLogin != null && userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId) != null) {
-                partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+            if (userLogin != null && userLogin.get(x.partyId) != null) {
+                partyId = userLogin.getString(x.partyId);
             }
         }
 
@@ -204,13 +205,13 @@ public class CommonServices {
      *@return Map with the result of the service, the output parameters
      */
     public static Map<String, Object> adjustDebugLevels(DispatchContext dctc, Map<String, ?> context) {
-        Debug.set(Debug.FATAL, "Y".equalsIgnoreCase((String) context.get(org.apache.ofbiz.persistence.entity.x.fatal)));
-        Debug.set(Debug.ERROR, "Y".equalsIgnoreCase((String) context.get(org.apache.ofbiz.persistence.entity.x.error)));
-        Debug.set(Debug.WARNING, "Y".equalsIgnoreCase((String) context.get(org.apache.ofbiz.persistence.entity.x.warning)));
-        Debug.set(Debug.IMPORTANT, "Y".equalsIgnoreCase((String) context.get(org.apache.ofbiz.persistence.entity.x.important)));
-        Debug.set(Debug.INFO, "Y".equalsIgnoreCase((String) context.get(org.apache.ofbiz.persistence.entity.x.info)));
-        Debug.set(Debug.TIMING, "Y".equalsIgnoreCase((String) context.get(org.apache.ofbiz.persistence.entity.x.timing)));
-        Debug.set(Debug.VERBOSE, "Y".equalsIgnoreCase((String) context.get(org.apache.ofbiz.persistence.entity.x.verbose)));
+        Debug.set(Debug.FATAL, "Y".equalsIgnoreCase((String) context.get(x.fatal)));
+        Debug.set(Debug.ERROR, "Y".equalsIgnoreCase((String) context.get(x.error)));
+        Debug.set(Debug.WARNING, "Y".equalsIgnoreCase((String) context.get(x.warning)));
+        Debug.set(Debug.IMPORTANT, "Y".equalsIgnoreCase((String) context.get(x.important)));
+        Debug.set(Debug.INFO, "Y".equalsIgnoreCase((String) context.get(x.info)));
+        Debug.set(Debug.TIMING, "Y".equalsIgnoreCase((String) context.get(x.timing)));
+        Debug.set(Debug.VERBOSE, "Y".equalsIgnoreCase((String) context.get(x.verbose)));
 
         return ServiceUtil.returnSuccess();
     }
@@ -235,7 +236,7 @@ public class CommonServices {
      * Return Error Service; Used for testing error handling
      */
     public static Map<String, Object> returnErrorService(DispatchContext dctx, Map<String, ?> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonServiceReturnError", locale));
     }
 
@@ -260,13 +261,13 @@ public class CommonServices {
     /** Cause a Referential Integrity Error */
     public static Map<String, Object> entityFailTest(DispatchContext dctx, Map<String, ?> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
         // attempt to create a DataSource entity w/ an invalid dataSourceTypeId
         GenericValue newEntity = delegator.makeValue("DataSource");
-        newEntity.set(org.apache.ofbiz.persistence.entity.x.dataSourceId, "ENTITY_FAIL_TEST");
-        newEntity.set(org.apache.ofbiz.persistence.entity.x.dataSourceTypeId, "ENTITY_FAIL_TEST");
-        newEntity.set(org.apache.ofbiz.persistence.entity.x.description, "Entity Fail Test - Delete me if I am here");
+        newEntity.set(x.dataSourceId, "ENTITY_FAIL_TEST");
+        newEntity.set(x.dataSourceTypeId, "ENTITY_FAIL_TEST");
+        newEntity.set(x.description, "Entity Fail Test - Delete me if I am here");
         try {
             delegator.create(newEntity);
         } catch (GenericEntityException e) {
@@ -302,25 +303,25 @@ public class CommonServices {
 
     public static Map<String, Object> makeALotOfVisits(DispatchContext dctx, Map<String, ?> context) {
         Delegator delegator = dctx.getDelegator();
-        int count = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.count);
+        int count = (Integer) context.get(x.count);
 
         for (int i = 0; i < count; i++) {
             GenericValue v = delegator.makeValue("Visit");
             String seqId = delegator.getNextSeqId("Visit");
 
-            v.set(org.apache.ofbiz.persistence.entity.x.visitId, seqId);
-            v.set(org.apache.ofbiz.persistence.entity.x.userCreated, "N");
-            v.set(org.apache.ofbiz.persistence.entity.x.sessionId, "NA-" + seqId);
-            v.set(org.apache.ofbiz.persistence.entity.x.serverIpAddress, "127.0.0.1");
-            v.set(org.apache.ofbiz.persistence.entity.x.serverHostName, "localhost");
-            v.set(org.apache.ofbiz.persistence.entity.x.webappName, "webtools");
-            v.set(org.apache.ofbiz.persistence.entity.x.initialLocale, "en_US");
-            v.set(org.apache.ofbiz.persistence.entity.x.initialRequest, "https://localhost:8443/webtools/control/main");
-            v.set(org.apache.ofbiz.persistence.entity.x.initialReferrer, "https://localhost:8443/webtools/control/main");
-            v.set(org.apache.ofbiz.persistence.entity.x.initialUserAgent, "Mozilla/5.0 (Macintosh; U; PPC Mac OS X; en-us) AppleWebKit/124 (KHTML, like Gecko) Safari/125.1");
-            v.set(org.apache.ofbiz.persistence.entity.x.clientIpAddress, "127.0.0.1");
-            v.set(org.apache.ofbiz.persistence.entity.x.clientHostName, "localhost");
-            v.set(org.apache.ofbiz.persistence.entity.x.fromDate, UtilDateTime.nowTimestamp());
+            v.set(x.visitId, seqId);
+            v.set(x.userCreated, "N");
+            v.set(x.sessionId, "NA-" + seqId);
+            v.set(x.serverIpAddress, "127.0.0.1");
+            v.set(x.serverHostName, "localhost");
+            v.set(x.webappName, "webtools");
+            v.set(x.initialLocale, "en_US");
+            v.set(x.initialRequest, "https://localhost:8443/webtools/control/main");
+            v.set(x.initialReferrer, "https://localhost:8443/webtools/control/main");
+            v.set(x.initialUserAgent, "Mozilla/5.0 (Macintosh; U; PPC Mac OS X; en-us) AppleWebKit/124 (KHTML, like Gecko) Safari/125.1");
+            v.set(x.clientIpAddress, "127.0.0.1");
+            v.set(x.clientHostName, "localhost");
+            v.set(x.fromDate, UtilDateTime.nowTimestamp());
 
             try {
                 delegator.create(v);
@@ -347,10 +348,10 @@ public class CommonServices {
     }
 
     public static Map<String, Object> byteBufferTest(DispatchContext dctx, Map<String, ?> context) {
-        ByteBuffer buffer1 = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.byteBuffer1);
-        ByteBuffer buffer2 = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.byteBuffer2);
-        String fileName1 = (String) context.get(org.apache.ofbiz.persistence.entity.x.saveAsFileName1);
-        String fileName2 = (String) context.get(org.apache.ofbiz.persistence.entity.x.saveAsFileName2);
+        ByteBuffer buffer1 = (ByteBuffer) context.get(x.byteBuffer1);
+        ByteBuffer buffer2 = (ByteBuffer) context.get(x.byteBuffer2);
+        String fileName1 = (String) context.get(x.saveAsFileName1);
+        String fileName2 = (String) context.get(x.saveAsFileName2);
         String ofbizHome = System.getProperty("ofbiz.home");
         String outputPath1 = ofbizHome + (fileName1.startsWith("/") ? fileName1 : "/" + fileName1);
         String outputPath2 = ofbizHome + (fileName2.startsWith("/") ? fileName2 : "/" + fileName2);
@@ -378,11 +379,11 @@ public class CommonServices {
 
     public static Map<String, Object> uploadTest(DispatchContext dctx, Map<String, ?> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
 
-        byte[] array = (byte[]) context.get(org.apache.ofbiz.persistence.entity.x.uploadFile);
-        String fileName = (String) context.get(org.apache.ofbiz.persistence.entity.x._uploadFile_fileName);
-        String contentType = (String) context.get(org.apache.ofbiz.persistence.entity.x._uploadFile_contentType);
+        byte[] array = (byte[]) context.get(x.uploadFile);
+        String fileName = (String) context.get(x._uploadFile_fileName);
+        String contentType = (String) context.get(x._uploadFile_contentType);
 
         Map<String, Object> createCtx = new LinkedHashMap<>();
         createCtx.put("binData", array);
@@ -407,8 +408,8 @@ public class CommonServices {
         GenericValue dataResource = (GenericValue) createResp.get("dataResource");
         if (dataResource != null) {
             Map<String, Object> contentCtx = new LinkedHashMap<>();
-            contentCtx.put("dataResourceId", dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId));
-            contentCtx.put("localeString", ((Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale)).toString());
+            contentCtx.put("dataResourceId", dataResource.getString(x.dataResourceId));
+            contentCtx.put("localeString", ((Locale) context.get(x.locale)).toString());
             contentCtx.put("contentTypeId", "DOCUMENT");
             contentCtx.put("mimeTypeId", contentType);
             contentCtx.put("contentName", fileName);
@@ -431,7 +432,7 @@ public class CommonServices {
     }
 
     public static Map<String, Object> mcaTest(DispatchContext dctx, Map<String, ?> context) {
-        MimeMessageWrapper wrapper = (MimeMessageWrapper) context.get(org.apache.ofbiz.persistence.entity.x.messageWrapper);
+        MimeMessageWrapper wrapper = (MimeMessageWrapper) context.get(x.messageWrapper);
         MimeMessage message = wrapper.getMessage();
         try {
             if (message.getAllRecipients() != null) {
@@ -454,8 +455,8 @@ public class CommonServices {
     }
 
     public static Map<String, Object> streamTest(DispatchContext dctx, Map<String, ?> context) {
-        InputStream in = (InputStream) context.get(org.apache.ofbiz.persistence.entity.x.inputStream);
-        OutputStream out = (OutputStream) context.get(org.apache.ofbiz.persistence.entity.x.outputStream);
+        InputStream in = (InputStream) context.get(x.inputStream);
+        OutputStream out = (OutputStream) context.get(x.outputStream);
 
         String line;
 
@@ -477,8 +478,8 @@ public class CommonServices {
 
     public static Map<String, Object> ping(DispatchContext dctx, Map<String, ?> context) {
         Delegator delegator = dctx.getDelegator();
-        String message = (String) context.get(org.apache.ofbiz.persistence.entity.x.message);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String message = (String) context.get(x.message);
+        Locale locale = (Locale) context.get(x.locale);
         if (message == null) {
             message = "PONG";
         }
@@ -516,8 +517,8 @@ public class CommonServices {
     }
 
     public static Map<String, Object> resetMetric(DispatchContext dctx, Map<String, ?> context) {
-        String originalName = (String) context.get(org.apache.ofbiz.persistence.entity.x.name);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String originalName = (String) context.get(x.name);
+        Locale locale = (Locale) context.get(x.locale);
         String name = UtilCodec.getDecoder("url").decode(originalName);
         if (name == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonExceptionThrownWhileDecodingMetric",

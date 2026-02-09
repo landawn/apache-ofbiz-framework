@@ -31,6 +31,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.testtools.OFBizTestCase;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class PurchaseOrderTest extends OFBizTestCase {
     private static final String MODULE = OFBizTestCase.class.getName();
 
@@ -59,10 +60,10 @@ public class PurchaseOrderTest extends OFBizTestCase {
 
         GenericValue orderItem = delegator.makeValue("OrderItem", UtilMisc.toMap("orderItemSeqId", "00001", "orderItemTypeId",
                 "PRODUCT_ORDER_ITEM", "prodCatalogId", "DemoCatalog", "productId", "GZ-1000", "quantity", new BigDecimal("2"), "isPromo", "N"));
-        orderItem.set(org.apache.ofbiz.persistence.entity.x.unitPrice, new BigDecimal("1399.5"));
-        orderItem.set(org.apache.ofbiz.persistence.entity.x.unitListPrice, BigDecimal.ZERO);
-        orderItem.set(org.apache.ofbiz.persistence.entity.x.isModifiedPrice, "N");
-        orderItem.set(org.apache.ofbiz.persistence.entity.x.statusId, "ITEM_CREATED");
+        orderItem.set(x.unitPrice, new BigDecimal("1399.5"));
+        orderItem.set(x.unitListPrice, BigDecimal.ZERO);
+        orderItem.set(x.isModifiedPrice, "N");
+        orderItem.set(x.statusId, "ITEM_CREATED");
         List<GenericValue> orderItems = new LinkedList<>();
         orderItems.add(orderItem);
         ctx.put("orderItems", orderItems);
@@ -81,7 +82,7 @@ public class PurchaseOrderTest extends OFBizTestCase {
 
         GenericValue orderItemShipGroup = delegator.makeValue("OrderItemShipGroup", UtilMisc.toMap("carrierPartyId", "UPS",
                 "contactMechId", "9000", "isGift", "N", "maySplit", "N", "shipGroupSeqId", "00001", "shipmentMethodTypeId", "NEXT_DAY"));
-        orderItemShipGroup.set(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId, "CARRIER");
+        orderItemShipGroup.set(x.carrierRoleTypeId, "CARRIER");
         List<GenericValue> orderItemShipGroupInfo = new LinkedList<>();
         orderItemShipGroupInfo.add(orderItemShipGroup);
         ctx.put("orderItemShipGroupInfo", orderItemShipGroupInfo);

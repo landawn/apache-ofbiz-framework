@@ -41,6 +41,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class ConvertTree {
     private static final String MODULE = ConvertTree.class.getName();
 
@@ -67,9 +68,9 @@ In order to make this service active add the following to the service definition
     public static Map<String, Object> convertTree(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String file = (String) context.get(org.apache.ofbiz.persistence.entity.x.file);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String file = (String) context.get(x.file);
         Map<String, Object> result = new HashMap<>();
         String errMsg = "";
         String sucMsg = "";
@@ -80,29 +81,29 @@ In order to make this service active add the following to the service definition
                 int size = 0;
                 int counterLine = 0;
                 entity = delegator.makeValue("Content");
-                entity.set(org.apache.ofbiz.persistence.entity.x.contentId, "ROOT");
-                entity.set(org.apache.ofbiz.persistence.entity.x.contentName, "ROOT");
-                entity.set(org.apache.ofbiz.persistence.entity.x.contentTypeId, "DOCUMENT");
-                entity.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
-                entity.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
-                entity.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
-                entity.set(org.apache.ofbiz.persistence.entity.x.lastUpdatedStamp, UtilDateTime.nowTimestamp());
-                entity.set(org.apache.ofbiz.persistence.entity.x.lastUpdatedTxStamp, UtilDateTime.nowTimestamp());
-                entity.set(org.apache.ofbiz.persistence.entity.x.createdStamp, UtilDateTime.nowTimestamp());
-                entity.set(org.apache.ofbiz.persistence.entity.x.createdTxStamp, UtilDateTime.nowTimestamp());
+                entity.set(x.contentId, "ROOT");
+                entity.set(x.contentName, "ROOT");
+                entity.set(x.contentTypeId, "DOCUMENT");
+                entity.set(x.createdByUserLogin, userLogin.get(x.userLoginId));
+                entity.set(x.lastModifiedByUserLogin, userLogin.get(x.userLoginId));
+                entity.set(x.createdDate, UtilDateTime.nowTimestamp());
+                entity.set(x.lastUpdatedStamp, UtilDateTime.nowTimestamp());
+                entity.set(x.lastUpdatedTxStamp, UtilDateTime.nowTimestamp());
+                entity.set(x.createdStamp, UtilDateTime.nowTimestamp());
+                entity.set(x.createdTxStamp, UtilDateTime.nowTimestamp());
                 delegator.create(entity);
 
                 entity = delegator.makeValue("Content");
-                entity.set(org.apache.ofbiz.persistence.entity.x.contentId, "HOME_DOCUMENT");
-                entity.set(org.apache.ofbiz.persistence.entity.x.contentName, "Home");
-                entity.set(org.apache.ofbiz.persistence.entity.x.contentTypeId, "DOCUMENT");
-                entity.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
-                entity.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
-                entity.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
-                entity.set(org.apache.ofbiz.persistence.entity.x.lastUpdatedStamp, UtilDateTime.nowTimestamp());
-                entity.set(org.apache.ofbiz.persistence.entity.x.lastUpdatedTxStamp, UtilDateTime.nowTimestamp());
-                entity.set(org.apache.ofbiz.persistence.entity.x.createdStamp, UtilDateTime.nowTimestamp());
-                entity.set(org.apache.ofbiz.persistence.entity.x.createdTxStamp, UtilDateTime.nowTimestamp());
+                entity.set(x.contentId, "HOME_DOCUMENT");
+                entity.set(x.contentName, "Home");
+                entity.set(x.contentTypeId, "DOCUMENT");
+                entity.set(x.createdByUserLogin, userLogin.get(x.userLoginId));
+                entity.set(x.lastModifiedByUserLogin, userLogin.get(x.userLoginId));
+                entity.set(x.createdDate, UtilDateTime.nowTimestamp());
+                entity.set(x.lastUpdatedStamp, UtilDateTime.nowTimestamp());
+                entity.set(x.lastUpdatedTxStamp, UtilDateTime.nowTimestamp());
+                entity.set(x.createdStamp, UtilDateTime.nowTimestamp());
+                entity.set(x.createdTxStamp, UtilDateTime.nowTimestamp());
                 delegator.create(entity);
 
                 Map<String, Object> contentAssoc = new HashMap<>();
@@ -139,7 +140,7 @@ In order to make this service active add the following to the service definition
                                 //check duplicate folder
                                 GenericValue content = EntityQuery.use(delegator).from("Content").where("contentName", contentName).queryFirst();
                                 if (content != null) {
-                                    contentId = content.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+                                    contentId = content.getString(x.contentId);
                                 }
                                 if (content != null && hasFolder) {
                                     if (rootContent != null) {
@@ -153,11 +154,11 @@ In order to make this service active add the following to the service definition
                                         while (contentAssChecks.hasNext() && !contentNameMatch) {
                                             GenericValue contentAss = contentAssChecks.next();
                                             GenericValue contentcheck = EntityQuery.use(delegator).from("Content").where("contentId",
-                                                    contentAss.get(org.apache.ofbiz.persistence.entity.x.contentId)).queryOne();
+                                                    contentAss.get(x.contentId)).queryOne();
                                             if (contentcheck != null) {
-                                                if (contentcheck.get(org.apache.ofbiz.persistence.entity.x.contentName).equals(contentName) && !contentNameMatch) {
+                                                if (contentcheck.get(x.contentName).equals(contentName) && !contentNameMatch) {
                                                     contentNameMatch = true;
-                                                    contentId = contentcheck.get(org.apache.ofbiz.persistence.entity.x.contentId).toString();
+                                                    contentId = contentcheck.get(x.contentId).toString();
                                                 }
                                             }
                                         }
@@ -173,12 +174,12 @@ In order to make this service active add the following to the service definition
                                 if (contentAssocSize == 0 && !contentNameMatch) { //New Root Content
                                     contentId = delegator.getNextSeqId("Content");
                                     entity = delegator.makeValue("Content");
-                                    entity.set(org.apache.ofbiz.persistence.entity.x.contentId, contentId);
-                                    entity.set(org.apache.ofbiz.persistence.entity.x.contentName, contentName);
-                                    entity.set(org.apache.ofbiz.persistence.entity.x.contentTypeId, "DOCUMENT");
-                                    entity.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
-                                    entity.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
-                                    entity.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
+                                    entity.set(x.contentId, contentId);
+                                    entity.set(x.contentName, contentName);
+                                    entity.set(x.contentTypeId, "DOCUMENT");
+                                    entity.set(x.createdByUserLogin, userLogin.get(x.userLoginId));
+                                    entity.set(x.lastModifiedByUserLogin, userLogin.get(x.userLoginId));
+                                    entity.set(x.createdDate, UtilDateTime.nowTimestamp());
                                     delegator.create(entity);
                                     hasFolder = false;
                                 } else {
@@ -243,7 +244,7 @@ In order to make this service active add the following to the service definition
                                                        Map<String, ? extends Object> context, DispatchContext dctx) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Map<String, Object> result = new HashMap<>();
         String subContents = null;
         String check = ",";
@@ -274,7 +275,7 @@ In order to make this service active add the following to the service definition
                             GenericValue contentch = contentCheck.next();
                             if (contentch != null) {
                                 List<GenericValue> contentAssocsChecks = EntityQuery.use(delegator).from("ContentAssoc")
-                                        .where("contentId", contentch.get(org.apache.ofbiz.persistence.entity.x.contentId), "contentIdTo", rootContent)
+                                        .where("contentId", contentch.get(x.contentId), "contentIdTo", rootContent)
                                         .queryList();
                                 if (!contentAssocsChecks.isEmpty()) {
                                     contentNameMatch = true;
@@ -294,17 +295,17 @@ In order to make this service active add the following to the service definition
                         //create Content
                         contentId = delegator.getNextSeqId("Content");
                         entity = delegator.makeValue("Content");
-                        entity.set(org.apache.ofbiz.persistence.entity.x.contentId, contentId);
-                        entity.set(org.apache.ofbiz.persistence.entity.x.contentName, contentName);
-                        entity.set(org.apache.ofbiz.persistence.entity.x.contentTypeId, "DOCUMENT");
-                        entity.set(org.apache.ofbiz.persistence.entity.x.dataResourceId, dataResourceId);
-                        entity.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
-                        entity.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
-                        entity.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
-                        entity.set(org.apache.ofbiz.persistence.entity.x.lastUpdatedStamp, UtilDateTime.nowTimestamp());
-                        entity.set(org.apache.ofbiz.persistence.entity.x.lastUpdatedTxStamp, UtilDateTime.nowTimestamp());
-                        entity.set(org.apache.ofbiz.persistence.entity.x.createdStamp, UtilDateTime.nowTimestamp());
-                        entity.set(org.apache.ofbiz.persistence.entity.x.createdTxStamp, UtilDateTime.nowTimestamp());
+                        entity.set(x.contentId, contentId);
+                        entity.set(x.contentName, contentName);
+                        entity.set(x.contentTypeId, "DOCUMENT");
+                        entity.set(x.dataResourceId, dataResourceId);
+                        entity.set(x.createdByUserLogin, userLogin.get(x.userLoginId));
+                        entity.set(x.lastModifiedByUserLogin, userLogin.get(x.userLoginId));
+                        entity.set(x.createdDate, UtilDateTime.nowTimestamp());
+                        entity.set(x.lastUpdatedStamp, UtilDateTime.nowTimestamp());
+                        entity.set(x.lastUpdatedTxStamp, UtilDateTime.nowTimestamp());
+                        entity.set(x.createdStamp, UtilDateTime.nowTimestamp());
+                        entity.set(x.createdTxStamp, UtilDateTime.nowTimestamp());
                         delegator.create(entity);
 
                         //Relation Content
@@ -339,7 +340,7 @@ In order to make this service active add the following to the service definition
                             GenericValue contentch = contentCheck.next();
                             if (contentch != null) {
                                 long contentAssocCount = EntityQuery.use(delegator).from("ContentAssoc")
-                                        .where("contentId", contentch.get(org.apache.ofbiz.persistence.entity.x.contentId), "contentIdTo", rootContent)
+                                        .where("contentId", contentch.get(x.contentId), "contentIdTo", rootContent)
                                         .queryCount();
                                 if (contentAssocCount > 0) {
                                     contentNameMatch = true;
@@ -359,17 +360,17 @@ In order to make this service active add the following to the service definition
                         //create Content
                         contentId = delegator.getNextSeqId("Content");
                         entity = delegator.makeValue("Content");
-                        entity.set(org.apache.ofbiz.persistence.entity.x.contentId, contentId);
-                        entity.set(org.apache.ofbiz.persistence.entity.x.contentName, contentName);
-                        entity.set(org.apache.ofbiz.persistence.entity.x.contentTypeId, "DOCUMENT");
-                        entity.set(org.apache.ofbiz.persistence.entity.x.dataResourceId, dataResourceId);
-                        entity.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
-                        entity.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
-                        entity.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
-                        entity.set(org.apache.ofbiz.persistence.entity.x.lastUpdatedStamp, UtilDateTime.nowTimestamp());
-                        entity.set(org.apache.ofbiz.persistence.entity.x.lastUpdatedTxStamp, UtilDateTime.nowTimestamp());
-                        entity.set(org.apache.ofbiz.persistence.entity.x.createdStamp, UtilDateTime.nowTimestamp());
-                        entity.set(org.apache.ofbiz.persistence.entity.x.createdTxStamp, UtilDateTime.nowTimestamp());
+                        entity.set(x.contentId, contentId);
+                        entity.set(x.contentName, contentName);
+                        entity.set(x.contentTypeId, "DOCUMENT");
+                        entity.set(x.dataResourceId, dataResourceId);
+                        entity.set(x.createdByUserLogin, userLogin.get(x.userLoginId));
+                        entity.set(x.lastModifiedByUserLogin, userLogin.get(x.userLoginId));
+                        entity.set(x.createdDate, UtilDateTime.nowTimestamp());
+                        entity.set(x.lastUpdatedStamp, UtilDateTime.nowTimestamp());
+                        entity.set(x.lastUpdatedTxStamp, UtilDateTime.nowTimestamp());
+                        entity.set(x.createdStamp, UtilDateTime.nowTimestamp());
+                        entity.set(x.createdTxStamp, UtilDateTime.nowTimestamp());
                         delegator.create(entity);
 
                         //create ContentAssoc

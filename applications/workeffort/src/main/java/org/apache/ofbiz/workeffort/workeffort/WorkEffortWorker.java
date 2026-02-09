@@ -32,6 +32,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 /** WorkEffortWorker - Work Effort worker class. */
 public final class WorkEffortWorker {
 
@@ -83,7 +84,7 @@ public final class WorkEffortWorker {
         Set<String> keys = new HashSet<>();
         Set<GenericValue> exclusions = new HashSet<>();
         for (GenericValue workEffort : workEfforts) {
-            String workEffortId = workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
+            String workEffortId = workEffort.getString(x.workEffortId);
             if (keys.contains(workEffortId)) {
                 exclusions.add(workEffort);
             } else {

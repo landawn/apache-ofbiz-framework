@@ -55,6 +55,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Survey Wrapper - Class to render survey forms
  */
@@ -212,9 +213,9 @@ public class SurveyWrapper {
 
         Map<String, Object> sqaaWithColIdListByMultiRespId = new HashMap<>();
         for (GenericValue surveyQuestionAndAppl : surveyQuestionAndAppls) {
-            String surveyMultiRespColId = surveyQuestionAndAppl.getString(org.apache.ofbiz.persistence.entity.x.surveyMultiRespColId);
+            String surveyMultiRespColId = surveyQuestionAndAppl.getString(x.surveyMultiRespColId);
             if (UtilValidate.isNotEmpty(surveyMultiRespColId)) {
-                String surveyMultiRespId = surveyQuestionAndAppl.getString(org.apache.ofbiz.persistence.entity.x.surveyMultiRespId);
+                String surveyMultiRespId = surveyQuestionAndAppl.getString(x.surveyMultiRespId);
                 UtilMisc.addToListInMap(surveyQuestionAndAppl, sqaaWithColIdListByMultiRespId, surveyMultiRespId);
             }
         }
@@ -289,7 +290,7 @@ public class SurveyWrapper {
     public String getSurveyName() {
         GenericValue survey = this.getSurvey();
         if (survey != null) {
-            return survey.getString(org.apache.ofbiz.persistence.entity.x.surveyName);
+            return survey.getString(x.surveyName);
         }
         return "";
     }
@@ -304,7 +305,7 @@ public class SurveyWrapper {
         }
 
         GenericValue survey = this.getSurvey();
-        return !(!"Y".equals(survey.getString(org.apache.ofbiz.persistence.entity.x.allowMultiple)) && !"Y".equals(survey.getString(org.apache.ofbiz.persistence.entity.x.allowUpdate)));
+        return !(!"Y".equals(survey.getString(x.allowMultiple)) && !"Y".equals(survey.getString(x.allowUpdate)));
     }
 
     /**
@@ -317,7 +318,7 @@ public class SurveyWrapper {
             return true;
         }
         GenericValue survey = this.getSurvey();
-        return "Y".equals(survey.getString(org.apache.ofbiz.persistence.entity.x.allowMultiple));
+        return "Y".equals(survey.getString(x.allowMultiple));
     }
 
     /** returns a list of SurveyQuestions (in order by sequence number) for the current Survey */
@@ -359,7 +360,7 @@ public class SurveyWrapper {
 
         if (UtilValidate.isNotEmpty(responses)) {
             GenericValue response = EntityUtil.getFirst(responses);
-            responseId = response.getString(org.apache.ofbiz.persistence.entity.x.surveyResponseId);
+            responseId = response.getString(x.surveyResponseId);
             if (responses.size() > 1) {
                 Debug.logWarning("More then one response found for survey : " + surveyId + " by party : " + partyId + " using most current", MODULE);
             }
@@ -400,7 +401,7 @@ public class SurveyWrapper {
     public List<GenericValue> getSurveyResponses(GenericValue question) throws SurveyWrapperException {
         List<GenericValue> responses = null;
         try {
-            responses = EntityQuery.use(delegator).from("SurveyResponse").where("surveyQuestionId", question.get(org.apache.ofbiz.persistence.entity.x.surveyQuestionId)).queryList();
+            responses = EntityQuery.use(delegator).from("SurveyResponse").where("surveyQuestionId", question.get(x.surveyQuestionId)).queryList();
         } catch (GenericEntityException e) {
             throw new SurveyWrapperException(e);
         }
@@ -421,7 +422,7 @@ public class SurveyWrapper {
 
             if (UtilValidate.isNotEmpty(answers)) {
                 for (GenericValue answer : answers) {
-                    answerMap.put(answer.getString(org.apache.ofbiz.persistence.entity.x.surveyQuestionId), answer);
+                    answerMap.put(answer.getString(x.surveyQuestionId), answer);
                 }
             }
         }
@@ -504,7 +505,7 @@ public class SurveyWrapper {
             for (GenericValue question : questions) {
                 Map<String, Object> results = getResultInfo(question);
                 if (results != null) {
-                    questionResults.put(question.getString(org.apache.ofbiz.persistence.entity.x.surveyQuestionId), results);
+                    questionResults.put(question.getString(x.surveyQuestionId), results);
                 }
             }
         }
@@ -532,7 +533,7 @@ public class SurveyWrapper {
         // "_no_percent"  - number of 'N' (false) responses (boolean type)
         // [optionId]     - Map containing '_total, _percent' keys (option type)
 
-        String questionType = question.getString(org.apache.ofbiz.persistence.entity.x.surveyQuestionTypeId);
+        String questionType = question.getString(x.surveyQuestionTypeId);
         resultMap.put("_q_type", questionType);
 
         // call the proper method based on the question type
@@ -615,7 +616,7 @@ public class SurveyWrapper {
                 if (eli != null) {
                     GenericValue value;
                     while (((value = eli.next()) != null)) {
-                        if ("Y".equalsIgnoreCase(value.getString(org.apache.ofbiz.persistence.entity.x.booleanResponse))) {
+                        if ("Y".equalsIgnoreCase(value.getString(x.booleanResponse))) {
                             result[1]++;
                         } else {
                             result[2]++;
@@ -663,19 +664,19 @@ public class SurveyWrapper {
                 while (((value = eli.next()) != null)) {
                     switch (type) {
                     case 1:
-                        Long n = value.getLong(org.apache.ofbiz.persistence.entity.x.numericResponse);
+                        Long n = value.getLong(x.numericResponse);
                         if (UtilValidate.isNotEmpty(n)) {
                             result[1] += n;
                         }
                         break;
                     case 2:
-                        Double c = value.getDouble(org.apache.ofbiz.persistence.entity.x.currencyResponse);
+                        Double c = value.getDouble(x.currencyResponse);
                         if (UtilValidate.isNotEmpty(c)) {
                             result[1] += (((double) Math.round((c - c) * 100)) / 100);
                         }
                         break;
                     case 3:
-                        Double f = value.getDouble(org.apache.ofbiz.persistence.entity.x.floatResponse);
+                        Double f = value.getDouble(x.floatResponse);
                         if (UtilValidate.isNotEmpty(f)) {
                             result[1] += f;
                         }
@@ -754,7 +755,7 @@ public class SurveyWrapper {
             if (eli != null) {
                 GenericValue value;
                 while (((value = eli.next()) != null)) {
-                    String optionId = value.getString(org.apache.ofbiz.persistence.entity.x.surveyOptionSeqId);
+                    String optionId = value.getString(x.surveyOptionSeqId);
                     if (UtilValidate.isNotEmpty(optionId)) {
                         Long optCount = (Long) result.remove(optionId);
                         if (optCount == null) {
@@ -791,7 +792,7 @@ public class SurveyWrapper {
 
     private EntityCondition makeEliCondition(GenericValue question) {
         return EntityCondition.makeCondition(UtilMisc.toList(EntityCondition.makeCondition("surveyQuestionId",
-                EntityOperator.EQUALS, question.getString(org.apache.ofbiz.persistence.entity.x.surveyQuestionId)),
+                EntityOperator.EQUALS, question.getString(x.surveyQuestionId)),
                 EntityCondition.makeCondition("surveyId", EntityOperator.EQUALS, surveyId)), EntityOperator.AND);
     }
 

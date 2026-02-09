@@ -31,6 +31,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.transaction.TransactionUtil;
 import org.apache.ofbiz.webapp.stats.VisitHandler;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * HttpSessionListener that saves information about abandoned carts
  */
@@ -79,23 +80,23 @@ public class CartEventListener implements HttpSessionListener {
             for (ShoppingCartItem cartItem : cart) {
                 GenericValue cartAbandonedLine = delegator.makeValue("CartAbandonedLine");
 
-                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.visitId, visit.get(org.apache.ofbiz.persistence.entity.x.visitId));
-                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.cartAbandonedLineSeqId, Integer.toString(seqId));
-                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.productId, cartItem.getProductId());
-                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.prodCatalogId, cartItem.getProdCatalogId());
-                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.quantity, cartItem.getQuantity());
-                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.reservStart, cartItem.getReservStart());
-                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.reservLength, cartItem.getReservLength());
-                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.reservPersons, cartItem.getReservPersons());
-                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.unitPrice, cartItem.getBasePrice());
-                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.reserv2ndPPPerc, cartItem.getReserv2ndPPPerc());
-                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.reservNthPPPerc, cartItem.getReservNthPPPerc());
+                cartAbandonedLine.set(x.visitId, visit.get(x.visitId));
+                cartAbandonedLine.set(x.cartAbandonedLineSeqId, Integer.toString(seqId));
+                cartAbandonedLine.set(x.productId, cartItem.getProductId());
+                cartAbandonedLine.set(x.prodCatalogId, cartItem.getProdCatalogId());
+                cartAbandonedLine.set(x.quantity, cartItem.getQuantity());
+                cartAbandonedLine.set(x.reservStart, cartItem.getReservStart());
+                cartAbandonedLine.set(x.reservLength, cartItem.getReservLength());
+                cartAbandonedLine.set(x.reservPersons, cartItem.getReservPersons());
+                cartAbandonedLine.set(x.unitPrice, cartItem.getBasePrice());
+                cartAbandonedLine.set(x.reserv2ndPPPerc, cartItem.getReserv2ndPPPerc());
+                cartAbandonedLine.set(x.reservNthPPPerc, cartItem.getReservNthPPPerc());
                 if (cartItem.getConfigWrapper() != null) {
-                    cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.configId, cartItem.getConfigWrapper().getConfigId());
+                    cartAbandonedLine.set(x.configId, cartItem.getConfigWrapper().getConfigId());
                 }
-                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.totalWithAdjustments, cartItem.getItemSubTotal());
+                cartAbandonedLine.set(x.totalWithAdjustments, cartItem.getItemSubTotal());
                 //not doing pre-reservations now, so this is always N
-                cartAbandonedLine.set(org.apache.ofbiz.persistence.entity.x.wasReserved, "N");
+                cartAbandonedLine.set(x.wasReserved, "N");
                 cartAbandonedLine.create();
 
                 seqId++;

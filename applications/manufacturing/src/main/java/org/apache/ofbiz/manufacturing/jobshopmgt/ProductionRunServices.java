@@ -59,6 +59,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Services for Production Run maintenance
  */
@@ -83,10 +84,10 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Map<String, Object> serviceResult = new HashMap<>();
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunId);
+        String productionRunId = (String) context.get(x.productionRunId);
 
         ProductionRun productionRun = new ProductionRun(productionRunId, delegator, dispatcher);
         if (!productionRun.exist()) {
@@ -102,7 +103,7 @@ public class ProductionRunServices {
                 ProductionRunHelper.getLinkedProductionRuns(delegator, dispatcher, productionRunId, mandatoryWorkEfforts);
                 for (int i = 1; i < mandatoryWorkEfforts.size(); i++) {
                     GenericValue mandatoryWorkEffort = (mandatoryWorkEfforts.get(i)).getGenericValue();
-                    if (!("PRUN_CANCELLED".equals(mandatoryWorkEffort.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId)))) {
+                    if (!("PRUN_CANCELLED".equals(mandatoryWorkEffort.getString(x.currentStatusId)))) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                                 "ManufacturingProductionRunStatusNotChangedMandatoryProductionRunFound", locale));
                     }
@@ -124,7 +125,7 @@ public class ProductionRunServices {
                         .queryList();
                 if (UtilValidate.isNotEmpty(products)) {
                     for (GenericValue product : products) {
-                        product.set(org.apache.ofbiz.persistence.entity.x.statusId, "WEGS_CANCELLED");
+                        product.set(x.statusId, "WEGS_CANCELLED");
                         product.store();
                     }
                 }
@@ -133,7 +134,7 @@ public class ProductionRunServices {
                 List<GenericValue> tasks = productionRun.getProductionRunRoutingTasks();
                 String taskId = null;
                 for (GenericValue oneTask : tasks) {
-                    taskId = oneTask.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
+                    taskId = oneTask.getString(x.workEffortId);
                     serviceContext.clear();
                     serviceContext.put("workEffortId", taskId);
                     serviceContext.put("currentStatusId", "PRUN_CANCELLED");
@@ -150,7 +151,7 @@ public class ProductionRunServices {
                             .queryList();
                     if (UtilValidate.isNotEmpty(components)) {
                         for (GenericValue component : components) {
-                            component.set(org.apache.ofbiz.persistence.entity.x.statusId, "WEGS_CANCELLED");
+                            component.set(x.statusId, "WEGS_CANCELLED");
                             component.store();
                         }
                     }
@@ -186,18 +187,18 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         // TODO: security management  and finishing cleaning (ex copy from PartyServices.java)
         // Mandatory input fields
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        Timestamp startDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.startDate);
-        BigDecimal pRQuantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.pRQuantity);
-        String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId);
+        String productId = (String) context.get(x.productId);
+        Timestamp startDate = (Timestamp) context.get(x.startDate);
+        BigDecimal pRQuantity = (BigDecimal) context.get(x.pRQuantity);
+        String facilityId = (String) context.get(x.facilityId);
         // Optional input fields
-        String workEffortId = (String) context.get(org.apache.ofbiz.persistence.entity.x.routingId);
-        String workEffortName = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortName);
-        String description = (String) context.get(org.apache.ofbiz.persistence.entity.x.description);
+        String workEffortId = (String) context.get(x.routingId);
+        String workEffortName = (String) context.get(x.workEffortName);
+        String description = (String) context.get(x.description);
 
         GenericValue routing = null;
         GenericValue product = null;
@@ -262,10 +263,10 @@ public class ProductionRunServices {
 
         // ProductionRun header creation,
         if (workEffortName == null) {
-            String prdName = UtilValidate.isNotEmpty(product.getString(org.apache.ofbiz.persistence.entity.x.productName)) ? product.getString(org.apache.ofbiz.persistence.entity.x.productName) : product.getString(
-                    org.apache.ofbiz.persistence.entity.x.productId);
-            String wefName = UtilValidate.isNotEmpty(routing.getString(org.apache.ofbiz.persistence.entity.x.workEffortName)) ? routing.getString(org.apache.ofbiz.persistence.entity.x.workEffortName)
-                    : routing.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
+            String prdName = UtilValidate.isNotEmpty(product.getString(x.productName)) ? product.getString(x.productName) : product.getString(
+                    x.productId);
+            String wefName = UtilValidate.isNotEmpty(routing.getString(x.workEffortName)) ? routing.getString(x.workEffortName)
+                    : routing.getString(x.workEffortId);
             workEffortName = prdName + "-" + wefName;
         }
 
@@ -318,7 +319,7 @@ public class ProductionRunServices {
             if (EntityUtil.isValueActive(routingTaskAssoc, startDate)) {
                 GenericValue routingTask = null;
                 try {
-                    routingTask = routingTaskAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ToWorkEffort, false);
+                    routingTask = routingTaskAssoc.getRelatedOne(x.ToWorkEffort, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e.getMessage(), MODULE);
                 }
@@ -327,20 +328,20 @@ public class ProductionRunServices {
                 Timestamp endDate = TechDataServices.addForward(TechDataServices.getTechDataCalendar(routingTask), startDate, totalTime);
 
                 serviceContext.clear();
-                serviceContext.put("priority", routingTaskAssoc.get(org.apache.ofbiz.persistence.entity.x.sequenceNum));
+                serviceContext.put("priority", routingTaskAssoc.get(x.sequenceNum));
                 serviceContext.put("workEffortPurposeTypeId", "WEPT_PRODUCTION_RUN");
-                serviceContext.put("workEffortName", routingTask.get(org.apache.ofbiz.persistence.entity.x.workEffortName));
-                serviceContext.put("description", routingTask.get(org.apache.ofbiz.persistence.entity.x.description));
-                serviceContext.put("fixedAssetId", routingTask.get(org.apache.ofbiz.persistence.entity.x.fixedAssetId));
+                serviceContext.put("workEffortName", routingTask.get(x.workEffortName));
+                serviceContext.put("description", routingTask.get(x.description));
+                serviceContext.put("fixedAssetId", routingTask.get(x.fixedAssetId));
                 serviceContext.put("workEffortTypeId", "PROD_ORDER_TASK");
                 serviceContext.put("currentStatusId", "PRUN_CREATED");
                 serviceContext.put("workEffortParentId", productionRunId);
                 serviceContext.put("facilityId", facilityId);
-                serviceContext.put("reservPersons", routingTask.get(org.apache.ofbiz.persistence.entity.x.reservPersons));
+                serviceContext.put("reservPersons", routingTask.get(x.reservPersons));
                 serviceContext.put("estimatedStartDate", startDate);
                 serviceContext.put("estimatedCompletionDate", endDate);
-                serviceContext.put("estimatedSetupMillis", routingTask.get(org.apache.ofbiz.persistence.entity.x.estimatedSetupMillis));
-                serviceContext.put("estimatedMilliSeconds", routingTask.get(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds));
+                serviceContext.put("estimatedSetupMillis", routingTask.get(x.estimatedSetupMillis));
+                serviceContext.put("estimatedMilliSeconds", routingTask.get(x.estimatedMilliSeconds));
                 serviceContext.put("quantityToProduce", pRQuantity);
                 serviceContext.put("userLogin", userLogin);
                 serviceResult = null;
@@ -361,7 +362,7 @@ public class ProductionRunServices {
                 // to keep track of the template used to generate it.
                 serviceContext.clear();
                 serviceContext.put("userLogin", userLogin);
-                serviceContext.put("workEffortIdFrom", routingTask.getString(org.apache.ofbiz.persistence.entity.x.workEffortId));
+                serviceContext.put("workEffortIdFrom", routingTask.getString(x.workEffortId));
                 serviceContext.put("workEffortIdTo", productionRunTaskId);
                 serviceContext.put("workEffortAssocTypeId", "WORK_EFF_TEMPLATE");
                 try {
@@ -373,7 +374,7 @@ public class ProductionRunServices {
                     Debug.logError(e, "Problem calling the createWorkEffortAssoc service", MODULE);
                 }
                 // clone associated objects from the routing task to the run task
-                String routingTaskId = routingTaskAssoc.getString(org.apache.ofbiz.persistence.entity.x.workEffortIdTo);
+                String routingTaskId = routingTaskAssoc.getString(x.workEffortIdTo);
                 try {
                     cloneWorkEffortPartyAssignments(ctx, userLogin, routingTaskId, productionRunTaskId);
                     cloneWorkEffortCostCalcs(ctx, userLogin, routingTaskId, productionRunTaskId);
@@ -387,8 +388,8 @@ public class ProductionRunServices {
                     // The components variable contains a list of BOMNodes:
                     // each node represents a product (component).
                     GenericValue productBom = node.getProductAssoc();
-                    if ((productBom.getString(org.apache.ofbiz.persistence.entity.x.routingWorkEffortId) == null && first) || (productBom.getString(org.apache.ofbiz.persistence.entity.x.routingWorkEffortId) != null
-                            && productBom.getString(org.apache.ofbiz.persistence.entity.x.routingWorkEffortId).equals(routingTask.getString(org.apache.ofbiz.persistence.entity.x.workEffortId)))) {
+                    if ((productBom.getString(x.routingWorkEffortId) == null && first) || (productBom.getString(x.routingWorkEffortId) != null
+                            && productBom.getString(x.routingWorkEffortId).equals(routingTask.getString(x.workEffortId)))) {
                         serviceContext.clear();
                         serviceContext.put("workEffortId", productionRunTaskId);
                         // Here we get the ProductAssoc record from the BOMNode
@@ -397,7 +398,7 @@ public class ProductionRunServices {
                         serviceContext.put("productId", node.getProduct().get("productId"));
                         serviceContext.put("workEffortGoodStdTypeId", "PRUNT_PROD_NEEDED");
                         serviceContext.put("statusId", "WEGS_CREATED");
-                        serviceContext.put("fromDate", productBom.get(org.apache.ofbiz.persistence.entity.x.fromDate));
+                        serviceContext.put("fromDate", productBom.get(x.fromDate));
                         // Here we use the getQuantity method to get the quantity already
                         // computed by the getManufacturingComponents service
                         serviceContext.put("estimatedQuantity", node.getQuantity());
@@ -412,7 +413,7 @@ public class ProductionRunServices {
                             Debug.logError(e, "Problem calling the createWorkEffortGoodStandard service", MODULE);
                         }
                         if (Debug.infoOn()) {
-                            Debug.logInfo("ProductLink created for productId: " + productBom.getString(org.apache.ofbiz.persistence.entity.x.productIdTo), MODULE);
+                            Debug.logInfo("ProductLink created for productId: " + productBom.getString(x.productIdTo), MODULE);
                         }
                     }
                 }
@@ -459,10 +460,10 @@ public class ProductionRunServices {
             for (GenericValue workEffortPartyAssignment : workEffortPartyAssignments) {
                 Map<String, Object> partyToWorkEffort = UtilMisc.<String, Object>toMap(
                         "workEffortId", productionRunTaskId,
-                        "partyId", workEffortPartyAssignment.getString(org.apache.ofbiz.persistence.entity.x.partyId),
-                        "roleTypeId", workEffortPartyAssignment.getString(org.apache.ofbiz.persistence.entity.x.roleTypeId),
-                        "fromDate", workEffortPartyAssignment.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate),
-                        "statusId", workEffortPartyAssignment.getString(org.apache.ofbiz.persistence.entity.x.statusId),
+                        "partyId", workEffortPartyAssignment.getString(x.partyId),
+                        "roleTypeId", workEffortPartyAssignment.getString(x.roleTypeId),
+                        "fromDate", workEffortPartyAssignment.getTimestamp(x.fromDate),
+                        "statusId", workEffortPartyAssignment.getString(x.statusId),
                         "userLogin", userLogin);
                 try {
                     Map<String, Object> result = dctx.getDispatcher().runSync("assignPartyToWorkEffort", partyToWorkEffort);
@@ -475,7 +476,7 @@ public class ProductionRunServices {
                     Debug.logError(e, "Problem calling the assignPartyToWorkEffort service", MODULE);
                 }
                 if (Debug.infoOn()) {
-                    Debug.logInfo("ProductionRunPartyassigment for party: " + workEffortPartyAssignment.get(org.apache.ofbiz.persistence.entity.x.partyId) + " created", MODULE);
+                    Debug.logInfo("ProductionRunPartyassigment for party: " + workEffortPartyAssignment.get(x.partyId) + " created", MODULE);
                 }
             }
         }
@@ -498,10 +499,10 @@ public class ProductionRunServices {
             for (GenericValue costCalc : workEffortCostCalcs) {
                 Map<String, Object> createCostCalc = UtilMisc.toMap(
                         "workEffortId", productionRunTaskId,
-                        "costComponentTypeId", costCalc.getString(org.apache.ofbiz.persistence.entity.x.costComponentTypeId),
-                        "costComponentCalcId", costCalc.getString(org.apache.ofbiz.persistence.entity.x.costComponentCalcId),
-                        "fromDate", costCalc.get(org.apache.ofbiz.persistence.entity.x.fromDate),
-                        "thruDate", costCalc.get(org.apache.ofbiz.persistence.entity.x.thruDate),
+                        "costComponentTypeId", costCalc.getString(x.costComponentTypeId),
+                        "costComponentCalcId", costCalc.getString(x.costComponentCalcId),
+                        "fromDate", costCalc.get(x.fromDate),
+                        "thruDate", costCalc.get(x.thruDate),
                         "userLogin", userLogin);
 
                 try {
@@ -515,7 +516,7 @@ public class ProductionRunServices {
                     Debug.logError(gse, "Problem calling the createWorkEffortCostCalc service", MODULE);
                 }
                 if (Debug.infoOn()) {
-                    Debug.logInfo("ProductionRun CostCalc for cost calc: " + costCalc.getString(org.apache.ofbiz.persistence.entity.x.costComponentCalcId) + " created", MODULE);
+                    Debug.logInfo("ProductionRun CostCalc for cost calc: " + costCalc.getString(x.costComponentCalcId) + " created", MODULE);
                 }
             }
         }
@@ -537,9 +538,9 @@ public class ProductionRunServices {
     public static Map<String, Object> updateProductionRun(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunId);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String productionRunId = (String) context.get(x.productionRunId);
 
         if (UtilValidate.isNotEmpty(productionRunId)) {
             ProductionRun productionRun = new ProductionRun(productionRunId, delegator, dispatcher);
@@ -550,27 +551,27 @@ public class ProductionRunServices {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingProductionRunPrinted", locale));
                 }
 
-                BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
+                BigDecimal quantity = (BigDecimal) context.get(x.quantity);
                 if (quantity != null && quantity.compareTo(productionRun.getQuantity()) != 0) {
                     productionRun.setQuantity(quantity);
                 }
 
-                Timestamp estimatedStartDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.estimatedStartDate);
+                Timestamp estimatedStartDate = (Timestamp) context.get(x.estimatedStartDate);
                 if (estimatedStartDate != null && !estimatedStartDate.equals(productionRun.getEstimatedStartDate())) {
                     productionRun.setEstimatedStartDate(estimatedStartDate);
                 }
 
-                String workEffortName = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortName);
+                String workEffortName = (String) context.get(x.workEffortName);
                 if (workEffortName != null) {
                     productionRun.setProductionRunName(workEffortName);
                 }
 
-                String description = (String) context.get(org.apache.ofbiz.persistence.entity.x.description);
+                String description = (String) context.get(x.description);
                 if (description != null) {
                     productionRun.setDescription(description);
                 }
 
-                String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId);
+                String facilityId = (String) context.get(x.facilityId);
                 if (facilityId != null) {
                     productionRun.getGenericValue().set("facilityId", facilityId);
                 }
@@ -606,11 +607,11 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Map<String, Object> serviceResult = new HashMap<>();
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunId);
-        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
+        String productionRunId = (String) context.get(x.productionRunId);
+        String statusId = (String) context.get(x.statusId);
 
         ProductionRun productionRun = new ProductionRun(productionRunId, delegator, dispatcher);
         if (!productionRun.exist()) {
@@ -645,7 +646,7 @@ public class ProductionRunServices {
             // change the production run tasks status to PRUN_SCHEDULED
             for (GenericValue task : productionRun.getProductionRunRoutingTasks()) {
                 serviceContext.clear();
-                serviceContext.put("workEffortId", task.getString(org.apache.ofbiz.persistence.entity.x.workEffortId));
+                serviceContext.put("workEffortId", task.getString(x.workEffortId));
                 serviceContext.put("currentStatusId", statusId);
                 serviceContext.put("userLogin", userLogin);
                 try {
@@ -685,7 +686,7 @@ public class ProductionRunServices {
             // change the production run tasks status to PRUN_DOC_PRINTED
             for (GenericValue task : productionRun.getProductionRunRoutingTasks()) {
                 serviceContext.clear();
-                serviceContext.put("workEffortId", task.getString(org.apache.ofbiz.persistence.entity.x.workEffortId));
+                serviceContext.put("workEffortId", task.getString(x.workEffortId));
                 serviceContext.put("currentStatusId", "PRUN_DOC_PRINTED");
                 serviceContext.put("userLogin", userLogin);
                 try {
@@ -715,10 +716,10 @@ public class ProductionRunServices {
                                 "workEffortAssocTypeId", "WORK_EFF_PRECEDENCY")
                         .filterByDate().queryList();
                 for (GenericValue mandatoryWorkEffortAssoc : mandatoryWorkEfforts) {
-                    GenericValue mandatoryWorkEffort = mandatoryWorkEffortAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FromWorkEffort, false);
-                    if (!("PRUN_COMPLETED".equals(mandatoryWorkEffort.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))
-                            || "PRUN_RUNNING".equals(mandatoryWorkEffort.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))
-                            || "PRUN_CLOSED".equals(mandatoryWorkEffort.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId)))) {
+                    GenericValue mandatoryWorkEffort = mandatoryWorkEffortAssoc.getRelatedOne(x.FromWorkEffort, false);
+                    if (!("PRUN_COMPLETED".equals(mandatoryWorkEffort.getString(x.currentStatusId))
+                            || "PRUN_RUNNING".equals(mandatoryWorkEffort.getString(x.currentStatusId))
+                            || "PRUN_CLOSED".equals(mandatoryWorkEffort.getString(x.currentStatusId)))) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                                 "ManufacturingProductionRunStatusNotChangedMandatoryProductionRunNotCompleted", locale));
                     }
@@ -793,7 +794,7 @@ public class ProductionRunServices {
             // change the production run tasks status to PRUN_CLOSED
             for (GenericValue task : productionRun.getProductionRunRoutingTasks()) {
                 serviceContext.clear();
-                serviceContext.put("workEffortId", task.getString(org.apache.ofbiz.persistence.entity.x.workEffortId));
+                serviceContext.put("workEffortId", task.getString(x.workEffortId));
                 serviceContext.put("currentStatusId", "PRUN_CLOSED");
                 serviceContext.put("userLogin", userLogin);
                 try {
@@ -821,13 +822,13 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunId);
-        String taskId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortId);
-        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String productionRunId = (String) context.get(x.productionRunId);
+        String taskId = (String) context.get(x.workEffortId);
+        String statusId = (String) context.get(x.statusId);
         Map<String, Object> serviceResult = new HashMap<>();
-        Boolean issueAllComponents = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.issueAllComponents);
+        Boolean issueAllComponents = (Boolean) context.get(x.issueAllComponents);
         if (issueAllComponents == null) {
             issueAllComponents = Boolean.FALSE;
         }
@@ -843,15 +844,15 @@ public class ProductionRunServices {
         boolean allPrecTaskCompletedOrRunning = true;
         for (GenericValue task : tasks) {
             oneTask = task;
-            if (oneTask.getString(org.apache.ofbiz.persistence.entity.x.workEffortId).equals(taskId)) {
+            if (oneTask.getString(x.workEffortId).equals(taskId)) {
                 theTask = oneTask;
             } else {
                 if (theTask == null && allPrecTaskCompletedOrRunning
-                        && (!"PRUN_COMPLETED".equals(oneTask.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))
-                        && !"PRUN_RUNNING".equals(oneTask.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId)))) {
+                        && (!"PRUN_COMPLETED".equals(oneTask.getString(x.currentStatusId))
+                        && !"PRUN_RUNNING".equals(oneTask.getString(x.currentStatusId)))) {
                     allPrecTaskCompletedOrRunning = false;
                 }
-                if (allTaskCompleted && !"PRUN_COMPLETED".equals(oneTask.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))) {
+                if (allTaskCompleted && !"PRUN_COMPLETED".equals(oneTask.getString(x.currentStatusId))) {
                     allTaskCompleted = false;
                 }
             }
@@ -860,8 +861,8 @@ public class ProductionRunServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingProductionRunTaskNotExists", locale));
         }
 
-        String currentStatusId = theTask.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId);
-        String oldStatusId = theTask.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId); // pass back old status for secas to check
+        String currentStatusId = theTask.getString(x.currentStatusId);
+        String oldStatusId = theTask.getString(x.currentStatusId); // pass back old status for secas to check
 
         if (statusId != null && currentStatusId.equals(statusId)) {
             result.put("oldStatusId", oldStatusId);
@@ -950,15 +951,15 @@ public class ProductionRunServices {
             serviceContext.put("workEffortId", taskId);
             serviceContext.put("currentStatusId", "PRUN_COMPLETED");
             serviceContext.put("actualCompletionDate", UtilDateTime.nowTimestamp());
-            BigDecimal quantityToProduce = theTask.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityToProduce);
+            BigDecimal quantityToProduce = theTask.getBigDecimal(x.quantityToProduce);
             if (quantityToProduce == null) {
                 quantityToProduce = BigDecimal.ZERO;
             }
-            BigDecimal quantityProduced = theTask.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityProduced);
+            BigDecimal quantityProduced = theTask.getBigDecimal(x.quantityProduced);
             if (quantityProduced == null) {
                 quantityProduced = BigDecimal.ZERO;
             }
-            BigDecimal quantityRejected = theTask.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityRejected);
+            BigDecimal quantityRejected = theTask.getBigDecimal(x.quantityRejected);
             if (quantityRejected == null) {
                 quantityRejected = BigDecimal.ZERO;
             }
@@ -968,13 +969,13 @@ public class ProductionRunServices {
                 quantityProduced = quantityProduced.add(diffQuantity);
             }
             serviceContext.put("quantityProduced", quantityProduced);
-            if (theTask.get(org.apache.ofbiz.persistence.entity.x.actualSetupMillis) == null) {
-                serviceContext.put("actualSetupMillis", theTask.get(org.apache.ofbiz.persistence.entity.x.estimatedSetupMillis));
+            if (theTask.get(x.actualSetupMillis) == null) {
+                serviceContext.put("actualSetupMillis", theTask.get(x.estimatedSetupMillis));
             }
-            if (theTask.get(org.apache.ofbiz.persistence.entity.x.actualMilliSeconds) == null) {
+            if (theTask.get(x.actualMilliSeconds) == null) {
                 Double autoMillis = null;
-                if (theTask.get(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds) != null) {
-                    autoMillis = quantityProduced.doubleValue() * theTask.getDouble(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds);
+                if (theTask.get(x.estimatedMilliSeconds) != null) {
+                    autoMillis = quantityProduced.doubleValue() * theTask.getDouble(x.estimatedMilliSeconds);
                 }
                 serviceContext.put("actualMilliSeconds", autoMillis);
             }
@@ -1022,7 +1023,7 @@ public class ProductionRunServices {
                     GenericValue facility = productionRun.getGenericValue().getRelatedOne("Facility", false);
                     Map<String, Object> outputMap = dispatcher.runSync("getPartyAccountingPreferences",
                             UtilMisc.<String, Object>toMap("userLogin", userLogin,
-                                    "organizationPartyId", facility.getString(org.apache.ofbiz.persistence.entity.x.ownerPartyId)));
+                                    "organizationPartyId", facility.getString(x.ownerPartyId)));
                     if (ServiceUtil.isError(outputMap)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(outputMap));
                     }
@@ -1044,19 +1045,19 @@ public class ProductionRunServices {
                             .where("productId", productionRun.getProductProduced().get("productId"))
                             .orderBy("sequenceNum").queryList();
                     for (GenericValue productCostComponentCalc : productCostComponentCalcs) {
-                        GenericValue costComponentCalc = productCostComponentCalc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CostComponentCalc, false);
-                        GenericValue customMethod = costComponentCalc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CustomMethod, false);
+                        GenericValue costComponentCalc = productCostComponentCalc.getRelatedOne(x.CostComponentCalc, false);
+                        GenericValue customMethod = costComponentCalc.getRelatedOne(x.CustomMethod, false);
                         if (customMethod == null) {
                             // TODO: not supported for CostComponentCalc entries directly associated to a product
                             Debug.logWarning("Unable to create cost component for cost component calc with id [" + costComponentCalc.getString(
-                                    org.apache.ofbiz.persistence.entity.x.costComponentCalcId) + "] because customMethod is not set", MODULE);
+                                    x.costComponentCalcId) + "] because customMethod is not set", MODULE);
                         } else {
-                            Map<String, Object> costMethodResult = dispatcher.runSync(customMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName),
+                            Map<String, Object> costMethodResult = dispatcher.runSync(customMethod.getString(x.customMethodName),
                                     UtilMisc.toMap("productCostComponentCalc", productCostComponentCalc,
                                             "costComponentCalc", costComponentCalc,
                                             "costComponentTypePrefix", "ACTUAL",
                                             "baseCost", totalCost,
-                                            "currencyUomId", (String) partyAccountingPreference.get(org.apache.ofbiz.persistence.entity.x.baseCurrencyUomId),
+                                            "currencyUomId", (String) partyAccountingPreference.get(x.baseCurrencyUomId),
                                             "userLogin", userLogin));
                             if (ServiceUtil.isError(costMethodResult)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(costMethodResult));
@@ -1064,9 +1065,9 @@ public class ProductionRunServices {
                             BigDecimal productCostAdjustment = (BigDecimal) costMethodResult.get("productCostAdjustment");
                             totalCost = totalCost.add(productCostAdjustment);
                             Map<String, Object> inMap = UtilMisc.<String, Object>toMap("userLogin", userLogin, "workEffortId", productionRunId);
-                            inMap.put("costComponentCalcId", costComponentCalc.getString(org.apache.ofbiz.persistence.entity.x.costComponentCalcId));
-                            inMap.put("costComponentTypeId", "ACTUAL_" + productCostComponentCalc.getString(org.apache.ofbiz.persistence.entity.x.costComponentTypeId));
-                            inMap.put("costUomId", partyAccountingPreference.get(org.apache.ofbiz.persistence.entity.x.baseCurrencyUomId));
+                            inMap.put("costComponentCalcId", costComponentCalc.getString(x.costComponentCalcId));
+                            inMap.put("costComponentTypeId", "ACTUAL_" + productCostComponentCalc.getString(x.costComponentTypeId));
+                            inMap.put("costUomId", partyAccountingPreference.get(x.baseCurrencyUomId));
                             inMap.put("cost", productCostAdjustment);
                             serviceResult = dispatcher.runSync("createCostComponent", inMap);
                             if (ServiceUtil.isError(serviceResult)) {
@@ -1096,8 +1097,8 @@ public class ProductionRunServices {
     public static Map<String, Object> getWorkEffortCosts(DispatchContext ctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
-        String workEffortId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String workEffortId = (String) context.get(x.workEffortId);
+        Locale locale = (Locale) context.get(x.locale);
         try {
             GenericValue workEffort = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", workEffortId).queryOne();
             if (workEffort == null) {
@@ -1113,9 +1114,9 @@ public class ProductionRunServices {
             BigDecimal totalCost = ZERO;
             BigDecimal totalCostNoMaterials = ZERO;
             for (GenericValue costComponent : costComponents) {
-                BigDecimal cost = costComponent.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cost);
+                BigDecimal cost = costComponent.getBigDecimal(x.cost);
                 totalCost = totalCost.add(cost);
-                if (!"ACTUAL_MAT_COST".equals(costComponent.getString(org.apache.ofbiz.persistence.entity.x.costComponentTypeId))) {
+                if (!"ACTUAL_MAT_COST".equals(costComponent.getString(x.costComponentTypeId))) {
                     totalCostNoMaterials = totalCostNoMaterials.add(cost);
                 }
             }
@@ -1132,9 +1133,9 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String workEffortId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String workEffortId = (String) context.get(x.workEffortId);
+        Locale locale = (Locale) context.get(x.locale);
         try {
             List<GenericValue> tasks = EntityQuery.use(delegator).from("WorkEffort")
                     .where("workEffortParentId", workEffortId)
@@ -1150,7 +1151,7 @@ public class ProductionRunServices {
             totalCost = totalCost.add(productionRunHeaderCost);
             for (GenericValue task : tasks) {
                 outputMap = dispatcher.runSync("getWorkEffortCosts",
-                        UtilMisc.<String, Object>toMap("userLogin", userLogin, "workEffortId", task.getString(org.apache.ofbiz.persistence.entity.x.workEffortId)));
+                        UtilMisc.<String, Object>toMap("userLogin", userLogin, "workEffortId", task.getString(x.workEffortId)));
                 if (ServiceUtil.isError(outputMap)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(outputMap));
                 }
@@ -1168,11 +1169,11 @@ public class ProductionRunServices {
     public static Map<String, Object> createProductionRunTaskCosts(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> serviceResult = new HashMap<>();
         // this is the id of the actual (real) production run task
-        String productionRunTaskId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunTaskId);
+        String productionRunTaskId = (String) context.get(x.productionRunTaskId);
         try {
             GenericValue workEffort = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", productionRunTaskId).queryOne();
             if (UtilValidate.isEmpty(workEffort)) {
@@ -1180,8 +1181,8 @@ public class ProductionRunServices {
                         "productionRunTaskId", productionRunTaskId), locale));
             }
             double actualTotalMilliSeconds = 0.0;
-            Double actualSetupMillis = workEffort.getDouble(org.apache.ofbiz.persistence.entity.x.actualSetupMillis);
-            Double actualMilliSeconds = workEffort.getDouble(org.apache.ofbiz.persistence.entity.x.actualMilliSeconds);
+            Double actualSetupMillis = workEffort.getDouble(x.actualSetupMillis);
+            Double actualMilliSeconds = workEffort.getDouble(x.actualMilliSeconds);
             if (actualSetupMillis == null) {
                 actualSetupMillis = 0.0;
             }
@@ -1197,7 +1198,7 @@ public class ProductionRunServices {
                     .filterByDate().queryFirst();
             GenericValue routingTask = null;
             if (routingTaskAssoc != null) {
-                routingTask = routingTaskAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FromWorkEffort, false);
+                routingTask = routingTaskAssoc.getRelatedOne(x.FromWorkEffort, false);
             }
 
             // Get all the valid CostComponentCalc entries
@@ -1206,20 +1207,20 @@ public class ProductionRunServices {
                     .filterByDate().queryList();
 
             for (GenericValue workEffortCostCalc : workEffortCostCalcs) {
-                GenericValue costComponentCalc = workEffortCostCalc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CostComponentCalc, false);
-                GenericValue customMethod = costComponentCalc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CustomMethod, false);
-                if (UtilValidate.isEmpty(customMethod) || UtilValidate.isEmpty(customMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName))) {
+                GenericValue costComponentCalc = workEffortCostCalc.getRelatedOne(x.CostComponentCalc, false);
+                GenericValue customMethod = costComponentCalc.getRelatedOne(x.CustomMethod, false);
+                if (UtilValidate.isEmpty(customMethod) || UtilValidate.isEmpty(customMethod.getString(x.customMethodName))) {
                     // compute the total time
                     double totalTime = actualTotalMilliSeconds;
-                    if (costComponentCalc.get(org.apache.ofbiz.persistence.entity.x.perMilliSecond) != null) {
-                        long perMilliSecond = costComponentCalc.getLong(org.apache.ofbiz.persistence.entity.x.perMilliSecond);
+                    if (costComponentCalc.get(x.perMilliSecond) != null) {
+                        long perMilliSecond = costComponentCalc.getLong(x.perMilliSecond);
                         if (perMilliSecond != 0) {
                             totalTime = totalTime / perMilliSecond;
                         }
                     }
                     // compute the cost
-                    BigDecimal fixedCost = costComponentCalc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.fixedCost);
-                    BigDecimal variableCost = costComponentCalc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.variableCost);
+                    BigDecimal fixedCost = costComponentCalc.getBigDecimal(x.fixedCost);
+                    BigDecimal variableCost = costComponentCalc.getBigDecimal(x.variableCost);
                     if (fixedCost == null) {
                         fixedCost = BigDecimal.ZERO;
                     }
@@ -1229,9 +1230,9 @@ public class ProductionRunServices {
                     BigDecimal totalCost = fixedCost.add(variableCost.multiply(BigDecimal.valueOf(totalTime))).setScale(DECIMALS, ROUNDING);
                     // store the cost
                     Map<String, Object> inMap = UtilMisc.<String, Object>toMap("userLogin", userLogin, "workEffortId", productionRunTaskId);
-                    inMap.put("costComponentTypeId", "ACTUAL_" + workEffortCostCalc.getString(org.apache.ofbiz.persistence.entity.x.costComponentTypeId));
-                    inMap.put("costComponentCalcId", costComponentCalc.getString(org.apache.ofbiz.persistence.entity.x.costComponentCalcId));
-                    inMap.put("costUomId", costComponentCalc.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId));
+                    inMap.put("costComponentTypeId", "ACTUAL_" + workEffortCostCalc.getString(x.costComponentTypeId));
+                    inMap.put("costComponentCalcId", costComponentCalc.getString(x.costComponentCalcId));
+                    inMap.put("costUomId", costComponentCalc.getString(x.currencyUomId));
                     inMap.put("cost", totalCost);
                     serviceResult = dispatcher.runSync("createCostComponent", inMap);
                     if (ServiceUtil.isError(serviceResult)) {
@@ -1242,7 +1243,7 @@ public class ProductionRunServices {
                     Map<String, Object> inMap = UtilMisc.<String, Object>toMap("userLogin", userLogin, "workEffort", workEffort);
                     inMap.put("workEffortCostCalc", workEffortCostCalc);
                     inMap.put("costComponentCalc", costComponentCalc);
-                    serviceResult = dispatcher.runSync(customMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName), inMap);
+                    serviceResult = dispatcher.runSync(customMethod.getString(x.customMethodName), inMap);
                     if (ServiceUtil.isError(serviceResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                     }
@@ -1250,26 +1251,26 @@ public class ProductionRunServices {
             }
 
             // Now get the cost information associated to the fixed asset and compute the costs
-            GenericValue fixedAsset = workEffort.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FixedAsset, false);
+            GenericValue fixedAsset = workEffort.getRelatedOne(x.FixedAsset, false);
             if (fixedAsset != null && routingTask != null) {
-                fixedAsset = routingTask.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FixedAsset, false);
+                fixedAsset = routingTask.getRelatedOne(x.FixedAsset, false);
             }
             if (fixedAsset != null) {
-                List<GenericValue> setupCosts = fixedAsset.getRelated(org.apache.ofbiz.persistence.entity.x.FixedAssetStdCost,
+                List<GenericValue> setupCosts = fixedAsset.getRelated(x.FixedAssetStdCost,
                         UtilMisc.toMap("fixedAssetStdCostTypeId", "SETUP_COST"), null, false);
                 GenericValue setupCost = EntityUtil.getFirst(EntityUtil.filterByDate(setupCosts));
-                List<GenericValue> usageCosts = fixedAsset.getRelated(org.apache.ofbiz.persistence.entity.x.FixedAssetStdCost, UtilMisc.toMap("fixedAssetStdCostTypeId", "USAGE_COST"),
+                List<GenericValue> usageCosts = fixedAsset.getRelated(x.FixedAssetStdCost, UtilMisc.toMap("fixedAssetStdCostTypeId", "USAGE_COST"),
                         null, false);
                 GenericValue usageCost = EntityUtil.getFirst(EntityUtil.filterByDate(usageCosts));
                 if (setupCost != null || usageCost != null) {
-                    String currencyUomId = (setupCost != null ? setupCost.getString(org.apache.ofbiz.persistence.entity.x.amountUomId) : usageCost.getString(org.apache.ofbiz.persistence.entity.x.amountUomId));
+                    String currencyUomId = (setupCost != null ? setupCost.getString(x.amountUomId) : usageCost.getString(x.amountUomId));
                     BigDecimal setupCostAmount = ZERO;
                     if (setupCost != null) {
-                        setupCostAmount = setupCost.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).multiply(BigDecimal.valueOf(actualSetupMillis));
+                        setupCostAmount = setupCost.getBigDecimal(x.amount).multiply(BigDecimal.valueOf(actualSetupMillis));
                     }
                     BigDecimal usageCostAmount = ZERO;
                     if (usageCost != null) {
-                        usageCostAmount = usageCost.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).multiply(BigDecimal.valueOf(actualMilliSeconds));
+                        usageCostAmount = usageCost.getBigDecimal(x.amount).multiply(BigDecimal.valueOf(actualMilliSeconds));
                     }
                     BigDecimal fixedAssetCost = setupCostAmount.add(usageCostAmount).setScale(DECIMALS, ROUNDING);
                     fixedAssetCost = fixedAssetCost.divide(BigDecimal.valueOf(3600000), DECIMALS, ROUNDING);
@@ -1279,7 +1280,7 @@ public class ProductionRunServices {
                     inMap.put("costComponentTypeId", "ACTUAL_ROUTE_COST");
                     inMap.put("costUomId", currencyUomId);
                     inMap.put("cost", fixedAssetCost);
-                    inMap.put("fixedAssetId", fixedAsset.get(org.apache.ofbiz.persistence.entity.x.fixedAssetId));
+                    inMap.put("fixedAssetId", fixedAsset.get(x.fixedAssetId));
                     serviceResult = dispatcher.runSync("createCostComponent", inMap);
                     if (ServiceUtil.isError(serviceResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
@@ -1295,12 +1296,12 @@ public class ProductionRunServices {
             Map<String, BigDecimal> materialsCostByCurrency = new HashMap<>();
             for (GenericValue inventoryConsumed : EntityQuery.use(delegator).from("WorkEffortAndInventoryAssign")
                     .where("workEffortId", productionRunTaskId).queryList()) {
-                BigDecimal quantity = inventoryConsumed.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
-                BigDecimal unitCost = inventoryConsumed.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitCost);
+                BigDecimal quantity = inventoryConsumed.getBigDecimal(x.quantity);
+                BigDecimal unitCost = inventoryConsumed.getBigDecimal(x.unitCost);
                 if (UtilValidate.isEmpty(unitCost) || UtilValidate.isEmpty(quantity)) {
                     continue;
                 }
-                String currencyUomId = inventoryConsumed.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId);
+                String currencyUomId = inventoryConsumed.getString(x.currencyUomId);
                 if (!materialsCostByCurrency.containsKey(currencyUomId)) {
                     materialsCostByCurrency.put(currencyUomId, BigDecimal.ZERO);
                 }
@@ -1344,11 +1345,11 @@ public class ProductionRunServices {
     public static Map<String, Object> checkUpdatePrunRoutingTask(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Map<String, Object> serviceResult = new HashMap<>();
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunId);
-        String routingTaskId = (String) context.get(org.apache.ofbiz.persistence.entity.x.routingTaskId);
+        String productionRunId = (String) context.get(x.productionRunId);
+        String routingTaskId = (String) context.get(x.routingTaskId);
         if (!UtilValidate.isEmpty(productionRunId) && !UtilValidate.isEmpty(routingTaskId)) {
             ProductionRun productionRun = new ProductionRun(productionRunId, delegator, dispatcher);
             if (productionRun.exist()) {
@@ -1358,7 +1359,7 @@ public class ProductionRunServices {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingProductionRunPrinted", locale));
                 }
 
-                Timestamp estimatedStartDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.estimatedStartDate);
+                Timestamp estimatedStartDate = (Timestamp) context.get(x.estimatedStartDate);
                 Timestamp pRestimatedStartDate = productionRun.getEstimatedStartDate();
                 if (pRestimatedStartDate.after(estimatedStartDate)) {
                     try {
@@ -1372,24 +1373,24 @@ public class ProductionRunServices {
                     }
                 }
 
-                Long priority = (Long) context.get(org.apache.ofbiz.persistence.entity.x.priority);
+                Long priority = (Long) context.get(x.priority);
                 List<GenericValue> pRRoutingTasks = productionRun.getProductionRunRoutingTasks();
                 boolean first = true;
                 for (GenericValue routingTask : pRRoutingTasks) {
-                    if (priority.equals(routingTask.get(org.apache.ofbiz.persistence.entity.x.priority)) && !routingTaskId.equals(routingTask.get(org.apache.ofbiz.persistence.entity.x.workEffortId))) {
+                    if (priority.equals(routingTask.get(x.priority)) && !routingTaskId.equals(routingTask.get(x.workEffortId))) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingRoutingTaskSeqIdAlreadyExist", locale));
                     }
-                    if (routingTaskId.equals(routingTask.get(org.apache.ofbiz.persistence.entity.x.workEffortId))) {
-                        routingTask.set(org.apache.ofbiz.persistence.entity.x.estimatedSetupMillis, ((BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.estimatedSetupMillis)).doubleValue());
-                        routingTask.set(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds, ((BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds)).doubleValue());
+                    if (routingTaskId.equals(routingTask.get(x.workEffortId))) {
+                        routingTask.set(x.estimatedSetupMillis, ((BigDecimal) context.get(x.estimatedSetupMillis)).doubleValue());
+                        routingTask.set(x.estimatedMilliSeconds, ((BigDecimal) context.get(x.estimatedMilliSeconds)).doubleValue());
                         if (first) {    // for the first routingTask the estimatedStartDate update imply estimatedStartDate productonRun update
                             if (!estimatedStartDate.equals(pRestimatedStartDate)) {
                                 productionRun.setEstimatedStartDate(estimatedStartDate);
                             }
                         }
                         // the priority has been changed
-                        if (!priority.equals(routingTask.get(org.apache.ofbiz.persistence.entity.x.priority))) {
-                            routingTask.set(org.apache.ofbiz.persistence.entity.x.priority, priority);
+                        if (!priority.equals(routingTask.get(x.priority))) {
+                            routingTask.set(x.priority, priority);
                             // update the routingTask List and re-read it to be able to have it sorted with the new value
                             if (!productionRun.store()) {
                                 Debug.logError("productionRun.store(), in routingTask.priority update, fail for productionRunId ="
@@ -1422,14 +1423,14 @@ public class ProductionRunServices {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Timestamp now = UtilDateTime.nowTimestamp();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         // Mandatory input fields
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunId);
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.estimatedQuantity);
+        String productionRunId = (String) context.get(x.productionRunId);
+        String productId = (String) context.get(x.productId);
+        BigDecimal quantity = (BigDecimal) context.get(x.estimatedQuantity);
         // Optional input fields
-        String workEffortId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortId);
+        String workEffortId = (String) context.get(x.workEffortId);
 
         ProductionRun productionRun = new ProductionRun(productionRunId, delegator, dispatcher);
         List<GenericValue> tasks = productionRun.getProductionRunRoutingTasks();
@@ -1446,7 +1447,7 @@ public class ProductionRunServices {
             boolean found = false;
             for (int i = 0; i < tasks.size(); i++) {
                 GenericValue oneTask = tasks.get(i);
-                if (oneTask.getString(org.apache.ofbiz.persistence.entity.x.workEffortId).equals(workEffortId)) {
+                if (oneTask.getString(x.workEffortId).equals(workEffortId)) {
                     found = true;
                     break;
                 }
@@ -1495,14 +1496,14 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         // Mandatory input fields
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunId);
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String productionRunId = (String) context.get(x.productionRunId);
+        String productId = (String) context.get(x.productId);
         // Optional input fields
-        String workEffortId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortId); // the production run task
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.estimatedQuantity);
+        String workEffortId = (String) context.get(x.workEffortId); // the production run task
+        BigDecimal quantity = (BigDecimal) context.get(x.estimatedQuantity);
 
         ProductionRun productionRun = new ProductionRun(productionRunId, delegator, dispatcher);
         List<GenericValue> components = productionRun.getProductionRunComponents();
@@ -1519,9 +1520,9 @@ public class ProductionRunServices {
         GenericValue theComponent = null;
         for (int i = 0; i < components.size(); i++) {
             theComponent = components.get(i);
-            if (theComponent.getString(org.apache.ofbiz.persistence.entity.x.productId).equals(productId)) {
+            if (theComponent.getString(x.productId).equals(productId)) {
                 if (workEffortId != null) {
-                    if (theComponent.getString(org.apache.ofbiz.persistence.entity.x.workEffortId).equals(workEffortId)) {
+                    if (theComponent.getString(x.workEffortId).equals(workEffortId)) {
                         found = true;
                         break;
                     }
@@ -1547,10 +1548,10 @@ public class ProductionRunServices {
         }
         Map<String, Object> serviceContext = new HashMap<>();
         serviceContext.clear();
-        serviceContext.put("workEffortId", theComponent.getString(org.apache.ofbiz.persistence.entity.x.workEffortId));
+        serviceContext.put("workEffortId", theComponent.getString(x.workEffortId));
         serviceContext.put("workEffortGoodStdTypeId", "PRUNT_PROD_NEEDED");
         serviceContext.put("productId", productId);
-        serviceContext.put("fromDate", theComponent.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate));
+        serviceContext.put("fromDate", theComponent.getTimestamp(x.fromDate));
         if (quantity != null) {
             serviceContext.put("estimatedQuantity", quantity);
         }
@@ -1573,26 +1574,26 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         // Mandatory input fields
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunId);
-        String routingTaskId = (String) context.get(org.apache.ofbiz.persistence.entity.x.routingTaskId);
-        Long priority = (Long) context.get(org.apache.ofbiz.persistence.entity.x.priority);
+        String productionRunId = (String) context.get(x.productionRunId);
+        String routingTaskId = (String) context.get(x.routingTaskId);
+        Long priority = (Long) context.get(x.priority);
 
         // Optional input fields
-        String workEffortName = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortName);
-        String description = (String) context.get(org.apache.ofbiz.persistence.entity.x.description);
-        Timestamp estimatedStartDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.estimatedStartDate);
-        Timestamp estimatedCompletionDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate);
+        String workEffortName = (String) context.get(x.workEffortName);
+        String description = (String) context.get(x.description);
+        Timestamp estimatedStartDate = (Timestamp) context.get(x.estimatedStartDate);
+        Timestamp estimatedCompletionDate = (Timestamp) context.get(x.estimatedCompletionDate);
 
         Double estimatedSetupMillis = null;
-        if (context.get(org.apache.ofbiz.persistence.entity.x.estimatedSetupMillis) != null) {
-            estimatedSetupMillis = ((BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.estimatedSetupMillis)).doubleValue();
+        if (context.get(x.estimatedSetupMillis) != null) {
+            estimatedSetupMillis = ((BigDecimal) context.get(x.estimatedSetupMillis)).doubleValue();
         }
         Double estimatedMilliSeconds = null;
-        if (context.get(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds) != null) {
-            estimatedMilliSeconds = ((BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds)).doubleValue();
+        if (context.get(x.estimatedMilliSeconds) != null) {
+            estimatedMilliSeconds = ((BigDecimal) context.get(x.estimatedMilliSeconds)).doubleValue();
         }
         // The production run is loaded
         ProductionRun productionRun = new ProductionRun(productionRunId, delegator, dispatcher);
@@ -1627,16 +1628,16 @@ public class ProductionRunServices {
         }
 
         if (workEffortName == null) {
-            workEffortName = (String) routingTask.get(org.apache.ofbiz.persistence.entity.x.workEffortName);
+            workEffortName = (String) routingTask.get(x.workEffortName);
         }
         if (description == null) {
-            description = (String) routingTask.get(org.apache.ofbiz.persistence.entity.x.description);
+            description = (String) routingTask.get(x.description);
         }
         if (estimatedSetupMillis == null) {
-            estimatedSetupMillis = (Double) routingTask.get(org.apache.ofbiz.persistence.entity.x.estimatedSetupMillis);
+            estimatedSetupMillis = (Double) routingTask.get(x.estimatedSetupMillis);
         }
         if (estimatedMilliSeconds == null) {
-            estimatedMilliSeconds = (Double) routingTask.get(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds);
+            estimatedMilliSeconds = (Double) routingTask.get(x.estimatedMilliSeconds);
         }
         if (estimatedStartDate == null) {
             estimatedStartDate = productionRun.getEstimatedStartDate();
@@ -1649,10 +1650,10 @@ public class ProductionRunServices {
         Map<String, Object> serviceContext = new HashMap<>();
         serviceContext.clear();
         serviceContext.put("priority", priority);
-        serviceContext.put("workEffortPurposeTypeId", routingTask.get(org.apache.ofbiz.persistence.entity.x.workEffortPurposeTypeId));
+        serviceContext.put("workEffortPurposeTypeId", routingTask.get(x.workEffortPurposeTypeId));
         serviceContext.put("workEffortName", workEffortName);
         serviceContext.put("description", description);
-        serviceContext.put("fixedAssetId", routingTask.get(org.apache.ofbiz.persistence.entity.x.fixedAssetId));
+        serviceContext.put("fixedAssetId", routingTask.get(x.fixedAssetId));
         serviceContext.put("workEffortTypeId", "PROD_ORDER_TASK");
         serviceContext.put("currentStatusId", "PRUN_CREATED");
         serviceContext.put("workEffortParentId", productionRunId);
@@ -1697,10 +1698,10 @@ public class ProductionRunServices {
             for (GenericValue workEffortPartyAssignment : workEffortPartyAssignments) {
                 Map<String, Object> partyToWorkEffort = UtilMisc.<String, Object>toMap(
                         "workEffortId", productionRunTaskId,
-                        "partyId", workEffortPartyAssignment.getString(org.apache.ofbiz.persistence.entity.x.partyId),
-                        "roleTypeId", workEffortPartyAssignment.getString(org.apache.ofbiz.persistence.entity.x.roleTypeId),
-                        "fromDate", workEffortPartyAssignment.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate),
-                        "statusId", workEffortPartyAssignment.getString(org.apache.ofbiz.persistence.entity.x.statusId),
+                        "partyId", workEffortPartyAssignment.getString(x.partyId),
+                        "roleTypeId", workEffortPartyAssignment.getString(x.roleTypeId),
+                        "fromDate", workEffortPartyAssignment.getTimestamp(x.fromDate),
+                        "statusId", workEffortPartyAssignment.getString(x.statusId),
                         "userLogin", userLogin);
                 try {
                     serviceResult = dispatcher.runSync("assignPartyToWorkEffort", partyToWorkEffort);
@@ -1711,7 +1712,7 @@ public class ProductionRunServices {
                     Debug.logError(e, "Problem calling the assignPartyToWorkEffort service", MODULE);
                 }
                 if (Debug.infoOn()) {
-                    Debug.logInfo("ProductionRunPartyassigment for party: " + workEffortPartyAssignment.get(org.apache.ofbiz.persistence.entity.x.partyId) + " created", MODULE);
+                    Debug.logInfo("ProductionRunPartyassigment for party: " + workEffortPartyAssignment.get(x.partyId) + " created", MODULE);
                 }
             }
         }
@@ -1726,19 +1727,19 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         // Mandatory input fields
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortId);
+        String productionRunId = (String) context.get(x.workEffortId);
 
         // Optional input fields
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
-        String inventoryItemTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.inventoryItemTypeId);
-        String lotId = (String) context.get(org.apache.ofbiz.persistence.entity.x.lotId);
-        String uomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.quantityUomId);
-        String locationSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.locationSeqId);
-        Boolean createLotIfNeeded = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.createLotIfNeeded);
-        Boolean autoCreateLot = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.autoCreateLot);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
+        String inventoryItemTypeId = (String) context.get(x.inventoryItemTypeId);
+        String lotId = (String) context.get(x.lotId);
+        String uomId = (String) context.get(x.quantityUomId);
+        String locationSeqId = (String) context.get(x.locationSeqId);
+        Boolean createLotIfNeeded = (Boolean) context.get(x.createLotIfNeeded);
+        Boolean autoCreateLot = (Boolean) context.get(x.autoCreateLot);
 
         // The default is non-serialized inventory item
         if (UtilValidate.isEmpty(inventoryItemTypeId)) {
@@ -1769,7 +1770,7 @@ public class ProductionRunServices {
         if (quantityProduced == null) {
             quantityProduced = BigDecimal.ZERO;
         }
-        BigDecimal quantityDeclared = lastTask.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityProduced);
+        BigDecimal quantityDeclared = lastTask.getBigDecimal(x.quantityProduced);
 
         if (quantityDeclared == null) {
             quantityDeclared = BigDecimal.ZERO;
@@ -1831,7 +1832,7 @@ public class ProductionRunServices {
             // get the currency
             facility = productionRun.getGenericValue().getRelatedOne("Facility", false);
             Map<String, Object> outputMap = dispatcher.runSync("getPartyAccountingPreferences", UtilMisc.<String, Object>toMap("userLogin",
-                    userLogin, "organizationPartyId", facility.getString(org.apache.ofbiz.persistence.entity.x.ownerPartyId)));
+                    userLogin, "organizationPartyId", facility.getString(x.ownerPartyId)));
             if (ServiceUtil.isError(outputMap)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(outputMap));
             }
@@ -1841,7 +1842,7 @@ public class ProductionRunServices {
             }
             outputMap = dispatcher.runSync("getProductCost", UtilMisc.<String, Object>toMap("userLogin", userLogin, "productId",
                     productionRun.getProductProduced().getString("productId"), "currencyUomId",
-                    (String) partyAccountingPreference.get(org.apache.ofbiz.persistence.entity.x.baseCurrencyUomId), "costComponentTypePrefix", "EST_STD"));
+                    (String) partyAccountingPreference.get(x.baseCurrencyUomId), "costComponentTypePrefix", "EST_STD"));
             if (ServiceUtil.isError(outputMap)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(outputMap));
             }
@@ -1853,19 +1854,19 @@ public class ProductionRunServices {
                 List<GenericValue> actualGenCosts = EntityQuery.use(delegator)
                         .from("CostComponent")
                         .where("workEffortId", productionRunId,
-                                "costUomId", partyAccountingPreference.get(org.apache.ofbiz.persistence.entity.x.baseCurrencyUomId))
+                                "costUomId", partyAccountingPreference.get(x.baseCurrencyUomId))
                         .queryList();
                 for (GenericValue actualGenCost : actualGenCosts) {
-                    totalCost = totalCost.add((BigDecimal) actualGenCost.get(org.apache.ofbiz.persistence.entity.x.cost));
+                    totalCost = totalCost.add((BigDecimal) actualGenCost.get(x.cost));
                 }
                 for (GenericValue task : tasks) {
                     List<GenericValue> otherCosts = EntityQuery.use(delegator)
                             .from("CostComponent")
-                            .where("workEffortId", task.get(org.apache.ofbiz.persistence.entity.x.workEffortId),
-                                    "costUomId", partyAccountingPreference.get(org.apache.ofbiz.persistence.entity.x.baseCurrencyUomId))
+                            .where("workEffortId", task.get(x.workEffortId),
+                                    "costUomId", partyAccountingPreference.get(x.baseCurrencyUomId))
                             .queryList();
                     for (GenericValue otherCost : otherCosts) {
-                        totalCost = totalCost.add((BigDecimal) otherCost.get(org.apache.ofbiz.persistence.entity.x.cost));
+                        totalCost = totalCost.add((BigDecimal) otherCost.get(x.cost));
                     }
                 }
                 if (totalCost != null) {
@@ -1877,11 +1878,11 @@ public class ProductionRunServices {
             // Before creating InvntoryItem and InventoryItemDetails, check weather the record of ProductFacility exist in the system or not
             GenericValue productFacility = EntityQuery.use(delegator).from("ProductFacility").where("productId",
                     productionRun.getProductProduced().getString("productId"),
-                    "facilityId", facility.get(org.apache.ofbiz.persistence.entity.x.facilityId)).queryOne();
+                    "facilityId", facility.get(x.facilityId)).queryOne();
             if (productFacility == null) {
                 Map<String, Object> createProductFacilityCtx = new HashMap<>();
                 createProductFacilityCtx.put("productId", productionRun.getProductProduced().getString("productId"));
-                createProductFacilityCtx.put("facilityId", facility.get(org.apache.ofbiz.persistence.entity.x.facilityId));
+                createProductFacilityCtx.put("facilityId", facility.get(x.facilityId));
                 createProductFacilityCtx.put("userLogin", userLogin);
                 Map<String, Object> serviceResult = dispatcher.runSync("createProductFacility", createProductFacilityCtx);
                 if (ServiceUtil.isError(serviceResult)) {
@@ -1995,8 +1996,8 @@ public class ProductionRunServices {
                 serviceContext.put("userLogin", userLogin);
                 if (orderItem != null) {
                     // the reservations of this order item are privileged reservations
-                    serviceContext.put("priorityOrderId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId));
-                    serviceContext.put("priorityOrderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                    serviceContext.put("priorityOrderId", orderItem.getString(x.orderId));
+                    serviceContext.put("priorityOrderItemSeqId", orderItem.getString(x.orderItemSeqId));
                 }
                 serviceResult = dispatcher.runSync("balanceInventoryItems", serviceContext);
                 if (ServiceUtil.isError(serviceResult)) {
@@ -2029,14 +2030,14 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         // Mandatory input fields
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortId);
+        String productionRunId = (String) context.get(x.workEffortId);
 
         // Optional input fields
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
-        Map<GenericPK, Object> componentsLocationMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.componentsLocationMap));
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
+        Map<GenericPK, Object> componentsLocationMap = UtilGenerics.cast(context.get(x.componentsLocationMap));
 
         // The production run is loaded
         ProductionRun productionRun = new ProductionRun(productionRunId, delegator, dispatcher);
@@ -2057,9 +2058,9 @@ public class ProductionRunServices {
         List<GenericValue> tasks = productionRun.getProductionRunRoutingTasks();
         for (int i = 0; i < tasks.size(); i++) {
             GenericValue oneTask = tasks.get(i);
-            String taskId = oneTask.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
-            if ("PRUN_RUNNING".equals(oneTask.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))) {
-                BigDecimal quantityDeclared = oneTask.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityProduced);
+            String taskId = oneTask.getString(x.workEffortId);
+            if ("PRUN_RUNNING".equals(oneTask.getString(x.currentStatusId))) {
+                BigDecimal quantityDeclared = oneTask.getBigDecimal(x.quantityProduced);
                 if (quantityDeclared == null) {
                     quantityDeclared = BigDecimal.ZERO;
                 }
@@ -2101,20 +2102,20 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         // Mandatory input fields
-        String productionRunTaskId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortId);
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
+        String productionRunTaskId = (String) context.get(x.workEffortId);
+        String productId = (String) context.get(x.productId);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
 
         // Optional input fields
-        String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId);
-        String currencyUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.currencyUomId);
-        BigDecimal unitCost = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.unitCost);
-        String inventoryItemTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.inventoryItemTypeId);
-        String lotId = (String) context.get(org.apache.ofbiz.persistence.entity.x.lotId);
-        String uomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.quantityUomId);
-        String isReturned = (String) context.get(org.apache.ofbiz.persistence.entity.x.isReturned);
+        String facilityId = (String) context.get(x.facilityId);
+        String currencyUomId = (String) context.get(x.currencyUomId);
+        BigDecimal unitCost = (BigDecimal) context.get(x.unitCost);
+        String inventoryItemTypeId = (String) context.get(x.inventoryItemTypeId);
+        String lotId = (String) context.get(x.lotId);
+        String uomId = (String) context.get(x.quantityUomId);
+        String isReturned = (String) context.get(x.isReturned);
 
         // The default is non-serialized inventory item
         if (UtilValidate.isEmpty(inventoryItemTypeId)) {
@@ -2242,15 +2243,15 @@ public class ProductionRunServices {
     public static Map<String, Object> productionRunTaskReturnMaterial(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         // Mandatory input fields
-        String productionRunTaskId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortId);
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+        String productionRunTaskId = (String) context.get(x.workEffortId);
+        String productId = (String) context.get(x.productId);
         // Optional input fields
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
-        String lotId = (String) context.get(org.apache.ofbiz.persistence.entity.x.lotId);
-        String uomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.quantityUomId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
+        String lotId = (String) context.get(x.lotId);
+        String uomId = (String) context.get(x.quantityUomId);
+        Locale locale = (Locale) context.get(x.locale);
         if (quantity == null || quantity.compareTo(ZERO) == 0) {
             return ServiceUtil.returnSuccess();
         }
@@ -2261,7 +2262,7 @@ public class ProductionRunServices {
             BigDecimal totalIssued = BigDecimal.ZERO;
             for (GenericValue issuance : EntityQuery.use(delegator).from("WorkEffortAndInventoryAssign")
                     .where("workEffortId", productionRunTaskId, "productId", productId).queryList()) {
-                BigDecimal issued = issuance.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                BigDecimal issued = issuance.getBigDecimal(x.quantity);
                 if (issued != null) {
                     totalIssued = totalIssued.add(issued);
                 }
@@ -2270,11 +2271,11 @@ public class ProductionRunServices {
             for (GenericValue returned : EntityQuery.use(delegator).from("WorkEffortAndInventoryProduced")
                     .where("workEffortId", productionRunTaskId, "productId", productId).queryList()) {
                 GenericValue returnDetail = EntityQuery.use(delegator).from("InventoryItemDetail")
-                        .where("inventoryItemId", returned.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId))
+                        .where("inventoryItemId", returned.get(x.inventoryItemId))
                         .orderBy("inventoryItemDetailSeqId")
                         .queryFirst();
                 if (returnDetail != null) {
-                    BigDecimal qtyReturned = returnDetail.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityOnHandDiff);
+                    BigDecimal qtyReturned = returnDetail.getBigDecimal(x.quantityOnHandDiff);
                     if (qtyReturned != null) {
                         totalReturned = totalReturned.add(qtyReturned);
                     }
@@ -2288,7 +2289,7 @@ public class ProductionRunServices {
         } catch (GenericEntityException gee) {
             return ServiceUtil.returnError(gee.getMessage());
         }
-        String inventoryItemTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.inventoryItemTypeId);
+        String inventoryItemTypeId = (String) context.get(x.inventoryItemTypeId);
 
         // TODO: if the task is not running, then return an error message.
 
@@ -2311,24 +2312,24 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         // Mandatory input fields
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunId);
-        String workEffortId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunTaskId);
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String productionRunId = (String) context.get(x.productionRunId);
+        String workEffortId = (String) context.get(x.productionRunTaskId);
+        String partyId = (String) context.get(x.partyId);
         if (UtilValidate.isEmpty(partyId)) {
-            partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+            partyId = userLogin.getString(x.partyId);
         }
 
         // Optional input fields
-        BigDecimal addQuantityProduced = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.addQuantityProduced);
-        BigDecimal addQuantityRejected = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.addQuantityRejected);
-        BigDecimal addSetupTime = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.addSetupTime);
-        BigDecimal addTaskTime = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.addTaskTime);
-        String comments = (String) context.get(org.apache.ofbiz.persistence.entity.x.comments);
-        Boolean issueRequiredComponents = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.issueRequiredComponents);
-        Map<GenericPK, Object> componentsLocationMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.componentsLocationMap));
+        BigDecimal addQuantityProduced = (BigDecimal) context.get(x.addQuantityProduced);
+        BigDecimal addQuantityRejected = (BigDecimal) context.get(x.addQuantityRejected);
+        BigDecimal addSetupTime = (BigDecimal) context.get(x.addSetupTime);
+        BigDecimal addTaskTime = (BigDecimal) context.get(x.addTaskTime);
+        String comments = (String) context.get(x.comments);
+        Boolean issueRequiredComponents = (Boolean) context.get(x.issueRequiredComponents);
+        Map<GenericPK, Object> componentsLocationMap = UtilGenerics.cast(context.get(x.componentsLocationMap));
 
         if (issueRequiredComponents == null) {
             issueRequiredComponents = Boolean.FALSE;
@@ -2352,7 +2353,7 @@ public class ProductionRunServices {
         GenericValue oneTask = null;
         for (int i = 0; i < tasks.size(); i++) {
             oneTask = tasks.get(i);
-            if (oneTask.getString(org.apache.ofbiz.persistence.entity.x.workEffortId).equals(workEffortId)) {
+            if (oneTask.getString(x.workEffortId).equals(workEffortId)) {
                 theTask = oneTask;
                 break;
             }
@@ -2361,17 +2362,17 @@ public class ProductionRunServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingProductionRunTaskNotExists", locale));
         }
 
-        String currentStatusId = theTask.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId);
+        String currentStatusId = theTask.getString(x.currentStatusId);
 
         if (!"PRUN_RUNNING".equals(currentStatusId)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingProductionRunTaskNotRunning", locale));
         }
 
-        BigDecimal quantityProduced = theTask.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityProduced);
+        BigDecimal quantityProduced = theTask.getBigDecimal(x.quantityProduced);
         if (quantityProduced == null) {
             quantityProduced = BigDecimal.ZERO;
         }
-        BigDecimal quantityRejected = theTask.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityRejected);
+        BigDecimal quantityRejected = theTask.getBigDecimal(x.quantityRejected);
         if (quantityRejected == null) {
             quantityRejected = BigDecimal.ZERO;
         }
@@ -2379,24 +2380,24 @@ public class ProductionRunServices {
         BigDecimal totalQuantityRejected = quantityRejected.add(addQuantityRejected);
 
         if (issueRequiredComponents && addQuantityProduced.compareTo(ZERO) > 0) {
-            BigDecimal quantityToProduce = theTask.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityToProduce);
+            BigDecimal quantityToProduce = theTask.getBigDecimal(x.quantityToProduce);
             if (quantityToProduce == null) {
                 quantityToProduce = BigDecimal.ZERO;
             }
             if (quantityToProduce.compareTo(ZERO) > 0) {
                 try {
-                    List<GenericValue> components = theTask.getRelated(org.apache.ofbiz.persistence.entity.x.WorkEffortGoodStandard, null, null, false);
+                    List<GenericValue> components = theTask.getRelated(x.WorkEffortGoodStandard, null, null, false);
                     for (GenericValue component : components) {
                         BigDecimal totalRequiredMaterialQuantity =
-                                component.getBigDecimal(org.apache.ofbiz.persistence.entity.x.estimatedQuantity).multiply(totalQuantityProduced).divide(quantityToProduce, ROUNDING);
+                                component.getBigDecimal(x.estimatedQuantity).multiply(totalQuantityProduced).divide(quantityToProduce, ROUNDING);
                         // now get the units that have been already issued and subtract them
                         List<GenericValue> issuances = EntityQuery.use(delegator).from("WorkEffortAndInventoryAssign")
                                 .where("workEffortId", workEffortId,
-                                        "productId", component.get(org.apache.ofbiz.persistence.entity.x.productId))
+                                        "productId", component.get(x.productId))
                                 .queryList();
                         BigDecimal totalIssued = BigDecimal.ZERO;
                         for (GenericValue issuance : issuances) {
-                            BigDecimal issued = issuance.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                            BigDecimal issued = issuance.getBigDecimal(x.quantity);
                             if (issued != null) {
                                 totalIssued = totalIssued.add(issued);
                             }
@@ -2409,8 +2410,8 @@ public class ProductionRunServices {
                                 componentsLocation = UtilGenerics.cast(componentsLocationMap.get(key));
                             }
                             Map<String, Object> serviceContext = UtilMisc.toMap("workEffortId", workEffortId,
-                                    "productId", component.getString(org.apache.ofbiz.persistence.entity.x.productId),
-                                    "fromDate", component.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate));
+                                    "productId", component.getString(x.productId),
+                                    "fromDate", component.getTimestamp(x.fromDate));
                             serviceContext.put("quantity", requiredQuantity);
                             if (componentsLocation != null) {
                                 serviceContext.put("locationSeqId", componentsLocation.get("locationSeqId"));
@@ -2439,14 +2440,14 @@ public class ProductionRunServices {
             serviceContext.clear();
             serviceContext.put("workEffortId", workEffortId);
             if (addTaskTime != null) {
-                Double actualMilliSeconds = theTask.getDouble(org.apache.ofbiz.persistence.entity.x.actualMilliSeconds);
+                Double actualMilliSeconds = theTask.getDouble(x.actualMilliSeconds);
                 if (actualMilliSeconds == null) {
                     actualMilliSeconds = (double) 0;
                 }
                 serviceContext.put("actualMilliSeconds", actualMilliSeconds + addTaskTime.doubleValue());
             }
             if (addSetupTime != null) {
-                Double actualSetupMillis = theTask.getDouble(org.apache.ofbiz.persistence.entity.x.actualSetupMillis);
+                Double actualSetupMillis = theTask.getDouble(x.actualSetupMillis);
                 if (actualSetupMillis == null) {
                     actualSetupMillis = (double) 0;
                 }
@@ -2469,10 +2470,10 @@ public class ProductionRunServices {
     public static Map<String, Object> approveRequirement(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         // Mandatory input fields
-        String requirementId = (String) context.get(org.apache.ofbiz.persistence.entity.x.requirementId);
+        String requirementId = (String) context.get(x.requirementId);
         GenericValue requirement = null;
         try {
             requirement = EntityQuery.use(delegator).from("Requirement").where("requirementId", requirementId).queryOne();
@@ -2488,7 +2489,7 @@ public class ProductionRunServices {
         try {
             Map<String, Object> serviceResult = dispatcher.runSync("updateRequirement",
                     UtilMisc.<String, Object>toMap("requirementId", requirementId,
-                            "statusId", "REQ_APPROVED", "requirementTypeId", requirement.getString(org.apache.ofbiz.persistence.entity.x.requirementTypeId),
+                            "statusId", "REQ_APPROVED", "requirementTypeId", requirement.getString(x.requirementTypeId),
                             "userLogin", userLogin));
             if (ServiceUtil.isError(serviceResult)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
@@ -2503,12 +2504,12 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         // Mandatory input fields
-        String requirementId = (String) context.get(org.apache.ofbiz.persistence.entity.x.requirementId);
+        String requirementId = (String) context.get(x.requirementId);
         // Optional input fields
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
 
         GenericValue requirement = null;
         try {
@@ -2521,30 +2522,30 @@ public class ProductionRunServices {
         if (requirement == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingRequirementNotExists", locale));
         }
-        if (!"INTERNAL_REQUIREMENT".equals(requirement.getString(org.apache.ofbiz.persistence.entity.x.requirementTypeId))) {
+        if (!"INTERNAL_REQUIREMENT".equals(requirement.getString(x.requirementTypeId))) {
             return ServiceUtil.returnSuccess();
         }
 
         if (quantity == null) {
-            quantity = requirement.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+            quantity = requirement.getBigDecimal(x.quantity);
         }
         if (quantity == null) {
             quantity = BigDecimal.ONE;
         }
         Map<String, Object> serviceContext = new HashMap<>();
         serviceContext.clear();
-        serviceContext.put("productId", requirement.getString(org.apache.ofbiz.persistence.entity.x.productId));
+        serviceContext.put("productId", requirement.getString(x.productId));
         serviceContext.put("pRQuantity", quantity);
-        serviceContext.put("startDate", requirement.getTimestamp(org.apache.ofbiz.persistence.entity.x.requirementStartDate));
-        serviceContext.put("facilityId", requirement.getString(org.apache.ofbiz.persistence.entity.x.facilityId));
+        serviceContext.put("startDate", requirement.getTimestamp(x.requirementStartDate));
+        serviceContext.put("facilityId", requirement.getString(x.facilityId));
         String workEffortName = null;
-        if (requirement.getString(org.apache.ofbiz.persistence.entity.x.description) != null) {
-            workEffortName = requirement.getString(org.apache.ofbiz.persistence.entity.x.description);
+        if (requirement.getString(x.description) != null) {
+            workEffortName = requirement.getString(x.description);
             if (workEffortName.length() > 50) {
                 workEffortName = workEffortName.substring(0, 50);
             }
         } else {
-            workEffortName = "Created from requirement " + requirement.getString(org.apache.ofbiz.persistence.entity.x.requirementId);
+            workEffortName = "Created from requirement " + requirement.getString(x.requirementId);
         }
         serviceContext.put("workEffortName", workEffortName);
         serviceContext.put("userLogin", userLogin);
@@ -2575,16 +2576,16 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         // Mandatory input fields
-        String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId);
+        String facilityId = (String) context.get(x.facilityId);
         // Optional input fields
-        String configId = (String) context.get(org.apache.ofbiz.persistence.entity.x.configId);
-        ProductConfigWrapper config = (ProductConfigWrapper) context.get(org.apache.ofbiz.persistence.entity.x.config);
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
-        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+        String configId = (String) context.get(x.configId);
+        ProductConfigWrapper config = (ProductConfigWrapper) context.get(x.config);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
+        String orderId = (String) context.get(x.orderId);
+        String orderItemSeqId = (String) context.get(x.orderItemSeqId);
 
         if (config == null && configId == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingConfigurationNotAvailable", locale));
@@ -2631,13 +2632,13 @@ public class ProductionRunServices {
         for (ConfigOption co : config.getSelectedOptions()) {
             for (GenericValue selComponent : co.getComponents()) {
                 BigDecimal componentQuantity = null;
-                if (selComponent.get(org.apache.ofbiz.persistence.entity.x.quantity) != null) {
-                    componentQuantity = selComponent.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                if (selComponent.get(x.quantity) != null) {
+                    componentQuantity = selComponent.getBigDecimal(x.quantity);
                 }
                 if (componentQuantity == null) {
                     componentQuantity = BigDecimal.ONE;
                 }
-                String componentProductId = selComponent.getString(org.apache.ofbiz.persistence.entity.x.productId);
+                String componentProductId = selComponent.getString(x.productId);
                 if (co.isVirtualComponent(selComponent)) {
                     Map<String, String> componentOptions = co.getComponentOptions();
                     if (UtilValidate.isNotEmpty(componentOptions) && UtilValidate.isNotEmpty(componentOptions.get(componentProductId))) {
@@ -2699,7 +2700,7 @@ public class ProductionRunServices {
                     serviceContext.put("noteInfo", comments);
                     serviceContext.put("noteName", co.getDescription());
                     serviceContext.put("userLogin", userLogin);
-                    serviceContext.put("noteParty", userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId));
+                    serviceContext.put("noteParty", userLogin.getString(x.partyId));
                     try {
                         serviceResult = dispatcher.runSync("createWorkEffortNote", serviceContext);
                         if (ServiceUtil.isError(serviceResult)) {
@@ -2752,12 +2753,12 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         // Mandatory input fields
-        String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId);
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
-        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+        String facilityId = (String) context.get(x.facilityId);
+        String orderId = (String) context.get(x.orderId);
+        String orderItemSeqId = (String) context.get(x.orderItemSeqId);
 
         // Check if the order is to be immediately fulfilled, in which case the inventory
         // hasn't been reserved and ATP not yet decreased
@@ -2765,7 +2766,7 @@ public class ProductionRunServices {
         try {
             GenericValue order = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
             GenericValue productStore = delegator.getRelatedOne("ProductStore", order, false);
-            isImmediatelyFulfilled = "Y".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.isImmediatelyFulfilled));
+            isImmediatelyFulfilled = "Y".equals(productStore.getString(x.isImmediatelyFulfilled));
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingProductionRunForMarketingPackagesCreationError",
                     UtilMisc.toMap("orderId", orderId, "orderItemSeqId", orderItemSeqId, "errorString", e.getMessage()), locale));
@@ -2782,7 +2783,7 @@ public class ProductionRunServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingProductionRunForMarketingPackagesOrderItemNotFound",
                     UtilMisc.toMap("orderId", orderId, "orderItemSeqId", orderItemSeqId), locale));
         }
-        if (orderItem.get(org.apache.ofbiz.persistence.entity.x.quantity) == null) {
+        if (orderItem.get(x.quantity) == null) {
             Debug.logWarning("No quantity found for orderItem [" + orderItem + "], skipping production run of this marketing package", MODULE);
             return ServiceUtil.returnSuccess();
         }
@@ -2791,7 +2792,7 @@ public class ProductionRunServices {
             // first figure out how much of this product we already have in stock (ATP)
             BigDecimal existingAtp = BigDecimal.ZERO;
             Map<String, Object> tmpResults = dispatcher.runSync("getInventoryAvailableByFacility",
-                    UtilMisc.<String, Object>toMap("productId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId),
+                    UtilMisc.<String, Object>toMap("productId", orderItem.getString(x.productId),
                             "facilityId", facilityId, "userLogin", userLogin));
             if (ServiceUtil.isError(tmpResults)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(tmpResults));
@@ -2801,7 +2802,7 @@ public class ProductionRunServices {
             }
             // if the order is immediately fulfilled, adjust the atp to compensate for it not reserved
             if (isImmediatelyFulfilled) {
-                existingAtp = existingAtp.subtract(orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
+                existingAtp = existingAtp.subtract(orderItem.getBigDecimal(x.quantity));
             }
 
             if (Debug.verboseOn()) {
@@ -2813,7 +2814,7 @@ public class ProductionRunServices {
                 BigDecimal qtyRequired = BigDecimal.ZERO.subtract(existingAtp);
                 // ok so that's how many we WANT to produce, but let's check how many we can actually produce based on the available components
                 Map<String, Object> serviceContext = new HashMap<>();
-                serviceContext.put("productId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId));
+                serviceContext.put("productId", orderItem.getString(x.productId));
                 serviceContext.put("facilityId", facilityId);
                 serviceContext.put("userLogin", userLogin);
                 Map<String, Object> serviceResult = dispatcher.runSync("getMktgPackagesAvailable", serviceContext);
@@ -2828,12 +2829,12 @@ public class ProductionRunServices {
                     This will handle cases like if production run job creates for partial quantities
                      or in case of fully backordered scenario.
                  */
-                BigDecimal remainingQty = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity).subtract(qtyToProduce);
+                BigDecimal remainingQty = orderItem.getBigDecimal(x.quantity).subtract(qtyToProduce);
                 if (remainingQty.compareTo(ZERO) > 0) {
                     serviceContext.clear();
                     serviceContext.put("facilityId", facilityId);
                     serviceContext.put("userLogin", userLogin);
-                    serviceContext.put("productId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId));
+                    serviceContext.put("productId", orderItem.getString(x.productId));
                     serviceContext.put("pRQuantity", remainingQty);
                     serviceContext.put("startDate", UtilDateTime.nowTimestamp());
                     serviceResult = dispatcher.runSync("createProductionRun", serviceContext);
@@ -2903,7 +2904,7 @@ public class ProductionRunServices {
                 } else {
                     if (Debug.verboseOn()) {
                         Debug.logVerbose("There are not enough components available to produce any marketing packages [" + orderItem.getString(
-                                org.apache.ofbiz.persistence.entity.x.productId) + "]", MODULE);
+                                x.productId) + "]", MODULE);
                     }
                     return ServiceUtil.returnSuccess();
                 }
@@ -2922,14 +2923,14 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
-        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
-        String orderItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
-        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
-        String fromDateStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String orderId = (String) context.get(x.orderId);
+        String shipmentId = (String) context.get(x.shipmentId);
+        String orderItemSeqId = (String) context.get(x.orderItemSeqId);
+        String shipGroupSeqId = (String) context.get(x.shipGroupSeqId);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
+        String fromDateStr = (String) context.get(x.fromDate);
+        Locale locale = (Locale) context.get(x.locale);
 
         Date fromDate = null;
         if (UtilValidate.isNotEmpty(fromDateStr)) {
@@ -2958,7 +2959,7 @@ public class ProductionRunServices {
                             orderId, "orderItemSeqId", ""), locale));
                 }
                 if (quantity != null) {
-                    orderItem.set(org.apache.ofbiz.persistence.entity.x.quantity, quantity);
+                    orderItem.set(x.quantity, quantity);
                 }
                 orderItems = UtilMisc.toList(orderItem);
             } catch (GenericEntityException gee) {
@@ -2985,26 +2986,26 @@ public class ProductionRunServices {
             GenericValue orderItem = null;
             if ("OrderItemShipGroupAssoc".equals(orderItemOrShipGroupAssoc.getEntityName())) {
                 try {
-                    orderItem = orderItemOrShipGroupAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItem, false);
+                    orderItem = orderItemOrShipGroupAssoc.getRelatedOne(x.OrderItem, false);
                 } catch (GenericEntityException gee) {
                     Debug.logInfo("Unable to find order item for " + orderItemOrShipGroupAssoc, MODULE);
                 }
             } else {
                 orderItem = orderItemOrShipGroupAssoc;
             }
-            if (orderItem == null || orderItem.get(org.apache.ofbiz.persistence.entity.x.productId) == null) {
+            if (orderItem == null || orderItem.get(x.productId) == null) {
                 continue;
             } else {
-                productId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
+                productId = orderItem.getString(x.productId);
             }
-            if (orderItem.get(org.apache.ofbiz.persistence.entity.x.selectedAmount) != null) {
-                amount = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.selectedAmount);
+            if (orderItem.get(x.selectedAmount) != null) {
+                amount = orderItem.getBigDecimal(x.selectedAmount);
             }
             if (amount == null) {
                 amount = BigDecimal.ZERO;
             }
-            if (orderItemOrShipGroupAssoc.get(org.apache.ofbiz.persistence.entity.x.quantity) != null) {
-                quantity = orderItemOrShipGroupAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+            if (orderItemOrShipGroupAssoc.get(x.quantity) != null) {
+                quantity = orderItemOrShipGroupAssoc.getBigDecimal(x.quantity);
             } else {
                 continue;
             }
@@ -3013,25 +3014,25 @@ public class ProductionRunServices {
                 if (UtilValidate.isNotEmpty(shipGroupSeqId)) {
                     existingProductionRuns = EntityQuery.use(delegator).from("WorkAndOrderItemFulfillment")
                             .where(
-                                    EntityCondition.makeCondition("orderId", EntityOperator.EQUALS, orderItemOrShipGroupAssoc.get(org.apache.ofbiz.persistence.entity.x.orderId)),
+                                    EntityCondition.makeCondition("orderId", EntityOperator.EQUALS, orderItemOrShipGroupAssoc.get(x.orderId)),
                                     EntityCondition.makeCondition("orderItemSeqId", EntityOperator.EQUALS, orderItemOrShipGroupAssoc.get(
-                                            org.apache.ofbiz.persistence.entity.x.orderItemSeqId)),
+                                            x.orderItemSeqId)),
                                     EntityCondition.makeCondition("shipGroupSeqId", EntityOperator.EQUALS, orderItemOrShipGroupAssoc.get(
-                                            org.apache.ofbiz.persistence.entity.x.shipGroupSeqId)),
+                                            x.shipGroupSeqId)),
                                     EntityCondition.makeCondition("currentStatusId", EntityOperator.NOT_EQUAL, "PRUN_CANCELLED"))
                             .cache().queryList();
                 } else {
                     existingProductionRuns = EntityQuery.use(delegator).from("WorkAndOrderItemFulfillment")
                             .where(
-                                    EntityCondition.makeCondition("orderId", EntityOperator.EQUALS, orderItemOrShipGroupAssoc.get(org.apache.ofbiz.persistence.entity.x.orderId)),
+                                    EntityCondition.makeCondition("orderId", EntityOperator.EQUALS, orderItemOrShipGroupAssoc.get(x.orderId)),
                                     EntityCondition.makeCondition("orderItemSeqId", EntityOperator.EQUALS, orderItemOrShipGroupAssoc.get(
-                                            org.apache.ofbiz.persistence.entity.x.orderItemSeqId)),
+                                            x.orderItemSeqId)),
                                     EntityCondition.makeCondition("currentStatusId", EntityOperator.NOT_EQUAL, "PRUN_CANCELLED"))
                             .cache().queryList();
                 }
                 if (UtilValidate.isNotEmpty(existingProductionRuns)) {
-                    Debug.logWarning("Production Run for order item [" + orderItemOrShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.orderId) + "/"
-                            + orderItemOrShipGroupAssoc.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId) + "] and ship group [" + shipGroupSeqId + "] already exists.",
+                    Debug.logWarning("Production Run for order item [" + orderItemOrShipGroupAssoc.getString(x.orderId) + "/"
+                            + orderItemOrShipGroupAssoc.getString(x.orderItemSeqId) + "] and ship group [" + shipGroupSeqId + "] already exists.",
                             MODULE);
                     continue;
                 }
@@ -3045,7 +3046,7 @@ public class ProductionRunServices {
                 tree.setRootQuantity(quantity);
                 tree.setRootAmount(amount);
                 tree.print(components);
-                productionRuns.add(tree.createManufacturingOrders(null, fromDate, null, null, null, orderId, orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId),
+                productionRuns.add(tree.createManufacturingOrders(null, fromDate, null, null, null, orderId, orderItem.getString(x.orderItemSeqId),
                         shipGroupSeqId, shipmentId, userLogin));
             } catch (GenericEntityException gee) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingBomErrorCreatingBillOfMaterialsTree",
@@ -3060,15 +3061,15 @@ public class ProductionRunServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        Timestamp startDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.startDate);
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
-        String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId);
-        String workEffortName = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortName);
-        String description = (String) context.get(org.apache.ofbiz.persistence.entity.x.description);
-        String routingId = (String) context.get(org.apache.ofbiz.persistence.entity.x.routingId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        String productId = (String) context.get(x.productId);
+        Timestamp startDate = (Timestamp) context.get(x.startDate);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
+        String facilityId = (String) context.get(x.facilityId);
+        String workEffortName = (String) context.get(x.workEffortName);
+        String description = (String) context.get(x.description);
+        String routingId = (String) context.get(x.routingId);
         String workEffortId = null;
         if (quantity == null) {
             quantity = BigDecimal.ONE;
@@ -3106,17 +3107,17 @@ public class ProductionRunServices {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
 
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunId);
-        String taskId = (String) context.get(org.apache.ofbiz.persistence.entity.x.taskId);
+        String productionRunId = (String) context.get(x.productionRunId);
+        String taskId = (String) context.get(x.taskId);
 
         try {
             Map<String, Object> serviceContext = new HashMap<>();
             Map<String, Object> serviceResult = null;
             GenericValue task = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", taskId).queryOne();
-            String currentStatusId = task.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId);
+            String currentStatusId = task.getString(x.currentStatusId);
             String prevStatusId = "";
             while (!"PRUN_COMPLETED".equals(currentStatusId)) {
                 serviceContext.put("productionRunId", productionRunId);
@@ -3157,10 +3158,10 @@ public class ProductionRunServices {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
 
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunId);
+        String productionRunId = (String) context.get(x.productionRunId);
 
         ProductionRun productionRun = new ProductionRun(productionRunId, delegator, dispatcher);
         if (!productionRun.exist()) {
@@ -3171,7 +3172,7 @@ public class ProductionRunServices {
         String taskId = null;
         for (int i = 0; i < tasks.size(); i++) {
             oneTask = tasks.get(i);
-            taskId = oneTask.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
+            taskId = oneTask.getString(x.workEffortId);
             try {
                 Map<String, Object> serviceContext = new HashMap<>();
                 serviceContext.put("productionRunId", productionRunId);
@@ -3193,10 +3194,10 @@ public class ProductionRunServices {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
 
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunId);
+        String productionRunId = (String) context.get(x.productionRunId);
 
         ProductionRun productionRun = new ProductionRun(productionRunId, delegator, dispatcher);
         if (!productionRun.exist()) {
@@ -3207,10 +3208,10 @@ public class ProductionRunServices {
         String taskId = null;
         for (int i = 0; i < tasks.size(); i++) {
             oneTask = tasks.get(i);
-            taskId = oneTask.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
-            if ("PRUN_CREATED".equals(oneTask.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))
-                    || "PRUN_SCHEDULED".equals(oneTask.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))
-                    || "PRUN_DOC_PRINTED".equals(oneTask.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))) {
+            taskId = oneTask.getString(x.workEffortId);
+            if ("PRUN_CREATED".equals(oneTask.getString(x.currentStatusId))
+                    || "PRUN_SCHEDULED".equals(oneTask.getString(x.currentStatusId))
+                    || "PRUN_DOC_PRINTED".equals(oneTask.getString(x.currentStatusId))) {
                 try {
                     Map<String, Object> serviceContext = UtilMisc.<String, Object>toMap("productionRunId", productionRunId,
                             "workEffortId", taskId);
@@ -3240,12 +3241,12 @@ public class ProductionRunServices {
     public static Map<String, Object> quickChangeProductionRunStatus(DispatchContext ctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Map<String, Object> serviceResult = new HashMap<>();
-        String productionRunId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productionRunId);
-        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
-        String startAllTasks = (String) context.get(org.apache.ofbiz.persistence.entity.x.startAllTasks);
+        String productionRunId = (String) context.get(x.productionRunId);
+        String statusId = (String) context.get(x.statusId);
+        String startAllTasks = (String) context.get(x.startAllTasks);
 
         try {
             Map<String, Object> serviceContext = new HashMap<>();
@@ -3323,10 +3324,10 @@ public class ProductionRunServices {
     public static Map<String, Object> getProductionRunTotResQty(DispatchContext ctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        Timestamp startDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.startDate);
+        String productId = (String) context.get(x.productId);
+        Timestamp startDate = (Timestamp) context.get(x.startDate);
         if (startDate == null) {
             startDate = UtilDateTime.nowTimestamp();
         }
@@ -3352,7 +3353,7 @@ public class ProductionRunServices {
             if (outgoingProductionRuns != null) {
                 for (int i = 0; i < outgoingProductionRuns.size(); i++) {
                     GenericValue outgoingProductionRun = outgoingProductionRuns.get(i);
-                    BigDecimal qty = outgoingProductionRun.getBigDecimal(org.apache.ofbiz.persistence.entity.x.estimatedQuantity);
+                    BigDecimal qty = outgoingProductionRun.getBigDecimal(x.estimatedQuantity);
                     qty = qty != null ? qty : BigDecimal.ZERO;
                     totQty = totQty.add(qty);
                 }
@@ -3368,9 +3369,9 @@ public class ProductionRunServices {
     public static Map<String, Object> checkDecomposeInventoryItem(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String inventoryItemId = (String) context.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String inventoryItemId = (String) context.get(x.inventoryItemId);
+        Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> serviceResult = new HashMap<>();
         try {
             GenericValue inventoryItem = EntityQuery.use(delegator).from("InventoryItem").where("inventoryItemId", inventoryItemId).queryOne();
@@ -3378,15 +3379,15 @@ public class ProductionRunServices {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_PRODUCT, "ProductInventoryItemNotFound", UtilMisc.toMap(
                         "inventoryItemId", inventoryItemId), locale));
             }
-            if (inventoryItem.get(org.apache.ofbiz.persistence.entity.x.availableToPromiseTotal) != null && inventoryItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.availableToPromiseTotal).compareTo(ZERO) <= 0) {
+            if (inventoryItem.get(x.availableToPromiseTotal) != null && inventoryItem.getBigDecimal(x.availableToPromiseTotal).compareTo(ZERO) <= 0) {
                 return ServiceUtil.returnSuccess();
             }
-            GenericValue product = inventoryItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
+            GenericValue product = inventoryItem.getRelatedOne(x.Product, false);
             if (product == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_PRODUCT, "ProductProductNotFound", locale) + " " + inventoryItem.get(
-                        org.apache.ofbiz.persistence.entity.x.productId));
+                        x.productId));
             }
-            if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId), "parentTypeId",
+            if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", product.getString(x.productTypeId), "parentTypeId",
                     "MARKETING_PKG_AUTO")) {
                 Map<String, Object> serviceContext = UtilMisc.toMap("inventoryItemId", inventoryItemId,
                         "userLogin", userLogin);
@@ -3410,11 +3411,11 @@ public class ProductionRunServices {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Timestamp now = UtilDateTime.nowTimestamp();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
         // Mandatory input fields
-        String inventoryItemId = (String) context.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId);
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
+        String inventoryItemId = (String) context.get(x.inventoryItemId);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
         List<String> inventoryItemIds = new LinkedList<>();
         try {
             GenericValue inventoryItem = EntityQuery.use(delegator).from("InventoryItem")
@@ -3428,9 +3429,9 @@ public class ProductionRunServices {
                     "workEffortPurposeTypeId", "WEPT_PRODUCTION_RUN",
                     "currentStatusId", "CAL_COMPLETED");
             serviceContext.put("workEffortName",
-                    "Decomposing product [" + inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.productId) + "] inventory item [" + inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId)
+                    "Decomposing product [" + inventoryItem.getString(x.productId) + "] inventory item [" + inventoryItem.getString(x.inventoryItemId)
                             + "]");
-            serviceContext.put("facilityId", inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.facilityId));
+            serviceContext.put("facilityId", inventoryItem.getString(x.facilityId));
             serviceContext.put("estimatedStartDate", now);
             serviceContext.put("userLogin", userLogin);
             Map<String, Object> serviceResult = dispatcher.runSync("createWorkEffort", serviceContext);
@@ -3453,14 +3454,14 @@ public class ProductionRunServices {
             if (issuedQuantity.compareTo(ZERO) == 0) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "ManufacturingProductionRunCannotDecomposingInventoryItemNoMarketingPackagesFound", UtilMisc.toMap("inventoryItemId",
-                                inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId)), locale));
+                                inventoryItem.getString(x.inventoryItemId)), locale));
             }
             // get the package's unit cost to compute a cost coefficient ratio which is the marketing package's actual unit cost divided by its
             // standard cost
             // this ratio will be used to determine the cost of the marketing package components when they are returned to inventory
             serviceContext.clear();
-            serviceContext = UtilMisc.toMap("productId", inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.productId),
-                    "currencyUomId", inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId),
+            serviceContext = UtilMisc.toMap("productId", inventoryItem.getString(x.productId),
+                    "currencyUomId", inventoryItem.getString(x.currencyUomId),
                     "costComponentTypePrefix", "EST_STD",
                     "userLogin", userLogin);
             serviceResult = dispatcher.runSync("getProductCost", serviceContext);
@@ -3468,7 +3469,7 @@ public class ProductionRunServices {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
             }
             BigDecimal packageCost = (BigDecimal) serviceResult.get("productCost");
-            BigDecimal inventoryItemCost = inventoryItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitCost);
+            BigDecimal inventoryItemCost = inventoryItem.getBigDecimal(x.unitCost);
             BigDecimal costCoefficient = null;
             if (packageCost == null || packageCost.compareTo(ZERO) == 0 || inventoryItemCost == null) {
                 // if the actual cost of the item (marketing package) that we are decomposing is not available, or
@@ -3483,7 +3484,7 @@ public class ProductionRunServices {
 
             // the components are retrieved
             serviceContext.clear();
-            serviceContext = UtilMisc.toMap("productId", inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.productId),
+            serviceContext = UtilMisc.toMap("productId", inventoryItem.getString(x.productId),
                     "quantity", issuedQuantity,
                     "userLogin", userLogin);
             serviceResult = dispatcher.runSync("getManufacturingComponents", serviceContext);
@@ -3494,13 +3495,13 @@ public class ProductionRunServices {
             if (UtilValidate.isEmpty(components)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "ManufacturingProductionRunCannotDecomposingInventoryItemNoComponentsFound", UtilMisc.toMap("productId",
-                                inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.productId)), locale));
+                                inventoryItem.getString(x.productId)), locale));
             }
             for (Map<String, Object> component : components) {
                 // get the component's standard cost
                 serviceContext.clear();
-                serviceContext = UtilMisc.toMap("productId", ((GenericValue) component.get(org.apache.ofbiz.persistence.entity.x.product)).getString("productId"),
-                        "currencyUomId", inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId),
+                serviceContext = UtilMisc.toMap("productId", ((GenericValue) component.get(x.product)).getString("productId"),
+                        "currencyUomId", inventoryItem.getString(x.currencyUomId),
                         "costComponentTypePrefix", "EST_STD",
                         "userLogin", userLogin);
                 serviceResult = dispatcher.runSync("getProductCost", serviceContext);
@@ -3512,9 +3513,9 @@ public class ProductionRunServices {
                 // return the component to inventory at its standard cost multiplied by the cost coefficient from above
                 BigDecimal componentInventoryItemCost = costCoefficient.multiply(componentCost);
                 serviceContext.clear();
-                serviceContext = UtilMisc.toMap("productId", ((GenericValue) component.get(org.apache.ofbiz.persistence.entity.x.product)).getString("productId"),
-                        "quantity", component.get(org.apache.ofbiz.persistence.entity.x.quantity),
-                        "facilityId", inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.facilityId),
+                serviceContext = UtilMisc.toMap("productId", ((GenericValue) component.get(x.product)).getString("productId"),
+                        "quantity", component.get(x.quantity),
+                        "facilityId", inventoryItem.getString(x.facilityId),
                         "unitCost", componentInventoryItemCost,
                         "userLogin", userLogin);
                 serviceContext.put("workEffortId", workEffortId);
@@ -3537,7 +3538,7 @@ public class ProductionRunServices {
     public static Map<String, Object> setEstimatedDeliveryDates(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         Timestamp now = UtilDateTime.nowTimestamp();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         Map<String, TreeMap<Timestamp, Object>> products = new HashMap<>();
 
         try {
@@ -3547,15 +3548,15 @@ public class ProductionRunServices {
                             "workEffortTypeId", "PROD_ORDER_HEADER")
                     .queryList();
             for (GenericValue genericResult : resultList) {
-                if ("PRUN_CLOSED".equals(genericResult.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))
-                        || "PRUN_CREATED".equals(genericResult.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))) {
+                if ("PRUN_CLOSED".equals(genericResult.getString(x.currentStatusId))
+                        || "PRUN_CREATED".equals(genericResult.getString(x.currentStatusId))) {
                     continue;
                 }
-                BigDecimal qtyToProduce = genericResult.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityToProduce);
+                BigDecimal qtyToProduce = genericResult.getBigDecimal(x.quantityToProduce);
                 if (qtyToProduce == null) {
                     qtyToProduce = BigDecimal.ZERO;
                 }
-                BigDecimal qtyProduced = genericResult.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityProduced);
+                BigDecimal qtyProduced = genericResult.getBigDecimal(x.quantityProduced);
                 if (qtyProduced == null) {
                     qtyProduced = BigDecimal.ZERO;
                 }
@@ -3563,8 +3564,8 @@ public class ProductionRunServices {
                     continue;
                 }
                 BigDecimal qtyDiff = qtyToProduce.subtract(qtyProduced);
-                String productId = genericResult.getString(org.apache.ofbiz.persistence.entity.x.productId);
-                Timestamp estimatedShipDate = genericResult.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate);
+                String productId = genericResult.getString(x.productId);
+                Timestamp estimatedShipDate = genericResult.getTimestamp(x.estimatedCompletionDate);
                 if (estimatedShipDate == null) {
                     estimatedShipDate = now;
                 }
@@ -3590,25 +3591,25 @@ public class ProductionRunServices {
             String orderId = null;
             GenericValue orderDeliverySchedule = null;
             for (GenericValue genericResult : resultList) {
-                String newOrderId = genericResult.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+                String newOrderId = genericResult.getString(x.orderId);
                 if (!newOrderId.equals(orderId)) {
                     orderDeliverySchedule = null;
                     orderId = newOrderId;
                     orderDeliverySchedule = EntityQuery.use(delegator).from("OrderDeliverySchedule").where("orderId", orderId, "orderItemSeqId",
                             "_NA_").queryOne();
                 }
-                String productId = genericResult.getString(org.apache.ofbiz.persistence.entity.x.productId);
-                BigDecimal orderQuantity = genericResult.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                String productId = genericResult.getString(x.productId);
+                BigDecimal orderQuantity = genericResult.getBigDecimal(x.quantity);
                 GenericValue orderItemDeliverySchedule = null;
                 orderItemDeliverySchedule = EntityQuery.use(delegator).from("OrderDeliverySchedule").where("orderId", orderId, "orderItemSeqId",
-                        genericResult.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId)).queryOne();
+                        genericResult.getString(x.orderItemSeqId)).queryOne();
                 Timestamp estimatedShipDate = null;
-                if (orderItemDeliverySchedule != null && orderItemDeliverySchedule.get(org.apache.ofbiz.persistence.entity.x.estimatedReadyDate) != null) {
-                    estimatedShipDate = orderItemDeliverySchedule.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedReadyDate);
-                } else if (orderDeliverySchedule != null && orderDeliverySchedule.get(org.apache.ofbiz.persistence.entity.x.estimatedReadyDate) != null) {
-                    estimatedShipDate = orderDeliverySchedule.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedReadyDate);
+                if (orderItemDeliverySchedule != null && orderItemDeliverySchedule.get(x.estimatedReadyDate) != null) {
+                    estimatedShipDate = orderItemDeliverySchedule.getTimestamp(x.estimatedReadyDate);
+                } else if (orderDeliverySchedule != null && orderDeliverySchedule.get(x.estimatedReadyDate) != null) {
+                    estimatedShipDate = orderDeliverySchedule.getTimestamp(x.estimatedReadyDate);
                 } else {
-                    estimatedShipDate = genericResult.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedDeliveryDate);
+                    estimatedShipDate = genericResult.getTimestamp(x.estimatedDeliveryDate);
                 }
                 if (estimatedShipDate == null) {
                     estimatedShipDate = now;
@@ -3637,14 +3638,14 @@ public class ProductionRunServices {
                             EntityCondition.makeCondition("quantityNotAvailable", EntityOperator.GREATER_THAN, BigDecimal.ZERO))
                     .orderBy("shipBeforeDate").queryList();
             for (GenericValue genericResult : backorders) {
-                String productId = genericResult.getString(org.apache.ofbiz.persistence.entity.x.productId);
+                String productId = genericResult.getString(x.productId);
                 GenericValue orderItemShipGroup = EntityQuery.use(delegator).from("OrderItemShipGroup")
-                        .where("orderId", genericResult.get(org.apache.ofbiz.persistence.entity.x.orderId),
-                                "shipGroupSeqId", genericResult.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId))
+                        .where("orderId", genericResult.get(x.orderId),
+                                "shipGroupSeqId", genericResult.get(x.shipGroupSeqId))
                         .queryOne();
-                Timestamp requiredByDate = orderItemShipGroup.getTimestamp(org.apache.ofbiz.persistence.entity.x.shipByDate);
+                Timestamp requiredByDate = orderItemShipGroup.getTimestamp(x.shipByDate);
 
-                BigDecimal quantityNotAvailable = genericResult.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityNotAvailable);
+                BigDecimal quantityNotAvailable = genericResult.getBigDecimal(x.quantityNotAvailable);
                 BigDecimal quantityNotAvailableRem = quantityNotAvailable;
                 if (requiredByDate == null) {
                     // If shipByDate is not set, 'now' is assumed.
@@ -3666,12 +3667,12 @@ public class ProductionRunServices {
                         remainingQty = remainingQty.subtract(quantityNotAvailableRem);
                         currentDateMap.put("remainingQty", remainingQty);
                         GenericValue orderItemShipGrpInvRes = EntityQuery.use(delegator).from("OrderItemShipGrpInvRes")
-                                .where("orderId", genericResult.get(org.apache.ofbiz.persistence.entity.x.orderId),
-                                        "shipGroupSeqId", genericResult.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId),
-                                        "orderItemSeqId", genericResult.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId),
-                                        "inventoryItemId", genericResult.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId))
+                                .where("orderId", genericResult.get(x.orderId),
+                                        "shipGroupSeqId", genericResult.get(x.shipGroupSeqId),
+                                        "orderItemSeqId", genericResult.get(x.orderItemSeqId),
+                                        "inventoryItemId", genericResult.get(x.inventoryItemId))
                                 .queryOne();
-                        orderItemShipGrpInvRes.set(org.apache.ofbiz.persistence.entity.x.promisedDatetime, currentDate);
+                        orderItemShipGrpInvRes.set(x.promisedDatetime, currentDate);
                         orderItemShipGrpInvRes.store();
                         // TODO: set the reservation
                         break;

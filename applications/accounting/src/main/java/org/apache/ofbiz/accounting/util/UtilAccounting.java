@@ -35,6 +35,7 @@ import org.apache.ofbiz.entity.condition.EntityJoinOperator;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 public final class UtilAccounting {
 
     private static final String MODULE = UtilAccounting.class.getName();
@@ -88,7 +89,7 @@ public final class UtilAccounting {
         }
 
         // otherwise return the glAccountId
-        return account.getString(org.apache.ofbiz.persistence.entity.x.glAccountId);
+        return account.getString(x.glAccountId);
     }
 
     /**
@@ -109,8 +110,8 @@ public final class UtilAccounting {
     }
 
     private static void getGlAccountClassChildren(GenericValue glAccountClass, List<String> glAccountClassIds) throws GenericEntityException {
-        glAccountClassIds.add(glAccountClass.getString(org.apache.ofbiz.persistence.entity.x.glAccountClassId));
-        List<GenericValue> glAccountClassChildren = glAccountClass.getRelated(org.apache.ofbiz.persistence.entity.x.ChildGlAccountClass, null, null, true);
+        glAccountClassIds.add(glAccountClass.getString(x.glAccountClassId));
+        List<GenericValue> glAccountClassChildren = glAccountClass.getRelated(x.ChildGlAccountClass, null, null, true);
         for (GenericValue glAccountClassChild : glAccountClassChildren) {
             getGlAccountClassChildren(glAccountClassChild, glAccountClassIds);
         }
@@ -122,11 +123,11 @@ public final class UtilAccounting {
     private static boolean isPaymentTypeRecurse(GenericValue paymentType, String inputTypeId) throws GenericEntityException {
 
         // first check the parentTypeId against inputTypeId
-        String parentTypeId = paymentType.getString(org.apache.ofbiz.persistence.entity.x.parentTypeId);
+        String parentTypeId = paymentType.getString(x.parentTypeId);
 
         // isPaymentTypeRecurse => otherwise, we have to go to the grandparent (recurse)
         return !(parentTypeId == null)
-                && (parentTypeId.equals(inputTypeId) || isPaymentTypeRecurse(paymentType.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ParentPaymentType, false), inputTypeId));
+                && (parentTypeId.equals(inputTypeId) || isPaymentTypeRecurse(paymentType.getRelatedOne(x.ParentPaymentType, false), inputTypeId));
     }
 
 
@@ -139,12 +140,12 @@ public final class UtilAccounting {
             return false;
         }
 
-        GenericValue paymentType = payment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PaymentType, true);
+        GenericValue paymentType = payment.getRelatedOne(x.PaymentType, true);
         if (paymentType == null) {
-            throw new GenericEntityException("Cannot find PaymentType for paymentId " + payment.getString(org.apache.ofbiz.persistence.entity.x.paymentId));
+            throw new GenericEntityException("Cannot find PaymentType for paymentId " + payment.getString(x.paymentId));
         }
 
-        String paymentTypeId = paymentType.getString(org.apache.ofbiz.persistence.entity.x.paymentTypeId);
+        String paymentTypeId = paymentType.getString(x.paymentTypeId);
 
         // recurse up tree
         return inputTypeId.equals(paymentTypeId) || isPaymentTypeRecurse(paymentType, inputTypeId);
@@ -171,16 +172,16 @@ public final class UtilAccounting {
         if (glAccountClass == null) return false;
 
         // check current class against input classId
-        if (parentGlAccountClassId.equals(glAccountClass.get(org.apache.ofbiz.persistence.entity.x.glAccountClassId))) {
+        if (parentGlAccountClassId.equals(glAccountClass.get(x.glAccountClassId))) {
             return true;
         }
 
         // check parentClassId against inputClassId
-        String parentClassId = glAccountClass.getString(org.apache.ofbiz.persistence.entity.x.parentClassId);
+        String parentClassId = glAccountClass.getString(x.parentClassId);
 
         // otherwise, we have to go to the grandparent (recurse)
         return !(parentClassId == null) && (parentClassId.equals(parentGlAccountClassId)
-                || isAccountClassClass(glAccountClass.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ParentGlAccountClass, true), parentGlAccountClassId));
+                || isAccountClassClass(glAccountClass.getRelatedOne(x.ParentGlAccountClass, true), parentGlAccountClassId));
     }
 
     /**
@@ -192,9 +193,9 @@ public final class UtilAccounting {
             return false;
         }
 
-        GenericValue glAccountClass = glAccount.getRelatedOne(org.apache.ofbiz.persistence.entity.x.GlAccountClass, true);
+        GenericValue glAccountClass = glAccount.getRelatedOne(x.GlAccountClass, true);
         if (glAccountClass == null) {
-            throw new GenericEntityException("Cannot find GlAccountClass for glAccountId " + glAccount.getString(org.apache.ofbiz.persistence.entity.x.glAccountId));
+            throw new GenericEntityException("Cannot find GlAccountClass for glAccountId " + glAccount.getString(x.glAccountId));
         }
 
         return isAccountClassClass(glAccountClass, glAccountClassId);
@@ -239,12 +240,12 @@ public final class UtilAccounting {
     private static boolean isInvoiceTypeRecurse(GenericValue invoiceType, String inputTypeId) throws GenericEntityException {
 
         // first check the invoiceTypeId and parentTypeId against inputTypeId
-        String invoiceTypeId = invoiceType.getString(org.apache.ofbiz.persistence.entity.x.invoiceTypeId);
-        String parentTypeId = invoiceType.getString(org.apache.ofbiz.persistence.entity.x.parentTypeId);
+        String invoiceTypeId = invoiceType.getString(x.invoiceTypeId);
+        String parentTypeId = invoiceType.getString(x.parentTypeId);
 
         // otherwise, we have to go to the grandparent (recurse)
         return !(parentTypeId == null || invoiceTypeId.equals(parentTypeId))
-                && (parentTypeId.equals(inputTypeId) || isInvoiceTypeRecurse(invoiceType.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ParentInvoiceType, false), inputTypeId));
+                && (parentTypeId.equals(inputTypeId) || isInvoiceTypeRecurse(invoiceType.getRelatedOne(x.ParentInvoiceType, false), inputTypeId));
     }
 
     /**
@@ -256,12 +257,12 @@ public final class UtilAccounting {
             return false;
         }
 
-        GenericValue invoiceType = invoice.getRelatedOne(org.apache.ofbiz.persistence.entity.x.InvoiceType, true);
+        GenericValue invoiceType = invoice.getRelatedOne(x.InvoiceType, true);
         if (invoiceType == null) {
-            throw new GenericEntityException("Cannot find InvoiceType for invoiceId " + invoice.getString(org.apache.ofbiz.persistence.entity.x.invoiceId));
+            throw new GenericEntityException("Cannot find InvoiceType for invoiceId " + invoice.getString(x.invoiceId));
         }
 
-        String invoiceTypeId = invoiceType.getString(org.apache.ofbiz.persistence.entity.x.invoiceTypeId);
+        String invoiceTypeId = invoiceType.getString(x.invoiceTypeId);
 
         // recurse up tree
         return inputTypeId.equals(invoiceTypeId)
@@ -288,15 +289,15 @@ public final class UtilAccounting {
                 EntityCondition.makeCondition("glAccountTypeId", "ACCOUNTS_PAYABLE"),
                 EntityCondition.makeCondition("debitCreditFlag", "C"),
                 EntityCondition.makeCondition("acctgTransTypeId", "PURCHASE_INVOICE"),
-                EntityCondition.makeCondition("invoiceId", paymentApplication.getString(org.apache.ofbiz.persistence.entity.x.invoiceId)));
+                EntityCondition.makeCondition("invoiceId", paymentApplication.getString(x.invoiceId)));
         EntityCondition whereCondition = EntityCondition.makeCondition(andConditions, EntityJoinOperator.AND);
         GenericValue amounts = EntityQuery.use(delegator).select("origAmount", "amount").from("AcctgTransAndEntries")
                 .where(whereCondition).queryFirst();
         if (amounts == null) {
             return exchangeRate;
         }
-        BigDecimal origAmount = amounts.getBigDecimal(org.apache.ofbiz.persistence.entity.x.origAmount);
-        BigDecimal amount = amounts.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
+        BigDecimal origAmount = amounts.getBigDecimal(x.origAmount);
+        BigDecimal amount = amounts.getBigDecimal(x.amount);
         if (origAmount != null && amount != null && BigDecimal.ZERO.compareTo(origAmount) != 0 && BigDecimal.ZERO.compareTo(amount)
                 != 0 && amount.compareTo(origAmount) != 0) {
             exchangeRate = amount.divide(origAmount, UtilNumber.getBigDecimalScale("ledger.decimals"),
@@ -312,15 +313,15 @@ public final class UtilAccounting {
                 EntityCondition.makeCondition("glAccountTypeId", "CURRENT_ASSET"),
                 EntityCondition.makeCondition("debitCreditFlag", "C"),
                 EntityCondition.makeCondition("acctgTransTypeId", "OUTGOING_PAYMENT"),
-                EntityCondition.makeCondition("paymentId", paymentApplication.getString(org.apache.ofbiz.persistence.entity.x.paymentId)));
+                EntityCondition.makeCondition("paymentId", paymentApplication.getString(x.paymentId)));
         EntityCondition whereCondition = EntityCondition.makeCondition(andConditions, EntityJoinOperator.AND);
         GenericValue amounts = EntityQuery.use(delegator).select("origAmount", "amount").from("AcctgTransAndEntries")
                 .where(whereCondition).queryFirst();
         if (amounts == null) {
             return exchangeRate;
         }
-        BigDecimal origAmount = amounts.getBigDecimal(org.apache.ofbiz.persistence.entity.x.origAmount);
-        BigDecimal amount = amounts.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
+        BigDecimal origAmount = amounts.getBigDecimal(x.origAmount);
+        BigDecimal amount = amounts.getBigDecimal(x.amount);
         if (origAmount != null && amount != null && BigDecimal.ZERO.compareTo(origAmount) != 0 && BigDecimal.ZERO.compareTo(amount) != 0
                 && amount.compareTo(origAmount) != 0) {
             exchangeRate = amount.divide(origAmount, UtilNumber.getBigDecimalScale("ledger.decimals"),

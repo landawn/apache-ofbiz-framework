@@ -48,6 +48,7 @@ import com.paymentech.orbital.sdk.transactionProcessor.TransactionException;
 import com.paymentech.orbital.sdk.transactionProcessor.TransactionProcessor;
 import com.paymentech.orbital.sdk.util.exceptions.InitializationException;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class OrbitalPaymentServices {
 
     private static final String MODULE = OrbitalPaymentServices.class.getName();
@@ -119,11 +120,11 @@ public class OrbitalPaymentServices {
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Map<String, Object> props = buildOrbitalProperties(context, delegator);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         GenericValue creditCard = null;
         try {
-            creditCard = orderPaymentPreference.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CreditCard, false);
+            creditCard = orderPaymentPreference.getRelatedOne(x.CreditCard, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -134,9 +135,9 @@ public class OrbitalPaymentServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPaymentTransactionAuthorizationNotFoundCannotCapture", locale));
         }
-        context.put(org.apache.ofbiz.persistence.entity.x.creditCard, creditCard);
-        context.put(org.apache.ofbiz.persistence.entity.x.authTransaction, authTransaction);
-        context.put(org.apache.ofbiz.persistence.entity.x.orderId, orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+        context.put(x.creditCard, creditCard);
+        context.put(x.authTransaction, authTransaction);
+        context.put(x.orderId, orderPaymentPreference.getString(x.orderId));
 
         props.put("transType", "PRIOR_AUTH_CAPTURE");
         //Tell the request object which template to use (see RequestIF.java)
@@ -161,14 +162,14 @@ public class OrbitalPaymentServices {
     }
 
     public static Map<String, Object> ccRefund(DispatchContext ctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Map<String, Object> props = buildOrbitalProperties(context, delegator);
-        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         GenericValue creditCard = null;
         try {
-            creditCard = orderPaymentPreference.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CreditCard, false);
+            creditCard = orderPaymentPreference.getRelatedOne(x.CreditCard, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -179,9 +180,9 @@ public class OrbitalPaymentServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPaymentTransactionAuthorizationNotFoundCannotRefund", locale));
         }
-        context.put(org.apache.ofbiz.persistence.entity.x.creditCard, creditCard);
-        context.put(org.apache.ofbiz.persistence.entity.x.authTransaction, authTransaction);
-        context.put(org.apache.ofbiz.persistence.entity.x.orderId, orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+        context.put(x.creditCard, creditCard);
+        context.put(x.authTransaction, authTransaction);
+        context.put(x.orderId, orderPaymentPreference.getString(x.orderId));
 
         //Tell the request object which template to use (see RequestIF.java)
         try {
@@ -205,14 +206,14 @@ public class OrbitalPaymentServices {
     }
 
     public static Map<String, Object> ccRelease(DispatchContext ctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Map<String, Object> props = buildOrbitalProperties(context, delegator);
 
-        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         try {
-            orderPaymentPreference.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CreditCard, false);
+            orderPaymentPreference.getRelatedOne(x.CreditCard, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -223,8 +224,8 @@ public class OrbitalPaymentServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPaymentTransactionAuthorizationNotFoundCannotRelease", locale));
         }
-        context.put(org.apache.ofbiz.persistence.entity.x.authTransaction, authTransaction);
-        context.put(org.apache.ofbiz.persistence.entity.x.orderId, orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+        context.put(x.authTransaction, authTransaction);
+        context.put(x.orderId, orderPaymentPreference.getString(x.orderId));
 
         //Tell the request object which template to use (see RequestIF.java)
         try {
@@ -251,7 +252,7 @@ public class OrbitalPaymentServices {
     private static Map<String, Object> buildOrbitalProperties(Map<String, Object> context, Delegator delegator) {
         //TODO: Will move this to property file and then will read it from there.
         String configFile = "/applications/accounting/config/linehandler.properties";
-        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
         Map<String, Object> buildConfiguratorContext = new HashMap<>();
         try {
             buildConfiguratorContext.put("OrbitalConnectionUsername", getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "username"));
@@ -301,8 +302,8 @@ public class OrbitalPaymentServices {
         GenericValue cc = (GenericValue) params.get("creditCard");
         BigDecimal amount = (BigDecimal) params.get("processAmount");
         String amountValue = amount.setScale(DECIMALS, ROUNDING).movePointRight(2).toPlainString();
-        String number = UtilFormatOut.checkNull(cc.getString(org.apache.ofbiz.persistence.entity.x.cardNumber));
-        String expDate = UtilFormatOut.checkNull(cc.getString(org.apache.ofbiz.persistence.entity.x.expireDate));
+        String number = UtilFormatOut.checkNull(cc.getString(x.cardNumber));
+        String expDate = UtilFormatOut.checkNull(cc.getString(x.expireDate));
         expDate = formatExpDateForOrbital(expDate);
         String cardSecurityCode = (String) params.get("cardSecurityCode");
         String orderId = UtilFormatOut.checkNull((String) params.get("orderId"));
@@ -327,34 +328,34 @@ public class OrbitalPaymentServices {
             GenericValue creditCard = null;
             if (params.get("orderPaymentPreference") != null) {
                 GenericValue opp = (GenericValue) params.get("orderPaymentPreference");
-                if ("CREDIT_CARD".equals(opp.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+                if ("CREDIT_CARD".equals(opp.getString(x.paymentMethodTypeId))) {
                     // sometimes the ccAuthCapture interface is used, in which case the creditCard is passed directly
                      creditCard = (GenericValue) params.get("creditCard");
-                    if (creditCard == null || !(opp.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId).equals(creditCard.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId)))) {
-                        creditCard = opp.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CreditCard, false);
+                    if (creditCard == null || !(opp.get(x.paymentMethodId).equals(creditCard.get(x.paymentMethodId)))) {
+                        creditCard = opp.getRelatedOne(x.CreditCard, false);
                     }
                 }
 
                 request.setFieldValue("AVSname", "Demo Customer");
-                if (UtilValidate.isNotEmpty(creditCard.getString(org.apache.ofbiz.persistence.entity.x.contactMechId))) {
-                    GenericValue address = creditCard.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
+                if (UtilValidate.isNotEmpty(creditCard.getString(x.contactMechId))) {
+                    GenericValue address = creditCard.getRelatedOne(x.PostalAddress, false);
                     if (address != null) {
-                        request.setFieldValue("AVSaddress1", UtilFormatOut.checkNull(address.getString(org.apache.ofbiz.persistence.entity.x.address1)));
-                        request.setFieldValue("AVScity", UtilFormatOut.checkNull(address.getString(org.apache.ofbiz.persistence.entity.x.city)));
-                        request.setFieldValue("AVSstate", UtilFormatOut.checkNull(address.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId)));
-                        request.setFieldValue("AVSzip", UtilFormatOut.checkNull(address.getString(org.apache.ofbiz.persistence.entity.x.postalCode)));
+                        request.setFieldValue("AVSaddress1", UtilFormatOut.checkNull(address.getString(x.address1)));
+                        request.setFieldValue("AVScity", UtilFormatOut.checkNull(address.getString(x.city)));
+                        request.setFieldValue("AVSstate", UtilFormatOut.checkNull(address.getString(x.stateProvinceGeoId)));
+                        request.setFieldValue("AVSzip", UtilFormatOut.checkNull(address.getString(x.postalCode)));
                     }
                 }
             } else {
                 // this would be the case for an authorization
                 GenericValue cp = (GenericValue) params.get("billToParty");
                 GenericValue ba = (GenericValue) params.get("billingAddress");
-                request.setFieldValue("AVSname", UtilFormatOut.checkNull(cp.getString(org.apache.ofbiz.persistence.entity.x.firstName)) + UtilFormatOut.checkNull(cp.getString(org.apache.ofbiz.persistence.entity.x.lastName)));
-                request.setFieldValue("AVSaddress1", UtilFormatOut.checkNull(ba.getString(org.apache.ofbiz.persistence.entity.x.address1)));
-                request.setFieldValue("AVScity", UtilFormatOut.checkNull(ba.getString(org.apache.ofbiz.persistence.entity.x.city)));
-                request.setFieldValue("AVSstate", UtilFormatOut.checkNull(ba.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId)));
-                request.setFieldValue("AVSzip", UtilFormatOut.checkNull(ba.getString(org.apache.ofbiz.persistence.entity.x.postalCode)));
-                request.setFieldValue("AVSCountryCode", UtilFormatOut.checkNull(ba.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId)));
+                request.setFieldValue("AVSname", UtilFormatOut.checkNull(cp.getString(x.firstName)) + UtilFormatOut.checkNull(cp.getString(x.lastName)));
+                request.setFieldValue("AVSaddress1", UtilFormatOut.checkNull(ba.getString(x.address1)));
+                request.setFieldValue("AVScity", UtilFormatOut.checkNull(ba.getString(x.city)));
+                request.setFieldValue("AVSstate", UtilFormatOut.checkNull(ba.getString(x.stateProvinceGeoId)));
+                request.setFieldValue("AVSzip", UtilFormatOut.checkNull(ba.getString(x.postalCode)));
+                request.setFieldValue("AVSCountryCode", UtilFormatOut.checkNull(ba.getString(x.countryGeoId)));
             }
             // Additional Information
             request.setFieldValue("Comments", "This is building of request object");
@@ -389,20 +390,20 @@ public class OrbitalPaymentServices {
             //Basic Auth Fields
             request.setFieldValue("MerchantID", UtilFormatOut.checkNull(props.get("merchantId").toString()));
             request.setFieldValue("BIN", BIN_VALUE);
-            request.setFieldValue("TxRefNum", UtilFormatOut.checkNull(authTransaction.get(org.apache.ofbiz.persistence.entity.x.referenceNum).toString()));
+            request.setFieldValue("TxRefNum", UtilFormatOut.checkNull(authTransaction.get(x.referenceNum).toString()));
             request.setFieldValue("OrderID", UtilFormatOut.checkNull(orderId));
             request.setFieldValue("Amount", UtilFormatOut.checkNull(amountValue));
 
-            request.setFieldValue("PCDestName", UtilFormatOut.checkNull(creditCard.getString(org.apache.ofbiz.persistence.entity.x.firstNameOnCard) + creditCard.getString(org.apache.ofbiz.persistence.entity.x.lastNameOnCard)));
-            if (UtilValidate.isNotEmpty(creditCard.getString(org.apache.ofbiz.persistence.entity.x.contactMechId))) {
-                GenericValue address = creditCard.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
+            request.setFieldValue("PCDestName", UtilFormatOut.checkNull(creditCard.getString(x.firstNameOnCard) + creditCard.getString(x.lastNameOnCard)));
+            if (UtilValidate.isNotEmpty(creditCard.getString(x.contactMechId))) {
+                GenericValue address = creditCard.getRelatedOne(x.PostalAddress, false);
                 if (address != null) {
                     request.setFieldValue("PCOrderNum", UtilFormatOut.checkNull(orderId));
-                    request.setFieldValue("PCDestAddress1", UtilFormatOut.checkNull(address.getString(org.apache.ofbiz.persistence.entity.x.address1)));
-                    request.setFieldValue("PCDestAddress2", UtilFormatOut.checkNull(address.getString(org.apache.ofbiz.persistence.entity.x.address2)));
-                    request.setFieldValue("PCDestCity", UtilFormatOut.checkNull(address.getString(org.apache.ofbiz.persistence.entity.x.city)));
-                    request.setFieldValue("PCDestState", UtilFormatOut.checkNull(address.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId)));
-                    request.setFieldValue("PCDestZip", UtilFormatOut.checkNull(address.getString(org.apache.ofbiz.persistence.entity.x.postalCode)));
+                    request.setFieldValue("PCDestAddress1", UtilFormatOut.checkNull(address.getString(x.address1)));
+                    request.setFieldValue("PCDestAddress2", UtilFormatOut.checkNull(address.getString(x.address2)));
+                    request.setFieldValue("PCDestCity", UtilFormatOut.checkNull(address.getString(x.city)));
+                    request.setFieldValue("PCDestState", UtilFormatOut.checkNull(address.getString(x.stateProvinceGeoId)));
+                    request.setFieldValue("PCDestZip", UtilFormatOut.checkNull(address.getString(x.postalCode)));
                 }
             }
             //Display the request
@@ -421,8 +422,8 @@ public class OrbitalPaymentServices {
         GenericValue cc = (GenericValue) params.get("creditCard");
         BigDecimal amount = (BigDecimal) params.get("refundAmount");
         String amountValue = amount.setScale(DECIMALS, ROUNDING).movePointRight(2).toPlainString();
-        String number = UtilFormatOut.checkNull(cc.getString(org.apache.ofbiz.persistence.entity.x.cardNumber));
-        String expDate = UtilFormatOut.checkNull(cc.getString(org.apache.ofbiz.persistence.entity.x.expireDate));
+        String number = UtilFormatOut.checkNull(cc.getString(x.cardNumber));
+        String expDate = UtilFormatOut.checkNull(cc.getString(x.expireDate));
         expDate = formatExpDateForOrbital(expDate);
         String orderId = UtilFormatOut.checkNull((String) params.get("orderId"));
         try {
@@ -458,7 +459,7 @@ public class OrbitalPaymentServices {
             //Basic Auth Fields
             request.setFieldValue("MerchantID", UtilFormatOut.checkNull(props.get("merchantId").toString()));
             request.setFieldValue("BIN", BIN_VALUE);
-            request.setFieldValue("TxRefNum", UtilFormatOut.checkNull(authTransaction.get(org.apache.ofbiz.persistence.entity.x.referenceNum).toString()));
+            request.setFieldValue("TxRefNum", UtilFormatOut.checkNull(authTransaction.get(x.referenceNum).toString()));
             request.setFieldValue("OrderID", UtilFormatOut.checkNull(orderId));
 
             //Display the request
@@ -625,11 +626,11 @@ public class OrbitalPaymentServices {
             GenericValue trackingCodeOrder = EntityQuery.use(delegator).from("TrackingCodeOrder").where("orderId", orderId).queryFirst();
             GenericValue trackingCode = null;
             if (trackingCodeOrder != null) {
-                trackingCode = trackingCodeOrder.getRelatedOne(org.apache.ofbiz.persistence.entity.x.TrackingCode, false);
+                trackingCode = trackingCodeOrder.getRelatedOne(x.TrackingCode, false);
             }
-            if (trackingCode != null && UtilValidate.isNotEmpty(trackingCode.getString(org.apache.ofbiz.persistence.entity.x.description))) {
+            if (trackingCode != null && UtilValidate.isNotEmpty(trackingCode.getString(x.description))) {
                 // get tracking code description and provide it into shipping reference.
-                shippingRef = trackingCode.getString(org.apache.ofbiz.persistence.entity.x.trackingCodeId) + "====" + trackingCode.getString(org.apache.ofbiz.persistence.entity.x.description);
+                shippingRef = trackingCode.getString(x.trackingCodeId) + "====" + trackingCode.getString(x.description);
             } else {
                 shippingRef = "No Tracking Info processed in order";
             }

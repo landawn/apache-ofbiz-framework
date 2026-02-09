@@ -40,6 +40,7 @@ import org.apache.ofbiz.entity.model.ModelEntity;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Handles saving and maintaining visit information
  */
@@ -66,9 +67,9 @@ public class VisitHandler {
 
         GenericValue visitor = (GenericValue) session.getAttribute("visitor");
         if (visitor != null) {
-            visitor.set(org.apache.ofbiz.persistence.entity.x.userLoginId, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
+            visitor.set(x.userLoginId, userLogin.get(x.userLoginId));
             if (modelUserLogin.isField("partyId")) {
-                visitor.set(org.apache.ofbiz.persistence.entity.x.partyId, userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId));
+                visitor.set(x.partyId, userLogin.get(x.partyId));
             }
             try {
                 visitor.store();
@@ -79,15 +80,15 @@ public class VisitHandler {
 
         GenericValue visit = getVisit(session);
         if (visit != null) {
-            visit.set(org.apache.ofbiz.persistence.entity.x.userLoginId, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
+            visit.set(x.userLoginId, userLogin.get(x.userLoginId));
             if (modelUserLogin.isField("partyId")) {
-                visit.set(org.apache.ofbiz.persistence.entity.x.partyId, userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId));
+                visit.set(x.partyId, userLogin.get(x.partyId));
             }
-            visit.set(org.apache.ofbiz.persistence.entity.x.userCreated, userCreated);
+            visit.set(x.userCreated, userCreated);
 
             // make sure the visitorId is still in place
             if (visitor != null) {
-                visit.set(org.apache.ofbiz.persistence.entity.x.visitorId, visitor.get(org.apache.ofbiz.persistence.entity.x.visitorId));
+                visit.set(x.visitorId, visitor.get(x.visitorId));
             }
 
             try {
@@ -101,7 +102,7 @@ public class VisitHandler {
     public static String getVisitId(HttpSession session) {
         GenericValue visit = getVisit(session);
         if (visit != null) {
-            return visit.getString(org.apache.ofbiz.persistence.entity.x.visitId);
+            return visit.getString(x.visitId);
         } else {
             return null;
         }
@@ -150,35 +151,35 @@ public class VisitHandler {
                             }
 
                             visit = delegator.makeValue("Visit");
-                            visit.set(org.apache.ofbiz.persistence.entity.x.sessionId, session.getId());
-                            visit.set(org.apache.ofbiz.persistence.entity.x.fromDate, new Timestamp(session.getCreationTime()));
+                            visit.set(x.sessionId, session.getId());
+                            visit.set(x.fromDate, new Timestamp(session.getCreationTime()));
 
-                            visit.set(org.apache.ofbiz.persistence.entity.x.initialLocale, initialLocale);
+                            visit.set(x.initialLocale, initialLocale);
                             if (initialRequest != null) {
-                                visit.set(org.apache.ofbiz.persistence.entity.x.initialRequest, initialRequest.length() > 2000 ? initialRequest.substring(0, 1999)
+                                visit.set(x.initialRequest, initialRequest.length() > 2000 ? initialRequest.substring(0, 1999)
                                         : initialRequest);
                             }
                             if (initialReferrer != null) {
-                                visit.set(org.apache.ofbiz.persistence.entity.x.initialReferrer, initialReferrer.length() > 2000 ? initialReferrer.substring(0, 1999)
+                                visit.set(x.initialReferrer, initialReferrer.length() > 2000 ? initialReferrer.substring(0, 1999)
                                         : initialReferrer);
                             }
                             if (initialUserAgent != null) {
-                                visit.set(org.apache.ofbiz.persistence.entity.x.initialUserAgent, initialUserAgent.length() > 250 ? initialUserAgent.substring(0, 250)
+                                visit.set(x.initialUserAgent, initialUserAgent.length() > 250 ? initialUserAgent.substring(0, 250)
                                         : initialUserAgent);
                             }
-                            visit.set(org.apache.ofbiz.persistence.entity.x.webappName, webappName);
+                            visit.set(x.webappName, webappName);
                             if (UtilProperties.propertyValueEquals("serverstats", "stats.proxy.enabled", "true")) {
-                                visit.set(org.apache.ofbiz.persistence.entity.x.clientIpAddress, session.getAttribute("_CLIENT_FORWARDED_FOR_"));
+                                visit.set(x.clientIpAddress, session.getAttribute("_CLIENT_FORWARDED_FOR_"));
                             } else {
-                                visit.set(org.apache.ofbiz.persistence.entity.x.clientIpAddress, session.getAttribute("_CLIENT_REMOTE_ADDR_"));
+                                visit.set(x.clientIpAddress, session.getAttribute("_CLIENT_REMOTE_ADDR_"));
                             }
-                            visit.set(org.apache.ofbiz.persistence.entity.x.clientHostName, session.getAttribute("_CLIENT_REMOTE_HOST_"));
-                            visit.set(org.apache.ofbiz.persistence.entity.x.clientUser, session.getAttribute("_CLIENT_REMOTE_USER_"));
+                            visit.set(x.clientHostName, session.getAttribute("_CLIENT_REMOTE_HOST_"));
+                            visit.set(x.clientUser, session.getAttribute("_CLIENT_REMOTE_USER_"));
 
                             // get the visitorId
                             GenericValue visitor = (GenericValue) session.getAttribute("visitor");
                             if (visitor != null) {
-                                String visitorId = visitor.getString(org.apache.ofbiz.persistence.entity.x.visitorId);
+                                String visitorId = visitor.getString(x.visitorId);
                                 // sometimes these values get stale, so check it before we use it
                                 try {
                                     GenericValue checkVisitor = EntityQuery.use(delegator).from("Visitor").where("visitorId", visitorId).queryOne();
@@ -186,15 +187,15 @@ public class VisitHandler {
                                         GenericValue newVisitor = delegator.create("Visitor", "visitorId", visitorId);
                                         session.setAttribute("visitor", newVisitor);
                                     }
-                                    visit.set(org.apache.ofbiz.persistence.entity.x.visitorId, visitorId);
+                                    visit.set(x.visitorId, visitorId);
                                 } catch (GenericEntityException e) {
                                     Debug.logWarning("Problem checking the visitorId: " + e.toString(), MODULE);
                                 }
                             }
                             // get localhost ip ADDRESS and hostname to store
                             if (ADDRESS != null) {
-                                visit.set(org.apache.ofbiz.persistence.entity.x.serverIpAddress, ADDRESS.getHostAddress());
-                                visit.set(org.apache.ofbiz.persistence.entity.x.serverHostName, ADDRESS.getHostName());
+                                visit.set(x.serverIpAddress, ADDRESS.getHostAddress());
+                                visit.set(x.serverHostName, ADDRESS.getHostName());
                             }
                             try {
                                 visit = delegator.createSetNextSeqId(visit);
@@ -272,7 +273,7 @@ public class VisitHandler {
                                         visitor = delegator.makeValue("Visitor");
                                         visitor = delegator.createSetNextSeqId(visitor);
                                         if (Debug.infoOn()) {
-                                            String visitorId = visitor != null ? visitor.getString(org.apache.ofbiz.persistence.entity.x.visitorId) : "empty visitor";
+                                            String visitorId = visitor != null ? visitor.getString(x.visitorId) : "empty visitor";
                                             Debug.logInfo("The visitorId [" + cookieVisitorId
                                                     + "] found in cookie was invalid, creating new Visitor with ID [" + visitorId + "]", MODULE);
                                         }
@@ -289,7 +290,7 @@ public class VisitHandler {
                             session.setAttribute("visitor", visitor);
 
                             // create the cookie and send it back, this may be done over and over, in effect frequently refreshing the cookie
-                            Cookie visitorCookie = new Cookie(VISITOR_COOKIE_NAME, visitor.getString(org.apache.ofbiz.persistence.entity.x.visitorId));
+                            Cookie visitorCookie = new Cookie(VISITOR_COOKIE_NAME, visitor.getString(x.visitorId));
                             visitorCookie.setMaxAge(60 * 60 * 24 * 365);
                             visitorCookie.setPath("/");
                             visitorCookie.setSecure(true);

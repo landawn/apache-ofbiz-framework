@@ -42,6 +42,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import freemarker.core.Environment;
 import freemarker.template.TemplateTransformModel;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * EditRenderSubContentCacheTransform - Freemarker Transform for URLs (links)
  *
@@ -104,16 +105,16 @@ public class EditRenderSubContentCacheTransform implements TemplateTransformMode
 
         String dataResourceId = null;
         try {
-            dataResourceId = (String) view.get(org.apache.ofbiz.persistence.entity.x.drDataResourceId);
+            dataResourceId = (String) view.get(x.drDataResourceId);
         } catch (IllegalArgumentException e) {
-            dataResourceId = (String) view.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+            dataResourceId = (String) view.get(x.dataResourceId);
         }
-        String subContentIdSub = (String) view.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String subContentIdSub = (String) view.get(x.contentId);
         // This order is taken so that the dataResourceType can be overridden in the transform arguments.
         String subDataResourceTypeId = (String) templateCtx.get("subDataResourceTypeId");
         if (UtilValidate.isEmpty(subDataResourceTypeId)) {
             try {
-                subDataResourceTypeId = (String) view.get(org.apache.ofbiz.persistence.entity.x.drDataResourceTypeId);
+                subDataResourceTypeId = (String) view.get(x.drDataResourceTypeId);
             } catch (IllegalArgumentException e) {
                 // view may be "Content"
             }

@@ -45,6 +45,7 @@ import freemarker.template.SimpleScalar;
 import freemarker.template.TemplateModelException;
 import freemarker.template.TemplateTransformModel;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class OfbizContentAltUrlTransforms implements TemplateTransformModel {
     private static final String MODULE = OfbizContentAltUrlTransforms.class.getName();
     private static final String DEF_VIEW_REQUEST = "contentViewInfo";
@@ -129,7 +130,7 @@ public class OfbizContentAltUrlTransforms implements TemplateTransformModel {
                     .orderBy("-caFromDate")
                     .queryFirst();
             if (contentAssocDataResource != null) {
-                url = contentAssocDataResource.getString(org.apache.ofbiz.persistence.entity.x.drObjectInfo);
+                url = contentAssocDataResource.getString(x.drObjectInfo);
                 url = UtilCodec.getDecoder("url").decode(url);
                 String mountPoint = request.getContextPath();
                 if (!("/".equals(mountPoint)) && !("".equals(mountPoint))) {

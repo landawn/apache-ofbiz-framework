@@ -47,6 +47,7 @@ import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.LocalDispatcher;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * WorkEffortContentWrapper; gets work effort content for display
  */
@@ -99,7 +100,7 @@ public class PartyContentWrapper implements ContentWrapper {
     public String getId(String contentTypeId) {
         GenericValue partyContent = getFirstPartyContentByType(null, party, contentTypeId, party.getDelegator());
         if (partyContent != null) {
-            return partyContent.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+            return partyContent.getString(x.contentId);
         } else {
             return null;
         }
@@ -168,10 +169,10 @@ public class PartyContentWrapper implements ContentWrapper {
         if (useCache) {
             if (contentId != null) {
                 cacheKey = contentId + CACHE_KEY_SEPARATOR + locale + CACHE_KEY_SEPARATOR + mimeTypeId
-                        + CACHE_KEY_SEPARATOR + party.get(org.apache.ofbiz.persistence.entity.x.partyId);
+                        + CACHE_KEY_SEPARATOR + party.get(x.partyId);
             } else {
                 cacheKey = partyContentTypeId + CACHE_KEY_SEPARATOR + locale + CACHE_KEY_SEPARATOR + mimeTypeId
-                        + CACHE_KEY_SEPARATOR + party.get(org.apache.ofbiz.persistence.entity.x.partyId);
+                        + CACHE_KEY_SEPARATOR + party.get(x.partyId);
             }
 
             String cachedValue = PARTY_CONTENT_CACHE.get(cacheKey);
@@ -184,7 +185,7 @@ public class PartyContentWrapper implements ContentWrapper {
         String outString = null;
         try {
             Writer outWriter = new StringWriter();
-            getPartyContentAsText(contentId, party.getString(org.apache.ofbiz.persistence.entity.x.partyId), party, partyContentTypeId, locale, mimeTypeId,
+            getPartyContentAsText(contentId, party.getString(x.partyId), party, partyContentTypeId, locale, mimeTypeId,
                     delegator, dispatcher, outWriter, false);
             outString = outWriter.toString();
         } catch (GeneralException | IOException e) {
@@ -216,7 +217,7 @@ public class PartyContentWrapper implements ContentWrapper {
             String mimeTypeId, Delegator delegator, LocalDispatcher dispatcher, Writer outWriter, boolean cache)
             throws GeneralException, IOException {
         if (partyId == null && party != null) {
-            partyId = party.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+            partyId = party.getString(x.partyId);
         }
 
         if (delegator == null && party != null) {
@@ -244,7 +245,7 @@ public class PartyContentWrapper implements ContentWrapper {
             Map<String, Object> inContext = new HashMap<>();
             inContext.put("party", party);
             inContext.put("partyContent", partyContent);
-            ContentWorker.renderContentAsText(dispatcher, partyContent.getString(org.apache.ofbiz.persistence.entity.x.contentId), outWriter, inContext, locale, mimeTypeId,
+            ContentWorker.renderContentAsText(dispatcher, partyContent.getString(x.contentId), outWriter, inContext, locale, mimeTypeId,
                     null, null, cache);
             // check person and group entity fields, if no content was found
         } else if (partyContentTypeId != null) {
@@ -265,7 +266,7 @@ public class PartyContentWrapper implements ContentWrapper {
     public static List<String> getPartyContentTextList(GenericValue party, String partyContentTypeId, Locale locale, String mimeTypeId,
                                                        Delegator delegator, LocalDispatcher dispatcher) throws GeneralException, IOException {
         List<GenericValue> partyContentList = EntityQuery.use(delegator).from("PartyContent")
-                .where("partyId", party.getString(org.apache.ofbiz.persistence.entity.x.partyId), "partyContentTypeId", partyContentTypeId)
+                .where("partyId", party.getString(x.partyId), "partyContentTypeId", partyContentTypeId)
                 .orderBy("-fromDate")
                 .cache(true)
                 .filterByDate()
@@ -278,7 +279,7 @@ public class PartyContentWrapper implements ContentWrapper {
                 Map<String, Object> inContext = new HashMap<>();
                 inContext.put("party", party);
                 inContext.put("partyContent", partyContent);
-                ContentWorker.renderContentAsText(dispatcher, partyContent.getString(org.apache.ofbiz.persistence.entity.x.contentId), outWriter, inContext, locale, mimeTypeId,
+                ContentWorker.renderContentAsText(dispatcher, partyContent.getString(x.contentId), outWriter, inContext, locale, mimeTypeId,
                         null, null, false);
                 contentList.add(outWriter.toString());
             }
@@ -294,7 +295,7 @@ public class PartyContentWrapper implements ContentWrapper {
     public static GenericValue getFirstPartyContentByType(String partyId, GenericValue party, String partyContentTypeId,
                                                           Delegator delegator, Timestamp date) {
         if (partyId == null && party != null) {
-            partyId = party.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+            partyId = party.getString(x.partyId);
         }
 
         if (delegator == null && party != null) {

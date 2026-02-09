@@ -27,6 +27,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.model.ModelEntity;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * PartyHelper
  */
@@ -65,7 +66,7 @@ public final class PartyHelper {
         }
         String partyId = null;
         try {
-            partyId = partyObject.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+            partyId = partyObject.getString(x.partyId);
         } catch (IllegalArgumentException e) {
             Debug.logError(e, "Party object does not contain a party ID", MODULE);
         }
@@ -85,25 +86,25 @@ public final class PartyHelper {
         ModelEntity modelEntity = partyValue.getModelEntity();
         if (modelEntity.isField("firstName") && modelEntity.isField("middleName") && modelEntity.isField("lastName")) {
             if (lastNameFirst) {
-                if (!UtilFormatOut.checkNull(partyValue.getString(org.apache.ofbiz.persistence.entity.x.lastName)).isEmpty()) {
-                    result.append(UtilFormatOut.checkNull(partyValue.getString(org.apache.ofbiz.persistence.entity.x.lastName)));
-                    if (partyValue.getString(org.apache.ofbiz.persistence.entity.x.firstName) != null) {
+                if (!UtilFormatOut.checkNull(partyValue.getString(x.lastName)).isEmpty()) {
+                    result.append(UtilFormatOut.checkNull(partyValue.getString(x.lastName)));
+                    if (partyValue.getString(x.firstName) != null) {
                         result.append(", ");
                     }
                 }
-                result.append(UtilFormatOut.checkNull(partyValue.getString(org.apache.ofbiz.persistence.entity.x.firstName)));
-                if (partyValue.getString(org.apache.ofbiz.persistence.entity.x.middleName) != null) {
+                result.append(UtilFormatOut.checkNull(partyValue.getString(x.firstName)));
+                if (partyValue.getString(x.middleName) != null) {
                     result.append(" ");
                 }
-                result.append(UtilFormatOut.checkNull(partyValue.getString(org.apache.ofbiz.persistence.entity.x.middleName)));
+                result.append(UtilFormatOut.checkNull(partyValue.getString(x.middleName)));
             } else {
-                result.append(UtilFormatOut.ifNotEmpty(partyValue.getString(org.apache.ofbiz.persistence.entity.x.firstName), "", " "));
-                result.append(UtilFormatOut.ifNotEmpty(partyValue.getString(org.apache.ofbiz.persistence.entity.x.middleName), "", " "));
-                result.append(UtilFormatOut.checkNull(partyValue.getString(org.apache.ofbiz.persistence.entity.x.lastName)));
+                result.append(UtilFormatOut.ifNotEmpty(partyValue.getString(x.firstName), "", " "));
+                result.append(UtilFormatOut.ifNotEmpty(partyValue.getString(x.middleName), "", " "));
+                result.append(UtilFormatOut.checkNull(partyValue.getString(x.lastName)));
             }
         }
-        if (modelEntity.isField("groupName") && partyValue.get(org.apache.ofbiz.persistence.entity.x.groupName) != null) {
-            result.append(partyValue.getString(org.apache.ofbiz.persistence.entity.x.groupName));
+        if (modelEntity.isField("groupName") && partyValue.get(x.groupName) != null) {
+            result.append(partyValue.getString(x.groupName));
         }
         return result.toString();
     }

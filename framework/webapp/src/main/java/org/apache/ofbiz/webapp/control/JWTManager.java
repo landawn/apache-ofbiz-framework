@@ -64,6 +64,7 @@ import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * This class manages the single sign-on authentication through JWT tokens between OFBiz applications.
  */
@@ -217,7 +218,7 @@ public class JWTManager {
         }
         GenericValue userLogin = (GenericValue) result.get("userLogin");
 
-        String token = createJwt(delegator, UtilMisc.toMap("userLoginId", userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId)));
+        String token = createJwt(delegator, UtilMisc.toMap("userLoginId", userLogin.getString(x.userLoginId)));
         if (token == null) {
             Debug.logError("Unable to generate token", MODULE);
             request.setAttribute("_ERROR_MESSAGE_", "Unable to generate token");
@@ -426,9 +427,9 @@ public class JWTManager {
      * @return boolean True if it works, log an error message if it fails
      */
     private static boolean storeUserlogin(GenericValue userLogin) {
-        String enabled = userLogin.getString(org.apache.ofbiz.persistence.entity.x.enabled);
+        String enabled = userLogin.getString(x.enabled);
         if (enabled == null || "Y".equals(enabled)) {
-            userLogin.set(org.apache.ofbiz.persistence.entity.x.hasLoggedOut, "N");
+            userLogin.set(x.hasLoggedOut, "N");
             try {
                 userLogin.store();
             } catch (GenericEntityException e) {

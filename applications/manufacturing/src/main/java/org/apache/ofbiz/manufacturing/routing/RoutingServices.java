@@ -34,6 +34,7 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Routing related services
  *
@@ -53,14 +54,14 @@ public class RoutingServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
         // The mandatory IN parameters
-        String taskId = (String) context.get(org.apache.ofbiz.persistence.entity.x.taskId);
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
+        String taskId = (String) context.get(x.taskId);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
         // The optional IN parameters
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        String routingId = (String) context.get(org.apache.ofbiz.persistence.entity.x.routingId);
+        String productId = (String) context.get(x.productId);
+        String routingId = (String) context.get(x.routingId);
 
         if (quantity == null) {
             quantity = BigDecimal.ONE;
@@ -77,11 +78,11 @@ public class RoutingServices {
         // its logic will be implemented inside this method.
         long estimatedTaskTime = ProductionRun.getEstimatedTaskTime(task, quantity, productId, routingId, dispatcher);
         result.put("estimatedTaskTime", estimatedTaskTime);
-        if (task != null && task.get(org.apache.ofbiz.persistence.entity.x.estimatedSetupMillis) != null) {
-            result.put("setupTime", task.getBigDecimal(org.apache.ofbiz.persistence.entity.x.estimatedSetupMillis));
+        if (task != null && task.get(x.estimatedSetupMillis) != null) {
+            result.put("setupTime", task.getBigDecimal(x.estimatedSetupMillis));
         }
-        if (task != null && task.get(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds) != null) {
-            result.put("taskUnitTime", task.getBigDecimal(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds));
+        if (task != null && task.get(x.estimatedMilliSeconds) != null) {
+            result.put("taskUnitTime", task.getBigDecimal(x.estimatedMilliSeconds));
         }
         return result;
     }

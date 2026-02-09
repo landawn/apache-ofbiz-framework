@@ -41,6 +41,7 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  *  Does indexing in preparation for a keyword search.
  */
@@ -63,14 +64,14 @@ public class KeywordIndex {
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
         Delegator delegator = product.getDelegator();
         if (!doAll) {
-            if ("N".equals(product.getString(org.apache.ofbiz.persistence.entity.x.autoCreateKeywords))) {
+            if ("N".equals(product.getString(x.autoCreateKeywords))) {
                 return;
             }
-            if ("Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.isVariant)) && "true".equals(EntityUtilProperties.getPropertyValue("prodsearch",
+            if ("Y".equals(product.getString(x.isVariant)) && "true".equals(EntityUtilProperties.getPropertyValue("prodsearch",
                     "index.ignore.variants", delegator))) {
                 return;
             }
-            Timestamp salesDiscontinuationDate = product.getTimestamp(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate);
+            Timestamp salesDiscontinuationDate = product.getTimestamp(x.salesDiscontinuationDate);
             if (salesDiscontinuationDate != null && salesDiscontinuationDate.before(nowTimestamp)
                     && "true".equals(EntityUtilProperties.getPropertyValue("prodsearch", "index.ignore.discontinued.sales", delegator))) {
                 return;
@@ -80,7 +81,7 @@ public class KeywordIndex {
         if (delegator == null) {
             return;
         }
-        String productId = product.getString(org.apache.ofbiz.persistence.entity.x.productId);
+        String productId = product.getString(x.productId);
 
         // get these in advance just once since they will be used many times for the multiple strings to index
         String separators = KeywordSearchUtil.getSeparators();
@@ -98,7 +99,7 @@ public class KeywordIndex {
         } catch (Exception e) {
             Debug.logWarning("Could not parse weight number: " + e.toString(), MODULE);
         }
-        keywords.put(product.getString(org.apache.ofbiz.persistence.entity.x.productId).toLowerCase(Locale.getDefault()), (long) pidWeight);
+        keywords.put(product.getString(x.productId).toLowerCase(Locale.getDefault()), (long) pidWeight);
 
         // Product fields - default is 0 if not found in the properties file
         if (!"0".equals(EntityUtilProperties.getPropertyValue("prodsearch", "index.weight.Product.productName", "0", delegator))) {
@@ -150,7 +151,7 @@ public class KeywordIndex {
         }
 
         // Variant Product IDs
-        if ("Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.isVirtual))) {
+        if ("Y".equals(product.getString(x.isVirtual))) {
             if (!"0".equals(EntityUtilProperties.getPropertyValue("prodsearch", "index.weight.Variant.Product.productId", "0", delegator))) {
                 List<GenericValue> variantProductAssocs = EntityQuery.use(delegator).from("ProductAssoc").where("productId", productId,
                         "productAssocTypeId", "PRODUCT_VARIANT").filterByDate().queryList();
@@ -162,7 +163,7 @@ public class KeywordIndex {
                         Debug.logWarning("Could not parse weight number: " + e.toString(), MODULE);
                     }
                     for (int i = 0; i < weight; i++) {
-                        strings.add(variantProductAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo));
+                        strings.add(variantProductAssoc.getString(x.productIdTo));
                     }
                 }
             }
@@ -183,7 +184,7 @@ public class KeywordIndex {
             for (GenericValue productContentAndInfo: productContentAndInfos) {
                 addWeightedDataResourceString(productContentAndInfo, weight, strings, delegator, product);
 
-                List<GenericValue> alternateViews = productContentAndInfo.getRelated(org.apache.ofbiz.persistence.entity.x.ContentAssocDataResourceViewTo,
+                List<GenericValue> alternateViews = productContentAndInfo.getRelated(x.ContentAssocDataResourceViewTo,
                         UtilMisc.toMap("caContentAssocTypeId", "ALTERNATE_LOCALE"), UtilMisc.toList("-caFromDate"), false);
                 alternateViews = EntityUtil.filterByDate(alternateViews, UtilDateTime.nowTimestamp(), "caFromDate", "caThruDate", true);
                 for (GenericValue thisView: alternateViews) {
@@ -202,7 +203,7 @@ public class KeywordIndex {
         int keywordMaxLength = EntityUtilProperties.getPropertyAsInteger("prodsearch", "product.keyword.max.length", 0);
         for (Map.Entry<String, Long> entry: keywords.entrySet()) {
             if (entry.getKey().length() <= keywordMaxLength) {
-                GenericValue productKeyword = delegator.makeValue("ProductKeyword", UtilMisc.toMap("productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId),
+                GenericValue productKeyword = delegator.makeValue("ProductKeyword", UtilMisc.toMap("productId", product.getString(x.productId),
                         "keyword", entry.getKey(), "keywordTypeId", "KWT_KEYWORD", "relevancyWeight", entry.getValue()));
                 toBeStored.add(productKeyword);
             }
@@ -210,12 +211,12 @@ public class KeywordIndex {
         if (!toBeStored.isEmpty()) {
             if (Debug.verboseOn()) {
                 Debug.logVerbose("[KeywordIndex.indexKeywords] Storing " + toBeStored.size() + " keywords for productId "
-                        + product.getString(org.apache.ofbiz.persistence.entity.x.productId), MODULE);
+                        + product.getString(x.productId), MODULE);
             }
 
             if ("true".equals(EntityUtilProperties.getPropertyValue("prodsearch", "index.delete.on_index", "false", delegator))) {
                 // delete all keywords if the properties file says to
-                delegator.removeByAnd("ProductKeyword", UtilMisc.toMap("productId", product.getString(org.apache.ofbiz.persistence.entity.x.productId)));
+                delegator.removeByAnd("ProductKeyword", UtilMisc.toMap("productId", product.getString(x.productId)));
             }
 
             delegator.storeAll(toBeStored);
@@ -226,7 +227,7 @@ public class KeywordIndex {
                                                      GenericValue product) {
         Map<String, Object> drContext = UtilMisc.<String, Object>toMap("product", product);
         try {
-            String contentText = DataResourceWorker.renderDataResourceAsText(null, delegator, drView.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId), drContext,
+            String contentText = DataResourceWorker.renderDataResourceAsText(null, delegator, drView.getString(x.dataResourceId), drContext,
                     null, null, false);
             for (int i = 0; i < weight; i++) {
                 strings.add(contentText);

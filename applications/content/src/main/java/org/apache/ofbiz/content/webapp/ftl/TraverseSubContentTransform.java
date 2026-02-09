@@ -46,6 +46,7 @@ import freemarker.template.TemplateModelException;
 import freemarker.template.TemplateTransformModel;
 import freemarker.template.TransformControl;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * TraverseSubContentTransform - Freemarker Transform for URLs (links)
  */
@@ -247,7 +248,7 @@ public class TraverseSubContentTransform implements TemplateTransformModel {
                 List<Object> purposes = ContentWorker.getPurposes(thisContent);
                 assocContext.put("purposes", purposes);
                 List<String> contentTypeAncestry = new LinkedList<>();
-                String contentTypeId = (String) thisContent.get(org.apache.ofbiz.persistence.entity.x.contentTypeId);
+                String contentTypeId = (String) thisContent.get(x.contentTypeId);
                 try {
                     ContentWorker.getContentTypeAncestry(delegator, contentTypeId, contentTypeAncestry);
                 } catch (GenericEntityException e) {

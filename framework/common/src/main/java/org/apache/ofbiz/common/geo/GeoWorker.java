@@ -36,6 +36,7 @@ import org.apache.ofbiz.entity.util.EntityUtil;
 import com.ibm.icu.util.LocaleData;
 import com.ibm.icu.util.ULocale;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Worker methods for Geos
  */
@@ -59,14 +60,14 @@ public final class GeoWorker {
         if (geo == null) {
             return new LinkedList<>();
         }
-        if (!"GROUP".equals(geo.getString(org.apache.ofbiz.persistence.entity.x.geoTypeId))) {
+        if (!"GROUP".equals(geo.getString(x.geoTypeId))) {
             return UtilMisc.toList(geo);
         }
 
         List<GenericValue> geoList = new LinkedList<>();
         List<GenericValue> thisGeoAssoc = null;
         try {
-            thisGeoAssoc = geo.getRelated(org.apache.ofbiz.persistence.entity.x.AssocGeoAssoc, UtilMisc.toMap("geoAssocTypeId", "GROUP_MEMBER"), null, false);
+            thisGeoAssoc = geo.getRelated(x.AssocGeoAssoc, UtilMisc.toMap("geoAssocTypeId", "GROUP_MEMBER"), null, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Unable to get associated Geo GROUP_MEMBER relationship(s)", MODULE);
         }
@@ -74,7 +75,7 @@ public final class GeoWorker {
             for (GenericValue nextGeoAssoc: thisGeoAssoc) {
                 GenericValue nextGeo = null;
                 try {
-                    nextGeo = nextGeoAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.MainGeo, false);
+                    nextGeo = nextGeoAssoc.getRelatedOne(x.MainGeo, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Unable to get related Geo", MODULE);
                 }
@@ -96,8 +97,8 @@ public final class GeoWorker {
                                                          .cache(true)
                                                          .queryList();
             for (GenericValue geoAssoc: geoAssocList) {
-                GenericValue newGeo = EntityQuery.use(delegator).from("Geo").where("geoId", geoAssoc.get(org.apache.ofbiz.persistence.entity.x.geoId)).cache().queryOne();
-                geoIdByTypeMapTemp.put(newGeo.getString(org.apache.ofbiz.persistence.entity.x.geoTypeId), newGeo.getString(org.apache.ofbiz.persistence.entity.x.geoId));
+                GenericValue newGeo = EntityQuery.use(delegator).from("Geo").where("geoId", geoAssoc.get(x.geoId)).cache().queryOne();
+                geoIdByTypeMapTemp.put(newGeo.getString(x.geoTypeId), newGeo.getString(x.geoId));
             }
         }
         geoIdByTypeMapTemp = expandGeoRegionDeep(geoIdByTypeMapTemp, delegator);

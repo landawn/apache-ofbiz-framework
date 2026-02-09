@@ -85,6 +85,7 @@ import com.ibm.wsdl.extensions.soap.SOAPBindingImpl;
 import com.ibm.wsdl.extensions.soap.SOAPBodyImpl;
 import com.ibm.wsdl.extensions.soap.SOAPOperationImpl;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Generic Service Model Class
  */
@@ -1745,7 +1746,7 @@ public class ModelService extends AbstractMap<String, Object> implements Seriali
         } else {
             Map<String, Object> result = ServiceUtil.returnSuccess();
             result.put("hasPermission", Boolean.FALSE);
-            result.put("failMessage", UtilProperties.getMessage(RESOURCE, "ServicePermissionErrorDefinitionProblem", (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale)));
+            result.put("failMessage", UtilProperties.getMessage(RESOURCE, "ServicePermissionErrorDefinitionProblem", (Locale) context.get(x.locale)));
             return result;
         }
     }

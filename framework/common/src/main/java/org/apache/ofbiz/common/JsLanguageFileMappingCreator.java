@@ -40,6 +40,7 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import freemarker.template.TemplateException;
 
+import org.apache.ofbiz.persistence.entity.x;
 // Use the createJsLanguageFileMapping service to create or update JsLanguageFilesMapping.java and JsLanguageFilesMapping.ftl files.
 // You will still need to compile thereafter
 
@@ -49,7 +50,7 @@ public class JsLanguageFileMappingCreator {
 
     public static Map<String, Object> createJsLanguageFileMapping(DispatchContext ctx, Map<String, ?> context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        String encoding = (String) context.get(org.apache.ofbiz.persistence.entity.x.encoding); // default value: UTF-8
+        String encoding = (String) context.get(x.encoding); // default value: UTF-8
 
         List<Locale> localeList = UtilMisc.availableLocales();
         Map<String, Object> jQueryLocaleFile = new LinkedHashMap<>();
@@ -225,7 +226,7 @@ public class JsLanguageFileMappingCreator {
         } catch (IOException | TemplateException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage("CommonUiLabels", "CommonOutputFileCouldNotBeCreated",
-                    UtilMisc.toMap("errorString", e.getMessage()), (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale)));
+                    UtilMisc.toMap("errorString", e.getMessage()), (Locale) context.get(x.locale)));
         }
 
         return result;

@@ -47,6 +47,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * DataEvents Class
  */
@@ -117,7 +118,7 @@ public class DataEvents {
         }
 
         // make sure there is a DataResource for this content
-        String dataResourceId = content.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+        String dataResourceId = content.getString(x.dataResourceId);
         if (UtilValidate.isEmpty(dataResourceId)) {
             String errorMsg = "No Data Resource found for Content ID: " + contentId;
             Debug.logError(errorMsg, MODULE);
@@ -144,7 +145,7 @@ public class DataEvents {
         }
 
         // see if data RESOURCE is public or not
-        String isPublic = dataResource.getString(org.apache.ofbiz.persistence.entity.x.isPublic);
+        String isPublic = dataResource.getString(x.isPublic);
         if (UtilValidate.isEmpty(isPublic)) {
             isPublic = "N";
         }
@@ -182,7 +183,7 @@ public class DataEvents {
         // get objects needed for data processing
         String contextRoot = (String) request.getAttribute("_CONTEXT_ROOT_");
         String webSiteId = (String) session.getAttribute("webSiteId");
-        String dataName = dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceName);
+        String dataName = dataResource.getString(x.dataResourceName);
 
         // get the mime type
         String mimeType = DataResourceWorker.getMimeType(dataResource);
@@ -267,7 +268,7 @@ public class DataEvents {
 
         try {
             GenericValue dataResource = EntityQuery.use(delegator).from("DataResource").where("dataResourceId", dataResourceId).cache().queryOne();
-            if (!"Y".equals(dataResource.getString(org.apache.ofbiz.persistence.entity.x.isPublic))) {
+            if (!"Y".equals(dataResource.getString(x.isPublic))) {
                 // now require login...
                 GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
                 if (userLogin == null) {
@@ -280,7 +281,7 @@ public class DataEvents {
                 // make sure the logged in user can download this content; otherwise is a pretty big security hole for DataResource records...
                 // TODO: should we restrict the roleTypeId?
                 long contentAndRoleCount = EntityQuery.use(delegator).from("ContentAndRole")
-                        .where("partyId", userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId),
+                        .where("partyId", userLogin.get(x.partyId),
                                 "dataResourceId", dataResourceId)
                         .queryCount();
                 if (contentAndRoleCount == 0) {
@@ -359,7 +360,7 @@ public class DataEvents {
                     return "error";
                 }
                 dataResourceId = (String) result.get("dataResourceId");
-                dataResource.set(org.apache.ofbiz.persistence.entity.x.dataResourceId, dataResourceId);
+                dataResource.set(x.dataResourceId, dataResourceId);
             }
         } catch (GenericServiceException e) {
             Debug.logError(e, MODULE);

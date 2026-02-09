@@ -36,6 +36,7 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 import com.ibm.icu.util.Calendar;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * General input/data validation methods
  * Utility methods for validating data, especially input.
@@ -1316,7 +1317,7 @@ public final class UtilValidate {
         try {
             GenericValue geo = EntityQuery.use(delegator).from("Geo").where("geoId", geoId).cache().queryOne();
             PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-            String geoCode = geo != null ? geo.getString(org.apache.ofbiz.persistence.entity.x.geoCode) : "US";
+            String geoCode = geo != null ? geo.getString(x.geoCode) : "US";
             PhoneNumber phNumber = phoneUtil.parse(phoneNumber, geoCode);
             if (phoneUtil.isValidNumber(phNumber) || phoneUtil.isPossibleNumber(phNumber)) {
                 isValid = true;

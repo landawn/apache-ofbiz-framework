@@ -63,6 +63,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.webapp.website.WebSiteWorker;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Product Information Related Events
  */
@@ -346,17 +347,17 @@ public class ProductEvents {
             return "error";
         }
 
-        tempProductAssoc.set(org.apache.ofbiz.persistence.entity.x.thruDate, thruDate);
-        tempProductAssoc.set(org.apache.ofbiz.persistence.entity.x.reason, reason);
-        tempProductAssoc.set(org.apache.ofbiz.persistence.entity.x.instruction, instruction);
-        tempProductAssoc.set(org.apache.ofbiz.persistence.entity.x.quantity, quantity);
-        tempProductAssoc.set(org.apache.ofbiz.persistence.entity.x.sequenceNum, sequenceNum);
+        tempProductAssoc.set(x.thruDate, thruDate);
+        tempProductAssoc.set(x.reason, reason);
+        tempProductAssoc.set(x.instruction, instruction);
+        tempProductAssoc.set(x.quantity, quantity);
+        tempProductAssoc.set(x.sequenceNum, sequenceNum);
 
         if ("CREATE".equals(updateMode)) {
             // if no from date specified, set to now
             if (fromDate == null) {
                 fromDate = new Timestamp(new java.util.Date().getTime());
-                tempProductAssoc.set(org.apache.ofbiz.persistence.entity.x.fromDate, fromDate);
+                tempProductAssoc.set(x.fromDate, fromDate);
                 request.setAttribute("ProductAssocCreateFromDate", fromDate);
             }
 
@@ -447,19 +448,19 @@ public class ProductEvents {
                     // only single product to update
                     String productId = request.getParameter("productId");
                     GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productId).queryOne();
-                    product.set(org.apache.ofbiz.persistence.entity.x.lastModifiedDate, nowTimestamp);
-                    product.setString(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
+                    product.set(x.lastModifiedDate, nowTimestamp);
+                    product.setString(x.lastModifiedByUserLogin, userLogin.getString(x.userLoginId));
                     try {
-                        product.set(org.apache.ofbiz.persistence.entity.x.productHeight, parseBigDecimalFromParameter("productHeight", request));
-                        product.set(org.apache.ofbiz.persistence.entity.x.productWidth, parseBigDecimalFromParameter("productWidth", request));
-                        product.set(org.apache.ofbiz.persistence.entity.x.productDepth, parseBigDecimalFromParameter("productDepth", request));
-                        product.set(org.apache.ofbiz.persistence.entity.x.productWeight, parseBigDecimalFromParameter("weight", request));
+                        product.set(x.productHeight, parseBigDecimalFromParameter("productHeight", request));
+                        product.set(x.productWidth, parseBigDecimalFromParameter("productWidth", request));
+                        product.set(x.productDepth, parseBigDecimalFromParameter("productDepth", request));
+                        product.set(x.productWeight, parseBigDecimalFromParameter("weight", request));
 
                         // default unit settings for shipping parameters
-                        product.set(org.apache.ofbiz.persistence.entity.x.heightUomId, "LEN_in");
-                        product.set(org.apache.ofbiz.persistence.entity.x.widthUomId, "LEN_in");
-                        product.set(org.apache.ofbiz.persistence.entity.x.depthUomId, "LEN_in");
-                        product.set(org.apache.ofbiz.persistence.entity.x.weightUomId, "WT_oz");
+                        product.set(x.heightUomId, "LEN_in");
+                        product.set(x.widthUomId, "LEN_in");
+                        product.set(x.depthUomId, "LEN_in");
+                        product.set(x.weightUomId, "WT_oz");
 
                         BigDecimal floz = parseBigDecimalFromParameter("~floz", request);
                         BigDecimal ml = parseBigDecimalFromParameter("~ml", request);
@@ -488,10 +489,10 @@ public class ProductEvents {
                     do {
                         GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productId).queryOne();
                         try {
-                            product.set(org.apache.ofbiz.persistence.entity.x.productHeight, parseBigDecimalFromParameter("productHeight" + attribIdx, request));
-                            product.set(org.apache.ofbiz.persistence.entity.x.productWidth, parseBigDecimalFromParameter("productWidth" + attribIdx, request));
-                            product.set(org.apache.ofbiz.persistence.entity.x.productDepth, parseBigDecimalFromParameter("productDepth" + attribIdx, request));
-                            product.set(org.apache.ofbiz.persistence.entity.x.productWeight, parseBigDecimalFromParameter("weight" + attribIdx, request));
+                            product.set(x.productHeight, parseBigDecimalFromParameter("productHeight" + attribIdx, request));
+                            product.set(x.productWidth, parseBigDecimalFromParameter("productWidth" + attribIdx, request));
+                            product.set(x.productDepth, parseBigDecimalFromParameter("productDepth" + attribIdx, request));
+                            product.set(x.productWeight, parseBigDecimalFromParameter("weight" + attribIdx, request));
                             BigDecimal floz = parseBigDecimalFromParameter("~floz" + attribIdx, request);
                             BigDecimal ml = parseBigDecimalFromParameter("~ml" + attribIdx, request);
                             BigDecimal ntwt = parseBigDecimalFromParameter("~ntwt" + attribIdx, request);
@@ -559,7 +560,7 @@ public class ProductEvents {
         // go through each; need to remove? do it now
         boolean foundOneEqual = false;
         for (GenericValue typeUomProductFeatureAndAppl: typeUomProductFeatureAndApplList) {
-            if ((numberSpecified != null) && (numberSpecified.compareTo(typeUomProductFeatureAndAppl.getBigDecimal(org.apache.ofbiz.persistence.entity.x.numberSpecified)) == 0)) {
+            if ((numberSpecified != null) && (numberSpecified.compareTo(typeUomProductFeatureAndAppl.getBigDecimal(x.numberSpecified)) == 0)) {
                 foundOneEqual = true;
             } else {
                 // remove the PFA...
@@ -575,28 +576,28 @@ public class ProductEvents {
                     productFeatureTypeId, "numberSpecified", numberSpecified, "uomId", uomId).queryList();
             if (!existingProductFeatureList.isEmpty()) {
                 GenericValue existingProductFeature = existingProductFeatureList.get(0);
-                productFeatureId = existingProductFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId);
+                productFeatureId = existingProductFeature.getString(x.productFeatureId);
             } else {
                 // doesn't exist, so create it
                 productFeatureId = delegator.getNextSeqId("ProductFeature");
                 GenericValue prodFeature = delegator.makeValue("ProductFeature", UtilMisc.toMap("productFeatureId",
                         productFeatureId, "productFeatureTypeId", productFeatureTypeId));
                 if (uomId != null) {
-                    prodFeature.set(org.apache.ofbiz.persistence.entity.x.uomId, uomId);
+                    prodFeature.set(x.uomId, uomId);
                 }
-                prodFeature.set(org.apache.ofbiz.persistence.entity.x.numberSpecified, numberSpecified);
-                prodFeature.set(org.apache.ofbiz.persistence.entity.x.description, numberSpecified.toString() + (uom == null ? "" : (" " + uom.getString(org.apache.ofbiz.persistence.entity.x.description))));
+                prodFeature.set(x.numberSpecified, numberSpecified);
+                prodFeature.set(x.description, numberSpecified.toString() + (uom == null ? "" : (" " + uom.getString(x.description))));
 
                 // if there is a productFeatureCategory with the same id as the productFeatureType, use that category.
                 // otherwise, use a default category from the configuration
                 if (EntityQuery.use(delegator).from("ProductFeatureCategory").where("productFeatureCategoryId",
                         productFeatureTypeId).queryOne() == null) {
                     GenericValue productFeatureCategory = delegator.makeValue("ProductFeatureCategory");
-                    productFeatureCategory.set(org.apache.ofbiz.persistence.entity.x.productFeatureCategoryId, productFeatureTypeId);
-                    productFeatureCategory.set(org.apache.ofbiz.persistence.entity.x.description, productFeatureType.get(org.apache.ofbiz.persistence.entity.x.description));
+                    productFeatureCategory.set(x.productFeatureCategoryId, productFeatureTypeId);
+                    productFeatureCategory.set(x.description, productFeatureType.get(x.description));
                     productFeatureCategory.create();
                 }
-                prodFeature.set(org.apache.ofbiz.persistence.entity.x.productFeatureCategoryId, productFeatureTypeId);
+                prodFeature.set(x.productFeatureCategoryId, productFeatureTypeId);
                 prodFeature.create();
             }
 
@@ -651,10 +652,10 @@ public class ProductEvents {
 
                         // update image urls
                         if ((useImagesProdId != null) && (useImagesProdId.equals(variantProductId))) {
-                            product.set(org.apache.ofbiz.persistence.entity.x.smallImageUrl, variantProduct.getString(org.apache.ofbiz.persistence.entity.x.smallImageUrl));
-                            product.set(org.apache.ofbiz.persistence.entity.x.mediumImageUrl, variantProduct.getString(org.apache.ofbiz.persistence.entity.x.mediumImageUrl));
-                            product.set(org.apache.ofbiz.persistence.entity.x.largeImageUrl, null);
-                            product.set(org.apache.ofbiz.persistence.entity.x.detailImageUrl, null);
+                            product.set(x.smallImageUrl, variantProduct.getString(x.smallImageUrl));
+                            product.set(x.mediumImageUrl, variantProduct.getString(x.mediumImageUrl));
+                            product.set(x.largeImageUrl, null);
+                            product.set(x.detailImageUrl, null);
                             product.store();
                         }
                         attribIdx++;
@@ -699,15 +700,15 @@ public class ProductEvents {
                 GenericValue productFeatureAppl = delegator.makeValidValue("ProductFeatureAppl", productFeatureAndAppl);
 
                 // remove productFeatureAppl IFF: productFeatureAppl != null && (description is empty/null || description is different than existing)
-                if (productFeatureAppl != null && (description == null || !description.equals(productFeatureAndAppl.getString(org.apache.ofbiz.persistence.entity.x.description)))) {
+                if (productFeatureAppl != null && (description == null || !description.equals(productFeatureAndAppl.getString(x.description)))) {
                     // if descriptionsToRemove is not null, only remove if description is in that set
-                    if (descriptionsToRemove == null || descriptionsToRemove.contains(productFeatureAndAppl.getString(org.apache.ofbiz.persistence.entity.x.description))) {
+                    if (descriptionsToRemove == null || descriptionsToRemove.contains(productFeatureAndAppl.getString(x.description))) {
                         // okay, almost there: before removing it if this is a virtual product check to make SURE this feature's
                         // description doesn't exist on any of the variants; wouldn't want to remove something we should have kept around...
-                        if ("Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.isVirtual))) {
+                        if ("Y".equals(product.getString(x.isVirtual))) {
                             boolean foundFeatureOnVariant = false;
                             // get/check all the variants
-                            List<GenericValue> variantAssocs = product.getRelated(org.apache.ofbiz.persistence.entity.x.MainProductAssoc, UtilMisc.toMap("productAssocTypeId",
+                            List<GenericValue> variantAssocs = product.getRelated(x.MainProductAssoc, UtilMisc.toMap("productAssocTypeId",
                                     "PRODUCT_VARIANT"), null, false);
                             variantAssocs = EntityUtil.filterByDate(variantAssocs);
                             List<GenericValue> variants = EntityUtil.getRelated("AssocProduct", null, variantAssocs, false);
@@ -715,7 +716,7 @@ public class ProductEvents {
                             while (!foundFeatureOnVariant && variantIter.hasNext()) {
                                 GenericValue variant = variantIter.next();
                                 // get the selectable features for the variant
-                                List<GenericValue> variantProductFeatureAndAppls = variant.getRelated(org.apache.ofbiz.persistence.entity.x.ProductFeatureAndAppl,
+                                List<GenericValue> variantProductFeatureAndAppls = variant.getRelated(x.ProductFeatureAndAppl,
                                         UtilMisc.toMap("productFeatureTypeId", productFeatureTypeId, "productFeatureApplTypeId", "STANDARD_FEATURE",
                                                 "description", description), null, false);
                                 if (!variantProductFeatureAndAppls.isEmpty()) {
@@ -730,7 +731,7 @@ public class ProductEvents {
                         }
 
                         if (descriptionsRemoved != null) {
-                            descriptionsRemoved.add(productFeatureAndAppl.getString(org.apache.ofbiz.persistence.entity.x.description));
+                            descriptionsRemoved.add(productFeatureAndAppl.getString(x.description));
                         }
                         productFeatureAppl.remove();
                         continue;
@@ -738,7 +739,7 @@ public class ProductEvents {
                 }
 
                 // we got here, is still a valid description associated with this product
-                descriptionsForThisType.add(productFeatureAndAppl.getString(org.apache.ofbiz.persistence.entity.x.description));
+                descriptionsForThisType.add(productFeatureAndAppl.getString(x.description));
             }
         }
 
@@ -751,7 +752,7 @@ public class ProductEvents {
                     productFeatureTypeId, "description", description).queryList();
             if (!existingProductFeatureList.isEmpty()) {
                 GenericValue existingProductFeature = existingProductFeatureList.get(0);
-                productFeatureId = existingProductFeature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId);
+                productFeatureId = existingProductFeature.getString(x.productFeatureId);
             } else {
                 // doesn't exist, so create it
                 productFeatureId = delegator.getNextSeqId("ProductFeature");
@@ -765,11 +766,11 @@ public class ProductEvents {
                 if (EntityQuery.use(delegator).from("ProductFeatureCategory").where("productFeatureCategoryId",
                         productFeatureTypeId).queryOne() == null) {
                     GenericValue productFeatureCategory = delegator.makeValue("ProductFeatureCategory");
-                    productFeatureCategory.set(org.apache.ofbiz.persistence.entity.x.productFeatureCategoryId, productFeatureTypeId);
-                    productFeatureCategory.set(org.apache.ofbiz.persistence.entity.x.description, productFeatureType.get(org.apache.ofbiz.persistence.entity.x.description));
+                    productFeatureCategory.set(x.productFeatureCategoryId, productFeatureTypeId);
+                    productFeatureCategory.set(x.description, productFeatureType.get(x.description));
                     productFeatureCategory.create();
                 }
-                newProductFeature.set(org.apache.ofbiz.persistence.entity.x.productFeatureCategoryId, productFeatureTypeId);
+                newProductFeature.set(x.productFeatureCategoryId, productFeatureTypeId);
                 newProductFeature.create();
             }
 
@@ -795,13 +796,13 @@ public class ProductEvents {
         try {
             GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productId).queryOne();
             // get all the variants
-            List<GenericValue> variantAssocs = product.getRelated(org.apache.ofbiz.persistence.entity.x.MainProductAssoc, UtilMisc.toMap("productAssocTypeId",
+            List<GenericValue> variantAssocs = product.getRelated(x.MainProductAssoc, UtilMisc.toMap("productAssocTypeId",
                     "PRODUCT_VARIANT"), null, false);
             variantAssocs = EntityUtil.filterByDate(variantAssocs);
             List<GenericValue> variants = EntityUtil.getRelated("AssocProduct", null, variantAssocs, false);
             for (GenericValue variant: variants) {
                 // get the selectable features for the variant
-                List<GenericValue> productFeatureAndAppls = variant.getRelated(org.apache.ofbiz.persistence.entity.x.ProductFeatureAndAppl, UtilMisc.toMap("productFeatureTypeId",
+                List<GenericValue> productFeatureAndAppls = variant.getRelated(x.ProductFeatureAndAppl, UtilMisc.toMap("productFeatureTypeId",
                         productFeatureTypeId, "productFeatureApplTypeId", "STANDARD_FEATURE"), null, false);
                 for (GenericValue productFeatureAndAppl: productFeatureAndAppls) {
                     GenericPK productFeatureApplPK = delegator.makePK("ProductFeatureAppl");
@@ -809,7 +810,7 @@ public class ProductEvents {
                     delegator.removeByPrimaryKey(productFeatureApplPK);
                 }
             }
-            List<GenericValue> productFeatureAndAppls = product.getRelated(org.apache.ofbiz.persistence.entity.x.ProductFeatureAndAppl, UtilMisc.toMap("productFeatureTypeId",
+            List<GenericValue> productFeatureAndAppls = product.getRelated(x.ProductFeatureAndAppl, UtilMisc.toMap("productFeatureTypeId",
                     productFeatureTypeId, "productFeatureApplTypeId", "SELECTABLE_FEATURE"), null, false);
             for (GenericValue productFeatureAndAppl: productFeatureAndAppls) {
                 GenericPK productFeatureApplPK = delegator.makePK("ProductFeatureAppl");
@@ -889,7 +890,7 @@ public class ProductEvents {
             if (!prodCatMembs.isEmpty()) {
                 // there is one to modify
                 GenericValue prodCatMemb = prodCatMembs.get(0);
-                prodCatMemb.setString(org.apache.ofbiz.persistence.entity.x.thruDate, thruDate);
+                prodCatMemb.setString(x.thruDate, thruDate);
                 prodCatMemb.store();
             }
 
@@ -948,26 +949,26 @@ public class ProductEvents {
             GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
             if (userLogin != null) {
                 // user login currency
-                currencyStr = userLogin.getString(org.apache.ofbiz.persistence.entity.x.lastCurrencyUom);
+                currencyStr = userLogin.getString(x.lastCurrencyUom);
                 // user login locale
-                localeStr = userLogin.getString(org.apache.ofbiz.persistence.entity.x.lastLocale);
+                localeStr = userLogin.getString(x.lastLocale);
                 // user login timezone
-                timeZoneStr = userLogin.getString(org.apache.ofbiz.persistence.entity.x.lastTimeZone);
+                timeZoneStr = userLogin.getString(x.lastTimeZone);
             }
 
             // if currency is not set, the store's default currency is used
-            if (currencyStr == null && productStore.get(org.apache.ofbiz.persistence.entity.x.defaultCurrencyUomId) != null) {
-                currencyStr = productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultCurrencyUomId);
+            if (currencyStr == null && productStore.get(x.defaultCurrencyUomId) != null) {
+                currencyStr = productStore.getString(x.defaultCurrencyUomId);
             }
 
             // if locale is not set, the store's default locale is used
-            if (localeStr == null && productStore.get(org.apache.ofbiz.persistence.entity.x.defaultLocaleString) != null) {
-                localeStr = productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultLocaleString);
+            if (localeStr == null && productStore.get(x.defaultLocaleString) != null) {
+                localeStr = productStore.getString(x.defaultLocaleString);
             }
 
             // if timezone is not set, the store's default timezone is used
-            if (timeZoneStr == null && productStore.get(org.apache.ofbiz.persistence.entity.x.defaultTimeZoneString) != null) {
-                timeZoneStr = productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultTimeZoneString);
+            if (timeZoneStr == null && productStore.get(x.defaultTimeZoneString) != null) {
+                timeZoneStr = productStore.getString(x.defaultTimeZoneString);
             }
 
             UtilHttp.setCurrencyUom(session, currencyStr);
@@ -990,22 +991,22 @@ public class ProductEvents {
         GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
         GenericValue productStore = ProductStoreWorker.getProductStore(request);
         if (productStore != null && userLogin != null) {
-            if ("Y".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.requireCustomerRole))) {
+            if ("Y".equals(productStore.getString(x.requireCustomerRole))) {
                 List<GenericValue> productStoreRoleList = null;
                 try {
                     productStoreRoleList = EntityQuery.use(delegator).from("ProductStoreRole").where("productStoreId",
-                            productStore.get(org.apache.ofbiz.persistence.entity.x.productStoreId), "partyId", userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId), "roleTypeId", "CUSTOMER")
+                            productStore.get(x.productStoreId), "partyId", userLogin.get(x.partyId), "roleTypeId", "CUSTOMER")
                             .filterByDate().queryList();
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Database error finding CUSTOMER ProductStoreRole records, required by the ProductStore with ID ["
-                            + productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId) + "]", MODULE);
+                            + productStore.getString(x.productStoreId) + "]", MODULE);
                 }
                 if (UtilValidate.isEmpty(productStoreRoleList)) {
                     // uh-oh, this user isn't associated...
-                    String errorMsg = "The " + productStore.getString(org.apache.ofbiz.persistence.entity.x.storeName) + " [" + productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId)
+                    String errorMsg = "The " + productStore.getString(x.storeName) + " [" + productStore.getString(x.productStoreId)
                             + "] ProductStore requires that customers be associated with it, and the logged in user is NOT associated with it in "
-                            + "the CUSTOMER role; userLoginId=[" + userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId) + "], partyId=["
-                            + userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId) + "]";
+                            + "the CUSTOMER role; userLoginId=[" + userLogin.getString(x.userLoginId) + "], partyId=["
+                            + userLogin.getString(x.partyId) + "]";
                     Debug.logWarning(errorMsg, MODULE);
                     request.setAttribute("_ERROR_MESSAGE_", errorMsg);
                     session.removeAttribute("userLogin");
@@ -1030,7 +1031,7 @@ public class ProductEvents {
             request.setAttribute("_ERROR_MESSAGE_", errMsg);
             return "error";
         }
-        String productStoreId = productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
+        String productStoreId = productStore.getString(x.productStoreId);
 
         GenericValue productStoreEmail = null;
         try {
@@ -1048,7 +1049,7 @@ public class ProductEvents {
             return "error";
         }
 
-        String bodyScreenLocation = productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.bodyScreenLocation);
+        String bodyScreenLocation = productStoreEmail.getString(x.bodyScreenLocation);
         if (UtilValidate.isEmpty(bodyScreenLocation)) {
             bodyScreenLocation = defaultScreenLocation;
         }
@@ -1062,15 +1063,15 @@ public class ProductEvents {
         paramMap.put("userLogin", session.getAttribute("userLogin"));
 
         Map<String, Object> context = new HashMap<>();
-        context.put(org.apache.ofbiz.persistence.entity.x.bodyScreenUri, bodyScreenLocation);
-        context.put(org.apache.ofbiz.persistence.entity.x.bodyParameters, paramMap);
-        context.put(org.apache.ofbiz.persistence.entity.x.sendTo, paramMap.get("sendTo"));
-        context.put(org.apache.ofbiz.persistence.entity.x.contentType, productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.contentType));
-        context.put(org.apache.ofbiz.persistence.entity.x.sendFrom, productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.fromAddress));
-        context.put(org.apache.ofbiz.persistence.entity.x.sendCc, productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.ccAddress));
-        context.put(org.apache.ofbiz.persistence.entity.x.sendBcc, productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.bccAddress));
-        context.put(org.apache.ofbiz.persistence.entity.x.subject, productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.subject));
-        context.put(org.apache.ofbiz.persistence.entity.x.webSiteId, websiteId);
+        context.put(x.bodyScreenUri, bodyScreenLocation);
+        context.put(x.bodyParameters, paramMap);
+        context.put(x.sendTo, paramMap.get("sendTo"));
+        context.put(x.contentType, productStoreEmail.get(x.contentType));
+        context.put(x.sendFrom, productStoreEmail.get(x.fromAddress));
+        context.put(x.sendCc, productStoreEmail.get(x.ccAddress));
+        context.put(x.sendBcc, productStoreEmail.get(x.bccAddress));
+        context.put(x.subject, productStoreEmail.getString(x.subject));
+        context.put(x.webSiteId, websiteId);
 
         try {
             dispatcher.runAsync("sendMailFromScreen", context);
@@ -1122,7 +1123,7 @@ public class ProductEvents {
         List<GenericValue> compareList = getProductCompareList(request);
         boolean alreadyInList = false;
         for (GenericValue compProduct : compareList) {
-            if (product.getString(org.apache.ofbiz.persistence.entity.x.productId).equals(compProduct.getString(org.apache.ofbiz.persistence.entity.x.productId))) {
+            if (product.getString(x.productId).equals(compProduct.getString(x.productId))) {
                 alreadyInList = true;
                 break;
             }
@@ -1166,7 +1167,7 @@ public class ProductEvents {
         Iterator<GenericValue> it = compareList.iterator();
         while (it.hasNext()) {
             GenericValue compProduct = it.next();
-            if (product.getString(org.apache.ofbiz.persistence.entity.x.productId).equals(compProduct.getString(org.apache.ofbiz.persistence.entity.x.productId))) {
+            if (product.getString(x.productId).equals(compProduct.getString(x.productId))) {
                 it.remove();
                 break;
             }

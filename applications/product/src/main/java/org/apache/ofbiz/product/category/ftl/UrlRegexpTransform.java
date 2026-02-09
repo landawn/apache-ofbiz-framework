@@ -51,6 +51,7 @@ import freemarker.template.TemplateModelException;
 import freemarker.template.TemplateScalarModel;
 import freemarker.template.TemplateTransformModel;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * UrlRegexpTransform - Freemarker Transform for Products URLs (links)
  *
@@ -137,7 +138,7 @@ public class UrlRegexpTransform implements TemplateTransformModel {
                         GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
 
                         // anonymous shoppers are not logged in
-                        if (userLogin != null && "anonymous".equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId))) {
+                        if (userLogin != null && "anonymous".equals(userLogin.getString(x.userLoginId))) {
                             userLogin = null;
                         }
 

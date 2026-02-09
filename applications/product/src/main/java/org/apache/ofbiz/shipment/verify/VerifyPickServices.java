@@ -30,16 +30,17 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class VerifyPickServices {
 
     public static Map<String, Object> verifySingleItem(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        VerifyPickSession pickSession = (VerifyPickSession) context.get(org.apache.ofbiz.persistence.entity.x.verifyPickSession);
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
-        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        String originGeoId = (String) context.get(org.apache.ofbiz.persistence.entity.x.originGeoId);
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
+        Locale locale = (Locale) context.get(x.locale);
+        VerifyPickSession pickSession = (VerifyPickSession) context.get(x.verifyPickSession);
+        String orderId = (String) context.get(x.orderId);
+        String shipGroupSeqId = (String) context.get(x.shipGroupSeqId);
+        String productId = (String) context.get(x.productId);
+        String originGeoId = (String) context.get(x.originGeoId);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
         if (quantity != null) {
             try {
                 pickSession.createRow(orderId, null, shipGroupSeqId, productId, originGeoId, quantity, locale);
@@ -51,15 +52,15 @@ public class VerifyPickServices {
     }
 
     public static Map<String, Object> verifyBulkItem(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        VerifyPickSession pickSession = (VerifyPickSession) context.get(org.apache.ofbiz.persistence.entity.x.verifyPickSession);
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
-        String shipGroupSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId);
-        Map<String, ?> selectedMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.selectedMap));
-        Map<String, String> itemMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemMap));
-        Map<String, String> productMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.productMap));
-        Map<String, String> originGeoIdMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.originGeoIdMap));
-        Map<String, String> quantityMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.quantityMap));
+        Locale locale = (Locale) context.get(x.locale);
+        VerifyPickSession pickSession = (VerifyPickSession) context.get(x.verifyPickSession);
+        String orderId = (String) context.get(x.orderId);
+        String shipGroupSeqId = (String) context.get(x.shipGroupSeqId);
+        Map<String, ?> selectedMap = UtilGenerics.cast(context.get(x.selectedMap));
+        Map<String, String> itemMap = UtilGenerics.cast(context.get(x.itemMap));
+        Map<String, String> productMap = UtilGenerics.cast(context.get(x.productMap));
+        Map<String, String> originGeoIdMap = UtilGenerics.cast(context.get(x.originGeoIdMap));
+        Map<String, String> quantityMap = UtilGenerics.cast(context.get(x.quantityMap));
         if (selectedMap != null) {
             for (String rowKey : selectedMap.keySet()) {
                 String orderItemSeqId = itemMap.get(rowKey);
@@ -82,10 +83,10 @@ public class VerifyPickServices {
     }
 
     public static Map<String, Object> completeVerifiedPick(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         String shipmentId = null;
-        VerifyPickSession pickSession = (VerifyPickSession) context.get(org.apache.ofbiz.persistence.entity.x.verifyPickSession);
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        VerifyPickSession pickSession = (VerifyPickSession) context.get(x.verifyPickSession);
+        String orderId = (String) context.get(x.orderId);
         try {
             shipmentId = pickSession.complete(orderId, locale);
             Map<String, Object> shipment = new HashMap<>();
@@ -98,7 +99,7 @@ public class VerifyPickServices {
     }
 
     public static Map<String, Object> cancelAllRows(DispatchContext dctx, Map<String, ? extends Object> context) {
-        VerifyPickSession session = (VerifyPickSession) context.get(org.apache.ofbiz.persistence.entity.x.verifyPickSession);
+        VerifyPickSession session = (VerifyPickSession) context.get(x.verifyPickSession);
         session.clearAllRows();
         return ServiceUtil.returnSuccess();
     }

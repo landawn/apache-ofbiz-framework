@@ -52,6 +52,7 @@ import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.webapp.control.LoginWorker;
 import org.apache.ofbiz.webapp.website.WebSiteWorker;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * LoginEvents - Events for UserLogin and Security handling.
  */
@@ -150,7 +151,7 @@ public class LoginEvents {
             Debug.logWarning(gee, "", MODULE);
         }
         if (supposedUserLogin != null) {
-            passwordHint = supposedUserLogin.getString(org.apache.ofbiz.persistence.entity.x.passwordHint);
+            passwordHint = supposedUserLogin.getString(x.passwordHint);
         }
 
         if (supposedUserLogin == null || UtilValidate.isEmpty(passwordHint)) {
@@ -197,7 +198,7 @@ public class LoginEvents {
                     .from("UserLogin")
                     .where("userLoginId", userLoginId)
                     .queryOne();
-            if (userLogin == null || "N".equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.enabled))) {
+            if (userLogin == null || "N".equals(userLogin.getString(x.enabled))) {
                 Debug.logError("userlogin uknown or disabled " + userLogin, MODULE);
                 //giving a "sent email to associated email-address" response, to suppress feedback on in-/valid usernames
                 String errMsg = UtilProperties.getMessage(RESOURCE, "loginevents.new_password_sent_check_email",
@@ -207,7 +208,7 @@ public class LoginEvents {
             }
 
             // check login is associated to a party
-            GenericValue userParty = userLogin.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Party, false);
+            GenericValue userParty = userLogin.getRelatedOne(x.Party, false);
             if (userParty == null) {
                 String errMsg = UtilProperties.getMessage(RESOURCE, "loginevents.username_not_found_reenter", UtilHttp.getLocale(request));
                 request.setAttribute("_ERROR_MESSAGE_", errMsg);
@@ -242,7 +243,7 @@ public class LoginEvents {
 
             String bodyScreenLocation = null;
             if (productStoreEmail != null) {
-                bodyScreenLocation = productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.bodyScreenLocation);
+                bodyScreenLocation = productStoreEmail.getString(x.bodyScreenLocation);
             }
             if (UtilValidate.isEmpty(bodyScreenLocation)) {
                 bodyScreenLocation = defaultScreenLocation;
@@ -260,11 +261,11 @@ public class LoginEvents {
             serviceContext.put("bodyParameters", bodyParameters);
             serviceContext.put("webSiteId", WebSiteWorker.getWebSiteId(request));
             if (productStoreEmail != null) {
-                serviceContext.put("subject", productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.subject));
-                serviceContext.put("sendFrom", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.fromAddress));
-                serviceContext.put("sendCc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.ccAddress));
-                serviceContext.put("sendBcc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.bccAddress));
-                serviceContext.put("contentType", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.contentType));
+                serviceContext.put("subject", productStoreEmail.getString(x.subject));
+                serviceContext.put("sendFrom", productStoreEmail.get(x.fromAddress));
+                serviceContext.put("sendCc", productStoreEmail.get(x.ccAddress));
+                serviceContext.put("sendBcc", productStoreEmail.get(x.bccAddress));
+                serviceContext.put("contentType", productStoreEmail.get(x.contentType));
             } else {
                 GenericValue emailTemplateSetting = null;
                 try {
@@ -274,10 +275,10 @@ public class LoginEvents {
                     Debug.logError(e, MODULE);
                 }
                 if (emailTemplateSetting != null) {
-                    String subject = emailTemplateSetting.getString(org.apache.ofbiz.persistence.entity.x.subject);
+                    String subject = emailTemplateSetting.getString(x.subject);
                     subject = FlexibleStringExpander.expandString(subject, UtilMisc.toMap("userLoginId", userLoginId));
                     serviceContext.put("subject", subject);
-                    serviceContext.put("sendFrom", emailTemplateSetting.get(org.apache.ofbiz.persistence.entity.x.fromAddress));
+                    serviceContext.put("sendFrom", emailTemplateSetting.get(x.fromAddress));
                 } else {
                     serviceContext.put("subject", UtilProperties.getMessage(RESOURCE, "loginservices.password_reminder_subject",
                             UtilMisc.toMap("userLoginId", userLoginId), UtilHttp.getLocale(request)));
@@ -285,7 +286,7 @@ public class LoginEvents {
                 }
             }
             serviceContext.put("sendTo", emails);
-            serviceContext.put("partyId", userParty.getString(org.apache.ofbiz.persistence.entity.x.partyId));
+            serviceContext.put("partyId", userParty.getString(x.partyId));
 
             Map<String, Object> result = dispatcher.runSync("sendMailHiddenInLogFromScreen", serviceContext);
             if (ServiceUtil.isError(result)) {

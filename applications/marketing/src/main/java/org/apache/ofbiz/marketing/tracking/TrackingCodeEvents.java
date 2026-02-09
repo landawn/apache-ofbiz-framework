@@ -42,6 +42,7 @@ import org.apache.ofbiz.product.category.CategoryWorker;
 import org.apache.ofbiz.webapp.stats.VisitHandler;
 import org.apache.ofbiz.webapp.website.WebSiteWorker;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Events used for maintaining TrackingCode related information
  */
@@ -123,13 +124,13 @@ public class TrackingCodeEvents {
                     }
 
                     if (defaultTrackingCode != null) {
-                        defaultTrackingCode.set(org.apache.ofbiz.persistence.entity.x.trackingCodeId, trackingCodeId);
-                        defaultTrackingCode.set(org.apache.ofbiz.persistence.entity.x.trackingCodeTypeId, "PARTNER_MGD");
+                        defaultTrackingCode.set(x.trackingCodeId, trackingCodeId);
+                        defaultTrackingCode.set(x.trackingCodeTypeId, "PARTNER_MGD");
                         //null out userLogin fields, no use tracking to customer, or is there?; set dates to current
-                        defaultTrackingCode.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
-                        defaultTrackingCode.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, null);
-                        defaultTrackingCode.set(org.apache.ofbiz.persistence.entity.x.lastModifiedDate, UtilDateTime.nowTimestamp());
-                        defaultTrackingCode.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, null);
+                        defaultTrackingCode.set(x.createdDate, UtilDateTime.nowTimestamp());
+                        defaultTrackingCode.set(x.createdByUserLogin, null);
+                        defaultTrackingCode.set(x.lastModifiedDate, UtilDateTime.nowTimestamp());
+                        defaultTrackingCode.set(x.lastModifiedByUserLogin, null);
 
                         trackingCode = defaultTrackingCode;
                         try {
@@ -145,18 +146,18 @@ public class TrackingCodeEvents {
                 //if trackingCode is still null then the defaultTrackingCode thing didn't work out, use empty TrackingCode
                 if (trackingCode == null) {
                     trackingCode = delegator.makeValue("TrackingCode");
-                    trackingCode.set(org.apache.ofbiz.persistence.entity.x.trackingCodeId, trackingCodeId);
-                    trackingCode.set(org.apache.ofbiz.persistence.entity.x.trackingCodeTypeId, "PARTNER_MGD");
+                    trackingCode.set(x.trackingCodeId, trackingCodeId);
+                    trackingCode.set(x.trackingCodeTypeId, "PARTNER_MGD");
                     //leave userLogin fields empty, no use tracking to customer, or is there?; set dates to current
-                    trackingCode.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
-                    trackingCode.set(org.apache.ofbiz.persistence.entity.x.lastModifiedDate, UtilDateTime.nowTimestamp());
+                    trackingCode.set(x.createdDate, UtilDateTime.nowTimestamp());
+                    trackingCode.set(x.lastModifiedDate, UtilDateTime.nowTimestamp());
 
                     //use nearly unlimited trackable lifetime: 10 billion seconds, 310 years
-                    trackingCode.set(org.apache.ofbiz.persistence.entity.x.trackableLifetime, 10000000000L);
+                    trackingCode.set(x.trackableLifetime, 10000000000L);
                     //use 2592000 seconds as billable lifetime: equals 1 month
-                    trackingCode.set(org.apache.ofbiz.persistence.entity.x.billableLifetime, 2592000L);
+                    trackingCode.set(x.billableLifetime, 2592000L);
 
-                    trackingCode.set(org.apache.ofbiz.persistence.entity.x.comments, "This TrackingCode has default values because no default TrackingCode could be found.");
+                    trackingCode.set(x.comments, "This TrackingCode has default values because no default TrackingCode could be found.");
 
                     Debug.logWarning("No default TrackingCode record was found, using a TrackingCode with hard coded default values: "
                             + trackingCode, MODULE);
@@ -180,17 +181,17 @@ public class TrackingCodeEvents {
     public static String processTrackingCode(GenericValue trackingCode, HttpServletRequest request, HttpServletResponse response,
                                              String sourceEnumId) {
         Delegator delegator = (Delegator) request.getAttribute("delegator");
-        String trackingCodeId = trackingCode.getString(org.apache.ofbiz.persistence.entity.x.trackingCodeId);
+        String trackingCodeId = trackingCode.getString(x.trackingCodeId);
 
         //check effective dates
         java.sql.Timestamp nowStamp = UtilDateTime.nowTimestamp();
-        if (trackingCode.get(org.apache.ofbiz.persistence.entity.x.fromDate) != null && nowStamp.before(trackingCode.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate))) {
+        if (trackingCode.get(x.fromDate) != null && nowStamp.before(trackingCode.getTimestamp(x.fromDate))) {
             if (Debug.infoOn()) {
                 Debug.logInfo("The TrackingCode with ID [" + trackingCodeId + "] has not yet gone into effect, ignoring this trackingCodeId", MODULE);
             }
             return "success";
         }
-        if (trackingCode.get(org.apache.ofbiz.persistence.entity.x.thruDate) != null && nowStamp.after(trackingCode.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate))) {
+        if (trackingCode.get(x.thruDate) != null && nowStamp.after(trackingCode.getTimestamp(x.thruDate))) {
             if (Debug.infoOn()) {
                 Debug.logInfo("The TrackingCode with ID [" + trackingCodeId + "] has expired, ignoring this trackingCodeId", MODULE);
             }
@@ -201,7 +202,7 @@ public class TrackingCodeEvents {
         GenericValue visit = VisitHandler.getVisit(request.getSession());
         if (visit != null) {
             GenericValue trackingCodeVisit = delegator.makeValue("TrackingCodeVisit",
-                    UtilMisc.toMap("trackingCodeId", trackingCodeId, "visitId", visit.get(org.apache.ofbiz.persistence.entity.x.visitId),
+                    UtilMisc.toMap("trackingCodeId", trackingCodeId, "visitId", visit.get(x.visitId),
                             "fromDate", UtilDateTime.nowTimestamp(), "sourceEnumId", sourceEnumId));
             try {
                 trackingCodeVisit.create();
@@ -222,7 +223,7 @@ public class TrackingCodeEvents {
             try {
                 GenericValue webSite = EntityQuery.use(delegator).from("WebSite").where("webSiteId", webSiteId).cache().queryOne();
                 if (webSite != null) {
-                    cookieDomain = webSite.getString(org.apache.ofbiz.persistence.entity.x.cookieDomain);
+                    cookieDomain = webSite.getString(x.cookieDomain);
                 }
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, "Problems with WebSite entity; using global default cookie domain", MODULE);
@@ -235,9 +236,9 @@ public class TrackingCodeEvents {
 
         // if trackingCode.trackableLifetime not null and is > 0 write a trackable cookie with name in the form: TKCDT_{trackingCode
         // .trackingCodeTypeId} and timeout will be trackingCode.trackableLifetime
-        Long trackableLifetime = trackingCode.getLong(org.apache.ofbiz.persistence.entity.x.trackableLifetime);
+        Long trackableLifetime = trackingCode.getLong(x.trackableLifetime);
         if (trackableLifetime != null && (trackableLifetime > 0 || trackableLifetime == -1)) {
-            Cookie trackableCookie = new Cookie("TKCDT_" + trackingCode.getString(org.apache.ofbiz.persistence.entity.x.trackingCodeTypeId), trackingCode.getString(org.apache.ofbiz.persistence.entity.x.trackingCodeId));
+            Cookie trackableCookie = new Cookie("TKCDT_" + trackingCode.getString(x.trackingCodeTypeId), trackingCode.getString(x.trackingCodeId));
             if (trackableLifetime > 0) trackableCookie.setMaxAge(trackableLifetime.intValue());
             trackableCookie.setPath("/");
             if (!cookieDomain.isEmpty()) trackableCookie.setDomain(cookieDomain);
@@ -248,9 +249,9 @@ public class TrackingCodeEvents {
 
         // if trackingCode.billableLifetime not null and is > 0 write a billable cookie with name in the form: TKCDB_{trackingCode
         // .trackingCodeTypeId} and timeout will be trackingCode.billableLifetime
-        Long billableLifetime = trackingCode.getLong(org.apache.ofbiz.persistence.entity.x.billableLifetime);
+        Long billableLifetime = trackingCode.getLong(x.billableLifetime);
         if (billableLifetime != null && (billableLifetime > 0 || billableLifetime == -1)) {
-            Cookie billableCookie = new Cookie("TKCDB_" + trackingCode.getString(org.apache.ofbiz.persistence.entity.x.trackingCodeTypeId), trackingCode.getString(org.apache.ofbiz.persistence.entity.x.trackingCodeId));
+            Cookie billableCookie = new Cookie("TKCDB_" + trackingCode.getString(x.trackingCodeTypeId), trackingCode.getString(x.trackingCodeId));
             if (billableLifetime > 0) billableCookie.setMaxAge(billableLifetime.intValue());
             billableCookie.setPath("/");
             if (!cookieDomain.isEmpty()) billableCookie.setDomain(cookieDomain);
@@ -313,22 +314,22 @@ public class TrackingCodeEvents {
 
         // if we have overridden logo, css and/or catalogId set some session attributes
         HttpSession session = request.getSession();
-        String overrideLogo = trackingCode.getString(org.apache.ofbiz.persistence.entity.x.overrideLogo);
+        String overrideLogo = trackingCode.getString(x.overrideLogo);
         if (overrideLogo != null) {
             session.setAttribute("overrideLogo", overrideLogo);
         }
-        String overrideCss = trackingCode.getString(org.apache.ofbiz.persistence.entity.x.overrideCss);
+        String overrideCss = trackingCode.getString(x.overrideCss);
         if (overrideCss != null) {
             session.setAttribute("overrideCss", overrideCss);
         }
-        String prodCatalogId = trackingCode.getString(org.apache.ofbiz.persistence.entity.x.prodCatalogId);
+        String prodCatalogId = trackingCode.getString(x.prodCatalogId);
         if (UtilValidate.isNotEmpty(prodCatalogId)) {
             session.setAttribute("CURRENT_CATALOG_ID", prodCatalogId);
             CategoryWorker.setTrail(request, new LinkedList<>());
         }
 
         // if forward/redirect is needed, do a response.sendRedirect and return null to tell the control servlet to not do any other requests/views
-        String redirectUrl = trackingCode.getString(org.apache.ofbiz.persistence.entity.x.redirectUrl);
+        String redirectUrl = trackingCode.getString(x.redirectUrl);
         if (UtilValidate.isNotEmpty(redirectUrl)) {
             try {
                 response.sendRedirect(redirectUrl);
@@ -374,14 +375,14 @@ public class TrackingCodeEvents {
                         }
 
                         //check effective dates
-                        if (trackingCode.get(org.apache.ofbiz.persistence.entity.x.fromDate) != null && nowStamp.before(trackingCode.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate))) {
+                        if (trackingCode.get(x.fromDate) != null && nowStamp.before(trackingCode.getTimestamp(x.fromDate))) {
                             if (Debug.infoOn()) {
                                 Debug.logInfo("The TrackingCode with ID [" + trackingCodeId + "] has not yet gone into effect, ignoring this "
                                         + "trackingCodeId", MODULE);
                             }
                             continue;
                         }
-                        if (trackingCode.get(org.apache.ofbiz.persistence.entity.x.thruDate) != null && nowStamp.after(trackingCode.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate))) {
+                        if (trackingCode.get(x.thruDate) != null && nowStamp.after(trackingCode.getTimestamp(x.thruDate))) {
                             if (Debug.infoOn()) {
                                 Debug.logInfo("The TrackingCode with ID [" + trackingCodeId + "] has expired, ignoring this trackingCodeId", MODULE);
                             }
@@ -390,7 +391,7 @@ public class TrackingCodeEvents {
 
                         // for each trackingCodeId found in this way attach to the visit with the TKCDSRC_COOKIE sourceEnumId
                         GenericValue trackingCodeVisit = delegator.makeValue("TrackingCodeVisit",
-                                UtilMisc.toMap("trackingCodeId", trackingCodeId, "visitId", visit.get(org.apache.ofbiz.persistence.entity.x.visitId),
+                                UtilMisc.toMap("trackingCodeId", trackingCodeId, "visitId", visit.get(x.visitId),
                                         "fromDate", nowStamp, "sourceEnumId", "TKCDSRC_COOKIE"));
                         try {
                             //not doing this inside a transaction, want each one possible to go in
@@ -434,10 +435,10 @@ public class TrackingCodeEvents {
             }
             if (trackingCode != null) {
                 // verify the tracking code type
-                if ("ACCESS".equals(trackingCode.getString(org.apache.ofbiz.persistence.entity.x.trackingCodeTypeId))) {
+                if ("ACCESS".equals(trackingCode.getString(x.trackingCodeTypeId))) {
                     // verify the effective date
-                    if (trackingCode.get(org.apache.ofbiz.persistence.entity.x.fromDate) != null && nowStamp.after(trackingCode.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate))) {
-                        if (trackingCode.get(org.apache.ofbiz.persistence.entity.x.thruDate) != null && nowStamp.before(trackingCode.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate))) {
+                    if (trackingCode.get(x.fromDate) != null && nowStamp.after(trackingCode.getTimestamp(x.fromDate))) {
+                        if (trackingCode.get(x.thruDate) != null && nowStamp.before(trackingCode.getTimestamp(x.thruDate))) {
                             // tracking code is valid
                             return "success";
                         } else {
@@ -538,19 +539,19 @@ public class TrackingCodeEvents {
 
         if (trackingCode != null) {
             //check effective dates
-            if (trackingCode.get(org.apache.ofbiz.persistence.entity.x.fromDate) != null && nowStamp.before(trackingCode.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate))) {
+            if (trackingCode.get(x.fromDate) != null && nowStamp.before(trackingCode.getTimestamp(x.fromDate))) {
                 if (Debug.infoOn()) {
                     Debug.logInfo("The TrackingCode with ID [" + trackingCodeId + "] has not yet gone into effect, ignoring this trackingCodeId",
                             MODULE);
                 }
             }
-            if (trackingCode.get(org.apache.ofbiz.persistence.entity.x.thruDate) != null && nowStamp.after(trackingCode.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate))) {
+            if (trackingCode.get(x.thruDate) != null && nowStamp.after(trackingCode.getTimestamp(x.thruDate))) {
                 if (Debug.infoOn()) {
                     Debug.logInfo("The TrackingCode with ID [" + trackingCodeId + "] has expired, ignoring this trackingCodeId", MODULE);
                 }
             }
             GenericValue trackingCodeOrder = delegator.makeValue("TrackingCodeOrder",
-                    UtilMisc.toMap("trackingCodeTypeId", trackingCode.get(org.apache.ofbiz.persistence.entity.x.trackingCodeTypeId),
+                    UtilMisc.toMap("trackingCodeTypeId", trackingCode.get(x.trackingCodeTypeId),
                             "trackingCodeId", trackingCodeId, "isBillable", isBillable, "siteId", siteId,
                             "hasExported", "N", "affiliateReferredTimeStamp", affiliateReferredTimeStamp));
 

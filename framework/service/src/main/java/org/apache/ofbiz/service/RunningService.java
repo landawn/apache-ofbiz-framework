@@ -22,6 +22,7 @@ import java.sql.Timestamp;
 
 import org.apache.ofbiz.base.util.UtilDateTime;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class RunningService {
 
     private ModelService model;

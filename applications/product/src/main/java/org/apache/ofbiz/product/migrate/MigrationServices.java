@@ -32,6 +32,7 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class MigrationServices {
     private static final String MODULE = MigrationServices.class.getName();
 
@@ -45,7 +46,7 @@ public class MigrationServices {
             while ((productPromoCodeEmail = eli.next()) != null) {
                 String contactMechId;
 
-                String emailAddress = productPromoCodeEmail.getString(org.apache.ofbiz.persistence.entity.x.emailAddress);
+                String emailAddress = productPromoCodeEmail.getString(x.emailAddress);
                 if (!UtilValidate.isEmail(emailAddress)) {
                     Debug.logError(emailAddress + ": is not a valid email address", MODULE);
                     errors.add(emailAddress + ": is not a valid email address ");
@@ -69,17 +70,17 @@ public class MigrationServices {
                     //If no contactMech found create new
                     GenericValue newContactMech = delegator.makeValue("ContactMech");
                     contactMechId = delegator.getNextSeqId("ContactMech");
-                    newContactMech.set(org.apache.ofbiz.persistence.entity.x.contactMechId, contactMechId);
-                    newContactMech.set(org.apache.ofbiz.persistence.entity.x.contactMechTypeId, "EMAIL_ADDRESS");
-                    newContactMech.set(org.apache.ofbiz.persistence.entity.x.infoString, emailAddress);
+                    newContactMech.set(x.contactMechId, contactMechId);
+                    newContactMech.set(x.contactMechTypeId, "EMAIL_ADDRESS");
+                    newContactMech.set(x.infoString, emailAddress);
                     delegator.create(newContactMech);
                 } else {
-                    contactMechId = contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechId);
+                    contactMechId = contactMech.getString(x.contactMechId);
                 }
 
                 GenericValue prodPromoCodeContMech = delegator.makeValue("ProdPromoCodeContactMech");
-                prodPromoCodeContMech.set(org.apache.ofbiz.persistence.entity.x.productPromoCodeId, productPromoCodeEmail.getString(org.apache.ofbiz.persistence.entity.x.productPromoCodeId));
-                prodPromoCodeContMech.set(org.apache.ofbiz.persistence.entity.x.contactMechId, contactMechId);
+                prodPromoCodeContMech.set(x.productPromoCodeId, productPromoCodeEmail.getString(x.productPromoCodeId));
+                prodPromoCodeContMech.set(x.contactMechId, contactMechId);
                 //createOrStore to avoid duplicate data for same email.
                 delegator.createOrStore(prodPromoCodeContMech);
             }

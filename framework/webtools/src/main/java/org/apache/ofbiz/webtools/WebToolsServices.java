@@ -97,6 +97,7 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * WebTools Services
  */
@@ -107,23 +108,23 @@ public class WebToolsServices {
     private static final String RESOURCE = "WebtoolsUiLabels";
 
     public static Map<String, Object> entityImport(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         List<String> messages = new LinkedList<>();
 
-        String filename = (String) context.get(org.apache.ofbiz.persistence.entity.x.filename);
-        String fmfilename = (String) context.get(org.apache.ofbiz.persistence.entity.x.fmfilename);
-        String fulltext = (String) context.get(org.apache.ofbiz.persistence.entity.x.fulltext);
-        boolean isUrl = (String) context.get(org.apache.ofbiz.persistence.entity.x.isUrl) != null;
-        String onlyInserts = (String) context.get(org.apache.ofbiz.persistence.entity.x.onlyInserts);
-        String maintainTimeStamps = (String) context.get(org.apache.ofbiz.persistence.entity.x.maintainTimeStamps);
-        String createDummyFks = (String) context.get(org.apache.ofbiz.persistence.entity.x.createDummyFks);
-        String checkDataOnly = (String) context.get(org.apache.ofbiz.persistence.entity.x.checkDataOnly);
-        Map<String, Object> placeholderValues = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.placeholderValues));
+        String filename = (String) context.get(x.filename);
+        String fmfilename = (String) context.get(x.fmfilename);
+        String fulltext = (String) context.get(x.fulltext);
+        boolean isUrl = (String) context.get(x.isUrl) != null;
+        String onlyInserts = (String) context.get(x.onlyInserts);
+        String maintainTimeStamps = (String) context.get(x.maintainTimeStamps);
+        String createDummyFks = (String) context.get(x.createDummyFks);
+        String checkDataOnly = (String) context.get(x.checkDataOnly);
+        Map<String, Object> placeholderValues = UtilGenerics.cast(context.get(x.placeholderValues));
 
-        Integer txTimeout = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.txTimeout);
+        Integer txTimeout = (Integer) context.get(x.txTimeout);
         if (txTimeout == null) {
             txTimeout = 7200;
         }
@@ -237,21 +238,21 @@ public class WebToolsServices {
     }
 
     public static Map<String, Object> entityImportDir(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         List<String> messages = new LinkedList<>();
 
-        String path = (String) context.get(org.apache.ofbiz.persistence.entity.x.path);
-        String onlyInserts = (String) context.get(org.apache.ofbiz.persistence.entity.x.onlyInserts);
-        String maintainTimeStamps = (String) context.get(org.apache.ofbiz.persistence.entity.x.maintainTimeStamps);
-        String createDummyFks = (String) context.get(org.apache.ofbiz.persistence.entity.x.createDummyFks);
-        boolean deleteFiles = (String) context.get(org.apache.ofbiz.persistence.entity.x.deleteFiles) != null;
-        String checkDataOnly = (String) context.get(org.apache.ofbiz.persistence.entity.x.checkDataOnly);
-        Map<String, Object> placeholderValues = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.placeholderValues));
+        String path = (String) context.get(x.path);
+        String onlyInserts = (String) context.get(x.onlyInserts);
+        String maintainTimeStamps = (String) context.get(x.maintainTimeStamps);
+        String createDummyFks = (String) context.get(x.createDummyFks);
+        boolean deleteFiles = (String) context.get(x.deleteFiles) != null;
+        String checkDataOnly = (String) context.get(x.checkDataOnly);
+        Map<String, Object> placeholderValues = UtilGenerics.cast(context.get(x.placeholderValues));
 
-        Integer txTimeout = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.txTimeout);
-        Long filePause = (Long) context.get(org.apache.ofbiz.persistence.entity.x.filePause);
+        Integer txTimeout = (Integer) context.get(x.txTimeout);
+        Long filePause = (Long) context.get(x.filePause);
 
         if (txTimeout == null) {
             txTimeout = 7200;
@@ -349,15 +350,15 @@ public class WebToolsServices {
     }
 
     public static Map<String, Object> entityImportReaders(DispatchContext dctx, Map<String, Object> context) {
-        String readers = (String) context.get(org.apache.ofbiz.persistence.entity.x.readers);
-        String overrideDelegator = (String) context.get(org.apache.ofbiz.persistence.entity.x.overrideDelegator);
-        String overrideGroup = (String) context.get(org.apache.ofbiz.persistence.entity.x.overrideGroup);
-        boolean useDummyFks = "true".equals(context.get(org.apache.ofbiz.persistence.entity.x.createDummyFks));
-        boolean maintainTxs = "true".equals(context.get(org.apache.ofbiz.persistence.entity.x.maintainTimeStamps));
-        boolean tryInserts = "true".equals(context.get(org.apache.ofbiz.persistence.entity.x.onlyInserts));
-        boolean checkDataOnly = "true".equals(context.get(org.apache.ofbiz.persistence.entity.x.checkDataOnly));
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        Integer txTimeoutInt = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.txTimeout);
+        String readers = (String) context.get(x.readers);
+        String overrideDelegator = (String) context.get(x.overrideDelegator);
+        String overrideGroup = (String) context.get(x.overrideGroup);
+        boolean useDummyFks = "true".equals(context.get(x.createDummyFks));
+        boolean maintainTxs = "true".equals(context.get(x.maintainTimeStamps));
+        boolean tryInserts = "true".equals(context.get(x.onlyInserts));
+        boolean checkDataOnly = "true".equals(context.get(x.checkDataOnly));
+        Locale locale = (Locale) context.get(x.locale);
+        Integer txTimeoutInt = (Integer) context.get(x.txTimeout);
         int txTimeout = txTimeoutInt != null ? txTimeoutInt : -1;
 
         List<Object> messages = new LinkedList<>();
@@ -461,19 +462,19 @@ public class WebToolsServices {
 
     public static Map<String, Object> parseEntityXmlFile(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        URL url = (URL) context.get(org.apache.ofbiz.persistence.entity.x.url);
-        String xmltext = (String) context.get(org.apache.ofbiz.persistence.entity.x.xmltext);
+        Locale locale = (Locale) context.get(x.locale);
+        URL url = (URL) context.get(x.url);
+        String xmltext = (String) context.get(x.xmltext);
 
         if (url == null && xmltext == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityImportNoXmlFileOrTextSpecified", locale));
         }
-        boolean onlyInserts = (String) context.get(org.apache.ofbiz.persistence.entity.x.onlyInserts) != null;
-        boolean maintainTimeStamps = (String) context.get(org.apache.ofbiz.persistence.entity.x.maintainTimeStamps) != null;
-        boolean createDummyFks = (String) context.get(org.apache.ofbiz.persistence.entity.x.createDummyFks) != null;
-        boolean checkDataOnly = (String) context.get(org.apache.ofbiz.persistence.entity.x.checkDataOnly) != null;
-        Integer txTimeout = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.txTimeout);
-        Map<String, Object> placeholderValues = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.placeholderValues));
+        boolean onlyInserts = (String) context.get(x.onlyInserts) != null;
+        boolean maintainTimeStamps = (String) context.get(x.maintainTimeStamps) != null;
+        boolean createDummyFks = (String) context.get(x.createDummyFks) != null;
+        boolean checkDataOnly = (String) context.get(x.checkDataOnly) != null;
+        Integer txTimeout = (Integer) context.get(x.txTimeout);
+        Map<String, Object> placeholderValues = UtilGenerics.cast(context.get(x.placeholderValues));
 
         if (txTimeout == null) {
             txTimeout = 7200;
@@ -502,10 +503,10 @@ public class WebToolsServices {
 
     public static Map<String, Object> entityExportAll(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        String outpath = (String) context.get(org.apache.ofbiz.persistence.entity.x.outpath); // mandatory
-        Timestamp fromDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
-        Integer txTimeout = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.txTimeout);
+        Locale locale = (Locale) context.get(x.locale);
+        String outpath = (String) context.get(x.outpath); // mandatory
+        Timestamp fromDate = (Timestamp) context.get(x.fromDate);
+        Integer txTimeout = (Integer) context.get(x.txTimeout);
         if (txTimeout == null) {
             txTimeout = 7200;
         }
@@ -646,7 +647,7 @@ public class WebToolsServices {
      */
     public static Map<String, Object> getEntityRefData(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         Map<String, Object> resultMap = ServiceUtil.returnSuccess();
 
@@ -678,7 +679,7 @@ public class WebToolsServices {
                     + e.getMessage());
         }
 
-        String search = (String) context.get(org.apache.ofbiz.persistence.entity.x.search);
+        String search = (String) context.get(x.search);
         List<Map<String, Object>> packagesList = new LinkedList<>();
         try {
             for (String pName : packageNames) {
@@ -831,12 +832,12 @@ public class WebToolsServices {
     }
 
     public static Map<String, Object> exportEntityEoModelBundle(DispatchContext dctx, Map<String, ? extends Object> context) {
-        String eomodeldFullPath = (String) context.get(org.apache.ofbiz.persistence.entity.x.eomodeldFullPath);
-        String entityPackageNameOrig = (String) context.get(org.apache.ofbiz.persistence.entity.x.entityPackageName);
-        String entityGroupId = (String) context.get(org.apache.ofbiz.persistence.entity.x.entityGroupId);
-        String datasourceName = (String) context.get(org.apache.ofbiz.persistence.entity.x.datasourceName);
-        String entityNamePrefix = (String) context.get(org.apache.ofbiz.persistence.entity.x.entityNamePrefix);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String eomodeldFullPath = (String) context.get(x.eomodeldFullPath);
+        String entityPackageNameOrig = (String) context.get(x.entityPackageName);
+        String entityGroupId = (String) context.get(x.entityGroupId);
+        String datasourceName = (String) context.get(x.datasourceName);
+        String entityNamePrefix = (String) context.get(x.entityNamePrefix);
+        Locale locale = (Locale) context.get(x.locale);
         if (datasourceName == null) datasourceName = "localderby";
 
         ModelReader reader = dctx.getDelegator().getModelReader();
@@ -930,8 +931,8 @@ public class WebToolsServices {
      * @return return the result of the service execution
      */
     public static Map<String, Object> entityMaintPermCheck(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
         Security security = dctx.getSecurity();
         Map<String, Object> resultMap = null;
         if (security.hasPermission("ENTITY_MAINT", userLogin)) {
@@ -946,9 +947,9 @@ public class WebToolsServices {
 
 
     public static Map<String, Object> exportServiceEoModelBundle(DispatchContext dctx, Map<String, ? extends Object> context) {
-        String eomodeldFullPath = (String) context.get(org.apache.ofbiz.persistence.entity.x.eomodeldFullPath);
-        String serviceName = (String) context.get(org.apache.ofbiz.persistence.entity.x.serviceName);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String eomodeldFullPath = (String) context.get(x.eomodeldFullPath);
+        String serviceName = (String) context.get(x.serviceName);
+        Locale locale = (Locale) context.get(x.locale);
 
         if (eomodeldFullPath.endsWith("/")) {
             eomodeldFullPath = eomodeldFullPath + serviceName + ".eomodeld";

@@ -103,6 +103,7 @@ import org.xml.sax.SAXException;
 
 import freemarker.template.TemplateException;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * DataResourceWorker Class
  */
@@ -139,8 +140,8 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
         categoryNode.put("count", categoryValues.size());
         List<Map<String, Object>> subCategoryIds = new LinkedList<>();
         for (GenericValue category : categoryValues) {
-            String id = (String) category.get(org.apache.ofbiz.persistence.entity.x.dataCategoryId);
-            String categoryName = (String) category.get(org.apache.ofbiz.persistence.entity.x.categoryName);
+            String id = (String) category.get(x.dataCategoryId);
+            String categoryName = (String) category.get(x.categoryName);
             Map<String, Object> newNode = new HashMap<>();
             newNode.put("id", id);
             newNode.put("name", categoryName);
@@ -176,7 +177,7 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
         if (dataCategoryValue == null) {
             return;
         }
-        String parentCategoryId = (String) dataCategoryValue.get(org.apache.ofbiz.persistence.entity.x.parentCategoryId);
+        String parentCategoryId = (String) dataCategoryValue.get(x.parentCategoryId);
         if (parentCategoryId != null) {
             getDataCategoryAncestry(delegator, parentCategoryId, categoryTypeIds);
         }
@@ -316,23 +317,23 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
                                                                             Map<String, Object> context) {
 
         Map<String, Object> permResults = new HashMap<>();
-        String skipPermissionCheck = (String) context.get(org.apache.ofbiz.persistence.entity.x.skipPermissionCheck);
+        String skipPermissionCheck = (String) context.get(x.skipPermissionCheck);
         if (Debug.infoOn()) {
             Debug.logInfo("in callDataResourcePermissionCheckResult, skipPermissionCheck:" + skipPermissionCheck, "");
         }
 
         if (UtilValidate.isEmpty(skipPermissionCheck)
                 || (!"true".equalsIgnoreCase(skipPermissionCheck) && !"granted".equalsIgnoreCase(skipPermissionCheck))) {
-            GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+            GenericValue userLogin = (GenericValue) context.get(x.userLogin);
             Map<String, Object> serviceInMap = new HashMap<>();
             serviceInMap.put("userLogin", userLogin);
-            serviceInMap.put("targetOperationList", context.get(org.apache.ofbiz.persistence.entity.x.targetOperationList));
-            serviceInMap.put("contentPurposeList", context.get(org.apache.ofbiz.persistence.entity.x.contentPurposeList));
-            serviceInMap.put("entityOperation", context.get(org.apache.ofbiz.persistence.entity.x.entityOperation));
+            serviceInMap.put("targetOperationList", context.get(x.targetOperationList));
+            serviceInMap.put("contentPurposeList", context.get(x.contentPurposeList));
+            serviceInMap.put("entityOperation", context.get(x.entityOperation));
 
             // It is possible that permission to work with DataResources will be controlled
             // by an external Content entity.
-            String ownerContentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.ownerContentId);
+            String ownerContentId = (String) context.get(x.ownerContentId);
             if (UtilValidate.isNotEmpty(ownerContentId)) {
                 try {
                     GenericValue content = EntityQuery.use(delegator).from("Content").where("contentId", ownerContentId).queryOne();
@@ -374,10 +375,10 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
 
     public static byte[] acquireImage(Delegator delegator, GenericValue dataResource) throws GenericEntityException {
         byte[] b = null;
-        String dataResourceId = dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+        String dataResourceId = dataResource.getString(x.dataResourceId);
         GenericValue imageDataResource = EntityQuery.use(delegator).from("ImageDataResource").where("dataResourceId", dataResourceId).queryOne();
         if (imageDataResource != null) {
-            b = imageDataResource.getBytes(org.apache.ofbiz.persistence.entity.x.imageData);
+            b = imageDataResource.getBytes(x.imageData);
         }
         return b;
     }
@@ -402,9 +403,9 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
     public static String getMimeType(GenericValue dataResource, String defaultMimeTypeId) {
         String mimeTypeId = null;
         if (dataResource != null) {
-            mimeTypeId = (String) dataResource.get(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
+            mimeTypeId = (String) dataResource.get(x.mimeTypeId);
             if (UtilValidate.isEmpty(mimeTypeId)) {
-                String fileName = (String) dataResource.get(org.apache.ofbiz.persistence.entity.x.objectInfo);
+                String fileName = (String) dataResource.get(x.objectInfo);
                 mimeTypeId = getMimeType(dataResource.getDelegator(), fileName, defaultMimeTypeId);
             }
         }
@@ -428,7 +429,7 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
                 try {
                     ext = delegator.findOne("FileExtension", true, "fileExtensionId", fileExtension);
                     if (ext != null) {
-                        mimeTypeId = ext.getString(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
+                        mimeTypeId = ext.getString(x.mimeTypeId);
                     }
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
@@ -515,11 +516,11 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
 
         String mimeType = null;
         if (view != null) {
-            mimeType = view.getString(org.apache.ofbiz.persistence.entity.x.drMimeTypeId);
+            mimeType = view.getString(x.drMimeTypeId);
         }
         if (UtilValidate.isEmpty(mimeType) && UtilValidate.isNotEmpty(dataResourceId)) {
             GenericValue dataResource = EntityQuery.use(delegator).from("DataResource").where("dataResourceId", dataResourceId).cache().queryOne();
-            mimeType = dataResource.getString(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
+            mimeType = dataResource.getString(x.mimeTypeId);
 
         }
         return mimeType;
@@ -651,7 +652,7 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
 
         GenericValue dataResource = EntityQuery.use(delegator).from("DataResource").where("dataResourceId", dataResourceId).cache().queryOne();
         if (dataResource != null) {
-            String dataTemplateTypeId = dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataTemplateTypeId);
+            String dataTemplateTypeId = dataResource.getString(x.dataTemplateTypeId);
             if ("FTL".equals(dataTemplateTypeId)) {
                 FreeMarkerWorker.clearTemplateFromCache("delegator:" + delegator.getDelegatorName() + ":DataResource:" + dataResourceId);
             }
@@ -711,7 +712,7 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
         }
 
         // a data template attached to the data RESOURCE
-        String dataTemplateTypeId = dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataTemplateTypeId);
+        String dataTemplateTypeId = dataResource.getString(x.dataTemplateTypeId);
 
         // no template; or template is NONE; render the data
         if (UtilValidate.isEmpty(dataTemplateTypeId) || "NONE".equals(dataTemplateTypeId)) {
@@ -731,7 +732,7 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
                         StringBuffer newTemplateText = new StringBuffer(templateText);
                         String webAnalyticsCode = "<script type=\"text/javascript\">";
                         for (GenericValue webAnalytic : webAnalytics) {
-                            StringWrapper wrapString = StringUtil.wrapString((String) webAnalytic.get(org.apache.ofbiz.persistence.entity.x.webAnalyticsCode));
+                            StringWrapper wrapString = StringUtil.wrapString((String) webAnalytic.get(x.webAnalyticsCode));
                             webAnalyticsCode += wrapString.toString();
                         }
                         webAnalyticsCode += "</script>";
@@ -745,10 +746,10 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
                     // If dataResource using ftl file use nowTimestamp to avoid freemarker caching
                     Timestamp lastUpdatedStamp = UtilDateTime.nowTimestamp();
                     //If dataResource is type of ELECTRONIC_TEXT then only use the lastUpdatedStamp of electronicText entity for freemarker caching
-                    if ("ELECTRONIC_TEXT".equals(dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId))) {
-                        GenericValue electronicText = dataResource.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ElectronicText, true);
+                    if ("ELECTRONIC_TEXT".equals(dataResource.getString(x.dataResourceTypeId))) {
+                        GenericValue electronicText = dataResource.getRelatedOne(x.ElectronicText, true);
                         if (electronicText != null) {
-                            lastUpdatedStamp = electronicText.getTimestamp(org.apache.ofbiz.persistence.entity.x.lastUpdatedStamp);
+                            lastUpdatedStamp = electronicText.getTimestamp(x.lastUpdatedStamp);
                         }
                     }
 
@@ -768,8 +769,8 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
                         docbookStylesheet.length() - 1));
                 UtilMisc.copyFile(sourceFileLocation, targetFileLocation);
                 // get the template data for rendering
-                String templateLocation = DataResourceWorker.getContentFile(dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId),
-                        dataResource.getString(org.apache.ofbiz.persistence.entity.x.objectInfo), (String) templateContext.get("contextRoot")).toString();
+                String templateLocation = DataResourceWorker.getContentFile(dataResource.getString(x.dataResourceTypeId),
+                        dataResource.getString(x.objectInfo), (String) templateContext.get("contextRoot")).toString();
                 // render the XSLT template and file
                 String outDoc = null;
                 try {
@@ -783,20 +784,20 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
             } else if ("SCREEN_COMBINED".equals(dataTemplateTypeId)) {
                 try {
                     MapStack<String> context = MapStack.create(templateContext);
-                    context.put(org.apache.ofbiz.persistence.entity.x.locale, locale);
+                    context.put(x.locale, locale);
                     // prepare the map for preRenderedContent
-                    String textData = (String) context.get(org.apache.ofbiz.persistence.entity.x.textData);
+                    String textData = (String) context.get(x.textData);
                     if (UtilValidate.isNotEmpty(textData)) {
                         Map<String, Object> prc = new HashMap<>();
-                        String mapKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.mapKey);
+                        String mapKey = (String) context.get(x.mapKey);
                         if (mapKey != null) {
                             prc.put(mapKey, mapKey);
                         }
                         prc.put("body", textData); // used for default screen defs
-                        context.put(org.apache.ofbiz.persistence.entity.x.preRenderedContent, prc);
+                        context.put(x.preRenderedContent, prc);
                     }
                     // get the screen renderer; or create a new one
-                    ScreenRenderer screens = (ScreenRenderer) context.get(org.apache.ofbiz.persistence.entity.x.screens);
+                    ScreenRenderer screens = (ScreenRenderer) context.get(x.screens);
                     if (screens == null) {
                      // TODO: replace "screen" to support dynamic rendering of different output
                         ScreenStringRenderer screenStringRenderer = new MacroScreenRenderer(modelTheme.getType("screen"),
@@ -807,15 +808,15 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
                     // render the screen
                     ModelScreen modelScreen = null;
                     ScreenStringRenderer renderer = screens.getScreenStringRenderer();
-                    String combinedName = dataResource.getString(org.apache.ofbiz.persistence.entity.x.objectInfo);
-                    if ("URL_RESOURCE".equals(dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId)) && UtilValidate.isNotEmpty(combinedName)
+                    String combinedName = dataResource.getString(x.objectInfo);
+                    if ("URL_RESOURCE".equals(dataResource.getString(x.dataResourceTypeId)) && UtilValidate.isNotEmpty(combinedName)
                             && combinedName.startsWith("component://")) {
                         modelScreen = ScreenFactory.getScreenFromLocation(combinedName);
                     } else { // stored in  a single file, long or short text
                         Document screenXml = UtilXml.readXmlDocument(getDataResourceText(dataResource, targetMimeTypeId, locale, templateContext,
                                 delegator, cache), true, true);
                         Map<String, ModelScreen> modelScreenMap = ScreenFactory.readScreenDocument(screenXml, "DataResourceId: "
-                                + dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId));
+                                + dataResource.getString(x.dataResourceId));
                         if (UtilValidate.isNotEmpty(modelScreenMap)) {
                             Map.Entry<String, ModelScreen> entry = modelScreenMap.entrySet().iterator().next();
                             // get first entry, only one screen allowed per file
@@ -835,10 +836,10 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
             } else if ("FORM_COMBINED".equals(dataTemplateTypeId)) {
                 try {
                     Map<String, Object> context = UtilGenerics.cast(templateContext.get("globalContext"));
-                    context.put(org.apache.ofbiz.persistence.entity.x.locale, locale);
-                    context.put(org.apache.ofbiz.persistence.entity.x.simpleEncoder, UtilCodec.getEncoder(modelTheme.getEncoder("screen")));
-                    HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
-                    HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
+                    context.put(x.locale, locale);
+                    context.put(x.simpleEncoder, UtilCodec.getEncoder(modelTheme.getEncoder("screen")));
+                    HttpServletRequest request = (HttpServletRequest) context.get(x.request);
+                    HttpServletResponse response = (HttpServletResponse) context.get(x.response);
                     ModelForm modelForm = null;
                     ModelReader entityModelReader = delegator.getModelReader();
                     String formText = getDataResourceText(dataResource, targetMimeTypeId, locale, templateContext, delegator, cache);
@@ -890,21 +891,21 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
         }
         String webSiteId = (String) templateContext.get("webSiteId");
         if (UtilValidate.isEmpty(webSiteId)) {
-            webSiteId = (String) context.get(org.apache.ofbiz.persistence.entity.x.webSiteId);
+            webSiteId = (String) context.get(x.webSiteId);
         }
 
         String https = (String) templateContext.get("https");
         if (UtilValidate.isEmpty(https)) {
-            https = (String) context.get(org.apache.ofbiz.persistence.entity.x.https);
+            https = (String) context.get(x.https);
         }
 
         String rootDir = (String) templateContext.get("rootDir");
         if (UtilValidate.isEmpty(rootDir)) {
-            rootDir = (String) context.get(org.apache.ofbiz.persistence.entity.x.rootDir);
+            rootDir = (String) context.get(x.rootDir);
         }
 
-        String dataResourceId = dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
-        String dataResourceTypeId = dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId);
+        String dataResourceId = dataResource.getString(x.dataResourceId);
+        String dataResourceTypeId = dataResource.getString(x.dataResourceTypeId);
 
         // default type
         if (UtilValidate.isEmpty(dataResourceTypeId)) {
@@ -913,26 +914,26 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
 
         // text types
         if ("SHORT_TEXT".equals(dataResourceTypeId) || "LINK".equals(dataResourceTypeId)) {
-            String text = dataResource.getString(org.apache.ofbiz.persistence.entity.x.objectInfo);
+            String text = dataResource.getString(x.objectInfo);
             writeText(dataResource, text, templateContext, mimeTypeId, locale, out);
         } else if ("ELECTRONIC_TEXT".equals(dataResourceTypeId)) {
             GenericValue electronicText = EntityQuery.use(delegator).from("ElectronicText")
                     .where("dataResourceId", dataResourceId)
                     .cache(cache).queryOne();
             if (electronicText != null) {
-                String text = electronicText.getString(org.apache.ofbiz.persistence.entity.x.textData);
+                String text = electronicText.getString(x.textData);
                 writeText(dataResource, text, templateContext, mimeTypeId, locale, out);
             }
 
         // object types
         } else if (dataResourceTypeId.endsWith("_OBJECT")) {
-            String text = (String) dataResource.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+            String text = (String) dataResource.get(x.dataResourceId);
             writeText(dataResource, text, templateContext, mimeTypeId, locale, out);
 
         // RESOURCE type
         } else if ("URL_RESOURCE".equals(dataResourceTypeId)) {
             String text = null;
-            URL url = FlexibleLocation.resolveLocation(dataResource.getString(org.apache.ofbiz.persistence.entity.x.objectInfo));
+            URL url = FlexibleLocation.resolveLocation(dataResource.getString(x.objectInfo));
 
             if (url.getHost() != null) { // is absolute
                 int c;
@@ -958,8 +959,8 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
         } else if (dataResourceTypeId.endsWith("_FILE_BIN")) {
             writeText(dataResource, dataResourceId, templateContext, mimeTypeId, locale, out);
         } else if (dataResourceTypeId.endsWith("_FILE")) {
-            String dataResourceMimeTypeId = dataResource.getString(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
-            String objectInfo = dataResource.getString(org.apache.ofbiz.persistence.entity.x.objectInfo);
+            String dataResourceMimeTypeId = dataResource.getString(x.mimeTypeId);
+            String objectInfo = dataResource.getString(x.objectInfo);
 
             if (dataResourceMimeTypeId == null || dataResourceMimeTypeId.startsWith("text")) {
                 renderFile(dataResourceTypeId, objectInfo, rootDir, out);
@@ -973,7 +974,7 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
 
     public static void writeText(GenericValue dataResource, String textData, Map<String, Object> context, String targetMimeTypeId, Locale locale,
                                  Appendable out) throws GeneralException, IOException {
-        String dataResourceMimeTypeId = dataResource.getString(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
+        String dataResourceMimeTypeId = dataResource.getString(x.mimeTypeId);
         Delegator delegator = dataResource.getDelegator();
 
         // assume HTML as data RESOURCE data
@@ -996,7 +997,7 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
             GenericValue mimeTypeTemplate = EntityQuery.use(delegator).from("MimeTypeHtmlTemplate").where("mimeTypeId",
                     dataResourceMimeTypeId).cache().queryOne();
 
-            if (mimeTypeTemplate != null && mimeTypeTemplate.get(org.apache.ofbiz.persistence.entity.x.templateLocation) != null) {
+            if (mimeTypeTemplate != null && mimeTypeTemplate.get(x.templateLocation) != null) {
                 // prepare the context
                 Map<String, Object> mimeContext = new HashMap<>();
                 mimeContext.putAll(context);
@@ -1016,7 +1017,7 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
     }
 
     public static String renderMimeTypeTemplate(GenericValue mimeTypeTemplate, Map<String, Object> context) throws GeneralException, IOException {
-        String location = mimeTypeTemplate.getString(org.apache.ofbiz.persistence.entity.x.templateLocation);
+        String location = mimeTypeTemplate.getString(x.templateLocation);
         StringWriter writer = new StringWriter();
         try {
             FreeMarkerWorker.renderTemplate(location, context, writer);
@@ -1101,8 +1102,8 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
             throw new GeneralException("Cannot stream null data RESOURCE!");
         }
 
-        String dataResourceTypeId = dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId);
-        String dataResourceId = dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+        String dataResourceTypeId = dataResource.getString(x.dataResourceTypeId);
+        String dataResourceId = dataResource.getString(x.dataResourceId);
         Delegator delegator = dataResource.getDelegator();
 
         // first text based data
@@ -1110,13 +1111,13 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
             String text = "";
 
             if ("SHORT_TEXT".equals(dataResourceTypeId) || "LINK".equals(dataResourceTypeId)) {
-                text = dataResource.getString(org.apache.ofbiz.persistence.entity.x.objectInfo);
+                text = dataResource.getString(x.objectInfo);
             } else if ("ELECTRONIC_TEXT".equals(dataResourceTypeId)) {
                 GenericValue electronicText = EntityQuery.use(delegator).from("ElectronicText")
                         .where("dataResourceId", dataResourceId)
                         .cache(cache).queryOne();
                 if (electronicText != null) {
-                    text = electronicText.getString(org.apache.ofbiz.persistence.entity.x.textData);
+                    text = electronicText.getString(x.textData);
                 }
             } else {
                 throw new GeneralException("Unsupported TEXT type; cannot stream");
@@ -1134,22 +1135,22 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
             if ("IMAGE_OBJECT".equals(dataResourceTypeId)) {
                 valObj = EntityQuery.use(delegator).from("ImageDataResource").where("dataResourceId", dataResourceId).cache(cache).queryOne();
                 if (valObj != null) {
-                    bytes = valObj.getBytes(org.apache.ofbiz.persistence.entity.x.imageData);
+                    bytes = valObj.getBytes(x.imageData);
                 }
             } else if ("VIDEO_OBJECT".equals(dataResourceTypeId)) {
                 valObj = EntityQuery.use(delegator).from("VideoDataResource").where("dataResourceId", dataResourceId).cache(cache).queryOne();
                 if (valObj != null) {
-                    bytes = valObj.getBytes(org.apache.ofbiz.persistence.entity.x.videoData);
+                    bytes = valObj.getBytes(x.videoData);
                 }
             } else if ("AUDIO_OBJECT".equals(dataResourceTypeId)) {
                 valObj = EntityQuery.use(delegator).from("AudioDataResource").where("dataResourceId", dataResourceId).cache(cache).queryOne();
                 if (valObj != null) {
-                    bytes = valObj.getBytes(org.apache.ofbiz.persistence.entity.x.audioData);
+                    bytes = valObj.getBytes(x.audioData);
                 }
             } else if ("OTHER_OBJECT".equals(dataResourceTypeId)) {
                 valObj = EntityQuery.use(delegator).from("OtherDataResource").where("dataResourceId", dataResourceId).cache(cache).queryOne();
                 if (valObj != null) {
-                    bytes = valObj.getBytes(org.apache.ofbiz.persistence.entity.x.dataResourceContent);
+                    bytes = valObj.getBytes(x.dataResourceContent);
                 }
             } else {
                 throw new GeneralException("Unsupported OBJECT type [" + dataResourceTypeId + "]; cannot stream");
@@ -1159,7 +1160,7 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
 
         // file data
         } else if (dataResourceTypeId.endsWith("_FILE") || dataResourceTypeId.endsWith("_FILE_BIN")) {
-            String objectInfo = dataResource.getString(org.apache.ofbiz.persistence.entity.x.objectInfo);
+            String objectInfo = dataResource.getString(x.objectInfo);
             if (UtilValidate.isNotEmpty(objectInfo)) {
                 File file = DataResourceWorker.getContentFile(dataResourceTypeId, objectInfo, contextRoot);
                 if (!file.exists()) {
@@ -1171,7 +1172,7 @@ public class DataResourceWorker implements org.apache.ofbiz.widget.content.DataR
 
         // URL RESOURCE data
         } else if ("URL_RESOURCE".equals(dataResourceTypeId)) {
-            String objectInfo = dataResource.getString(org.apache.ofbiz.persistence.entity.x.objectInfo);
+            String objectInfo = dataResource.getString(x.objectInfo);
             if (UtilValidate.isNotEmpty(objectInfo)) {
                 URL url = UtilURL.fromUrlString(objectInfo);
                 if (url.getHost() == null) { // is relative

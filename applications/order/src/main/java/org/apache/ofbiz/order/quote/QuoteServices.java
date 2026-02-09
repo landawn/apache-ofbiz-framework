@@ -39,6 +39,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 public class QuoteServices {
 
     private static final String MODULE = QuoteServices.class.getName();
@@ -49,13 +50,13 @@ public class QuoteServices {
     public static Map<String, Object> sendQuoteReportMail(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        String emailType = (String) context.get(org.apache.ofbiz.persistence.entity.x.emailType);
-        String quoteId = (String) context.get(org.apache.ofbiz.persistence.entity.x.quoteId);
-        String sendTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.sendTo);
-        String sendCc = (String) context.get(org.apache.ofbiz.persistence.entity.x.sendCc);
-        String note = (String) context.get(org.apache.ofbiz.persistence.entity.x.note);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        String emailType = (String) context.get(x.emailType);
+        String quoteId = (String) context.get(x.quoteId);
+        String sendTo = (String) context.get(x.sendTo);
+        String sendCc = (String) context.get(x.sendCc);
+        String note = (String) context.get(x.note);
 
         // prepare the order information
         Map<String, Object> sendMap = new HashMap<>();
@@ -77,26 +78,26 @@ public class QuoteServices {
         GenericValue productStoreEmail = null;
         try {
             productStoreEmail = EntityQuery.use(delegator).from("ProductStoreEmailSetting").where("productStoreId",
-                    quote.get(org.apache.ofbiz.persistence.entity.x.productStoreId), "emailType", emailType).queryOne();
+                    quote.get(x.productStoreId), "emailType", emailType).queryOne();
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Problem getting the ProductStoreEmailSetting for productStoreId=" + quote.get(org.apache.ofbiz.persistence.entity.x.productStoreId)
+            Debug.logError(e, "Problem getting the ProductStoreEmailSetting for productStoreId=" + quote.get(x.productStoreId)
                     + " and emailType=" + emailType, MODULE);
         }
         if (productStoreEmail == null) {
             return ServiceUtil.returnFailure(UtilProperties.getMessage(RES_PRODUCT,
                     "ProductProductStoreEmailSettingsNotValid",
-                    UtilMisc.toMap("productStoreId", quote.get(org.apache.ofbiz.persistence.entity.x.productStoreId),
+                    UtilMisc.toMap("productStoreId", quote.get(x.productStoreId),
                             "emailType", emailType), locale));
         }
-        String bodyScreenLocation = productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.bodyScreenLocation);
+        String bodyScreenLocation = productStoreEmail.getString(x.bodyScreenLocation);
         if (UtilValidate.isEmpty(bodyScreenLocation)) {
             return ServiceUtil.returnFailure(UtilProperties.getMessage(RES_PRODUCT,
                     "ProductProductStoreEmailSettingsNotValidBodyScreenLocation",
-                    UtilMisc.toMap("productStoreId", quote.get(org.apache.ofbiz.persistence.entity.x.productStoreId),
+                    UtilMisc.toMap("productStoreId", quote.get(x.productStoreId),
                             "emailType", emailType), locale));
         }
         sendMap.put("bodyScreenUri", bodyScreenLocation);
-        String xslfoAttachScreenLocation = productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.xslfoAttachScreenLocation);
+        String xslfoAttachScreenLocation = productStoreEmail.getString(x.xslfoAttachScreenLocation);
         sendMap.put("xslfoAttachScreenLocation", xslfoAttachScreenLocation);
 
         if ((sendTo == null) || !UtilValidate.isEmail(sendTo)) {
@@ -106,22 +107,22 @@ public class QuoteServices {
 
         Map<String, Object> bodyParameters = UtilMisc.<String, Object>toMap("quoteId", quoteId, "userLogin", userLogin, "locale", locale);
         bodyParameters.put("note", note);
-        bodyParameters.put("partyId", quote.getString(org.apache.ofbiz.persistence.entity.x.partyId)); // This is set to trigger the "storeEmailAsCommunication" seca
+        bodyParameters.put("partyId", quote.getString(x.partyId)); // This is set to trigger the "storeEmailAsCommunication" seca
         sendMap.put("bodyParameters", bodyParameters);
         sendMap.put("userLogin", userLogin);
 
-        String subjectString = productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.subject);
+        String subjectString = productStoreEmail.getString(x.subject);
         sendMap.put("subject", subjectString);
 
-        sendMap.put("contentType", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.contentType));
-        sendMap.put("sendFrom", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.fromAddress));
-        sendMap.put("sendCc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.ccAddress));
-        sendMap.put("sendBcc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.bccAddress));
+        sendMap.put("contentType", productStoreEmail.get(x.contentType));
+        sendMap.put("sendFrom", productStoreEmail.get(x.fromAddress));
+        sendMap.put("sendCc", productStoreEmail.get(x.ccAddress));
+        sendMap.put("sendBcc", productStoreEmail.get(x.bccAddress));
         sendMap.put("sendTo", sendTo);
         if ((sendCc != null) && UtilValidate.isEmail(sendCc)) {
             sendMap.put("sendCc", sendCc);
         } else {
-            sendMap.put("sendCc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.ccAddress));
+            sendMap.put("sendCc", productStoreEmail.get(x.ccAddress));
         }
 
         // send the notification
@@ -145,25 +146,25 @@ public class QuoteServices {
 
     public static Map<String, Object> storeQuote(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String quoteTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.quoteTypeId);
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
-        Timestamp issueDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.issueDate);
-        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
-        String currencyUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.currencyUomId);
-        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
-        String salesChannelEnumId = (String) context.get(org.apache.ofbiz.persistence.entity.x.salesChannelEnumId);
-        Timestamp validFromDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.validFromDate);
-        Timestamp validThruDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.validThruDate);
-        String quoteName = (String) context.get(org.apache.ofbiz.persistence.entity.x.quoteName);
-        String description = (String) context.get(org.apache.ofbiz.persistence.entity.x.description);
-        List<GenericValue> quoteItems = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.quoteItems));
-        List<GenericValue> quoteAttributes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.quoteAttributes));
-        List<GenericValue> quoteCoefficients = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.quoteCoefficients));
-        List<GenericValue> quoteRoles = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.quoteRoles));
-        List<GenericValue> quoteWorkEfforts = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.quoteWorkEfforts));
-        List<GenericValue> quoteAdjustments = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.quoteAdjustments));
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String quoteTypeId = (String) context.get(x.quoteTypeId);
+        String partyId = (String) context.get(x.partyId);
+        Timestamp issueDate = (Timestamp) context.get(x.issueDate);
+        String statusId = (String) context.get(x.statusId);
+        String currencyUomId = (String) context.get(x.currencyUomId);
+        String productStoreId = (String) context.get(x.productStoreId);
+        String salesChannelEnumId = (String) context.get(x.salesChannelEnumId);
+        Timestamp validFromDate = (Timestamp) context.get(x.validFromDate);
+        Timestamp validThruDate = (Timestamp) context.get(x.validThruDate);
+        String quoteName = (String) context.get(x.quoteName);
+        String description = (String) context.get(x.description);
+        List<GenericValue> quoteItems = UtilGenerics.cast(context.get(x.quoteItems));
+        List<GenericValue> quoteAttributes = UtilGenerics.cast(context.get(x.quoteAttributes));
+        List<GenericValue> quoteCoefficients = UtilGenerics.cast(context.get(x.quoteCoefficients));
+        List<GenericValue> quoteRoles = UtilGenerics.cast(context.get(x.quoteRoles));
+        List<GenericValue> quoteWorkEfforts = UtilGenerics.cast(context.get(x.quoteWorkEfforts));
+        List<GenericValue> quoteAdjustments = UtilGenerics.cast(context.get(x.quoteAdjustments));
+        Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> serviceResult = new HashMap<>();
 
         //TODO create Quote Terms still to be implemented
@@ -197,7 +198,7 @@ public class QuoteServices {
                 // create Quote Items
                 if (UtilValidate.isNotEmpty(quoteItems)) {
                     for (GenericValue quoteItem : quoteItems) {
-                        quoteItem.set(org.apache.ofbiz.persistence.entity.x.quoteId, quoteId);
+                        quoteItem.set(x.quoteId, quoteId);
                         Map<String, Object> quoteItemIn = quoteItem.getAllFields();
                         quoteItemIn.put("userLogin", userLogin);
 
@@ -211,7 +212,7 @@ public class QuoteServices {
                 // create Quote Attributes
                 if (UtilValidate.isNotEmpty(quoteAttributes)) {
                     for (GenericValue quoteAttr : quoteAttributes) {
-                        quoteAttr.set(org.apache.ofbiz.persistence.entity.x.quoteId, quoteId);
+                        quoteAttr.set(x.quoteId, quoteId);
                         Map<String, Object> quoteAttrIn = quoteAttr.getAllFields();
                         quoteAttrIn.put("userLogin", userLogin);
 
@@ -225,7 +226,7 @@ public class QuoteServices {
                 // create Quote Coefficients
                 if (UtilValidate.isNotEmpty(quoteCoefficients)) {
                     for (GenericValue quoteCoefficient : quoteCoefficients) {
-                        quoteCoefficient.set(org.apache.ofbiz.persistence.entity.x.quoteId, quoteId);
+                        quoteCoefficient.set(x.quoteId, quoteId);
                         Map<String, Object> quoteCoefficientIn = quoteCoefficient.getAllFields();
                         quoteCoefficientIn.put("userLogin", userLogin);
 
@@ -239,7 +240,7 @@ public class QuoteServices {
                 // create Quote Roles
                 if (UtilValidate.isNotEmpty(quoteRoles)) {
                     for (GenericValue quoteRole : quoteRoles) {
-                        quoteRole.set(org.apache.ofbiz.persistence.entity.x.quoteId, quoteId);
+                        quoteRole.set(x.quoteId, quoteId);
                         Map<String, Object> quoteRoleIn = quoteRole.getAllFields();
                         quoteRoleIn.put("userLogin", userLogin);
                         serviceResult = dispatcher.runSync("createQuoteRole", quoteRoleIn);
@@ -252,7 +253,7 @@ public class QuoteServices {
                 // create Quote WorkEfforts
                 if (UtilValidate.isNotEmpty(quoteWorkEfforts)) {
                     for (GenericValue quoteWorkEffort : quoteWorkEfforts) {
-                        quoteWorkEffort.set(org.apache.ofbiz.persistence.entity.x.quoteId, quoteId);
+                        quoteWorkEffort.set(x.quoteId, quoteId);
                         Map<String, Object> quoteWorkEffortIn = quoteWorkEffort.getAllFields();
                         quoteWorkEffortIn.put("userLogin", userLogin);
                         serviceResult = dispatcher.runSync("createQuoteWorkEffort", quoteWorkEffortIn);
@@ -265,7 +266,7 @@ public class QuoteServices {
                 // create Quote Adjustments
                 if (UtilValidate.isNotEmpty(quoteAdjustments)) {
                     for (GenericValue quoteAdjustment : quoteAdjustments) {
-                        quoteAdjustment.set(org.apache.ofbiz.persistence.entity.x.quoteId, quoteId);
+                        quoteAdjustment.set(x.quoteId, quoteId);
                         Map<String, Object> quoteAdjustmentIn = quoteAdjustment.getAllFields();
                         quoteAdjustmentIn.put("userLogin", userLogin);
                         serviceResult = dispatcher.runSync("createQuoteAdjustment", quoteAdjustmentIn);

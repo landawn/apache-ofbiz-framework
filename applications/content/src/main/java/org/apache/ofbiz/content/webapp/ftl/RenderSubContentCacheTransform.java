@@ -45,6 +45,7 @@ import org.apache.ofbiz.webapp.control.RequestHandler;
 import freemarker.core.Environment;
 import freemarker.template.TemplateTransformModel;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * RenderSubContentCacheTransform - Freemarker Transform for Content rendering
  * This transform cannot be called recursively (at this time).
@@ -86,18 +87,18 @@ public class RenderSubContentCacheTransform implements TemplateTransformModel {
         String subContentIdSub = null;
         if (view != null) {
             try {
-                dataResourceId = (String) view.get(org.apache.ofbiz.persistence.entity.x.drDataResourceId);
+                dataResourceId = (String) view.get(x.drDataResourceId);
             } catch (IllegalArgumentException e) {
-                dataResourceId = (String) view.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+                dataResourceId = (String) view.get(x.dataResourceId);
             }
-            subContentIdSub = (String) view.get(org.apache.ofbiz.persistence.entity.x.contentId);
+            subContentIdSub = (String) view.get(x.contentId);
         }
         // This order is taken so that the dataResourceType can be overridden in the transform arguments.
         String subDataResourceTypeId = (String) templateRoot.get("subDataResourceTypeId");
 
         if (UtilValidate.isEmpty(subDataResourceTypeId) && view != null) {
             try {
-                subDataResourceTypeId = (String) view.get(org.apache.ofbiz.persistence.entity.x.drDataResourceTypeId);
+                subDataResourceTypeId = (String) view.get(x.drDataResourceTypeId);
             } catch (IllegalArgumentException e) {
                 // view may be "Content"
             }
@@ -161,7 +162,7 @@ public class RenderSubContentCacheTransform implements TemplateTransformModel {
                 }
 
                 if (thisView != null) {
-                    String contentId = thisView.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+                    String contentId = thisView.getString(x.contentId);
                     if (contentId != null) {
                         try {
                             ContentWorker.renderContentAsText(dispatcher, contentId, out, templateRoot, locale, mimeTypeId, null, null, true);
@@ -201,34 +202,34 @@ public class RenderSubContentCacheTransform implements TemplateTransformModel {
                     if (view != null) {
                         ModelEntity modelEntity = view.getModelEntity();
                         if (UtilValidate.isEmpty(contentId) && modelEntity.getField("caContentId") != null) {
-                            contentId = view.getString(org.apache.ofbiz.persistence.entity.x.caContentId);
+                            contentId = view.getString(x.caContentId);
                         }
                         if (UtilValidate.isEmpty(contentId) && modelEntity.getField("contentId") != null) {
-                            contentId = view.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+                            contentId = view.getString(x.contentId);
                         }
                         if (UtilValidate.isEmpty(contentIdTo) && modelEntity.getField("caContentIdTo") != null) {
-                            contentIdTo = view.getString(org.apache.ofbiz.persistence.entity.x.caContentIdTo);
+                            contentIdTo = view.getString(x.caContentIdTo);
                         }
                         if (UtilValidate.isEmpty(contentIdTo) && modelEntity.getField("contentIdTo") != null) {
-                            contentIdTo = view.getString(org.apache.ofbiz.persistence.entity.x.contentIdTo);
+                            contentIdTo = view.getString(x.contentIdTo);
                         }
                         if (UtilValidate.isEmpty(contentAssocTypeId) && modelEntity.getField("caContentAssocTypeId") != null) {
-                            contentAssocTypeId = view.getString(org.apache.ofbiz.persistence.entity.x.caContentAssocTypeId);
+                            contentAssocTypeId = view.getString(x.caContentAssocTypeId);
                         }
                         if (UtilValidate.isEmpty(contentAssocTypeId) && modelEntity.getField("contentAssocTypeId") != null) {
-                            contentAssocTypeId = view.getString(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId);
+                            contentAssocTypeId = view.getString(x.contentAssocTypeId);
                         }
                         if (UtilValidate.isEmpty(mapKey) && modelEntity.getField("caMapKey") != null) {
-                            mapKey = view.getString(org.apache.ofbiz.persistence.entity.x.caMapKey);
+                            mapKey = view.getString(x.caMapKey);
                         }
                         if (UtilValidate.isEmpty(mapKey) && modelEntity.getField("mapKey") != null) {
-                            mapKey = view.getString(org.apache.ofbiz.persistence.entity.x.mapKey);
+                            mapKey = view.getString(x.mapKey);
                         }
                         if (UtilValidate.isEmpty(fromDate) && modelEntity.getField("caFromDate") != null) {
-                            fromDate = view.getString(org.apache.ofbiz.persistence.entity.x.caFromDate);
+                            fromDate = view.getString(x.caFromDate);
                         }
                         if (UtilValidate.isEmpty(fromDate) && modelEntity.getField("fromDate") != null) {
-                            fromDate = view.getString(org.apache.ofbiz.persistence.entity.x.fromDate);
+                            fromDate = view.getString(x.fromDate);
                         }
                     }
                 } else {

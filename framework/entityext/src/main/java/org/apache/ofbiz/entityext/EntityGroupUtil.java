@@ -31,6 +31,7 @@ import org.apache.ofbiz.entity.model.ModelEntity;
 import org.apache.ofbiz.entity.model.ModelViewEntity;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * EntityEcaUtil
  */
@@ -85,7 +86,7 @@ public final class EntityGroupUtil {
                 Iterator<GenericValue> entitySyncIncludeIter = entityGroupEntryValues.iterator();
                 while (entitySyncIncludeIter.hasNext()) {
                     GenericValue entitySyncInclude = entitySyncIncludeIter.next();
-                    String entityOrPackage = entitySyncInclude.getString(org.apache.ofbiz.persistence.entity.x.entityOrPackage);
+                    String entityOrPackage = entitySyncInclude.getString(x.entityOrPackage);
                     boolean matches = false;
                     if (entityName.equals(entityOrPackage)) {
                         matches = true;
@@ -94,11 +95,11 @@ public final class EntityGroupUtil {
                     }
 
                     if (matches) {
-                        if ("ESIA_INCLUDE".equals(entitySyncInclude.getString(org.apache.ofbiz.persistence.entity.x.applEnumId))) {
+                        if ("ESIA_INCLUDE".equals(entitySyncInclude.getString(x.applEnumId))) {
                             matchesInclude = true;
-                        } else if ("ESIA_EXCLUDE".equals(entitySyncInclude.getString(org.apache.ofbiz.persistence.entity.x.applEnumId))) {
+                        } else if ("ESIA_EXCLUDE".equals(entitySyncInclude.getString(x.applEnumId))) {
                             matchesExclude = true;
-                        } else if ("ESIA_ALWAYS".equals(entitySyncInclude.getString(org.apache.ofbiz.persistence.entity.x.applEnumId))) {
+                        } else if ("ESIA_ALWAYS".equals(entitySyncInclude.getString(x.applEnumId))) {
                             matchesAlways = true;
                             break;
                         }

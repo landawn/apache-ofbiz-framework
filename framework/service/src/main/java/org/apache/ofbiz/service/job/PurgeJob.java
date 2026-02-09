@@ -22,6 +22,7 @@ import java.io.Serializable;
 
 import org.apache.ofbiz.entity.GenericValue;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Purge job - removes a JobSandbox entity value and its related values.
  */
@@ -31,7 +32,7 @@ public class PurgeJob extends AbstractJob implements Serializable {
     private final GenericValue jobValue;
 
     public PurgeJob(GenericValue jobValue) {
-        super(jobValue.getString(org.apache.ofbiz.persistence.entity.x.jobId), "Purge " + jobValue.getString(org.apache.ofbiz.persistence.entity.x.jobName));
+        super(jobValue.getString(x.jobId), "Purge " + jobValue.getString(x.jobName));
         this.jobValue = jobValue;
     }
 

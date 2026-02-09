@@ -42,6 +42,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 public class CropImage {
 
     private static final String MODULE = CropImage.class.getName();
@@ -52,17 +53,17 @@ public class CropImage {
             throws IOException {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dispatcher.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         String nameOfThumb = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
                 "image.management.nameofthumbnail", delegator), context);
 
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        String imageName = (String) context.get(org.apache.ofbiz.persistence.entity.x.imageName);
-        String imageX = (String) context.get(org.apache.ofbiz.persistence.entity.x.imageX);
-        String imageY = (String) context.get(org.apache.ofbiz.persistence.entity.x.imageY);
-        String imageW = (String) context.get(org.apache.ofbiz.persistence.entity.x.imageW);
-        String imageH = (String) context.get(org.apache.ofbiz.persistence.entity.x.imageH);
+        String productId = (String) context.get(x.productId);
+        String imageName = (String) context.get(x.imageName);
+        String imageX = (String) context.get(x.imageX);
+        String imageY = (String) context.get(x.imageY);
+        String imageW = (String) context.get(x.imageW);
+        String imageH = (String) context.get(x.imageH);
 
         if (UtilValidate.isNotEmpty(imageName)) {
             Map<String, Object> contentCtx = new HashMap<>();

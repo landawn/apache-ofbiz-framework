@@ -41,6 +41,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.webapp.WebAppUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class ContentUrlFilter implements Filter {
     private static final String MODULE = ContentUrlFilter.class.getName();
     private FilterConfig config;
@@ -68,10 +69,10 @@ public class ContentUrlFilter implements Filter {
                     if (contentDataResourceView != null) {
                         GenericValue content = EntityQuery.use(delegator).from("ContentAssoc")
                                 .where("contentAssocTypeId", "ALTERNATIVE_URL",
-                                        "contentIdTo", contentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.contentId))
+                                        "contentIdTo", contentDataResourceView.get(x.contentId))
                                 .filterByDate().queryFirst();
                         if (content != null) {
-                            urlContentId = content.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+                            urlContentId = content.getString(x.contentId);
                         }
                     }
                 } catch (GenericEntityException gee) {

@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class GeoServices {
 
     private static final double RADIUS_OF_EARTH = 6371; // Radius of the earth in km
@@ -33,10 +34,10 @@ public class GeoServices {
     public static Map<String, Object> getDistanceBetweenGeoPoints(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> serviceResponse = new HashMap<>();
 
-        double fromLatitude = UtilMisc.toDouble(context.get(org.apache.ofbiz.persistence.entity.x.fromLatitude));
-        double fromLongitude = UtilMisc.toDouble(context.get(org.apache.ofbiz.persistence.entity.x.fromLongitude));
-        double toLatitude = UtilMisc.toDouble(context.get(org.apache.ofbiz.persistence.entity.x.toLatitude));
-        double toLongitude = UtilMisc.toDouble(context.get(org.apache.ofbiz.persistence.entity.x.toLongitude));
+        double fromLatitude = UtilMisc.toDouble(context.get(x.fromLatitude));
+        double fromLongitude = UtilMisc.toDouble(context.get(x.fromLongitude));
+        double toLatitude = UtilMisc.toDouble(context.get(x.toLatitude));
+        double toLongitude = UtilMisc.toDouble(context.get(x.toLongitude));
 
         double dLatitude = Math.toRadians(toLatitude - fromLatitude);
         double dLongitude = Math.toRadians(toLongitude - fromLongitude);
@@ -45,7 +46,7 @@ public class GeoServices {
                 * Math.sin(dLongitude / 2) * Math.sin(dLongitude / 2);
         double c = 2 * Math.atan(Math.sqrt(a) / Math.sqrt(1 - a));
         double distance = c * RADIUS_OF_EARTH; // Distance in Kilometers
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         if ("IMPERIAL".equals(GeoWorker.getMeasurementSystem(locale))) {
             distance = distance * MILES_PER_KILOMETER; // Distance in Miles
         }

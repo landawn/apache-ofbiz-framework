@@ -36,6 +36,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityListIterator;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class AfterLoginEvents {
 
     private static final String MODULE = AfterLoginEvents.class.getName();
@@ -67,7 +68,7 @@ public class AfterLoginEvents {
         Delegator delegator = (Delegator) request.getAttribute("delegator");
         GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
 
-        String userLoginId = (String) userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+        String userLoginId = (String) userLogin.get(x.userLoginId);
 
         try (EntityListIterator eli = EntityQuery.use(delegator)
                 .from("Visit")
@@ -81,7 +82,7 @@ public class AfterLoginEvents {
                 int count = 0;
                 while ((visit = eli.next()) != null) {
                     if (count == 1) {
-                        Timestamp fromDate = visit.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate);
+                        Timestamp fromDate = visit.getTimestamp(x.fromDate);
                         Locale locale = UtilHttp.getLocale(request);
                         String libJs = "['" + JsLanguageFilesMappingUtil.getFile("datejs", locale.toString()) + "']";
                         SimpleDateFormat formatter = new SimpleDateFormat("EE MMM d y H:m:s ZZZ");

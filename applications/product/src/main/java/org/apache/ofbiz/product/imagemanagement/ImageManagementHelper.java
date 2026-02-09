@@ -31,6 +31,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public final class ImageManagementHelper {
 
     private static final String MODULE = ImageManagementHelper.class.getName();
@@ -47,16 +48,16 @@ public final class ImageManagementHelper {
                     "productContentTypeId", "DEFAULT_IMAGE", "statusId", "IM_APPROVED", "drIsPublic", "N").orderBy("sequenceNum").queryList();
             if (UtilValidate.isNotEmpty(defaultImageList)) {
                 GenericValue productContent = EntityUtil.getFirst(defaultImageList);
-                if (UtilValidate.isNotEmpty(productContent.get(org.apache.ofbiz.persistence.entity.x.drObjectInfo))) {
-                    internalImageUrl = (String) productContent.get(org.apache.ofbiz.persistence.entity.x.drObjectInfo);
+                if (UtilValidate.isNotEmpty(productContent.get(x.drObjectInfo))) {
+                    internalImageUrl = (String) productContent.get(x.drObjectInfo);
                 }
             } else {
                 List<GenericValue> productContentList = EntityQuery.use(delegator).from("ProductContentAndInfo").where("productId", productId,
                         "productContentTypeId", "IMAGE", "statusId", "IM_APPROVED", "drIsPublic", "N").orderBy("sequenceNum").queryList();
                 if (UtilValidate.isNotEmpty(productContentList)) {
                     GenericValue productContent = EntityUtil.getFirst(productContentList);
-                    if (UtilValidate.isNotEmpty(productContent.get(org.apache.ofbiz.persistence.entity.x.drObjectInfo))) {
-                        internalImageUrl = (String) productContent.get(org.apache.ofbiz.persistence.entity.x.drObjectInfo);
+                    if (UtilValidate.isNotEmpty(productContent.get(x.drObjectInfo))) {
+                        internalImageUrl = (String) productContent.get(x.drObjectInfo);
                     }
                 }
             }

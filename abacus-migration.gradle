@@ -2,6 +2,13 @@ import groovy.xml.XmlSlurper
 import java.nio.charset.StandardCharsets
 
 def generatedAbacusJavaDir = file("${buildDir}/generated/sources/abacus/main/java")
+def checkedInPersistenceEntityDir = file("${rootDir}/framework/entity/src/main/java/org/apache/ofbiz/persistence/entity")
+def checkedInPersistenceDaoDir = file("${rootDir}/framework/entity/src/main/java/org/apache/ofbiz/persistence/dao")
+def hasCheckedInAbacusPersistenceSources =
+        checkedInPersistenceEntityDir.exists()
+                && checkedInPersistenceDaoDir.exists()
+                && !fileTree(checkedInPersistenceEntityDir) { include '**/*Entity.java' }.isEmpty()
+                && !fileTree(checkedInPersistenceDaoDir) { include '**/*Dao.java' }.isEmpty()
 
 def javaKeywords = [
     'abstract', 'assert', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const',
@@ -249,10 +256,14 @@ tasks.register('generateAbacusPersistenceLayer') {
     }
 }
 
-sourceSets.main.java.srcDir(generatedAbacusJavaDir)
+if (hasCheckedInAbacusPersistenceSources) {
+    logger.lifecycle("Detected checked-in Abacus persistence sources under framework/entity/src/main/java; skipping generated Abacus source registration for compileJava.")
+} else {
+    sourceSets.main.java.srcDir(generatedAbacusJavaDir)
 
-tasks.named('compileJava') {
-    dependsOn(tasks.named('generateAbacusPersistenceLayer'))
+    tasks.named('compileJava') {
+        dependsOn(tasks.named('generateAbacusPersistenceLayer'))
+    }
 }
 
 tasks.matching { it.name == 'checkstyleMain' }.configureEach {

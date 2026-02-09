@@ -51,6 +51,7 @@ import java.util.HashMap;
 
 import static org.apache.ofbiz.base.util.UtilValidate.isNotEmpty;
 
+import org.apache.ofbiz.persistence.entity.x;
 public final class WidgetWorker {
 
     private static final String MODULE = WidgetWorker.class.getName();
@@ -212,18 +213,18 @@ public final class WidgetWorker {
 
     public static String makeLinkHiddenFormName(Map<String, Object> context, ModelFormField modelFormField) {
         ModelForm modelForm = modelFormField.getModelForm();
-        Integer itemIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.itemIndex);
+        Integer itemIndex = (Integer) context.get(x.itemIndex);
         String iterateId = "";
         String formUniqueId = "";
-        String formName = (String) context.get(org.apache.ofbiz.persistence.entity.x.formName);
+        String formName = (String) context.get(x.formName);
         if (UtilValidate.isEmpty(formName)) {
             formName = modelForm.getName();
         }
-        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.iterateId))) {
-            iterateId = (String) context.get(org.apache.ofbiz.persistence.entity.x.iterateId);
+        if (UtilValidate.isNotEmpty(context.get(x.iterateId))) {
+            iterateId = (String) context.get(x.iterateId);
         }
-        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.formUniqueId))) {
-            formUniqueId = (String) context.get(org.apache.ofbiz.persistence.entity.x.formUniqueId);
+        if (UtilValidate.isNotEmpty(context.get(x.formUniqueId))) {
+            formUniqueId = (String) context.get(x.formUniqueId);
         }
         if (itemIndex != null) {
             return formName + modelForm.getItemIndexSeparator() + itemIndex + iterateId + formUniqueId
@@ -283,9 +284,9 @@ public final class WidgetWorker {
      */
     public static ScreenRenderer.ScreenStack getScreenStack(Map<String, Object> context) {
         if (!context.containsKey("screenStack")) {
-            context.put(org.apache.ofbiz.persistence.entity.x.screenStack, new ScreenRenderer.ScreenStack());
+            context.put(x.screenStack, new ScreenRenderer.ScreenStack());
         }
-        return (ScreenRenderer.ScreenStack) context.get(org.apache.ofbiz.persistence.entity.x.screenStack);
+        return (ScreenRenderer.ScreenStack) context.get(x.screenStack);
     }
 
     /**
@@ -296,7 +297,7 @@ public final class WidgetWorker {
     public static String getJwtCallback(Map<String, Object> context) {
         String jwtCallback = (String) context.get(CommonWidgetModels.JWT_CALLBACK);
         if (UtilValidate.isEmpty(jwtCallback) && context.containsKey("parameters")) {
-            jwtCallback = (String) ((Map) context.get(org.apache.ofbiz.persistence.entity.x.parameters)).get(CommonWidgetModels.JWT_CALLBACK);
+            jwtCallback = (String) ((Map) context.get(x.parameters)).get(CommonWidgetModels.JWT_CALLBACK);
         }
         return jwtCallback;
     }
@@ -304,11 +305,11 @@ public final class WidgetWorker {
     public static int getPaginatorNumber(Map<String, Object> context) {
         int paginatorNumber = 0;
         if (context != null) {
-            Integer paginateNumberInt = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.PAGINATOR_NUMBER);
+            Integer paginateNumberInt = (Integer) context.get(x.PAGINATOR_NUMBER);
             if (paginateNumberInt == null) {
                 paginateNumberInt = 0;
-                context.put(org.apache.ofbiz.persistence.entity.x.PAGINATOR_NUMBER, paginateNumberInt);
-                Map<String, Object> globalCtx = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.globalContext));
+                context.put(x.PAGINATOR_NUMBER, paginateNumberInt);
+                Map<String, Object> globalCtx = UtilGenerics.cast(context.get(x.globalContext));
                 if (globalCtx != null) {
                     globalCtx.put("PAGINATOR_NUMBER", paginateNumberInt);
                 }
@@ -319,7 +320,7 @@ public final class WidgetWorker {
     }
 
     public static void incrementPaginatorNumber(Map<String, Object> context) {
-        Map<String, Object> globalCtx = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.globalContext));
+        Map<String, Object> globalCtx = UtilGenerics.cast(context.get(x.globalContext));
         if (globalCtx != null) {
             Boolean noPaginator = (Boolean) globalCtx.get("NO_PAGINATOR");
             if (UtilValidate.isNotEmpty(noPaginator)) {
@@ -331,17 +332,17 @@ public final class WidgetWorker {
                 }
                 paginateNumberInt = paginateNumberInt + 1;
                 globalCtx.put("PAGINATOR_NUMBER", paginateNumberInt);
-                context.put(org.apache.ofbiz.persistence.entity.x.PAGINATOR_NUMBER, paginateNumberInt);
+                context.put(x.PAGINATOR_NUMBER, paginateNumberInt);
             }
         }
     }
 
     public static LocalDispatcher getDispatcher(Map<String, Object> context) {
-        return (LocalDispatcher) context.get(org.apache.ofbiz.persistence.entity.x.dispatcher);
+        return (LocalDispatcher) context.get(x.dispatcher);
     }
 
     public static Delegator getDelegator(Map<String, Object> context) {
-        return (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
+        return (Delegator) context.get(x.delegator);
     }
 
     /**
@@ -350,7 +351,7 @@ public final class WidgetWorker {
      * @return
      */
     public static Map<String, Object> resolveParametersMapFromQueryString(Map<String, Object> context) {
-        String qbeString = (String) context.get(org.apache.ofbiz.persistence.entity.x._QBESTRING_);
+        String qbeString = (String) context.get(x._QBESTRING_);
         return qbeString != null
                 ? UtilHttp.getQueryStringOnlyParameterMap(qbeString.replace("&amp;", "&"))
                 : null;

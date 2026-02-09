@@ -61,6 +61,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ProductPromoWorker - Worker class for catalog/product promotion related functionality
  */
@@ -112,20 +113,20 @@ public final class ProductPromoWorker {
             }
 
             Iterator<GenericValue> productStorePromoAppls = UtilMisc.toIterator(EntityUtil.filterByDate(productStore.getRelated(
-                    org.apache.ofbiz.persistence.entity.x.ProductStorePromoAppl, UtilMisc.toMap("productStoreId", productStoreId), UtilMisc.toList("sequenceNum"), true), true));
+                    x.ProductStorePromoAppl, UtilMisc.toMap("productStoreId", productStoreId), UtilMisc.toList("sequenceNum"), true), true));
             while (productStorePromoAppls != null && productStorePromoAppls.hasNext()) {
                 GenericValue productStorePromoAppl = productStorePromoAppls.next();
-                if (UtilValidate.isNotEmpty(productStorePromoAppl.getString(org.apache.ofbiz.persistence.entity.x.manualOnly)) && "Y".equals(productStorePromoAppl.getString(
-                        org.apache.ofbiz.persistence.entity.x.manualOnly))) {
+                if (UtilValidate.isNotEmpty(productStorePromoAppl.getString(x.manualOnly)) && "Y".equals(productStorePromoAppl.getString(
+                        x.manualOnly))) {
                     // manual only promotions are not automatically evaluated (they must be explicitly selected by the user)
                     if (Debug.verboseOn()) {
-                        Debug.logVerbose("Skipping promotion with id [" + productStorePromoAppl.getString(org.apache.ofbiz.persistence.entity.x.productPromoId) + "] because it is "
+                        Debug.logVerbose("Skipping promotion with id [" + productStorePromoAppl.getString(x.productPromoId) + "] because it is "
                                 + "applied to the store with ID " + productStoreId + " as a manual only promotion.", MODULE);
                     }
                     continue;
                 }
-                GenericValue productPromo = productStorePromoAppl.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductPromo, true);
-                List<GenericValue> productPromoRules = productPromo.getRelated(org.apache.ofbiz.persistence.entity.x.ProductPromoRule, null, null, true);
+                GenericValue productPromo = productStorePromoAppl.getRelatedOne(x.ProductPromo, true);
+                List<GenericValue> productPromoRules = productPromo.getRelated(x.ProductPromoRule, null, null, true);
 
 
                 if (productPromoRules != null) {
@@ -133,24 +134,24 @@ public final class ProductPromoWorker {
 
                     while (condResult && promoRulesItr != null && promoRulesItr.hasNext()) {
                         GenericValue promoRule = promoRulesItr.next();
-                        Iterator<GenericValue> productPromoConds = UtilMisc.toIterator(promoRule.getRelated(org.apache.ofbiz.persistence.entity.x.ProductPromoCond, null,
+                        Iterator<GenericValue> productPromoConds = UtilMisc.toIterator(promoRule.getRelated(x.ProductPromoCond, null,
                                 UtilMisc.toList("productPromoCondSeqId"), true));
 
                         while (condResult && productPromoConds != null && productPromoConds.hasNext()) {
                             GenericValue productPromoCond = productPromoConds.next();
 
                             // evaluate the party related conditions; so we don't show the promo if it doesn't apply.
-                            if ("PPIP_PARTY_ID".equals(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))
-                                    || "PPC_PARTY_ID".equals(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.customMethodId))) {
+                            if ("PPIP_PARTY_ID".equals(productPromoCond.getString(x.inputParamEnumId))
+                                    || "PPC_PARTY_ID".equals(productPromoCond.getString(x.customMethodId))) {
                                 condResult = checkCondition(productPromoCond, cart, delegator, dispatcher, nowTimestamp);
-                            } else if ("PPIP_PARTY_GRP_MEM".equals(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))
-                                    || "PPC_PARTY_GRP_MEM".equals(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.customMethodId))) {
+                            } else if ("PPIP_PARTY_GRP_MEM".equals(productPromoCond.getString(x.inputParamEnumId))
+                                    || "PPC_PARTY_GRP_MEM".equals(productPromoCond.getString(x.customMethodId))) {
                                 condResult = checkCondition(productPromoCond, cart, delegator, dispatcher, nowTimestamp);
-                            } else if ("PPIP_PARTY_CLASS".equals(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))
-                                    || "PPC_PARTY_CLASS".equals(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.customMethodId))) {
+                            } else if ("PPIP_PARTY_CLASS".equals(productPromoCond.getString(x.inputParamEnumId))
+                                    || "PPC_PARTY_CLASS".equals(productPromoCond.getString(x.customMethodId))) {
                                 condResult = checkCondition(productPromoCond, cart, delegator, dispatcher, nowTimestamp);
-                            } else if ("PPIP_ROLE_TYPE".equals(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))
-                                    || "PPC_ROLE_TYPE".equals(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.customMethodId))) {
+                            } else if ("PPIP_ROLE_TYPE".equals(productPromoCond.getString(x.inputParamEnumId))
+                                    || "PPC_ROLE_TYPE".equals(productPromoCond.getString(x.customMethodId))) {
                                 condResult = checkCondition(productPromoCond, cart, delegator, dispatcher, nowTimestamp);
                             }
                         }
@@ -187,23 +188,23 @@ public final class ProductPromoWorker {
         }
         try {
             Iterator<GenericValue> productStorePromoAppls = UtilMisc.toIterator(EntityUtil.filterByDate(productStore.getRelated(
-                    org.apache.ofbiz.persistence.entity.x.ProductStorePromoAppl, UtilMisc.toMap("productStoreId", productStoreId), UtilMisc.toList("sequenceNum"), true), true));
+                    x.ProductStorePromoAppl, UtilMisc.toMap("productStoreId", productStoreId), UtilMisc.toList("sequenceNum"), true), true));
             while (productStorePromoAppls != null && productStorePromoAppls.hasNext()) {
                 GenericValue productStorePromoAppl = productStorePromoAppls.next();
-                if (UtilValidate.isNotEmpty(productStorePromoAppl.getString(org.apache.ofbiz.persistence.entity.x.manualOnly)) && "Y".equals(productStorePromoAppl.getString(
-                        org.apache.ofbiz.persistence.entity.x.manualOnly))) {
+                if (UtilValidate.isNotEmpty(productStorePromoAppl.getString(x.manualOnly)) && "Y".equals(productStorePromoAppl.getString(
+                        x.manualOnly))) {
                     // manual only promotions are not automatically evaluated (they must be explicitly selected by the user)
                     if (Debug.verboseOn()) {
-                        Debug.logVerbose("Skipping promotion with id [" + productStorePromoAppl.getString(org.apache.ofbiz.persistence.entity.x.productPromoId) + "] because it is "
+                        Debug.logVerbose("Skipping promotion with id [" + productStorePromoAppl.getString(x.productPromoId) + "] because it is "
                                 + "applied to the store with ID " + productStoreId + " as a manual only promotion.", MODULE);
                     }
                     continue;
                 }
-                GenericValue productPromo = productStorePromoAppl.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductPromo, true);
-                Iterator<GenericValue> productPromoCodesIter = UtilMisc.toIterator(productPromo.getRelated(org.apache.ofbiz.persistence.entity.x.ProductPromoCode, null, null, true));
+                GenericValue productPromo = productStorePromoAppl.getRelatedOne(x.ProductPromo, true);
+                Iterator<GenericValue> productPromoCodesIter = UtilMisc.toIterator(productPromo.getRelated(x.ProductPromoCode, null, null, true));
                 while (productPromoCodesIter != null && productPromoCodesIter.hasNext()) {
                     GenericValue productPromoCode = productPromoCodesIter.next();
-                    promoCodes.add(productPromoCode.getString(org.apache.ofbiz.persistence.entity.x.productPromoCodeId));
+                    promoCodes.add(productPromoCode.getString(x.productPromoCodeId));
                 }
             }
         } catch (GenericEntityException e) {
@@ -232,7 +233,7 @@ public final class ProductPromoWorker {
 
         try {
             // loop through promotions and get a list of all of the rules...
-            List<GenericValue> productStorePromoApplsList = productStore.getRelated(org.apache.ofbiz.persistence.entity.x.ProductStorePromoAppl, null, UtilMisc.toList("sequenceNum"),
+            List<GenericValue> productStorePromoApplsList = productStore.getRelated(x.ProductStorePromoAppl, null, UtilMisc.toList("sequenceNum"),
                     true);
             productStorePromoApplsList = EntityUtil.filterByDate(productStorePromoApplsList, nowTimestamp);
 
@@ -243,15 +244,15 @@ public final class ProductPromoWorker {
             }
 
             for (GenericValue prodCatalogPromoAppl : productStorePromoApplsList) {
-                if ("Y".equals(prodCatalogPromoAppl.getString(org.apache.ofbiz.persistence.entity.x.manualOnly))) {
+                if ("Y".equals(prodCatalogPromoAppl.getString(x.manualOnly))) {
                     // manual only promotions are not automatically evaluated (they must be explicitly selected by the user)
                     if (Debug.verboseOn()) {
-                        Debug.logVerbose("Skipping promotion with id [" + prodCatalogPromoAppl.getString(org.apache.ofbiz.persistence.entity.x.productPromoId) + "] because it is "
+                        Debug.logVerbose("Skipping promotion with id [" + prodCatalogPromoAppl.getString(x.productPromoId) + "] because it is "
                                 + "applied to the store with ID " + productStoreId + " as a manual only promotion.", MODULE);
                     }
                     continue;
                 }
-                GenericValue productPromo = prodCatalogPromoAppl.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductPromo, true);
+                GenericValue productPromo = prodCatalogPromoAppl.getRelatedOne(x.ProductPromo, true);
                 productPromoList.add(productPromo);
             }
         } catch (GenericEntityException e) {
@@ -292,7 +293,7 @@ public final class ProductPromoWorker {
 
         try {
             // loop through promotions and get a list of all of the rules...
-            List<GenericValue> agreementPromoApplsList = agreementItem.getRelated(org.apache.ofbiz.persistence.entity.x.AgreementPromoAppl, null, UtilMisc.toList("sequenceNum"), true);
+            List<GenericValue> agreementPromoApplsList = agreementItem.getRelated(x.AgreementPromoAppl, null, UtilMisc.toList("sequenceNum"), true);
             agreementPromoApplsList = EntityUtil.filterByDate(agreementPromoApplsList, nowTimestamp);
 
             if (Debug.verboseOn() && UtilValidate.isEmpty(agreementPromoApplsList)) {
@@ -302,7 +303,7 @@ public final class ProductPromoWorker {
             Iterator<GenericValue> agreementPromoAppls = UtilMisc.toIterator(agreementPromoApplsList);
             while (agreementPromoAppls != null && agreementPromoAppls.hasNext()) {
                 GenericValue agreementPromoAppl = agreementPromoAppls.next();
-                GenericValue productPromo = agreementPromoAppl.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductPromo, true);
+                GenericValue productPromo = agreementPromoAppl.getRelatedOne(x.ProductPromo, true);
                 productPromoList.add(productPromo);
             }
         } catch (GenericEntityException e) {
@@ -369,9 +370,9 @@ public final class ProductPromoWorker {
                 }
                 long uses = usesPerPromo.get(promoUse.getProductPromoId());
                 uses = uses + 1;
-                long useLimitPerOrder = (newProductPromo.get(org.apache.ofbiz.persistence.entity.x.useLimitPerOrder) != null ? newProductPromo.getLong(org.apache.ofbiz.persistence.entity.x.useLimitPerOrder) : -1);
+                long useLimitPerOrder = (newProductPromo.get(x.useLimitPerOrder) != null ? newProductPromo.getLong(x.useLimitPerOrder) : -1);
                 if (useLimitPerOrder == -1 || uses < useLimitPerOrder) {
-                    newProductPromo.set(org.apache.ofbiz.persistence.entity.x.useLimitPerOrder, uses);
+                    newProductPromo.set(x.useLimitPerOrder, uses);
                 }
                 usesPerPromo.put(promoUse.getProductPromoId(), uses);
                 sortedExplodedProductPromoList.add(newProductPromo);
@@ -385,11 +386,11 @@ public final class ProductPromoWorker {
 
             for (GenericValue productPromo : productPromoList) {
                 if (hasOrderTotalCondition(productPromo, delegator)) {
-                    if (!usesPerPromo.containsKey(productPromo.getString(org.apache.ofbiz.persistence.entity.x.productPromoId))) {
+                    if (!usesPerPromo.containsKey(productPromo.getString(x.productPromoId))) {
                         sortedExplodedProductPromoList.add(productPromo);
                     }
                 } else {
-                    if (!usesPerPromo.containsKey(productPromo.getString(org.apache.ofbiz.persistence.entity.x.productPromoId))) {
+                    if (!usesPerPromo.containsKey(productPromo.getString(x.productPromoId))) {
                         if (indexOfFirstOrderTotalPromo != -1) {
                             sortedExplodedProductPromoList.add(indexOfFirstOrderTotalPromo, productPromo);
                         } else {
@@ -414,12 +415,12 @@ public final class ProductPromoWorker {
     private static boolean hasOrderTotalCondition(GenericValue productPromo, Delegator delegator) throws GenericEntityException {
         boolean hasOtCond = false;
         List<GenericValue> productPromoConds = EntityQuery.use(delegator).from("ProductPromoCond")
-                .where("productPromoId", productPromo.get(org.apache.ofbiz.persistence.entity.x.productPromoId))
+                .where("productPromoId", productPromo.get(x.productPromoId))
                 .orderBy("productPromoCondSeqId")
                 .cache(true).queryList();
         for (GenericValue productPromoCond : productPromoConds) {
-            String inputParamEnumId = productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId);
-            String customMethodId = productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.customMethodId);
+            String inputParamEnumId = productPromoCond.getString(x.inputParamEnumId);
+            String customMethodId = productPromoCond.getString(x.customMethodId);
             if ("PPIP_ORDER_TOTAL".equals(inputParamEnumId) || "PPC_ORDER_TOTAL".equals(customMethodId)) {
                 hasOtCond = true;
                 break;
@@ -456,9 +457,9 @@ public final class ProductPromoWorker {
                 }
 
                 for (GenericValue productPromo : productPromoList) {
-                    String productPromoId = productPromo.getString(org.apache.ofbiz.persistence.entity.x.productPromoId);
+                    String productPromoId = productPromo.getString(x.productPromoId);
 
-                    List<GenericValue> productPromoRules = productPromo.getRelated(org.apache.ofbiz.persistence.entity.x.ProductPromoRule, null, null, true);
+                    List<GenericValue> productPromoRules = productPromo.getRelated(x.ProductPromoRule, null, null, true);
                     if (UtilValidate.isNotEmpty(productPromoRules)) {
                         // always have a useLimit to avoid unlimited looping, default to 1 if no other is specified
                         Long candidateUseLimit = getProductPromoUseLimit(productPromo, partyId, delegator);
@@ -468,7 +469,7 @@ public final class ProductPromoWorker {
                                     + productPromoRules.size(), MODULE);
                         }
 
-                        boolean requireCode = "Y".equals(productPromo.getString(org.apache.ofbiz.persistence.entity.x.requireCode));
+                        boolean requireCode = "Y".equals(productPromo.getString(x.requireCode));
                         // check if promo code required
                         if (requireCode) {
                             Set<String> enteredCodes = cart.getProductPromoCodesEntered();
@@ -479,7 +480,7 @@ public final class ProductPromoWorker {
                                 Iterator<GenericValue> orderproductPromoCodesItr = UtilMisc.toIterator(orderproductPromoCodes);
                                 while (orderproductPromoCodesItr != null && orderproductPromoCodesItr.hasNext()) {
                                     GenericValue orderproductPromoCode = orderproductPromoCodesItr.next();
-                                    enteredCodes.add(orderproductPromoCode.getString(org.apache.ofbiz.persistence.entity.x.productPromoCodeId));
+                                    enteredCodes.add(orderproductPromoCode.getString(x.productPromoCodeId));
                                 }
                             }
                             if (!enteredCodes.isEmpty()) {
@@ -499,7 +500,7 @@ public final class ProductPromoWorker {
                                 while ((useLimit == null || useLimit > cart.getProductPromoUseCount(productPromoId))
                                         && productPromoCodeIter.hasNext()) {
                                     GenericValue productPromoCode = productPromoCodeIter.next();
-                                    String productPromoCodeId = productPromoCode.getString(org.apache.ofbiz.persistence.entity.x.productPromoCodeId);
+                                    String productPromoCodeId = productPromoCode.getString(x.productPromoCodeId);
                                     Long codeUseLimit = getProductPromoCodeUseLimit(productPromoCode, partyId, delegator);
                                     if (runProductPromoRules(cart, useLimit, true, productPromoCodeId, codeUseLimit, maxUseLimit, productPromo,
                                             productPromoRules, dispatcher, delegator, nowTimestamp)) {
@@ -548,15 +549,15 @@ public final class ProductPromoWorker {
      * calculate low use limit for this promo for the current "order", check per order, customer, promo
      */
     public static Long getProductPromoUseLimit(GenericValue productPromo, String partyId, Delegator delegator) throws GenericEntityException {
-        String productPromoId = productPromo.getString(org.apache.ofbiz.persistence.entity.x.productPromoId);
+        String productPromoId = productPromo.getString(x.productPromoId);
         Long candidateUseLimit = null;
 
-        Long useLimitPerOrder = productPromo.getLong(org.apache.ofbiz.persistence.entity.x.useLimitPerOrder);
+        Long useLimitPerOrder = productPromo.getLong(x.useLimitPerOrder);
         if (useLimitPerOrder != null) {
             candidateUseLimit = useLimitPerOrder;
         }
 
-        Long useLimitPerCustomer = productPromo.getLong(org.apache.ofbiz.persistence.entity.x.useLimitPerCustomer);
+        Long useLimitPerCustomer = productPromo.getLong(x.useLimitPerCustomer);
         // check this whether or not there is a party right now
         if (useLimitPerCustomer != null) {
             // if partyId is not empty check previous usage
@@ -576,7 +577,7 @@ public final class ProductPromoWorker {
             }
         }
 
-        Long useLimitPerPromotion = productPromo.getLong(org.apache.ofbiz.persistence.entity.x.useLimitPerPromotion);
+        Long useLimitPerPromotion = productPromo.getLong(x.useLimitPerPromotion);
         if (useLimitPerPromotion != null) {
             // check to see how many times this has been used for other orders for this customer, the remainder is the limit for this order
             EntityCondition checkCondition = EntityCondition.makeCondition(UtilMisc.toList(
@@ -594,11 +595,11 @@ public final class ProductPromoWorker {
     }
 
     public static Long getProductPromoCodeUseLimit(GenericValue productPromoCode, String partyId, Delegator delegator) throws GenericEntityException {
-        String productPromoCodeId = productPromoCode.getString(org.apache.ofbiz.persistence.entity.x.productPromoCodeId);
+        String productPromoCodeId = productPromoCode.getString(x.productPromoCodeId);
         Long codeUseLimit = null;
 
         // check promo code use limits, per customer, code
-        Long codeUseLimitPerCustomer = productPromoCode.getLong(org.apache.ofbiz.persistence.entity.x.useLimitPerCustomer);
+        Long codeUseLimitPerCustomer = productPromoCode.getLong(x.useLimitPerCustomer);
         if (codeUseLimitPerCustomer != null) {
             long productPromoCustomerUseSize = 0;
             if (UtilValidate.isNotEmpty(partyId)) {
@@ -613,7 +614,7 @@ public final class ProductPromoWorker {
             codeUseLimit = codeUseLimitPerCustomer - productPromoCustomerUseSize;
         }
 
-        Long codeUseLimitPerCode = productPromoCode.getLong(org.apache.ofbiz.persistence.entity.x.useLimitPerCode);
+        Long codeUseLimitPerCode = productPromoCode.getLong(x.useLimitPerCode);
         if (codeUseLimitPerCode != null) {
             // check to see how many times this has been used for other orders for this customer, the remainder is the limit for this order
             EntityCondition checkCondition = EntityCondition.makeCondition(UtilMisc.toList(
@@ -650,14 +651,14 @@ public final class ProductPromoWorker {
                 }
             }
             Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
-            Timestamp thruDate = productPromoCode.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate);
+            Timestamp thruDate = productPromoCode.getTimestamp(x.thruDate);
             if (thruDate != null) {
                 if (nowTimestamp.after(thruDate)) {
                     return UtilProperties.getMessage(RES_ERROR, "productpromoworker.promotion_code_is_expired_at", UtilMisc.toMap(
                             "productPromoCodeId", productPromoCodeId, "thruDate", thruDate), locale);
                 }
             }
-            Timestamp fromDate = productPromoCode.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate);
+            Timestamp fromDate = productPromoCode.getTimestamp(x.fromDate);
             if (fromDate != null) {
                 if (nowTimestamp.before(fromDate)) {
                     return UtilProperties.getMessage(RES_ERROR, "productpromoworker.promotion_code_will_be_activated_at", UtilMisc.toMap(
@@ -665,7 +666,7 @@ public final class ProductPromoWorker {
                 }
             }
 
-            if ("Y".equals(productPromoCode.getString(org.apache.ofbiz.persistence.entity.x.requireEmailOrParty))) {
+            if ("Y".equals(productPromoCode.getString(x.requireEmailOrParty))) {
                 boolean hasEmailOrParty = false;
 
                 // check partyId
@@ -720,15 +721,15 @@ public final class ProductPromoWorker {
         List<String> partyClassificationsIncluded = new ArrayList<>();
         List<String> partyClassificationsExcluded = new ArrayList<>();
         StringBuilder promoDescBuf = new StringBuilder();
-        List<GenericValue> productPromoRules = productPromo.getRelated(org.apache.ofbiz.persistence.entity.x.ProductPromoRule, null, null, true);
+        List<GenericValue> productPromoRules = productPromo.getRelated(x.ProductPromoRule, null, null, true);
         Iterator<GenericValue> promoRulesIter = productPromoRules.iterator();
         while (promoRulesIter != null && promoRulesIter.hasNext()) {
             GenericValue productPromoRule = promoRulesIter.next();
 
             List<GenericValue> productPromoConds = EntityQuery.use(delegator).from("ProductPromoCond").where("productPromoId", productPromo.get(
-                    org.apache.ofbiz.persistence.entity.x.productPromoId)).orderBy("productPromoCondSeqId").cache(true).queryList();
+                    x.productPromoId)).orderBy("productPromoCondSeqId").cache(true).queryList();
             productPromoConds = EntityUtil.filterByAnd(productPromoConds, UtilMisc.toMap("productPromoRuleId", productPromoRule.get(
-                    org.apache.ofbiz.persistence.entity.x.productPromoRuleId)));
+                    x.productPromoRuleId)));
             // using the other method to consolidate cache entries because the same cache is used elsewhere: List productPromoConds =
             // productPromoRule.getRelated("ProductPromoCond", null, UtilMisc.toList("productPromoCondSeqId"), true);
             Iterator<GenericValue> productPromoCondIter = UtilMisc.toIterator(productPromoConds);
@@ -736,46 +737,46 @@ public final class ProductPromoWorker {
                 GenericValue productPromoCond = productPromoCondIter.next();
 
                 String equalityOperator = UtilProperties.getMessage("ProductPromoUiLabels",
-                        "ProductPromoOperatorEquality." + productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.operatorEnumId), locale);
+                        "ProductPromoOperatorEquality." + productPromoCond.getString(x.operatorEnumId), locale);
                 String quantityOperator = UtilProperties.getMessage("ProductPromoUiLabels",
-                        "ProductPromoOperatorQuantity." + productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.operatorEnumId), locale);
+                        "ProductPromoOperatorQuantity." + productPromoCond.getString(x.operatorEnumId), locale);
 
                 String condValue = "invalid";
-                if (UtilValidate.isNotEmpty(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.condValue))) {
-                    condValue = productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.condValue);
+                if (UtilValidate.isNotEmpty(productPromoCond.getString(x.condValue))) {
+                    condValue = productPromoCond.getString(x.condValue);
                 }
 
                 Map<String, Object> messageContext = UtilMisc.<String, Object>toMap("condValue", condValue, "equalityOperator", equalityOperator,
                         "quantityOperator", quantityOperator);
 
-                if ("PPIP_PARTY_CLASS".equalsIgnoreCase(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))
-                        || "PPC_PARTY_CLASS".equalsIgnoreCase(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.customMethodId))) {
+                if ("PPIP_PARTY_CLASS".equalsIgnoreCase(productPromoCond.getString(x.inputParamEnumId))
+                        || "PPC_PARTY_CLASS".equalsIgnoreCase(productPromoCond.getString(x.customMethodId))) {
                     GenericValue partyClassificationGroup = EntityQuery.use(delegator).from("PartyClassificationGroup").where(
                             "partyClassificationGroupId", condValue).cache(true).queryOne();
-                    if (partyClassificationGroup != null && UtilValidate.isNotEmpty(partyClassificationGroup.getString(org.apache.ofbiz.persistence.entity.x.description))) {
-                        condValue = partyClassificationGroup.getString(org.apache.ofbiz.persistence.entity.x.description);
+                    if (partyClassificationGroup != null && UtilValidate.isNotEmpty(partyClassificationGroup.getString(x.description))) {
+                        condValue = partyClassificationGroup.getString(x.description);
                     }
 
-                    if ("PPC_EQ".equalsIgnoreCase(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.operatorEnumId))) {
+                    if ("PPC_EQ".equalsIgnoreCase(productPromoCond.getString(x.operatorEnumId))) {
                         partyClassificationsIncluded.add(condValue);
                     }
-                    if ("PPC_NEQ".equalsIgnoreCase(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.operatorEnumId))) {
+                    if ("PPC_NEQ".equalsIgnoreCase(productPromoCond.getString(x.operatorEnumId))) {
                         partyClassificationsExcluded.add(condValue);
                     }
                 } else {
                     String enumId = null;
-                    if (UtilValidate.isNotEmpty(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.customMethodId))) {
+                    if (UtilValidate.isNotEmpty(productPromoCond.getString(x.customMethodId))) {
                         GenericValue enumeration = EntityQuery.use(delegator).from("Enumeration").where("enumCode", productPromoCond.getString(
-                                org.apache.ofbiz.persistence.entity.x.customMethodId)).cache().queryFirst();
+                                x.customMethodId)).cache().queryFirst();
                         if (enumeration != null) {
-                            enumId = enumeration.getString(org.apache.ofbiz.persistence.entity.x.enumId);
+                            enumId = enumeration.getString(x.enumId);
                         }
                     } else {
-                        enumId = productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId);
+                        enumId = productPromoCond.getString(x.inputParamEnumId);
                     }
 
-                    if (UtilValidate.isNotEmpty(productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.otherValue))) {
-                        messageContext.put("otherValue", productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.otherValue));
+                    if (UtilValidate.isNotEmpty(productPromoCond.getString(x.otherValue))) {
+                        messageContext.put("otherValue", productPromoCond.getString(x.otherValue));
                     }
                     String msgProp = UtilProperties.getMessage("ProductPromoUiLabels", "ProductPromoCondition." + enumId, messageContext, locale);
                     promoDescBuf.append(msgProp);
@@ -787,16 +788,16 @@ public final class ProductPromoWorker {
                 }
             }
 
-            List<GenericValue> productPromoActions = productPromoRule.getRelated(org.apache.ofbiz.persistence.entity.x.ProductPromoAction, null, UtilMisc.toList(
+            List<GenericValue> productPromoActions = productPromoRule.getRelated(x.ProductPromoAction, null, UtilMisc.toList(
                     "productPromoActionSeqId"), true);
             Iterator<GenericValue> productPromoActionIter = UtilMisc.toIterator(productPromoActions);
             while (productPromoActionIter != null && productPromoActionIter.hasNext()) {
                 GenericValue productPromoAction = productPromoActionIter.next();
 
-                String productId = productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.productId);
+                String productId = productPromoAction.getString(x.productId);
 
-                Map<String, Object> messageContext = UtilMisc.<String, Object>toMap("quantity", productPromoAction.get(org.apache.ofbiz.persistence.entity.x.quantity), "amount",
-                        productPromoAction.get(org.apache.ofbiz.persistence.entity.x.amount), "productId", productId, "partyId", productPromoAction.get(org.apache.ofbiz.persistence.entity.x.partyId));
+                Map<String, Object> messageContext = UtilMisc.<String, Object>toMap("quantity", productPromoAction.get(x.quantity), "amount",
+                        productPromoAction.get(x.amount), "productId", productId, "partyId", productPromoAction.get(x.partyId));
 
                 if (UtilValidate.isEmpty(messageContext.get("productId"))) {
                     messageContext.put("productId", "any");
@@ -811,14 +812,14 @@ public final class ProductPromoWorker {
                 }
 
                 String enumId = null;
-                if (UtilValidate.isNotEmpty(productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.customMethodId))) {
+                if (UtilValidate.isNotEmpty(productPromoAction.getString(x.customMethodId))) {
                     GenericValue enumeration = EntityQuery.use(delegator).from("Enumeration").where("enumCode", productPromoAction.getString(
-                            org.apache.ofbiz.persistence.entity.x.customMethodId)).cache().queryFirst();
+                            x.customMethodId)).cache().queryFirst();
                     if (enumeration != null) {
-                        enumId = enumeration.getString(org.apache.ofbiz.persistence.entity.x.enumId);
+                        enumId = enumeration.getString(x.enumId);
                     }
                 } else {
-                    enumId = productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.productPromoActionEnumId);
+                    enumId = productPromoAction.getString(x.productPromoActionEnumId);
                 }
 
                 String msgProp = UtilProperties.getMessage("ProductPromoUiLabels", "ProductPromoAction." + enumId, messageContext, locale);
@@ -846,20 +847,20 @@ public final class ProductPromoWorker {
             promoDescBuf.setCharAt(0, Character.toUpperCase(promoDescBuf.charAt(0)));
         }
 
-        if ("Y".equals(productPromo.getString(org.apache.ofbiz.persistence.entity.x.requireCode))) {
+        if ("Y".equals(productPromo.getString(x.requireCode))) {
             promoDescBuf.append(UtilProperties.getMessage(RESOURCE, "OrderRequiresCodeToUse", locale));
         }
-        if (productPromo.getLong(org.apache.ofbiz.persistence.entity.x.useLimitPerOrder) != null) {
+        if (productPromo.getLong(x.useLimitPerOrder) != null) {
             promoDescBuf.append(UtilProperties.getMessage(RESOURCE, "OrderLimitPerOrder",
-                    UtilMisc.toMap("limit", productPromo.getLong(org.apache.ofbiz.persistence.entity.x.useLimitPerOrder)), locale));
+                    UtilMisc.toMap("limit", productPromo.getLong(x.useLimitPerOrder)), locale));
         }
-        if (productPromo.getLong(org.apache.ofbiz.persistence.entity.x.useLimitPerCustomer) != null) {
+        if (productPromo.getLong(x.useLimitPerCustomer) != null) {
             promoDescBuf.append(UtilProperties.getMessage(RESOURCE, "OrderLimitPerCustomer",
-                    UtilMisc.toMap("limit", productPromo.getLong(org.apache.ofbiz.persistence.entity.x.useLimitPerCustomer)), locale));
+                    UtilMisc.toMap("limit", productPromo.getLong(x.useLimitPerCustomer)), locale));
         }
-        if (productPromo.getLong(org.apache.ofbiz.persistence.entity.x.useLimitPerPromotion) != null) {
+        if (productPromo.getLong(x.useLimitPerPromotion) != null) {
             promoDescBuf.append(UtilProperties.getMessage(RESOURCE, "OrderLimitPerPromotion",
-                    UtilMisc.toMap("limit", productPromo.getLong(org.apache.ofbiz.persistence.entity.x.useLimitPerPromotion)), locale));
+                    UtilMisc.toMap("limit", productPromo.getLong(x.useLimitPerPromotion)), locale));
         }
 
         if (UtilValidate.isNotEmpty(partyClassificationsIncluded)) {
@@ -884,7 +885,7 @@ public final class ProductPromoWorker {
             Timestamp nowTimestamp) throws GenericEntityException, UseLimitException {
         boolean cartChanged = false;
         Map<ShoppingCartItem, BigDecimal> usageInfoMap = prepareProductUsageInfoMap(cart);
-        String productPromoId = productPromo.getString(org.apache.ofbiz.persistence.entity.x.productPromoId);
+        String productPromoId = productPromo.getString(x.productPromoId);
         while ((useLimit == null || useLimit > cart.getProductPromoUseCount(productPromoId))
                 && (!requireCode || UtilValidate.isNotEmpty(productPromoCodeId))
                 && (codeUseLimit == null || codeUseLimit > cart.getProductPromoCodeUse(productPromoCodeId))) {
@@ -901,9 +902,9 @@ public final class ProductPromoWorker {
 
                 // loop through conditions for rule, if any false, set allConditionsTrue to false
                 List<GenericValue> productPromoConds = EntityQuery.use(delegator).from("ProductPromoCond").where("productPromoId",
-                        productPromo.get(org.apache.ofbiz.persistence.entity.x.productPromoId)).orderBy("productPromoCondSeqId").cache(true).queryList();
+                        productPromo.get(x.productPromoId)).orderBy("productPromoCondSeqId").cache(true).queryList();
                 productPromoConds = EntityUtil.filterByAnd(productPromoConds, UtilMisc.toMap("productPromoRuleId", productPromoRule.get(
-                        org.apache.ofbiz.persistence.entity.x.productPromoRuleId)));
+                        x.productPromoRuleId)));
                 // using the other method to consolidate cache entries because the same cache is used elsewhere: List productPromoConds =
                 // productPromoRule.getRelated("ProductPromoCond", null, UtilMisc.toList("productPromoCondSeqId"), true);
                 if (Debug.verboseOn()) {
@@ -926,7 +927,7 @@ public final class ProductPromoWorker {
                 if (performActions) {
                     // perform all actions, either apply or unapply
 
-                    List<GenericValue> productPromoActions = productPromoRule.getRelated(org.apache.ofbiz.persistence.entity.x.ProductPromoAction, null, UtilMisc.toList(
+                    List<GenericValue> productPromoActions = productPromoRule.getRelated(x.ProductPromoAction, null, UtilMisc.toList(
                             "productPromoActionSeqId"), true);
                     Iterator<GenericValue> productPromoActionIter = UtilMisc.toIterator(productPromoActions);
                     while (productPromoActionIter != null && productPromoActionIter.hasNext()) {
@@ -956,7 +957,7 @@ public final class ProductPromoWorker {
                 Map<ShoppingCartItem, BigDecimal> newUsageInfoMap = prepareProductUsageInfoMap(cart);
                 Map<ShoppingCartItem, BigDecimal> deltaUsageInfoMap = prepareDeltaProductUsageInfoMap(usageInfoMap, newUsageInfoMap);
                 usageInfoMap = newUsageInfoMap;
-                cart.addProductPromoUse(productPromo.getString(org.apache.ofbiz.persistence.entity.x.productPromoId), productPromoCodeId, totalDiscountAmount, quantityLeftInActions,
+                cart.addProductPromoUse(productPromo.getString(x.productPromoId), productPromoCodeId, totalDiscountAmount, quantityLeftInActions,
                         deltaUsageInfoMap);
             } else {
                 // the promotion was not used, don't try again until we finish a full pass and come back to see the promo conditions are now
@@ -1005,10 +1006,10 @@ public final class ProductPromoWorker {
 
     private static boolean checkCondition(GenericValue productPromoCond, ShoppingCart cart, Delegator delegator, LocalDispatcher dispatcher,
                                           Timestamp nowTimestamp) throws GenericEntityException {
-        String condValue = productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.condValue);
-        String otherValue = productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.otherValue);
-        String inputParamEnumId = productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId);
-        String operatorEnumId = productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.operatorEnumId);
+        String condValue = productPromoCond.getString(x.condValue);
+        String otherValue = productPromoCond.getString(x.otherValue);
+        String inputParamEnumId = productPromoCond.getString(x.inputParamEnumId);
+        String operatorEnumId = productPromoCond.getString(x.operatorEnumId);
         if (otherValue != null && otherValue.contains("@")) {
             otherValue = "";
         }
@@ -1024,9 +1025,9 @@ public final class ProductPromoWorker {
 
         //resolve the service name to use
         String serviceName = null;
-        GenericValue customMethod = productPromoCond.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CustomMethod, true);
+        GenericValue customMethod = productPromoCond.getRelatedOne(x.CustomMethod, true);
         if (customMethod != null) {
-            serviceName = customMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName);
+            serviceName = customMethod.getString(x.customMethodName);
         } else {
             if ("PPIP_SERVICE".equals(inputParamEnumId)) {
                 serviceName = condValue;
@@ -1035,13 +1036,13 @@ public final class ProductPromoWorker {
                 GenericValue condEnum = EntityQuery.use(delegator).from("Enumeration").where("enumId", inputParamEnumId).cache().queryOne();
                 if (condEnum != null) {
                     customMethod =
-                            EntityQuery.use(delegator).from("CustomMethod").where("customMethodId", condEnum.get(org.apache.ofbiz.persistence.entity.x.enumCode)).cache().queryOne();
+                            EntityQuery.use(delegator).from("CustomMethod").where("customMethodId", condEnum.get(x.enumCode)).cache().queryOne();
                     if (customMethod == null) {
                         Debug.logWarning("The oldest enumeration " + inputParamEnumId + " for promo " + productPromoCond.getPkShortValueString()
                                 + " haven't the new customMethod to use, please check your data or load seed data", MODULE);
                         return false;
                     }
-                    serviceName = customMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName);
+                    serviceName = customMethod.getString(x.customMethodName);
                 }
             }
         }
@@ -1092,12 +1093,12 @@ public final class ProductPromoWorker {
     public static boolean checkConditionsForItem(GenericValue productPromoActionOrCond, ShoppingCart cart, ShoppingCartItem cartItem,
                                                  Delegator delegator, LocalDispatcher dispatcher, Timestamp nowTimestamp)
             throws GenericEntityException {
-        GenericValue productPromoRule = productPromoActionOrCond.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductPromoRule, true);
+        GenericValue productPromoRule = productPromoActionOrCond.getRelatedOne(x.ProductPromoRule, true);
 
         List<GenericValue> productPromoConds = EntityQuery.use(delegator).from("ProductPromoCond").where("productPromoId", productPromoRule.get(
-                org.apache.ofbiz.persistence.entity.x.productPromoId)).orderBy("productPromoCondSeqId").cache(true).queryList();
+                x.productPromoId)).orderBy("productPromoCondSeqId").cache(true).queryList();
         productPromoConds = EntityUtil.filterByAnd(productPromoConds, UtilMisc.toMap("productPromoRuleId",
-                productPromoRule.get(org.apache.ofbiz.persistence.entity.x.productPromoRuleId)));
+                productPromoRule.get(x.productPromoRuleId)));
         for (GenericValue productPromoCond : productPromoConds) {
             boolean passed = checkConditionForItem(productPromoCond, cart, cartItem, delegator, dispatcher, nowTimestamp);
             if (!passed) {
@@ -1109,10 +1110,10 @@ public final class ProductPromoWorker {
 
     public static boolean checkConditionForItem(GenericValue productPromoCond, ShoppingCart cart, ShoppingCartItem cartItem, Delegator delegator,
                                                 LocalDispatcher dispatcher, Timestamp nowTimestamp) throws GenericEntityException {
-        String condValue = productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.condValue);
-        String inputParamEnumId = productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId);
-        String customMethodId = productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.customMethodId);
-        String operatorEnumId = productPromoCond.getString(org.apache.ofbiz.persistence.entity.x.operatorEnumId);
+        String condValue = productPromoCond.getString(x.condValue);
+        String inputParamEnumId = productPromoCond.getString(x.inputParamEnumId);
+        String customMethodId = productPromoCond.getString(x.customMethodId);
+        String operatorEnumId = productPromoCond.getString(x.operatorEnumId);
 
         // don't get list price from cart because it may have tax included whereas the base price does not: BigDecimal listPrice = cartItem
         // .getListPrice();
@@ -1121,7 +1122,7 @@ public final class ProductPromoWorker {
                 .orderBy("-fromDate")
                 .filterByDate().queryList();
         GenericValue listProductPrice = (listProductPriceList != null && !listProductPriceList.isEmpty()) ? listProductPriceList.get(0) : null;
-        BigDecimal listPrice = (listProductPrice != null) ? listProductPrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price) : null;
+        BigDecimal listPrice = (listProductPrice != null) ? listProductPrice.getBigDecimal(x.price) : null;
 
         if (listPrice == null) {
             // can't find a list price so this condition is meaningless, consider it passed
@@ -1164,7 +1165,7 @@ public final class ProductPromoWorker {
         List<GenericValue> partyRelationshipList = EntityQuery.use(delegator).from("PartyRelationship").where("partyIdTo", partyId,
                 "partyRelationshipTypeId", "GROUP_ROLLUP").cache(true).filterByDate(nowTimestamp).queryList();
         for (GenericValue genericValue : partyRelationshipList) {
-            String partyIdFrom = (String) genericValue.get(org.apache.ofbiz.persistence.entity.x.partyIdFrom);
+            String partyIdFrom = (String) genericValue.get(x.partyIdFrom);
             if (partyIdFrom.equals(groupPartyId)) {
                 return 0;
             }
@@ -1188,22 +1189,22 @@ public final class ProductPromoWorker {
 
     public static void performAction(ActionResultInfo actionResultInfo, GenericValue productPromoAction, ShoppingCart cart, Delegator delegator,
                                      LocalDispatcher dispatcher, Timestamp nowTimestamp) throws GenericEntityException, CartItemModifyException {
-        String productPromoActionEnumId = productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.productPromoActionEnumId);
+        String productPromoActionEnumId = productPromoAction.getString(x.productPromoActionEnumId);
         String serviceName = null;
-        GenericValue customMethod = productPromoAction.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CustomMethod, true);
+        GenericValue customMethod = productPromoAction.getRelatedOne(x.CustomMethod, true);
         if (customMethod != null) {
-            serviceName = customMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName);
+            serviceName = customMethod.getString(x.customMethodName);
         } else {
             if ("PROMO_SERVICE".equals(productPromoActionEnumId)) {
-                serviceName = productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.serviceName);
+                serviceName = productPromoAction.getString(x.serviceName);
             } else {
                 //for backware compatibility resolve customMethodId from enumCode
                 GenericValue condEnum = EntityQuery.use(delegator).from("Enumeration").where("enumId", productPromoActionEnumId).cache().queryOne();
                 if (condEnum != null) {
                     customMethod =
-                            EntityQuery.use(delegator).from("CustomMethod").where("customMethodId", condEnum.get(org.apache.ofbiz.persistence.entity.x.enumCode)).cache().queryOne();
+                            EntityQuery.use(delegator).from("CustomMethod").where("customMethodId", condEnum.get(x.enumCode)).cache().queryOne();
                     if (customMethod != null) {
-                        serviceName = customMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName);
+                        serviceName = customMethod.getString(x.customMethodName);
                     }
                 }
             }
@@ -1236,9 +1237,9 @@ public final class ProductPromoWorker {
         // in action, if doesn't have enough quantity to use the promo at all, remove candidate promo uses and increment promoQuantityUsed; this
         // should go for all actions, if any action runs we confirm
         if (actionResultInfo.ranAction) {
-            cart.confirmPromoRuleUse(productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.productPromoId), productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.productPromoRuleId));
+            cart.confirmPromoRuleUse(productPromoAction.getString(x.productPromoId), productPromoAction.getString(x.productPromoRuleId));
         } else {
-            cart.resetPromoRuleUse(productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.productPromoId), productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.productPromoRuleId));
+            cart.resetPromoRuleUse(productPromoAction.getString(x.productPromoId), productPromoAction.getString(x.productPromoRuleId));
         }
     }
 
@@ -1301,9 +1302,9 @@ public final class ProductPromoWorker {
                 Iterator<GenericValue> checkOrderAdjustments = UtilMisc.toIterator(checkItem.getAdjustments());
                 while (checkOrderAdjustments != null && checkOrderAdjustments.hasNext()) {
                     GenericValue checkOrderAdjustment = checkOrderAdjustments.next();
-                    if (productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.productPromoId).equals(checkOrderAdjustment.get(org.apache.ofbiz.persistence.entity.x.productPromoId))
-                            && productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.productPromoRuleId).equals(checkOrderAdjustment.get(org.apache.ofbiz.persistence.entity.x.productPromoRuleId))
-                            && productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId).equals(checkOrderAdjustment.get(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId))) {
+                    if (productPromoAction.getString(x.productPromoId).equals(checkOrderAdjustment.get(x.productPromoId))
+                            && productPromoAction.getString(x.productPromoRuleId).equals(checkOrderAdjustment.get(x.productPromoRuleId))
+                            && productPromoAction.getString(x.productPromoActionSeqId).equals(checkOrderAdjustment.get(x.productPromoActionSeqId))) {
                         return i;
                     }
                 }
@@ -1322,10 +1323,10 @@ public final class ProductPromoWorker {
         List<GenericValue> adjustments = cartItem.getAdjustments();
         if (UtilValidate.isNotEmpty(adjustments)) {
             for (GenericValue adjustment : adjustments) {
-                if ("PROMOTION_ADJUSTMENT".equals(adjustment.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))
-                        && productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoId).equals(adjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoId))
-                        && productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoRuleId).equals(adjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoRuleId))
-                        && productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId).equals(adjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId))) {
+                if ("PROMOTION_ADJUSTMENT".equals(adjustment.getString(x.orderAdjustmentTypeId))
+                        && productPromoAction.get(x.productPromoId).equals(adjustment.getString(x.productPromoId))
+                        && productPromoAction.get(x.productPromoRuleId).equals(adjustment.getString(x.productPromoRuleId))
+                        && productPromoAction.get(x.productPromoActionSeqId).equals(adjustment.getString(x.productPromoActionSeqId))) {
                     BigDecimal newAmount = amount.add(adjustment.getBigDecimal(amountField));
                     adjustment.set(amountField, newAmount);
                     addNewAdjustment = false;
@@ -1335,14 +1336,14 @@ public final class ProductPromoWorker {
         if (addNewAdjustment) {
             GenericValue orderAdjustment = delegator.makeValue("OrderAdjustment",
                     UtilMisc.toMap("orderAdjustmentTypeId", "PROMOTION_ADJUSTMENT", amountField, amount,
-                            "productPromoId", productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoId),
-                            "productPromoRuleId", productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoRuleId),
-                            "productPromoActionSeqId", productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId),
-                            "description", getProductPromoDescription((String) productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoId), delegator)));
+                            "productPromoId", productPromoAction.get(x.productPromoId),
+                            "productPromoRuleId", productPromoAction.get(x.productPromoRuleId),
+                            "productPromoActionSeqId", productPromoAction.get(x.productPromoActionSeqId),
+                            "description", getProductPromoDescription((String) productPromoAction.get(x.productPromoId), delegator)));
 
             // if an orderAdjustmentTypeId was included, override the default
-            if (UtilValidate.isNotEmpty(productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
-                orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId, productPromoAction.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId));
+            if (UtilValidate.isNotEmpty(productPromoAction.getString(x.orderAdjustmentTypeId))) {
+                orderAdjustment.set(x.orderAdjustmentTypeId, productPromoAction.get(x.orderAdjustmentTypeId));
             }
 
             cartItem.addAdjustment(orderAdjustment);
@@ -1355,14 +1356,14 @@ public final class ProductPromoWorker {
         amount = amount.setScale(DECIMALS, ROUNDING);
         GenericValue orderAdjustment = delegator.makeValue("OrderAdjustment",
                 UtilMisc.toMap("orderAdjustmentTypeId", "PROMOTION_ADJUSTMENT", amountField, amount,
-                        "productPromoId", productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoId),
-                        "productPromoRuleId", productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoRuleId),
-                        "productPromoActionSeqId", productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId),
-                        "description", getProductPromoDescription((String) productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoId), delegator)));
+                        "productPromoId", productPromoAction.get(x.productPromoId),
+                        "productPromoRuleId", productPromoAction.get(x.productPromoRuleId),
+                        "productPromoActionSeqId", productPromoAction.get(x.productPromoActionSeqId),
+                        "description", getProductPromoDescription((String) productPromoAction.get(x.productPromoId), delegator)));
 
         // if an orderAdjustmentTypeId was included, override the default
-        if (UtilValidate.isNotEmpty(productPromoAction.getString(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
-            orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId, productPromoAction.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId));
+        if (UtilValidate.isNotEmpty(productPromoAction.getString(x.orderAdjustmentTypeId))) {
+            orderAdjustment.set(x.orderAdjustmentTypeId, productPromoAction.get(x.orderAdjustmentTypeId));
         }
 
         cart.addAdjustment(orderAdjustment);
@@ -1373,11 +1374,11 @@ public final class ProductPromoWorker {
         GenericValue prodPromo;
         try {
             prodPromo = EntityQuery.use(delegator).from("ProductPromo").where("productPromoId", prodPromoId).cache().queryOne();
-            if (UtilValidate.isNotEmpty(prodPromo.get(org.apache.ofbiz.persistence.entity.x.promoName))) {
-                return (String) prodPromo.get(org.apache.ofbiz.persistence.entity.x.promoName);
+            if (UtilValidate.isNotEmpty(prodPromo.get(x.promoName))) {
+                return (String) prodPromo.get(x.promoName);
             }
-            if (UtilValidate.isNotEmpty(prodPromo.get(org.apache.ofbiz.persistence.entity.x.promoText))) {
-                return (String) prodPromo.get(org.apache.ofbiz.persistence.entity.x.promoText);
+            if (UtilValidate.isNotEmpty(prodPromo.get(x.promoText))) {
+                return (String) prodPromo.get(x.promoText);
             }
             return "No promotion name nor text";
 
@@ -1392,17 +1393,17 @@ public final class ProductPromoWorker {
             throws GenericEntityException {
         // get a cached list for the whole promo and filter it as needed, this for better efficiency in caching
         List<GenericValue> productPromoCategoriesAll = EntityQuery.use(delegator).from("ProductPromoCategory").where("productPromoId",
-                productPromoCond.get(org.apache.ofbiz.persistence.entity.x.productPromoId)).cache(true).queryList();
+                productPromoCond.get(x.productPromoId)).cache(true).queryList();
         List<GenericValue> productPromoCategories = EntityUtil.filterByAnd(productPromoCategoriesAll, UtilMisc.toMap("productPromoRuleId", "_NA_",
                 "productPromoCondSeqId", "_NA_"));
         productPromoCategories.addAll(EntityUtil.filterByAnd(productPromoCategoriesAll, UtilMisc.toMap("productPromoRuleId", productPromoCond.get(
-                org.apache.ofbiz.persistence.entity.x.productPromoRuleId), "productPromoCondSeqId", productPromoCond.get(org.apache.ofbiz.persistence.entity.x.productPromoCondSeqId))));
+                x.productPromoRuleId), "productPromoCondSeqId", productPromoCond.get(x.productPromoCondSeqId))));
         List<GenericValue> productPromoProductsAll = EntityQuery.use(delegator).from("ProductPromoProduct").where("productPromoId",
-                productPromoCond.get(org.apache.ofbiz.persistence.entity.x.productPromoId)).cache(true).queryList();
+                productPromoCond.get(x.productPromoId)).cache(true).queryList();
         List<GenericValue> productPromoProducts = EntityUtil.filterByAnd(productPromoProductsAll, UtilMisc.toMap("productPromoRuleId", "_NA_",
                 "productPromoCondSeqId", "_NA_"));
         productPromoProducts.addAll(EntityUtil.filterByAnd(productPromoProductsAll, UtilMisc.toMap("productPromoRuleId", productPromoCond.get(
-                org.apache.ofbiz.persistence.entity.x.productPromoRuleId), "productPromoCondSeqId", productPromoCond.get(org.apache.ofbiz.persistence.entity.x.productPromoCondSeqId))));
+                x.productPromoRuleId), "productPromoCondSeqId", productPromoCond.get(x.productPromoCondSeqId))));
 
         Set<String> productIds = new HashSet<>();
         makeProductPromoIdSet(productIds, productPromoCategories, productPromoProducts, delegator, nowTimestamp, false);
@@ -1413,18 +1414,18 @@ public final class ProductPromoWorker {
             throws GenericEntityException {
         // get a cached list for the whole promo and filter it as needed, this for better efficiency in caching
         List<GenericValue> productPromoCategoriesAll = EntityQuery.use(delegator).from("ProductPromoCategory").where("productPromoId",
-                productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoId)).cache(true).queryList();
+                productPromoAction.get(x.productPromoId)).cache(true).queryList();
         List<GenericValue> productPromoCategories = EntityUtil.filterByAnd(productPromoCategoriesAll, UtilMisc.toMap("productPromoRuleId", "_NA_",
                 "productPromoActionSeqId", "_NA_"));
         productPromoCategories.addAll(EntityUtil.filterByAnd(productPromoCategoriesAll, UtilMisc.toMap("productPromoRuleId",
-                productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoRuleId), "productPromoActionSeqId", productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId))));
+                productPromoAction.get(x.productPromoRuleId), "productPromoActionSeqId", productPromoAction.get(x.productPromoActionSeqId))));
 
         List<GenericValue> productPromoProductsAll = EntityQuery.use(delegator).from("ProductPromoProduct").where("productPromoId",
-                productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoId)).cache(true).queryList();
+                productPromoAction.get(x.productPromoId)).cache(true).queryList();
         List<GenericValue> productPromoProducts = EntityUtil.filterByAnd(productPromoProductsAll, UtilMisc.toMap("productPromoRuleId", "_NA_",
                 "productPromoActionSeqId", "_NA_"));
         productPromoProducts.addAll(EntityUtil.filterByAnd(productPromoProductsAll, UtilMisc.toMap("productPromoRuleId", productPromoAction.get(
-                org.apache.ofbiz.persistence.entity.x.productPromoRuleId), "productPromoActionSeqId", productPromoAction.get(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId))));
+                x.productPromoRuleId), "productPromoActionSeqId", productPromoAction.get(x.productPromoActionSeqId))));
 
         Set<String> productIds = new HashSet<>();
         makeProductPromoIdSet(productIds, productPromoCategories, productPromoProducts, delegator, nowTimestamp, false);
@@ -1471,22 +1472,22 @@ public final class ProductPromoWorker {
 
         for (GenericValue productPromoProduct : productPromoProductsAll) {
             // if the rule id is null then this is a global promo one, so always include
-            if (!"_NA_".equals(productPromoProduct.getString(org.apache.ofbiz.persistence.entity.x.productPromoCondSeqId)) || "_NA_".equals(productPromoProduct.getString(
-                    org.apache.ofbiz.persistence.entity.x.productPromoRuleId))) {
+            if (!"_NA_".equals(productPromoProduct.getString(x.productPromoCondSeqId)) || "_NA_".equals(productPromoProduct.getString(
+                    x.productPromoRuleId))) {
                 productPromoProductsCond.add(productPromoProduct);
             }
-            if (!"_NA_".equals(productPromoProduct.getString(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId)) || "_NA_".equals(productPromoProduct.getString(
-                    org.apache.ofbiz.persistence.entity.x.productPromoRuleId))) {
+            if (!"_NA_".equals(productPromoProduct.getString(x.productPromoActionSeqId)) || "_NA_".equals(productPromoProduct.getString(
+                    x.productPromoRuleId))) {
                 productPromoProductsAction.add(productPromoProduct);
             }
         }
         for (GenericValue productPromoCategory : productPromoCategoriesAll) {
-            if (!"_NA_".equals(productPromoCategory.getString(org.apache.ofbiz.persistence.entity.x.productPromoCondSeqId)) || "_NA_".equals(productPromoCategory.getString(
-                    org.apache.ofbiz.persistence.entity.x.productPromoRuleId))) {
+            if (!"_NA_".equals(productPromoCategory.getString(x.productPromoCondSeqId)) || "_NA_".equals(productPromoCategory.getString(
+                    x.productPromoRuleId))) {
                 productPromoCategoriesCond.add(productPromoCategory);
             }
-            if (!"_NA_".equals(productPromoCategory.getString(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId)) || "_NA_".equals(productPromoCategory.getString(
-                    org.apache.ofbiz.persistence.entity.x.productPromoRuleId))) {
+            if (!"_NA_".equals(productPromoCategory.getString(x.productPromoActionSeqId)) || "_NA_".equals(productPromoCategory.getString(
+                    x.productPromoRuleId))) {
                 productPromoCategoriesAction.add(productPromoCategory);
             }
         }
@@ -1516,7 +1517,7 @@ public final class ProductPromoWorker {
     private static boolean isProductOld(String productId, Delegator delegator, Timestamp nowTimestamp) throws GenericEntityException {
         GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache().queryOne();
         if (product != null) {
-            Timestamp salesDiscontinuationDate = product.getTimestamp(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate);
+            Timestamp salesDiscontinuationDate = product.getTimestamp(x.salesDiscontinuationDate);
             if (salesDiscontinuationDate != null && salesDiscontinuationDate.before(nowTimestamp)) {
                 return true;
             }
@@ -1532,15 +1533,15 @@ public final class ProductPromoWorker {
         Map<String, List<Set<String>>> productCategoryGroupSetListMap = new HashMap<>();
 
         for (GenericValue productPromoCategory : productPromoCategories) {
-            if (productPromoApplEnumId.equals(productPromoCategory.getString(org.apache.ofbiz.persistence.entity.x.productPromoApplEnumId))) {
+            if (productPromoApplEnumId.equals(productPromoCategory.getString(x.productPromoApplEnumId))) {
                 Set<String> tempCatIdSet = new HashSet<>();
-                if ("Y".equals(productPromoCategory.getString(org.apache.ofbiz.persistence.entity.x.includeSubCategories))) {
-                    ProductSearch.getAllSubCategoryIds(productPromoCategory.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId), tempCatIdSet, delegator, nowTimestamp);
+                if ("Y".equals(productPromoCategory.getString(x.includeSubCategories))) {
+                    ProductSearch.getAllSubCategoryIds(productPromoCategory.getString(x.productCategoryId), tempCatIdSet, delegator, nowTimestamp);
                 } else {
-                    tempCatIdSet.add(productPromoCategory.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId));
+                    tempCatIdSet.add(productPromoCategory.getString(x.productCategoryId));
                 }
 
-                String andGroupId = productPromoCategory.getString(org.apache.ofbiz.persistence.entity.x.andGroupId);
+                String andGroupId = productPromoCategory.getString(x.andGroupId);
                 if ("_NA_".equals(andGroupId)) {
                     productCategoryIds.addAll(tempCatIdSet);
                 }
@@ -1610,7 +1611,7 @@ public final class ProductPromoWorker {
             List<GenericValue> productCategoryMembers = EntityQuery.use(delegator).from("ProductCategoryMember").where("productCategoryId",
                     productCategoryId).cache(true).filterByDate(nowTimestamp).queryList();
             for (GenericValue productCategoryMember : productCategoryMembers) {
-                String productId = productCategoryMember.getString(org.apache.ofbiz.persistence.entity.x.productId);
+                String productId = productCategoryMember.getString(x.productId);
                 if (include) {
                     productIdSet.add(productId);
                 } else {
@@ -1624,8 +1625,8 @@ public final class ProductPromoWorker {
             throws GenericEntityException {
         boolean include = !"PPPA_EXCLUDE".equals(productPromoApplEnumId);
         for (GenericValue productPromoProduct : productPromoProducts) {
-            if (productPromoApplEnumId.equals(productPromoProduct.getString(org.apache.ofbiz.persistence.entity.x.productPromoApplEnumId))) {
-                String productId = productPromoProduct.getString(org.apache.ofbiz.persistence.entity.x.productId);
+            if (productPromoApplEnumId.equals(productPromoProduct.getString(x.productPromoApplEnumId))) {
+                String productId = productPromoProduct.getString(x.productId);
                 if (include) {
                     productIds.add(productId);
                 } else {

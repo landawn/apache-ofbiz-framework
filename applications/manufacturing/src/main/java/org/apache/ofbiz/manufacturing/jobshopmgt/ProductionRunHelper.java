@@ -33,6 +33,7 @@ import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.service.LocalDispatcher;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Helper for Production Run maintenance
  *
@@ -56,13 +57,13 @@ public final class ProductionRunHelper {
             if (productionRunId != null) {
                 GenericValue productionRun = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", productionRunId).queryOne();
                 if (productionRun != null) {
-                    List<GenericValue> productionRunProducts = productionRun.getRelated(org.apache.ofbiz.persistence.entity.x.WorkEffortGoodStandard,
+                    List<GenericValue> productionRunProducts = productionRun.getRelated(x.WorkEffortGoodStandard,
                             UtilMisc.toMap("workEffortGoodStdTypeId", "PRUN_PROD_DELIV"), null, false);
                     GenericValue productionRunProduct = EntityUtil.getFirst(productionRunProducts);
-                    GenericValue productProduced = productionRunProduct.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, true);
-                    List<GenericValue> productionRunComponents = productionRun.getRelated(org.apache.ofbiz.persistence.entity.x.WorkEffortGoodStandard,
+                    GenericValue productProduced = productionRunProduct.getRelatedOne(x.Product, true);
+                    List<GenericValue> productionRunComponents = productionRun.getRelated(x.WorkEffortGoodStandard,
                             UtilMisc.toMap("workEffortGoodStdTypeId", "PRUNT_PROD_NEEDED"), null, false);
-                    List<GenericValue> productionRunRoutingTasks = productionRun.getRelated(org.apache.ofbiz.persistence.entity.x.FromWorkEffortAssoc,
+                    List<GenericValue> productionRunRoutingTasks = productionRun.getRelated(x.FromWorkEffortAssoc,
                             UtilMisc.toMap("workEffortTypeId", "PROD_ORDER_TASK"), null, false);
                     result.put("productionRunProduct", productionRunProduct);
                     result.put("productProduced", productProduced);
@@ -93,7 +94,7 @@ public final class ProductionRunHelper {
                         "workEffortAssocTypeId", "WORK_EFF_PRECEDENCY")
                 .filterByDate().queryList();
         for (GenericValue link : linkedWorkEfforts) {
-            getLinkedProductionRuns(delegator, dispatcher, link.getString(org.apache.ofbiz.persistence.entity.x.workEffortIdFrom), productionRuns);
+            getLinkedProductionRuns(delegator, dispatcher, link.getString(x.workEffortIdFrom), productionRuns);
         }
     }
 
@@ -102,7 +103,7 @@ public final class ProductionRunHelper {
                 .where("workEffortIdFrom", productionRunId, "workEffortAssocTypeId", "WORK_EFF_PRECEDENCY")
                 .queryFirst();
         if (linkedWorkEffort != null) {
-            productionRunId = getRootProductionRun(delegator, linkedWorkEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortIdTo));
+            productionRunId = getRootProductionRun(delegator, linkedWorkEffort.getString(x.workEffortIdTo));
         }
         return productionRunId;
     }

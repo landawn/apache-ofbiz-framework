@@ -44,6 +44,7 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import com.ibm.icu.util.Calendar;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * TechDataServices - TechData related Services
  *
@@ -63,9 +64,9 @@ public class TechDataServices {
     public static Map<String, Object> lookupRoutingTask(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> result = new HashMap<>();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        String workEffortName = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortName);
-        String fixedAssetId = (String) context.get(org.apache.ofbiz.persistence.entity.x.fixedAssetId);
+        Locale locale = (Locale) context.get(x.locale);
+        String workEffortName = (String) context.get(x.workEffortName);
+        String fixedAssetId = (String) context.get(x.fixedAssetId);
 
         List<GenericValue> listRoutingTask = null;
         List<EntityExpr> constraints = new LinkedList<>();
@@ -110,14 +111,14 @@ public class TechDataServices {
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> result = new HashMap<>();
         String sequenceNumNotOk = "N";
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        String workEffortIdFrom = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortIdFrom);
-        String workEffortIdTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortIdTo);
-        String workEffortAssocTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortAssocTypeId);
-        Long sequenceNum = (Long) context.get(org.apache.ofbiz.persistence.entity.x.sequenceNum);
-        Timestamp fromDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
-        Timestamp thruDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.thruDate);
-        String create = (String) context.get(org.apache.ofbiz.persistence.entity.x.create);
+        Locale locale = (Locale) context.get(x.locale);
+        String workEffortIdFrom = (String) context.get(x.workEffortIdFrom);
+        String workEffortIdTo = (String) context.get(x.workEffortIdTo);
+        String workEffortAssocTypeId = (String) context.get(x.workEffortAssocTypeId);
+        Long sequenceNum = (Long) context.get(x.sequenceNum);
+        Timestamp fromDate = (Timestamp) context.get(x.fromDate);
+        Timestamp thruDate = (Timestamp) context.get(x.thruDate);
+        String create = (String) context.get(x.create);
 
         boolean createProcess = "Y".equals(create);
         List<GenericValue> listRoutingTaskAssoc = null;
@@ -135,30 +136,30 @@ public class TechDataServices {
 
         if (listRoutingTaskAssoc != null) {
             for (GenericValue routingTaskAssoc : listRoutingTaskAssoc) {
-                if (!workEffortIdFrom.equals(routingTaskAssoc.getString(org.apache.ofbiz.persistence.entity.x.workEffortIdFrom))
-                        || !workEffortIdTo.equals(routingTaskAssoc.getString(org.apache.ofbiz.persistence.entity.x.workEffortIdTo))
-                        || !workEffortAssocTypeId.equals(routingTaskAssoc.getString(org.apache.ofbiz.persistence.entity.x.workEffortAssocTypeId))
-                        || !sequenceNum.equals(routingTaskAssoc.getLong(org.apache.ofbiz.persistence.entity.x.sequenceNum))) {
-                    if (routingTaskAssoc.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate) == null && routingTaskAssoc.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate) == null) {
+                if (!workEffortIdFrom.equals(routingTaskAssoc.getString(x.workEffortIdFrom))
+                        || !workEffortIdTo.equals(routingTaskAssoc.getString(x.workEffortIdTo))
+                        || !workEffortAssocTypeId.equals(routingTaskAssoc.getString(x.workEffortAssocTypeId))
+                        || !sequenceNum.equals(routingTaskAssoc.getLong(x.sequenceNum))) {
+                    if (routingTaskAssoc.getTimestamp(x.thruDate) == null && routingTaskAssoc.getTimestamp(x.fromDate) == null) {
                         sequenceNumNotOk = "Y";
-                    } else if (routingTaskAssoc.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate) == null) {
+                    } else if (routingTaskAssoc.getTimestamp(x.thruDate) == null) {
                         if (thruDate == null) sequenceNumNotOk = "Y";
-                        else if (thruDate.after(routingTaskAssoc.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate))) {
+                        else if (thruDate.after(routingTaskAssoc.getTimestamp(x.fromDate))) {
                             sequenceNumNotOk = "Y";
                         }
-                    } else if (routingTaskAssoc.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate) == null) {
+                    } else if (routingTaskAssoc.getTimestamp(x.fromDate) == null) {
                         if (fromDate == null) sequenceNumNotOk = "Y";
-                        else if (fromDate.before(routingTaskAssoc.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate))) {
+                        else if (fromDate.before(routingTaskAssoc.getTimestamp(x.thruDate))) {
                             sequenceNumNotOk = "Y";
                         }
                     } else if (fromDate == null && thruDate == null) {
                         sequenceNumNotOk = "Y";
                     } else if (thruDate == null) {
-                        if (fromDate.before(routingTaskAssoc.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate))) sequenceNumNotOk = "Y";
+                        if (fromDate.before(routingTaskAssoc.getTimestamp(x.thruDate))) sequenceNumNotOk = "Y";
                     } else if (fromDate == null) {
-                        if (thruDate.after(routingTaskAssoc.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate))) sequenceNumNotOk = "Y";
-                    } else if (routingTaskAssoc.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate).before(thruDate) && fromDate.before(routingTaskAssoc.getTimestamp(
-                            org.apache.ofbiz.persistence.entity.x.thruDate))) {
+                        if (thruDate.after(routingTaskAssoc.getTimestamp(x.fromDate))) sequenceNumNotOk = "Y";
+                    } else if (routingTaskAssoc.getTimestamp(x.fromDate).before(thruDate) && fromDate.before(routingTaskAssoc.getTimestamp(
+                            x.thruDate))) {
                         sequenceNumNotOk = "Y";
                     }
                 } else if (createProcess) {
@@ -180,23 +181,23 @@ public class TechDataServices {
         GenericValue machineGroup = null;
         GenericValue techDataCalendar = null;
         try {
-            machineGroup = routingTask.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FixedAsset, true);
+            machineGroup = routingTask.getRelatedOne(x.FixedAsset, true);
         } catch (GenericEntityException e) {
             Debug.logError("Pb reading FixedAsset associated with routingTask" + e.getMessage(), MODULE);
         }
         if (machineGroup != null) {
-            if (machineGroup.getString(org.apache.ofbiz.persistence.entity.x.calendarId) != null) {
+            if (machineGroup.getString(x.calendarId) != null) {
                 try {
-                    techDataCalendar = machineGroup.getRelatedOne(org.apache.ofbiz.persistence.entity.x.TechDataCalendar, true);
+                    techDataCalendar = machineGroup.getRelatedOne(x.TechDataCalendar, true);
                 } catch (GenericEntityException e) {
                     Debug.logError("Pb reading TechDataCalendar associated with machineGroup" + e.getMessage(), MODULE);
                 }
             } else {
                 try {
-                    List<GenericValue> machines = machineGroup.getRelated(org.apache.ofbiz.persistence.entity.x.ChildFixedAsset, null, null, true);
+                    List<GenericValue> machines = machineGroup.getRelated(x.ChildFixedAsset, null, null, true);
                     if (machines != null && !machines.isEmpty()) {
                         GenericValue machine = EntityUtil.getFirst(machines);
-                        techDataCalendar = machine.getRelatedOne(org.apache.ofbiz.persistence.entity.x.TechDataCalendar, true);
+                        techDataCalendar = machine.getRelatedOne(x.TechDataCalendar, true);
                     }
                 } catch (GenericEntityException e) {
                     Debug.logError("Pb reading machine child from machineGroup" + e.getMessage(), MODULE);
@@ -241,32 +242,32 @@ public class TechDataServices {
             int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
             switch (dayOfWeek) {
             case Calendar.MONDAY:
-                capacity = techDataCalendarWeek.getDouble(org.apache.ofbiz.persistence.entity.x.mondayCapacity);
-                startTime = techDataCalendarWeek.getTime(org.apache.ofbiz.persistence.entity.x.mondayStartTime);
+                capacity = techDataCalendarWeek.getDouble(x.mondayCapacity);
+                startTime = techDataCalendarWeek.getTime(x.mondayStartTime);
                 break;
             case Calendar.TUESDAY:
-                capacity = techDataCalendarWeek.getDouble(org.apache.ofbiz.persistence.entity.x.tuesdayCapacity);
-                startTime = techDataCalendarWeek.getTime(org.apache.ofbiz.persistence.entity.x.tuesdayStartTime);
+                capacity = techDataCalendarWeek.getDouble(x.tuesdayCapacity);
+                startTime = techDataCalendarWeek.getTime(x.tuesdayStartTime);
                 break;
             case Calendar.WEDNESDAY:
-                capacity = techDataCalendarWeek.getDouble(org.apache.ofbiz.persistence.entity.x.wednesdayCapacity);
-                startTime = techDataCalendarWeek.getTime(org.apache.ofbiz.persistence.entity.x.wednesdayStartTime);
+                capacity = techDataCalendarWeek.getDouble(x.wednesdayCapacity);
+                startTime = techDataCalendarWeek.getTime(x.wednesdayStartTime);
                 break;
             case Calendar.THURSDAY:
-                capacity = techDataCalendarWeek.getDouble(org.apache.ofbiz.persistence.entity.x.thursdayCapacity);
-                startTime = techDataCalendarWeek.getTime(org.apache.ofbiz.persistence.entity.x.thursdayStartTime);
+                capacity = techDataCalendarWeek.getDouble(x.thursdayCapacity);
+                startTime = techDataCalendarWeek.getTime(x.thursdayStartTime);
                 break;
             case Calendar.FRIDAY:
-                capacity = techDataCalendarWeek.getDouble(org.apache.ofbiz.persistence.entity.x.fridayCapacity);
-                startTime = techDataCalendarWeek.getTime(org.apache.ofbiz.persistence.entity.x.fridayStartTime);
+                capacity = techDataCalendarWeek.getDouble(x.fridayCapacity);
+                startTime = techDataCalendarWeek.getTime(x.fridayStartTime);
                 break;
             case Calendar.SATURDAY:
-                capacity = techDataCalendarWeek.getDouble(org.apache.ofbiz.persistence.entity.x.saturdayCapacity);
-                startTime = techDataCalendarWeek.getTime(org.apache.ofbiz.persistence.entity.x.saturdayStartTime);
+                capacity = techDataCalendarWeek.getDouble(x.saturdayCapacity);
+                startTime = techDataCalendarWeek.getTime(x.saturdayStartTime);
                 break;
             case Calendar.SUNDAY:
-                capacity = techDataCalendarWeek.getDouble(org.apache.ofbiz.persistence.entity.x.sundayCapacity);
-                startTime = techDataCalendarWeek.getTime(org.apache.ofbiz.persistence.entity.x.sundayStartTime);
+                capacity = techDataCalendarWeek.getDouble(x.sundayCapacity);
+                startTime = techDataCalendarWeek.getTime(x.sundayStartTime);
                 break;
             }
 
@@ -299,7 +300,7 @@ public class TechDataServices {
         GenericValue techDataCalendarWeek = null;
         // TODO read TechDataCalendarExcWeek to manage execption week (maybe it's needed to refactor the entity definition
         try {
-            techDataCalendarWeek = techDataCalendar.getRelatedOne(org.apache.ofbiz.persistence.entity.x.TechDataCalendarWeek, true);
+            techDataCalendarWeek = techDataCalendar.getRelatedOne(x.TechDataCalendarWeek, true);
         } catch (GenericEntityException e) {
             Debug.logError("Pb reading Calendar Week associated with calendar" + e.getMessage(), MODULE);
             return 0;
@@ -331,7 +332,7 @@ public class TechDataServices {
         GenericValue techDataCalendarWeek = null;
         // TODO read TechDataCalendarExcWeek to manage execption week (maybe it's needed to refactor the entity definition
         try {
-            techDataCalendarWeek = techDataCalendar.getRelatedOne(org.apache.ofbiz.persistence.entity.x.TechDataCalendarWeek, true);
+            techDataCalendarWeek = techDataCalendar.getRelatedOne(x.TechDataCalendarWeek, true);
         } catch (GenericEntityException e) {
             Debug.logError("Pb reading Calendar Week associated with calendar" + e.getMessage(), MODULE);
             return ServiceUtil.returnError("Pb reading Calendar Week associated with calendar");
@@ -403,32 +404,32 @@ public class TechDataServices {
         while (capacity == null || capacity == 0) {
             switch (dayEnd) {
             case Calendar.MONDAY:
-                capacity = techDataCalendarWeek.getDouble(org.apache.ofbiz.persistence.entity.x.mondayCapacity);
-                startTime = techDataCalendarWeek.getTime(org.apache.ofbiz.persistence.entity.x.mondayStartTime);
+                capacity = techDataCalendarWeek.getDouble(x.mondayCapacity);
+                startTime = techDataCalendarWeek.getTime(x.mondayStartTime);
                 break;
             case Calendar.TUESDAY:
-                capacity = techDataCalendarWeek.getDouble(org.apache.ofbiz.persistence.entity.x.tuesdayCapacity);
-                startTime = techDataCalendarWeek.getTime(org.apache.ofbiz.persistence.entity.x.tuesdayStartTime);
+                capacity = techDataCalendarWeek.getDouble(x.tuesdayCapacity);
+                startTime = techDataCalendarWeek.getTime(x.tuesdayStartTime);
                 break;
             case Calendar.WEDNESDAY:
-                capacity = techDataCalendarWeek.getDouble(org.apache.ofbiz.persistence.entity.x.wednesdayCapacity);
-                startTime = techDataCalendarWeek.getTime(org.apache.ofbiz.persistence.entity.x.wednesdayStartTime);
+                capacity = techDataCalendarWeek.getDouble(x.wednesdayCapacity);
+                startTime = techDataCalendarWeek.getTime(x.wednesdayStartTime);
                 break;
             case Calendar.THURSDAY:
-                capacity = techDataCalendarWeek.getDouble(org.apache.ofbiz.persistence.entity.x.thursdayCapacity);
-                startTime = techDataCalendarWeek.getTime(org.apache.ofbiz.persistence.entity.x.thursdayStartTime);
+                capacity = techDataCalendarWeek.getDouble(x.thursdayCapacity);
+                startTime = techDataCalendarWeek.getTime(x.thursdayStartTime);
                 break;
             case Calendar.FRIDAY:
-                capacity = techDataCalendarWeek.getDouble(org.apache.ofbiz.persistence.entity.x.fridayCapacity);
-                startTime = techDataCalendarWeek.getTime(org.apache.ofbiz.persistence.entity.x.fridayStartTime);
+                capacity = techDataCalendarWeek.getDouble(x.fridayCapacity);
+                startTime = techDataCalendarWeek.getTime(x.fridayStartTime);
                 break;
             case Calendar.SATURDAY:
-                capacity = techDataCalendarWeek.getDouble(org.apache.ofbiz.persistence.entity.x.saturdayCapacity);
-                startTime = techDataCalendarWeek.getTime(org.apache.ofbiz.persistence.entity.x.saturdayStartTime);
+                capacity = techDataCalendarWeek.getDouble(x.saturdayCapacity);
+                startTime = techDataCalendarWeek.getTime(x.saturdayStartTime);
                 break;
             case Calendar.SUNDAY:
-                capacity = techDataCalendarWeek.getDouble(org.apache.ofbiz.persistence.entity.x.sundayCapacity);
-                startTime = techDataCalendarWeek.getTime(org.apache.ofbiz.persistence.entity.x.sundayStartTime);
+                capacity = techDataCalendarWeek.getDouble(x.sundayCapacity);
+                startTime = techDataCalendarWeek.getTime(x.sundayStartTime);
                 break;
             }
             if (capacity == null || capacity == 0) {
@@ -451,7 +452,7 @@ public class TechDataServices {
         GenericValue techDataCalendarWeek = null;
         // TODO read TechDataCalendarExcWeek to manage exception week (maybe it's needed to refactor the entity definition
         try {
-            techDataCalendarWeek = techDataCalendar.getRelatedOne(org.apache.ofbiz.persistence.entity.x.TechDataCalendarWeek, true);
+            techDataCalendarWeek = techDataCalendar.getRelatedOne(x.TechDataCalendarWeek, true);
         } catch (GenericEntityException e) {
             Debug.logError("Pb reading Calendar Week associated with calendar" + e.getMessage(), MODULE);
             return 0;
@@ -483,7 +484,7 @@ public class TechDataServices {
         GenericValue techDataCalendarWeek = null;
         // TODO read TechDataCalendarExcWeek to manage exception week (maybe it's needed to refactor the entity definition
         try {
-            techDataCalendarWeek = techDataCalendar.getRelatedOne(org.apache.ofbiz.persistence.entity.x.TechDataCalendarWeek, true);
+            techDataCalendarWeek = techDataCalendar.getRelatedOne(x.TechDataCalendarWeek, true);
         } catch (GenericEntityException e) {
             Debug.logError("Pb reading Calendar Week associated with calendar" + e.getMessage(), MODULE);
             return ServiceUtil.returnError("Pb reading Calendar Week associated with calendar");
@@ -554,7 +555,7 @@ public class TechDataServices {
      */
     private static Double getExceptionCapacityForDate(GenericValue techDataCalendar, Timestamp date) {
         try {
-            List<GenericValue> excDays = techDataCalendar.getRelated(org.apache.ofbiz.persistence.entity.x.TechDataCalendarExcDay, null, null, true);
+            List<GenericValue> excDays = techDataCalendar.getRelated(x.TechDataCalendarExcDay, null, null, true);
             if (excDays != null) {
                 Calendar checkCal = Calendar.getInstance();
                 checkCal.setTime(date);
@@ -565,7 +566,7 @@ public class TechDataServices {
                 long checkMillis = checkCal.getTimeInMillis();
 
                 for (GenericValue excDay : excDays) {
-                    Timestamp excDate = excDay.getTimestamp(org.apache.ofbiz.persistence.entity.x.exceptionDateStartTime);
+                    Timestamp excDate = excDay.getTimestamp(x.exceptionDateStartTime);
                     if (excDate != null) {
                         Calendar excCal = Calendar.getInstance();
                         excCal.setTime(excDate);
@@ -576,7 +577,7 @@ public class TechDataServices {
                         long excMillis = excCal.getTimeInMillis();
 
                         if (excMillis == checkMillis) {
-                            return excDay.getDouble(org.apache.ofbiz.persistence.entity.x.exceptionCapacity);
+                            return excDay.getDouble(x.exceptionCapacity);
                         }
                     }
                 }

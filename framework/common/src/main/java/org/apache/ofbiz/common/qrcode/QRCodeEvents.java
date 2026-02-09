@@ -39,6 +39,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Events for QRCode.
  */
@@ -83,13 +84,13 @@ public class QRCodeEvents {
                     "locale", locale);
             if (UtilValidate.isNotEmpty(width)) {
                 try {
-                    context.put(org.apache.ofbiz.persistence.entity.x.width, Integer.parseInt(width));
+                    context.put(x.width, Integer.parseInt(width));
                 } catch (NumberFormatException e) {
                     Debug.logWarning(e, e.getMessage(), MODULE);
                 }
                 if (UtilValidate.isEmpty(height)) {
                     try {
-                        context.put(org.apache.ofbiz.persistence.entity.x.height, Integer.parseInt(width));
+                        context.put(x.height, Integer.parseInt(width));
                     } catch (NumberFormatException e) {
                         Debug.logWarning(e, e.getMessage(), MODULE);
                     }
@@ -97,34 +98,34 @@ public class QRCodeEvents {
             }
             if (UtilValidate.isNotEmpty(height)) {
                 try {
-                    context.put(org.apache.ofbiz.persistence.entity.x.height, Integer.parseInt(height));
+                    context.put(x.height, Integer.parseInt(height));
                 } catch (NumberFormatException e) {
                     Debug.logWarning(e, e.getMessage(), MODULE);
                 }
                 if (UtilValidate.isEmpty(width)) {
                     try {
-                        context.put(org.apache.ofbiz.persistence.entity.x.width, Integer.parseInt(height));
+                        context.put(x.width, Integer.parseInt(height));
                     } catch (NumberFormatException e) {
                         Debug.logWarning(e, e.getMessage(), MODULE);
                     }
                 }
             }
             if (UtilValidate.isNotEmpty(encoding)) {
-                context.put(org.apache.ofbiz.persistence.entity.x.encoding, encoding);
+                context.put(x.encoding, encoding);
             }
             if (UtilValidate.isNotEmpty(verifyOutput) && verifyOutput) {
-                context.put(org.apache.ofbiz.persistence.entity.x.verifyOutput, verifyOutput);
+                context.put(x.verifyOutput, verifyOutput);
             }
             if (UtilValidate.isNotEmpty(logoImageMaxWidth)) {
                 try {
-                    context.put(org.apache.ofbiz.persistence.entity.x.logoImageMaxWidth, Integer.parseInt(logoImageMaxWidth));
+                    context.put(x.logoImageMaxWidth, Integer.parseInt(logoImageMaxWidth));
                 } catch (NumberFormatException e) {
                     Debug.logWarning(e, e.getMessage(), MODULE);
                 }
             }
             if (UtilValidate.isNotEmpty(logoImageMaxHeight)) {
                 try {
-                    context.put(org.apache.ofbiz.persistence.entity.x.logoImageMaxHeight, Integer.parseInt(logoImageMaxHeight));
+                    context.put(x.logoImageMaxHeight, Integer.parseInt(logoImageMaxHeight));
                 } catch (NumberFormatException e) {
                     Debug.logWarning(e, e.getMessage(), MODULE);
                 }

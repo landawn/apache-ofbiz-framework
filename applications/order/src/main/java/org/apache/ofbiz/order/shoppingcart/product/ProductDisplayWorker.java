@@ -47,6 +47,7 @@ import org.apache.ofbiz.product.category.CategoryWorker;
 import org.apache.ofbiz.product.product.ProductWorker;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 public final class ProductDisplayWorker {
 
     private static final String MODULE = ProductDisplayWorker.class.getName();
@@ -82,14 +83,14 @@ public final class ProductDisplayWorker {
                         item.getProductId()).cache(true).filterByDate().queryList();
                 if (productsCategories != null) {
                     for (GenericValue productsCategoryMember : productsCategories) {
-                        GenericValue productsCategory = productsCategoryMember.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductCategory, true);
-                        if ("CROSS_SELL_CATEGORY".equals(productsCategory.getString(org.apache.ofbiz.persistence.entity.x.productCategoryTypeId))) {
-                            List<GenericValue> curPcms = productsCategory.getRelated(org.apache.ofbiz.persistence.entity.x.ProductCategoryMember, null, null, true);
+                        GenericValue productsCategory = productsCategoryMember.getRelatedOne(x.ProductCategory, true);
+                        if ("CROSS_SELL_CATEGORY".equals(productsCategory.getString(x.productCategoryTypeId))) {
+                            List<GenericValue> curPcms = productsCategory.getRelated(x.ProductCategoryMember, null, null, true);
                             if (curPcms != null) {
                                 for (GenericValue curPcm : curPcms) {
-                                    if (!products.containsKey(curPcm.getString(org.apache.ofbiz.persistence.entity.x.productId))) {
-                                        GenericValue product = curPcm.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, true);
-                                        products.put(product.getString(org.apache.ofbiz.persistence.entity.x.productId), product);
+                                    if (!products.containsKey(curPcm.getString(x.productId))) {
+                                        GenericValue product = curPcm.getRelatedOne(x.Product, true);
+                                        products.put(product.getString(x.productId), product);
                                     }
                                 }
                             }
@@ -99,9 +100,9 @@ public final class ProductDisplayWorker {
 
                 if (UtilValidate.isNotEmpty(complementProducts)) {
                     for (GenericValue productAssoc : complementProducts) {
-                        if (!products.containsKey(productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo))) {
-                            GenericValue product = productAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.AssocProduct, true);
-                            products.put(product.getString(org.apache.ofbiz.persistence.entity.x.productId), product);
+                        if (!products.containsKey(productAssoc.getString(x.productIdTo))) {
+                            GenericValue product = productAssoc.getRelatedOne(x.AssocProduct, true);
+                            products.put(product.getString(x.productId), product);
                         }
                     }
                 }
@@ -173,43 +174,43 @@ public final class ProductDisplayWorker {
                 productOccurances = new HashMap<>();
 
                 // get all order role entities for user by customer role type : PLACING_CUSTOMER
-                List<GenericValue> orderRoles = EntityQuery.use(delegator).from("OrderRole").where("partyId", userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId),
+                List<GenericValue> orderRoles = EntityQuery.use(delegator).from("OrderRole").where("partyId", userLogin.get(x.partyId),
                         "roleTypeId", "PLACING_CUSTOMER").queryList();
                 Iterator<GenericValue> ordersIter = UtilMisc.toIterator(orderRoles);
 
                 while (ordersIter != null && ordersIter.hasNext()) {
                     GenericValue orderRole = ordersIter.next();
                     // for each order role get all order items
-                    List<GenericValue> orderItems = orderRole.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItem, null, null, false);
+                    List<GenericValue> orderItems = orderRole.getRelated(x.OrderItem, null, null, false);
                     Iterator<GenericValue> orderItemsIter = UtilMisc.toIterator(orderItems);
 
                     while (orderItemsIter != null && orderItemsIter.hasNext()) {
                         GenericValue orderItem = orderItemsIter.next();
-                        String productId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
+                        String productId = orderItem.getString(x.productId);
                         if (UtilValidate.isNotEmpty(productId)) {
                             // for each order item get the associated product
-                            GenericValue product = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, true);
+                            GenericValue product = orderItem.getRelatedOne(x.Product, true);
 
-                            products.put(product.getString(org.apache.ofbiz.persistence.entity.x.productId), product);
+                            products.put(product.getString(x.productId), product);
 
-                            BigDecimal curQuant = productQuantities.get(product.get(org.apache.ofbiz.persistence.entity.x.productId));
+                            BigDecimal curQuant = productQuantities.get(product.get(x.productId));
 
                             if (curQuant == null) {
                                 curQuant = BigDecimal.ZERO;
                             }
-                            BigDecimal orderQuant = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                            BigDecimal orderQuant = orderItem.getBigDecimal(x.quantity);
 
                             if (orderQuant == null) {
                                 orderQuant = BigDecimal.ZERO;
                             }
-                            productQuantities.put(product.getString(org.apache.ofbiz.persistence.entity.x.productId), curQuant.add(orderQuant));
+                            productQuantities.put(product.getString(x.productId), curQuant.add(orderQuant));
 
-                            Integer curOcc = productOccurances.get(product.get(org.apache.ofbiz.persistence.entity.x.productId));
+                            Integer curOcc = productOccurances.get(product.get(x.productId));
 
                             if (curOcc == null) {
                                 curOcc = 0;
                             }
-                            productOccurances.put(product.getString(org.apache.ofbiz.persistence.entity.x.productId), curOcc + 1);
+                            productOccurances.put(product.getString(x.productId), curOcc + 1);
                         }
                     }
                 }

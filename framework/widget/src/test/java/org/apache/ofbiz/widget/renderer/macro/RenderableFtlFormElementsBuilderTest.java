@@ -48,6 +48,7 @@ import java.util.Map;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class RenderableFtlFormElementsBuilderTest {
 
     @Injectable
@@ -197,7 +198,7 @@ public class RenderableFtlFormElementsBuilderTest {
         };
 
         final HashMap<String, Object> context = new HashMap<>();
-        context.put(org.apache.ofbiz.persistence.entity.x.session, httpSession);
+        context.put(x.session, httpSession);
 
         final RenderableFtl renderableFtl = renderableFtlFormElementsBuilder.textField(context, textField, true);
         assertThat(renderableFtl, MacroCallMatcher.hasNameAndParameters("renderTextField",
@@ -230,8 +231,8 @@ public class RenderableFtlFormElementsBuilderTest {
         };
 
         final HashMap<String, Object> context = new HashMap<>();
-        context.put(org.apache.ofbiz.persistence.entity.x.param1, "ThisIsParam1");
-        context.put(org.apache.ofbiz.persistence.entity.x.session, httpSession);
+        context.put(x.param1, "ThisIsParam1");
+        context.put(x.session, httpSession);
 
         final RenderableFtl renderableFtl = renderableFtlFormElementsBuilder.textField(context, textField, true);
         assertThat(renderableFtl, MacroCallMatcher.hasName("renderTextField"));
@@ -530,7 +531,7 @@ public class RenderableFtlFormElementsBuilderTest {
         };
 
         final Map<String, Object> context = new HashMap<>();
-        context.put(org.apache.ofbiz.persistence.entity.x.title, "ABC");
+        context.put(x.title, "ABC");
 
         final RenderableFtl renderableFtl = renderableFtlFormElementsBuilder.fieldGroupOpen(context, fieldGroup);
         assertThat(renderableFtl, MacroCallMatcher.hasName("renderFieldGroupOpen"));
@@ -551,7 +552,7 @@ public class RenderableFtlFormElementsBuilderTest {
         };
 
         final Map<String, Object> context = new HashMap<>();
-        context.put(org.apache.ofbiz.persistence.entity.x.title, "ABC");
+        context.put(x.title, "ABC");
 
         final RenderableFtl renderableFtl = renderableFtlFormElementsBuilder.fieldGroupClose(context, fieldGroup);
         assertThat(renderableFtl, MacroCallMatcher.hasName("renderFieldGroupClose"));
@@ -589,7 +590,7 @@ public class RenderableFtlFormElementsBuilderTest {
         };
 
         final Map<String, Object> context = new HashMap<>();
-        context.put(org.apache.ofbiz.persistence.entity.x.locale, new Locale("fr"));
+        context.put(x.locale, new Locale("fr"));
 
         final RenderableFtl renderableFtl = renderableFtlFormElementsBuilder.dateRangePicker(context, dateRangePickerField);
         assertThat(renderableFtl, MacroCallMatcher.hasName("renderDateRangePicker"));

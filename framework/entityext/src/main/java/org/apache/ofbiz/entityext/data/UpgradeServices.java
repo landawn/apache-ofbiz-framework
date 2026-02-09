@@ -41,6 +41,7 @@ import org.apache.ofbiz.security.Security;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Entity Data Upgrade Services
  *
@@ -71,16 +72,16 @@ public class UpgradeServices {
     public static Map<String, Object> generateMySqlFileWithAlterTableForTimestamps(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
         // check permission
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         if (!security.hasPermission("ENTITY_MAINT", userLogin)) {
             Debug.logError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale));
         }
 
-        String groupName = (String) context.get(org.apache.ofbiz.persistence.entity.x.groupName);
+        String groupName = (String) context.get(x.groupName);
 
         Map<String, ModelEntity> modelEntities;
         try (PrintWriter dataWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(

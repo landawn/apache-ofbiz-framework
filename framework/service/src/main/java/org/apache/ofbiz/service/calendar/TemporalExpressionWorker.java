@@ -29,6 +29,7 @@ import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 /** TemporalExpression persistence worker. */
 public final class TemporalExpressionWorker {
 
@@ -89,50 +90,50 @@ public final class TemporalExpressionWorker {
      * @throws GenericEntityException
      */
     public static TemporalExpression makeTemporalExpression(Delegator delegator, GenericValue exprValue) throws GenericEntityException {
-        String tempExprId = exprValue.getString(org.apache.ofbiz.persistence.entity.x.tempExprId);
-        String tempExprTypeId = exprValue.getString(org.apache.ofbiz.persistence.entity.x.tempExprTypeId);
+        String tempExprId = exprValue.getString(x.tempExprId);
+        String tempExprTypeId = exprValue.getString(x.tempExprTypeId);
         if (DATE_RANGE.equals(tempExprTypeId)) {
-            return setExpressionId(exprValue, new TemporalExpressions.DateRange(exprValue.getTimestamp(org.apache.ofbiz.persistence.entity.x.date1),
-                    exprValue.getTimestamp(org.apache.ofbiz.persistence.entity.x.date2)));
+            return setExpressionId(exprValue, new TemporalExpressions.DateRange(exprValue.getTimestamp(x.date1),
+                    exprValue.getTimestamp(x.date2)));
         } else if (DAY_IN_MONTH.equals(tempExprTypeId)) {
-            return setExpressionId(exprValue, new TemporalExpressions.DayInMonth(exprValue.getLong(org.apache.ofbiz.persistence.entity.x.integer1).intValue(),
-                    exprValue.getLong(org.apache.ofbiz.persistence.entity.x.integer2).intValue()));
+            return setExpressionId(exprValue, new TemporalExpressions.DayInMonth(exprValue.getLong(x.integer1).intValue(),
+                    exprValue.getLong(x.integer2).intValue()));
         } else if (DAY_OF_MONTH_RANGE.equals(tempExprTypeId)) {
-            return setExpressionId(exprValue, new TemporalExpressions.DayOfMonthRange(exprValue.getLong(org.apache.ofbiz.persistence.entity.x.integer1).intValue(),
-                    exprValue.getLong(org.apache.ofbiz.persistence.entity.x.integer2).intValue()));
+            return setExpressionId(exprValue, new TemporalExpressions.DayOfMonthRange(exprValue.getLong(x.integer1).intValue(),
+                    exprValue.getLong(x.integer2).intValue()));
         } else if (DAY_OF_WEEK_RANGE.equals(tempExprTypeId)) {
-            return setExpressionId(exprValue, new TemporalExpressions.DayOfWeekRange(exprValue.getLong(org.apache.ofbiz.persistence.entity.x.integer1).intValue(),
-                    exprValue.getLong(org.apache.ofbiz.persistence.entity.x.integer2).intValue()));
+            return setExpressionId(exprValue, new TemporalExpressions.DayOfWeekRange(exprValue.getLong(x.integer1).intValue(),
+                    exprValue.getLong(x.integer2).intValue()));
         } else if (DIFFERENCE.equals(tempExprTypeId)) {
             List<GenericValue> childExpressions = EntityQuery.use(delegator).from("TemporalExpressionAssoc").where("fromTempExprId",
                     tempExprId).cache(true).queryList();
             GenericValue inclAssoc = null;
             GenericValue exclAssoc = null;
             for (GenericValue childExpression : childExpressions) {
-                if (INCLUDE.equals(childExpression.get(org.apache.ofbiz.persistence.entity.x.exprAssocType))) {
+                if (INCLUDE.equals(childExpression.get(x.exprAssocType))) {
                     inclAssoc = childExpression;
-                } else if (EXCLUDE.equals(childExpression.get(org.apache.ofbiz.persistence.entity.x.exprAssocType))) {
+                } else if (EXCLUDE.equals(childExpression.get(x.exprAssocType))) {
                     exclAssoc = childExpression;
                 }
             }
             if (inclAssoc != null && exclAssoc != null) {
                 return setExpressionId(exprValue, new TemporalExpressions.Difference(getTemporalExpression(delegator,
-                        inclAssoc.getString(org.apache.ofbiz.persistence.entity.x.toTempExprId)), getTemporalExpression(delegator, exclAssoc.getString(org.apache.ofbiz.persistence.entity.x.toTempExprId))));
+                        inclAssoc.getString(x.toTempExprId)), getTemporalExpression(delegator, exclAssoc.getString(x.toTempExprId))));
             }
         } else if (FREQUENCY.equals(tempExprTypeId)) {
-            return setExpressionId(exprValue, new TemporalExpressions.Frequency(exprValue.getTimestamp(org.apache.ofbiz.persistence.entity.x.date1),
-                    exprValue.getLong(org.apache.ofbiz.persistence.entity.x.integer1).intValue(), exprValue.getLong(org.apache.ofbiz.persistence.entity.x.integer2).intValue()));
+            return setExpressionId(exprValue, new TemporalExpressions.Frequency(exprValue.getTimestamp(x.date1),
+                    exprValue.getLong(x.integer1).intValue(), exprValue.getLong(x.integer2).intValue()));
         } else if (HOUR_RANGE.equals(tempExprTypeId)) {
-            return setExpressionId(exprValue, new TemporalExpressions.HourRange(exprValue.getLong(org.apache.ofbiz.persistence.entity.x.integer1).intValue(),
-                    exprValue.getLong(org.apache.ofbiz.persistence.entity.x.integer2).intValue()));
+            return setExpressionId(exprValue, new TemporalExpressions.HourRange(exprValue.getLong(x.integer1).intValue(),
+                    exprValue.getLong(x.integer2).intValue()));
         } else if (INTERSECTION.equals(tempExprTypeId)) {
             return setExpressionId(exprValue, new TemporalExpressions.Intersection(getChildExpressions(delegator, tempExprId)));
         } else if (MINUTE_RANGE.equals(tempExprTypeId)) {
-            return setExpressionId(exprValue, new TemporalExpressions.MinuteRange(exprValue.getLong(org.apache.ofbiz.persistence.entity.x.integer1).intValue(),
-                    exprValue.getLong(org.apache.ofbiz.persistence.entity.x.integer2).intValue()));
+            return setExpressionId(exprValue, new TemporalExpressions.MinuteRange(exprValue.getLong(x.integer1).intValue(),
+                    exprValue.getLong(x.integer2).intValue()));
         } else if (MONTH_RANGE.equals(tempExprTypeId)) {
-            return setExpressionId(exprValue, new TemporalExpressions.MonthRange(exprValue.getLong(org.apache.ofbiz.persistence.entity.x.integer1).intValue(),
-                    exprValue.getLong(org.apache.ofbiz.persistence.entity.x.integer2).intValue()));
+            return setExpressionId(exprValue, new TemporalExpressions.MonthRange(exprValue.getLong(x.integer1).intValue(),
+                    exprValue.getLong(x.integer2).intValue()));
         } else if (SUBSTITUTION.equals(tempExprTypeId)) {
             List<GenericValue> childExpressions = EntityQuery.use(delegator).from("TemporalExpressionAssoc").where("fromTempExprId",
                     tempExprId).cache(true).queryList();
@@ -140,18 +141,18 @@ public final class TemporalExpressionWorker {
             GenericValue exclAssoc = null;
             GenericValue substAssoc = null;
             for (GenericValue childExpression : childExpressions) {
-                if (INCLUDE.equals(childExpression.get(org.apache.ofbiz.persistence.entity.x.exprAssocType))) {
+                if (INCLUDE.equals(childExpression.get(x.exprAssocType))) {
                     inclAssoc = childExpression;
-                } else if (EXCLUDE.equals(childExpression.get(org.apache.ofbiz.persistence.entity.x.exprAssocType))) {
+                } else if (EXCLUDE.equals(childExpression.get(x.exprAssocType))) {
                     exclAssoc = childExpression;
-                } else if (SUBSTITUTE.equals(childExpression.get(org.apache.ofbiz.persistence.entity.x.exprAssocType))) {
+                } else if (SUBSTITUTE.equals(childExpression.get(x.exprAssocType))) {
                     substAssoc = childExpression;
                 }
             }
             if (inclAssoc != null && exclAssoc != null && substAssoc != null) {
                 return setExpressionId(exprValue, new TemporalExpressions.Substitution(getTemporalExpression(delegator,
-                        inclAssoc.getString(org.apache.ofbiz.persistence.entity.x.toTempExprId)), getTemporalExpression(delegator, exclAssoc.getString(org.apache.ofbiz.persistence.entity.x.toTempExprId)),
-                        getTemporalExpression(delegator, substAssoc.getString(org.apache.ofbiz.persistence.entity.x.toTempExprId))));
+                        inclAssoc.getString(x.toTempExprId)), getTemporalExpression(delegator, exclAssoc.getString(x.toTempExprId)),
+                        getTemporalExpression(delegator, substAssoc.getString(x.toTempExprId))));
             }
         } else if (UNION.equals(tempExprTypeId)) {
             return setExpressionId(exprValue, new TemporalExpressions.Union(getChildExpressions(delegator, tempExprId)));
@@ -167,13 +168,13 @@ public final class TemporalExpressionWorker {
         }
         Set<TemporalExpression> exprList = new TreeSet<>();
         for (GenericValue value : valueList) {
-            exprList.add(makeTemporalExpression(delegator, value.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ToTemporalExpression, false)));
+            exprList.add(makeTemporalExpression(delegator, value.getRelatedOne(x.ToTemporalExpression, false)));
         }
         return exprList;
     }
 
     private static TemporalExpression setExpressionId(GenericValue value, TemporalExpression expression) {
-        expression.setId(value.getString(org.apache.ofbiz.persistence.entity.x.tempExprId));
+        expression.setId(value.getString(x.tempExprId));
         return expression;
     }
 

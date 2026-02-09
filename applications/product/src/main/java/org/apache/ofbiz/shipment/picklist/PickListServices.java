@@ -35,6 +35,7 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class PickListServices {
 
     private static final String MODULE = PickListServices.class.getName();
@@ -42,8 +43,8 @@ public class PickListServices {
     public static Map<String, Object> convertOrderIdListToHeaders(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
 
-        List<GenericValue> orderHeaderList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderHeaderList));
-        List<String> orderIdList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderIdList));
+        List<GenericValue> orderHeaderList = UtilGenerics.cast(context.get(x.orderHeaderList));
+        List<String> orderIdList = UtilGenerics.cast(context.get(x.orderIdList));
 
         // we don't want to process if there is already a header list
         if (orderHeaderList == null) {

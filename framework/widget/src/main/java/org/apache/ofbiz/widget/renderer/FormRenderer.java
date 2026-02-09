@@ -62,6 +62,7 @@ import org.apache.ofbiz.widget.model.ModelGrid;
 import org.apache.ofbiz.widget.model.ModelWidget;
 import org.apache.ofbiz.widget.renderer.html.HtmlWidgetRenderer;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * A form rendering engine.
  *
@@ -81,12 +82,12 @@ public class FormRenderer {
     private static final String MODULE = FormRenderer.class.getName();
 
     public static String getCurrentContainerId(ModelForm modelForm, Map<String, Object> context) {
-        Locale locale = UtilMisc.ensureLocale(context.get(org.apache.ofbiz.persistence.entity.x.locale));
+        Locale locale = UtilMisc.ensureLocale(context.get(x.locale));
         String retVal = FlexibleStringExpander.expandString(modelForm.getContainerId(), context, locale);
-        Integer itemIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.itemIndex);
+        Integer itemIndex = (Integer) context.get(x.itemIndex);
         if (itemIndex != null/* && "list".equals(modelForm.getType()) */) {
-            if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.parentItemIndex))) {
-                return retVal + context.get(org.apache.ofbiz.persistence.entity.x.parentItemIndex) + modelForm.getItemIndexSeparator() + itemIndex;
+            if (UtilValidate.isNotEmpty(context.get(x.parentItemIndex))) {
+                return retVal + context.get(x.parentItemIndex) + modelForm.getItemIndexSeparator() + itemIndex;
             }
             return retVal + modelForm.getItemIndexSeparator() + itemIndex;
         }
@@ -94,8 +95,8 @@ public class FormRenderer {
     }
 
     public static String getCurrentFormName(ModelForm modelForm, Map<String, Object> context) {
-        Integer itemIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.itemIndex);
-        String formName = (String) context.get(org.apache.ofbiz.persistence.entity.x.formName);
+        Integer itemIndex = (Integer) context.get(x.itemIndex);
+        String formName = (String) context.get(x.formName);
         if (UtilValidate.isEmpty(formName)) {
             formName = modelForm.getName();
         }
@@ -259,14 +260,14 @@ public class FormRenderer {
         }
 
         // Populate the viewSize and viewIndex so they are available for use during form actions
-        context.put(org.apache.ofbiz.persistence.entity.x.viewIndex, Paginator.getViewIndex(modelForm, context));
-        context.put(org.apache.ofbiz.persistence.entity.x.viewSize, Paginator.getViewSize(modelForm, context));
+        context.put(x.viewIndex, Paginator.getViewIndex(modelForm, context));
+        context.put(x.viewSize, Paginator.getViewSize(modelForm, context));
 
         modelForm.runFormActions(context);
 
         // if this is a list form, don't use Request Parameters
         if (modelForm instanceof ModelGrid) {
-            context.put(org.apache.ofbiz.persistence.entity.x.useRequestParameters_ + modelForm.getName(), Boolean.FALSE);
+            context.put(x.useRequestParameters_ + modelForm.getName(), Boolean.FALSE);
         }
 
         // find the highest position number to get the max positions used
@@ -720,28 +721,28 @@ public class FormRenderer {
         // set low and high index
         Paginator.getListLimits(modelForm, context, obj);
 
-        int listSize = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.listSize);
-        int lowIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.lowIndex);
-        int highIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.highIndex);
+        int listSize = (Integer) context.get(x.listSize);
+        int lowIndex = (Integer) context.get(x.lowIndex);
+        int highIndex = (Integer) context.get(x.highIndex);
 
         // we're passed a subset of the list, so use (0, viewSize) range
         if (modelForm.isOverridenListSize()) {
             lowIndex = 0;
-            highIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.viewSize);
+            highIndex = (Integer) context.get(x.viewSize);
         }
 
         if (iter != null) {
             // render item rows
-            if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.itemIndex))) {
-                if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.parentItemIndex))) {
-                    context.put(org.apache.ofbiz.persistence.entity.x.parentItemIndex, context.get(org.apache.ofbiz.persistence.entity.x.parentItemIndex) + modelForm.getItemIndexSeparator() + context.get(org.apache.ofbiz.persistence.entity.x.itemIndex));
+            if (UtilValidate.isNotEmpty(context.get(x.itemIndex))) {
+                if (UtilValidate.isNotEmpty(context.get(x.parentItemIndex))) {
+                    context.put(x.parentItemIndex, context.get(x.parentItemIndex) + modelForm.getItemIndexSeparator() + context.get(x.itemIndex));
                 } else {
-                    context.put(org.apache.ofbiz.persistence.entity.x.parentItemIndex, modelForm.getItemIndexSeparator() + context.get(org.apache.ofbiz.persistence.entity.x.itemIndex));
+                    context.put(x.parentItemIndex, modelForm.getItemIndexSeparator() + context.get(x.itemIndex));
                 }
             }
             int itemIndex = -1;
             Object item = null;
-            context.put(org.apache.ofbiz.persistence.entity.x.wholeFormContext, context);
+            context.put(x.wholeFormContext, context);
             // Initialize previousItem with a sentry value since the first Item has no previous Item.
             Map<String, Object> previousItem = new HashMap<>();
             while ((item = safeNext(iter)) != null) {
@@ -777,8 +778,8 @@ public class FormRenderer {
                 AbstractModelAction.runSubActions(modelForm.getRowActions(), localContext);
 
                 localContext.put("itemIndex", itemIndex - lowIndex);
-                if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.renderFormSeqNumber))) {
-                    localContext.put("formUniqueId", "_" + context.get(org.apache.ofbiz.persistence.entity.x.renderFormSeqNumber));
+                if (UtilValidate.isNotEmpty(context.get(x.renderFormSeqNumber))) {
+                    localContext.put("formUniqueId", "_" + context.get(x.renderFormSeqNumber));
                 }
 
                 if (Debug.verboseOn()) {
@@ -909,9 +910,9 @@ public class FormRenderer {
             if ((itemIndex + 1) < highIndex) {
                 highIndex = itemIndex + 1;
                 // if list size is overridden, use full listSize
-                context.put(org.apache.ofbiz.persistence.entity.x.highIndex, modelForm.isOverridenListSize() ? listSize : highIndex);
+                context.put(x.highIndex, modelForm.isOverridenListSize() ? listSize : highIndex);
             }
-            context.put(org.apache.ofbiz.persistence.entity.x.actualPageSize, highIndex - lowIndex);
+            context.put(x.actualPageSize, highIndex - lowIndex);
 
             if (iter instanceof EntityListIterator) {
                 try {
@@ -996,7 +997,7 @@ public class FormRenderer {
         if (!modelForm.getSkipStart()) {
             formStringRenderer.renderFormOpen(writer, context, modelForm);
             if (HtmlWidgetRenderer.NAMED_BORDER_TYPE != ModelWidget.NamedBorderType.NONE) {
-                HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
+                HttpServletRequest request = (HttpServletRequest) context.get(x.request);
                 writer.append(HtmlWidgetRenderer.beginNamedBorder("Form",
                         modelForm.getFormLocation() + "#" + modelForm.getName(),
                         request.getContextPath()));

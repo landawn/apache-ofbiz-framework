@@ -33,6 +33,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.testtools.OFBizTestCase;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class SecurePayServiceTest extends OFBizTestCase {
 
     public SecurePayServiceTest(String name) {
@@ -180,7 +181,7 @@ public class SecurePayServiceTest extends OFBizTestCase {
             } else {
                 String captureRefNum = (String) result.get("captureRefNum");
                 GenericValue checkPaymentGatewayResponse = EntityQuery.use(delegator).from("PaymentGatewayResponse").where("paymentGatewayResponseId", "testOrder1000_01").queryOne();
-                checkPaymentGatewayResponse.set(org.apache.ofbiz.persistence.entity.x.referenceNum, captureRefNum);
+                checkPaymentGatewayResponse.set(x.referenceNum, captureRefNum);
                 checkPaymentGatewayResponse.store();
                 Debug.logInfo("[testdoCapture] Result from SecurePay: " + result, MODULE);
             }

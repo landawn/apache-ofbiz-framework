@@ -37,6 +37,7 @@ import org.apache.ofbiz.entity.condition.EntityConditionList;
 import org.apache.ofbiz.entity.condition.EntityOperator;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 public final class InventoryWorker {
 
     private static final String MODULE = InventoryWorker.class.getName();
@@ -85,11 +86,11 @@ public final class InventoryWorker {
             return qty;
         }
         for (GenericValue nextOrder : purchaseOrders) {
-            if (nextOrder.get(org.apache.ofbiz.persistence.entity.x.quantity) != null) {
-                BigDecimal itemQuantity = nextOrder.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+            if (nextOrder.get(x.quantity) != null) {
+                BigDecimal itemQuantity = nextOrder.getBigDecimal(x.quantity);
                 BigDecimal cancelQuantity = BigDecimal.ZERO;
-                if (nextOrder.get(org.apache.ofbiz.persistence.entity.x.cancelQuantity) != null) {
-                    cancelQuantity = nextOrder.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
+                if (nextOrder.get(x.cancelQuantity) != null) {
+                    cancelQuantity = nextOrder.getBigDecimal(x.cancelQuantity);
                 }
                 itemQuantity = itemQuantity.subtract(cancelQuantity);
                 if (itemQuantity.compareTo(BigDecimal.ZERO) >= 0) {
@@ -129,7 +130,7 @@ public final class InventoryWorker {
             List<GenericValue> orderedProducts = EntityQuery.use(delegator).select(fieldsToSelect).from("OrderItemQuantityReportGroupByProduct")
                     .where(conditions).queryList();
             for (GenericValue value: orderedProducts) {
-                results.put(value.getString(org.apache.ofbiz.persistence.entity.x.productId), value.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityOpen));
+                results.put(value.getString(x.productId), value.getBigDecimal(x.quantityOpen));
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);

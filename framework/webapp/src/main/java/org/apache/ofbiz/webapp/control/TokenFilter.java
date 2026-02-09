@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class TokenFilter implements Filter {
     private static final String MODULE = TokenFilter.class.getName();
 
@@ -73,7 +74,7 @@ public class TokenFilter implements Filter {
             } else if (UtilValidate.isNotEmpty(userLoginId)) {
                 try {
                     GenericValue userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", userLoginId).queryOne();
-                    if (userLogin != null && !"N".equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.enabled))) {
+                    if (userLogin != null && !"N".equals(userLogin.getString(x.enabled))) {
                         //FIXME: This is not good way for API, but session is required to get the userLogin while performing auth check
                         HttpSession session = httpRequest.getSession();
                         session.setAttribute("userLogin", userLogin);

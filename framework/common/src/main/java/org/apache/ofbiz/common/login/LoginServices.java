@@ -65,6 +65,7 @@ import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.webapp.control.LoginWorker;
 import org.apache.tomcat.util.res.StringManager;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * <b>Title:</b> Login Services
  */
@@ -79,7 +80,7 @@ public class LoginServices {
      */
     public static Map<String, Object> userLogin(DispatchContext ctx, Map<String, ?> context) {
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = ctx.getDelegator();
 
         // Keep track of two different kinds of errors (UserOnly and DebugLog) and set the RESPONSE_MESSAGE of the
@@ -108,23 +109,23 @@ public class LoginServices {
         boolean useEncryption = "true".equals(EntityUtilProperties.getPropertyValue("security", "password.encrypt", delegator));
 
         // if isServiceAuth is not specified, default to not a service auth
-        boolean isServiceAuth = context.get(org.apache.ofbiz.persistence.entity.x.isServiceAuth) != null && (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.isServiceAuth);
+        boolean isServiceAuth = context.get(x.isServiceAuth) != null && (Boolean) context.get(x.isServiceAuth);
 
-        String username = (String) context.get(org.apache.ofbiz.persistence.entity.x.login_username);
+        String username = (String) context.get(x.login_username);
         if (username == null) {
-            username = (String) context.get(org.apache.ofbiz.persistence.entity.x.username);
+            username = (String) context.get(x.username);
         }
-        String password = (String) context.get(org.apache.ofbiz.persistence.entity.x.login_password);
+        String password = (String) context.get(x.login_password);
         if (password == null) {
-            password = (String) context.get(org.apache.ofbiz.persistence.entity.x.password);
+            password = (String) context.get(x.password);
         }
-        String jwtToken = (String) context.get(org.apache.ofbiz.persistence.entity.x.login_token);
+        String jwtToken = (String) context.get(x.login_token);
         if (jwtToken == null) {
-            jwtToken = (String) context.get(org.apache.ofbiz.persistence.entity.x.token);
+            jwtToken = (String) context.get(x.token);
         }
 
         // get the visitId for the history entity
-        String visitId = (String) context.get(org.apache.ofbiz.persistence.entity.x.visitId);
+        String visitId = (String) context.get(x.visitId);
 
         if (UtilValidate.isEmpty(username)) {
             userErrMsgs.add(UtilProperties.getMessage(RESOURCE, "loginservices.username_missing", locale));
@@ -184,7 +185,7 @@ public class LoginServices {
                         Debug.logWarning("Could not parse login.disable.minutes from security.properties, using default of 30", MODULE);
                     }
 
-                    Timestamp disabledDateTime = userLogin.getTimestamp(org.apache.ofbiz.persistence.entity.x.disabledDateTime);
+                    Timestamp disabledDateTime = userLogin.getTimestamp(x.disabledDateTime);
                     Timestamp reEnableTime = null;
 
                     if (loginDisableMinutes > 0 && disabledDateTime != null) {
@@ -196,19 +197,19 @@ public class LoginServices {
                     userLogin = GenericValue.create(userLogin);
 
                     // get the is system flag -- system accounts can only be used for service authentication
-                    boolean isSystem = (isServiceAuth && userLogin.get(org.apache.ofbiz.persistence.entity.x.isSystem) != null) ? "Y".equalsIgnoreCase(userLogin.getString(org.apache.ofbiz.persistence.entity.x.isSystem))
+                    boolean isSystem = (isServiceAuth && userLogin.get(x.isSystem) != null) ? "Y".equalsIgnoreCase(userLogin.getString(x.isSystem))
                                                                                             : false;
 
                     // grab the hasLoggedOut flag
-                    Boolean hasLoggedOut = userLogin.getBoolean(org.apache.ofbiz.persistence.entity.x.hasLoggedOut);
+                    Boolean hasLoggedOut = userLogin.getBoolean(x.hasLoggedOut);
 
-                    if ((UtilValidate.isEmpty(userLogin.getString(org.apache.ofbiz.persistence.entity.x.enabled)) || "Y".equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.enabled))
+                    if ((UtilValidate.isEmpty(userLogin.getString(x.enabled)) || "Y".equals(userLogin.getString(x.enabled))
                             || (reEnableTime != null && reEnableTime.before(UtilDateTime.nowTimestamp())) || (isSystem))
-                            && UtilValidate.isEmpty(userLogin.getString(org.apache.ofbiz.persistence.entity.x.disabledBy))) {
+                            && UtilValidate.isEmpty(userLogin.getString(x.disabledBy))) {
                         String successfulLogin;
                         if (!isSystem) {
-                            userLogin.set(org.apache.ofbiz.persistence.entity.x.enabled, "Y");
-                            userLogin.set(org.apache.ofbiz.persistence.entity.x.disabledBy, null);
+                            userLogin.set(x.enabled, "Y");
+                            userLogin.set(x.disabledBy, null);
                         }
                         // attempt to authenticate with Authenticator class(es)
                         boolean authFatalError = false;
@@ -224,7 +225,7 @@ public class LoginServices {
 
                         // check whether to sign in with Tomcat SSO
                         boolean useTomcatSSO = EntityUtilProperties.propertyValueEquals("security", "security.login.tomcat.sso", "true");
-                        HttpServletRequest request = (jakarta.servlet.http.HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
+                        HttpServletRequest request = (jakarta.servlet.http.HttpServletRequest) context.get(x.request);
                         // when request is not supplied, we will treat that SSO is not required as
                         // in the usage of userLogin service in ICalWorker.java
                         useTomcatSSO = useTomcatSSO && (request != null);
@@ -237,18 +238,18 @@ public class LoginServices {
                         // if externalAuth passed; this is run as well
                         if ((!authFatalError && externalAuth) || (useTomcatSSO && tomcatSSOLogin(request, username, password))
                                 || (jwtToken != null && jwtTokenValid)
-                                || (password != null && checkPassword(userLogin.getString(org.apache.ofbiz.persistence.entity.x.currentPassword), useEncryption, password))) {
+                                || (password != null && checkPassword(userLogin.getString(x.currentPassword), useEncryption, password))) {
                             Debug.logVerbose("[LoginServices.userLogin] : Password Matched or Token Validated", MODULE);
 
                             // update the hasLoggedOut flag
                             if (hasLoggedOut == null || hasLoggedOut) {
-                                userLogin.set(org.apache.ofbiz.persistence.entity.x.hasLoggedOut, "N");
+                                userLogin.set(x.hasLoggedOut, "N");
                             }
 
                             // reset failed login count if necessary
-                            Long currentFailedLogins = userLogin.getLong(org.apache.ofbiz.persistence.entity.x.successiveFailedLogins);
+                            Long currentFailedLogins = userLogin.getLong(x.successiveFailedLogins);
                             if (currentFailedLogins != null && currentFailedLogins > 0) {
-                                userLogin.set(org.apache.ofbiz.persistence.entity.x.successiveFailedLogins, 0L);
+                                userLogin.set(x.successiveFailedLogins, 0L);
                             } else if (hasLoggedOut != null && !hasLoggedOut) {
                                 // successful login & no logout flag, no need to change anything, so don't do the store
                                 doStore = false;
@@ -285,14 +286,14 @@ public class LoginServices {
                                 userErrMsgs.add(UtilProperties.getMessage(RESOURCE, "loginservices.token_incorrect", locale));
                             }
                             // increment failed login count
-                            Long currentFailedLogins = userLogin.getLong(org.apache.ofbiz.persistence.entity.x.successiveFailedLogins);
+                            Long currentFailedLogins = userLogin.getLong(x.successiveFailedLogins);
 
                             if (currentFailedLogins == null) {
                                 currentFailedLogins = 1L;
                             } else {
                                 currentFailedLogins = currentFailedLogins + 1;
                             }
-                            userLogin.set(org.apache.ofbiz.persistence.entity.x.successiveFailedLogins, currentFailedLogins);
+                            userLogin.set(x.successiveFailedLogins, currentFailedLogins);
 
                             // if failed logins over amount in properties file, disable account
                             String mflStr = EntityUtilProperties.getPropertyValue("security", "max.failed.logins", delegator);
@@ -305,8 +306,8 @@ public class LoginServices {
                             }
 
                             if (maxFailedLogins > 0 && currentFailedLogins >= maxFailedLogins) {
-                                userLogin.set(org.apache.ofbiz.persistence.entity.x.enabled, "N");
-                                userLogin.set(org.apache.ofbiz.persistence.entity.x.disabledDateTime, UtilDateTime.nowTimestamp());
+                                userLogin.set(x.enabled, "N");
+                                userLogin.set(x.disabledDateTime, UtilDateTime.nowTimestamp());
                             }
 
                             successfulLogin = "N";
@@ -347,7 +348,7 @@ public class LoginServices {
 
                                         ModelEntity modelUserLogin = userLogin.getModelEntity();
                                         if (modelUserLogin.isField("partyId")) {
-                                            ulhCreateMap.put("partyId", userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId));
+                                            ulhCreateMap.put("partyId", userLogin.get(x.partyId));
                                         }
 
                                         // ONLY save the password if it was incorrect
@@ -437,9 +438,9 @@ public class LoginServices {
                     if (externalAuth) {
                         // external auth passed - create a placeholder object for session
                         userLogin = delegator.makeValue("UserLogin");
-                        userLogin.set(org.apache.ofbiz.persistence.entity.x.userLoginId, username);
-                        userLogin.set(org.apache.ofbiz.persistence.entity.x.enabled, "Y");
-                        userLogin.set(org.apache.ofbiz.persistence.entity.x.hasLoggedOut, "N");
+                        userLogin.set(x.userLoginId, username);
+                        userLogin.set(x.enabled, "Y");
+                        userLogin.set(x.hasLoggedOut, "N");
                         result.put("userLogin", userLogin);
                         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
                         // TODO: more than this is needed to support 100% external authentication
@@ -506,14 +507,14 @@ public class LoginServices {
      * @return Map of results including (userLogin) GenericValue object
      */
     public static Map<String, Object> userImpersonate(DispatchContext ctx, Map<String, ?> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> result = ServiceUtil.returnSuccess();
 
-        String userLoginIdToImpersonate = (String) context.get(org.apache.ofbiz.persistence.entity.x.userLoginIdToImpersonate);
-        GenericValue originUserLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String userLoginIdToImpersonate = (String) context.get(x.userLoginIdToImpersonate);
+        GenericValue originUserLogin = (GenericValue) context.get(x.userLogin);
         // get the visitId for the history entity
-        String visitId = (String) context.get(org.apache.ofbiz.persistence.entity.x.visitId);
+        String visitId = (String) context.get(x.visitId);
 
         if ("true".equalsIgnoreCase(EntityUtilProperties.getPropertyValue("security", "username.lowercase", delegator))) {
             userLoginIdToImpersonate = userLoginIdToImpersonate.toLowerCase();
@@ -540,9 +541,9 @@ public class LoginServices {
         }
 
         // grab the hasLoggedOut flag
-        boolean hasLoggedOut = "Y".equalsIgnoreCase(userLogin.getString(org.apache.ofbiz.persistence.entity.x.hasLoggedOut));
-        if (hasLoggedOut || UtilValidate.isEmpty(userLogin.getString(org.apache.ofbiz.persistence.entity.x.hasLoggedOut))) {
-            userLogin.set(org.apache.ofbiz.persistence.entity.x.hasLoggedOut, "N");
+        boolean hasLoggedOut = "Y".equalsIgnoreCase(userLogin.getString(x.hasLoggedOut));
+        if (hasLoggedOut || UtilValidate.isEmpty(userLogin.getString(x.hasLoggedOut))) {
+            userLogin.set(x.hasLoggedOut, "N");
             try {
                 userLogin.store();
             } catch (GenericEntityException e) {
@@ -556,8 +557,8 @@ public class LoginServices {
         historyCreateMap.put("visitId", visitId);
         historyCreateMap.put("fromDate", UtilDateTime.nowTimestamp());
         historyCreateMap.put("successfulLogin", "Y");
-        historyCreateMap.put("partyId", userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId));
-        historyCreateMap.put("originUserLoginId", originUserLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
+        historyCreateMap.put("partyId", userLogin.get(x.partyId));
+        historyCreateMap.put("originUserLoginId", originUserLogin.get(x.userLoginId));
         // End impersonation in one hour max
         historyCreateMap.put("thruDate", UtilDateTime.adjustTimestamp(UtilDateTime.nowTimestamp(), Calendar.HOUR, 1));
         try {
@@ -586,8 +587,8 @@ public class LoginServices {
         if (userLoginToImpersonate == null) {
             return UtilProperties.getMessage(RESOURCE, "loginservices.username_missing", locale);
         }
-        String userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
-        String userLoginIdToImpersonate = userLoginToImpersonate.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
+        String userLoginId = userLogin.getString(x.userLoginId);
+        String userLoginIdToImpersonate = userLoginToImpersonate.getString(x.userLoginId);
 
         if (UtilProperties.getPropertyAsBoolean("security", "security.disable.impersonation", true)) {
             return UtilProperties.getMessage(RESOURCE, "loginevents.impersonation_disabled", locale);
@@ -620,8 +621,8 @@ public class LoginServices {
     public static void createUserLoginPasswordHistory(GenericValue userLogin) throws GenericEntityException {
         int passwordChangeHistoryLimit = 0;
         Delegator delegator = userLogin.getDelegator();
-        String userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
-        String currentPassword = userLogin.getString(org.apache.ofbiz.persistence.entity.x.currentPassword);
+        String userLoginId = userLogin.getString(x.userLoginId);
+        String currentPassword = userLogin.getString(x.currentPassword);
         try {
             passwordChangeHistoryLimit = EntityUtilProperties.getPropertyAsInteger("security", "password.change.history.limit", 0);
         } catch (NumberFormatException nfe) {
@@ -641,7 +642,7 @@ public class LoginServices {
             pwdHist = eli.next();
             if (pwdHist != null) {
                 // updating password so set end date on previous password in history
-                pwdHist.set(org.apache.ofbiz.persistence.entity.x.thruDate, nowTimestamp);
+                pwdHist.set(x.thruDate, nowTimestamp);
                 pwdHist.store();
                 // check if we have hit the limit on number of password changes to be saved. If we did then delete the oldest password from history.
                 eli.last();
@@ -657,7 +658,7 @@ public class LoginServices {
         // save this password in history
         GenericValue userLoginPwdHistToCreate = delegator.makeValue("UserLoginPasswordHistory",
                 UtilMisc.toMap("userLoginId", userLoginId, "fromDate", nowTimestamp));
-        userLoginPwdHistToCreate.set(org.apache.ofbiz.persistence.entity.x.currentPassword, currentPassword);
+        userLoginPwdHistToCreate.set(x.currentPassword, currentPassword);
         userLoginPwdHistToCreate.create();
     }
 
@@ -673,20 +674,20 @@ public class LoginServices {
         Map<String, Object> result = new LinkedHashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue loggedInUserLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue loggedInUserLogin = (GenericValue) context.get(x.userLogin);
         List<String> errorMessageList = new LinkedList<>();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
         boolean useEncryption = "true".equals(EntityUtilProperties.getPropertyValue("security", "password.encrypt", delegator));
 
-        String userLoginId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
-        String currentPassword = (String) context.get(org.apache.ofbiz.persistence.entity.x.currentPassword);
-        String currentPasswordVerify = (String) context.get(org.apache.ofbiz.persistence.entity.x.currentPasswordVerify);
-        String enabled = (String) context.get(org.apache.ofbiz.persistence.entity.x.enabled);
-        String passwordHint = (String) context.get(org.apache.ofbiz.persistence.entity.x.passwordHint);
-        String requirePasswordChange = (String) context.get(org.apache.ofbiz.persistence.entity.x.requirePasswordChange);
-        String externalAuthId = (String) context.get(org.apache.ofbiz.persistence.entity.x.externalAuthId);
+        String userLoginId = (String) context.get(x.userLoginId);
+        String partyId = (String) context.get(x.partyId);
+        String currentPassword = (String) context.get(x.currentPassword);
+        String currentPasswordVerify = (String) context.get(x.currentPasswordVerify);
+        String enabled = (String) context.get(x.enabled);
+        String passwordHint = (String) context.get(x.passwordHint);
+        String requirePasswordChange = (String) context.get(x.requirePasswordChange);
+        String externalAuthId = (String) context.get(x.externalAuthId);
         String errMsg = null;
 
         // security: don't create a user login if the specified partyId (if not empty) already exists
@@ -703,7 +704,7 @@ public class LoginServices {
             if (party != null) {
                 if (loggedInUserLogin != null) {
                     // <b>security check</b>: userLogin partyId must equal partyId, or must have PARTYMGR_CREATE permission
-                    if (!partyId.equals(loggedInUserLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId))) {
+                    if (!partyId.equals(loggedInUserLogin.getString(x.partyId))) {
                         if (!security.hasEntityPermission("PARTYMGR", "_CREATE", loggedInUserLogin)) {
 
                             errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.party_with_specified_party_ID_exists_not_have_permission",
@@ -721,13 +722,13 @@ public class LoginServices {
 
         GenericValue userLoginToCreate = delegator.makeValue("UserLogin", UtilMisc.toMap("userLoginId", userLoginId));
         checkNewPassword(userLoginToCreate, null, currentPassword, currentPasswordVerify, passwordHint, errorMessageList, true, locale);
-        userLoginToCreate.set(org.apache.ofbiz.persistence.entity.x.externalAuthId, externalAuthId);
-        userLoginToCreate.set(org.apache.ofbiz.persistence.entity.x.passwordHint, passwordHint);
-        userLoginToCreate.set(org.apache.ofbiz.persistence.entity.x.enabled, enabled);
-        userLoginToCreate.set(org.apache.ofbiz.persistence.entity.x.requirePasswordChange, requirePasswordChange);
-        userLoginToCreate.set(org.apache.ofbiz.persistence.entity.x.currentPassword, useEncryption ? HashCrypt.cryptUTF8(getHashType(), null, currentPassword) : currentPassword);
+        userLoginToCreate.set(x.externalAuthId, externalAuthId);
+        userLoginToCreate.set(x.passwordHint, passwordHint);
+        userLoginToCreate.set(x.enabled, enabled);
+        userLoginToCreate.set(x.requirePasswordChange, requirePasswordChange);
+        userLoginToCreate.set(x.currentPassword, useEncryption ? HashCrypt.cryptUTF8(getHashType(), null, currentPassword) : currentPassword);
         try {
-            userLoginToCreate.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
+            userLoginToCreate.set(x.partyId, partyId);
         } catch (Exception e) {
             // Will get thrown in framework-only installation
             Debug.logInfo(e, "Exception thrown while setting UserLogin partyId field: ", MODULE);
@@ -776,8 +777,8 @@ public class LoginServices {
     public static Map<String, Object> updatePassword(DispatchContext ctx, Map<String, ?> context) {
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue loggedInUserLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue loggedInUserLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = ServiceUtil
                 .returnSuccess(UtilProperties.getMessage(RESOURCE, "loginevents.password_was_changed_with_success", locale));
 
@@ -789,11 +790,11 @@ public class LoginServices {
         boolean useEncryption = "true".equals(EntityUtilProperties.getPropertyValue("security", "password.encrypt", delegator));
         boolean adminUser = false;
 
-        String userLoginId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+        String userLoginId = (String) context.get(x.userLoginId);
         String errMsg = null;
 
         if (UtilValidate.isEmpty(userLoginId)) {
-            userLoginId = loggedInUserLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
+            userLoginId = loggedInUserLogin.getString(x.userLoginId);
         }
 
         GenericValue userLoginToUpdate;
@@ -810,21 +811,21 @@ public class LoginServices {
         // NOTE: must check permission first so that admin users can set own password without specifying old password
         // TODO: change this security group because we can't use permission groups defined in the applications from the framework.
         if (!security.hasEntityPermission("PARTYMGR", "_UPDATE", loggedInUserLogin)) {
-            if (!userLoginId.equals(loggedInUserLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId))) {
+            if (!userLoginId.equals(loggedInUserLogin.getString(x.userLoginId))) {
                 errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.not_have_permission_update_password_for_user_login", locale);
                 return ServiceUtil.returnError(errMsg);
             }
-            if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.login_token))) {
-                adminUser = SecurityUtil.authenticateUserLoginByJWT(delegator, userLoginId, (String) context.get(org.apache.ofbiz.persistence.entity.x.login_token));
+            if (UtilValidate.isNotEmpty(context.get(x.login_token))) {
+                adminUser = SecurityUtil.authenticateUserLoginByJWT(delegator, userLoginId, (String) context.get(x.login_token));
             }
         } else {
             adminUser = true;
         }
 
-        String currentPassword = (String) context.get(org.apache.ofbiz.persistence.entity.x.currentPassword);
-        String newPassword = (String) context.get(org.apache.ofbiz.persistence.entity.x.newPassword);
-        String newPasswordVerify = (String) context.get(org.apache.ofbiz.persistence.entity.x.newPasswordVerify);
-        String passwordHint = (String) context.get(org.apache.ofbiz.persistence.entity.x.passwordHint);
+        String currentPassword = (String) context.get(x.currentPassword);
+        String newPassword = (String) context.get(x.newPassword);
+        String newPasswordVerify = (String) context.get(x.newPasswordVerify);
+        String passwordHint = (String) context.get(x.passwordHint);
 
         if (userLoginToUpdate == null) {
             // this may be a full external authenticator; first try authenticating
@@ -871,7 +872,7 @@ public class LoginServices {
             return ServiceUtil.returnError(errorMessageList);
         }
 
-        String externalAuthId = userLoginToUpdate.getString(org.apache.ofbiz.persistence.entity.x.externalAuthId);
+        String externalAuthId = userLoginToUpdate.getString(x.externalAuthId);
         if (UtilValidate.isNotEmpty(externalAuthId)) {
             // external auth is set; don't update the database record
             try {
@@ -883,11 +884,11 @@ public class LoginServices {
                 return ServiceUtil.returnError(errMsg);
             }
         } else {
-            userLoginToUpdate.set(org.apache.ofbiz.persistence.entity.x.currentPassword, useEncryption ? HashCrypt.cryptUTF8(getHashType(), null, newPassword) : newPassword, false);
-            userLoginToUpdate.set(org.apache.ofbiz.persistence.entity.x.passwordHint, passwordHint, false);
+            userLoginToUpdate.set(x.currentPassword, useEncryption ? HashCrypt.cryptUTF8(getHashType(), null, newPassword) : newPassword, false);
+            userLoginToUpdate.set(x.passwordHint, passwordHint, false);
             // optional parameter in service definition "requirePasswordChange" to update a password to a new generated value that has to be changed
             // by the user
-            userLoginToUpdate.set(org.apache.ofbiz.persistence.entity.x.requirePasswordChange, ("Y".equals(context.get(org.apache.ofbiz.persistence.entity.x.requirePasswordChange)) ? "Y" : "N"));
+            userLoginToUpdate.set(x.requirePasswordChange, ("Y".equals(context.get(x.requirePasswordChange)) ? "Y" : "N"));
 
             try {
                 userLoginToUpdate.store();
@@ -914,27 +915,27 @@ public class LoginServices {
     public static Map<String, Object> updateUserLoginId(DispatchContext ctx, Map<String, ?> context) {
         Map<String, Object> result = new LinkedHashMap<>();
         Delegator delegator = ctx.getDelegator();
-        GenericValue loggedInUserLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue loggedInUserLogin = (GenericValue) context.get(x.userLogin);
         List<String> errorMessageList = new LinkedList<>();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
-        String userLoginId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+        String userLoginId = (String) context.get(x.userLoginId);
         String errMsg = null;
 
         if ((userLoginId != null) && ("true".equals(EntityUtilProperties.getPropertyValue("security", "username.lowercase", delegator)))) {
             userLoginId = userLoginId.toLowerCase(Locale.getDefault());
         }
 
-        String partyId = loggedInUserLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
-        String password = loggedInUserLogin.getString(org.apache.ofbiz.persistence.entity.x.currentPassword);
-        String passwordHint = loggedInUserLogin.getString(org.apache.ofbiz.persistence.entity.x.passwordHint);
+        String partyId = loggedInUserLogin.getString(x.partyId);
+        String password = loggedInUserLogin.getString(x.currentPassword);
+        String passwordHint = loggedInUserLogin.getString(x.passwordHint);
 
         // security: don't create a user login if the specified partyId (if not empty) already exists
         // unless the logged in user has permission to do so (same partyId or PARTYMGR_CREATE)
         if (UtilValidate.isNotEmpty(partyId)) {
             if (!loggedInUserLogin.isEmpty()) {
                 // security check: userLogin partyId must equal partyId, or must have PARTYMGR_CREATE permission
-                if (!partyId.equals(loggedInUserLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId))) {
+                if (!partyId.equals(loggedInUserLogin.getString(x.partyId))) {
                     errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.party_with_party_id_exists_not_permission_create_user_login", locale);
                     errorMessageList.add(errMsg);
                 }
@@ -958,7 +959,7 @@ public class LoginServices {
         }
 
         if (newUserLogin != null) {
-            if (!newUserLogin.get(org.apache.ofbiz.persistence.entity.x.partyId).equals(partyId)) {
+            if (!newUserLogin.get(x.partyId).equals(partyId)) {
                 Map<String, String> messageMap = UtilMisc.toMap("userLoginId", userLoginId);
                 errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_create_login_user_with_ID_exists", messageMap, locale);
                 errorMessageList.add(errMsg);
@@ -969,11 +970,11 @@ public class LoginServices {
             newUserLogin = delegator.makeValue("UserLogin", UtilMisc.toMap("userLoginId", userLoginId));
         }
 
-        newUserLogin.set(org.apache.ofbiz.persistence.entity.x.passwordHint, passwordHint);
-        newUserLogin.set(org.apache.ofbiz.persistence.entity.x.partyId, partyId);
-        newUserLogin.set(org.apache.ofbiz.persistence.entity.x.currentPassword, password);
-        newUserLogin.set(org.apache.ofbiz.persistence.entity.x.enabled, "Y");
-        newUserLogin.set(org.apache.ofbiz.persistence.entity.x.disabledDateTime, null);
+        newUserLogin.set(x.passwordHint, passwordHint);
+        newUserLogin.set(x.partyId, partyId);
+        newUserLogin.set(x.currentPassword, password);
+        newUserLogin.set(x.enabled, "Y");
+        newUserLogin.set(x.disabledDateTime, null);
 
         if (!errorMessageList.isEmpty()) {
             return ServiceUtil.returnError(errorMessageList);
@@ -993,8 +994,8 @@ public class LoginServices {
         }
 
         // Deactivate 'old' UserLogin and do not set disabledDateTime here, otherwise the 'old' UserLogin would be reenabled by next login
-        loggedInUserLogin.set(org.apache.ofbiz.persistence.entity.x.enabled, "N");
-        loggedInUserLogin.set(org.apache.ofbiz.persistence.entity.x.disabledDateTime, null);
+        loggedInUserLogin.set(x.enabled, "N");
+        loggedInUserLogin.set(x.disabledDateTime, null);
 
         try {
             loggedInUserLogin.store();
@@ -1022,14 +1023,14 @@ public class LoginServices {
         Map<String, Object> result = new LinkedHashMap<>();
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue loggedInUserLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue loggedInUserLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
-        String userLoginId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+        String userLoginId = (String) context.get(x.userLoginId);
         String errMsg = null;
 
         if (UtilValidate.isEmpty(userLoginId)) {
-            userLoginId = loggedInUserLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
+            userLoginId = loggedInUserLogin.getString(x.userLoginId);
         }
 
         // <b>security check</b>: must have PARTYMGR_UPDATE permission
@@ -1055,35 +1056,35 @@ public class LoginServices {
             return ServiceUtil.returnError(errMsg);
         }
 
-        boolean wasEnabled = !"N".equals(userLoginToUpdate.get(org.apache.ofbiz.persistence.entity.x.enabled));
+        boolean wasEnabled = !"N".equals(userLoginToUpdate.get(x.enabled));
 
         if (context.containsKey("enabled")) {
-            userLoginToUpdate.set(org.apache.ofbiz.persistence.entity.x.enabled, context.get(org.apache.ofbiz.persistence.entity.x.enabled), true);
+            userLoginToUpdate.set(x.enabled, context.get(x.enabled), true);
         }
         if (context.containsKey("disabledDateTime")) {
-            userLoginToUpdate.set(org.apache.ofbiz.persistence.entity.x.disabledDateTime, context.get(org.apache.ofbiz.persistence.entity.x.disabledDateTime), true);
+            userLoginToUpdate.set(x.disabledDateTime, context.get(x.disabledDateTime), true);
         }
         if (context.containsKey("successiveFailedLogins")) {
-            userLoginToUpdate.set(org.apache.ofbiz.persistence.entity.x.successiveFailedLogins, context.get(org.apache.ofbiz.persistence.entity.x.successiveFailedLogins), true);
+            userLoginToUpdate.set(x.successiveFailedLogins, context.get(x.successiveFailedLogins), true);
         }
         if (context.containsKey("externalAuthId")) {
-            userLoginToUpdate.set(org.apache.ofbiz.persistence.entity.x.externalAuthId, context.get(org.apache.ofbiz.persistence.entity.x.externalAuthId), true);
+            userLoginToUpdate.set(x.externalAuthId, context.get(x.externalAuthId), true);
         }
         if (context.containsKey("userLdapDn")) {
-            userLoginToUpdate.set(org.apache.ofbiz.persistence.entity.x.userLdapDn, context.get(org.apache.ofbiz.persistence.entity.x.userLdapDn), true);
+            userLoginToUpdate.set(x.userLdapDn, context.get(x.userLdapDn), true);
         }
         if (context.containsKey("requirePasswordChange")) {
-            userLoginToUpdate.set(org.apache.ofbiz.persistence.entity.x.requirePasswordChange, context.get(org.apache.ofbiz.persistence.entity.x.requirePasswordChange), true);
+            userLoginToUpdate.set(x.requirePasswordChange, context.get(x.requirePasswordChange), true);
         }
 
         // if was disabled and we are enabling it, clear disabledDateTime
-        if (!wasEnabled && "Y".equals(context.get(org.apache.ofbiz.persistence.entity.x.enabled))) {
-            userLoginToUpdate.set(org.apache.ofbiz.persistence.entity.x.disabledDateTime, null);
-            userLoginToUpdate.set(org.apache.ofbiz.persistence.entity.x.disabledBy, null);
+        if (!wasEnabled && "Y".equals(context.get(x.enabled))) {
+            userLoginToUpdate.set(x.disabledDateTime, null);
+            userLoginToUpdate.set(x.disabledBy, null);
         }
 
-        if ("N".equals(context.get(org.apache.ofbiz.persistence.entity.x.enabled))) {
-            userLoginToUpdate.set(org.apache.ofbiz.persistence.entity.x.disabledBy, loggedInUserLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
+        if ("N".equals(context.get(x.enabled))) {
+            userLoginToUpdate.set(x.disabledBy, loggedInUserLogin.getString(x.userLoginId));
         }
 
         try {
@@ -1108,12 +1109,12 @@ public class LoginServices {
         // if it's a system account (aka adminUser) don't bother checking the passwords
         if (!ignoreCurrentPassword) {
             // if the password.accept.encrypted.and.plain property in security is set to true allow plain or encrypted passwords
-            boolean passwordMatches = checkPassword(userLogin.getString(org.apache.ofbiz.persistence.entity.x.currentPassword), useEncryption, currentPassword);
+            boolean passwordMatches = checkPassword(userLogin.getString(x.currentPassword), useEncryption, currentPassword);
             if ((currentPassword == null) || (!passwordMatches)) {
                 errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.old_password_not_correct_reenter", locale);
                 errorMessageList.add(errMsg);
             }
-            if (checkPassword(userLogin.getString(org.apache.ofbiz.persistence.entity.x.currentPassword), useEncryption, newPassword)) {
+            if (checkPassword(userLogin.getString(x.currentPassword), useEncryption, newPassword)) {
                 errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.new_password_is_equal_to_old_password", locale);
                 errorMessageList.add(errMsg);
             }
@@ -1140,9 +1141,9 @@ public class LoginServices {
             Debug.logInfo(" checkNewPassword Checking if user is tyring to use old password " + passwordChangeHistoryLimit, MODULE);
             try {
                 List<GenericValue> pwdHistList = EntityQuery.use(delegator).from("UserLoginPasswordHistory")
-                        .where("userLoginId", userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId)).orderBy("-fromDate").queryList();
+                        .where("userLoginId", userLogin.getString(x.userLoginId)).orderBy("-fromDate").queryList();
                 for (GenericValue pwdHistValue : pwdHistList) {
-                    if (checkPassword(pwdHistValue.getString(org.apache.ofbiz.persistence.entity.x.currentPassword), useEncryption, newPassword)) {
+                    if (checkPassword(pwdHistValue.getString(x.currentPassword), useEncryption, newPassword)) {
                         Map<String, Integer> messageMap = UtilMisc.toMap("passwordChangeHistoryLimit", passwordChangeHistoryLimit);
                         errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.password_must_be_different_from_last_passwords", messageMap,
                                 locale);
@@ -1188,7 +1189,7 @@ public class LoginServices {
                     errorMessageList.add(errMsg);
                 }
             }
-            if (newPassword.equalsIgnoreCase(userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId))) {
+            if (newPassword.equalsIgnoreCase(userLogin.getString(x.userLoginId))) {
                 errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.password_may_not_equal_username", locale);
                 errorMessageList.add(errMsg);
             }

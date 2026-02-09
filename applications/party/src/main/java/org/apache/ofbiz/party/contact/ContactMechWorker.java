@@ -50,6 +50,7 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Worker methods for Contact Mechanisms
  */
@@ -86,7 +87,7 @@ public final class ContactMechWorker {
         if (entityName != null) {
             GenericValue element = delegator.makeValue(entityName);
             element.setAllFields(fields, false, prefix, null);
-            element.set(org.apache.ofbiz.persistence.entity.x.contactMechId, fields.get("contactMechId"));
+            element.set(x.contactMechId, fields.get("contactMechId"));
             elementMap.put(ModelUtil.lowerFirstChar(entityName), element);
         }
     }
@@ -149,7 +150,7 @@ public final class ContactMechWorker {
 
             ContactMechWorker.insertRelatedContactElement(delegator, partyContactMechValueMap, fields);
             List<GenericValue> partyContactMechPurposes = EntityUtil.filterByAnd(allPartyContactMechPurposes, UtilMisc.toMap("contactMechId",
-                    partyContactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechId)));
+                    partyContactMech.getString(x.contactMechId)));
             partyContactMechValueMap.put("partyContactMechPurposes", partyContactMechPurposes);
         }
 
@@ -210,7 +211,7 @@ public final class ContactMechWorker {
 
             ContactMechWorker.insertRelatedContactElement(delegator, facilityContactMechValueMap, fields);
             List<GenericValue> facilityContactMechPurposes = EntityUtil.filterByAnd(allFacilityContactMechPurposes,
-                    UtilMisc.toMap("contactMechId", facilityContactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechId)));
+                    UtilMisc.toMap("contactMechId", facilityContactMech.getString(x.contactMechId)));
             facilityContactMechValueMap.put("facilityContactMechPurposes", facilityContactMechPurposes);
         }
 
@@ -338,7 +339,7 @@ public final class ContactMechWorker {
                 Collection<GenericValue> partyContactMechPurposes = null;
 
                 try {
-                    partyContactMechPurposes = EntityUtil.filterByDate(partyContactMech.getRelated(org.apache.ofbiz.persistence.entity.x.PartyContactMechPurpose, null,
+                    partyContactMechPurposes = EntityUtil.filterByDate(partyContactMech.getRelated(x.PartyContactMechPurpose, null,
                             null, false), true);
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e, MODULE);
@@ -356,7 +357,7 @@ public final class ContactMechWorker {
 
             if (contactMech != null) {
                 target.put("contactMech", contactMech);
-                contactMechTypeId = contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechTypeId);
+                contactMechTypeId = contactMech.getString(x.contactMechTypeId);
             }
         }
 
@@ -389,7 +390,7 @@ public final class ContactMechWorker {
                 GenericValue contactMechPurposeType = null;
 
                 try {
-                    contactMechPurposeType = contactMechTypePurpose.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ContactMechPurposeType, false);
+                    contactMechPurposeType = contactMechTypePurpose.getRelatedOne(x.ContactMechPurposeType, false);
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e, MODULE);
                 }
@@ -442,7 +443,7 @@ public final class ContactMechWorker {
 
             try {
                 if (contactMech != null) {
-                    postalAddress = contactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
+                    postalAddress = contactMech.getRelatedOne(x.PostalAddress, false);
                 }
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, MODULE);
@@ -455,7 +456,7 @@ public final class ContactMechWorker {
 
             try {
                 if (contactMech != null) {
-                    telecomNumber = contactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.TelecomNumber, false);
+                    telecomNumber = contactMech.getRelatedOne(x.TelecomNumber, false);
                 }
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, MODULE);
@@ -468,7 +469,7 @@ public final class ContactMechWorker {
 
             try {
                 if (contactMech != null) {
-                    ftpAddress = contactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FtpAddress, false);
+                    ftpAddress = contactMech.getRelatedOne(x.FtpAddress, false);
                 }
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, MODULE);
@@ -526,7 +527,7 @@ public final class ContactMechWorker {
                 continue;
             }
             for (GenericValue facilityContactMechPurpose: facilityContactMechPurposes) {
-                String contactMechId = facilityContactMechPurpose.getString(org.apache.ofbiz.persistence.entity.x.contactMechId);
+                String contactMechId = facilityContactMechPurpose.getString(x.contactMechId);
                 List<GenericValue> facilityContactMechs = null;
                 conditionList = new LinkedList<>();
                 conditionList.add(EntityCondition.makeCondition("facilityId", facilityId));
@@ -611,7 +612,7 @@ public final class ContactMechWorker {
                 Collection<GenericValue> facilityContactMechPurposes = null;
 
                 try {
-                    facilityContactMechPurposes = EntityUtil.filterByDate(facilityContactMech.getRelated(org.apache.ofbiz.persistence.entity.x.FacilityContactMechPurpose,
+                    facilityContactMechPurposes = EntityUtil.filterByDate(facilityContactMech.getRelated(x.FacilityContactMechPurpose,
                             null, null, false), true);
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e, MODULE);
@@ -629,7 +630,7 @@ public final class ContactMechWorker {
 
             if (contactMech != null) {
                 target.put("contactMech", contactMech);
-                contactMechTypeId = contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechTypeId);
+                contactMechTypeId = contactMech.getString(x.contactMechTypeId);
             }
         }
 
@@ -662,7 +663,7 @@ public final class ContactMechWorker {
                 GenericValue contactMechPurposeType = null;
 
                 try {
-                    contactMechPurposeType = contactMechTypePurpose.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ContactMechPurposeType, false);
+                    contactMechPurposeType = contactMechTypePurpose.getRelatedOne(x.ContactMechPurposeType, false);
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e, MODULE);
                 }
@@ -711,7 +712,7 @@ public final class ContactMechWorker {
 
             try {
                 if (contactMech != null) {
-                    postalAddress = contactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
+                    postalAddress = contactMech.getRelatedOne(x.PostalAddress, false);
                 }
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, MODULE);
@@ -724,7 +725,7 @@ public final class ContactMechWorker {
 
             try {
                 if (contactMech != null) {
-                    telecomNumber = contactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.TelecomNumber, false);
+                    telecomNumber = contactMech.getRelatedOne(x.TelecomNumber, false);
                 }
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, MODULE);
@@ -770,11 +771,11 @@ public final class ContactMechWorker {
             GenericValue contactMech = null;
 
             try {
-                contactMech = partyContactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ContactMech, false);
+                contactMech = partyContactMech.getRelatedOne(x.ContactMech, false);
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, MODULE);
             }
-            if (contactMech != null && "POSTAL_ADDRESS".equals(contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechTypeId)) && !contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechId)
+            if (contactMech != null && "POSTAL_ADDRESS".equals(contactMech.getString(x.contactMechTypeId)) && !contactMech.getString(x.contactMechId)
                     .equals(curContactMechId)) {
                 Map<String, Object> postalAddressInfo = new HashMap<>();
 
@@ -783,14 +784,14 @@ public final class ContactMechWorker {
                 postalAddressInfo.put("partyContactMech", partyContactMech);
 
                 try {
-                    GenericValue postalAddress = contactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
+                    GenericValue postalAddress = contactMech.getRelatedOne(x.PostalAddress, false);
                     postalAddressInfo.put("postalAddress", postalAddress);
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e, MODULE);
                 }
 
                 try {
-                    List<GenericValue> partyContactMechPurposes = EntityUtil.filterByDate(partyContactMech.getRelated(org.apache.ofbiz.persistence.entity.x.PartyContactMechPurpose,
+                    List<GenericValue> partyContactMechPurposes = EntityUtil.filterByDate(partyContactMech.getRelated(x.PartyContactMechPurpose,
                             null, null, false), true);
                     postalAddressInfo.put("partyContactMechPurposes", partyContactMechPurposes);
                 } catch (GenericEntityException e) {
@@ -823,14 +824,14 @@ public final class ContactMechWorker {
             GenericValue curContactMech = null;
             if (curPartyContactMech != null) {
                 try {
-                    curContactMech = curPartyContactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ContactMech, false);
+                    curContactMech = curPartyContactMech.getRelatedOne(x.ContactMech, false);
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e, MODULE);
                 }
 
                 Collection<GenericValue> curPartyContactMechPurposes = null;
                 try {
-                    curPartyContactMechPurposes = EntityUtil.filterByDate(curPartyContactMech.getRelated(org.apache.ofbiz.persistence.entity.x.PartyContactMechPurpose,
+                    curPartyContactMechPurposes = EntityUtil.filterByDate(curPartyContactMech.getRelated(x.PartyContactMechPurpose,
                             null, null, false), true);
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e, MODULE);
@@ -842,7 +843,7 @@ public final class ContactMechWorker {
             GenericValue curPostalAddress = null;
             if (curContactMech != null) {
                 try {
-                    curPostalAddress = curContactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
+                    curPostalAddress = curContactMech.getRelatedOne(x.PostalAddress, false);
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e, MODULE);
                 }
@@ -864,8 +865,8 @@ public final class ContactMechWorker {
         }
 
         // get and clean the address strings
-        String addr1 = postalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1);
-        String addr2 = postalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2);
+        String addr1 = postalAddress.getString(x.address1);
+        String addr2 = postalAddress.getString(x.address2);
 
         // get the matching string from general.properties
         String matcher = EntityUtilProperties.getPropertyValue("general", "usps.address.match", postalAddress.getDelegator());
@@ -895,9 +896,9 @@ public final class ContactMechWorker {
             return false;
         }
 
-        String state = postalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId);
-        String addr1 = postalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1);
-        String addr2 = postalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2);
+        String state = postalAddress.getString(x.stateProvinceGeoId);
+        String addr1 = postalAddress.getString(x.address1);
+        String addr2 = postalAddress.getString(x.address2);
         if (state != null) {
             state = state.replaceAll("\\W", "").toLowerCase(Locale.getDefault());
         } else {
@@ -924,7 +925,7 @@ public final class ContactMechWorker {
                     .queryList();
             if (partyContactMechs != null) {
                 for (GenericValue pcm: partyContactMechs) {
-                    GenericValue addr = pcm.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PostalAddress, false);
+                    GenericValue addr = pcm.getRelatedOne(x.PostalAddress, false);
                     if (addr != null) {
                         postalAddresses.add(addr);
                     }
@@ -935,9 +936,9 @@ public final class ContactMechWorker {
         }
 
         for (GenericValue addr: postalAddresses) {
-            String thisAddr1 = addr.getString(org.apache.ofbiz.persistence.entity.x.address1);
-            String thisAddr2 = addr.getString(org.apache.ofbiz.persistence.entity.x.address2);
-            String thisState = addr.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId);
+            String thisAddr1 = addr.getString(x.address1);
+            String thisAddr2 = addr.getString(x.address2);
+            String thisState = addr.getString(x.stateProvinceGeoId);
             if (thisState != null) {
                 thisState = thisState.replaceAll("\\W", "").toLowerCase(Locale.getDefault());
             } else {
@@ -971,53 +972,53 @@ public final class ContactMechWorker {
         if (attr == null) {
             return null;
         } else {
-            return attr.getString(org.apache.ofbiz.persistence.entity.x.attrValue);
+            return attr.getString(x.attrValue);
         }
     }
 
     public static String getPostalAddressPostalCodeGeoId(GenericValue postalAddress, Delegator delegator) throws GenericEntityException {
         // if postalCodeGeoId not empty use that
-        if (UtilValidate.isNotEmpty(postalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId))) {
-            return postalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId);
+        if (UtilValidate.isNotEmpty(postalAddress.getString(x.postalCodeGeoId))) {
+            return postalAddress.getString(x.postalCodeGeoId);
         }
 
         // no postalCodeGeoId, see if there is a Geo record matching the countryGeoId and postalCode fields
-        if (UtilValidate.isNotEmpty(postalAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId)) && UtilValidate.isNotEmpty(postalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode))) {
+        if (UtilValidate.isNotEmpty(postalAddress.getString(x.countryGeoId)) && UtilValidate.isNotEmpty(postalAddress.getString(x.postalCode))) {
             // first try the shortcut with the geoId convention for "{countryGeoId}-{postalCode}"
-            GenericValue geo = EntityQuery.use(delegator).from("Geo").where("geoId", postalAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId) + "-"
-                    + postalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode)).cache().queryOne();
+            GenericValue geo = EntityQuery.use(delegator).from("Geo").where("geoId", postalAddress.getString(x.countryGeoId) + "-"
+                    + postalAddress.getString(x.postalCode)).cache().queryOne();
             if (geo != null) {
                 // save the value to the database for quicker future reference
                 if (postalAddress.isMutable()) {
-                    postalAddress.set(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId, geo.getString(org.apache.ofbiz.persistence.entity.x.geoId));
+                    postalAddress.set(x.postalCodeGeoId, geo.getString(x.geoId));
                     postalAddress.store();
                 } else {
                     GenericValue mutablePostalAddress = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId",
-                            postalAddress.getString(org.apache.ofbiz.persistence.entity.x.contactMechId)).queryOne();
-                    mutablePostalAddress.set(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId, geo.getString(org.apache.ofbiz.persistence.entity.x.geoId));
+                            postalAddress.getString(x.contactMechId)).queryOne();
+                    mutablePostalAddress.set(x.postalCodeGeoId, geo.getString(x.geoId));
                     mutablePostalAddress.store();
                 }
 
-                return geo.getString(org.apache.ofbiz.persistence.entity.x.geoId);
+                return geo.getString(x.geoId);
             }
 
             // no shortcut, try the longcut to see if there is something with a geoCode associated to the countryGeoId
             GenericValue geoAssocAndGeoTo = EntityQuery.use(delegator).from("GeoAssocAndGeoTo")
-                    .where("geoIdFrom", postalAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId), "geoCode", postalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode),
+                    .where("geoIdFrom", postalAddress.getString(x.countryGeoId), "geoCode", postalAddress.getString(x.postalCode),
                             "geoAssocTypeId", "REGIONS").cache(true).queryFirst();
             if (geoAssocAndGeoTo != null) {
                 // save the value to the database for quicker future reference
                 if (postalAddress.isMutable()) {
-                    postalAddress.set(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId, geoAssocAndGeoTo.getString(org.apache.ofbiz.persistence.entity.x.geoId));
+                    postalAddress.set(x.postalCodeGeoId, geoAssocAndGeoTo.getString(x.geoId));
                     postalAddress.store();
                 } else {
                     GenericValue mutablePostalAddress = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId",
-                            postalAddress.getString(org.apache.ofbiz.persistence.entity.x.contactMechId)).queryOne();
-                    mutablePostalAddress.set(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId, geoAssocAndGeoTo.getString(org.apache.ofbiz.persistence.entity.x.geoId));
+                            postalAddress.getString(x.contactMechId)).queryOne();
+                    mutablePostalAddress.set(x.postalCodeGeoId, geoAssocAndGeoTo.getString(x.geoId));
                     mutablePostalAddress.store();
                 }
 
-                return geoAssocAndGeoTo.getString(org.apache.ofbiz.persistence.entity.x.geoId);
+                return geoAssocAndGeoTo.getString(x.geoId);
             }
         }
 
@@ -1038,33 +1039,33 @@ public final class ContactMechWorker {
             throw new IllegalArgumentException("postalAddress argument is not a PostalAddress entity");
         }
         StringBuilder sb = new StringBuilder();
-        if (postalAddress.get(org.apache.ofbiz.persistence.entity.x.address1) != null) {
-            sb.append(postalAddress.get(org.apache.ofbiz.persistence.entity.x.address1));
+        if (postalAddress.get(x.address1) != null) {
+            sb.append(postalAddress.get(x.address1));
         }
-        if (postalAddress.get(org.apache.ofbiz.persistence.entity.x.address2) != null) {
-            sb.append(", ").append(postalAddress.get(org.apache.ofbiz.persistence.entity.x.address2));
+        if (postalAddress.get(x.address2) != null) {
+            sb.append(", ").append(postalAddress.get(x.address2));
         }
-        if (postalAddress.get(org.apache.ofbiz.persistence.entity.x.city) != null) {
-            sb.append(", ").append(postalAddress.get(org.apache.ofbiz.persistence.entity.x.city));
+        if (postalAddress.get(x.city) != null) {
+            sb.append(", ").append(postalAddress.get(x.city));
         }
-        if (postalAddress.get(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId) != null) {
-            GenericValue geoValue = postalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.StateProvinceGeo, false);
+        if (postalAddress.get(x.stateProvinceGeoId) != null) {
+            GenericValue geoValue = postalAddress.getRelatedOne(x.StateProvinceGeo, false);
             if (geoValue != null) {
-                sb.append(", ").append(geoValue.get(org.apache.ofbiz.persistence.entity.x.geoName));
+                sb.append(", ").append(geoValue.get(x.geoName));
             }
-        } else if (postalAddress.get(org.apache.ofbiz.persistence.entity.x.countyGeoId) != null) {
-            GenericValue geoValue = postalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountyGeo, false);
+        } else if (postalAddress.get(x.countyGeoId) != null) {
+            GenericValue geoValue = postalAddress.getRelatedOne(x.CountyGeo, false);
             if (geoValue != null) {
-                sb.append(", ").append(geoValue.get(org.apache.ofbiz.persistence.entity.x.geoName));
+                sb.append(", ").append(geoValue.get(x.geoName));
             }
         }
-        if (postalAddress.get(org.apache.ofbiz.persistence.entity.x.postalCode) != null) {
-            sb.append(", ").append(postalAddress.get(org.apache.ofbiz.persistence.entity.x.postalCode));
+        if (postalAddress.get(x.postalCode) != null) {
+            sb.append(", ").append(postalAddress.get(x.postalCode));
         }
-        if (postalAddress.get(org.apache.ofbiz.persistence.entity.x.countryGeoId) != null) {
-            GenericValue geoValue = postalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
+        if (postalAddress.get(x.countryGeoId) != null) {
+            GenericValue geoValue = postalAddress.getRelatedOne(x.CountryGeo, false);
             if (geoValue != null) {
-                sb.append(", ").append(geoValue.get(org.apache.ofbiz.persistence.entity.x.geoName));
+                sb.append(", ").append(geoValue.get(x.geoName));
             }
         }
         String postalAddressString = sb.toString().trim();

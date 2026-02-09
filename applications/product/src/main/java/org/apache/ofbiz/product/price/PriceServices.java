@@ -50,6 +50,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * PriceServices - Workers and Services class for product price related functionality
  */
@@ -87,23 +88,23 @@ public class PriceServices {
         Map<String, Object> result = new HashMap<>();
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
 
-        GenericValue product = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.product);
-        String productId = product.getString(org.apache.ofbiz.persistence.entity.x.productId);
-        String prodCatalogId = (String) context.get(org.apache.ofbiz.persistence.entity.x.prodCatalogId);
-        String webSiteId = (String) context.get(org.apache.ofbiz.persistence.entity.x.webSiteId);
-        String checkIncludeVat = (String) context.get(org.apache.ofbiz.persistence.entity.x.checkIncludeVat);
-        String surveyResponseId = (String) context.get(org.apache.ofbiz.persistence.entity.x.surveyResponseId);
-        Map<String, Object> customAttributes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.customAttributes));
+        GenericValue product = (GenericValue) context.get(x.product);
+        String productId = product.getString(x.productId);
+        String prodCatalogId = (String) context.get(x.prodCatalogId);
+        String webSiteId = (String) context.get(x.webSiteId);
+        String checkIncludeVat = (String) context.get(x.checkIncludeVat);
+        String surveyResponseId = (String) context.get(x.surveyResponseId);
+        Map<String, Object> customAttributes = UtilGenerics.cast(context.get(x.customAttributes));
 
-        String findAllQuantityPricesStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.findAllQuantityPrices);
+        String findAllQuantityPricesStr = (String) context.get(x.findAllQuantityPrices);
         boolean findAllQuantityPrices = "Y".equals(findAllQuantityPricesStr);
-        boolean optimizeForLargeRuleSet = "Y".equals(context.get(org.apache.ofbiz.persistence.entity.x.optimizeForLargeRuleSet));
+        boolean optimizeForLargeRuleSet = "Y".equals(context.get(x.optimizeForLargeRuleSet));
 
-        String agreementId = (String) context.get(org.apache.ofbiz.persistence.entity.x.agreementId);
+        String agreementId = (String) context.get(x.agreementId);
 
-        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
-        String productStoreGroupId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreGroupId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String productStoreId = (String) context.get(x.productStoreId);
+        String productStoreGroupId = (String) context.get(x.productStoreGroupId);
+        Locale locale = (Locale) context.get(x.locale);
 
         GenericValue productStore = null;
         try {
@@ -117,8 +118,8 @@ public class PriceServices {
         if (UtilValidate.isEmpty(productStoreGroupId)) {
             if (productStore != null) {
                 try {
-                    if (UtilValidate.isNotEmpty(productStore.getString(org.apache.ofbiz.persistence.entity.x.primaryStoreGroupId))) {
-                        productStoreGroupId = productStore.getString(org.apache.ofbiz.persistence.entity.x.primaryStoreGroupId);
+                    if (UtilValidate.isNotEmpty(productStore.getString(x.primaryStoreGroupId))) {
+                        productStoreGroupId = productStore.getString(x.primaryStoreGroupId);
                     } else {
                         // no ProductStore.primaryStoreGroupId, try ProductStoreGroupMember
                         List<GenericValue> productStoreGroupMemberList = EntityQuery.use(delegator).from("ProductStoreGroupMember")
@@ -126,7 +127,7 @@ public class PriceServices {
                         productStoreGroupMemberList = EntityUtil.filterByDate(productStoreGroupMemberList, true);
                         if (!productStoreGroupMemberList.isEmpty()) {
                             GenericValue productStoreGroupMember = EntityUtil.getFirst(productStoreGroupMemberList);
-                            productStoreGroupId = productStoreGroupMember.getString(org.apache.ofbiz.persistence.entity.x.productStoreGroupId);
+                            productStoreGroupId = productStoreGroupMember.getString(x.productStoreGroupId);
                         }
                     }
                 } catch (GenericEntityException e) {
@@ -143,29 +144,29 @@ public class PriceServices {
         }
 
         // if currencyUomId is null get from properties file, if nothing there assume USD (USD: American Dollar) for now
-        String currencyDefaultUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.currencyUomId);
-        String currencyUomIdTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.currencyUomIdTo);
+        String currencyDefaultUomId = (String) context.get(x.currencyUomId);
+        String currencyUomIdTo = (String) context.get(x.currencyUomIdTo);
         if (UtilValidate.isEmpty(currencyDefaultUomId)) {
-            if (productStore != null && UtilValidate.isNotEmpty(productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultCurrencyUomId))) {
-                currencyDefaultUomId = productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultCurrencyUomId);
+            if (productStore != null && UtilValidate.isNotEmpty(productStore.getString(x.defaultCurrencyUomId))) {
+                currencyDefaultUomId = productStore.getString(x.defaultCurrencyUomId);
             } else {
                 currencyDefaultUomId = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
             }
         }
 
         // productPricePurposeId is null assume "PURCHASE", which is equivalent to what prices were before the purpose concept
-        String productPricePurposeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productPricePurposeId);
+        String productPricePurposeId = (String) context.get(x.productPricePurposeId);
         if (UtilValidate.isEmpty(productPricePurposeId)) {
             productPricePurposeId = "PURCHASE";
         }
 
         // termUomId, for things like recurring prices specifies the term (time/frequency measure for example) of the recurrence
         // if this is empty it will simply not be used to constrain the selection
-        String termUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.termUomId);
+        String termUomId = (String) context.get(x.termUomId);
 
         // if this product is variant, find the virtual product and apply checks to it as well
         String virtualProductId = null;
-        if ("Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.isVariant))) {
+        if ("Y".equals(product.getString(x.isVariant))) {
             try {
                 virtualProductId = ProductWorker.getVariantVirtualId(product);
             } catch (GenericEntityException e) {
@@ -188,22 +189,22 @@ public class PriceServices {
         }
 
         // NOTE: partyId CAN be null
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
-        if (UtilValidate.isEmpty(partyId) && context.get(org.apache.ofbiz.persistence.entity.x.userLogin) != null) {
-            GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-            partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+        String partyId = (String) context.get(x.partyId);
+        if (UtilValidate.isEmpty(partyId) && context.get(x.userLogin) != null) {
+            GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+            partyId = userLogin.getString(x.partyId);
         }
 
         // check for auto-userlogin for price rules
-        if (UtilValidate.isEmpty(partyId) && context.get(org.apache.ofbiz.persistence.entity.x.autoUserLogin) != null) {
-            GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.autoUserLogin);
-            partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+        if (UtilValidate.isEmpty(partyId) && context.get(x.autoUserLogin) != null) {
+            GenericValue userLogin = (GenericValue) context.get(x.autoUserLogin);
+            partyId = userLogin.getString(x.partyId);
         }
 
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
         if (quantity == null) quantity = BigDecimal.ONE;
 
-        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
+        BigDecimal amount = (BigDecimal) context.get(x.amount);
 
         List<EntityCondition> productPriceEcList = new LinkedList<>();
         productPriceEcList.add(EntityCondition.makeCondition("productId", EntityOperator.EQUALS, productId));
@@ -245,7 +246,7 @@ public class PriceServices {
             try {
                 GenericValue agreementPriceValue = EntityQuery.use(delegator).from("AgreementItemAndProductAppl").where("agreementId", agreementId,
                         "productId", productId, "currencyUomId", currencyDefaultUomId).queryFirst();
-                if (agreementPriceValue != null && agreementPriceValue.get(org.apache.ofbiz.persistence.entity.x.price) != null) {
+                if (agreementPriceValue != null && agreementPriceValue.get(x.price) != null) {
                     defaultPriceValue = agreementPriceValue;
                 }
             } catch (GenericEntityException e) {
@@ -264,30 +265,30 @@ public class PriceServices {
         GenericValue specialPromoPriceValue = getPriceValueForType("SPECIAL_PROMO_PRICE", productPrices, virtualProductPrices);
 
         // now if this is a virtual product check each price type, if doesn't exist get from variant with lowest DEFAULT_PRICE
-        if ("Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.isVirtual))) {
+        if ("Y".equals(product.getString(x.isVirtual))) {
             // only do this if there is no default price, consider the others optional for performance reasons
             if (defaultPriceValue == null) {
                 //use the cache to find the variant with the lowest default price
                 try {
-                    List<GenericValue> variantAssocList = EntityQuery.use(delegator).from("ProductAssoc").where("productId", product.get(org.apache.ofbiz.persistence.entity.x.productId),
+                    List<GenericValue> variantAssocList = EntityQuery.use(delegator).from("ProductAssoc").where("productId", product.get(x.productId),
                             "productAssocTypeId", "PRODUCT_VARIANT").orderBy("-fromDate").cache(true).filterByDate().queryList();
                     BigDecimal minDefaultPrice = null;
                     List<GenericValue> variantProductPrices = null;
                     for (GenericValue variantAssoc: variantAssocList) {
-                        String curVariantProductId = variantAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo);
+                        String curVariantProductId = variantAssoc.getString(x.productIdTo);
                         List<GenericValue> curVariantPriceList = EntityQuery.use(delegator).from("ProductPrice")
                                 .where("productId", curVariantProductId).orderBy("-fromDate").cache(true).filterByDate(nowTimestamp).queryList();
                         List<GenericValue> tempDefaultPriceList = EntityUtil.filterByAnd(curVariantPriceList, UtilMisc.toMap("productPriceTypeId",
                                 "DEFAULT_PRICE"));
                         GenericValue curDefaultPriceValue = EntityUtil.getFirst(tempDefaultPriceList);
                         if (curDefaultPriceValue != null) {
-                            BigDecimal curDefaultPrice = curDefaultPriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price);
+                            BigDecimal curDefaultPrice = curDefaultPriceValue.getBigDecimal(x.price);
                             if (minDefaultPrice == null || curDefaultPrice.compareTo(minDefaultPrice) < 0) {
                                 // check to see if the product is discontinued for sale before considering it the lowest price
                                 GenericValue curVariantProduct = EntityQuery.use(delegator).from("Product").where("productId", curVariantProductId)
                                         .cache().queryOne();
                                 if (curVariantProduct != null) {
-                                    Timestamp salesDiscontinuationDate = curVariantProduct.getTimestamp(org.apache.ofbiz.persistence.entity.x.salesDiscontinuationDate);
+                                    Timestamp salesDiscontinuationDate = curVariantProduct.getTimestamp(x.salesDiscontinuationDate);
                                     if (salesDiscontinuationDate == null || salesDiscontinuationDate.after(nowTimestamp)) {
                                         minDefaultPrice = curDefaultPrice;
                                         variantProductPrices = curVariantPriceList;
@@ -332,13 +333,13 @@ public class PriceServices {
         }
 
         BigDecimal promoPrice = BigDecimal.ZERO;
-        if (promoPriceValue != null && promoPriceValue.get(org.apache.ofbiz.persistence.entity.x.price) != null) {
-            promoPrice = promoPriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price);
+        if (promoPriceValue != null && promoPriceValue.get(x.price) != null) {
+            promoPrice = promoPriceValue.getBigDecimal(x.price);
         }
 
         BigDecimal wholesalePrice = BigDecimal.ZERO;
-        if (wholesalePriceValue != null && wholesalePriceValue.get(org.apache.ofbiz.persistence.entity.x.price) != null) {
-            wholesalePrice = wholesalePriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price);
+        if (wholesalePriceValue != null && wholesalePriceValue.get(x.price) != null) {
+            wholesalePrice = wholesalePriceValue.getBigDecimal(x.price);
         }
 
         boolean validPriceFound = false;
@@ -349,16 +350,16 @@ public class PriceServices {
         if (defaultPriceValue != null) {
             // If a price calc formula (service) is specified, then use it to get the unit price
             if ("ProductPrice".equals(defaultPriceValue.getEntityName()) && UtilValidate.isNotEmpty(defaultPriceValue
-                    .getString(org.apache.ofbiz.persistence.entity.x.customPriceCalcService))) {
+                    .getString(x.customPriceCalcService))) {
                 GenericValue customMethod = null;
                 try {
-                    customMethod = defaultPriceValue.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CustomMethod, false);
+                    customMethod = defaultPriceValue.getRelatedOne(x.CustomMethod, false);
                 } catch (GenericEntityException gee) {
                     Debug.logError(gee, "An error occurred while getting the customPriceCalcService", MODULE);
                 }
-                if (customMethod != null && UtilValidate.isNotEmpty(customMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName))) {
-                    Map<String, Object> inMap = UtilMisc.toMap("userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin), "product", product);
-                    inMap.put("initialPrice", defaultPriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price));
+                if (customMethod != null && UtilValidate.isNotEmpty(customMethod.getString(x.customMethodName))) {
+                    Map<String, Object> inMap = UtilMisc.toMap("userLogin", context.get(x.userLogin), "product", product);
+                    inMap.put("initialPrice", defaultPriceValue.getBigDecimal(x.price));
                     inMap.put("currencyUomId", currencyDefaultUomId);
                     inMap.put("quantity", quantity);
                     inMap.put("amount", amount);
@@ -371,7 +372,7 @@ public class PriceServices {
                     inMap.put("productStoreGroupId", productStoreGroupId);
                     inMap.put("partyId", partyId);
                     try {
-                        Map<String, Object> outMap = dispatcher.runSync(customMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName), inMap);
+                        Map<String, Object> outMap = dispatcher.runSync(customMethod.getString(x.customMethodName), inMap);
                         if (ServiceUtil.isSuccess(outMap)) {
                             BigDecimal calculatedDefaultPrice = (BigDecimal) outMap.get("price");
                             BigDecimal calculatedListPrice = (BigDecimal) outMap.get("listPrice");
@@ -386,19 +387,19 @@ public class PriceServices {
                         }
                     } catch (GenericServiceException gse) {
                         Debug.logError(gse, "An error occurred while running the customPriceCalcService ["
-                                + customMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName) + "]", MODULE);
+                                + customMethod.getString(x.customMethodName) + "]", MODULE);
                     }
                 }
             }
-            if (!validPriceFound && defaultPriceValue.get(org.apache.ofbiz.persistence.entity.x.price) != null) {
-                defaultPrice = defaultPriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price);
+            if (!validPriceFound && defaultPriceValue.get(x.price) != null) {
+                defaultPrice = defaultPriceValue.getBigDecimal(x.price);
                 validPriceFound = true;
             }
         }
 
         boolean skipPriceRules = true;
         if (listPrice == null && listPriceValue != null) {
-            listPrice = listPriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price);
+            listPrice = listPriceValue.getBigDecimal(x.price);
             skipPriceRules = listPrice == null;
         }
 
@@ -406,12 +407,12 @@ public class PriceServices {
             // no list price, use defaultPrice for the final price
 
             // ========= ensure calculated price is not below minSalePrice or above maxSalePrice =========
-            BigDecimal maxSellPrice = maximumPriceValue != null ? maximumPriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price) : null;
+            BigDecimal maxSellPrice = maximumPriceValue != null ? maximumPriceValue.getBigDecimal(x.price) : null;
             if (maxSellPrice != null && defaultPrice.compareTo(maxSellPrice) > 0) {
                 defaultPrice = maxSellPrice;
             }
             // min price second to override max price, safety net
-            BigDecimal minSellPrice = minimumPriceValue != null ? minimumPriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price) : null;
+            BigDecimal minSellPrice = minimumPriceValue != null ? minimumPriceValue.getBigDecimal(x.price) : null;
             if (minSellPrice != null && defaultPrice.compareTo(minSellPrice) < 0) {
                 defaultPrice = minSellPrice;
                 // since we have found a minimum price that has overriden a the defaultPrice, even if no valid one was found,
@@ -424,10 +425,10 @@ public class PriceServices {
             result.put("basePrice", defaultPrice);
             result.put("price", defaultPrice);
             result.put("defaultPrice", defaultPrice);
-            result.put("competitivePrice", competitivePriceValue != null ? competitivePriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price) : null);
-            result.put("averageCost", averageCostValue != null ? averageCostValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price) : null);
-            result.put("promoPrice", promoPriceValue != null ? promoPriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price) : null);
-            result.put("specialPromoPrice", specialPromoPriceValue != null ? specialPromoPriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price) : null);
+            result.put("competitivePrice", competitivePriceValue != null ? competitivePriceValue.getBigDecimal(x.price) : null);
+            result.put("averageCost", averageCostValue != null ? averageCostValue.getBigDecimal(x.price) : null);
+            result.put("promoPrice", promoPriceValue != null ? promoPriceValue.getBigDecimal(x.price) : null);
+            result.put("specialPromoPrice", specialPromoPriceValue != null ? specialPromoPriceValue.getBigDecimal(x.price) : null);
             result.put("validPriceFound", validPriceFound);
             result.put("isSale", Boolean.FALSE);
             result.put("orderItemPriceInfos", orderItemPriceInfos);
@@ -449,13 +450,13 @@ public class PriceServices {
                     nonQuantityProductPriceRules = new LinkedList<>();
                     for (GenericValue productPriceRule: allProductPriceRules) {
                         List<GenericValue> productPriceCondList = EntityQuery.use(delegator).from("ProductPriceCond").where("productPriceRuleId",
-                                productPriceRule.get(org.apache.ofbiz.persistence.entity.x.productPriceRuleId)).cache(true).queryList();
+                                productPriceRule.get(x.productPriceRuleId)).cache(true).queryList();
 
                         boolean foundQuantityInputParam = false;
                         // only consider a rule if all conditions except the quantity condition are true
                         boolean allExceptQuantTrue = true;
                         for (GenericValue productPriceCond: productPriceCondList) {
-                            if ("PRIP_QUANTITY".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))) {
+                            if ("PRIP_QUANTITY".equals(productPriceCond.getString(x.inputParamEnumId))) {
                                 foundQuantityInputParam = true;
                             } else {
                                 if (!checkPriceCondition(productPriceCond, productId, virtualProductId, prodCatalogId, productStoreGroupId,
@@ -599,9 +600,9 @@ public class PriceServices {
         GenericValue priceValue = EntityUtil.getFirst(filteredPrices);
         if (filteredPrices != null && filteredPrices.size() > 1) {
             if (Debug.infoOn()) {
-                Debug.logInfo("There is more than one " + productPriceTypeId + " with the currencyUomId " + priceValue.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId)
-                        + " and productId " + priceValue.getString(org.apache.ofbiz.persistence.entity.x.productId) + ", using the latest found with price: "
-                        + priceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price), MODULE);
+                Debug.logInfo("There is more than one " + productPriceTypeId + " with the currencyUomId " + priceValue.getString(x.currencyUomId)
+                        + " and productId " + priceValue.getString(x.productId) + ", using the latest found with price: "
+                        + priceValue.getBigDecimal(x.price), MODULE);
             }
         }
         if (priceValue == null && secondaryPriceList != null) {
@@ -614,13 +615,13 @@ public class PriceServices {
                                                         GenericValue specialPromoPriceValue, GenericValue productStore, String checkIncludeVat,
                                                         String currencyUomId, String productId,
                                                         BigDecimal quantity, String partyId, LocalDispatcher dispatcher, Locale locale) {
-        result.put("competitivePrice", competitivePriceValue != null ? competitivePriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price) : null);
-        result.put("specialPromoPrice", specialPromoPriceValue != null ? specialPromoPriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price) : null);
+        result.put("competitivePrice", competitivePriceValue != null ? competitivePriceValue.getBigDecimal(x.price) : null);
+        result.put("specialPromoPrice", specialPromoPriceValue != null ? specialPromoPriceValue.getBigDecimal(x.price) : null);
         result.put("currencyUsed", currencyUomId);
 
         // okay, now we have the calculated price, see if we should add in tax and if so do it
-        if ("Y".equals(checkIncludeVat) && productStore != null && "Y".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.showPricesWithVatTax))) {
-            Map<String, Object> calcTaxForDisplayContext = UtilMisc.toMap("productStoreId", productStore.get(org.apache.ofbiz.persistence.entity.x.productStoreId),
+        if ("Y".equals(checkIncludeVat) && productStore != null && "Y".equals(productStore.getString(x.showPricesWithVatTax))) {
+            Map<String, Object> calcTaxForDisplayContext = UtilMisc.toMap("productStoreId", productStore.get(x.productStoreId),
                     "productId", productId, "quantity", quantity,
                     "basePrice", (BigDecimal) result.get("price"));
             if (UtilValidate.isNotEmpty(partyId)) {
@@ -691,7 +692,7 @@ public class PriceServices {
                     "PRIP_PROD_CAT_ID").cache(true).queryList();
             if (UtilValidate.isNotEmpty(productCategoryIdConds)) {
                 for (GenericValue productCategoryIdCond: productCategoryIdConds) {
-                    productPriceRuleIds.add(productCategoryIdCond.getString(org.apache.ofbiz.persistence.entity.x.productPriceRuleId));
+                    productPriceRuleIds.add(productCategoryIdCond.getString(x.productPriceRuleId));
                 }
             }
 
@@ -700,7 +701,7 @@ public class PriceServices {
                     "PRIP_PROD_FEAT_ID").cache(true).queryList();
             if (UtilValidate.isNotEmpty(productFeatureIdConds)) {
                 for (GenericValue productFeatureIdCond: productFeatureIdConds) {
-                    productPriceRuleIds.add(productFeatureIdCond.getString(org.apache.ofbiz.persistence.entity.x.productPriceRuleId));
+                    productPriceRuleIds.add(productFeatureIdCond.getString(x.productPriceRuleId));
                 }
             }
 
@@ -711,7 +712,7 @@ public class PriceServices {
                     "PRIP_QUANTITY").cache(true).queryList();
             if (UtilValidate.isNotEmpty(quantityConds)) {
                 for (GenericValue quantityCond: quantityConds) {
-                    productPriceRuleIds.add(quantityCond.getString(org.apache.ofbiz.persistence.entity.x.productPriceRuleId));
+                    productPriceRuleIds.add(quantityCond.getString(x.productPriceRuleId));
                 }
             }
 
@@ -720,7 +721,7 @@ public class PriceServices {
                     "PRIP_ROLE_TYPE").cache(true).queryList();
             if (UtilValidate.isNotEmpty(roleTypeIdConds)) {
                 for (GenericValue roleTypeIdCond: roleTypeIdConds) {
-                    productPriceRuleIds.add(roleTypeIdCond.getString(org.apache.ofbiz.persistence.entity.x.productPriceRuleId));
+                    productPriceRuleIds.add(roleTypeIdCond.getString(x.productPriceRuleId));
                 }
             }
 
@@ -729,7 +730,7 @@ public class PriceServices {
                     "PRIP_PARTY_CLASS").cache(true).queryList();
             if (UtilValidate.isNotEmpty(partyClassificationGroupIdConds)) {
                 for (GenericValue partyClassificationGroupIdCond: partyClassificationGroupIdConds) {
-                    productPriceRuleIds.add(partyClassificationGroupIdCond.getString(org.apache.ofbiz.persistence.entity.x.productPriceRuleId));
+                    productPriceRuleIds.add(partyClassificationGroupIdCond.getString(x.productPriceRuleId));
                 }
             }
 
@@ -741,7 +742,7 @@ public class PriceServices {
                     "PRIP_LIST_PRICE").cache(true).queryList();
             if (UtilValidate.isNotEmpty(listPriceConds)) {
                 for (GenericValue listPriceCond: listPriceConds) {
-                    productPriceRuleIds.add(listPriceCond.getString(org.apache.ofbiz.persistence.entity.x.productPriceRuleId));
+                    productPriceRuleIds.add(listPriceCond.getString(x.productPriceRuleId));
                 }
             }
 
@@ -752,7 +753,7 @@ public class PriceServices {
                     "PRIP_PRODUCT_ID", "condValue", productId).cache(true).queryList();
             if (UtilValidate.isNotEmpty(productIdConds)) {
                 for (GenericValue productIdCond: productIdConds) {
-                    productPriceRuleIds.add(productIdCond.getString(org.apache.ofbiz.persistence.entity.x.productPriceRuleId));
+                    productPriceRuleIds.add(productIdCond.getString(x.productPriceRuleId));
                 }
             }
 
@@ -762,7 +763,7 @@ public class PriceServices {
                         "PRIP_PRODUCT_ID", "condValue", virtualProductId).cache(true).queryList();
                 if (UtilValidate.isNotEmpty(virtualProductIdConds)) {
                     for (GenericValue virtualProductIdCond: virtualProductIdConds) {
-                        productPriceRuleIds.add(virtualProductIdCond.getString(org.apache.ofbiz.persistence.entity.x.productPriceRuleId));
+                        productPriceRuleIds.add(virtualProductIdCond.getString(x.productPriceRuleId));
                     }
                 }
             }
@@ -773,7 +774,7 @@ public class PriceServices {
                         "PRIP_PROD_CLG_ID", "condValue", prodCatalogId).cache(true).queryList();
                 if (UtilValidate.isNotEmpty(prodCatalogIdConds)) {
                     for (GenericValue prodCatalogIdCond: prodCatalogIdConds) {
-                        productPriceRuleIds.add(prodCatalogIdCond.getString(org.apache.ofbiz.persistence.entity.x.productPriceRuleId));
+                        productPriceRuleIds.add(prodCatalogIdCond.getString(x.productPriceRuleId));
                     }
                 }
             }
@@ -784,7 +785,7 @@ public class PriceServices {
                         "PRIP_PROD_SGRP_ID", "condValue", productStoreGroupId).cache(true).queryList();
                 if (UtilValidate.isNotEmpty(storeGroupConds)) {
                     for (GenericValue storeGroupCond: storeGroupConds) {
-                        productPriceRuleIds.add(storeGroupCond.getString(org.apache.ofbiz.persistence.entity.x.productPriceRuleId));
+                        productPriceRuleIds.add(storeGroupCond.getString(x.productPriceRuleId));
                     }
                 }
             }
@@ -795,7 +796,7 @@ public class PriceServices {
                         "PRIP_WEBSITE_ID", "condValue", webSiteId).cache(true).queryList();
                 if (UtilValidate.isNotEmpty(webSiteIdConds)) {
                     for (GenericValue webSiteIdCond: webSiteIdConds) {
-                        productPriceRuleIds.add(webSiteIdCond.getString(org.apache.ofbiz.persistence.entity.x.productPriceRuleId));
+                        productPriceRuleIds.add(webSiteIdCond.getString(x.productPriceRuleId));
                     }
                 }
             }
@@ -806,7 +807,7 @@ public class PriceServices {
                         "PRIP_PARTY_ID", "condValue", partyId).cache(true).queryList();
                 if (UtilValidate.isNotEmpty(partyIdConds)) {
                     for (GenericValue partyIdCond: partyIdConds) {
-                        productPriceRuleIds.add(partyIdCond.getString(org.apache.ofbiz.persistence.entity.x.productPriceRuleId));
+                        productPriceRuleIds.add(partyIdCond.getString(x.productPriceRuleId));
                     }
                 }
             }
@@ -816,7 +817,7 @@ public class PriceServices {
                     "PRIP_CURRENCY_UOMID", "condValue", currencyUomId).cache(true).queryList();
             if (UtilValidate.isNotEmpty(currencyUomIdConds)) {
                 for (GenericValue currencyUomIdCond: currencyUomIdConds) {
-                    productPriceRuleIds.add(currencyUomIdCond.getString(org.apache.ofbiz.persistence.entity.x.productPriceRuleId));
+                    productPriceRuleIds.add(currencyUomIdCond.getString(x.productPriceRuleId));
                 }
             }
 
@@ -856,7 +857,7 @@ public class PriceServices {
         int totalRules = 0;
 
         // get some of the base values to calculate with
-        BigDecimal averageCost = (averageCostValue != null && averageCostValue.get(org.apache.ofbiz.persistence.entity.x.price) != null) ? averageCostValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price)
+        BigDecimal averageCost = (averageCostValue != null && averageCostValue.get(x.price) != null) ? averageCostValue.getBigDecimal(x.price)
                 : listPrice;
         BigDecimal margin = listPrice.subtract(averageCost);
 
@@ -864,11 +865,11 @@ public class PriceServices {
         BigDecimal price = listPrice;
 
         for (GenericValue productPriceRule: productPriceRules) {
-            String productPriceRuleId = productPriceRule.getString(org.apache.ofbiz.persistence.entity.x.productPriceRuleId);
+            String productPriceRuleId = productPriceRule.getString(x.productPriceRuleId);
 
             // check from/thru dates
-            java.sql.Timestamp fromDate = productPriceRule.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate);
-            java.sql.Timestamp thruDate = productPriceRule.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate);
+            java.sql.Timestamp fromDate = productPriceRule.getTimestamp(x.fromDate);
+            java.sql.Timestamp thruDate = productPriceRule.getTimestamp(x.thruDate);
 
             if (fromDate != null && fromDate.after(nowTimestamp)) {
                 // hasn't started yet
@@ -896,15 +897,15 @@ public class PriceServices {
 
                 // add condsDescription string entry
                 condsDescription.append("[");
-                GenericValue inputParamEnum = productPriceCond.getRelatedOne(org.apache.ofbiz.persistence.entity.x.InputParamEnumeration, true);
+                GenericValue inputParamEnum = productPriceCond.getRelatedOne(x.InputParamEnumeration, true);
 
-                condsDescription.append(inputParamEnum.getString(org.apache.ofbiz.persistence.entity.x.enumCode));
+                condsDescription.append(inputParamEnum.getString(x.enumCode));
                 // condsDescription.append(":");
-                GenericValue operatorEnum = productPriceCond.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OperatorEnumeration, true);
+                GenericValue operatorEnum = productPriceCond.getRelatedOne(x.OperatorEnumeration, true);
 
-                condsDescription.append(operatorEnum.getString(org.apache.ofbiz.persistence.entity.x.description));
+                condsDescription.append(operatorEnum.getString(x.description));
                 // condsDescription.append(":");
-                condsDescription.append(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.condValue));
+                condsDescription.append(productPriceCond.getString(x.condValue));
                 condsDescription.append("] ");
             }
 
@@ -922,7 +923,7 @@ public class PriceServices {
             // if all true, perform all actions
             if (allTrue) {
                 // check isSale
-                if ("Y".equals(productPriceRule.getString(org.apache.ofbiz.persistence.entity.x.isSale))) {
+                if ("Y".equals(productPriceRule.getString(x.isSale))) {
                     isSale = true;
                 }
 
@@ -935,48 +936,48 @@ public class PriceServices {
                     // yeah, finally here, perform the action, ie, modify the price
                     BigDecimal modifyAmount = BigDecimal.ZERO;
 
-                    if ("PRICE_POD".equals(productPriceAction.getString(org.apache.ofbiz.persistence.entity.x.productPriceActionTypeId))) {
-                        if (productPriceAction.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
-                            modifyAmount = defaultPrice.multiply(productPriceAction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).movePointLeft(2));
+                    if ("PRICE_POD".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                        if (productPriceAction.get(x.amount) != null) {
+                            modifyAmount = defaultPrice.multiply(productPriceAction.getBigDecimal(x.amount).movePointLeft(2));
                             price = defaultPrice;
                         }
-                    } else if ("PRICE_POL".equals(productPriceAction.getString(org.apache.ofbiz.persistence.entity.x.productPriceActionTypeId))) {
-                        if (productPriceAction.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
-                            modifyAmount = listPrice.multiply(productPriceAction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).movePointLeft(2));
+                    } else if ("PRICE_POL".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                        if (productPriceAction.get(x.amount) != null) {
+                            modifyAmount = listPrice.multiply(productPriceAction.getBigDecimal(x.amount).movePointLeft(2));
                         }
-                    } else if ("PRICE_POAC".equals(productPriceAction.getString(org.apache.ofbiz.persistence.entity.x.productPriceActionTypeId))) {
-                        if (productPriceAction.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
-                            modifyAmount = averageCost.multiply(productPriceAction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).movePointLeft(2));
+                    } else if ("PRICE_POAC".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                        if (productPriceAction.get(x.amount) != null) {
+                            modifyAmount = averageCost.multiply(productPriceAction.getBigDecimal(x.amount).movePointLeft(2));
                         }
-                    } else if ("PRICE_POM".equals(productPriceAction.getString(org.apache.ofbiz.persistence.entity.x.productPriceActionTypeId))) {
-                        if (productPriceAction.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
-                            modifyAmount = margin.multiply(productPriceAction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).movePointLeft(2));
+                    } else if ("PRICE_POM".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                        if (productPriceAction.get(x.amount) != null) {
+                            modifyAmount = margin.multiply(productPriceAction.getBigDecimal(x.amount).movePointLeft(2));
                         }
-                    } else if ("PRICE_POWHS".equals(productPriceAction.getString(org.apache.ofbiz.persistence.entity.x.productPriceActionTypeId))) {
-                        if (productPriceAction.get(org.apache.ofbiz.persistence.entity.x.amount) != null && wholesalePrice != null) {
-                            modifyAmount = wholesalePrice.multiply(productPriceAction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount).movePointLeft(2));
+                    } else if ("PRICE_POWHS".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                        if (productPriceAction.get(x.amount) != null && wholesalePrice != null) {
+                            modifyAmount = wholesalePrice.multiply(productPriceAction.getBigDecimal(x.amount).movePointLeft(2));
                         }
-                    } else if ("PRICE_FOL".equals(productPriceAction.getString(org.apache.ofbiz.persistence.entity.x.productPriceActionTypeId))) {
-                        if (productPriceAction.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
-                            modifyAmount = productPriceAction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
+                    } else if ("PRICE_FOL".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                        if (productPriceAction.get(x.amount) != null) {
+                            modifyAmount = productPriceAction.getBigDecimal(x.amount);
                         }
-                    } else if ("PRICE_FLAT".equals(productPriceAction.getString(org.apache.ofbiz.persistence.entity.x.productPriceActionTypeId))) {
+                    } else if ("PRICE_FLAT".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
                         // this one is a bit different, break out of the loop because we now have our final price
                         foundFlatOverride = true;
-                        if (productPriceAction.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
-                            price = productPriceAction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
+                        if (productPriceAction.get(x.amount) != null) {
+                            price = productPriceAction.getBigDecimal(x.amount);
                         } else {
                             Debug.logInfo("ProductPriceAction had null amount, using default price: " + defaultPrice + " for product with id "
                                     + productId, MODULE);
                             price = defaultPrice;
                             isSale = false;                // reverse isSale flag, as this sale rule was actually not applied
                         }
-                    } else if ("PRICE_PFLAT".equals(productPriceAction.getString(org.apache.ofbiz.persistence.entity.x.productPriceActionTypeId))) {
+                    } else if ("PRICE_PFLAT".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
                         // this one is a bit different too, break out of the loop because we now have our final price
                         foundFlatOverride = true;
                         price = promoPrice;
-                        if (productPriceAction.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
-                            price = price.add(productPriceAction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
+                        if (productPriceAction.get(x.amount) != null) {
+                            price = price.add(productPriceAction.getBigDecimal(x.amount));
                         }
                         if (price.compareTo(BigDecimal.ZERO) == 0) {
                             if (defaultPrice.compareTo(BigDecimal.ZERO) != 0) {
@@ -994,12 +995,12 @@ public class PriceServices {
                             }
                             isSale = false;                // reverse isSale flag, as this sale rule was actually not applied
                         }
-                    } else if ("PRICE_WFLAT".equals(productPriceAction.getString(org.apache.ofbiz.persistence.entity.x.productPriceActionTypeId))) {
+                    } else if ("PRICE_WFLAT".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
                         // same as promo price but using the wholesale price instead
                         foundFlatOverride = true;
                         price = wholesalePrice;
-                        if (productPriceAction.get(org.apache.ofbiz.persistence.entity.x.amount) != null) {
-                            price = price.add(productPriceAction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
+                        if (productPriceAction.get(x.amount) != null) {
+                            price = price.add(productPriceAction.getBigDecimal(x.amount));
                         }
                         if (price.compareTo(BigDecimal.ZERO) == 0) {
                             if (defaultPrice.compareTo(BigDecimal.ZERO) != 0) {
@@ -1026,22 +1027,22 @@ public class PriceServices {
                     priceInfoDescription.append(condsDescription.toString());
                     priceInfoDescription.append("[");
                     priceInfoDescription.append(UtilProperties.getMessage(RESOURCE, "ProductPriceConditionType", locale));
-                    priceInfoDescription.append(productPriceAction.getString(org.apache.ofbiz.persistence.entity.x.productPriceActionTypeId));
+                    priceInfoDescription.append(productPriceAction.getString(x.productPriceActionTypeId));
                     priceInfoDescription.append("]");
 
                     GenericValue orderItemPriceInfo = delegator.makeValue("OrderItemPriceInfo");
 
-                    orderItemPriceInfo.set(org.apache.ofbiz.persistence.entity.x.productPriceRuleId, productPriceAction.get(org.apache.ofbiz.persistence.entity.x.productPriceRuleId));
-                    orderItemPriceInfo.set(org.apache.ofbiz.persistence.entity.x.productPriceActionSeqId, productPriceAction.get(org.apache.ofbiz.persistence.entity.x.productPriceActionSeqId));
-                    orderItemPriceInfo.set(org.apache.ofbiz.persistence.entity.x.modifyAmount, modifyAmount);
-                    orderItemPriceInfo.set(org.apache.ofbiz.persistence.entity.x.rateCode, productPriceAction.get(org.apache.ofbiz.persistence.entity.x.rateCode));
+                    orderItemPriceInfo.set(x.productPriceRuleId, productPriceAction.get(x.productPriceRuleId));
+                    orderItemPriceInfo.set(x.productPriceActionSeqId, productPriceAction.get(x.productPriceActionSeqId));
+                    orderItemPriceInfo.set(x.modifyAmount, modifyAmount);
+                    orderItemPriceInfo.set(x.rateCode, productPriceAction.get(x.rateCode));
                     // make sure description is <= than 250 chars
                     String priceInfoDescriptionString = priceInfoDescription.toString();
 
                     if (priceInfoDescriptionString.length() > 250) {
                         priceInfoDescriptionString = priceInfoDescriptionString.substring(0, 250);
                     }
-                    orderItemPriceInfo.set(org.apache.ofbiz.persistence.entity.x.description, priceInfoDescriptionString);
+                    orderItemPriceInfo.set(x.description, priceInfoDescriptionString);
                     orderItemPriceInfos.add(orderItemPriceInfo);
 
                     if (foundFlatOverride) {
@@ -1079,12 +1080,12 @@ public class PriceServices {
         }
 
         // ========= ensure calculated price is not below minSalePrice or above maxSalePrice =========
-        BigDecimal maxSellPrice = maximumPriceValue != null ? maximumPriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price) : null;
+        BigDecimal maxSellPrice = maximumPriceValue != null ? maximumPriceValue.getBigDecimal(x.price) : null;
         if (maxSellPrice != null && price.compareTo(maxSellPrice) > 0) {
             price = maxSellPrice;
         }
         // min price second to override max price, safety net
-        BigDecimal minSellPrice = minimumPriceValue != null ? minimumPriceValue.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price) : null;
+        BigDecimal minSellPrice = minimumPriceValue != null ? minimumPriceValue.getBigDecimal(x.price) : null;
         if (minSellPrice != null && price.compareTo(minSellPrice) < 0) {
             price = minSellPrice;
             // since we have found a minimum price that has overriden a the defaultPrice, even if no valid one was found,
@@ -1117,11 +1118,11 @@ public class PriceServices {
         }
         int compare = 0;
 
-        if ("PRIP_PRODUCT_ID".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))) {
-            compare = UtilMisc.toList(productId, virtualProductId).contains(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.condValue)) ? 0 : 1;
-        } else if ("PRIP_PROD_CAT_ID".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))) {
+        if ("PRIP_PRODUCT_ID".equals(productPriceCond.getString(x.inputParamEnumId))) {
+            compare = UtilMisc.toList(productId, virtualProductId).contains(productPriceCond.getString(x.condValue)) ? 0 : 1;
+        } else if ("PRIP_PROD_CAT_ID".equals(productPriceCond.getString(x.inputParamEnumId))) {
             // if a ProductCategoryMember exists for this productId and the specified productCategoryId
-            String productCategoryId = productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.condValue);
+            String productCategoryId = productPriceCond.getString(x.condValue);
             // and from/thru date within range
             List<GenericValue> productCategoryMembers = EntityQuery.use(delegator).from("ProductCategoryMember")
                     .where("productId", productId, "productCategoryId", productCategoryId)
@@ -1148,12 +1149,12 @@ public class PriceServices {
                     compare = 0;
                 }
             }
-        } else if ("PRIP_PROD_FEAT_ID".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))) {
+        } else if ("PRIP_PROD_FEAT_ID".equals(productPriceCond.getString(x.inputParamEnumId))) {
             // NOTE: DEJ20070130 don't retry this condition with the virtualProductId as well; this breaks various things you might want to do
             // with price rules, like have different pricing for a variant products with a certain distinguishing feature
 
             // if a ProductFeatureAppl exists for this productId and the specified productFeatureId
-            String productFeatureId = productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.condValue);
+            String productFeatureId = productPriceCond.getString(x.condValue);
             // and from/thru date within range
             List<GenericValue> productFeatureAppls = EntityQuery.use(delegator).from("ProductFeatureAppl").where("productId", productId,
                     "productFeatureId", productFeatureId).cache(true).filterByDate(nowTimestamp).queryList();
@@ -1163,44 +1164,44 @@ public class PriceServices {
             } else {
                 compare = 1;
             }
-        } else if ("PRIP_PROD_CLG_ID".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))) {
+        } else if ("PRIP_PROD_CLG_ID".equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (UtilValidate.isNotEmpty(prodCatalogId)) {
-                compare = prodCatalogId.compareTo(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.condValue));
+                compare = prodCatalogId.compareTo(productPriceCond.getString(x.condValue));
             } else {
                 // this shouldn't happen because if prodCatalogId is null no PRIP_PROD_CLG_ID prices will be in the list
                 compare = 1;
             }
-        } else if ("PRIP_PROD_SGRP_ID".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))) {
+        } else if ("PRIP_PROD_SGRP_ID".equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (UtilValidate.isNotEmpty(productStoreGroupId)) {
-                compare = productStoreGroupId.compareTo(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.condValue));
+                compare = productStoreGroupId.compareTo(productPriceCond.getString(x.condValue));
             } else {
                 compare = 1;
             }
-        } else if ("PRIP_WEBSITE_ID".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))) {
+        } else if ("PRIP_WEBSITE_ID".equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (UtilValidate.isNotEmpty(webSiteId)) {
-                compare = webSiteId.compareTo(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.condValue));
+                compare = webSiteId.compareTo(productPriceCond.getString(x.condValue));
             } else {
                 compare = 1;
             }
-        } else if ("PRIP_QUANTITY".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))) {
+        } else if ("PRIP_QUANTITY".equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (quantity == null) {
                 // if no quantity is passed in, assume all quantity conditions pass
                 // NOTE: setting compare = 0 won't do the trick here because the condition won't always be or include and equal
                 return true;
             } else {
-                compare = quantity.compareTo(new BigDecimal(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.condValue)));
+                compare = quantity.compareTo(new BigDecimal(productPriceCond.getString(x.condValue)));
             }
-        } else if ("PRIP_PARTY_ID".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))) {
+        } else if ("PRIP_PARTY_ID".equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (UtilValidate.isNotEmpty(partyId)) {
-                compare = partyId.compareTo(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.condValue));
+                compare = partyId.compareTo(productPriceCond.getString(x.condValue));
             } else {
                 compare = 1;
             }
-        } else if ("PRIP_PARTY_GRP_MEM".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))) {
+        } else if ("PRIP_PARTY_GRP_MEM".equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (UtilValidate.isEmpty(partyId)) {
                 compare = 1;
             } else {
-                String groupPartyId = productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.condValue);
+                String groupPartyId = productPriceCond.getString(x.condValue);
                 if (partyId.equals(groupPartyId)) {
                     compare = 0;
                 } else {
@@ -1218,11 +1219,11 @@ public class PriceServices {
                     }
                 }
             }
-        } else if ("PRIP_PARTY_CLASS".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))) {
+        } else if ("PRIP_PARTY_CLASS".equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (UtilValidate.isEmpty(partyId)) {
                 compare = 1;
             } else {
-                String partyClassificationGroupId = productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.condValue);
+                String partyClassificationGroupId = productPriceCond.getString(x.condValue);
                 // find any PartyClassification
                 // and from/thru date within range
                 List<GenericValue> partyClassificationList = EntityQuery.use(delegator).from("PartyClassification").where("partyId", partyId,
@@ -1234,11 +1235,11 @@ public class PriceServices {
                     compare = 1;
                 }
             }
-        } else if ("PRIP_ROLE_TYPE".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))) {
+        } else if ("PRIP_ROLE_TYPE".equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (partyId != null) {
                 // if a PartyRole exists for this partyId and the specified roleTypeId
                 GenericValue partyRole = EntityQuery.use(delegator).from("PartyRole").where("partyId", partyId, "roleTypeId",
-                        productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.condValue)).cache(true).queryOne();
+                        productPriceCond.getString(x.condValue)).cache(true).queryOne();
 
                 // then 0 (equals), otherwise 1 (not equals)
                 if (partyRole != null) {
@@ -1249,14 +1250,14 @@ public class PriceServices {
             } else {
                 compare = 1;
             }
-        } else if ("PRIP_LIST_PRICE".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))) {
+        } else if ("PRIP_LIST_PRICE".equals(productPriceCond.getString(x.inputParamEnumId))) {
             BigDecimal listPriceValue = listPrice;
 
-            compare = listPriceValue.compareTo(new BigDecimal(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.condValue)));
-        } else if ("PRIP_CURRENCY_UOMID".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId))) {
-            compare = currencyUomId.compareTo(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.condValue));
+            compare = listPriceValue.compareTo(new BigDecimal(productPriceCond.getString(x.condValue)));
+        } else if ("PRIP_CURRENCY_UOMID".equals(productPriceCond.getString(x.inputParamEnumId))) {
+            compare = currencyUomId.compareTo(productPriceCond.getString(x.condValue));
         } else {
-            Debug.logWarning("An un-supported productPriceCond input parameter (lhs) was used: " + productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.inputParamEnumId)
+            Debug.logWarning("An un-supported productPriceCond input parameter (lhs) was used: " + productPriceCond.getString(x.inputParamEnumId)
                     + ", returning false, ie check failed", MODULE);
             return false;
         }
@@ -1265,20 +1266,20 @@ public class PriceServices {
             Debug.logVerbose("Price Condition compare done, compare=" + compare, MODULE);
         }
 
-        if ("PRC_EQ".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.operatorEnumId))) {
+        if ("PRC_EQ".equals(productPriceCond.getString(x.operatorEnumId))) {
             if (compare == 0) return true;
-        } else if ("PRC_NEQ".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.operatorEnumId))) {
+        } else if ("PRC_NEQ".equals(productPriceCond.getString(x.operatorEnumId))) {
             if (compare != 0) return true;
-        } else if ("PRC_LT".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.operatorEnumId))) {
+        } else if ("PRC_LT".equals(productPriceCond.getString(x.operatorEnumId))) {
             if (compare < 0) return true;
-        } else if ("PRC_LTE".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.operatorEnumId))) {
+        } else if ("PRC_LTE".equals(productPriceCond.getString(x.operatorEnumId))) {
             if (compare <= 0) return true;
-        } else if ("PRC_GT".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.operatorEnumId))) {
+        } else if ("PRC_GT".equals(productPriceCond.getString(x.operatorEnumId))) {
             if (compare > 0) return true;
-        } else if ("PRC_GTE".equals(productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.operatorEnumId))) {
+        } else if ("PRC_GTE".equals(productPriceCond.getString(x.operatorEnumId))) {
             if (compare >= 0) return true;
         } else {
-            Debug.logWarning("An un-supported productPriceCond condition was used: " + productPriceCond.getString(org.apache.ofbiz.persistence.entity.x.operatorEnumId)
+            Debug.logWarning("An un-supported productPriceCond condition was used: " + productPriceCond.getString(x.operatorEnumId)
                     + ", returning false, ie check failed", MODULE);
             return false;
         }
@@ -1290,7 +1291,7 @@ public class PriceServices {
         List<GenericValue> partyRelationshipList = EntityQuery.use(delegator).from("PartyRelationship").where("partyIdTo", partyId,
                 "partyRelationshipTypeId", "GROUP_ROLLUP").cache(true).filterByDate(nowTimestamp).queryList();
         for (GenericValue genericValue : partyRelationshipList) {
-            String partyIdFrom = (String) genericValue.get(org.apache.ofbiz.persistence.entity.x.partyIdFrom);
+            String partyIdFrom = (String) genericValue.get(x.partyIdFrom);
             if (partyIdFrom.equals(groupPartyId)) {
                 return 0;
             }
@@ -1313,13 +1314,13 @@ public class PriceServices {
         boolean validPriceFound = false;
         BigDecimal price = BigDecimal.ZERO;
 
-        GenericValue product = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.product);
-        String productId = product.getString(org.apache.ofbiz.persistence.entity.x.productId);
-        String agreementId = (String) context.get(org.apache.ofbiz.persistence.entity.x.agreementId);
-        String currencyUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.currencyUomId);
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue product = (GenericValue) context.get(x.product);
+        String productId = product.getString(x.productId);
+        String agreementId = (String) context.get(x.agreementId);
+        String currencyUomId = (String) context.get(x.currencyUomId);
+        String partyId = (String) context.get(x.partyId);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
+        Locale locale = (Locale) context.get(x.locale);
 
         // a) Get the Price from the Agreement* data model
         if (Debug.infoOn()) {
@@ -1348,8 +1349,8 @@ public class PriceServices {
                     if (priceFound == null) {
                         priceFound = EntityUtil.getFirst(agreementPrices);
                         try {
-                            Map<String, Object> priceConvertMap = UtilMisc.toMap("uomId", priceFound.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId), "uomIdTo",
-                                    currencyUomId, "originalValue", priceFound.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price), "defaultDecimalScale", 2L,
+                            Map<String, Object> priceConvertMap = UtilMisc.toMap("uomId", priceFound.getString(x.currencyUomId), "uomIdTo",
+                                    currencyUomId, "originalValue", priceFound.getBigDecimal(x.price), "defaultDecimalScale", 2L,
                                     "defaultRoundingMode", "HalfUp");
                             Map<String, Object> priceResults = dispatcher.runSync("convertUom", priceConvertMap);
                             if (ServiceUtil.isError(priceResults) || (priceResults.get("convertedValue") == null)) {
@@ -1362,7 +1363,7 @@ public class PriceServices {
                             Debug.logError(e, MODULE);
                         }
                     } else {
-                        price = priceFound.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price);
+                        price = priceFound.getBigDecimal(x.price);
                         validPriceFound = true;
                     }
                 }
@@ -1373,14 +1374,14 @@ public class PriceServices {
                     priceInfoDescription.append("[");
                     priceInfoDescription.append(agreementId);
                     priceInfoDescription.append("] ");
-                    priceInfoDescription.append(agreement.get(org.apache.ofbiz.persistence.entity.x.description));
+                    priceInfoDescription.append(agreement.get(x.description));
                     GenericValue orderItemPriceInfo = delegator.makeValue("OrderItemPriceInfo");
                     // make sure description is <= than 250 chars
                     String priceInfoDescriptionString = priceInfoDescription.toString();
                     if (priceInfoDescriptionString.length() > 250) {
                         priceInfoDescriptionString = priceInfoDescriptionString.substring(0, 250);
                     }
-                    orderItemPriceInfo.set(org.apache.ofbiz.persistence.entity.x.description, priceInfoDescriptionString);
+                    orderItemPriceInfo.set(x.description, priceInfoDescriptionString);
                     orderItemPriceInfos.add(orderItemPriceInfo);
                 }
             } catch (GenericEntityException gee) {
@@ -1409,7 +1410,7 @@ public class PriceServices {
             if (productSuppliers != null) {
                 for (GenericValue productSupplier: productSuppliers) {
                     if (!validPriceFound) {
-                        price = ((BigDecimal) productSupplier.get(org.apache.ofbiz.persistence.entity.x.lastPrice));
+                        price = ((BigDecimal) productSupplier.get(x.lastPrice));
                         validPriceFound = true;
                     }
                     // add a orderItemPriceInfo element too, without orderId or orderItemId
@@ -1417,9 +1418,9 @@ public class PriceServices {
                     priceInfoDescription.append(UtilProperties.getMessage(RESOURCE, "ProductSupplier", locale));
                     priceInfoDescription.append(" [");
                     priceInfoDescription.append(UtilProperties.getMessage(RESOURCE, "ProductSupplierMinimumOrderQuantity", locale));
-                    priceInfoDescription.append(productSupplier.getBigDecimal(org.apache.ofbiz.persistence.entity.x.minimumOrderQuantity));
+                    priceInfoDescription.append(productSupplier.getBigDecimal(x.minimumOrderQuantity));
                     priceInfoDescription.append(UtilProperties.getMessage(RESOURCE, "ProductSupplierLastPrice", locale));
-                    priceInfoDescription.append(productSupplier.getBigDecimal(org.apache.ofbiz.persistence.entity.x.lastPrice));
+                    priceInfoDescription.append(productSupplier.getBigDecimal(x.lastPrice));
                     priceInfoDescription.append("]");
                     GenericValue orderItemPriceInfo = delegator.makeValue("OrderItemPriceInfo");
                     // make sure description is <= than 250 chars
@@ -1427,7 +1428,7 @@ public class PriceServices {
                     if (priceInfoDescriptionString.length() > 250) {
                         priceInfoDescriptionString = priceInfoDescriptionString.substring(0, 250);
                     }
-                    orderItemPriceInfo.set(org.apache.ofbiz.persistence.entity.x.description, priceInfoDescriptionString);
+                    orderItemPriceInfo.set(x.description, priceInfoDescriptionString);
                     orderItemPriceInfos.add(orderItemPriceInfo);
                 }
             }
@@ -1444,7 +1445,7 @@ public class PriceServices {
                 if (UtilValidate.isEmpty(prices)) {
                     GenericValue parentProduct = ProductWorker.getParentProduct(productId, delegator);
                     if (parentProduct != null) {
-                        String parentProductId = parentProduct.getString(org.apache.ofbiz.persistence.entity.x.productId);
+                        String parentProductId = parentProduct.getString(x.productId);
                         prices = EntityQuery.use(delegator).from("ProductPrice").where("productId", parentProductId, "productPricePurposeId",
                                 "PURCHASE").orderBy("-fromDate").queryList();
                     }
@@ -1471,7 +1472,7 @@ public class PriceServices {
             // use the most current price
             GenericValue thisPrice = EntityUtil.getFirst(pricesToUse);
             if (thisPrice != null) {
-                price = thisPrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price);
+                price = thisPrice.getBigDecimal(x.price);
                 validPriceFound = true;
             }
         }

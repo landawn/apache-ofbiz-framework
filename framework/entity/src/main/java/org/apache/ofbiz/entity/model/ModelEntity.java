@@ -54,6 +54,7 @@ import org.apache.ofbiz.entity.model.ModelIndex.Field;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * An object that models the <code>&lt;entity&gt;</code> element.
  */
@@ -2001,8 +2002,8 @@ public class ModelEntity implements Comparable<ModelEntity>, Serializable {
         }
         String fieldJavaType = modelFieldTypeReader.getModelFieldType(modelField.getType()).getJavaType();
         try {
-            return ObjectType.simpleTypeOrObjectConvert(value, fieldJavaType, null, (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone), (Locale)
-                    context.get(org.apache.ofbiz.persistence.entity.x.locale), true);
+            return ObjectType.simpleTypeOrObjectConvert(value, fieldJavaType, null, (TimeZone) context.get(x.timeZone), (Locale)
+                    context.get(x.locale), true);
         } catch (GeneralException e) {
             String errMsg = "Could not convert field value for the field: [" + modelField.getName() + "] on the [" + this.getEntityName()
                     + "] entity to the [" + fieldJavaType + "] type for the value [" + value + "]: " + e.toString();

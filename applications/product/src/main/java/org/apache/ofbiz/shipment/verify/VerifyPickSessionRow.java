@@ -34,6 +34,7 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 @SuppressWarnings("serial")
 public class VerifyPickSessionRow implements Serializable {
 
@@ -229,7 +230,7 @@ public class VerifyPickSessionRow implements Serializable {
 
             GenericValue picklistItem = EntityQuery.use(delegator).from("PicklistItem").where(picklistItemMap).cache(true).queryOne();
             if (UtilValidate.isNotEmpty(picklistItem)) {
-                BigDecimal itemQty = picklistItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                BigDecimal itemQty = picklistItem.getBigDecimal(x.quantity);
                 if (itemQty.compareTo(quantity) == 0) {
                     // set to complete
                     picklistItemMap.put("itemStatusId", "PICKITEM_COMPLETED");

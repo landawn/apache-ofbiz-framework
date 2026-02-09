@@ -42,6 +42,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class ReplaceImage {
 
     private static final String MODULE = ReplaceImage.class.getName();
@@ -51,15 +52,15 @@ public class ReplaceImage {
     public static Map<String, Object> replaceImageToExistImage(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
                 "image.management.path", delegator), context);
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        String contentIdExist = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentIdExist);
-        String contentIdReplace = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentIdReplace);
-        String dataResourceNameExist = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceNameExist);
-        String dataResourceNameReplace = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceNameReplace);
+        String productId = (String) context.get(x.productId);
+        String contentIdExist = (String) context.get(x.contentIdExist);
+        String contentIdReplace = (String) context.get(x.contentIdReplace);
+        String dataResourceNameExist = (String) context.get(x.dataResourceNameExist);
+        String dataResourceNameReplace = (String) context.get(x.dataResourceNameReplace);
 
         if (UtilValidate.isNotEmpty(dataResourceNameExist)) {
             if (UtilValidate.isNotEmpty(contentIdReplace)) {
@@ -90,24 +91,24 @@ public class ReplaceImage {
                     GenericValue contentAssocReplace = contentAssocReplaceList.get(i);
 
                     GenericValue dataResourceAssocReplace = EntityQuery.use(delegator).from("ContentDataResourceView")
-                            .where("contentId", contentAssocReplace.get(org.apache.ofbiz.persistence.entity.x.contentIdTo)).queryFirst();
+                            .where("contentId", contentAssocReplace.get(x.contentIdTo)).queryFirst();
 
                     GenericValue contentAssocExist = EntityQuery.use(delegator).from("ContentAssoc").where("contentId",
-                            contentIdExist, "contentAssocTypeId", "IMAGE_THUMBNAIL", "mapKey", contentAssocReplace.get(org.apache.ofbiz.persistence.entity.x.mapKey)).queryFirst();
+                            contentIdExist, "contentAssocTypeId", "IMAGE_THUMBNAIL", "mapKey", contentAssocReplace.get(x.mapKey)).queryFirst();
 
                     GenericValue dataResourceAssocExist = EntityQuery.use(delegator).from("ContentDataResourceView")
-                            .where("contentId", contentAssocExist.get(org.apache.ofbiz.persistence.entity.x.contentIdTo)).queryFirst();
+                            .where("contentId", contentAssocExist.get(x.contentIdTo)).queryFirst();
 
                     if (UtilValidate.isNotEmpty(dataResourceAssocExist)) {
                         BufferedImage bufImgAssocReplace = ImageIO.read(new File(imageServerPath + "/" + productId + "/"
-                                + dataResourceAssocReplace.get(org.apache.ofbiz.persistence.entity.x.drDataResourceName)));
+                                + dataResourceAssocReplace.get(x.drDataResourceName)));
                         ImageIO.write(bufImgAssocReplace, "jpg", new File(imageServerPath + "/" + productId + "/"
-                                + dataResourceAssocExist.get(org.apache.ofbiz.persistence.entity.x.drDataResourceName)));
+                                + dataResourceAssocExist.get(x.drDataResourceName)));
                     } else {
                         BufferedImage bufImgAssocReplace = ImageIO.read(new File(imageServerPath + "/" + productId + "/"
-                                + dataResourceAssocReplace.get(org.apache.ofbiz.persistence.entity.x.drDataResourceName)));
+                                + dataResourceAssocReplace.get(x.drDataResourceName)));
                         ImageIO.write(bufImgAssocReplace, "jpg", new File(imageServerPath + "/" + productId + "/"
-                                + dataResourceNameExist.substring(0, dataResourceNameExist.length() - 4) + "-" + contentAssocReplace.get(org.apache.ofbiz.persistence.entity.x.mapKey)
+                                + dataResourceNameExist.substring(0, dataResourceNameExist.length() - 4) + "-" + contentAssocReplace.get(x.mapKey)
                                 + ".jpg"));
                     }
                 }
@@ -121,7 +122,7 @@ public class ReplaceImage {
                 productContentCtx.put("productId", productId);
                 productContentCtx.put("contentId", contentIdReplace);
                 productContentCtx.put("productContentTypeId", "IMAGE");
-                productContentCtx.put("fromDate", productContent.get(org.apache.ofbiz.persistence.entity.x.fromDate));
+                productContentCtx.put("fromDate", productContent.get(x.fromDate));
                 productContentCtx.put("userLogin", userLogin);
                 Map<String, Object> serviceResult = dispatcher.runSync("removeProductContentAndImageFile", productContentCtx);
                 if (ServiceUtil.isError(serviceResult)) {

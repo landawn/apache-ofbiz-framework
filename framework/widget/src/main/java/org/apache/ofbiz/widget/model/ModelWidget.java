@@ -26,6 +26,7 @@ import org.apache.ofbiz.base.util.UtilGenerics;
 import org.apache.ofbiz.base.util.UtilProperties;
 import org.w3c.dom.Element;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Widget Library - Widget model class. ModelWidget is a base class that is
  * extended by other widget model classes.
@@ -140,7 +141,7 @@ public abstract class ModelWidget implements Serializable {
             if (str != null) {
                 result = "true".equals(str);
             } else {
-                Map<String, ? extends Object> parameters = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.parameters));
+                Map<String, ? extends Object> parameters = UtilGenerics.cast(context.get(x.parameters));
                 if (parameters != null) {
                     str = (String) parameters.get(ENABLE_BOUNDARY_COMMENTS_PARAM);
                     if (str != null) {

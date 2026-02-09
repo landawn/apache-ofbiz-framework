@@ -37,6 +37,7 @@ import org.apache.ofbiz.entity.util.EntityListIterator;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class EntityQueryTestSuite extends EntityTestCase {
 
     public EntityQueryTestSuite(String name) {
@@ -129,10 +130,10 @@ public class EntityQueryTestSuite extends EntityTestCase {
         GenericValue firstRecordByEntityEngine = EntityUtil.getFirst(delegator.findList("TestingType", null, null, null, null, false));
         GenericValue firstRecordByEntityQuery = EntityQuery.use(delegator).from("TestingType").queryFirst();
 
-        assertEquals("queryFirst(): Record matched = testingTypeId", firstRecordByEntityEngine.getString(org.apache.ofbiz.persistence.entity.x.testingTypeId),
-                firstRecordByEntityQuery.getString(org.apache.ofbiz.persistence.entity.x.testingTypeId));
-        assertEquals("queryFirst(): Record matched = description", firstRecordByEntityEngine.getString(org.apache.ofbiz.persistence.entity.x.description),
-                firstRecordByEntityQuery.getString(org.apache.ofbiz.persistence.entity.x.description));
+        assertEquals("queryFirst(): Record matched = testingTypeId", firstRecordByEntityEngine.getString(x.testingTypeId),
+                firstRecordByEntityQuery.getString(x.testingTypeId));
+        assertEquals("queryFirst(): Record matched = description", firstRecordByEntityEngine.getString(x.description),
+                firstRecordByEntityQuery.getString(x.description));
     }
 
     /**
@@ -151,10 +152,10 @@ public class EntityQueryTestSuite extends EntityTestCase {
         GenericValue findOneByEntityEngine = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "queryOne-2").queryOne();
         GenericValue queryOneByEntityQuery = EntityQuery.use(delegator).from("TestingType").where("testingTypeId", "queryOne-2").queryOne();
 
-        assertEquals("queryOne(): Record matched = testingTypeId", findOneByEntityEngine.getString(org.apache.ofbiz.persistence.entity.x.testingTypeId),
-                queryOneByEntityQuery.getString(org.apache.ofbiz.persistence.entity.x.testingTypeId));
-        assertEquals("queryOne(): Record matched = description", findOneByEntityEngine.getString(org.apache.ofbiz.persistence.entity.x.description),
-                queryOneByEntityQuery.getString(org.apache.ofbiz.persistence.entity.x.description));
+        assertEquals("queryOne(): Record matched = testingTypeId", findOneByEntityEngine.getString(x.testingTypeId),
+                queryOneByEntityQuery.getString(x.testingTypeId));
+        assertEquals("queryOne(): Record matched = description", findOneByEntityEngine.getString(x.description),
+                queryOneByEntityQuery.getString(x.description));
     }
 
     /**
@@ -179,7 +180,7 @@ public class EntityQueryTestSuite extends EntityTestCase {
         GenericValue queryOneByEntityQueryAndParameters = EntityQuery.use(delegator).from("TestingType").where(context).queryOne();
         assertNotNull("queryOne() with parameters: Record found", queryOneByEntityQueryAndParameters);
         assertEquals("queryOne() with parameters: Record is queryOneMap-3 ", "queryOneMap-3",
-                queryOneByEntityQueryAndParameters.getString(org.apache.ofbiz.persistence.entity.x.testingTypeId));
+                queryOneByEntityQueryAndParameters.getString(x.testingTypeId));
     }
 
     /**

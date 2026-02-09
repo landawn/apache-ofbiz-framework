@@ -45,6 +45,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceContainer;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Product Config Wrapper: gets product config to display
  */
@@ -109,8 +110,8 @@ public class ProductConfigWrapper implements Serializable {
     private void init(Delegator delegator, LocalDispatcher dispatcher, String productId, String productStoreId, String catalogId, String webSiteId,
                       String currencyUomId, Locale locale, GenericValue autoUserLogin) throws Exception {
         product = EntityQuery.use(delegator).from("Product").where("productId", productId).queryOne();
-        if (product == null || !"AGGREGATED".equals(product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId))
-                && !"AGGREGATED_SERVICE".equals(product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId))) {
+        if (product == null || !"AGGREGATED".equals(product.getString(x.productTypeId))
+                && !"AGGREGATED_SERVICE".equals(product.getString(x.productTypeId))) {
             throw new ProductConfigWrapperException("Product " + productId + " is not an AGGREGATED product.");
         }
         this.dispatcher = dispatcher;
@@ -140,7 +141,7 @@ public class ProductConfigWrapper implements Serializable {
             basePrice = price;
         }
         questions = new LinkedList<>();
-        if ("AGGREGATED".equals(product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId)) || "AGGREGATED_SERVICE".equals(product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId))) {
+        if ("AGGREGATED".equals(product.getString(x.productTypeId)) || "AGGREGATED_SERVICE".equals(product.getString(x.productTypeId))) {
             List<GenericValue> questionsValues = EntityQuery.use(delegator).from("ProductConfig").where("productId", productId)
                     .orderBy("sequenceNum").filterByDate().queryList();
             Set<String> itemIds = new HashSet<>();
@@ -178,10 +179,10 @@ public class ProductConfigWrapper implements Serializable {
             List<GenericValue> productConfigConfig = EntityQuery.use(delegator).from("ProductConfigConfig").where("configId", configId).queryList();
             if (UtilValidate.isNotEmpty(productConfigConfig)) {
                 for (GenericValue pcc: productConfigConfig) {
-                    String configItemId = pcc.getString(org.apache.ofbiz.persistence.entity.x.configItemId);
-                    String configOptionId = pcc.getString(org.apache.ofbiz.persistence.entity.x.configOptionId);
-                    Long sequenceNum = pcc.getLong(org.apache.ofbiz.persistence.entity.x.sequenceNum);
-                    String comments = pcc.getString(org.apache.ofbiz.persistence.entity.x.description);
+                    String configItemId = pcc.getString(x.configItemId);
+                    String configOptionId = pcc.getString(x.configOptionId);
+                    Long sequenceNum = pcc.getLong(x.sequenceNum);
+                    String comments = pcc.getString(x.description);
                     this.setSelected(configItemId, sequenceNum, configOptionId, comments);
                 }
             }
@@ -199,11 +200,11 @@ public class ProductConfigWrapper implements Serializable {
     public void setSelected(String configItemId, Long sequenceNum, String configOptionId, String comments) throws Exception {
         for (int i = 0; i < questions.size(); i++) {
             ConfigItem ci = questions.get(i);
-            if (ci.configItemAssoc.getString(org.apache.ofbiz.persistence.entity.x.configItemId).equals(configItemId) && ci.configItemAssoc.getLong(org.apache.ofbiz.persistence.entity.x.sequenceNum).equals(sequenceNum)) {
+            if (ci.configItemAssoc.getString(x.configItemId).equals(configItemId) && ci.configItemAssoc.getLong(x.sequenceNum).equals(sequenceNum)) {
                 List<ConfigOption> avalOptions = ci.getOptions();
                 for (int j = 0; j < avalOptions.size(); j++) {
                     ConfigOption oneOption = avalOptions.get(j);
-                    if (oneOption.configOption.getString(org.apache.ofbiz.persistence.entity.x.configOptionId).equals(configOptionId)) {
+                    if (oneOption.configOption.getString(x.configOptionId).equals(configOptionId)) {
                         setSelected(i, j, comments);
                         break;
                     }
@@ -291,7 +292,7 @@ public class ProductConfigWrapper implements Serializable {
             return false;
         }
         ProductConfigWrapper cw = (ProductConfigWrapper) obj;
-        if (!product.getString(org.apache.ofbiz.persistence.entity.x.productId).equals(cw.getProduct().getString("productId"))) {
+        if (!product.getString(x.productId).equals(cw.getProduct().getString("productId"))) {
             return false;
         }
         List<ConfigItem> cwq = cw.getQuestions();
@@ -372,7 +373,7 @@ public class ProductConfigWrapper implements Serializable {
             if (theOption.componentOptions == null) {
                 theOption.componentOptions = new HashMap<>();
             }
-            theOption.componentOptions.put(oneComponent.getString(org.apache.ofbiz.persistence.entity.x.productId), componentOption);
+            theOption.componentOptions.put(oneComponent.getString(x.productId), componentOption);
 
             //  recalculate option price
             theOption.recalculateOptionPrice(this);
@@ -509,7 +510,7 @@ public class ProductConfigWrapper implements Serializable {
 
         public ConfigItem(GenericValue questionAssoc) throws Exception {
             configItemAssoc = questionAssoc;
-            configItem = configItemAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ConfigItemProductConfigItem, false);
+            configItem = configItemAssoc.getRelatedOne(x.ConfigItemProductConfigItem, false);
             options = new LinkedList<>();
         }
 
@@ -562,7 +563,7 @@ public class ProductConfigWrapper implements Serializable {
          * @return the boolean
          */
         public boolean isStandard() {
-            return "STANDARD".equals(configItemAssoc.getString(org.apache.ofbiz.persistence.entity.x.configTypeId));
+            return "STANDARD".equals(configItemAssoc.getString(x.configTypeId));
         }
 
         /**
@@ -570,7 +571,7 @@ public class ProductConfigWrapper implements Serializable {
          * @return the boolean
          */
         public boolean isSingleChoice() {
-            return "SINGLE".equals(configItem.getString(org.apache.ofbiz.persistence.entity.x.configItemTypeId));
+            return "SINGLE".equals(configItem.getString(x.configItemTypeId));
         }
 
         /**
@@ -578,7 +579,7 @@ public class ProductConfigWrapper implements Serializable {
          * @return the boolean
          */
         public boolean isMandatory() {
-            return configItemAssoc.getString(org.apache.ofbiz.persistence.entity.x.isMandatory) != null && "Y".equals(configItemAssoc.getString(org.apache.ofbiz.persistence.entity.x.isMandatory));
+            return configItemAssoc.getString(x.isMandatory) != null && "Y".equals(configItemAssoc.getString(x.isMandatory));
         }
 
         /**
@@ -619,13 +620,13 @@ public class ProductConfigWrapper implements Serializable {
          */
         public String getQuestion() {
             String question = "";
-            if (UtilValidate.isNotEmpty(configItemAssoc.getString(org.apache.ofbiz.persistence.entity.x.description))) {
-                question = configItemAssoc.getString(org.apache.ofbiz.persistence.entity.x.description);
+            if (UtilValidate.isNotEmpty(configItemAssoc.getString(x.description))) {
+                question = configItemAssoc.getString(x.description);
             } else {
                 if (content != null) {
                     question = content.get("DESCRIPTION", "html").toString();
                 } else {
-                    question = (configItem.getString(org.apache.ofbiz.persistence.entity.x.description) != null ? configItem.getString(org.apache.ofbiz.persistence.entity.x.description) : "");
+                    question = (configItem.getString(x.description) != null ? configItem.getString(x.description) : "");
                 }
             }
             return question;
@@ -637,13 +638,13 @@ public class ProductConfigWrapper implements Serializable {
          */
         public String getDescription() {
             String description = "";
-            if (UtilValidate.isNotEmpty(configItemAssoc.getString(org.apache.ofbiz.persistence.entity.x.longDescription))) {
-                description = configItemAssoc.getString(org.apache.ofbiz.persistence.entity.x.longDescription);
+            if (UtilValidate.isNotEmpty(configItemAssoc.getString(x.longDescription))) {
+                description = configItemAssoc.getString(x.longDescription);
             } else {
                 if (content != null) {
                     description = content.get("LONG_DESCRIPTION", "html").toString();
                 } else {
-                    description = (configItem.getString(org.apache.ofbiz.persistence.entity.x.longDescription) != null ? configItem.getString(org.apache.ofbiz.persistence.entity.x.longDescription) : "");
+                    description = (configItem.getString(x.longDescription) != null ? configItem.getString(x.longDescription) : "");
                 }
             }
             return description;
@@ -683,7 +684,7 @@ public class ProductConfigWrapper implements Serializable {
          * @return the default
          */
         public ConfigOption getDefault() {
-            String defaultConfigOptionId = configItemAssoc.getString(org.apache.ofbiz.persistence.entity.x.defaultConfigOptionId);
+            String defaultConfigOptionId = configItemAssoc.getString(x.defaultConfigOptionId);
             if (UtilValidate.isNotEmpty(defaultConfigOptionId)) {
                 for (ConfigOption oneOption : getOptions()) {
                     String currentConfigOptionId = oneOption.getId();
@@ -730,7 +731,7 @@ public class ProductConfigWrapper implements Serializable {
 
         @Override
         public String toString() {
-            return configItem.getString(org.apache.ofbiz.persistence.entity.x.configItemId);
+            return configItem.getString(x.configItemId);
         }
 
     }
@@ -762,12 +763,12 @@ public class ProductConfigWrapper implements Serializable {
                             String webSiteId, String currencyUomId, GenericValue autoUserLogin) throws Exception {
             configOption = option;
             parentConfigItem = configItem;
-            componentList = option.getRelated(org.apache.ofbiz.persistence.entity.x.ConfigOptionProductConfigProduct, null, null, false);
+            componentList = option.getRelated(x.ConfigOptionProductConfigProduct, null, null, false);
             for (GenericValue oneComponent: componentList) {
                 BigDecimal listPrice = BigDecimal.ZERO;
                 BigDecimal price = BigDecimal.ZERO;
                 // Get the component's price
-                Map<String, Object> fieldMap = UtilMisc.toMap("product", oneComponent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductProduct, false),
+                Map<String, Object> fieldMap = UtilMisc.toMap("product", oneComponent.getRelatedOne(x.ProductProduct, false),
                         "prodCatalogId", catalogId, "webSiteId", webSiteId, "currencyUomId", currencyUomId, "productPricePurposeId",
                         "COMPONENT_PRICE", "autoUserLogin", autoUserLogin, "productStoreId", productStoreId);
                 Map<String, Object> priceMap = dispatcher.runSync("calculateProductPrice", fieldMap);
@@ -779,8 +780,8 @@ public class ProductConfigWrapper implements Serializable {
                 BigDecimal componentPrice = (BigDecimal) priceMap.get("price");
                 Boolean validPriceFound = (Boolean) priceMap.get("validPriceFound");
                 BigDecimal mult = BigDecimal.ONE;
-                if (oneComponent.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity) != null) {
-                    mult = oneComponent.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                if (oneComponent.getBigDecimal(x.quantity) != null) {
+                    mult = oneComponent.getBigDecimal(x.quantity);
                 }
                 if (mult.compareTo(BigDecimal.ZERO) == 0) {
                     mult = BigDecimal.ONE;
@@ -840,8 +841,8 @@ public class ProductConfigWrapper implements Serializable {
             for (GenericValue oneComponent: componentList) {
                 BigDecimal listPrice = BigDecimal.ZERO;
                 BigDecimal price = BigDecimal.ZERO;
-                GenericValue oneComponentProduct = oneComponent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductProduct, false);
-                String variantProductId = componentOptions.get(oneComponent.getString(org.apache.ofbiz.persistence.entity.x.productId));
+                GenericValue oneComponentProduct = oneComponent.getRelatedOne(x.ProductProduct, false);
+                String variantProductId = componentOptions.get(oneComponent.getString(x.productId));
 
                 if (UtilValidate.isNotEmpty(variantProductId)) {
                     oneComponentProduct = EntityQuery.use(delegator).from("Product").where("productId", variantProductId).queryOne();
@@ -861,8 +862,8 @@ public class ProductConfigWrapper implements Serializable {
                 BigDecimal componentPrice = (BigDecimal) priceMap.get("price");
                 Boolean validPriceFound = (Boolean) priceMap.get("validPriceFound");
                 BigDecimal mult = BigDecimal.ONE;
-                if (oneComponent.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity) != null) {
-                    mult = oneComponent.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                if (oneComponent.getBigDecimal(x.quantity) != null) {
+                    mult = oneComponent.getBigDecimal(x.quantity);
                 }
                 if (mult.compareTo(BigDecimal.ZERO) == 0) {
                     mult = BigDecimal.ONE;
@@ -900,7 +901,7 @@ public class ProductConfigWrapper implements Serializable {
          * @return the option name
          */
         public String getOptionName() {
-            return (configOption.getString(org.apache.ofbiz.persistence.entity.x.configOptionName) != null ? configOption.getString(org.apache.ofbiz.persistence.entity.x.configOptionName) : "no option name");
+            return (configOption.getString(x.configOptionName) != null ? configOption.getString(x.configOptionName) : "no option name");
         }
 
         /**
@@ -910,7 +911,7 @@ public class ProductConfigWrapper implements Serializable {
          */
         public String getOptionName(Locale locale) {
 
-            return (configOption.getString(org.apache.ofbiz.persistence.entity.x.configOptionName) != null ? (String) configOption.get(org.apache.ofbiz.persistence.entity.x.configOptionName, locale) : "no option name");
+            return (configOption.getString(x.configOptionName) != null ? (String) configOption.get(x.configOptionName, locale) : "no option name");
         }
 
         /**
@@ -918,7 +919,7 @@ public class ProductConfigWrapper implements Serializable {
          * @return the description
          */
         public String getDescription() {
-            return (configOption.getString(org.apache.ofbiz.persistence.entity.x.description) != null ? configOption.getString(org.apache.ofbiz.persistence.entity.x.description) : "no description");
+            return (configOption.getString(x.description) != null ? configOption.getString(x.description) : "no description");
         }
 
         /**
@@ -927,7 +928,7 @@ public class ProductConfigWrapper implements Serializable {
          * @return the description
          */
         public String getDescription(Locale locale) {
-            return (configOption.getString(org.apache.ofbiz.persistence.entity.x.description) != null ? (String) configOption.get(org.apache.ofbiz.persistence.entity.x.description, locale) : "no description");
+            return (configOption.getString(x.description) != null ? (String) configOption.get(x.description, locale) : "no description");
         }
 
         /**
@@ -935,7 +936,7 @@ public class ProductConfigWrapper implements Serializable {
          * @return the id
          */
         public String getId() {
-            return configOption.getString(org.apache.ofbiz.persistence.entity.x.configOptionId);
+            return configOption.getString(x.configOptionId);
         }
 
         /**
@@ -1031,8 +1032,8 @@ public class ProductConfigWrapper implements Serializable {
             int index = getComponents().indexOf(component);
             if (index != -1) {
                 try {
-                    GenericValue product = component.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductProduct, false);
-                    return "Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.isVirtual));
+                    GenericValue product = component.getRelatedOne(x.ProductProduct, false);
+                    return "Y".equals(product.getString(x.isVirtual));
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e.getMessage(), MODULE);
                 }
@@ -1108,7 +1109,7 @@ public class ProductConfigWrapper implements Serializable {
 
         @Override
         public String toString() {
-            return configOption.getString(org.apache.ofbiz.persistence.entity.x.configItemId) + "/" + configOption.getString(org.apache.ofbiz.persistence.entity.x.configOptionId) + (isSelected() ? "*" : "");
+            return configOption.getString(x.configItemId) + "/" + configOption.getString(x.configOptionId) + (isSelected() ? "*" : "");
         }
 
     }

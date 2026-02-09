@@ -43,6 +43,7 @@ import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ContentPermissionServices Class
  *
@@ -94,29 +95,29 @@ public class ContentPermissionServices {
         // String statusId = (String) context.get("statusId");
         //TODO this parameters is still not used but this service need to be replaced by genericContentPermission
         // String privilegeEnumId = (String) context.get("privilegeEnumId");
-        GenericValue content = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.currentContent);
-        Boolean bDisplayFailCond = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.displayFailCond);
+        GenericValue content = (GenericValue) context.get(x.currentContent);
+        Boolean bDisplayFailCond = (Boolean) context.get(x.displayFailCond);
         boolean displayFailCond = false;
         if (bDisplayFailCond != null && bDisplayFailCond) {
             displayFailCond = true;
         }
         Debug.logInfo("displayFailCond(0):" + displayFailCond, "");
-        Boolean bDisplayPassCond = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.displayPassCond);
+        Boolean bDisplayPassCond = (Boolean) context.get(x.displayPassCond);
         boolean displayPassCond = false;
         if (bDisplayPassCond != null && bDisplayPassCond) {
             displayPassCond = true;
         }
         Debug.logInfo("displayPassCond(0):" + displayPassCond, "");
         Map<String, Object> results = new HashMap<>();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String partyId = (String) context.get(x.partyId);
         if (UtilValidate.isEmpty(partyId)) {
-            String passedUserLoginId = (String) context.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+            String passedUserLoginId = (String) context.get(x.userLoginId);
             if (UtilValidate.isNotEmpty(passedUserLoginId)) {
                 try {
                     userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", passedUserLoginId).cache().queryOne();
                     if (userLogin != null) {
-                        partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+                        partyId = userLogin.getString(x.partyId);
                     }
                 } catch (GenericEntityException e) {
                     return ServiceUtil.returnError(e.getMessage());
@@ -124,7 +125,7 @@ public class ContentPermissionServices {
             }
         }
         if (UtilValidate.isEmpty(partyId) && userLogin != null) {
-            partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+            partyId = userLogin.getString(x.partyId);
         }
 
 
@@ -133,8 +134,8 @@ public class ContentPermissionServices {
         // I realized, belatedly, that I wanted to be able to pass parameters in as
         // strings so this service could be used in an action event directly,
         // so I had to write this code to handle both list and strings
-        List<String> passedPurposes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.contentPurposeList));
-        String contentPurposeString = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentPurposeString);
+        List<String> passedPurposes = UtilGenerics.cast(context.get(x.contentPurposeList));
+        String contentPurposeString = (String) context.get(x.contentPurposeString);
         if (UtilValidate.isNotEmpty(contentPurposeString)) {
             List<String> purposesFromString = StringUtil.split(contentPurposeString, "|");
             if (passedPurposes == null) {
@@ -148,8 +149,8 @@ public class ContentPermissionServices {
         // Sometimes permissions need to be checked before an entity is created, so
         // there needs to be a method for setting a purpose list
         auxGetter.setList(passedPurposes);
-        List<String> targetOperations = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.targetOperationList));
-        String targetOperationString = (String) context.get(org.apache.ofbiz.persistence.entity.x.targetOperationString);
+        List<String> targetOperations = UtilGenerics.cast(context.get(x.targetOperationList));
+        String targetOperationString = (String) context.get(x.targetOperationString);
         if (UtilValidate.isNotEmpty(targetOperationString)) {
             List<String> operationsFromString = StringUtil.split(targetOperationString, "|");
             if (targetOperations == null) {
@@ -164,16 +165,16 @@ public class ContentPermissionServices {
 
         EntityPermissionChecker.StdRelatedRoleGetter roleGetter = new EntityPermissionChecker.StdRelatedRoleGetter("Content",
                 "roleTypeId", "contentId", "partyId", "ownerContentId", "ContentRole");
-        List<String> passedRoles = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.roleTypeList));
+        List<String> passedRoles = UtilGenerics.cast(context.get(x.roleTypeList));
         if (passedRoles == null) passedRoles = new LinkedList<>();
-        String roleTypeString = (String) context.get(org.apache.ofbiz.persistence.entity.x.roleTypeString);
+        String roleTypeString = (String) context.get(x.roleTypeString);
         if (UtilValidate.isNotEmpty(roleTypeString)) {
             List<String> rolesFromString = StringUtil.split(roleTypeString, "|");
             passedRoles.addAll(rolesFromString);
         }
         roleGetter.setList(passedRoles);
 
-        String entityAction = (String) context.get(org.apache.ofbiz.persistence.entity.x.entityOperation);
+        String entityAction = (String) context.get(x.entityOperation);
         if (entityAction == null) entityAction = "_ADMIN";
         if (userLogin != null) {
             passed = security.hasEntityPermission("CONTENTMGR", entityAction, userLogin);
@@ -197,7 +198,7 @@ public class ContentPermissionServices {
             if (content != null) {
                 entityIds.add(content);
             }
-            String quickCheckContentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.quickCheckContentId);
+            String quickCheckContentId = (String) context.get(x.quickCheckContentId);
             if (UtilValidate.isNotEmpty(quickCheckContentId)) {
                 List<String> quickList = StringUtil.split(quickCheckContentId, "|");
                 if (UtilValidate.isNotEmpty(quickList)) {
@@ -255,12 +256,12 @@ public class ContentPermissionServices {
         // Security security = dctx.getSecurity();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Boolean bDisplayFailCond = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.displayFailCond);
-        String contentIdFrom = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentIdFrom);
-        String contentIdTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentIdTo);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String entityAction = (String) context.get(org.apache.ofbiz.persistence.entity.x.entityOperation);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Boolean bDisplayFailCond = (Boolean) context.get(x.displayFailCond);
+        String contentIdFrom = (String) context.get(x.contentIdFrom);
+        String contentIdTo = (String) context.get(x.contentIdTo);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String entityAction = (String) context.get(x.entityOperation);
+        Locale locale = (Locale) context.get(x.locale);
         if (entityAction == null) entityAction = "_ADMIN";
         String permissionStatus = null;
 

@@ -35,6 +35,7 @@ import org.apache.ofbiz.widget.renderer.ScreenRenderException;
 import org.apache.ofbiz.widget.renderer.ScreenStringRenderer;
 import org.w3c.dom.Element;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Widget Library - Screen model class
  */
@@ -142,7 +143,7 @@ public class ModelScreen extends ModelWidget {
     public void renderScreenString(Appendable writer, Map<String, Object> context, ScreenStringRenderer screenStringRenderer)
             throws ScreenRenderException {
         // make sure the "nullField" object is in there for entity ops
-        context.put(org.apache.ofbiz.persistence.entity.x.nullField, GenericEntity.NULL_FIELD);
+        context.put(x.nullField, GenericEntity.NULL_FIELD);
 
         // wrap the whole screen rendering in a transaction, should improve performance in querying and such
         boolean beganTransaction = false;
@@ -183,7 +184,7 @@ public class ModelScreen extends ModelWidget {
      * @return the dispatcher
      */
     public LocalDispatcher getDispatcher(Map<String, Object> context) {
-        LocalDispatcher dispatcher = (LocalDispatcher) context.get(org.apache.ofbiz.persistence.entity.x.dispatcher);
+        LocalDispatcher dispatcher = (LocalDispatcher) context.get(x.dispatcher);
         return dispatcher;
     }
 
@@ -193,7 +194,7 @@ public class ModelScreen extends ModelWidget {
      * @return the delegator
      */
     public Delegator getDelegator(Map<String, Object> context) {
-        Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
+        Delegator delegator = (Delegator) context.get(x.delegator);
         return delegator;
     }
 
@@ -207,7 +208,7 @@ public class ModelScreen extends ModelWidget {
      * @return
      */
     private int resolveTransactionTimeout(Map<String, Object> context) {
-        Map<String, String> parameters = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.parameters));
+        Map<String, String> parameters = UtilGenerics.cast(context.get(x.parameters));
         int transactionTimeout = -1;
         if (parameters != null) {
             String transactionTimeoutPar = parameters.get("TRANSACTION_TIMEOUT");

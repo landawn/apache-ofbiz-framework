@@ -50,6 +50,7 @@ import org.apache.ofbiz.security.Security;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Zip-Sales Database Services
  */
@@ -68,10 +69,10 @@ public class ZipSalesServices {
     public static Map<String, Object> importFlatTable(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String taxFileLocation = (String) context.get(org.apache.ofbiz.persistence.entity.x.taxFileLocation);
-        String ruleFileLocation = (String) context.get(org.apache.ofbiz.persistence.entity.x.ruleFileLocation);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String taxFileLocation = (String) context.get(x.taxFileLocation);
+        String ruleFileLocation = (String) context.get(x.ruleFileLocation);
+        Locale locale = (Locale) context.get(x.locale);
 
         // do security check
         if (!security.hasPermission("SERVICE_INVOKE_ANY", userLogin)) {
@@ -114,30 +115,30 @@ public class ZipSalesServices {
                 }
                 GenericValue newValue = delegator.makeValue("ZipSalesTaxLookup");
                 // PK fields
-                newValue.set(org.apache.ofbiz.persistence.entity.x.zipCode, entry.getString("zipCode").trim());
-                newValue.set(org.apache.ofbiz.persistence.entity.x.stateCode, entry.get("stateCode") != null ? entry.getString("stateCode").trim() : "_NA_");
-                newValue.set(org.apache.ofbiz.persistence.entity.x.city, entry.get("city") != null ? entry.getString("city").trim() : "_NA_");
-                newValue.set(org.apache.ofbiz.persistence.entity.x.county, entry.get("county") != null ? entry.getString("county").trim() : "_NA_");
-                newValue.set(org.apache.ofbiz.persistence.entity.x.fromDate, parseDate(entry.getString("effectiveDate"), now));
+                newValue.set(x.zipCode, entry.getString("zipCode").trim());
+                newValue.set(x.stateCode, entry.get("stateCode") != null ? entry.getString("stateCode").trim() : "_NA_");
+                newValue.set(x.city, entry.get("city") != null ? entry.getString("city").trim() : "_NA_");
+                newValue.set(x.county, entry.get("county") != null ? entry.getString("county").trim() : "_NA_");
+                newValue.set(x.fromDate, parseDate(entry.getString("effectiveDate"), now));
 
                 // non-PK fields
-                newValue.set(org.apache.ofbiz.persistence.entity.x.countyFips, entry.get("countyFips"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.countyDefault, entry.get("countyDefault"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.generalDefault, entry.get("generalDefault"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.insideCity, entry.get("insideCity"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.geoCode, entry.get("geoCode"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.stateSalesTax, entry.get("stateSalesTax"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.citySalesTax, entry.get("citySalesTax"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.cityLocalSalesTax, entry.get("cityLocalSalesTax"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.countySalesTax, entry.get("countySalesTax"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.countyLocalSalesTax, entry.get("countyLocalSalesTax"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.comboSalesTax, entry.get("comboSalesTax"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.stateUseTax, entry.get("stateUseTax"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.cityUseTax, entry.get("cityUseTax"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.cityLocalUseTax, entry.get("cityLocalUseTax"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.countyUseTax, entry.get("countyUseTax"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.countyLocalUseTax, entry.get("countyLocalUseTax"));
-                newValue.set(org.apache.ofbiz.persistence.entity.x.comboUseTax, entry.get("comboUseTax"));
+                newValue.set(x.countyFips, entry.get("countyFips"));
+                newValue.set(x.countyDefault, entry.get("countyDefault"));
+                newValue.set(x.generalDefault, entry.get("generalDefault"));
+                newValue.set(x.insideCity, entry.get("insideCity"));
+                newValue.set(x.geoCode, entry.get("geoCode"));
+                newValue.set(x.stateSalesTax, entry.get("stateSalesTax"));
+                newValue.set(x.citySalesTax, entry.get("citySalesTax"));
+                newValue.set(x.cityLocalSalesTax, entry.get("cityLocalSalesTax"));
+                newValue.set(x.countySalesTax, entry.get("countySalesTax"));
+                newValue.set(x.countyLocalSalesTax, entry.get("countyLocalSalesTax"));
+                newValue.set(x.comboSalesTax, entry.get("comboSalesTax"));
+                newValue.set(x.stateUseTax, entry.get("stateUseTax"));
+                newValue.set(x.cityUseTax, entry.get("cityUseTax"));
+                newValue.set(x.cityLocalUseTax, entry.get("cityLocalUseTax"));
+                newValue.set(x.countyUseTax, entry.get("countyUseTax"));
+                newValue.set(x.countyLocalUseTax, entry.get("countyLocalUseTax"));
+                newValue.set(x.comboUseTax, entry.get("comboUseTax"));
 
                 try {
                     delegator.createOrStore(newValue);
@@ -147,8 +148,8 @@ public class ZipSalesServices {
                 }
 
                 // console log
-                Debug.logInfo(newValue.get(org.apache.ofbiz.persistence.entity.x.zipCode) + "/" + newValue.get(org.apache.ofbiz.persistence.entity.x.stateCode) + "/" + newValue.get(org.apache.ofbiz.persistence.entity.x.city) + "/"
-                        + newValue.get(org.apache.ofbiz.persistence.entity.x.county) + "/" + newValue.get(org.apache.ofbiz.persistence.entity.x.fromDate), MODULE);
+                Debug.logInfo(newValue.get(x.zipCode) + "/" + newValue.get(x.stateCode) + "/" + newValue.get(x.city) + "/"
+                        + newValue.get(x.county) + "/" + newValue.get(x.fromDate), MODULE);
             }
         }
 
@@ -186,15 +187,15 @@ public class ZipSalesServices {
                 if (UtilValidate.isNotEmpty(entry.getString("stateCode"))) {
                     GenericValue newValue = delegator.makeValue("ZipSalesRuleLookup");
                     // PK fields
-                    newValue.set(org.apache.ofbiz.persistence.entity.x.stateCode, entry.get("stateCode") != null ? entry.getString("stateCode").trim() : "_NA_");
-                    newValue.set(org.apache.ofbiz.persistence.entity.x.city, entry.get("city") != null ? entry.getString("city").trim() : "_NA_");
-                    newValue.set(org.apache.ofbiz.persistence.entity.x.county, entry.get("county") != null ? entry.getString("county").trim() : "_NA_");
-                    newValue.set(org.apache.ofbiz.persistence.entity.x.fromDate, parseDate(entry.getString("effectiveDate"), now));
+                    newValue.set(x.stateCode, entry.get("stateCode") != null ? entry.getString("stateCode").trim() : "_NA_");
+                    newValue.set(x.city, entry.get("city") != null ? entry.getString("city").trim() : "_NA_");
+                    newValue.set(x.county, entry.get("county") != null ? entry.getString("county").trim() : "_NA_");
+                    newValue.set(x.fromDate, parseDate(entry.getString("effectiveDate"), now));
 
                     // non-PK fields
-                    newValue.set(org.apache.ofbiz.persistence.entity.x.idCode, entry.get("idCode") != null ? entry.getString("idCode").trim() : null);
-                    newValue.set(org.apache.ofbiz.persistence.entity.x.taxable, entry.get("taxable") != null ? entry.getString("taxable").trim() : null);
-                    newValue.set(org.apache.ofbiz.persistence.entity.x.shipCond, entry.get("shipCond") != null ? entry.getString("shipCond").trim() : null);
+                    newValue.set(x.idCode, entry.get("idCode") != null ? entry.getString("idCode").trim() : null);
+                    newValue.set(x.taxable, entry.get("taxable") != null ? entry.getString("taxable").trim() : null);
+                    newValue.set(x.shipCond, entry.get("shipCond") != null ? entry.getString("shipCond").trim() : null);
 
                     try {
                         // using storeAll as an easy way to create/update
@@ -205,8 +206,8 @@ public class ZipSalesServices {
                     }
 
                     // console log
-                    Debug.logInfo(newValue.get(org.apache.ofbiz.persistence.entity.x.stateCode) + "/" + newValue.get(org.apache.ofbiz.persistence.entity.x.city) + "/" + newValue.get(org.apache.ofbiz.persistence.entity.x.county) + "/" + newValue.get(
-                            org.apache.ofbiz.persistence.entity.x.fromDate), MODULE);
+                    Debug.logInfo(newValue.get(x.stateCode) + "/" + newValue.get(x.city) + "/" + newValue.get(x.county) + "/" + newValue.get(
+                            x.fromDate), MODULE);
                 }
             }
         }
@@ -217,16 +218,16 @@ public class ZipSalesServices {
     // tax calc service
     public static Map<String, Object> flatTaxCalc(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        List<GenericValue> itemProductList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemProductList));
-        List<BigDecimal> itemAmountList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemAmountList));
-        List<BigDecimal> itemShippingList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.itemShippingList));
-        BigDecimal orderShippingAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.orderShippingAmount);
-        GenericValue shippingAddress = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.shippingAddress);
+        List<GenericValue> itemProductList = UtilGenerics.cast(context.get(x.itemProductList));
+        List<BigDecimal> itemAmountList = UtilGenerics.cast(context.get(x.itemAmountList));
+        List<BigDecimal> itemShippingList = UtilGenerics.cast(context.get(x.itemShippingList));
+        BigDecimal orderShippingAmount = (BigDecimal) context.get(x.orderShippingAmount);
+        GenericValue shippingAddress = (GenericValue) context.get(x.shippingAddress);
 
         // flatTaxCalc only uses the Zip + City from the address
-        String stateProvince = shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId);
-        String postalCode = shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode);
-        String city = shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.city);
+        String stateProvince = shippingAddress.getString(x.stateProvinceGeoId);
+        String postalCode = shippingAddress.getString(x.postalCode);
+        String city = shippingAddress.getString(x.city);
 
         // setup the return lists.
         List<GenericValue> orderAdjustments = new LinkedList<>();
@@ -271,7 +272,7 @@ public class ZipSalesServices {
         List<GenericValue> adjustments = new LinkedList<>();
 
         // check the item for tax status
-        if (item != null && item.get(org.apache.ofbiz.persistence.entity.x.taxable) != null && "N".equals(item.getString(org.apache.ofbiz.persistence.entity.x.taxable))) {
+        if (item != null && item.get(x.taxable) != null && "N".equals(item.getString(x.taxable))) {
             // item not taxable
             return adjustments;
         }
@@ -345,7 +346,7 @@ public class ZipSalesServices {
         }
 
         // get state code
-        String stateCode = taxEntry.getString(org.apache.ofbiz.persistence.entity.x.stateCode);
+        String stateCode = taxEntry.getString(x.stateCode);
 
         // check if shipping is exempt
         boolean taxShipping = true;
@@ -374,9 +375,9 @@ public class ZipSalesServices {
                     // if we found an rule which passes no need to contine (all rules are ||)
                     break;
                 }
-                String idCode = rule.getString(org.apache.ofbiz.persistence.entity.x.idCode);
-                String taxable = rule.getString(org.apache.ofbiz.persistence.entity.x.taxable);
-                String condition = rule.getString(org.apache.ofbiz.persistence.entity.x.shipCond);
+                String idCode = rule.getString(x.idCode);
+                String taxable = rule.getString(x.taxable);
+                String condition = rule.getString(x.shipCond);
                 if ("T".equals(taxable)) {
                     // this record is taxable
                     continue;

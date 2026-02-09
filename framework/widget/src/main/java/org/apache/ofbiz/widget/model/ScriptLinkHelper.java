@@ -30,6 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Utility to support different handling of code blocks in an html template:
  * 1. Inline javascript tags are turned into external javascript tags for better compliance of Content Security Policy.
@@ -91,7 +92,7 @@ public final class ScriptLinkHelper {
      * @return key used to store the script
      */
     private static String putScriptInCache(Map<String, Object> context, String fileName, String fileContent) {
-        HttpSession session = (HttpSession) context.get(org.apache.ofbiz.persistence.entity.x.session);
+        HttpSession session = (HttpSession) context.get(x.session);
         String sessionId = session.getId();
         Map<String, String> scriptMap = UtilGenerics.cast(scriptCache.get(sessionId));
         if (scriptMap == null) {
@@ -142,7 +143,7 @@ public final class ScriptLinkHelper {
     public static String prepareScriptLinkForBodyEnd(HttpServletRequest request, String fileName, String script) {
 
         Map<String, Object> context = new HashMap<>();
-        context.put(org.apache.ofbiz.persistence.entity.x.session, request.getSession());
+        context.put(x.session, request.getSession());
         String key = putScriptInCache(context, fileName, script);
 
         // construct script link

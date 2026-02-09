@@ -43,6 +43,7 @@ import org.apache.ofbiz.widget.model.ModelMenuItem.MenuLink;
 import org.apache.ofbiz.widget.model.ModelWidget;
 import org.apache.ofbiz.widget.renderer.MenuStringRenderer;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Widget Library - HTML Menu Renderer implementation
  */
@@ -202,7 +203,7 @@ public class HtmlMenuRenderer extends HtmlWidgetRenderer implements MenuStringRe
             renderLink(writer, context, link);
         } else {
             String txt = menuItem.getTitle(context);
-            UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
+            UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(x.simpleEncoder);
             if (simpleEncoder != null) {
                 txt = simpleEncoder.encode(txt);
             }
@@ -308,7 +309,7 @@ public class HtmlMenuRenderer extends HtmlWidgetRenderer implements MenuStringRe
 
         GenericValue userLogin = (GenericValue) request.getSession().getAttribute("userLogin");
         if (userLogin != null) {
-            String userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
+            String userLoginId = userLogin.getString(x.userLoginId);
             setUserLoginIdAtPermGrant(userLoginId);
         } else {
             request.getSession().setAttribute("userLoginIdAtPermGrant", null);
@@ -379,7 +380,7 @@ public class HtmlMenuRenderer extends HtmlWidgetRenderer implements MenuStringRe
         userLoginIdAtPermGrant = getUserLoginIdAtPermGrant();
         String userLoginId = null;
         if (userLogin != null) {
-            userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
+            userLoginId = userLogin.getString(x.userLoginId);
         }
         if ((userLoginId == null && userLoginIdAtPermGrant != null)
                 || (userLoginId != null && userLoginIdAtPermGrant == null)
@@ -419,8 +420,8 @@ public class HtmlMenuRenderer extends HtmlWidgetRenderer implements MenuStringRe
         }
 
         if (UtilValidate.isNotEmpty(target)) {
-            HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
-            HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
+            HttpServletResponse response = (HttpServletResponse) context.get(x.response);
+            HttpServletRequest request = (HttpServletRequest) context.get(x.request);
 
             String targetWindow = link.getTargetWindow(context);
             String uniqueItemName = UtilRandom.getUnique(menuItem.getModelMenu().getName() + "_" + menuItem.getName() + "_", true);
@@ -447,7 +448,7 @@ public class HtmlMenuRenderer extends HtmlWidgetRenderer implements MenuStringRe
                 writer.append(uniqueItemName);
                 writer.append("\">");
 
-                UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
+                UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(x.simpleEncoder);
                 for (Map.Entry<String, String> parameter: link.getParameterMap(context, false).entrySet()) {
                     writer.append("<input name=\"");
                     writer.append(parameter.getKey());
@@ -562,8 +563,8 @@ public class HtmlMenuRenderer extends HtmlWidgetRenderer implements MenuStringRe
             boolean fullPath = false;
             boolean secure = false;
             boolean encode = false;
-            HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
-            HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
+            HttpServletResponse response = (HttpServletResponse) context.get(x.response);
+            HttpServletRequest request = (HttpServletRequest) context.get(x.request);
             if (urlMode != null && "ofbiz".equalsIgnoreCase(urlMode)) {
                 if (request != null && response != null) {
                     RequestHandler rh = (RequestHandler) request.getServletContext().getAttribute("_REQUEST_HANDLER_");

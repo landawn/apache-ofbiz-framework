@@ -38,6 +38,7 @@ import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityOperator;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * A package of methods for improving efficiency of financial accounts services
  */
@@ -263,7 +264,7 @@ public final class FinAccountHelper {
         }
 
         if (finAccount != null) {
-            String dbPin = finAccount.getString(org.apache.ofbiz.persistence.entity.x.finAccountCode);
+            String dbPin = finAccount.getString(x.finAccountCode);
             Debug.logInfo("FinAccount Pin Validation: [Sent: " + pinNumber + "] [Actual: " + dbPin + "]", MODULE);
             if (dbPin != null && dbPin.equals(pinNumber)) {
                 return true;

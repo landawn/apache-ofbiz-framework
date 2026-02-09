@@ -30,6 +30,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.service.testtools.OFBizTestCase;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class SalesOrderTest extends OFBizTestCase {
     private static final String MODULE = OFBizTestCase.class.getName();
 
@@ -63,7 +64,7 @@ public class SalesOrderTest extends OFBizTestCase {
         ctx.put("orderPaymentInfo", orderPaymentInfo);
 
         List<GenericValue> orderItemShipGroupInfo = new LinkedList<>();
-        orderContactMech.set(org.apache.ofbiz.persistence.entity.x.contactMechPurposeTypeId, "SHIPPING_LOCATION");
+        orderContactMech.set(x.contactMechPurposeTypeId, "SHIPPING_LOCATION");
         orderItemShipGroupInfo.add(orderContactMech);
 
         GenericValue orderItemShipGroup = delegator.makeValue("OrderItemShipGroup", UtilMisc.toMap("carrierPartyId", "UPS", "contactMechId", "9015",
@@ -82,31 +83,31 @@ public class SalesOrderTest extends OFBizTestCase {
         orderAdjustment = delegator.makeValue("OrderAdjustment", UtilMisc.toMap("orderAdjustmentTypeId", "SALES_TAX", "orderItemSeqId", "00001",
                 "overrideGlAccountId", "224153",
                 "primaryGeoId", "UT", "shipGroupSeqId", "00001", "sourcePercentage", BigDecimal.valueOf(4.7)));
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId, "UT");
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.taxAuthPartyId, "UT_TAXMAN");
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.taxAuthorityRateSeqId, "9004");
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.amount, BigDecimal.valueOf(1.824));
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.comments, "Utah State Sales Tax");
+        orderAdjustment.set(x.taxAuthGeoId, "UT");
+        orderAdjustment.set(x.taxAuthPartyId, "UT_TAXMAN");
+        orderAdjustment.set(x.taxAuthorityRateSeqId, "9004");
+        orderAdjustment.set(x.amount, BigDecimal.valueOf(1.824));
+        orderAdjustment.set(x.comments, "Utah State Sales Tax");
         orderItemShipGroupInfo.add(orderAdjustment);
 
         orderAdjustment = delegator.makeValue("OrderAdjustment", UtilMisc.toMap("orderAdjustmentTypeId", "SALES_TAX", "orderItemSeqId", "00001",
                 "overrideGlAccountId", "224153",
                 "primaryGeoId", "UT-UTAH", "shipGroupSeqId", "00001", "sourcePercentage", BigDecimal.valueOf(0.1)));
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId, "UT-UTAH");
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.taxAuthPartyId, "UT_UTAH_TAXMAN");
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.taxAuthorityRateSeqId, "9005");
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.amount, BigDecimal.valueOf(0.039));
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.comments, "Utah County, Utah Sales Tax");
+        orderAdjustment.set(x.taxAuthGeoId, "UT-UTAH");
+        orderAdjustment.set(x.taxAuthPartyId, "UT_UTAH_TAXMAN");
+        orderAdjustment.set(x.taxAuthorityRateSeqId, "9005");
+        orderAdjustment.set(x.amount, BigDecimal.valueOf(0.039));
+        orderAdjustment.set(x.comments, "Utah County, Utah Sales Tax");
         orderItemShipGroupInfo.add(orderAdjustment);
 
         orderAdjustment = delegator.makeValue("OrderAdjustment", UtilMisc.toMap("orderAdjustmentTypeId", "SALES_TAX", "orderItemSeqId", "00001",
                 "overrideGlAccountId", "224000",
                 "primaryGeoId", "_NA_", "shipGroupSeqId", "00001", "sourcePercentage", BigDecimal.valueOf(1)));
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.taxAuthGeoId, "_NA_");
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.taxAuthPartyId, "_NA_");
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.taxAuthorityRateSeqId, "9000");
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.amount, BigDecimal.valueOf(0.384));
-        orderAdjustment.set(org.apache.ofbiz.persistence.entity.x.comments, "1% OFB _NA_ Tax");
+        orderAdjustment.set(x.taxAuthGeoId, "_NA_");
+        orderAdjustment.set(x.taxAuthPartyId, "_NA_");
+        orderAdjustment.set(x.taxAuthorityRateSeqId, "9000");
+        orderAdjustment.set(x.amount, BigDecimal.valueOf(0.384));
+        orderAdjustment.set(x.comments, "1% OFB _NA_ Tax");
         orderItemShipGroupInfo.add(orderAdjustment);
 
         ctx.put("orderItemShipGroupInfo", orderItemShipGroupInfo);
@@ -120,20 +121,20 @@ public class SalesOrderTest extends OFBizTestCase {
         List<GenericValue> orderItems = new LinkedList<>();
         GenericValue orderItem = delegator.makeValue("OrderItem", UtilMisc.toMap("orderItemSeqId", "00001", "orderItemTypeId", "PRODUCT_ORDER_ITEM",
                 "prodCatalogId", "DemoCatalog", "productId", "GZ-2644", "quantity", BigDecimal.ONE, "selectedAmount", BigDecimal.ZERO));
-        orderItem.set(org.apache.ofbiz.persistence.entity.x.isPromo, "N");
-        orderItem.set(org.apache.ofbiz.persistence.entity.x.isModifiedPrice, "N");
-        orderItem.set(org.apache.ofbiz.persistence.entity.x.unitPrice, new BigDecimal("38.4"));
-        orderItem.set(org.apache.ofbiz.persistence.entity.x.unitListPrice, new BigDecimal("48.0"));
-        orderItem.set(org.apache.ofbiz.persistence.entity.x.statusId, "ITEM_CREATED");
+        orderItem.set(x.isPromo, "N");
+        orderItem.set(x.isModifiedPrice, "N");
+        orderItem.set(x.unitPrice, new BigDecimal("38.4"));
+        orderItem.set(x.unitListPrice, new BigDecimal("48.0"));
+        orderItem.set(x.statusId, "ITEM_CREATED");
         orderItems.add(orderItem);
 
         orderItem = delegator.makeValue("OrderItem", UtilMisc.toMap("orderItemSeqId", "00002", "orderItemTypeId", "PRODUCT_ORDER_ITEM",
                 "prodCatalogId", "DemoCatalog", "productId", "GZ-1006-1", "quantity", BigDecimal.ONE, "selectedAmount", BigDecimal.ZERO));
-        orderItem.set(org.apache.ofbiz.persistence.entity.x.isPromo, "N");
-        orderItem.set(org.apache.ofbiz.persistence.entity.x.isModifiedPrice, "N");
-        orderItem.set(org.apache.ofbiz.persistence.entity.x.unitPrice, new BigDecimal("1.99"));
-        orderItem.set(org.apache.ofbiz.persistence.entity.x.unitListPrice, new BigDecimal("5.99"));
-        orderItem.set(org.apache.ofbiz.persistence.entity.x.statusId, "ITEM_CREATED");
+        orderItem.set(x.isPromo, "N");
+        orderItem.set(x.isModifiedPrice, "N");
+        orderItem.set(x.unitPrice, new BigDecimal("1.99"));
+        orderItem.set(x.unitListPrice, new BigDecimal("5.99"));
+        orderItem.set(x.statusId, "ITEM_CREATED");
         orderItems.add(orderItem);
 
         ctx.put("orderItems", orderItems);
@@ -142,8 +143,8 @@ public class SalesOrderTest extends OFBizTestCase {
         ctx.put("orderTerms", orderTerms);
 
         GenericValue orderContactMec = delegator.makeValue("OrderContactMech");
-        orderContactMec.set(org.apache.ofbiz.persistence.entity.x.contactMechPurposeTypeId, "SHIPPING_LOCATION");
-        orderContactMec.set(org.apache.ofbiz.persistence.entity.x.contactMechId, "10000");
+        orderContactMec.set(x.contactMechPurposeTypeId, "SHIPPING_LOCATION");
+        orderContactMec.set(x.contactMechId, "10000");
 
         ctx.put("placingCustomerPartyId", "DemoCustomer");
         ctx.put("endUserCustomerPartyId", "DemoCustomer");

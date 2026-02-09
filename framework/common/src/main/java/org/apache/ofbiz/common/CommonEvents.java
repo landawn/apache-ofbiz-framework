@@ -62,6 +62,7 @@ import org.apache.ofbiz.widget.model.ScriptLinkHelper;
 import org.apache.ofbiz.widget.model.ThemeFactory;
 import org.apache.ofbiz.widget.renderer.VisualTheme;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Common Services
  */
@@ -105,7 +106,7 @@ public class CommonEvents {
 
             if (userLogin != null) {
                 GenericValue ulUpdate = GenericValue.create(userLogin);
-                ulUpdate.set(org.apache.ofbiz.persistence.entity.x.lastLocale, localeString);
+                ulUpdate.set(x.lastLocale, localeString);
                 try {
                     ulUpdate.store();
                     userLogin.refreshFromCache();
@@ -131,7 +132,7 @@ public class CommonEvents {
 
             if (userLogin != null) {
                 GenericValue ulUpdate = GenericValue.create(userLogin);
-                ulUpdate.set(org.apache.ofbiz.persistence.entity.x.lastTimeZone, tzString);
+                ulUpdate.set(x.lastTimeZone, tzString);
                 try {
                     ulUpdate.store();
                     userLogin.refreshFromCache();
@@ -170,7 +171,7 @@ public class CommonEvents {
 
             if (userLogin != null) {
                 GenericValue ulUpdate = GenericValue.create(userLogin);
-                ulUpdate.set(org.apache.ofbiz.persistence.entity.x.lastCurrencyUom, currencyUom);
+                ulUpdate.set(x.lastCurrencyUom, currencyUom);
                 try {
                     ulUpdate.store();
                     userLogin.refreshFromCache();

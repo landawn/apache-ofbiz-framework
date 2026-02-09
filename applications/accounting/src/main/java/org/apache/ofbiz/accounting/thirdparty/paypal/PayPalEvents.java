@@ -60,6 +60,7 @@ import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 public class PayPalEvents {
 
     private static final String RESOURCE = "AccountingUiLabels";
@@ -87,8 +88,8 @@ public class PayPalEvents {
         }
 
         // get the order total
-        String orderTotal = orderHeader.getBigDecimal(org.apache.ofbiz.persistence.entity.x.grandTotal).toPlainString();
-        String currencyUom = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.currencyUom);
+        String orderTotal = orderHeader.getBigDecimal(x.grandTotal).toPlainString();
+        String currencyUom = orderHeader.getString(x.currencyUom);
 
         // get the product store
         GenericValue productStore = ProductStoreWorker.getProductStore(request);
@@ -101,13 +102,13 @@ public class PayPalEvents {
         }
 
         // get the payment properties file
-        GenericValue paymentConfig = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId),
+        GenericValue paymentConfig = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStore.getString(x.productStoreId),
                 "EXT_PAYPAL", null, true);
         String configString = null;
         String paymentGatewayConfigId = null;
         if (paymentConfig != null) {
-            paymentGatewayConfigId = paymentConfig.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
-            configString = paymentConfig.getString(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath);
+            paymentGatewayConfigId = paymentConfig.getString(x.paymentGatewayConfigId);
+            configString = paymentConfig.getString(x.paymentPropertiesPath);
         }
 
         if (configString == null) {
@@ -115,7 +116,7 @@ public class PayPalEvents {
         }
 
         // get the company name
-        String company = UtilFormatOut.checkEmpty(productStore.getString(org.apache.ofbiz.persistence.entity.x.companyName), "");
+        String company = UtilFormatOut.checkEmpty(productStore.getString(x.companyName), "");
 
         // create the item name
         String itemName = UtilProperties.getMessage(RESOURCE, "AccountingOrderNr", locale) + orderId + " "
@@ -160,7 +161,7 @@ public class PayPalEvents {
         parameters.put("item_name", itemName);
         parameters.put("item_number", itemNumber);
         parameters.put("invoice", orderId);
-        parameters.put("custom", userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
+        parameters.put("custom", userLogin.getString(x.userLoginId));
         parameters.put("amount", orderTotal);
         parameters.put("currency_code", currencyUom);
         parameters.put("return", returnUrl);
@@ -205,14 +206,14 @@ public class PayPalEvents {
         }
 
         // get the payment properties file
-        GenericValue paymentConfig = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId),
+        GenericValue paymentConfig = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStore.getString(x.productStoreId),
                 "EXT_PAYPAL", null, true);
 
         String configString = null;
         String paymentGatewayConfigId = null;
         if (paymentConfig != null) {
-            paymentGatewayConfigId = paymentConfig.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
-            configString = paymentConfig.getString(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath);
+            paymentGatewayConfigId = paymentConfig.getString(x.paymentGatewayConfigId);
+            configString = paymentConfig.getString(x.paymentPropertiesPath);
         }
 
         if (configString == null) {
@@ -441,13 +442,13 @@ public class PayPalEvents {
             authDate = UtilDateTime.nowTimestamp();
         }
 
-        paymentPreference.set(org.apache.ofbiz.persistence.entity.x.maxAmount, new BigDecimal(paymentAmount));
+        paymentPreference.set(x.maxAmount, new BigDecimal(paymentAmount));
         if ("Completed".equals(paymentStatus)) {
-            paymentPreference.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_RECEIVED");
+            paymentPreference.set(x.statusId, "PAYMENT_RECEIVED");
         } else if ("Pending".equals(paymentStatus)) {
-            paymentPreference.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_NOT_RECEIVED");
+            paymentPreference.set(x.statusId, "PAYMENT_NOT_RECEIVED");
         } else {
-            paymentPreference.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_CANCELLED");
+            paymentPreference.set(x.statusId, "PAYMENT_CANCELLED");
         }
         toStore.add(paymentPreference);
 
@@ -457,19 +458,19 @@ public class PayPalEvents {
         // create the PaymentGatewayResponse
         String responseId = delegator.getNextSeqId("PaymentGatewayResponse");
         GenericValue response = delegator.makeValue("PaymentGatewayResponse");
-        response.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, responseId);
-        response.set(org.apache.ofbiz.persistence.entity.x.paymentServiceTypeEnumId, "PRDS_PAY_EXTERNAL");
-        response.set(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId, paymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
-        response.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, paymentPreference.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
-        response.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, paymentPreference.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        response.set(x.paymentGatewayResponseId, responseId);
+        response.set(x.paymentServiceTypeEnumId, "PRDS_PAY_EXTERNAL");
+        response.set(x.orderPaymentPreferenceId, paymentPreference.get(x.orderPaymentPreferenceId));
+        response.set(x.paymentMethodTypeId, paymentPreference.get(x.paymentMethodTypeId));
+        response.set(x.paymentMethodId, paymentPreference.get(x.paymentMethodId));
 
         // set the auth info
-        response.set(org.apache.ofbiz.persistence.entity.x.amount, new BigDecimal(paymentAmount));
-        response.set(org.apache.ofbiz.persistence.entity.x.referenceNum, transactionId);
-        response.set(org.apache.ofbiz.persistence.entity.x.gatewayCode, paymentStatus);
-        response.set(org.apache.ofbiz.persistence.entity.x.gatewayFlag, paymentStatus.substring(0, 1));
-        response.set(org.apache.ofbiz.persistence.entity.x.gatewayMessage, paymentType);
-        response.set(org.apache.ofbiz.persistence.entity.x.transactionDate, authDate);
+        response.set(x.amount, new BigDecimal(paymentAmount));
+        response.set(x.referenceNum, transactionId);
+        response.set(x.gatewayCode, paymentStatus);
+        response.set(x.gatewayFlag, paymentStatus.substring(0, 1));
+        response.set(x.gatewayMessage, paymentType);
+        response.set(x.transactionDate, authDate);
         toStore.add(response);
 
         try {
@@ -484,7 +485,7 @@ public class PayPalEvents {
         try {
             String comment = UtilProperties.getMessage(RESOURCE, "AccountingPaymentReceiveViaPayPal", locale);
             results = dispatcher.runSync("createPaymentFromPreference", UtilMisc.toMap("userLogin", userLogin,
-                    "orderPaymentPreferenceId", paymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId), "comments", comment));
+                    "orderPaymentPreferenceId", paymentPreference.get(x.orderPaymentPreferenceId), "comments", comment));
         } catch (GenericServiceException e) {
             Debug.logError(e, "Failed to execute service createPaymentFromPreference", MODULE);
             request.setAttribute("_ERROR_MESSAGE_", UtilProperties.getMessage(RES_ERROR,

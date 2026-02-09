@@ -29,6 +29,7 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.webapp.website.WebSiteWorker;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ContentUrlTag - Creates a URL string prepending the content prefix from url.properties
  */
@@ -67,8 +68,8 @@ public class ContentUrlTag {
 
     public static void appendContentPrefix(GenericValue webSite, boolean secure, Appendable urlBuffer) throws IOException {
         if (secure) {
-            if (webSite != null && UtilValidate.isNotEmpty(webSite.getString(org.apache.ofbiz.persistence.entity.x.secureContentPrefix))) {
-                urlBuffer.append(webSite.getString(org.apache.ofbiz.persistence.entity.x.secureContentPrefix).trim());
+            if (webSite != null && UtilValidate.isNotEmpty(webSite.getString(x.secureContentPrefix))) {
+                urlBuffer.append(webSite.getString(x.secureContentPrefix).trim());
             } else {
                 String prefix = UtilProperties.getPropertyValue("url", "content.url.prefix.secure");
                 if (prefix != null) {
@@ -76,8 +77,8 @@ public class ContentUrlTag {
                 }
             }
         } else {
-            if (webSite != null && UtilValidate.isNotEmpty(webSite.getString(org.apache.ofbiz.persistence.entity.x.standardContentPrefix))) {
-                urlBuffer.append(webSite.getString(org.apache.ofbiz.persistence.entity.x.standardContentPrefix).trim());
+            if (webSite != null && UtilValidate.isNotEmpty(webSite.getString(x.standardContentPrefix))) {
+                urlBuffer.append(webSite.getString(x.standardContentPrefix).trim());
             } else {
                 String prefix = UtilProperties.getPropertyValue("url", "content.url.prefix.standard");
                 if (prefix != null) {

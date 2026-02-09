@@ -46,6 +46,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 public class GiftCertificateServices {
 
     private static final String MODULE = GiftCertificateServices.class.getName();
@@ -63,17 +64,17 @@ public class GiftCertificateServices {
     public static Map<String, Object> createGiftCertificate(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
-        BigDecimal initialAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.initialAmount);
-        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String productStoreId = (String) context.get(x.productStoreId);
+        String orderId = (String) context.get(x.orderId);
+        BigDecimal initialAmount = (BigDecimal) context.get(x.initialAmount);
+        String currency = (String) context.get(x.currency);
+        String partyId = (String) context.get(x.partyId);
         if (UtilValidate.isEmpty(partyId)) {
             partyId = "_NA_";
         }
-        String currencyUom = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        String currencyUom = (String) context.get(x.currency);
         if (UtilValidate.isEmpty(currencyUom)) {
             currencyUom = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
         }
@@ -91,15 +92,15 @@ public class GiftCertificateServices {
                     .cache().queryOne();
             Map<String, Object> acctResult = null;
 
-            if ("Y".equals(giftCertSettings.getString(org.apache.ofbiz.persistence.entity.x.requirePinCode))) {
+            if ("Y".equals(giftCertSettings.getString(x.requirePinCode))) {
                 // TODO: move this code to createFinAccountForStore as well
                 int cardNumberLength = CARD_NUMBER_LENGTH;
                 int pinNumberLength = PIN_NUMBER_LENGTH;
-                if (giftCertSettings.getLong(org.apache.ofbiz.persistence.entity.x.accountCodeLength) != null) {
-                    cardNumberLength = giftCertSettings.getLong(org.apache.ofbiz.persistence.entity.x.accountCodeLength).intValue();
+                if (giftCertSettings.getLong(x.accountCodeLength) != null) {
+                    cardNumberLength = giftCertSettings.getLong(x.accountCodeLength).intValue();
                 }
-                if (giftCertSettings.getLong(org.apache.ofbiz.persistence.entity.x.pinCodeLength) != null) {
-                    pinNumberLength = giftCertSettings.getLong(org.apache.ofbiz.persistence.entity.x.pinCodeLength).intValue();
+                if (giftCertSettings.getLong(x.pinCodeLength) != null) {
+                    pinNumberLength = giftCertSettings.getLong(x.pinCodeLength).intValue();
                 }
                 cardNumber = generateNumber(delegator, cardNumberLength, true);
                 pinNumber = generateNumber(delegator, pinNumberLength, false);
@@ -168,20 +169,20 @@ public class GiftCertificateServices {
     public static Map<String, Object> addFundsToGiftCertificate(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         final String deposit = "DEPOSIT";
 
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
-        String cardNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber);
-        String pinNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.pinNumber);
-        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String productStoreId = (String) context.get(x.productStoreId);
+        String cardNumber = (String) context.get(x.cardNumber);
+        String pinNumber = (String) context.get(x.pinNumber);
+        BigDecimal amount = (BigDecimal) context.get(x.amount);
 
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String partyId = (String) context.get(x.partyId);
         if (UtilValidate.isEmpty(partyId)) {
             partyId = "_NA_";
         }
-        String currencyUom = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        String currencyUom = (String) context.get(x.currency);
         if (UtilValidate.isEmpty(currencyUom)) {
             currencyUom = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
         }
@@ -193,7 +194,7 @@ public class GiftCertificateServices {
             GenericValue giftCertSettings = EntityQuery.use(delegator).from("ProductStoreFinActSetting")
                     .where("productStoreId", productStoreId, "finAccountTypeId", FinAccountHelper.getGiftCertFinAccountTypeId())
                     .cache().queryOne();
-            if ("Y".equals(giftCertSettings.getString(org.apache.ofbiz.persistence.entity.x.requirePinCode))) {
+            if ("Y".equals(giftCertSettings.getString(x.requirePinCode))) {
                 if (!validatePin(delegator, cardNumber, pinNumber)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "AccountingGiftCertificateNumberPinNotValid", locale));
@@ -202,7 +203,7 @@ public class GiftCertificateServices {
             } else {
                 finAccount = FinAccountHelper.getFinAccountFromCode(cardNumber, delegator);
                 if (finAccount != null) {
-                    finAccountId = finAccount.getString(org.apache.ofbiz.persistence.entity.x.finAccountId);
+                    finAccountId = finAccount.getString(x.finAccountId);
                 }
             }
         } catch (GenericEntityException e) {
@@ -228,8 +229,8 @@ public class GiftCertificateServices {
 
         // get the previous balance
         BigDecimal previousBalance = BigDecimal.ZERO;
-        if (finAccount.get(org.apache.ofbiz.persistence.entity.x.availableBalance) != null) {
-            previousBalance = finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.availableBalance);
+        if (finAccount.get(x.availableBalance) != null) {
+            previousBalance = finAccount.getBigDecimal(x.availableBalance);
         }
 
         // create the transaction
@@ -239,7 +240,7 @@ public class GiftCertificateServices {
             refNum = GiftCertificateServices.createTransaction(delegator, dispatcher, userLogin, amount, productStoreId, partyId,
                     currencyUom, deposit, finAccountId, locale);
             finAccount.refresh();
-            balance = finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.availableBalance);
+            balance = finAccount.getBigDecimal(x.availableBalance);
         } catch (GeneralException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -260,19 +261,19 @@ public class GiftCertificateServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         final String withdrawl = "WITHDRAWAL";
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
-        String cardNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber);
-        String pinNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.pinNumber);
-        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String productStoreId = (String) context.get(x.productStoreId);
+        String orderId = (String) context.get(x.orderId);
+        String cardNumber = (String) context.get(x.cardNumber);
+        String pinNumber = (String) context.get(x.pinNumber);
+        BigDecimal amount = (BigDecimal) context.get(x.amount);
 
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        String partyId = (String) context.get(x.partyId);
         if (UtilValidate.isEmpty(partyId)) {
             partyId = "_NA_";
         }
-        String currencyUom = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        String currencyUom = (String) context.get(x.currency);
         if (UtilValidate.isEmpty(currencyUom)) {
             currencyUom = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
         }
@@ -288,7 +289,7 @@ public class GiftCertificateServices {
             GenericValue giftCertSettings = EntityQuery.use(delegator).from("ProductStoreFinActSetting")
                     .where("productStoreId", productStoreId, "finAccountTypeId", FinAccountHelper.getGiftCertFinAccountTypeId())
                     .cache().queryOne();
-            if ("Y".equals(giftCertSettings.getString(org.apache.ofbiz.persistence.entity.x.requirePinCode)) && !validatePin(delegator, cardNumber, pinNumber)) {
+            if ("Y".equals(giftCertSettings.getString(x.requirePinCode)) && !validatePin(delegator, cardNumber, pinNumber)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "AccountingGiftCertificateNumberPinNotValid", locale));
             }
@@ -309,7 +310,7 @@ public class GiftCertificateServices {
         }
 
         // check the actual balance (excluding authorized amounts) and create the transaction if it is sufficient
-        BigDecimal previousBalance = finAccount.get(org.apache.ofbiz.persistence.entity.x.actualBalance) == null ? BigDecimal.ZERO : finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualBalance);
+        BigDecimal previousBalance = finAccount.get(x.actualBalance) == null ? BigDecimal.ZERO : finAccount.getBigDecimal(x.actualBalance);
 
         BigDecimal balance = BigDecimal.ZERO;
         String refNum = null;
@@ -319,7 +320,7 @@ public class GiftCertificateServices {
                 refNum = GiftCertificateServices.createTransaction(delegator, dispatcher, userLogin, amount, productStoreId,
                         partyId, currencyUom, withdrawl, cardNumber, locale, orderId);
                 finAccount.refresh();
-                balance = finAccount.get(org.apache.ofbiz.persistence.entity.x.availableBalance) == null ? BigDecimal.ZERO : finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.availableBalance);
+                balance = finAccount.get(x.availableBalance) == null ? BigDecimal.ZERO : finAccount.getBigDecimal(x.availableBalance);
                 procResult = Boolean.TRUE;
             } catch (GeneralException e) {
                 Debug.logError(e, MODULE);
@@ -344,9 +345,9 @@ public class GiftCertificateServices {
 
     public static Map<String, Object> checkGiftCertificateBalance(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String cardNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber);
-        String pinNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.pinNumber);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String cardNumber = (String) context.get(x.cardNumber);
+        String pinNumber = (String) context.get(x.pinNumber);
+        Locale locale = (Locale) context.get(x.locale);
 
         // validate the pin
         if (!validatePin(delegator, cardNumber, pinNumber)) {
@@ -364,7 +365,7 @@ public class GiftCertificateServices {
 
         // TODO: get the real currency from context
         // get the balance
-        BigDecimal balance = finAccount.get(org.apache.ofbiz.persistence.entity.x.availableBalance) == null ? BigDecimal.ZERO : finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.availableBalance);
+        BigDecimal balance = finAccount.get(x.availableBalance) == null ? BigDecimal.ZERO : finAccount.getBigDecimal(x.availableBalance);
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         result.put("balance", balance);
@@ -376,19 +377,19 @@ public class GiftCertificateServices {
     public static Map<String, Object> giftCertificateProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
-        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        BigDecimal amount = (BigDecimal) context.get(x.processAmount);
+        String currency = (String) context.get(x.currency);
+        String orderId = (String) context.get(x.orderId);
         // make sure we have a currency
         if (currency == null) {
             currency = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
         }
 
         // get the authorizations
-        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        GenericValue authTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
+        GenericValue authTransaction = (GenericValue) context.get(x.authTrans);
         if (authTransaction == null) {
             authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         }
@@ -398,33 +399,33 @@ public class GiftCertificateServices {
         }
 
         // get the gift certificate and its authorization from the authorization
-        String finAccountAuthId = authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum);
+        String finAccountAuthId = authTransaction.getString(x.referenceNum);
         try {
             GenericValue finAccountAuth = EntityQuery.use(delegator).from("FinAccountAuth").where("finAccountAuthId", finAccountAuthId).queryOne();
-            GenericValue giftCard = finAccountAuth.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FinAccount, false);
+            GenericValue giftCard = finAccountAuth.getRelatedOne(x.FinAccount, false);
             // make sure authorization has not expired
-            Timestamp authExpiration = finAccountAuth.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate);
+            Timestamp authExpiration = finAccountAuth.getTimestamp(x.thruDate);
             if ((authExpiration != null) && (authExpiration.before(UtilDateTime.nowTimestamp()))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "AccountingFinAccountAuthorizationExpired",
-                        UtilMisc.toMap("paymentGatewayResponseId", authTransaction.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId),
+                        UtilMisc.toMap("paymentGatewayResponseId", authTransaction.getString(x.paymentGatewayResponseId),
                                 "authExpiration", authExpiration), locale));
             }
             // make sure the fin account itself has not expired
-            if ((giftCard.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate) != null) && (giftCard.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate).before(UtilDateTime.nowTimestamp()))) {
+            if ((giftCard.getTimestamp(x.thruDate) != null) && (giftCard.getTimestamp(x.thruDate).before(UtilDateTime.nowTimestamp()))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "AccountingGiftCertificateNumberExpired",
-                        UtilMisc.toMap("thruDate", giftCard.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate)), locale));
+                        UtilMisc.toMap("thruDate", giftCard.getTimestamp(x.thruDate)), locale));
             }
 
             // obtain the order information
-            OrderReadHelper orh = new OrderReadHelper(delegator, orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+            OrderReadHelper orh = new OrderReadHelper(delegator, orderPaymentPreference.getString(x.orderId));
 
             Map<String, Object> redeemCtx = new HashMap<>();
             redeemCtx.put("userLogin", userLogin);
             redeemCtx.put("productStoreId", orh.getProductStoreId());
-            redeemCtx.put("cardNumber", giftCard.get(org.apache.ofbiz.persistence.entity.x.finAccountId));
-            redeemCtx.put("pinNumber", giftCard.get(org.apache.ofbiz.persistence.entity.x.finAccountCode));
+            redeemCtx.put("cardNumber", giftCard.get(x.finAccountId));
+            redeemCtx.put("pinNumber", giftCard.get(x.finAccountCode));
             redeemCtx.put("currency", currency);
             redeemCtx.put("orderId", orderId);
             if (orh.getBillToParty() != null) {
@@ -446,7 +447,7 @@ public class GiftCertificateServices {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(releaseResult));
             }
 
-            String authRefNum = authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum);
+            String authRefNum = authTransaction.getString(x.referenceNum);
             Map<String, Object> result = ServiceUtil.returnSuccess();
             if (redeemResult != null) {
                 Boolean processResult = (Boolean) redeemResult.get("processResult");
@@ -470,12 +471,12 @@ public class GiftCertificateServices {
     public static Map<String, Object> giftCertificateAuthorize(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue giftCard = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.giftCard);
-        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
-        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue giftCard = (GenericValue) context.get(x.giftCard);
+        String currency = (String) context.get(x.currency);
+        String orderId = (String) context.get(x.orderId);
+        BigDecimal amount = (BigDecimal) context.get(x.processAmount);
 
         // make sure we have a currency
         if (currency == null) {
@@ -495,19 +496,19 @@ public class GiftCertificateServices {
             GenericValue finAccount = null;
             String finAccountId = null;
             if (UtilValidate.isNotEmpty(giftCertSettings)) {
-                if ("Y".equals(giftCertSettings.getString(org.apache.ofbiz.persistence.entity.x.requirePinCode))) {
-                    if (validatePin(delegator, giftCard.getString(org.apache.ofbiz.persistence.entity.x.cardNumber), giftCard.getString(org.apache.ofbiz.persistence.entity.x.pinNumber))) {
-                        finAccountId = giftCard.getString(org.apache.ofbiz.persistence.entity.x.cardNumber);
+                if ("Y".equals(giftCertSettings.getString(x.requirePinCode))) {
+                    if (validatePin(delegator, giftCard.getString(x.cardNumber), giftCard.getString(x.pinNumber))) {
+                        finAccountId = giftCard.getString(x.cardNumber);
                         finAccount = EntityQuery.use(delegator).from("FinAccount").where("finAccountId", finAccountId).queryOne();
                     }
                 } else {
-                    finAccount = FinAccountHelper.getFinAccountFromCode(giftCard.getString(org.apache.ofbiz.persistence.entity.x.cardNumber), delegator);
+                    finAccount = FinAccountHelper.getFinAccountFromCode(giftCard.getString(x.cardNumber), delegator);
                     if (finAccount == null) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                                 "AccountingGiftCertificateNumberNotFound",
                                 UtilMisc.toMap("finAccountId", ""), locale));
                     }
-                    finAccountId = finAccount.getString(org.apache.ofbiz.persistence.entity.x.finAccountId);
+                    finAccountId = finAccount.getString(x.finAccountId);
                 }
             } else {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -522,15 +523,15 @@ public class GiftCertificateServices {
             }
 
             // check for expiration date
-            if ((finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate) != null) && (finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate).before(UtilDateTime.nowTimestamp()))) {
+            if ((finAccount.getTimestamp(x.thruDate) != null) && (finAccount.getTimestamp(x.thruDate).before(UtilDateTime.nowTimestamp()))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "AccountingGiftCertificateNumberExpired",
-                        UtilMisc.toMap("thruDate", finAccount.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate)), locale));
+                        UtilMisc.toMap("thruDate", finAccount.getTimestamp(x.thruDate)), locale));
             }
 
             // check the amount to authorize against the available balance of fin account, which includes active authorizations as well as
             // transactions
-            BigDecimal availableBalance = finAccount.getBigDecimal(org.apache.ofbiz.persistence.entity.x.availableBalance);
+            BigDecimal availableBalance = finAccount.getBigDecimal(x.availableBalance);
             Boolean processResult = null;
             String refNum = null;
             Map<String, Object> result = ServiceUtil.returnSuccess();
@@ -541,8 +542,8 @@ public class GiftCertificateServices {
             // if availableBalance equal to or greater than amount, then auth
             if (UtilValidate.isNotEmpty(availableBalance) && availableBalance.compareTo(amount) >= 0) {
                 Timestamp thruDate = null;
-                if (giftCertSettings.getLong(org.apache.ofbiz.persistence.entity.x.authValidDays) != null) {
-                    thruDate = UtilDateTime.getDayEnd(UtilDateTime.nowTimestamp(), giftCertSettings.getLong(org.apache.ofbiz.persistence.entity.x.authValidDays));
+                if (giftCertSettings.getLong(x.authValidDays) != null) {
+                    thruDate = UtilDateTime.getDayEnd(UtilDateTime.nowTimestamp(), giftCertSettings.getLong(x.authValidDays));
                 }
                 Map<String, Object> tmpResult = dispatcher.runSync("createFinAccountAuth",
                         UtilMisc.<String, Object>toMap("finAccountId", finAccountId,
@@ -577,19 +578,19 @@ public class GiftCertificateServices {
     }
 
     public static Map<String, Object> giftCertificateRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
-        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.refundAmount);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
+        String currency = (String) context.get(x.currency);
+        BigDecimal amount = (BigDecimal) context.get(x.refundAmount);
+        Locale locale = (Locale) context.get(x.locale);
         return giftCertificateRestore(dctx, userLogin, paymentPref, amount, currency, "refund", locale);
     }
 
     public static Map<String, Object> giftCertificateRelease(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
+        Locale locale = (Locale) context.get(x.locale);
 
         String err = UtilProperties.getMessage(RES_ERROR,
                 "AccountingGiftCertificateNumberCannotBeExpired", locale);
@@ -601,15 +602,15 @@ public class GiftCertificateServices {
                         "AccountingFinAccountCannotFindAuthorization", locale));
             }
             Map<String, Object> input = UtilMisc.<String, Object>toMap("userLogin", userLogin,
-                    "finAccountAuthId", authTransaction.get(org.apache.ofbiz.persistence.entity.x.referenceNum));
+                    "finAccountAuthId", authTransaction.get(x.referenceNum));
             Map<String, Object> serviceResults = dispatcher.runSync("expireFinAccountAuth", input);
             if (ServiceUtil.isError(serviceResults)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResults));
             }
 
             Map<String, Object> result = ServiceUtil.returnSuccess();
-            result.put("releaseRefNum", authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
-            result.put("releaseAmount", authTransaction.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));
+            result.put("releaseRefNum", authTransaction.getString(x.referenceNum));
+            result.put("releaseAmount", authTransaction.getBigDecimal(x.amount));
             result.put("releaseResult", Boolean.TRUE);
 
             return result;
@@ -624,7 +625,7 @@ public class GiftCertificateServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         // get the orderId for tracking
-        String orderId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderId = paymentPref.getString(x.orderId);
         OrderReadHelper orh = new OrderReadHelper(delegator, orderId);
         String productStoreId = orh.getProductStoreId();
 
@@ -632,13 +633,13 @@ public class GiftCertificateServices {
         GenericValue placingParty = orh.getPlacingParty();
         String partyId = null;
         if (placingParty != null) {
-            partyId = placingParty.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+            partyId = placingParty.getString(x.partyId);
         }
 
         // get the GiftCard VO
         GenericValue giftCard = null;
         try {
-            giftCard = paymentPref.getRelatedOne(org.apache.ofbiz.persistence.entity.x.GiftCard, false);
+            giftCard = paymentPref.getRelatedOne(x.GiftCard, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Unable to get GiftCard from OrderPaymentPreference", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -659,8 +660,8 @@ public class GiftCertificateServices {
         refundCtx.put("productStoreId", productStoreId);
         refundCtx.put("currency", currency);
         refundCtx.put("partyId", partyId);
-        refundCtx.put("cardNumber", giftCard.get(org.apache.ofbiz.persistence.entity.x.cardNumber));
-        refundCtx.put("pinNumber", giftCard.get(org.apache.ofbiz.persistence.entity.x.pinNumber));
+        refundCtx.put("cardNumber", giftCard.get(x.cardNumber));
+        refundCtx.put("pinNumber", giftCard.get(x.pinNumber));
         refundCtx.put("amount", amount);
         refundCtx.put("userLogin", userLogin);
 
@@ -693,17 +694,17 @@ public class GiftCertificateServices {
         // this service should always be called via FULFILLMENT_EXTASYNC
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        GenericValue orderItem = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderItem);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        GenericValue orderItem = (GenericValue) context.get(x.orderItem);
+        Locale locale = (Locale) context.get(x.locale);
 
         // order ID for tracking
-        String orderId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderId = orderItem.getString(x.orderId);
 
         // the order header for store info
         GenericValue orderHeader = null;
         try {
-            orderHeader = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
+            orderHeader = orderItem.getRelatedOne(x.OrderHeader, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Unable to get OrderHeader from OrderItem", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER_ERROR,
@@ -736,17 +737,17 @@ public class GiftCertificateServices {
         GenericValue placingParty = orh.getPlacingParty();
         String partyId = null;
         if (placingParty != null) {
-            partyId = placingParty.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+            partyId = placingParty.getString(x.partyId);
         }
 
         // amount/quantity of the gift card(s)
-        BigDecimal amount = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice);
-        BigDecimal quantity = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+        BigDecimal amount = orderItem.getBigDecimal(x.unitPrice);
+        BigDecimal quantity = orderItem.getBigDecimal(x.quantity);
 
         // the product entity needed for information
         GenericValue product = null;
         try {
-            product = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
+            product = orderItem.getRelatedOne(x.Product, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Unable to get Product from OrderItem", MODULE);
         }
@@ -770,14 +771,14 @@ public class GiftCertificateServices {
         }
 
         // survey information
-        String surveyId = giftCertSettings.getString(org.apache.ofbiz.persistence.entity.x.purchaseSurveyId);
+        String surveyId = giftCertSettings.getString(x.purchaseSurveyId);
 
         // get the survey response
         GenericValue surveyResponse = null;
         try {
             // there should be only one
             surveyResponse = EntityQuery.use(delegator).from("SurveyResponse")
-                    .where("orderId", orderId, "orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "surveyId", surveyId)
+                    .where("orderId", orderId, "orderItemSeqId", orderItem.get(x.orderItemSeqId), "surveyId", surveyId)
                     .orderBy("-responseDate").queryFirst();
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -792,7 +793,7 @@ public class GiftCertificateServices {
         // get the response answers
         List<GenericValue> responseAnswers = null;
         try {
-            responseAnswers = surveyResponse.getRelated(org.apache.ofbiz.persistence.entity.x.SurveyResponseAnswer, null, null, false);
+            responseAnswers = surveyResponse.getRelated(x.SurveyResponseAnswer, null, null, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -805,27 +806,27 @@ public class GiftCertificateServices {
             for (GenericValue answer : responseAnswers) {
                 GenericValue question = null;
                 try {
-                    question = answer.getRelatedOne(org.apache.ofbiz.persistence.entity.x.SurveyQuestion, false);
+                    question = answer.getRelatedOne(x.SurveyQuestion, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "AccountingGiftCertificateNumberCannotFulfillFromSurveyAnswers", locale));
                 }
                 if (question != null) {
-                    String desc = question.getString(org.apache.ofbiz.persistence.entity.x.description);
-                    String ans = answer.getString(org.apache.ofbiz.persistence.entity.x.textResponse);  // only support text response types for now
+                    String desc = question.getString(x.description);
+                    String ans = answer.getString(x.textResponse);  // only support text response types for now
                     answerMap.put(desc, ans);
                 }
             }
         }
 
         // get the send to email address - key defined in product store settings entity
-        String sendToKey = giftCertSettings.getString(org.apache.ofbiz.persistence.entity.x.purchSurveySendTo);
+        String sendToKey = giftCertSettings.getString(x.purchSurveySendTo);
         String sendToEmail = (String) answerMap.get(sendToKey);
 
         // get the copyMe flag and set the order email address
         String orderEmails = orh.getOrderEmailString();
-        String copyMeField = giftCertSettings.getString(org.apache.ofbiz.persistence.entity.x.purchSurveyCopyMe);
+        String copyMeField = giftCertSettings.getString(x.purchSurveyCopyMe);
         String copyMeResp = copyMeField != null ? (String) answerMap.get(copyMeField) : null;
         boolean copyMe = UtilValidate.isNotEmpty(copyMeField)
                 && UtilValidate.isNotEmpty(copyMeResp) && "true".equalsIgnoreCase(copyMeResp);
@@ -860,8 +861,8 @@ public class GiftCertificateServices {
             gcFulFill.put("typeEnumId", "GC_ACTIVATE");
             gcFulFill.put("partyId", partyId);
             gcFulFill.put("orderId", orderId);
-            gcFulFill.put("orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
-            gcFulFill.put("surveyResponseId", surveyResponse.get(org.apache.ofbiz.persistence.entity.x.surveyResponseId));
+            gcFulFill.put("orderItemSeqId", orderItem.get(x.orderItemSeqId));
+            gcFulFill.put("surveyResponseId", surveyResponse.get(x.surveyResponseId));
             gcFulFill.put("cardNumber", createGcResult.get("cardNumber"));
             gcFulFill.put("pinNumber", createGcResult.get("pinNumber"));
             gcFulFill.put("amount", createGcResult.get("initialAmount"));
@@ -897,7 +898,7 @@ public class GiftCertificateServices {
                 answerMap.put("locale", locale);
 
                 // set the bcc address(s)
-                String bcc = productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.bccAddress);
+                String bcc = productStoreEmail.getString(x.bccAddress);
                 if (copyMe) {
                     if (UtilValidate.isNotEmpty(bcc)) {
                         bcc = bcc + "," + orderEmails;
@@ -906,14 +907,14 @@ public class GiftCertificateServices {
                     }
                 }
                 Map<String, Object> emailCtx = new HashMap<>();
-                emailCtx.put("bodyScreenUri", productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.bodyScreenLocation));
+                emailCtx.put("bodyScreenUri", productStoreEmail.getString(x.bodyScreenLocation));
                 emailCtx.put("bodyParameters", answerMap);
                 emailCtx.put("sendTo", sendToEmail);
-                emailCtx.put("contentType", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.contentType));
-                emailCtx.put("sendFrom", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.fromAddress));
-                emailCtx.put("sendCc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.ccAddress));
+                emailCtx.put("contentType", productStoreEmail.get(x.contentType));
+                emailCtx.put("sendFrom", productStoreEmail.get(x.fromAddress));
+                emailCtx.put("sendCc", productStoreEmail.get(x.ccAddress));
                 emailCtx.put("sendBcc", bcc);
-                emailCtx.put("subject", productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.subject));
+                emailCtx.put("subject", productStoreEmail.getString(x.subject));
                 emailCtx.put("userLogin", userLogin);
                 try {
                     dispatcher.runAsync("sendMailFromScreen", emailCtx);
@@ -933,17 +934,17 @@ public class GiftCertificateServices {
         // this service should always be called via FULFILLMENT_EXTSYNC
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        GenericValue orderItem = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderItem);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        GenericValue orderItem = (GenericValue) context.get(x.orderItem);
+        Locale locale = (Locale) context.get(x.locale);
 
         // order ID for tracking
-        String orderId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderId = orderItem.getString(x.orderId);
 
         // the order header for store info
         GenericValue orderHeader = null;
         try {
-            orderHeader = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
+            orderHeader = orderItem.getRelatedOne(x.OrderHeader, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Unable to get OrderHeader from OrderItem", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER_ERROR,
@@ -975,7 +976,7 @@ public class GiftCertificateServices {
         GenericValue paymentSetting = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStoreId, "GIFT_CARD", null, true);
         String paymentConfig = null;
         if (paymentSetting != null) {
-            paymentConfig = paymentSetting.getString(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath);
+            paymentConfig = paymentSetting.getString(x.paymentPropertiesPath);
         }
         if (paymentConfig == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER_ERROR,
@@ -986,11 +987,11 @@ public class GiftCertificateServices {
         GenericValue placingParty = orh.getPlacingParty();
         String partyId = null;
         if (placingParty != null) {
-            partyId = placingParty.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+            partyId = placingParty.getString(x.partyId);
         }
 
         // amount of the gift card reload
-        BigDecimal amount = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice);
+        BigDecimal amount = orderItem.getBigDecimal(x.unitPrice);
 
         // survey information
         String surveyId = EntityUtilProperties.getPropertyValue(paymentConfig, "payment.giftcert.reload.surveyId", delegator);
@@ -1000,7 +1001,7 @@ public class GiftCertificateServices {
         try {
             // there should be only one
             surveyResponse = EntityQuery.use(delegator).from("SurveyResponse")
-                    .where("orderId", orderId, "orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "surveyId", surveyId)
+                    .where("orderId", orderId, "orderItemSeqId", orderItem.get(x.orderItemSeqId), "surveyId", surveyId)
                     .orderBy("-responseDate").queryFirst();
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -1011,7 +1012,7 @@ public class GiftCertificateServices {
         // get the response answers
         List<GenericValue> responseAnswers = null;
         try {
-            responseAnswers = surveyResponse.getRelated(org.apache.ofbiz.persistence.entity.x.SurveyResponseAnswer, null, null, false);
+            responseAnswers = surveyResponse.getRelated(x.SurveyResponseAnswer, null, null, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER_ERROR,
@@ -1024,15 +1025,15 @@ public class GiftCertificateServices {
             for (GenericValue answer : responseAnswers) {
                 GenericValue question = null;
                 try {
-                    question = answer.getRelatedOne(org.apache.ofbiz.persistence.entity.x.SurveyQuestion, false);
+                    question = answer.getRelatedOne(x.SurveyQuestion, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER_ERROR,
                             "AccountingGiftCertificateNumberCannotReloadFromSurveyAnswers", locale));
                 }
                 if (question != null) {
-                    String desc = question.getString(org.apache.ofbiz.persistence.entity.x.description);
-                    String ans = answer.getString(org.apache.ofbiz.persistence.entity.x.textResponse);  // only support text response types for now
+                    String desc = question.getString(x.description);
+                    String ans = answer.getString(x.textResponse);  // only support text response types for now
                     answerMap.put(desc, ans);
                 }
             }
@@ -1071,8 +1072,8 @@ public class GiftCertificateServices {
         gcFulFill.put("userLogin", userLogin);
         gcFulFill.put("partyId", partyId);
         gcFulFill.put("orderId", orderId);
-        gcFulFill.put("orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
-        gcFulFill.put("surveyResponseId", surveyResponse.get(org.apache.ofbiz.persistence.entity.x.surveyResponseId));
+        gcFulFill.put("orderItemSeqId", orderItem.get(x.orderItemSeqId));
+        gcFulFill.put("surveyResponseId", surveyResponse.get(x.surveyResponseId));
         gcFulFill.put("cardNumber", cardNumber);
         gcFulFill.put("pinNumber", pinNumber);
         gcFulFill.put("amount", amount);
@@ -1126,14 +1127,14 @@ public class GiftCertificateServices {
             answerMap.put("locale", locale);
 
             Map<String, Object> emailCtx = new HashMap<>();
-            emailCtx.put("bodyScreenUri", productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.bodyScreenLocation));
+            emailCtx.put("bodyScreenUri", productStoreEmail.getString(x.bodyScreenLocation));
             emailCtx.put("bodyParameters", answerMap);
             emailCtx.put("sendTo", orh.getOrderEmailString());
-            emailCtx.put("contentType", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.contentType));
-            emailCtx.put("sendFrom", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.fromAddress));
-            emailCtx.put("sendCc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.ccAddress));
-            emailCtx.put("sendBcc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.bccAddress));
-            emailCtx.put("subject", productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.subject));
+            emailCtx.put("contentType", productStoreEmail.get(x.contentType));
+            emailCtx.put("sendFrom", productStoreEmail.get(x.fromAddress));
+            emailCtx.put("sendCc", productStoreEmail.get(x.ccAddress));
+            emailCtx.put("sendBcc", productStoreEmail.get(x.bccAddress));
+            emailCtx.put("subject", productStoreEmail.getString(x.subject));
             emailCtx.put("userLogin", userLogin);
 
             // send off the email async so we will retry on failed attempts
@@ -1154,24 +1155,24 @@ public class GiftCertificateServices {
     // Tracking Service
     public static Map<String, Object> createFulfillmentRecord(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
         // create the fulfillment record
         GenericValue gcFulFill = delegator.makeValue("GiftCardFulfillment");
-        gcFulFill.set(org.apache.ofbiz.persistence.entity.x.fulfillmentId, delegator.getNextSeqId("GiftCardFulfillment"));
-        gcFulFill.set(org.apache.ofbiz.persistence.entity.x.typeEnumId, context.get(org.apache.ofbiz.persistence.entity.x.typeEnumId));
-        gcFulFill.set(org.apache.ofbiz.persistence.entity.x.merchantId, context.get(org.apache.ofbiz.persistence.entity.x.merchantId));
-        gcFulFill.set(org.apache.ofbiz.persistence.entity.x.partyId, context.get(org.apache.ofbiz.persistence.entity.x.partyId));
-        gcFulFill.set(org.apache.ofbiz.persistence.entity.x.orderId, context.get(org.apache.ofbiz.persistence.entity.x.orderId));
-        gcFulFill.set(org.apache.ofbiz.persistence.entity.x.orderItemSeqId, context.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
-        gcFulFill.set(org.apache.ofbiz.persistence.entity.x.surveyResponseId, context.get(org.apache.ofbiz.persistence.entity.x.surveyResponseId));
-        gcFulFill.set(org.apache.ofbiz.persistence.entity.x.cardNumber, context.get(org.apache.ofbiz.persistence.entity.x.cardNumber));
-        gcFulFill.set(org.apache.ofbiz.persistence.entity.x.pinNumber, context.get(org.apache.ofbiz.persistence.entity.x.pinNumber));
-        gcFulFill.set(org.apache.ofbiz.persistence.entity.x.amount, context.get(org.apache.ofbiz.persistence.entity.x.amount));
-        gcFulFill.set(org.apache.ofbiz.persistence.entity.x.responseCode, context.get(org.apache.ofbiz.persistence.entity.x.responseCode));
-        gcFulFill.set(org.apache.ofbiz.persistence.entity.x.referenceNum, context.get(org.apache.ofbiz.persistence.entity.x.referenceNum));
-        gcFulFill.set(org.apache.ofbiz.persistence.entity.x.authCode, context.get(org.apache.ofbiz.persistence.entity.x.authCode));
-        gcFulFill.set(org.apache.ofbiz.persistence.entity.x.fulfillmentDate, UtilDateTime.nowTimestamp());
+        gcFulFill.set(x.fulfillmentId, delegator.getNextSeqId("GiftCardFulfillment"));
+        gcFulFill.set(x.typeEnumId, context.get(x.typeEnumId));
+        gcFulFill.set(x.merchantId, context.get(x.merchantId));
+        gcFulFill.set(x.partyId, context.get(x.partyId));
+        gcFulFill.set(x.orderId, context.get(x.orderId));
+        gcFulFill.set(x.orderItemSeqId, context.get(x.orderItemSeqId));
+        gcFulFill.set(x.surveyResponseId, context.get(x.surveyResponseId));
+        gcFulFill.set(x.cardNumber, context.get(x.cardNumber));
+        gcFulFill.set(x.pinNumber, context.get(x.pinNumber));
+        gcFulFill.set(x.amount, context.get(x.amount));
+        gcFulFill.set(x.responseCode, context.get(x.responseCode));
+        gcFulFill.set(x.referenceNum, context.get(x.referenceNum));
+        gcFulFill.set(x.authCode, context.get(x.authCode));
+        gcFulFill.set(x.fulfillmentDate, UtilDateTime.nowTimestamp());
         try {
             delegator.create(gcFulFill);
         } catch (GenericEntityException e) {
@@ -1187,10 +1188,10 @@ public class GiftCertificateServices {
     public static Map<String, Object> refundGcPurchase(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        GenericValue orderItem = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderItem);
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        GenericValue orderItem = (GenericValue) context.get(x.orderItem);
+        String partyId = (String) context.get(x.partyId);
+        Locale locale = (Locale) context.get(x.locale);
 
         // refresh the item object for status changes
         try {
@@ -1245,9 +1246,9 @@ public class GiftCertificateServices {
             returnItemInfo.put("returnReasonId", "RTN_DIG_FILL_FAIL");
             returnItemInfo.put("returnTypeId", "RTN_REFUND");
             returnItemInfo.put("returnItemType", "ITEM");
-            returnItemInfo.put("description", orderItem.get(org.apache.ofbiz.persistence.entity.x.itemDescription));
-            returnItemInfo.put("orderId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderId));
-            returnItemInfo.put("orderItemSeqId", orderItem.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+            returnItemInfo.put("description", orderItem.get(x.itemDescription));
+            returnItemInfo.put("orderId", orderItem.get(x.orderId));
+            returnItemInfo.put("orderItemSeqId", orderItem.get(x.orderItemSeqId));
             returnItemInfo.put("returnQuantity", returnableQuantity);
             returnItemInfo.put("returnPrice", returnablePrice);
             returnItemInfo.put("userLogin", userLogin);
@@ -1316,7 +1317,7 @@ public class GiftCertificateServices {
             Debug.logError(e, MODULE);
         }
         if (finAccount != null) {
-            String dbPin = finAccount.getString(org.apache.ofbiz.persistence.entity.x.finAccountCode);
+            String dbPin = finAccount.getString(x.finAccountCode);
             if (Debug.infoOn()) {
                 Debug.logInfo("GC Pin Validation: [Sent: " + pinNumber + "] [Actual: " + dbPin + "]", MODULE);
             }
@@ -1391,7 +1392,7 @@ public class GiftCertificateServices {
         // create the initial transaction
         Map<String, Object> transCtx = UtilMisc.<String, Object>toMap("finAccountTransTypeId", txType);
         transCtx.put("finAccountId", finAccountId);
-        transCtx.put("partyId", userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId));
+        transCtx.put("partyId", userLogin.getString(x.partyId));
         transCtx.put("userLogin", userLogin);
         transCtx.put("paymentId", paymentId);
         transCtx.put("orderId", orderId);
@@ -1464,8 +1465,8 @@ public class GiftCertificateServices {
             Debug.logError(e, "Unable to locate ProductStore (" + productStoreId + ")", MODULE);
             return null;
         }
-        if (productStore != null && productStore.get(org.apache.ofbiz.persistence.entity.x.payToPartyId) != null) {
-            payToPartyId = productStore.getString(org.apache.ofbiz.persistence.entity.x.payToPartyId);
+        if (productStore != null && productStore.get(x.payToPartyId) != null) {
+            payToPartyId = productStore.getString(x.payToPartyId);
         }
         return payToPartyId;
     }

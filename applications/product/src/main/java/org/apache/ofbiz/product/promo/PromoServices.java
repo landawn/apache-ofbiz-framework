@@ -50,6 +50,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Promotions Services
  */
@@ -61,12 +62,12 @@ public class PromoServices {
             'X', 'Y', 'Z', '2', '3', '4', '5', '6', '7', '8', '9' };
 
     public static Map<String, Object> createProductPromoCodeSet(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Long quantity = (Long) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
-        int codeLength = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.codeLength);
-        String promoCodeLayout = (String) context.get(org.apache.ofbiz.persistence.entity.x.promoCodeLayout);
+        Long quantity = (Long) context.get(x.quantity);
+        int codeLength = (Integer) context.get(x.codeLength);
+        String promoCodeLayout = (String) context.get(x.promoCodeLayout);
 
         // For PromoCodes we give the option not to use chars that are easy to mix up like 0<>O, 1<>I, ...
         boolean useSmartLayout = false;
@@ -128,8 +129,8 @@ public class PromoServices {
 
     public static Map<String, Object> purgeOldStoreAutoPromos(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String productStoreId = (String) context.get(x.productStoreId);
+        Locale locale = (Locale) context.get(x.locale);
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
 
         List<EntityCondition> condList = new LinkedList<>();
@@ -158,10 +159,10 @@ public class PromoServices {
 
     public static Map<String, Object> importPromoCodesFromFile(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
         // check the uploaded file
-        ByteBuffer fileBytes = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.uploadedFile);
+        ByteBuffer fileBytes = (ByteBuffer) context.get(x.uploadedFile);
         if (fileBytes == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "ProductPromoCodeImportUploadedFileNotValid", locale));
@@ -232,11 +233,11 @@ public class PromoServices {
 
     public static Map<String, Object> importPromoCodeEmailsFromFile(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String productPromoCodeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productPromoCodeId);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String productPromoCodeId = (String) context.get(x.productPromoCodeId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
-        ByteBuffer bytebufferwrapper = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.uploadedFile);
+        ByteBuffer bytebufferwrapper = (ByteBuffer) context.get(x.uploadedFile);
 
         if (bytebufferwrapper == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ProductPromoCodeImportUploadedFileNotValid", locale));
@@ -280,7 +281,7 @@ public class PromoServices {
                                 contactMechId = (String) result.get("contactMechId");
                             }
                         } else {
-                            contactMechId = contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechId);
+                            contactMechId = contactMech.getString(x.contactMechId);
                         }
                         result.clear();
                         result = dispatcher.runSync("createProductPromoCodeContactMech",

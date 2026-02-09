@@ -44,6 +44,7 @@ import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.jdom2.JDOMException;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ScaleImage Class
  * <p>
@@ -78,8 +79,8 @@ public class ScaleImage {
             String viewType, String viewNumber) throws IllegalArgumentException, ImagingOpException, IOException, JDOMException {
 
         /* VARIABLES */
-        Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Delegator delegator = (Delegator) context.get(x.delegator);
+        Locale locale = (Locale) context.get(x.locale);
 
         int index;
         Map<String, Map<String, String>> imgPropertyMap = new HashMap<>();
@@ -114,26 +115,26 @@ public class ScaleImage {
 
         Map<String, Object> imageContext = new HashMap<>();
         imageContext.putAll(context);
-        imageContext.put("tenantId", ((Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator)).getDelegatorTenantId());
+        imageContext.put("tenantId", ((Delegator) context.get(x.delegator)).getDelegatorTenantId());
         String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                "image.server.path", (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator)), imageContext);
+                "image.server.path", (Delegator) context.get(x.delegator)), imageContext);
         String imageUrlPrefix = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                "image.url.prefix", (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator)), imageContext);
+                "image.url.prefix", (Delegator) context.get(x.delegator)), imageContext);
         imageServerPath = imageServerPath.endsWith("/") ? imageServerPath.substring(0, imageServerPath.length() - 1) : imageServerPath;
         imageUrlPrefix = imageUrlPrefix.endsWith("/") ? imageUrlPrefix.substring(0, imageUrlPrefix.length() - 1) : imageUrlPrefix;
         FlexibleStringExpander filenameExpander;
         String fileLocation = null;
         String id = null;
         if (viewType.toLowerCase(Locale.getDefault()).contains("main")) {
-            String filenameFormat = EntityUtilProperties.getPropertyValue("catalog", "image.filename.format", (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator));
+            String filenameFormat = EntityUtilProperties.getPropertyValue("catalog", "image.filename.format", (Delegator) context.get(x.delegator));
             filenameExpander = FlexibleStringExpander.getInstance(filenameFormat);
-            id = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+            id = (String) context.get(x.productId);
             fileLocation = filenameExpander.expandString(UtilMisc.toMap("location", "products", "id", id, "type", "original"));
         } else if (viewType.toLowerCase(Locale.getDefault()).contains("additional") && viewNumber != null && !"0".equals(viewNumber)) {
             String filenameFormat = EntityUtilProperties.getPropertyValue("catalog",
-                    "image.filename.additionalviewsize.format", (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator));
+                    "image.filename.additionalviewsize.format", (Delegator) context.get(x.delegator));
             filenameExpander = FlexibleStringExpander.getInstance(filenameFormat);
-            id = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
+            id = (String) context.get(x.productId);
             if (filenameFormat.endsWith("${id}")) {
                 id = id + "_View_" + viewNumber;
             } else {
@@ -266,8 +267,8 @@ public class ScaleImage {
             String viewType, String viewNumber, String imageType) throws IllegalArgumentException, ImagingOpException, IOException, JDOMException {
 
         /* VARIABLES */
-        Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Delegator delegator = (Delegator) context.get(x.delegator);
+        Locale locale = (Locale) context.get(x.locale);
         List<String> sizeTypeList = null;
         if (UtilValidate.isNotEmpty(imageType)) {
             sizeTypeList = UtilMisc.toList(imageType);
@@ -308,13 +309,13 @@ public class ScaleImage {
         // paths
         Map<String, Object> imageContext = new HashMap<>();
         imageContext.putAll(context);
-        imageContext.put("tenantId", ((Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator)).getDelegatorTenantId());
-        String mainFilenameFormat = EntityUtilProperties.getPropertyValue("catalog", "image.filename.format", (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator));
+        imageContext.put("tenantId", ((Delegator) context.get(x.delegator)).getDelegatorTenantId());
+        String mainFilenameFormat = EntityUtilProperties.getPropertyValue("catalog", "image.filename.format", (Delegator) context.get(x.delegator));
 
         String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                "image.server.path", (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator)), imageContext);
+                "image.server.path", (Delegator) context.get(x.delegator)), imageContext);
         String imageUrlPrefix = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                "image.url.prefix", (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator)), imageContext);
+                "image.url.prefix", (Delegator) context.get(x.delegator)), imageContext);
         imageServerPath = imageServerPath.endsWith("/") ? imageServerPath.substring(0, imageServerPath.length() - 1) : imageServerPath;
         imageUrlPrefix = imageUrlPrefix.endsWith("/") ? imageUrlPrefix.substring(0, imageUrlPrefix.length() - 1) : imageUrlPrefix;
         String id = null;
@@ -330,15 +331,15 @@ public class ScaleImage {
                     "ProductImageViewType", UtilMisc.toMap("viewType", type), locale));
         }
         FlexibleStringExpander mainFilenameExpander = FlexibleStringExpander.getInstance(mainFilenameFormat);
-        String fileLocation = mainFilenameExpander.expandString(UtilMisc.toMap("location", "products", "id", context.get(org.apache.ofbiz.persistence.entity.x.productId), "type", type));
+        String fileLocation = mainFilenameExpander.expandString(UtilMisc.toMap("location", "products", "id", context.get(x.productId), "type", type));
         String filePathPrefix = "";
         if (fileLocation.lastIndexOf('/') != -1) {
             filePathPrefix = fileLocation.substring(0, fileLocation.lastIndexOf('/') + 1); // adding 1 to include the trailing slash
         }
 
-        if (context.get(org.apache.ofbiz.persistence.entity.x.contentId) != null) {
-            resultBufImgMap.putAll(ImageTransform.getBufferedImage(imageServerPath + "/" + context.get(org.apache.ofbiz.persistence.entity.x.productId) + "/"
-                    + context.get(org.apache.ofbiz.persistence.entity.x.clientFileName), locale));
+        if (context.get(x.contentId) != null) {
+            resultBufImgMap.putAll(ImageTransform.getBufferedImage(imageServerPath + "/" + context.get(x.productId) + "/"
+                    + context.get(x.clientFileName), locale));
         } else {
             /* get original BUFFERED IMAGE */
             resultBufImgMap.putAll(ImageTransform.getBufferedImage(imageServerPath + "/" + filePathPrefix + filenameToUse, locale));
@@ -362,7 +363,7 @@ public class ScaleImage {
             FlexibleStringExpander addFilenameExpander = mainFilenameExpander;
             if (viewType.toLowerCase(Locale.getDefault()).contains("additional")) {
                 String addFilenameFormat = EntityUtilProperties.getPropertyValue("catalog",
-                        "image.filename.additionalviewsize.format", (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator));
+                        "image.filename.additionalviewsize.format", (Delegator) context.get(x.delegator));
                 addFilenameExpander = FlexibleStringExpander.getInstance(addFilenameFormat);
             }
 

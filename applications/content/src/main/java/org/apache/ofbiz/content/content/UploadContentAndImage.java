@@ -57,6 +57,7 @@ import org.apache.ofbiz.service.ServiceAuthException;
 import org.apache.ofbiz.service.ServiceUtil;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * UploadContentAndImage Class
  *
@@ -292,7 +293,7 @@ public class UploadContentAndImage {
             }
 
             // Check for existing AUTHOR link
-            String userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
+            String userLoginId = userLogin.getString(x.userLoginId);
             GenericValue authorContent = EntityQuery.use(delegator).from("Content").where("contentId", userLoginId).cache().queryOne();
             if (authorContent != null) {
                 long currentAuthorAssocCount = EntityQuery.use(delegator).from("ContentAssoc")
@@ -301,14 +302,14 @@ public class UploadContentAndImage {
                 if (currentAuthorAssocCount == 0) {
                     // Don't want to bother with permission checking on this association
                     GenericValue authorAssoc = delegator.makeValue("ContentAssoc");
-                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.contentId, ftlContentId);
-                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.contentIdTo, userLoginId);
-                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId, "AUTHOR");
-                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.fromDate, UtilDateTime.nowTimestamp());
-                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLoginId);
-                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLoginId);
-                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
-                    authorAssoc.set(org.apache.ofbiz.persistence.entity.x.lastModifiedDate, UtilDateTime.nowTimestamp());
+                    authorAssoc.set(x.contentId, ftlContentId);
+                    authorAssoc.set(x.contentIdTo, userLoginId);
+                    authorAssoc.set(x.contentAssocTypeId, "AUTHOR");
+                    authorAssoc.set(x.fromDate, UtilDateTime.nowTimestamp());
+                    authorAssoc.set(x.createdByUserLogin, userLoginId);
+                    authorAssoc.set(x.lastModifiedByUserLogin, userLoginId);
+                    authorAssoc.set(x.createdDate, UtilDateTime.nowTimestamp());
+                    authorAssoc.set(x.lastModifiedDate, UtilDateTime.nowTimestamp());
                     authorAssoc.create();
                 }
             }

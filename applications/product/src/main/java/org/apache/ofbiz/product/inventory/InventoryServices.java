@@ -54,6 +54,7 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import com.ibm.icu.util.Calendar;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Inventory Services
  */
@@ -65,12 +66,12 @@ public class InventoryServices {
 
     public static Map<String, Object> prepareInventoryTransfer(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String inventoryItemId = (String) context.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId);
-        BigDecimal xferQty = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.xferQty);
+        String inventoryItemId = (String) context.get(x.inventoryItemId);
+        BigDecimal xferQty = (BigDecimal) context.get(x.xferQty);
         GenericValue inventoryItem = null;
         GenericValue newItem = null;
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         try {
             inventoryItem = EntityQuery.use(delegator).from("InventoryItem").where("inventoryItemId", inventoryItemId).queryOne();
@@ -87,15 +88,15 @@ public class InventoryServices {
         try {
             Map<String, Object> results = ServiceUtil.returnSuccess();
 
-            String inventoryType = inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemTypeId);
+            String inventoryType = inventoryItem.getString(x.inventoryItemTypeId);
             if ("NON_SERIAL_INV_ITEM".equals(inventoryType)) {
-                BigDecimal atp = inventoryItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.availableToPromiseTotal);
-                BigDecimal qoh = inventoryItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityOnHandTotal);
+                BigDecimal atp = inventoryItem.getBigDecimal(x.availableToPromiseTotal);
+                BigDecimal qoh = inventoryItem.getBigDecimal(x.quantityOnHandTotal);
 
                 if (atp == null) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                             "ProductInventoryItemATPNotAvailable",
-                            UtilMisc.toMap("inventoryItemId", inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId)), locale));
+                            UtilMisc.toMap("inventoryItemId", inventoryItem.getString(x.inventoryItemId)), locale));
                 }
                 if (qoh == null) {
                     qoh = atp;
@@ -105,7 +106,7 @@ public class InventoryServices {
                 if (xferQty.compareTo(atp) > 0) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                             "ProductInventoryItemATPIsNotSufficient",
-                            UtilMisc.toMap("inventoryItemId", inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId),
+                            UtilMisc.toMap("inventoryItemId", inventoryItem.getString(x.inventoryItemId),
                                     "atp", atp, "xferQty", xferQty), locale));
                 }
 
@@ -128,18 +129,18 @@ public class InventoryServices {
                     //       However, the code here should work fine because all the values
                     //       for the new inventory item are inerited from the existing item.
                     newItem = GenericValue.create(inventoryItem);
-                    newItem.set(org.apache.ofbiz.persistence.entity.x.availableToPromiseTotal, BigDecimal.ZERO);
-                    newItem.set(org.apache.ofbiz.persistence.entity.x.quantityOnHandTotal, BigDecimal.ZERO);
+                    newItem.set(x.availableToPromiseTotal, BigDecimal.ZERO);
+                    newItem.set(x.quantityOnHandTotal, BigDecimal.ZERO);
 
                     delegator.createSetNextSeqId(newItem);
 
-                    results.put("inventoryItemId", newItem.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId));
+                    results.put("inventoryItemId", newItem.get(x.inventoryItemId));
 
                     // TODO: how do we get this here: "inventoryTransferId", inventoryTransferId
                     Map<String, Object> createNewDetailMap = UtilMisc.toMap("availableToPromiseDiff", xferQty, "quantityOnHandDiff", xferQty,
-                            "accountingQuantityDiff", xferQty, "inventoryItemId", newItem.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId), "userLogin", userLogin);
+                            "accountingQuantityDiff", xferQty, "inventoryItemId", newItem.get(x.inventoryItemId), "userLogin", userLogin);
                     Map<String, Object> createUpdateDetailMap = UtilMisc.toMap("availableToPromiseDiff", negXferQty, "quantityOnHandDiff",
-                            negXferQty, "accountingQuantityDiff", negXferQty, "inventoryItemId", inventoryItem.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId), "userLogin",
+                            negXferQty, "accountingQuantityDiff", negXferQty, "inventoryItemId", inventoryItem.get(x.inventoryItemId), "userLogin",
                             userLogin);
                     try {
                         Map<String, Object> resultNew = dctx.getDispatcher().runSync("createInventoryItemDetail", createNewDetailMap);
@@ -160,10 +161,10 @@ public class InventoryServices {
                                 UtilMisc.toMap("errorString", e1.getMessage()), locale));
                     }
                 } else {
-                    results.put("inventoryItemId", inventoryItem.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId));
+                    results.put("inventoryItemId", inventoryItem.get(x.inventoryItemId));
                 }
             } else if ("SERIALIZED_INV_ITEM".equals(inventoryType)) {
-                if (!"INV_AVAILABLE".equals(inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
+                if (!"INV_AVAILABLE".equals(inventoryItem.getString(x.statusId))) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                             "ProductSerializedInventoryNotAvailable", locale));
                 }
@@ -177,11 +178,11 @@ public class InventoryServices {
                 GenericValue inventoryItemToClear = newItem == null ? inventoryItem : newItem;
 
                 inventoryItemToClear.refresh();
-                BigDecimal atp = inventoryItemToClear.get(org.apache.ofbiz.persistence.entity.x.availableToPromiseTotal) == null ? BigDecimal.ZERO
-                        : inventoryItemToClear.getBigDecimal(org.apache.ofbiz.persistence.entity.x.availableToPromiseTotal);
+                BigDecimal atp = inventoryItemToClear.get(x.availableToPromiseTotal) == null ? BigDecimal.ZERO
+                        : inventoryItemToClear.getBigDecimal(x.availableToPromiseTotal);
                 if (atp.compareTo(BigDecimal.ZERO) != 0) {
                     Map<String, Object> createDetailMap = UtilMisc.toMap("availableToPromiseDiff", atp.negate(),
-                            "inventoryItemId", inventoryItemToClear.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId), "userLogin", userLogin);
+                            "inventoryItemId", inventoryItemToClear.get(x.inventoryItemId), "userLogin", userLogin);
                     try {
                         Map<String, Object> result = dctx.getDispatcher().runSync("createInventoryItemDetail", createDetailMap);
                         if (ServiceUtil.isError(result)) {
@@ -199,14 +200,14 @@ public class InventoryServices {
                 // set the status to avoid re-moving or something
                 if (newItem != null) {
                     newItem.refresh();
-                    newItem.set(org.apache.ofbiz.persistence.entity.x.statusId, "INV_BEING_TRANSFERED");
+                    newItem.set(x.statusId, "INV_BEING_TRANSFERED");
                     newItem.store();
-                    results.put("inventoryItemId", newItem.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId));
+                    results.put("inventoryItemId", newItem.get(x.inventoryItemId));
                 } else {
                     inventoryItem.refresh();
-                    inventoryItem.set(org.apache.ofbiz.persistence.entity.x.statusId, "INV_BEING_TRANSFERED");
+                    inventoryItem.set(x.statusId, "INV_BEING_TRANSFERED");
                     inventoryItem.store();
-                    results.put("inventoryItemId", inventoryItem.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId));
+                    results.put("inventoryItemId", inventoryItem.get(x.inventoryItemId));
                 }
             }
 
@@ -220,18 +221,18 @@ public class InventoryServices {
 
     public static Map<String, Object> completeInventoryTransfer(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String inventoryTransferId = (String) context.get(org.apache.ofbiz.persistence.entity.x.inventoryTransferId);
-        Timestamp receiveDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.receiveDate);
+        String inventoryTransferId = (String) context.get(x.inventoryTransferId);
+        Timestamp receiveDate = (Timestamp) context.get(x.receiveDate);
         GenericValue inventoryTransfer = null;
         GenericValue inventoryItem = null;
         GenericValue destinationFacility = null;
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         try {
             inventoryTransfer = EntityQuery.use(delegator).from("InventoryTransfer").where("inventoryTransferId", inventoryTransferId).queryOne();
-            inventoryItem = inventoryTransfer.getRelatedOne(org.apache.ofbiz.persistence.entity.x.InventoryItem, false);
-            destinationFacility = inventoryTransfer.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ToFacility, false);
+            inventoryItem = inventoryTransfer.getRelatedOne(x.InventoryItem, false);
+            destinationFacility = inventoryTransfer.getRelatedOne(x.ToFacility, false);
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "ProductInventoryItemLookupProblem",
@@ -244,24 +245,24 @@ public class InventoryServices {
                     UtilMisc.toMap("errorString", ""), locale));
         }
 
-        String inventoryType = inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemTypeId);
+        String inventoryType = inventoryItem.getString(x.inventoryItemTypeId);
 
         // set the fields on the transfer record
-        if (inventoryTransfer.get(org.apache.ofbiz.persistence.entity.x.receiveDate) == null) {
+        if (inventoryTransfer.get(x.receiveDate) == null) {
             if (receiveDate != null) {
-                inventoryTransfer.set(org.apache.ofbiz.persistence.entity.x.receiveDate, receiveDate);
+                inventoryTransfer.set(x.receiveDate, receiveDate);
             } else {
-                inventoryTransfer.set(org.apache.ofbiz.persistence.entity.x.receiveDate, UtilDateTime.nowTimestamp());
+                inventoryTransfer.set(x.receiveDate, UtilDateTime.nowTimestamp());
             }
         }
 
         if ("NON_SERIAL_INV_ITEM".equals(inventoryType)) {
             // add an adjusting InventoryItemDetail so set ATP back to QOH: ATP = ATP + (QOH - ATP), diff = QOH - ATP
-            BigDecimal atp = inventoryItem.get(org.apache.ofbiz.persistence.entity.x.availableToPromiseTotal) == null ? BigDecimal.ZERO
-                    : inventoryItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.availableToPromiseTotal);
-            BigDecimal qoh = inventoryItem.get(org.apache.ofbiz.persistence.entity.x.quantityOnHandTotal) == null ? BigDecimal.ZERO : inventoryItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityOnHandTotal);
+            BigDecimal atp = inventoryItem.get(x.availableToPromiseTotal) == null ? BigDecimal.ZERO
+                    : inventoryItem.getBigDecimal(x.availableToPromiseTotal);
+            BigDecimal qoh = inventoryItem.get(x.quantityOnHandTotal) == null ? BigDecimal.ZERO : inventoryItem.getBigDecimal(x.quantityOnHandTotal);
             Map<String, Object> createDetailMap = UtilMisc.toMap("availableToPromiseDiff", qoh.subtract(atp),
-                    "inventoryItemId", inventoryItem.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId), "userLogin", userLogin);
+                    "inventoryItemId", inventoryItem.get(x.inventoryItemId), "userLogin", userLogin);
             try {
                 Map<String, Object> result = dctx.getDispatcher().runSync("createInventoryItemDetail", createDetailMap);
                 if (ServiceUtil.isError(result)) {
@@ -284,10 +285,10 @@ public class InventoryServices {
         }
 
         // set the fields on the item
-        Map<String, Object> updateInventoryItemMap = UtilMisc.toMap("inventoryItemId", inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId),
-                                                    "facilityId", inventoryTransfer.get(org.apache.ofbiz.persistence.entity.x.facilityIdTo),
-                                                    "containerId", inventoryTransfer.get(org.apache.ofbiz.persistence.entity.x.containerIdTo),
-                                                    "locationSeqId", inventoryTransfer.get(org.apache.ofbiz.persistence.entity.x.locationSeqIdTo),
+        Map<String, Object> updateInventoryItemMap = UtilMisc.toMap("inventoryItemId", inventoryItem.getString(x.inventoryItemId),
+                                                    "facilityId", inventoryTransfer.get(x.facilityIdTo),
+                                                    "containerId", inventoryTransfer.get(x.containerIdTo),
+                                                    "locationSeqId", inventoryTransfer.get(x.locationSeqIdTo),
                                                     "userLogin", userLogin);
 
         // for serialized items, automatically make them available
@@ -298,9 +299,9 @@ public class InventoryServices {
         // if the destination facility's owner is different
         // from the inventory item's ownwer,
         // the inventory item is assigned to the new owner.
-        if (destinationFacility != null && destinationFacility.get(org.apache.ofbiz.persistence.entity.x.ownerPartyId) != null) {
-            String fromPartyId = inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.ownerPartyId);
-            String toPartyId = destinationFacility.getString(org.apache.ofbiz.persistence.entity.x.ownerPartyId);
+        if (destinationFacility != null && destinationFacility.get(x.ownerPartyId) != null) {
+            String fromPartyId = inventoryItem.getString(x.ownerPartyId);
+            String toPartyId = destinationFacility.getString(x.ownerPartyId);
             if (fromPartyId == null || !fromPartyId.equals(toPartyId)) {
                 updateInventoryItemMap.put("ownerPartyId", toPartyId);
             }
@@ -319,7 +320,7 @@ public class InventoryServices {
         }
 
         // set the inventory transfer record to complete
-        inventoryTransfer.set(org.apache.ofbiz.persistence.entity.x.statusId, "IXF_COMPLETE");
+        inventoryTransfer.set(x.statusId, "IXF_COMPLETE");
 
         // store the entities
         try {
@@ -335,11 +336,11 @@ public class InventoryServices {
 
     public static Map<String, Object> cancelInventoryTransfer(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String inventoryTransferId = (String) context.get(org.apache.ofbiz.persistence.entity.x.inventoryTransferId);
+        String inventoryTransferId = (String) context.get(x.inventoryTransferId);
         GenericValue inventoryTransfer = null;
         GenericValue inventoryItem = null;
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         try {
             inventoryTransfer = EntityQuery.use(delegator).from("InventoryTransfer").where("inventoryTransferId", inventoryTransferId).queryOne();
@@ -348,7 +349,7 @@ public class InventoryServices {
                         "ProductInventoryItemTransferNotFound",
                         UtilMisc.toMap("inventoryTransferId", inventoryTransferId), locale));
             }
-            inventoryItem = inventoryTransfer.getRelatedOne(org.apache.ofbiz.persistence.entity.x.InventoryItem, false);
+            inventoryItem = inventoryTransfer.getRelatedOne(x.InventoryItem, false);
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "ProductInventoryItemLookupProblem",
@@ -361,17 +362,17 @@ public class InventoryServices {
                     UtilMisc.toMap("errorString", ""), locale));
         }
 
-        String inventoryType = inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemTypeId);
+        String inventoryType = inventoryItem.getString(x.inventoryItemTypeId);
 
         // re-set the fields on the item
         if ("NON_SERIAL_INV_ITEM".equals(inventoryType)) {
             // add an adjusting InventoryItemDetail so set ATP back to QOH: ATP = ATP + (QOH - ATP), diff = QOH - ATP
-            BigDecimal atp = inventoryItem.get(org.apache.ofbiz.persistence.entity.x.availableToPromiseTotal) == null ? BigDecimal.ZERO
-                    : inventoryItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.availableToPromiseTotal);
-            BigDecimal qoh = inventoryItem.get(org.apache.ofbiz.persistence.entity.x.quantityOnHandTotal) == null ? BigDecimal.ZERO
-                    : inventoryItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityOnHandTotal);
+            BigDecimal atp = inventoryItem.get(x.availableToPromiseTotal) == null ? BigDecimal.ZERO
+                    : inventoryItem.getBigDecimal(x.availableToPromiseTotal);
+            BigDecimal qoh = inventoryItem.get(x.quantityOnHandTotal) == null ? BigDecimal.ZERO
+                    : inventoryItem.getBigDecimal(x.quantityOnHandTotal);
             Map<String, Object> createDetailMap = UtilMisc.toMap("availableToPromiseDiff", qoh.subtract(atp),
-                                                 "inventoryItemId", inventoryItem.get(org.apache.ofbiz.persistence.entity.x.inventoryItemId),
+                                                 "inventoryItemId", inventoryItem.get(x.inventoryItemId),
                                                  "userLogin", userLogin);
             try {
                 Map<String, Object> result = dctx.getDispatcher().runSync("createInventoryItemDetail", createDetailMap);
@@ -386,7 +387,7 @@ public class InventoryServices {
                         UtilMisc.toMap("errorString", e1.getMessage()), locale));
             }
         } else if ("SERIALIZED_INV_ITEM".equals(inventoryType)) {
-            inventoryItem.set(org.apache.ofbiz.persistence.entity.x.statusId, "INV_AVAILABLE");
+            inventoryItem.set(x.statusId, "INV_AVAILABLE");
             // store the entity
             try {
                 inventoryItem.store();
@@ -398,7 +399,7 @@ public class InventoryServices {
         }
 
         // set the inventory transfer record to complete
-        inventoryTransfer.set(org.apache.ofbiz.persistence.entity.x.statusId, "IXF_CANCELLED");
+        inventoryTransfer.set(x.statusId, "IXF_CANCELLED");
 
         // store the entities
         try {
@@ -416,8 +417,8 @@ public class InventoryServices {
     public static Map<String, Object> checkInventoryAvailability(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
         Map<String, Map<String, Timestamp>> ordersToUpdate = new HashMap<>();
         Map<String, Map<String, Timestamp>> ordersToCancel = new HashMap<>();
 
@@ -444,8 +445,8 @@ public class InventoryServices {
             List<GenericValue> shipmentAndItems = null;
             try {
                 List<EntityExpr> exprs = new ArrayList<>();
-                exprs.add(EntityCondition.makeCondition("productId", EntityOperator.EQUALS, inventoryItem.get(org.apache.ofbiz.persistence.entity.x.productId)));
-                exprs.add(EntityCondition.makeCondition("destinationFacilityId", EntityOperator.EQUALS, inventoryItem.get(org.apache.ofbiz.persistence.entity.x.facilityId)));
+                exprs.add(EntityCondition.makeCondition("productId", EntityOperator.EQUALS, inventoryItem.get(x.productId)));
+                exprs.add(EntityCondition.makeCondition("destinationFacilityId", EntityOperator.EQUALS, inventoryItem.get(x.facilityId)));
                 exprs.add(EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "SHIPMENT_DELIVERED"));
                 exprs.add(EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "SHIPMENT_CANCELLED"));
 
@@ -460,7 +461,7 @@ public class InventoryServices {
             // get the reservations in order of newest first
             List<GenericValue> reservations = null;
             try {
-                reservations = inventoryItem.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItemShipGrpInvRes, null, UtilMisc.toList("-reservedDatetime"), false);
+                reservations = inventoryItem.getRelated(x.OrderItemShipGrpInvRes, null, UtilMisc.toList("-reservedDatetime"), false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Problem getting related reservations", MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -475,21 +476,21 @@ public class InventoryServices {
             Debug.logInfo("Reservations for item: " + reservations.size(), MODULE);
 
             // available at the time of order
-            BigDecimal availableBeforeReserved = inventoryItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.availableToPromiseTotal);
+            BigDecimal availableBeforeReserved = inventoryItem.getBigDecimal(x.availableToPromiseTotal);
 
             // go through all the reservations in order
             for (GenericValue reservation: reservations) {
-                String orderId = reservation.getString(org.apache.ofbiz.persistence.entity.x.orderId);
-                String orderItemSeqId = reservation.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
-                Timestamp promisedDate = reservation.getTimestamp(org.apache.ofbiz.persistence.entity.x.promisedDatetime);
-                Timestamp currentPromiseDate = reservation.getTimestamp(org.apache.ofbiz.persistence.entity.x.currentPromisedDate);
+                String orderId = reservation.getString(x.orderId);
+                String orderItemSeqId = reservation.getString(x.orderItemSeqId);
+                Timestamp promisedDate = reservation.getTimestamp(x.promisedDatetime);
+                Timestamp currentPromiseDate = reservation.getTimestamp(x.currentPromisedDate);
                 Timestamp actualPromiseDate = currentPromiseDate;
                 if (actualPromiseDate == null) {
                     if (promisedDate != null) {
                         actualPromiseDate = promisedDate;
                     } else {
                         // fall back if there is no promised date stored
-                        actualPromiseDate = reservation.getTimestamp(org.apache.ofbiz.persistence.entity.x.reservedDatetime);
+                        actualPromiseDate = reservation.getTimestamp(x.reservedDatetime);
                     }
                 }
 
@@ -499,9 +500,9 @@ public class InventoryServices {
                 Timestamp nextShipDate = null;
                 BigDecimal availableAtTime = BigDecimal.ZERO;
                 for (GenericValue shipmentItem: shipmentAndItems) {
-                    availableAtTime = availableAtTime.add(shipmentItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
+                    availableAtTime = availableAtTime.add(shipmentItem.getBigDecimal(x.quantity));
                     if (availableAtTime.compareTo(availableBeforeReserved) >= 0) {
-                        nextShipDate = shipmentItem.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedArrivalDate);
+                        nextShipDate = shipmentItem.getTimestamp(x.estimatedArrivalDate);
                         break;
                     }
                 }
@@ -564,7 +565,7 @@ public class InventoryServices {
 
                         // store the updated promiseDate as the nextShipDate
                         try {
-                            reservation.set(org.apache.ofbiz.persistence.entity.x.currentPromisedDate, nextShipDate);
+                            reservation.set(x.currentPromisedDate, nextShipDate);
                             reservation.store();
                         } catch (GenericEntityException e) {
                             Debug.logError(e, "Problem storing reservation : " + reservation, MODULE);
@@ -573,7 +574,7 @@ public class InventoryServices {
                 }
 
                 // subtract our qty from reserved to get the next value
-                availableBeforeReserved = availableBeforeReserved.subtract(reservation.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
+                availableBeforeReserved = availableBeforeReserved.subtract(reservation.getBigDecimal(x.quantity));
             }
         }
 
@@ -598,10 +599,10 @@ public class InventoryServices {
                 List<GenericValue> orderItemShipGroupAssoc = null;
                 try {
                     orderItemShipGroupAssoc = EntityQuery.use(delegator).from("OrderItemShipGroupAssoc").where("shipGroupSeqId",
-                            orderItemShipGroup.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId), "orderId", orderId).queryList();
+                            orderItemShipGroup.get(x.shipGroupSeqId), "orderId", orderId).queryList();
 
                     for (GenericValue assoc: orderItemShipGroupAssoc) {
-                        GenericValue orderItem = assoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItem, false);
+                        GenericValue orderItem = assoc.getRelatedOne(x.OrderItem, false);
                         if (orderItem != null) {
                             orderItems.add(orderItem);
                         }
@@ -613,8 +614,8 @@ public class InventoryServices {
 
                 /* Check the split preference. */
                 boolean maySplit = false;
-                if (orderItemShipGroup.get(org.apache.ofbiz.persistence.entity.x.maySplit) != null) {
-                    maySplit = orderItemShipGroup.getBoolean(org.apache.ofbiz.persistence.entity.x.maySplit);
+                if (orderItemShipGroup.get(x.maySplit) != null) {
+                    maySplit = orderItemShipGroup.getBoolean(x.maySplit);
                 }
 
                 /* Figure out if we must cancel all items. */
@@ -631,22 +632,22 @@ public class InventoryServices {
 
                 List<GenericValue> toBeStored = new LinkedList<>();
                 for (GenericValue orderItem: orderItems) {
-                    String orderItemSeqId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+                    String orderItemSeqId = orderItem.getString(x.orderItemSeqId);
                     Timestamp shipDate = backOrderedItems.get(orderItemSeqId);
                     Timestamp cancelDate = cancelItems.get(orderItemSeqId);
-                    Timestamp currentCancelDate = orderItem.getTimestamp(org.apache.ofbiz.persistence.entity.x.autoCancelDate);
+                    Timestamp currentCancelDate = orderItem.getTimestamp(x.autoCancelDate);
 
                     Debug.logInfo("OI: " + orderId + " SEQID: " + orderItemSeqId + " cancelAll: " + cancelAll + " cancelDate: " + cancelDate, MODULE);
                     if (backOrderedItems.containsKey(orderItemSeqId)) {
-                        orderItem.set(org.apache.ofbiz.persistence.entity.x.estimatedShipDate, shipDate);
+                        orderItem.set(x.estimatedShipDate, shipDate);
 
                         if (currentCancelDate == null) {
                             if (cancelAll || cancelDate != null) {
-                                if (orderItem.get(org.apache.ofbiz.persistence.entity.x.dontCancelSetUserLogin) == null && orderItem.get(org.apache.ofbiz.persistence.entity.x.dontCancelSetDate) == null) {
+                                if (orderItem.get(x.dontCancelSetUserLogin) == null && orderItem.get(x.dontCancelSetDate) == null) {
                                     if (cancelAllTime != null) {
-                                        orderItem.set(org.apache.ofbiz.persistence.entity.x.autoCancelDate, cancelAllTime);
+                                        orderItem.set(x.autoCancelDate, cancelAllTime);
                                     } else {
-                                        orderItem.set(org.apache.ofbiz.persistence.entity.x.autoCancelDate, cancelDate);
+                                        orderItem.set(x.autoCancelDate, cancelDate);
                                     }
                                 }
                             }
@@ -687,9 +688,9 @@ public class InventoryServices {
      * */
     public static Map<String, Object> getProductInventoryAvailableFromAssocProducts(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        List<GenericValue> productAssocList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.assocProducts));
-        String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId);
-        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
+        List<GenericValue> productAssocList = UtilGenerics.cast(context.get(x.assocProducts));
+        String facilityId = (String) context.get(x.facilityId);
+        String statusId = (String) context.get(x.statusId);
 
         BigDecimal availableToPromiseTotal = BigDecimal.ZERO;
         BigDecimal quantityOnHandTotal = BigDecimal.ZERO;
@@ -701,12 +702,12 @@ public class InventoryServices {
 
             // loop through each associated product.
             for (GenericValue productAssoc : productAssocList) {
-                String productIdTo = productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo);
-                BigDecimal assocQuantity = productAssoc.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                String productIdTo = productAssoc.getString(x.productIdTo);
+                BigDecimal assocQuantity = productAssoc.getBigDecimal(x.quantity);
 
                 // if there is no quantity for the associated product in ProductAssoc entity, default it to 1.0
                 if (assocQuantity == null) {
-                    Debug.logWarning("ProductAssoc from [" + productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productId) + "] to [" + productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo)
+                    Debug.logWarning("ProductAssoc from [" + productAssoc.getString(x.productId) + "] to [" + productAssoc.getString(x.productIdTo)
                             + "] has no quantity, assuming 1.0", MODULE);
                     assocQuantity = BigDecimal.ONE;
                 }
@@ -761,9 +762,9 @@ public class InventoryServices {
     public static Map<String, Object> getProductInventorySummaryForItems(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        List<GenericValue> orderItems = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.orderItems));
-        String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        List<GenericValue> orderItems = UtilGenerics.cast(context.get(x.orderItems));
+        String facilityId = (String) context.get(x.facilityId);
+        Locale locale = (Locale) context.get(x.locale);
         Map<String, BigDecimal> atpMap = new HashMap<>();
         Map<String, BigDecimal> qohMap = new HashMap<>();
         Map<String, BigDecimal> mktgPkgAtpMap = new HashMap<>();
@@ -786,7 +787,7 @@ public class InventoryServices {
 
         // loop through all the order items
         for (GenericValue orderItem: orderItems) {
-            String productId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId);
+            String productId = orderItem.getString(x.productId);
 
             if ((productId == null) || "".equals(productId)) {
                 continue;
@@ -794,7 +795,7 @@ public class InventoryServices {
 
             GenericValue product = null;
             try {
-                product = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, true);
+                product = orderItem.getRelatedOne(x.Product, true);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Couldn't get product.", MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -813,18 +814,18 @@ public class InventoryServices {
 
                 // get both the real ATP/QOH available and the quantities available from marketing packages
                 try {
-                    if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId), "parentTypeId",
+                    if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", product.getString(x.productTypeId), "parentTypeId",
                             "MARKETING_PKG")) {
                         mktgPkgInvResult = dispatcher.runSync("getMktgPackagesAvailable", UtilMisc.toMap("productId", productId, "facilityId",
-                                facility.getString(org.apache.ofbiz.persistence.entity.x.facilityId)));
+                                facility.getString(x.facilityId)));
                     }
                     invResult = dispatcher.runSync("getInventoryAvailableByFacility", UtilMisc.toMap("productId", productId, "facilityId",
-                            facility.getString(org.apache.ofbiz.persistence.entity.x.facilityId)));
+                            facility.getString(x.facilityId)));
                 } catch (GenericServiceException e) {
-                    Debug.logError(e, "Could not find inventory for facility " + facility.getString(org.apache.ofbiz.persistence.entity.x.facilityId), MODULE);
+                    Debug.logError(e, "Could not find inventory for facility " + facility.getString(x.facilityId), MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                             "ProductInventoryNotAvailableForFacility",
-                            UtilMisc.toMap("facilityId", facility.getString(org.apache.ofbiz.persistence.entity.x.facilityId)), locale));
+                            UtilMisc.toMap("facilityId", facility.getString(x.facilityId)), locale));
                 }
 
                 // add the results for this facility to the ATP/QOH counter for all facilities
@@ -838,7 +839,7 @@ public class InventoryServices {
                         qoh = qoh.add(fqoh);
                     }
                 }
-                if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", product.getString(org.apache.ofbiz.persistence.entity.x.productTypeId), "parentTypeId",
+                if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", product.getString(x.productTypeId), "parentTypeId",
                         "MARKETING_PKG") && ServiceUtil.isSuccess(mktgPkgInvResult)) {
                     BigDecimal fatp = (BigDecimal) mktgPkgInvResult.get("availableToPromiseTotal");
                     BigDecimal fqoh = (BigDecimal) mktgPkgInvResult.get("quantityOnHandTotal");
@@ -866,11 +867,11 @@ public class InventoryServices {
     public static Map<String, Object> getProductInventoryAndFacilitySummary(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Timestamp checkTime = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.checkTime);
-        String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId);
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        BigDecimal minimumStock = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.minimumStock);
-        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
+        Timestamp checkTime = (Timestamp) context.get(x.checkTime);
+        String facilityId = (String) context.get(x.facilityId);
+        String productId = (String) context.get(x.productId);
+        BigDecimal minimumStock = (BigDecimal) context.get(x.minimumStock);
+        String statusId = (String) context.get(x.statusId);
 
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> resultOutput = new HashMap<>();
@@ -884,7 +885,7 @@ public class InventoryServices {
         }
         if (product != null) {
             if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", product.getString(
-                    org.apache.ofbiz.persistence.entity.x.productTypeId), "parentTypeId", "MARKETING_PKG")) {
+                    x.productTypeId), "parentTypeId", "MARKETING_PKG")) {
                 try {
                     resultOutput = dispatcher.runSync("getMktgPackagesAvailable", contextInput);
                 } catch (GenericServiceException e) {
@@ -915,7 +916,7 @@ public class InventoryServices {
             result.put("totalQuantityOnHand", resultOutput.get("quantityOnHandTotal"));
             result.put("totalAvailableToPromise", resultOutput.get("availableToPromiseTotal"));
             result.put("quantityOnOrder", quantityOnOrder);
-            result.put("quantityUomId", product.getString(org.apache.ofbiz.persistence.entity.x.quantityUomId));
+            result.put("quantityUomId", product.getString(x.quantityUomId));
             result.put("offsetQOHQtyAvailable", offsetQOHQtyAvailable);
             result.put("offsetATPQtyAvailable", offsetATPQtyAvailable);
         }
@@ -929,16 +930,16 @@ public class InventoryServices {
         //change this for product price
         if (productPrices != null) {
             for (GenericValue onePrice: productPrices) {
-                if ("DEFAULT_PRICE".equals(onePrice.getString(org.apache.ofbiz.persistence.entity.x.productPriceTypeId))) { //defaultPrice
-                    result.put("defaultPrice", onePrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price));
-                } else if ("WHOLESALE_PRICE".equals(onePrice.getString(org.apache.ofbiz.persistence.entity.x.productPriceTypeId))) { //
-                    result.put("wholeSalePrice", onePrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price));
-                } else if ("LIST_PRICE".equals(onePrice.getString(org.apache.ofbiz.persistence.entity.x.productPriceTypeId))) { //listPrice
-                    result.put("listPrice", onePrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price));
+                if ("DEFAULT_PRICE".equals(onePrice.getString(x.productPriceTypeId))) { //defaultPrice
+                    result.put("defaultPrice", onePrice.getBigDecimal(x.price));
+                } else if ("WHOLESALE_PRICE".equals(onePrice.getString(x.productPriceTypeId))) { //
+                    result.put("wholeSalePrice", onePrice.getBigDecimal(x.price));
+                } else if ("LIST_PRICE".equals(onePrice.getString(x.productPriceTypeId))) { //listPrice
+                    result.put("listPrice", onePrice.getBigDecimal(x.price));
                 } else {
-                    result.put("defaultPrice", onePrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price));
-                    result.put("listPrice", onePrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price));
-                    result.put("wholeSalePrice", onePrice.getBigDecimal(org.apache.ofbiz.persistence.entity.x.price));
+                    result.put("defaultPrice", onePrice.getBigDecimal(x.price));
+                    result.put("listPrice", onePrice.getBigDecimal(x.price));
+                    result.put("wholeSalePrice", onePrice.getBigDecimal(x.price));
                 }
             }
         }
@@ -993,8 +994,8 @@ public class InventoryServices {
                 BigDecimal salesUsageQuantity = BigDecimal.ZERO;
                 GenericValue salesUsageItem = null;
                 while ((salesUsageItem = salesUsageIt.next()) != null) {
-                    if (salesUsageItem.get(org.apache.ofbiz.persistence.entity.x.quantity) != null) {
-                        salesUsageQuantity = salesUsageQuantity.add(salesUsageItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
+                    if (salesUsageItem.get(x.quantity) != null) {
+                        salesUsageQuantity = salesUsageQuantity.add(salesUsageItem.getBigDecimal(x.quantity));
                     }
                 }
                 // Make a query against the production usage view entity
@@ -1013,8 +1014,8 @@ public class InventoryServices {
                     BigDecimal productionUsageQuantity = BigDecimal.ZERO;
                     GenericValue productionUsageItem = null;
                     while ((productionUsageItem = productionUsageIt.next()) != null) {
-                        if (productionUsageItem.get(org.apache.ofbiz.persistence.entity.x.quantity) != null) {
-                            productionUsageQuantity = productionUsageQuantity.add(productionUsageItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
+                        if (productionUsageItem.get(x.quantity) != null) {
+                            productionUsageQuantity = productionUsageQuantity.add(productionUsageItem.getBigDecimal(x.quantity));
                         }
                     }
                     result.put("usageQuantity", salesUsageQuantity.add(productionUsageQuantity));

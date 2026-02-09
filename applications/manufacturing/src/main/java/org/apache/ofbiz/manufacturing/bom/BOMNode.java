@@ -42,6 +42,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /** An ItemCoinfigurationNode represents a component in a bill of materials.
  */
 
@@ -105,7 +106,7 @@ public class BOMNode {
         if (inDate == null) inDate = new Date();
         bomTypeId = partBomTypeId;
         List<GenericValue> rows = EntityQuery.use(delegator).from("ProductAssoc")
-                .where("productId", product.get(org.apache.ofbiz.persistence.entity.x.productId),
+                .where("productId", product.get(x.productId),
                         "productAssocTypeId", partBomTypeId)
                 .orderBy("sequenceNum", "productIdTo")
                 .filterByDate(inDate).queryList();
@@ -151,12 +152,12 @@ public class BOMNode {
             GenericValue rule = null;
             for (GenericValue productPartRule : productPartRules) {
                 rule = productPartRule;
-                String ruleCondition = (String) rule.get(org.apache.ofbiz.persistence.entity.x.productFeature);
-                String ruleOperator = (String) rule.get(org.apache.ofbiz.persistence.entity.x.ruleOperator);
-                String newPart = (String) rule.get(org.apache.ofbiz.persistence.entity.x.productIdInSubst);
+                String ruleCondition = (String) rule.get(x.productFeature);
+                String ruleOperator = (String) rule.get(x.ruleOperator);
+                String newPart = (String) rule.get(x.productIdInSubst);
                 BigDecimal ruleQuantity = BigDecimal.ZERO;
                 try {
-                    ruleQuantity = rule.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                    ruleQuantity = rule.getBigDecimal(x.quantity);
                 } catch (Exception exc) {
                     ruleQuantity = BigDecimal.ZERO;
                 }
@@ -169,7 +170,7 @@ public class BOMNode {
                     if (productFeatures != null) {
                         for (GenericValue productFeature : productFeatures) {
                             feature = productFeature;
-                            if (ruleCondition.equals(feature.get(org.apache.ofbiz.persistence.entity.x.productFeatureId))) {
+                            if (ruleCondition.equals(feature.get(x.productFeatureId))) {
                                 ruleSatisfied = true;
                                 break;
                             }
@@ -205,16 +206,16 @@ public class BOMNode {
 
     private BOMNode configurator(GenericValue node, List<GenericValue> productFeatures,
             String productIdForRules, Date inDate) throws GenericEntityException {
-        BOMNode oneChildNode = new BOMNode((String) node.get(org.apache.ofbiz.persistence.entity.x.productIdTo), delegator, dispatcher, userLogin);
+        BOMNode oneChildNode = new BOMNode((String) node.get(x.productIdTo), delegator, dispatcher, userLogin);
         oneChildNode.setTree(tree);
         oneChildNode.setProductAssoc(node);
         try {
-            oneChildNode.setQuantityMultiplier(node.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
+            oneChildNode.setQuantityMultiplier(node.getBigDecimal(x.quantity));
         } catch (Exception nfe) {
             oneChildNode.setQuantityMultiplier(BigDecimal.ONE);
         }
         try {
-            BigDecimal percScrapFactor = node.getBigDecimal(org.apache.ofbiz.persistence.entity.x.scrapFactor);
+            BigDecimal percScrapFactor = node.getBigDecimal(x.scrapFactor);
 
             // A negative scrap factor is a salvage factor
             BigDecimal bdHundred = new BigDecimal("100");
@@ -236,14 +237,14 @@ public class BOMNode {
             // we have to substitute the part with the right part's variant
             List<GenericValue> productPartRules = EntityQuery.use(delegator).from("ProductManufacturingRule")
                     .where("productId", productIdForRules,
-                            "productIdFor", node.get(org.apache.ofbiz.persistence.entity.x.productId),
-                            "productIdIn", node.get(org.apache.ofbiz.persistence.entity.x.productIdTo))
+                            "productIdFor", node.get(x.productId),
+                            "productIdIn", node.get(x.productIdTo))
                     .filterByDate(inDate).queryList();
             if (substitutedNode != null) {
                 productPartRules.addAll(EntityQuery.use(delegator).from("ProductManufacturingRule")
                         .where("productId", productIdForRules,
                                 "productIdFor", substitutedNode.getProduct().get("productId"),
-                                "productIdIn", node.get(org.apache.ofbiz.persistence.entity.x.productIdTo))
+                                "productIdIn", node.get(x.productIdTo))
                         .filterByDate(inDate).queryList());
             }
             newNode = substituteNode(oneChildNode, productFeatures, productPartRules);
@@ -251,20 +252,20 @@ public class BOMNode {
                 // If no substitution has been done (no valid rule applied),
                 // we try to search for a generic link-rule
                 List<GenericValue> genericLinkRules = EntityQuery.use(delegator).from("ProductManufacturingRule")
-                        .where("productIdFor", node.get(org.apache.ofbiz.persistence.entity.x.productId),
-                                "productIdIn", node.get(org.apache.ofbiz.persistence.entity.x.productIdTo))
+                        .where("productIdFor", node.get(x.productId),
+                                "productIdIn", node.get(x.productIdTo))
                         .filterByDate(inDate).queryList();
                 if (substitutedNode != null) {
                     genericLinkRules.addAll(EntityQuery.use(delegator).from("ProductManufacturingRule")
                             .where("productIdFor", substitutedNode.getProduct().get("productId"),
-                                    "productIdIn", node.get(org.apache.ofbiz.persistence.entity.x.productIdTo))
+                                    "productIdIn", node.get(x.productIdTo))
                             .filterByDate(inDate).queryList());
                 }
                 newNode = substituteNode(oneChildNode, productFeatures, genericLinkRules);
                 // If no substitution has been done (no valid rule applied),
                 // we try to search for a generic node-rule
                 List<GenericValue> genericNodeRules = EntityQuery.use(delegator).from("ProductManufacturingRule")
-                        .where("productIdIn", node.get(org.apache.ofbiz.persistence.entity.x.productIdTo))
+                        .where("productIdIn", node.get(x.productIdTo))
                         .orderBy("ruleSeqId")
                         .filterByDate(inDate).queryList();
                 newNode = null;
@@ -283,14 +284,14 @@ public class BOMNode {
                         GenericValue feature = null;
                         for (GenericValue productFeature : productFeatures) {
                             feature = productFeature;
-                            selectedFeatures.put(feature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureTypeId), feature.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId)); // FIXME
+                            selectedFeatures.put(feature.getString(x.productFeatureTypeId), feature.getString(x.productFeatureId)); // FIXME
                         }
                     }
 
                     if (!selectedFeatures.isEmpty()) {
                         Map<String, Object> context = new HashMap<>();
-                        context.put(org.apache.ofbiz.persistence.entity.x.productId, node.get(org.apache.ofbiz.persistence.entity.x.productIdTo));
-                        context.put(org.apache.ofbiz.persistence.entity.x.selectedFeatures, selectedFeatures);
+                        context.put(x.productId, node.get(x.productIdTo));
+                        context.put(x.selectedFeatures, selectedFeatures);
                         Map<String, Object> storeResult = null;
                         GenericValue variantProduct = null;
                         try {
@@ -340,7 +341,7 @@ public class BOMNode {
 
         bomTypeId = partBomTypeId;
         List<GenericValue> rows = EntityQuery.use(delegator).from("ProductAssoc")
-                .where("productIdTo", product.get(org.apache.ofbiz.persistence.entity.x.productId),
+                .where("productIdTo", product.get(x.productId),
                         "productAssocTypeId", partBomTypeId)
                 .orderBy("sequenceNum")
                 .filterByDate(inDate).queryList();
@@ -359,7 +360,7 @@ public class BOMNode {
 
         BOMNode oneChildNode = null;
         for (GenericValue oneChild : children) {
-            oneChildNode = new BOMNode(oneChild.getString(org.apache.ofbiz.persistence.entity.x.productId), delegator, dispatcher, userLogin);
+            oneChildNode = new BOMNode(oneChild.getString(x.productId), delegator, dispatcher, userLogin);
             // Configurator
             // If the node is null this means that the node has been discarded by the rules.
             oneChildNode.setParentNode(this);
@@ -396,7 +397,7 @@ public class BOMNode {
         for (int i = 0; i < depth; i++) {
             sb.append("<b>&nbsp;*&nbsp;</b>");
         }
-        sb.append(product.get(org.apache.ofbiz.persistence.entity.x.productId));
+        sb.append(product.get(x.productId));
         sb.append(" - ");
         sb.append(quantity);
         GenericValue oneChild = null;
@@ -406,7 +407,7 @@ public class BOMNode {
             oneChild = children.get(i);
             BigDecimal bomQuantity = BigDecimal.ZERO;
             try {
-                bomQuantity = oneChild.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                bomQuantity = oneChild.getBigDecimal(x.quantity);
             } catch (Exception exc) {
                 bomQuantity = BigDecimal.ONE;
             }
@@ -430,11 +431,11 @@ public class BOMNode {
         // in this breakdown.
         this.depth = depth;
         String serviceName = null;
-        if (this.productAssoc != null && this.productAssoc.getString(org.apache.ofbiz.persistence.entity.x.estimateCalcMethod) != null) {
+        if (this.productAssoc != null && this.productAssoc.getString(x.estimateCalcMethod) != null) {
             try {
-                GenericValue genericService = productAssoc.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CustomMethod, false);
-                if (genericService != null && genericService.getString(org.apache.ofbiz.persistence.entity.x.customMethodName) != null) {
-                    serviceName = genericService.getString(org.apache.ofbiz.persistence.entity.x.customMethodName);
+                GenericValue genericService = productAssoc.getRelatedOne(x.CustomMethod, false);
+                if (genericService != null && genericService.getString(x.customMethodName) != null) {
+                    serviceName = genericService.getString(x.customMethodName);
                 }
             } catch (Exception exc) {
             }
@@ -520,11 +521,11 @@ public class BOMNode {
      */
     public void sumQuantity(Map<String, BOMNode> nodes) {
         // First of all, we try to fetch a node with the same partId
-        BOMNode sameNode = nodes.get(product.getString(org.apache.ofbiz.persistence.entity.x.productId));
+        BOMNode sameNode = nodes.get(product.getString(x.productId));
         // If the node is not found we create a new node for the current product
         if (sameNode == null) {
             sameNode = new BOMNode(product, dispatcher, userLogin);
-            nodes.put(product.getString(org.apache.ofbiz.persistence.entity.x.productId), sameNode);
+            nodes.put(product.getString(x.productId), sameNode);
         }
         // Now we add the current quantity to the node
         sameNode.setQuantity(sameNode.getQuantity().add(quantity));
@@ -699,7 +700,7 @@ public class BOMNode {
             }
             if (UtilValidate.isNotEmpty(pfs)) {
                 for (GenericValue pf : pfs) {
-                    if (UtilValidate.isNotEmpty(pf.get(org.apache.ofbiz.persistence.entity.x.minimumStock)) && UtilValidate.isNotEmpty(pf.get(org.apache.ofbiz.persistence.entity.x.reorderQuantity))) {
+                    if (UtilValidate.isNotEmpty(pf.get(x.minimumStock)) && UtilValidate.isNotEmpty(pf.get(x.reorderQuantity))) {
                         isWarehouseManaged = true;
                         break;
                     }
@@ -720,7 +721,7 @@ public class BOMNode {
     public boolean isManufactured(boolean ignoreSupplierProducts) {
         List<GenericValue> supplierProducts = null;
         try {
-            supplierProducts = product.getRelated(org.apache.ofbiz.persistence.entity.x.SupplierProduct, UtilMisc.toMap("supplierPrefOrderId", "10_MAIN_SUPPL"),
+            supplierProducts = product.getRelated(x.SupplierProduct, UtilMisc.toMap("supplierPrefOrderId", "10_MAIN_SUPPL"),
                     UtilMisc.toList("minimumOrderQuantity"), false);
         } catch (GenericEntityException gee) {
             Debug.logError("Problem in BOMNode.isManufactured()", MODULE);
@@ -742,7 +743,7 @@ public class BOMNode {
      * @return the boolean
      */
     public boolean isVirtual() {
-        return (product.get(org.apache.ofbiz.persistence.entity.x.isVirtual) != null ? "Y".equals(product.get(org.apache.ofbiz.persistence.entity.x.isVirtual)) : false);
+        return (product.get(x.isVirtual) != null ? "Y".equals(product.get(x.isVirtual)) : false);
     }
 
     /**

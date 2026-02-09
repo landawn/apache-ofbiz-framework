@@ -41,6 +41,7 @@ import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.base.util.cache.UtilCache;
 
+import org.apache.ofbiz.persistence.entity.x;
 /** Expands String values that contain Unified Expression Language (JSR 245)
  * syntax. This class also supports the execution of Groovy scripts
  * by using the 'groovy:' prefix.
@@ -401,9 +402,9 @@ public abstract class FlexibleStringExpander implements Serializable, IsEmpty {
 
     private static Locale getLocale(Locale locale, Map<String, ? extends Object> context) {
         if (locale == null) {
-            locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+            locale = (Locale) context.get(x.locale);
             if (locale == null && context.containsKey("autoUserLogin")) {
-                Map<String, Object> autoUserLogin = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.autoUserLogin));
+                Map<String, Object> autoUserLogin = UtilGenerics.cast(context.get(x.autoUserLogin));
                 locale = UtilMisc.ensureLocale(autoUserLogin.get("lastLocale"));
             }
             if (locale == null && context.containsKey(UelUtil.getLocalizedMapLocaleKey())) {
@@ -418,9 +419,9 @@ public abstract class FlexibleStringExpander implements Serializable, IsEmpty {
 
     private static TimeZone getTimeZone(TimeZone timeZone, Map<String, ? extends Object> context) {
         if (timeZone == null) {
-            timeZone = (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone);
+            timeZone = (TimeZone) context.get(x.timeZone);
             if (timeZone == null && context.containsKey("autoUserLogin")) {
-                Map<String, String> autoUserLogin = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.autoUserLogin));
+                Map<String, String> autoUserLogin = UtilGenerics.cast(context.get(x.autoUserLogin));
                 timeZone = UtilDateTime.toTimeZone(autoUserLogin.get("lastTimeZone"));
             }
             if (timeZone == null) {

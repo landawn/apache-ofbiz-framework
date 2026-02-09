@@ -40,6 +40,7 @@ import org.apache.ofbiz.widget.renderer.MenuStringRenderer;
 import org.xml.sax.SAXException;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Widget Library - HTML Menu Wrapper class - makes it easy to do the setup and render of a menu
  */
@@ -85,25 +86,25 @@ public class HtmlMenuWrapper {
 
         this.context = new HashMap<>();
         Map<String, Object> parameterMap = UtilHttp.getParameterMap(request);
-        context.put(org.apache.ofbiz.persistence.entity.x.parameters, parameterMap);
+        context.put(x.parameters, parameterMap);
 
         HttpSession session = request.getSession();
         GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
-        context.put(org.apache.ofbiz.persistence.entity.x.userLogin, userLogin);
+        context.put(x.userLogin, userLogin);
 
         //make sure the locale is in the context
-        context.put(org.apache.ofbiz.persistence.entity.x.locale, UtilHttp.getLocale(request));
+        context.put(x.locale, UtilHttp.getLocale(request));
 
         // if there was an error message, this is an error
         if (UtilValidate.isNotEmpty(request.getAttribute("_ERROR_MESSAGE_"))) {
-            context.put(org.apache.ofbiz.persistence.entity.x.isError, Boolean.TRUE);
+            context.put(x.isError, Boolean.TRUE);
         } else {
-            context.put(org.apache.ofbiz.persistence.entity.x.isError, Boolean.FALSE);
+            context.put(x.isError, Boolean.FALSE);
         }
 
         // if a parameter was passed saying this is an error, it is an error
         if ("true".equals(parameterMap.get("isError"))) {
-            context.put(org.apache.ofbiz.persistence.entity.x.isError, Boolean.TRUE);
+            context.put(x.isError, Boolean.TRUE);
         }
     }
 
@@ -149,7 +150,7 @@ public class HtmlMenuWrapper {
      * parameters Map instead of the value Map.
      */
     public void setIsError(boolean isError) {
-        this.context.put(org.apache.ofbiz.persistence.entity.x.isError, isError);
+        this.context.put(x.isError, isError);
     }
 
     /**
@@ -157,7 +158,7 @@ public class HtmlMenuWrapper {
      * @return the is error
      */
     public boolean getIsError() {
-        Boolean isErrorBoolean = (Boolean) this.context.get(org.apache.ofbiz.persistence.entity.x.isError);
+        Boolean isErrorBoolean = (Boolean) this.context.get(x.isError);
         if (isErrorBoolean == null) {
             return false;
         } else {
@@ -170,7 +171,7 @@ public class HtmlMenuWrapper {
      * @param menuName the menu name
      */
     public void setMenuOverrideName(String menuName) {
-        this.context.put(org.apache.ofbiz.persistence.entity.x.menuName, menuName);
+        this.context.put(x.menuName, menuName);
     }
 
     /**
@@ -327,7 +328,7 @@ public class HtmlMenuWrapper {
      * @param paramMap the param map
      */
     public void setParameters(Map<String, Object> paramMap) {
-        context.put(org.apache.ofbiz.persistence.entity.x.parameters, paramMap);
+        context.put(x.parameters, paramMap);
     }
 
 }

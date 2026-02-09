@@ -37,6 +37,7 @@ import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.service.testtools.OFBizTestCase;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class PerformFindTests extends OFBizTestCase {
 
     private static final String MODULE = PerformFindTests.class.getName();
@@ -46,7 +47,7 @@ public class PerformFindTests extends OFBizTestCase {
 
     private static List<GenericValue> getCompleteList(Map<String, Object> context) {
         List<GenericValue> foundElements = new LinkedList<>();
-        try (EntityListIterator listIt = (EntityListIterator) context.get(org.apache.ofbiz.persistence.entity.x.listIt)) {
+        try (EntityListIterator listIt = (EntityListIterator) context.get(x.listIt)) {
             if (listIt != null) {
                 foundElements = listIt.getCompleteList();
             }

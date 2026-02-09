@@ -54,6 +54,7 @@ import org.apache.ofbiz.webapp.view.AbstractViewHandler;
 import org.apache.ofbiz.webapp.view.ViewHandlerException;
 import org.apache.ofbiz.webapp.website.WebSiteWorker;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class SimpleContentViewHandler extends AbstractViewHandler {
 
     private static final String MODULE = SimpleContentViewHandler.class.getName();
@@ -87,14 +88,14 @@ public class SimpleContentViewHandler extends AbstractViewHandler {
         LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
         HttpSession session = request.getSession();
         GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
-        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
-        String rootContentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.rootContentId);
-        String mapKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.mapKey);
-        String contentAssocTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId);
-        String fromDateStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
-        String dataResourceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
-        String contentRevisionSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentRevisionSeqId);
-        String mimeTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
+        String contentId = (String) context.get(x.contentId);
+        String rootContentId = (String) context.get(x.rootContentId);
+        String mapKey = (String) context.get(x.mapKey);
+        String contentAssocTypeId = (String) context.get(x.contentAssocTypeId);
+        String fromDateStr = (String) context.get(x.fromDate);
+        String dataResourceId = (String) context.get(x.dataResourceId);
+        String contentRevisionSeqId = (String) context.get(x.contentRevisionSeqId);
+        String mimeTypeId = (String) context.get(x.mimeTypeId);
         Locale locale = UtilHttp.getLocale(request);
         String webSiteId = WebSiteWorker.getWebSiteId(request);
 
@@ -108,7 +109,7 @@ public class SimpleContentViewHandler extends AbstractViewHandler {
                     if (UtilValidate.isEmpty(mapKey) && UtilValidate.isEmpty(contentAssocTypeId)) {
                         if (UtilValidate.isNotEmpty(contentId)) {
                             GenericValue content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).cache().queryOne();
-                            dataResourceId = content.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+                            dataResourceId = content.getString(x.dataResourceId);
                         }
                         if (Debug.verboseOn()) {
                             Debug.logVerbose("dataResourceId:" + dataResourceId, MODULE);
@@ -127,7 +128,7 @@ public class SimpleContentViewHandler extends AbstractViewHandler {
                             assocList = UtilMisc.toList(contentAssocTypeId);
                         }
                         GenericValue content = ContentWorker.getSubContent(delegator, contentId, mapKey, null, null, assocList, fromDate);
-                        dataResourceId = content.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+                        dataResourceId = content.getString(x.dataResourceId);
                         if (Debug.verboseOn()) {
                             Debug.logVerbose("dataResourceId:" + dataResourceId, MODULE);
                         }
@@ -142,7 +143,7 @@ public class SimpleContentViewHandler extends AbstractViewHandler {
                         throw new ViewHandlerException("ContentRevisionItem record not found for contentId=" + rootContentId
                                 + ", contentRevisionSeqId=" + contentRevisionSeqId + ", itemContentId=" + contentId);
                     }
-                    dataResourceId = contentRevisionItem.getString(org.apache.ofbiz.persistence.entity.x.newDataResourceId);
+                    dataResourceId = contentRevisionItem.getString(x.newDataResourceId);
                     if (Debug.verboseOn()) {
                         Debug.logVerbose("contentRevisionItem:" + contentRevisionItem, MODULE);
                     }
@@ -162,7 +163,7 @@ public class SimpleContentViewHandler extends AbstractViewHandler {
                 ByteBuffer byteBuffer = DataResourceWorker.getContentAsByteBuffer(delegator, dataResourceId, https, webSiteId, locale, rootDir);
                 ByteArrayInputStream bais = new ByteArrayInputStream(byteBuffer.array());
                 // setup character encoding and content type
-                String charset = dataResource.getString(org.apache.ofbiz.persistence.entity.x.characterSetId);
+                String charset = dataResource.getString(x.characterSetId);
                 if (UtilValidate.isEmpty(charset)) {
                     charset = encoding;
                 }
@@ -175,12 +176,12 @@ public class SimpleContentViewHandler extends AbstractViewHandler {
                 // setup content type
                 String contentType2 = UtilValidate.isNotEmpty(mimeTypeId) ? mimeTypeId + "; charset=" + charset : contentType;
                 String fileName = null;
-                if (UtilValidate.isNotEmpty(dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceName))) {
-                    fileName = dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceName).replace(" ", "_"); // spaces in filenames can be a problem
+                if (UtilValidate.isNotEmpty(dataResource.getString(x.dataResourceName))) {
+                    fileName = dataResource.getString(x.dataResourceName).replace(" ", "_"); // spaces in filenames can be a problem
                 }
 
                 // see if data RESOURCE is public or not
-                String isPublic = dataResource.getString(org.apache.ofbiz.persistence.entity.x.isPublic);
+                String isPublic = dataResource.getString(x.isPublic);
                 if (UtilValidate.isEmpty(isPublic)) {
                     isPublic = "N";
                 }

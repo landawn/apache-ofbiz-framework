@@ -36,6 +36,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class TelecomServices {
 
     private static final String MODULE = TelecomServices.class.getName();
@@ -45,13 +46,13 @@ public class TelecomServices {
         LocalDispatcher dispatcher = ctx.getDispatcher();
         Map<String, Object> results = ServiceUtil.returnSuccess();
 
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
-        String telecomMsgTypeEnumId = (String) context.get(org.apache.ofbiz.persistence.entity.x.telecomMsgTypeEnumId);
-        String telecomMethodTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.telecomMethodTypeId);
-        String telecomGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.telecomGatewayConfigId);
-        List<String> numbers = checkCollection(context.get(org.apache.ofbiz.persistence.entity.x.numbers), String.class);
-        String message = (String) context.get(org.apache.ofbiz.persistence.entity.x.message);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String productStoreId = (String) context.get(x.productStoreId);
+        String telecomMsgTypeEnumId = (String) context.get(x.telecomMsgTypeEnumId);
+        String telecomMethodTypeId = (String) context.get(x.telecomMethodTypeId);
+        String telecomGatewayConfigId = (String) context.get(x.telecomGatewayConfigId);
+        List<String> numbers = checkCollection(context.get(x.numbers), String.class);
+        String message = (String) context.get(x.message);
         String telecomEnabled = EntityUtilProperties.getPropertyValue("general", "telecom.notifications.enabled", delegator);
         if (!"Y".equals(telecomEnabled)) {
             Debug.logImportant("Telecom message not sent to " + numbers.toString()
@@ -87,8 +88,8 @@ public class TelecomServices {
             conditions.put("telecomMethodTypeId", telecomMethodTypeId);
             GenericValue productStoreTelecomSetting = EntityQuery.use(delegator).from("ProductStoreTelecomSetting").where(conditions).queryOne();
             if (productStoreTelecomSetting != null) {
-                GenericValue customMethod = productStoreTelecomSetting.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CustomMethod, false);
-                if (UtilValidate.isNotEmpty(customMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName))) {
+                GenericValue customMethod = productStoreTelecomSetting.getRelatedOne(x.CustomMethod, false);
+                if (UtilValidate.isNotEmpty(customMethod.getString(x.customMethodName))) {
                     Map<String, Object> serviceCtx = new HashMap<>();
                     serviceCtx.put("numbers", numbers);
                     serviceCtx.put("message", message);
@@ -96,7 +97,7 @@ public class TelecomServices {
                         serviceCtx.put("configId", telecomGatewayConfigId);
                     }
                     serviceCtx.put("userLogin", userLogin);
-                    Map<String, Object> customMethodResult = dispatcher.runSync(customMethod.getString(org.apache.ofbiz.persistence.entity.x.customMethodName), serviceCtx);
+                    Map<String, Object> customMethodResult = dispatcher.runSync(customMethod.getString(x.customMethodName), serviceCtx);
                     if (ServiceUtil.isError(customMethodResult) || ServiceUtil.isFailure(customMethodResult)) {
                         String errorMessage = ServiceUtil.getErrorMessage(customMethodResult);
                         Debug.logError(errorMessage, MODULE);

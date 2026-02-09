@@ -33,6 +33,7 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class InventoryEventPlannedServices {
 
     private static final String MODULE = InventoryEventPlannedServices.class.getName();
@@ -47,14 +48,14 @@ public class InventoryEventPlannedServices {
      */
     public static Map<String, Object> createMrpEvent(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        Map<String, Object> parameters = UtilMisc.<String, Object>toMap("mrpId", context.get(org.apache.ofbiz.persistence.entity.x.mrpId),
-                                        "productId", context.get(org.apache.ofbiz.persistence.entity.x.productId),
-                                        "eventDate", context.get(org.apache.ofbiz.persistence.entity.x.eventDate),
-                                        "mrpEventTypeId", context.get(org.apache.ofbiz.persistence.entity.x.mrpEventTypeId));
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
+        Locale locale = (Locale) context.get(x.locale);
+        Map<String, Object> parameters = UtilMisc.<String, Object>toMap("mrpId", context.get(x.mrpId),
+                                        "productId", context.get(x.productId),
+                                        "eventDate", context.get(x.eventDate),
+                                        "mrpEventTypeId", context.get(x.mrpEventTypeId));
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
         try {
-            createOrUpdateMrpEvent(parameters, quantity, (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId), (String) context.get(org.apache.ofbiz.persistence.entity.x.eventName), false, delegator);
+            createOrUpdateMrpEvent(parameters, quantity, (String) context.get(x.facilityId), (String) context.get(x.eventName), false, delegator);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Error : findOne(\"MrpEvent\", parameters =)" + parameters, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingMrpCreateOrUpdateEvent",
@@ -75,10 +76,10 @@ public class InventoryEventPlannedServices {
             mrpEvent.put("isLate", (isLate ? "Y" : "N"));
             mrpEvent.create();
         } else {
-            BigDecimal qties = newQuantity.add(mrpEvent.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
+            BigDecimal qties = newQuantity.add(mrpEvent.getBigDecimal(x.quantity));
             mrpEvent.put("quantity", qties.doubleValue());
             if (UtilValidate.isNotEmpty(eventName)) {
-                String existingEventName = mrpEvent.getString(org.apache.ofbiz.persistence.entity.x.eventName);
+                String existingEventName = mrpEvent.getString(x.eventName);
                 mrpEvent.put("eventName", (UtilValidate.isEmpty(existingEventName) ? eventName : existingEventName + ", " + eventName));
             }
             if (isLate) {

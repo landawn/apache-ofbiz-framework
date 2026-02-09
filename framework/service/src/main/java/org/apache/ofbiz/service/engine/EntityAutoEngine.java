@@ -47,6 +47,7 @@ import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Standard Java Static Method Service Engine
  */
@@ -317,35 +318,35 @@ public final class EntityAutoEngine extends GenericAsyncEngine {
         if (fromDateField != null && fromDateField.getIsPk()) {
             ModelParam fromDateParam = modelService.getParam("fromDate");
             if (fromDateParam == null || parameters.get("fromDate") == null) {
-                newEntity.set(org.apache.ofbiz.persistence.entity.x.fromDate, UtilDateTime.nowTimestamp());
+                newEntity.set(x.fromDate, UtilDateTime.nowTimestamp());
             }
         }
 
         newEntity.setNonPKFields(parameters, true);
         if (modelEntity.getField("createdDate") != null) {
-            newEntity.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
+            newEntity.set(x.createdDate, UtilDateTime.nowTimestamp());
             if (modelEntity.getField("createdByUserLogin") != null) {
                 GenericValue userLogin = (GenericValue) parameters.get("userLogin");
                 if (userLogin != null) {
-                    newEntity.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
+                    newEntity.set(x.createdByUserLogin, userLogin.get(x.userLoginId));
                     if (modelEntity.getField("lastModifiedByUserLogin") != null) {
-                        newEntity.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
+                        newEntity.set(x.lastModifiedByUserLogin, userLogin.get(x.userLoginId));
                     } else if (modelEntity.getField("changedByUserLogin") != null) {
-                        newEntity.set(org.apache.ofbiz.persistence.entity.x.changedByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
+                        newEntity.set(x.changedByUserLogin, userLogin.get(x.userLoginId));
                     }
                 }
             }
             if (modelEntity.getField("lastModifiedDate") != null) {
-                newEntity.set(org.apache.ofbiz.persistence.entity.x.lastModifiedDate, UtilDateTime.nowTimestamp());
+                newEntity.set(x.lastModifiedDate, UtilDateTime.nowTimestamp());
             } else if (modelEntity.getField("changedDate") != null) {
-                newEntity.set(org.apache.ofbiz.persistence.entity.x.changedDate, UtilDateTime.nowTimestamp());
+                newEntity.set(x.changedDate, UtilDateTime.nowTimestamp());
             }
         }
 
         if (modelEntity.getField("changeByUserLoginId") != null) {
             GenericValue userLogin = (GenericValue) parameters.get("userLogin");
             if (userLogin != null) {
-                newEntity.set(org.apache.ofbiz.persistence.entity.x.changeByUserLoginId, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
+                newEntity.set(x.changeByUserLoginId, userLogin.get(x.userLoginId));
             } else {
                 throw new GenericServiceException("You call a creation on entity that require the userLogin to track the activity,"
                         + " please control that your service definition has auth='true'");
@@ -354,7 +355,7 @@ public final class EntityAutoEngine extends GenericAsyncEngine {
             //Oh changeByUserLoginId detected, check if an EntityStatus concept
             if (modelEntity.getEntityName().endsWith("Status")) {
                 if (modelEntity.getField("statusDate") != null && parameters.get("statusDate") == null) {
-                    newEntity.set(org.apache.ofbiz.persistence.entity.x.statusDate, UtilDateTime.nowTimestamp());
+                    newEntity.set(x.statusDate, UtilDateTime.nowTimestamp());
 
                     //if a statusEndDate is present, resolve the last EntityStatus to store this value on the previous element
                     if (modelEntity.getField("statusEndDate") != null) {
@@ -367,7 +368,7 @@ public final class EntityAutoEngine extends GenericAsyncEngine {
                             GenericValue previousStatus = EntityQuery.use(newEntity.getDelegator()).from(modelEntity.getEntityName())
                                     .where(conditionRelatedPkFieldMap).orderBy("-statusDate").queryFirst();
                             if (previousStatus != null) {
-                                previousStatus.put("statusEndDate", newEntity.get(org.apache.ofbiz.persistence.entity.x.statusDate));
+                                previousStatus.put("statusEndDate", newEntity.get(x.statusDate));
                                 previousStatus.store();
                             }
                         }
@@ -470,18 +471,18 @@ public final class EntityAutoEngine extends GenericAsyncEngine {
         if (modelEntity.getField("lastModifiedDate") != null
                 || modelEntity.getField("changedDate") != null) {
             if (modelEntity.getField("lastModifiedDate") != null) {
-                lookedUpValue.set(org.apache.ofbiz.persistence.entity.x.lastModifiedDate, UtilDateTime.nowTimestamp());
+                lookedUpValue.set(x.lastModifiedDate, UtilDateTime.nowTimestamp());
             } else {
-                lookedUpValue.set(org.apache.ofbiz.persistence.entity.x.changedDate, UtilDateTime.nowTimestamp());
+                lookedUpValue.set(x.changedDate, UtilDateTime.nowTimestamp());
             }
             if (modelEntity.getField("lastModifiedByUserLogin") != null
                     || modelEntity.getField("changedByUserLogin") != null) {
                 GenericValue userLogin = (GenericValue) parameters.get("userLogin");
                 if (userLogin != null) {
                     if (modelEntity.getField("lastModifiedByUserLogin") != null) {
-                        lookedUpValue.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
+                        lookedUpValue.set(x.lastModifiedByUserLogin, userLogin.get(x.userLoginId));
                     } else {
-                        lookedUpValue.set(org.apache.ofbiz.persistence.entity.x.changedByUserLogin, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
+                        lookedUpValue.set(x.changedByUserLogin, userLogin.get(x.userLoginId));
                     }
                 }
             }
@@ -495,7 +496,7 @@ public final class EntityAutoEngine extends GenericAsyncEngine {
             }
             GenericValue userLogin = (GenericValue) parameters.get("userLogin");
             if (userLogin != null) {
-                lookedUpValue.set(org.apache.ofbiz.persistence.entity.x.changeByUserLoginId, userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
+                lookedUpValue.set(x.changeByUserLoginId, userLogin.get(x.userLoginId));
             } else {
                 throw new GenericServiceException("You call a updating operation on entity that track the activity, sorry I can't do that,"
                         + "please amazing developer check your service definition;)");
@@ -599,7 +600,7 @@ public final class EntityAutoEngine extends GenericAsyncEngine {
             }
         }
         // Expire thruDate fields
-        if (thruDatePresent && UtilValidate.isEmpty(lookedUpValue.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate))) {
+        if (thruDatePresent && UtilValidate.isEmpty(lookedUpValue.getTimestamp(x.thruDate))) {
             if (UtilValidate.isEmpty(parameters.get("thruDate"))) {
                 parameters.put("thruDate", UtilDateTime.nowTimestamp());
             }

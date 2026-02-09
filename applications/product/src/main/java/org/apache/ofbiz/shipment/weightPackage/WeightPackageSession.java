@@ -43,6 +43,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceContainer;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * The type Weight package session.
  */
@@ -554,16 +555,16 @@ public class WeightPackageSession implements Serializable {
             for (GenericValue shipmentRouteSegment : shipmentRouteSegments) {
                 Map<String, Object> shipmentRouteSegmentMap = new HashMap<>();
                 shipmentRouteSegmentMap.put("shipmentId", shipmentId);
-                shipmentRouteSegmentMap.put("shipmentRouteSegmentId", shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId));
+                shipmentRouteSegmentMap.put("shipmentRouteSegmentId", shipmentRouteSegment.getString(x.shipmentRouteSegmentId));
                 shipmentRouteSegmentMap.put("userLogin", userLogin);
                 Map<String, Object> shipmentRouteSegmentResult = this.getDispatcher().runSync("upsShipmentConfirm", shipmentRouteSegmentMap);
                 if (ServiceUtil.isError(shipmentRouteSegmentResult)) {
                     throw new GeneralException(ServiceUtil.getErrorMessage(shipmentRouteSegmentResult));
                 }
                 GenericValue shipRouteSeg = EntityQuery.use(delegator).from("ShipmentRouteSegment")
-                        .where("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId))
+                        .where("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegment.getString(x.shipmentRouteSegmentId))
                         .queryOne();
-                actualCost = actualCost.add(shipRouteSeg.getBigDecimal(org.apache.ofbiz.persistence.entity.x.actualCost));
+                actualCost = actualCost.add(shipRouteSeg.getBigDecimal(x.actualCost));
             }
         }
         return actualCost;
@@ -580,7 +581,7 @@ public class WeightPackageSession implements Serializable {
             for (GenericValue shipmentRouteSegment : shipmentRouteSegments) {
                 Map<String, Object> shipmentRouteSegmentMap = new HashMap<>();
                 shipmentRouteSegmentMap.put("shipmentId", shipmentId);
-                shipmentRouteSegmentMap.put("shipmentRouteSegmentId", shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId));
+                shipmentRouteSegmentMap.put("shipmentRouteSegmentId", shipmentRouteSegment.getString(x.shipmentRouteSegmentId));
                 shipmentRouteSegmentMap.put("userLogin", userLogin);
                 Map<String, Object> shipmentRouteSegmentResult = this.getDispatcher().runSync("upsShipmentAccept", shipmentRouteSegmentMap);
                 if (ServiceUtil.isError(shipmentRouteSegmentResult)) {
@@ -655,17 +656,17 @@ public class WeightPackageSession implements Serializable {
         List<GenericValue> shipmentItems = this.getDelegator().findByAnd("ShipmentItem", UtilMisc.toMap("shipmentId", shipmentId), null, false);
         for (GenericValue shipmentItem : shipmentItems) {
             for (WeightPackageSessionLine packedLine : this.getPackedLines(orderId)) {
-                packedLine.setShipmentItemSeqId(shipmentItem.getString(org.apache.ofbiz.persistence.entity.x.shipmentItemSeqId));
+                packedLine.setShipmentItemSeqId(shipmentItem.getString(x.shipmentItemSeqId));
             }
         }
         List<GenericValue> orderItems = this.getDelegator().findByAnd("OrderItem", UtilMisc.toMap("orderId", orderId, "statusId", "ITEM_APPROVED"),
                 null, false);
         for (GenericValue orderItem : orderItems) {
-            List<GenericValue> orderItemShipGrpInvReserves = orderItem.getRelated(org.apache.ofbiz.persistence.entity.x.OrderItemShipGrpInvRes, null, null, false);
+            List<GenericValue> orderItemShipGrpInvReserves = orderItem.getRelated(x.OrderItemShipGrpInvRes, null, null, false);
             if (UtilValidate.isEmpty(orderItemShipGrpInvReserves)) {
                 Map<String, Object> orderItemStatusMap = new HashMap<>();
                 orderItemStatusMap.put("orderId", orderId);
-                orderItemStatusMap.put("orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                orderItemStatusMap.put("orderItemSeqId", orderItem.getString(x.orderItemSeqId));
                 orderItemStatusMap.put("userLogin", userLogin);
                 orderItemStatusMap.put("statusId", "ITEM_COMPLETED");
                 Map<String, Object> orderItemStatusResult = this.getDispatcher().runSync("changeOrderItemStatus", orderItemStatusMap);
@@ -703,8 +704,8 @@ public class WeightPackageSession implements Serializable {
                     UtilMisc.toMap("shipmentId", this.getShipmentId()), null, false);
             if (UtilValidate.isNotEmpty(shipmentRouteSegments)) {
                 for (GenericValue shipmentRouteSegment : shipmentRouteSegments) {
-                    shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.billingWeight, shipmentWeight);
-                    shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.billingWeightUomId, getWeightUomId());
+                    shipmentRouteSegment.set(x.billingWeight, shipmentWeight);
+                    shipmentRouteSegment.set(x.billingWeightUomId, getWeightUomId());
                 }
                 getDelegator().storeAll(shipmentRouteSegments);
             }
@@ -739,8 +740,8 @@ public class WeightPackageSession implements Serializable {
      */
     public BigDecimal getShipmentCostEstimate(GenericValue orderItemShipGroup, String orderId, String productStoreId, List<GenericValue>
             shippableItemInfo, BigDecimal shippableTotal, BigDecimal shippableWeight, BigDecimal shippableQuantity) {
-        return getShipmentCostEstimate(orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.contactMechId), orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId),
-                                       orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId), orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId),
+        return getShipmentCostEstimate(orderItemShipGroup.getString(x.contactMechId), orderItemShipGroup.getString(x.shipmentMethodTypeId),
+                                       orderItemShipGroup.getString(x.carrierPartyId), orderItemShipGroup.getString(x.carrierRoleTypeId),
                                        orderId, productStoreId, shippableItemInfo, shippableTotal, shippableWeight, shippableQuantity);
     }
 
@@ -821,7 +822,7 @@ public class WeightPackageSession implements Serializable {
             List<GenericValue> orderItems = getDelegator().findByAnd("OrderItem",
                     UtilMisc.toMap("orderId", orderId, "statusId", "ITEM_APPROVED"), null, false);
             for (GenericValue orderItem : orderItems) {
-                orderedQuantity = orderedQuantity.add(orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
+                orderedQuantity = orderedQuantity.add(orderItem.getBigDecimal(x.quantity));
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);

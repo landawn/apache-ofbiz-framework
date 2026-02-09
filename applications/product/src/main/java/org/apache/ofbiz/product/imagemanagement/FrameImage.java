@@ -64,6 +64,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.jdom2.JDOMException;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class FrameImage {
 
     private static final String MODULE = FrameImage.class.getName();
@@ -82,32 +83,32 @@ public class FrameImage {
         String nameOfThumb = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
                 "image.management.nameofthumbnail", delegator), context);
 
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        String imageName = (String) context.get(org.apache.ofbiz.persistence.entity.x.imageName);
-        String imageWidth = (String) context.get(org.apache.ofbiz.persistence.entity.x.imageWidth);
-        String imageHeight = (String) context.get(org.apache.ofbiz.persistence.entity.x.imageHeight);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String productId = (String) context.get(x.productId);
+        String imageName = (String) context.get(x.imageName);
+        String imageWidth = (String) context.get(x.imageWidth);
+        String imageHeight = (String) context.get(x.imageHeight);
+        Locale locale = (Locale) context.get(x.locale);
 
-        if (UtilValidate.isEmpty(context.get(org.apache.ofbiz.persistence.entity.x.frameContentId)) || UtilValidate.isEmpty(context.get(org.apache.ofbiz.persistence.entity.x.frameDataResourceId))) {
+        if (UtilValidate.isEmpty(context.get(x.frameContentId)) || UtilValidate.isEmpty(context.get(x.frameDataResourceId))) {
             result = ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "ProductImageFrameContentIdRequired", locale));
             result.putAll(context);
         }
-        if (UtilValidate.isEmpty(context.get(org.apache.ofbiz.persistence.entity.x.imageWidth)) || UtilValidate.isEmpty(context.get(org.apache.ofbiz.persistence.entity.x.imageHeight))) {
+        if (UtilValidate.isEmpty(context.get(x.imageWidth)) || UtilValidate.isEmpty(context.get(x.imageHeight))) {
             result = ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "ProductImageWidthAndHeightRequired", locale));
             result.putAll(context);
         }
 
-        String frameContentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.frameContentId);
-        String frameDataResourceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.frameDataResourceId);
+        String frameContentId = (String) context.get(x.frameContentId);
+        String frameDataResourceId = (String) context.get(x.frameDataResourceId);
 
         String frameImageName = null;
         try {
             GenericValue contentDataResourceView = EntityQuery.use(delegator).from("ContentDataResourceView")
                     .where("contentId", frameContentId, "drDataResourceId", frameDataResourceId).queryOne();
-            frameImageName = contentDataResourceView.getString(org.apache.ofbiz.persistence.entity.x.contentName);
+            frameImageName = contentDataResourceView.getString(x.contentName);
         } catch (GenericEntityException gee) {
             Debug.logError(gee, MODULE);
             result = ServiceUtil.returnError(gee.getMessage());
@@ -412,7 +413,7 @@ public class FrameImage {
         try {
             GenericValue contentDataResourceView = EntityQuery.use(delegator).from("ContentDataResourceView").where("contentId", frameContentId,
                     "drDataResourceId", frameDataResourceId).queryOne();
-            frameImageName = contentDataResourceView.getString(org.apache.ofbiz.persistence.entity.x.contentName);
+            frameImageName = contentDataResourceView.getString(x.contentName);
         } catch (GenericEntityException e) {
             request.setAttribute("_ERROR_MESSAGE_", e.getMessage());
             return "error";
@@ -471,7 +472,7 @@ public class FrameImage {
         try {
             GenericValue contentDataResource = EntityQuery.use(delegator).from("ContentDataResourceView").where("contentId",
                     frameContentId).queryFirst();
-            frameDataResourceId = contentDataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+            frameDataResourceId = contentDataResource.getString(x.dataResourceId);
         } catch (GenericEntityException e) {
             request.setAttribute("_ERROR_MESSAGE_", e.getMessage());
             return "error";
@@ -484,7 +485,7 @@ public class FrameImage {
     public static String deleteFrameImage(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Map<String, ? extends Object> context = UtilGenerics.cast(request.getParameterMap());
         String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                "image.management.path", (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator)), context);
+                "image.management.path", (Delegator) context.get(x.delegator)), context);
         File file = new File(imageServerPath + "/preview/" + "/previewImage.jpg");
         if (file.exists()) {
             if (!file.delete()) {

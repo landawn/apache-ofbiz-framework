@@ -46,6 +46,7 @@ import org.apache.ofbiz.product.product.ProductSearch.ProductSearchContext;
 import org.apache.ofbiz.product.product.ProductSearch.ResultSortOrder;
 import org.apache.ofbiz.webapp.stats.VisitHandler;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Product Search Related Events
  */
@@ -79,7 +80,7 @@ public class ProductSearchEvents {
                 int numRemoved = 0;
                 GenericValue searchResultView = null;
                 while ((searchResultView = eli.next()) != null) {
-                    String productId = searchResultView.getString(org.apache.ofbiz.persistence.entity.x.mainProductId);
+                    String productId = searchResultView.getString(x.mainProductId);
                     numRemoved += delegator.removeByAnd("ProductCategoryMember", UtilMisc.toMap("productCategoryId", productCategoryId,
                             "productId", productId));
                 }
@@ -144,15 +145,15 @@ public class ProductSearchEvents {
                 GenericValue searchResultView = null;
                 int numExpired = 0;
                 while ((searchResultView = eli.next()) != null) {
-                    String productId = searchResultView.getString(org.apache.ofbiz.persistence.entity.x.mainProductId);
+                    String productId = searchResultView.getString(x.mainProductId);
                     //get all tuples that match product and category
                     List<GenericValue> pcmList = EntityQuery.use(delegator).from("ProductCategoryMember").where("productCategoryId",
                             productCategoryId, "productId", productId).queryList();
 
                     //set those thrudate to that specificed maybe remove then add new one
                     for (GenericValue pcm : pcmList) {
-                        if (pcm.get(org.apache.ofbiz.persistence.entity.x.thruDate) == null) {
-                            pcm.set(org.apache.ofbiz.persistence.entity.x.thruDate, thruDate);
+                        if (pcm.get(x.thruDate) == null) {
+                            pcm.set(x.thruDate, thruDate);
                             pcm.store();
                             numExpired++;
                         }
@@ -218,12 +219,12 @@ public class ProductSearchEvents {
                 GenericValue searchResultView = null;
                 int numAdded = 0;
                 while ((searchResultView = eli.next()) != null) {
-                    String productId = searchResultView.getString(org.apache.ofbiz.persistence.entity.x.mainProductId);
+                    String productId = searchResultView.getString(x.mainProductId);
 
                     GenericValue pcm = delegator.makeValue("ProductCategoryMember");
-                    pcm.set(org.apache.ofbiz.persistence.entity.x.productCategoryId, productCategoryId);
-                    pcm.set(org.apache.ofbiz.persistence.entity.x.productId, productId);
-                    pcm.set(org.apache.ofbiz.persistence.entity.x.fromDate, fromDate);
+                    pcm.set(x.productCategoryId, productCategoryId);
+                    pcm.set(x.productId, productId);
+                    pcm.set(x.fromDate, fromDate);
                     pcm.create();
 
                     numAdded++;
@@ -309,15 +310,15 @@ public class ProductSearchEvents {
                 GenericValue searchResultView = null;
                 int numAdded = 0;
                 while ((searchResultView = eli.next()) != null) {
-                    String productId = searchResultView.getString(org.apache.ofbiz.persistence.entity.x.mainProductId);
+                    String productId = searchResultView.getString(x.mainProductId);
                     GenericValue pfa = delegator.makeValue("ProductFeatureAppl");
-                    pfa.set(org.apache.ofbiz.persistence.entity.x.productId, productId);
-                    pfa.set(org.apache.ofbiz.persistence.entity.x.productFeatureId, productFeatureId);
-                    pfa.set(org.apache.ofbiz.persistence.entity.x.fromDate, fromDate);
-                    pfa.set(org.apache.ofbiz.persistence.entity.x.thruDate, thruDate);
-                    pfa.set(org.apache.ofbiz.persistence.entity.x.productFeatureApplTypeId, productFeatureApplTypeId);
-                    pfa.set(org.apache.ofbiz.persistence.entity.x.amount, amount);
-                    pfa.set(org.apache.ofbiz.persistence.entity.x.sequenceNum, sequenceNum);
+                    pfa.set(x.productId, productId);
+                    pfa.set(x.productFeatureId, productFeatureId);
+                    pfa.set(x.fromDate, fromDate);
+                    pfa.set(x.thruDate, thruDate);
+                    pfa.set(x.productFeatureApplTypeId, productFeatureApplTypeId);
+                    pfa.set(x.amount, amount);
+                    pfa.set(x.sequenceNum, sequenceNum);
                     pfa.create();
                     numAdded++;
                 }
@@ -368,7 +369,7 @@ public class ProductSearchEvents {
                 GenericValue searchResultView = null;
                 int numRemoved = 0;
                 while ((searchResultView = eli.next()) != null) {
-                    String productId = searchResultView.getString(org.apache.ofbiz.persistence.entity.x.mainProductId);
+                    String productId = searchResultView.getString(x.mainProductId);
                     numRemoved += delegator.removeByAnd("ProductFeatureAppl", UtilMisc.toMap("productId", productId, "productFeatureId",
                             productFeatureId));
                 }
@@ -418,7 +419,7 @@ public class ProductSearchEvents {
                 GenericValue searchResultView = null;
                 while ((searchResultView = eli.next()) != null) {
                     Map<String, Object> productMap = new HashMap<>();
-                    String productId = searchResultView.getString(org.apache.ofbiz.persistence.entity.x.mainProductId);
+                    String productId = searchResultView.getString(x.mainProductId);
                     productMap.put("productId", productId);
 
                     productMap.put("productFeatureCustom", EntityQuery.use(delegator).from("ProductFeatureAndAppl").where("productId", productId,

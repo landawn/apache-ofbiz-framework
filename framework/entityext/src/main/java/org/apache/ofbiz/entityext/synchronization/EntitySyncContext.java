@@ -58,6 +58,7 @@ import org.apache.ofbiz.service.ServiceUtil;
 import org.xml.sax.SAXException;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Entity Engine Sync Services
  */
@@ -200,15 +201,15 @@ public class EntitySyncContext {
 
         this.delegator = dctx.getDelegator();
         // what to do with the delegatorName? this is the delegatorName to use in this service...
-        String delegatorName = (String) context.get(org.apache.ofbiz.persistence.entity.x.delegatorName);
+        String delegatorName = (String) context.get(x.delegatorName);
         if (UtilValidate.isNotEmpty(delegatorName)) {
             this.delegator = DelegatorFactory.getDelegator(delegatorName);
         }
 
 
-        this.userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        this.userLogin = (GenericValue) context.get(x.userLogin);
 
-        this.entitySyncId = (String) context.get(org.apache.ofbiz.persistence.entity.x.entitySyncId);
+        this.entitySyncId = (String) context.get(x.entitySyncId);
         Debug.logInfo("Creating EntitySyncContext with entitySyncId=" + entitySyncId, MODULE);
 
         boolean beganTransaction = false;
@@ -224,8 +225,8 @@ public class EntitySyncContext {
                 throw new SyncAbortException("Not running EntitySync [" + entitySyncId + "], no record found with that ID.");
             }
 
-            targetServiceName = entitySync.getString(org.apache.ofbiz.persistence.entity.x.targetServiceName);
-            targetDelegatorName = entitySync.getString(org.apache.ofbiz.persistence.entity.x.targetDelegatorName);
+            targetServiceName = entitySync.getString(x.targetServiceName);
+            targetDelegatorName = entitySync.getString(x.targetDelegatorName);
 
             // make the last time to sync X minutes before the current time so that if this machines clock is up to that amount of time
             //ahead of another machine writing to the DB it will still work fine and not lose any data
@@ -236,7 +237,7 @@ public class EntitySyncContext {
             this.syncEndBufferMillis = getSyncEndBufferMillis(entitySync);
             this.maxRunningNoUpdateMillis = getMaxRunningNoUpdateMillis(entitySync);
 
-            this.lastSuccessfulSynchTime = entitySync.getTimestamp(org.apache.ofbiz.persistence.entity.x.lastSuccessfulSynchTime);
+            this.lastSuccessfulSynchTime = entitySync.getTimestamp(x.lastSuccessfulSynchTime);
             this.entityModelToUseList = this.makeEntityModelToUseList();
             this.entityNameToUseSet = this.makeEntityNameToUseSet();
 
@@ -245,7 +246,7 @@ public class EntitySyncContext {
             this.setCurrentRunEndTime();
 
             // this is mostly for the pull side... will always be null for at the beginning of a push process, to be filled in later
-            this.startDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.startDate);
+            this.startDate = (Timestamp) context.get(x.startDate);
         } catch (GenericEntityException e) {
             try {
                 TransactionUtil.rollback(beganTransaction, "Entity Engine error while getting Entity Sync init information", e);
@@ -269,8 +270,8 @@ public class EntitySyncContext {
      * @return boolean representing if the EntitySync should be considered running
      */
     public boolean isEntitySyncRunning() {
-        boolean isInRunning = ("ESR_RUNNING".equals(this.entitySync.getString(org.apache.ofbiz.persistence.entity.x.runStatusId))
-                || "ESR_PENDING".equals(this.entitySync.getString(org.apache.ofbiz.persistence.entity.x.runStatusId)));
+        boolean isInRunning = ("ESR_RUNNING".equals(this.entitySync.getString(x.runStatusId))
+                || "ESR_PENDING".equals(this.entitySync.getString(x.runStatusId)));
 
         if (!isInRunning) {
             return false;
@@ -337,7 +338,7 @@ public class EntitySyncContext {
 
     protected static long getSyncSplitMillis(GenericValue entitySync) {
         long splitMillis = DEF_SYNC_SPLIT_MILLIS;
-        Long syncSplitMillis = entitySync.getLong(org.apache.ofbiz.persistence.entity.x.syncSplitMillis);
+        Long syncSplitMillis = entitySync.getLong(x.syncSplitMillis);
         if (syncSplitMillis != null) {
             splitMillis = syncSplitMillis;
         }
@@ -346,7 +347,7 @@ public class EntitySyncContext {
 
     protected static long getOfflineSyncSplitMillis(GenericValue entitySync) {
         long splitMillis = DEF_OFFLINE_SYNC_SPLIT_MILLIS;
-        Long syncSplitMillis = entitySync.getLong(org.apache.ofbiz.persistence.entity.x.offlineSyncSplitMillis);
+        Long syncSplitMillis = entitySync.getLong(x.offlineSyncSplitMillis);
         if (syncSplitMillis != null) {
             splitMillis = syncSplitMillis;
         }
@@ -355,7 +356,7 @@ public class EntitySyncContext {
 
     protected static long getSyncEndBufferMillis(GenericValue entitySync) {
         long syncEndBufferMillis = DEF_SYNC_END_BUFFER_MILLIS;
-        Long syncEndBufferMillisLong = entitySync.getLong(org.apache.ofbiz.persistence.entity.x.syncEndBufferMillis);
+        Long syncEndBufferMillisLong = entitySync.getLong(x.syncEndBufferMillis);
         if (syncEndBufferMillisLong != null) {
             syncEndBufferMillis = syncEndBufferMillisLong;
         }
@@ -364,7 +365,7 @@ public class EntitySyncContext {
 
     protected static long getMaxRunningNoUpdateMillis(GenericValue entitySync) {
         long maxRunningNoUpdateMillis = DEF_MAX_RUNNING_NO_UPDATE_MILLIS;
-        Long maxRunningNoUpdateMillisLong = entitySync.getLong(org.apache.ofbiz.persistence.entity.x.maxRunningNoUpdateMillis);
+        Long maxRunningNoUpdateMillisLong = entitySync.getLong(x.maxRunningNoUpdateMillis);
         if (maxRunningNoUpdateMillisLong != null) {
             maxRunningNoUpdateMillis = maxRunningNoUpdateMillisLong;
         }
@@ -765,13 +766,13 @@ public class EntitySyncContext {
             GenericValue entitySyncRemove = null;
             while ((entitySyncRemove = removeEli.next()) != null) {
                 // pull the PK from the EntitySyncRemove in the primaryKeyRemoved field, de-XML-serialize it
-                String primaryKeyRemoved = entitySyncRemove.getString(org.apache.ofbiz.persistence.entity.x.primaryKeyRemoved);
+                String primaryKeyRemoved = entitySyncRemove.getString(x.primaryKeyRemoved);
                 GenericEntity pkToRemove = null;
                 try {
                     pkToRemove = (GenericEntity) XmlSerializer.deserialize(primaryKeyRemoved, delegator);
                 } catch (IOException | SAXException | ParserConfigurationException | SerializeException e) {
                     String errorMsg = "Error deserializing GenericPK to remove in Entity Sync Data for entitySyncId [" + entitySyncId
-                            + "] and entitySyncRemoveId [" + entitySyncRemove.getString(org.apache.ofbiz.persistence.entity.x.entitySyncRemoveId) + "]: " + e.toString();
+                            + "] and entitySyncRemoveId [" + entitySyncRemove.getString(x.entitySyncRemoveId) + "]: " + e.toString();
                     Debug.logError(e, errorMsg, MODULE);
                     throw new SyncDataErrorException(errorMsg, e);
                 }
@@ -1017,15 +1018,15 @@ public class EntitySyncContext {
     /** prepare a list of all entities we want to synchronize: remove all view-entities and all entities that don't match the patterns attached
      * to this EntitySync */
     protected List<ModelEntity> makeEntityModelToUseList() throws GenericEntityException {
-        List<GenericValue> entitySyncIncludes = entitySync.getRelated(org.apache.ofbiz.persistence.entity.x.EntitySyncInclude, null, null, false);
+        List<GenericValue> entitySyncIncludes = entitySync.getRelated(x.EntitySyncInclude, null, null, false);
         // get these ones as well, and just add them to the main list, it will have an extra field but that shouldn't hurt anything in the code below
-        List<GenericValue> entitySyncGroupIncludes = entitySync.getRelated(org.apache.ofbiz.persistence.entity.x.EntitySyncInclGrpDetailView, null, null, false);
+        List<GenericValue> entitySyncGroupIncludes = entitySync.getRelated(x.EntitySyncInclGrpDetailView, null, null, false);
         entitySyncIncludes.addAll(entitySyncGroupIncludes);
 
         List<ModelEntity> entityModelToUseList = EntityGroupUtil.getModelEntitiesFromRecords(entitySyncIncludes, delegator, true);
 
         if (Debug.infoOn()) {
-            Debug.logInfo("In makeEntityModelToUseList for EntitySync with ID [" + entitySync.get(org.apache.ofbiz.persistence.entity.x.entitySyncId) + "] syncing "
+            Debug.logInfo("In makeEntityModelToUseList for EntitySync with ID [" + entitySync.get(x.entitySyncId) + "] syncing "
                     + entityModelToUseList.size() + " entities", MODULE);
         }
         return entityModelToUseList;
@@ -1251,42 +1252,42 @@ public class EntitySyncContext {
                 // set the latest values from the EntitySyncHistory, based on the values on the EntitySync
                 GenericValue entitySyncHistory = EntityQuery.use(delegator).from("EntitySyncHistory").where("entitySyncId", entitySyncId,
                         "startDate", startDate).queryOne();
-                this.toCreateInserted = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.toCreateInserted));
-                this.toCreateUpdated = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.toCreateUpdated));
-                this.toCreateNotUpdated = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.toCreateNotUpdated));
+                this.toCreateInserted = UtilMisc.toLong(entitySyncHistory.getLong(x.toCreateInserted));
+                this.toCreateUpdated = UtilMisc.toLong(entitySyncHistory.getLong(x.toCreateUpdated));
+                this.toCreateNotUpdated = UtilMisc.toLong(entitySyncHistory.getLong(x.toCreateNotUpdated));
 
-                this.toStoreInserted = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.toStoreInserted));
-                this.toStoreUpdated = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.toStoreUpdated));
-                this.toStoreNotUpdated = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.toStoreNotUpdated));
+                this.toStoreInserted = UtilMisc.toLong(entitySyncHistory.getLong(x.toStoreInserted));
+                this.toStoreUpdated = UtilMisc.toLong(entitySyncHistory.getLong(x.toStoreUpdated));
+                this.toStoreNotUpdated = UtilMisc.toLong(entitySyncHistory.getLong(x.toStoreNotUpdated));
 
-                this.toRemoveDeleted = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.toRemoveDeleted));
-                this.toRemoveAlreadyDeleted = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.toRemoveAlreadyDeleted));
+                this.toRemoveDeleted = UtilMisc.toLong(entitySyncHistory.getLong(x.toRemoveDeleted));
+                this.toRemoveAlreadyDeleted = UtilMisc.toLong(entitySyncHistory.getLong(x.toRemoveAlreadyDeleted));
 
-                this.totalStoreCalls = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.totalStoreCalls));
-                this.totalSplits = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.totalSplits));
-                this.totalRowsToCreate = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.totalRowsToCreate));
-                this.totalRowsToStore = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.totalRowsToStore));
-                this.totalRowsToRemove = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.totalRowsToRemove));
+                this.totalStoreCalls = UtilMisc.toLong(entitySyncHistory.getLong(x.totalStoreCalls));
+                this.totalSplits = UtilMisc.toLong(entitySyncHistory.getLong(x.totalSplits));
+                this.totalRowsToCreate = UtilMisc.toLong(entitySyncHistory.getLong(x.totalRowsToCreate));
+                this.totalRowsToStore = UtilMisc.toLong(entitySyncHistory.getLong(x.totalRowsToStore));
+                this.totalRowsToRemove = UtilMisc.toLong(entitySyncHistory.getLong(x.totalRowsToRemove));
 
-                this.perSplitMinMillis = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.perSplitMinMillis));
-                this.perSplitMaxMillis = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.perSplitMaxMillis));
-                this.perSplitMinItems = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.perSplitMinItems));
-                this.perSplitMaxItems = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.perSplitMaxItems));
+                this.perSplitMinMillis = UtilMisc.toLong(entitySyncHistory.getLong(x.perSplitMinMillis));
+                this.perSplitMaxMillis = UtilMisc.toLong(entitySyncHistory.getLong(x.perSplitMaxMillis));
+                this.perSplitMinItems = UtilMisc.toLong(entitySyncHistory.getLong(x.perSplitMinItems));
+                this.perSplitMaxItems = UtilMisc.toLong(entitySyncHistory.getLong(x.perSplitMaxItems));
 
-                this.splitStartTime = UtilMisc.toLong(entitySyncHistory.getLong(org.apache.ofbiz.persistence.entity.x.lastSplitStartTime));
+                this.splitStartTime = UtilMisc.toLong(entitySyncHistory.getLong(x.lastSplitStartTime));
             } catch (GenericEntityException e) {
                 throw new SyncDataErrorException("Error getting existing EntitySyncHistory values", e);
             }
 
             // got the previous values, now add to them with the values from the context...
-            this.toCreateInserted += UtilMisc.toLong(this.context.get(org.apache.ofbiz.persistence.entity.x.toCreateInserted));
-            this.toCreateUpdated += UtilMisc.toLong(this.context.get(org.apache.ofbiz.persistence.entity.x.toCreateUpdated));
-            this.toCreateNotUpdated += UtilMisc.toLong(this.context.get(org.apache.ofbiz.persistence.entity.x.toCreateNotUpdated));
-            this.toStoreInserted += UtilMisc.toLong(this.context.get(org.apache.ofbiz.persistence.entity.x.toStoreInserted));
-            this.toStoreUpdated += UtilMisc.toLong(this.context.get(org.apache.ofbiz.persistence.entity.x.toStoreUpdated));
-            this.toStoreNotUpdated += UtilMisc.toLong(this.context.get(org.apache.ofbiz.persistence.entity.x.toStoreNotUpdated));
-            this.toRemoveDeleted += UtilMisc.toLong(this.context.get(org.apache.ofbiz.persistence.entity.x.toRemoveDeleted));
-            this.toRemoveAlreadyDeleted += UtilMisc.toLong(this.context.get(org.apache.ofbiz.persistence.entity.x.toRemoveAlreadyDeleted));
+            this.toCreateInserted += UtilMisc.toLong(this.context.get(x.toCreateInserted));
+            this.toCreateUpdated += UtilMisc.toLong(this.context.get(x.toCreateUpdated));
+            this.toCreateNotUpdated += UtilMisc.toLong(this.context.get(x.toCreateNotUpdated));
+            this.toStoreInserted += UtilMisc.toLong(this.context.get(x.toStoreInserted));
+            this.toStoreUpdated += UtilMisc.toLong(this.context.get(x.toStoreUpdated));
+            this.toStoreNotUpdated += UtilMisc.toLong(this.context.get(x.toStoreNotUpdated));
+            this.toRemoveDeleted += UtilMisc.toLong(this.context.get(x.toRemoveDeleted));
+            this.toRemoveAlreadyDeleted += UtilMisc.toLong(this.context.get(x.toRemoveAlreadyDeleted));
 
             this.totalStoreCalls++;
 

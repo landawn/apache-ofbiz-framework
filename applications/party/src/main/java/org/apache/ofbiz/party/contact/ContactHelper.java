@@ -29,6 +29,7 @@ import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Accessors for Contact Mechanisms
  */
@@ -59,11 +60,11 @@ public final class ContactHelper {
             List<GenericValue> partyContactMechList;
 
             if (contactMechPurposeTypeId == null) {
-                partyContactMechList = party.getRelated(org.apache.ofbiz.persistence.entity.x.PartyContactMech, null, null, false);
+                partyContactMechList = party.getRelated(x.PartyContactMech, null, null, false);
             } else {
                 List<GenericValue> list;
 
-                list = party.getRelated(org.apache.ofbiz.persistence.entity.x.PartyContactMechPurpose, UtilMisc.toMap("contactMechPurposeTypeId", contactMechPurposeTypeId), null, false);
+                list = party.getRelated(x.PartyContactMechPurpose, UtilMisc.toMap("contactMechPurposeTypeId", contactMechPurposeTypeId), null, false);
                 if (!includeOld) {
                     list = EntityUtil.filterByDate(list, true);
                 }
@@ -86,13 +87,13 @@ public final class ContactHelper {
     public static String formatCreditCard(GenericValue creditCardInfo) {
         StringBuilder result = new StringBuilder(16);
 
-        result.append(creditCardInfo.getString(org.apache.ofbiz.persistence.entity.x.cardType));
-        String cardNumber = creditCardInfo.getString(org.apache.ofbiz.persistence.entity.x.cardNumber);
+        result.append(creditCardInfo.getString(x.cardType));
+        String cardNumber = creditCardInfo.getString(x.cardNumber);
 
         if (cardNumber != null && cardNumber.length() > 4) {
             result.append(' ').append(cardNumber.substring(cardNumber.length() - 4));
         }
-        result.append(' ').append(creditCardInfo.getString(org.apache.ofbiz.persistence.entity.x.expireDate));
+        result.append(' ').append(creditCardInfo.getString(x.expireDate));
         return result.toString();
     }
 

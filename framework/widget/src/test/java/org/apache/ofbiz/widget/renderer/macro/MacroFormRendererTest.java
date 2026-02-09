@@ -71,6 +71,7 @@ import mockit.Mocked;
 import mockit.Tested;
 import mockit.Verifications;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class MacroFormRendererTest {
 
     @Injectable
@@ -312,7 +313,7 @@ public class MacroFormRendererTest {
         LinkedList<String> fieldName = new LinkedList<>();
         fieldName.add("KEY1");
         fieldName.add("KEY3");
-        context.put(org.apache.ofbiz.persistence.entity.x.FieldName, fieldName);
+        context.put(x.FieldName, fieldName);
 
         try {
             macroFormRenderer.renderCheckField(writer, context, checkField);
@@ -665,7 +666,7 @@ public class MacroFormRendererTest {
         };
 
         Map<String, Object> context = new HashMap<>();
-        context.put(org.apache.ofbiz.persistence.entity.x.session, httpSession);
+        context.put(x.session, httpSession);
         context.put(paginateIndexField, 0);
         context.put(paginateSizeField, 30);
         macroFormRenderer.renderNextPrev(appendable, context, modelForm);
@@ -826,7 +827,7 @@ public class MacroFormRendererTest {
         requestParameters.put("field2", "value2 with spaces");
 
         HashMap<String, Object> context = new HashMap<>();
-        context.put(org.apache.ofbiz.persistence.entity.x.requestParameters, requestParameters);
+        context.put(x.requestParameters, requestParameters);
 
         macroFormRenderer.renderFormatListWrapperOpen(appendable, context, modelSingleForm);
 
@@ -849,8 +850,8 @@ public class MacroFormRendererTest {
         };
 
         final Map<String, Object> context = new HashMap<>();
-        context.put(org.apache.ofbiz.persistence.entity.x._QBESTRING_, qbeString);
-        context.put(org.apache.ofbiz.persistence.entity.x.listSize, 100);
+        context.put(x._QBESTRING_, qbeString);
+        context.put(x.listSize, 100);
         macroFormRenderer.renderNextPrev(appendable, context, modelForm);
 
         assertAndGetMacroString("renderNextPrev", ImmutableMap.of("nextUrl", linkFromQbeString));
@@ -878,8 +879,8 @@ public class MacroFormRendererTest {
         };
 
         final Map<String, Object> context = new HashMap<>();
-        context.put(org.apache.ofbiz.persistence.entity.x._QBESTRING_, qbeString);
-        context.put(org.apache.ofbiz.persistence.entity.x.listSize, 100);
+        context.put(x._QBESTRING_, qbeString);
+        context.put(x.listSize, 100);
         macroFormRenderer.renderSortField(appendable, context, modelFormField, "");
 
         assertAndGetMacroString("renderSortField", ImmutableMap.of(

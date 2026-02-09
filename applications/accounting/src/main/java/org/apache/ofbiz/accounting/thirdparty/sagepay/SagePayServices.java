@@ -42,6 +42,7 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class SagePayServices {
     private static final String MODULE = SagePayServices.class.getName();
     private static final String RESOURCE = "AccountingUiLabels";
@@ -50,7 +51,7 @@ public class SagePayServices {
 
         Map<String, String> sagePayConfig = new HashMap<>();
 
-        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
 
         if (UtilValidate.isNotEmpty(paymentGatewayConfigId)) {
             try {
@@ -83,43 +84,43 @@ public class SagePayServices {
 
         Map<String, String> props = buildSagePayProperties(context, delegator);
 
-        String vendorTxCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.vendorTxCode);
-        String cardHolder = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardHolder);
-        String cardNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardNumber);
-        String expiryDate = (String) context.get(org.apache.ofbiz.persistence.entity.x.expiryDate);
-        String cardType = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardType);
-        String cv2 = (String) context.get(org.apache.ofbiz.persistence.entity.x.cv2);
-        String amount = (String) context.get(org.apache.ofbiz.persistence.entity.x.amount);
-        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
-        String description = (String) context.get(org.apache.ofbiz.persistence.entity.x.description);
+        String vendorTxCode = (String) context.get(x.vendorTxCode);
+        String cardHolder = (String) context.get(x.cardHolder);
+        String cardNumber = (String) context.get(x.cardNumber);
+        String expiryDate = (String) context.get(x.expiryDate);
+        String cardType = (String) context.get(x.cardType);
+        String cv2 = (String) context.get(x.cv2);
+        String amount = (String) context.get(x.amount);
+        String currency = (String) context.get(x.currency);
+        String description = (String) context.get(x.description);
 
-        String billingSurname = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingSurname);
-        String billingFirstnames = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingFirstnames);
-        String billingAddress = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingAddress);
-        String billingAddress2 = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingAddress2);
-        String billingCity = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingCity);
-        String billingPostCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingPostCode);
-        String billingCountry = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingCountry);
-        String billingState = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingState);
-        String billingPhone = (String) context.get(org.apache.ofbiz.persistence.entity.x.billingPhone);
+        String billingSurname = (String) context.get(x.billingSurname);
+        String billingFirstnames = (String) context.get(x.billingFirstnames);
+        String billingAddress = (String) context.get(x.billingAddress);
+        String billingAddress2 = (String) context.get(x.billingAddress2);
+        String billingCity = (String) context.get(x.billingCity);
+        String billingPostCode = (String) context.get(x.billingPostCode);
+        String billingCountry = (String) context.get(x.billingCountry);
+        String billingState = (String) context.get(x.billingState);
+        String billingPhone = (String) context.get(x.billingPhone);
 
-        Boolean isBillingSameAsDelivery = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.isBillingSameAsDelivery);
+        Boolean isBillingSameAsDelivery = (Boolean) context.get(x.isBillingSameAsDelivery);
 
-        String deliverySurname = (String) context.get(org.apache.ofbiz.persistence.entity.x.deliverySurname);
-        String deliveryFirstnames = (String) context.get(org.apache.ofbiz.persistence.entity.x.deliveryFirstnames);
-        String deliveryAddress = (String) context.get(org.apache.ofbiz.persistence.entity.x.deliveryAddress);
-        String deliveryAddress2 = (String) context.get(org.apache.ofbiz.persistence.entity.x.deliveryAddress2);
-        String deliveryCity = (String) context.get(org.apache.ofbiz.persistence.entity.x.deliveryCity);
-        String deliveryPostCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.deliveryPostCode);
-        String deliveryCountry = (String) context.get(org.apache.ofbiz.persistence.entity.x.deliveryCountry);
-        String deliveryState = (String) context.get(org.apache.ofbiz.persistence.entity.x.deliveryState);
-        String deliveryPhone = (String) context.get(org.apache.ofbiz.persistence.entity.x.deliveryPhone);
+        String deliverySurname = (String) context.get(x.deliverySurname);
+        String deliveryFirstnames = (String) context.get(x.deliveryFirstnames);
+        String deliveryAddress = (String) context.get(x.deliveryAddress);
+        String deliveryAddress2 = (String) context.get(x.deliveryAddress2);
+        String deliveryCity = (String) context.get(x.deliveryCity);
+        String deliveryPostCode = (String) context.get(x.deliveryPostCode);
+        String deliveryCountry = (String) context.get(x.deliveryCountry);
+        String deliveryState = (String) context.get(x.deliveryState);
+        String deliveryPhone = (String) context.get(x.deliveryPhone);
 
-        String startDate = (String) context.get(org.apache.ofbiz.persistence.entity.x.startDate);
-        String issueNumber = (String) context.get(org.apache.ofbiz.persistence.entity.x.issueNumber);
-        String basket = (String) context.get(org.apache.ofbiz.persistence.entity.x.basket);
-        String clientIPAddress = (String) context.get(org.apache.ofbiz.persistence.entity.x.clientIPAddress);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String startDate = (String) context.get(x.startDate);
+        String issueNumber = (String) context.get(x.issueNumber);
+        String basket = (String) context.get(x.basket);
+        String clientIPAddress = (String) context.get(x.clientIPAddress);
+        Locale locale = (Locale) context.get(x.locale);
 
         HttpHost host = SagePayUtil.getHost(props);
 
@@ -385,12 +386,12 @@ public class SagePayServices {
 
         Map<String, String> props = buildSagePayProperties(context, delegator);
 
-        String vendorTxCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.vendorTxCode);
-        String vpsTxId = (String) context.get(org.apache.ofbiz.persistence.entity.x.vpsTxId);
-        String securityKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.securityKey);
-        String txAuthNo = (String) context.get(org.apache.ofbiz.persistence.entity.x.txAuthNo);
-        String amount = (String) context.get(org.apache.ofbiz.persistence.entity.x.amount);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String vendorTxCode = (String) context.get(x.vendorTxCode);
+        String vpsTxId = (String) context.get(x.vpsTxId);
+        String securityKey = (String) context.get(x.securityKey);
+        String txAuthNo = (String) context.get(x.txAuthNo);
+        String amount = (String) context.get(x.amount);
+        Locale locale = (Locale) context.get(x.locale);
 
         HttpHost host = SagePayUtil.getHost(props);
 
@@ -480,11 +481,11 @@ public class SagePayServices {
 
         Map<String, String> props = buildSagePayProperties(context, delegator);
 
-        String vendorTxCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.vendorTxCode);
-        String vpsTxId = (String) context.get(org.apache.ofbiz.persistence.entity.x.vpsTxId);
-        String securityKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.securityKey);
-        String txAuthNo = (String) context.get(org.apache.ofbiz.persistence.entity.x.txAuthNo);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String vendorTxCode = (String) context.get(x.vendorTxCode);
+        String vpsTxId = (String) context.get(x.vpsTxId);
+        String securityKey = (String) context.get(x.securityKey);
+        String txAuthNo = (String) context.get(x.txAuthNo);
+        Locale locale = (Locale) context.get(x.locale);
 
         HttpHost host = SagePayUtil.getHost(props);
 
@@ -572,11 +573,11 @@ public class SagePayServices {
 
         Map<String, String> props = buildSagePayProperties(context, delegator);
 
-        String vendorTxCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.vendorTxCode);
-        String vpsTxId = (String) context.get(org.apache.ofbiz.persistence.entity.x.vpsTxId);
-        String securityKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.securityKey);
-        String txAuthNo = (String) context.get(org.apache.ofbiz.persistence.entity.x.txAuthNo);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String vendorTxCode = (String) context.get(x.vendorTxCode);
+        String vpsTxId = (String) context.get(x.vpsTxId);
+        String securityKey = (String) context.get(x.securityKey);
+        String txAuthNo = (String) context.get(x.txAuthNo);
+        Locale locale = (Locale) context.get(x.locale);
 
         HttpHost host = SagePayUtil.getHost(props);
 
@@ -661,16 +662,16 @@ public class SagePayServices {
 
         Map<String, String> props = buildSagePayProperties(context, delegator);
 
-        String vendorTxCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.vendorTxCode);
-        String amount = (String) context.get(org.apache.ofbiz.persistence.entity.x.amount);
-        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
-        String description = (String) context.get(org.apache.ofbiz.persistence.entity.x.description);
+        String vendorTxCode = (String) context.get(x.vendorTxCode);
+        String amount = (String) context.get(x.amount);
+        String currency = (String) context.get(x.currency);
+        String description = (String) context.get(x.description);
 
-        String relatedVPSTxId = (String) context.get(org.apache.ofbiz.persistence.entity.x.relatedVPSTxId);
-        String relatedVendorTxCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.relatedVendorTxCode);
-        String relatedSecurityKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.relatedSecurityKey);
-        String relatedTxAuthNo = (String) context.get(org.apache.ofbiz.persistence.entity.x.relatedTxAuthNo);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String relatedVPSTxId = (String) context.get(x.relatedVPSTxId);
+        String relatedVendorTxCode = (String) context.get(x.relatedVendorTxCode);
+        String relatedSecurityKey = (String) context.get(x.relatedSecurityKey);
+        String relatedTxAuthNo = (String) context.get(x.relatedTxAuthNo);
+        Locale locale = (Locale) context.get(x.locale);
 
         HttpHost host = SagePayUtil.getHost(props);
 

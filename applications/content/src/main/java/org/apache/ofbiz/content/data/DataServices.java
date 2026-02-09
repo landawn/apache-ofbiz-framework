@@ -55,6 +55,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * DataServices Class
  */
@@ -65,8 +66,8 @@ public class DataServices {
 
     public static Map<String, Object> clearAssociatedRenderCache(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String dataResourceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String dataResourceId = (String) context.get(x.dataResourceId);
+        Locale locale = (Locale) context.get(x.locale);
         try {
             DataResourceWorker.clearAssociatedRenderCache(delegator, dataResourceId);
         } catch (GeneralException e) {
@@ -90,9 +91,9 @@ public class DataServices {
         }
 
         result.put("dataResourceId", thisResult.get("dataResourceId"));
-        context.put(org.apache.ofbiz.persistence.entity.x.dataResourceId, thisResult.get("dataResourceId"));
+        context.put(x.dataResourceId, thisResult.get("dataResourceId"));
 
-        String dataResourceTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId);
+        String dataResourceTypeId = (String) context.get(x.dataResourceTypeId);
         if (dataResourceTypeId != null && "ELECTRONIC_TEXT".equals(dataResourceTypeId)) {
             thisResult = createElectronicText(dctx, context);
             if (thisResult.get(ModelService.RESPONSE_MESSAGE) != null) {
@@ -115,20 +116,20 @@ public class DataServices {
         Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String userLoginId = (String) userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String userLoginId = (String) userLogin.get(x.userLoginId);
         String createdByUserLogin = userLoginId;
         String lastModifiedByUserLogin = userLoginId;
         Timestamp createdDate = UtilDateTime.nowTimestamp();
         Timestamp lastModifiedDate = UtilDateTime.nowTimestamp();
-        String dataTemplateTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataTemplateTypeId);
+        String dataTemplateTypeId = (String) context.get(x.dataTemplateTypeId);
         if (UtilValidate.isEmpty(dataTemplateTypeId)) {
             dataTemplateTypeId = "NONE";
-            context.put(org.apache.ofbiz.persistence.entity.x.dataTemplateTypeId, dataTemplateTypeId);
+            context.put(x.dataTemplateTypeId, dataTemplateTypeId);
         }
 
         // If textData exists, then create DataResource and return dataResourceId
-        String dataResourceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+        String dataResourceId = (String) context.get(x.dataResourceId);
         if (UtilValidate.isEmpty(dataResourceId)) {
             dataResourceId = delegator.getNextSeqId("DataResource");
         }
@@ -142,12 +143,12 @@ public class DataServices {
         dataResource.put("createdDate", createdDate);
         dataResource.put("lastModifiedDate", lastModifiedDate);
         // get first statusId  for content out of the statusItem table if not provided
-        if (UtilValidate.isEmpty(dataResource.get(org.apache.ofbiz.persistence.entity.x.statusId))) {
+        if (UtilValidate.isEmpty(dataResource.get(x.statusId))) {
             try {
                 GenericValue statusItem = EntityQuery.use(delegator).from("StatusItem").where("statusTypeId", "CONTENT_STATUS")
                         .orderBy("sequenceId").queryFirst();
                 if (statusItem != null) {
-                    dataResource.put("statusId", statusItem.get(org.apache.ofbiz.persistence.entity.x.statusId));
+                    dataResource.put("statusId", statusItem.get(x.statusId));
                 }
             } catch (GenericEntityException e) {
                 return ServiceUtil.returnError(e.getMessage());
@@ -175,8 +176,8 @@ public class DataServices {
     public static Map<String, Object> createElectronicTextMethod(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        String dataResourceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
-        String textData = (String) context.get(org.apache.ofbiz.persistence.entity.x.textData);
+        String dataResourceId = (String) context.get(x.dataResourceId);
+        String textData = (String) context.get(x.textData);
         if (UtilValidate.isNotEmpty(textData)) {
             GenericValue electronicText = delegator.makeValue("ElectronicText",
                     UtilMisc.toMap("dataResourceId", dataResourceId, "textData", textData));
@@ -221,17 +222,17 @@ public class DataServices {
         }
 
         Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
-        context.put(org.apache.ofbiz.persistence.entity.x.skipPermissionCheck, "true");
+        context.put(x.skipPermissionCheck, "true");
         return createFileMethod(dctx, context);
     }
 
     public static Map<String, Object> createFileMethod(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String dataResourceTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId);
-        String objectInfo = (String) context.get(org.apache.ofbiz.persistence.entity.x.objectInfo);
-        ByteBuffer binData = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.binData);
-        String textData = (String) context.get(org.apache.ofbiz.persistence.entity.x.textData);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String dataResourceTypeId = (String) context.get(x.dataResourceTypeId);
+        String objectInfo = (String) context.get(x.objectInfo);
+        ByteBuffer binData = (ByteBuffer) context.get(x.binData);
+        String textData = (String) context.get(x.textData);
+        Locale locale = (Locale) context.get(x.locale);
 
         // a few place holders
         String prefix = "";
@@ -260,7 +261,7 @@ public class DataServices {
             }
             file = new File(prefix + sep + objectInfo);
         } else if ("CONTEXT_FILE".equals(dataResourceTypeId) || "CONTEXT_FILE_BIN".equals(dataResourceTypeId)) {
-            prefix = (String) context.get(org.apache.ofbiz.persistence.entity.x.rootDir);
+            prefix = (String) context.get(x.rootDir);
             if (UtilValidate.isEmpty(prefix)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentCannotFindContextFileWithEmptyContextRoot", locale));
             }
@@ -331,7 +332,7 @@ public class DataServices {
         if (thisResult.get(ModelService.RESPONSE_MESSAGE) != null) {
             return ServiceUtil.returnError((String) thisResult.get(ModelService.ERROR_MESSAGE));
         }
-        String dataResourceTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId);
+        String dataResourceTypeId = (String) context.get(x.dataResourceTypeId);
         if (dataResourceTypeId != null && "ELECTRONIC_TEXT".equals(dataResourceTypeId)) {
             thisResult = updateElectronicText(dctx, context);
             if (thisResult.get(ModelService.RESPONSE_MESSAGE) != null) {
@@ -353,14 +354,14 @@ public class DataServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         GenericValue dataResource = null;
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String userLoginId = (String) userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String userLoginId = (String) userLogin.get(x.userLoginId);
         String lastModifiedByUserLogin = userLoginId;
         Timestamp lastModifiedDate = UtilDateTime.nowTimestamp();
 
         // If textData exists, then create DataResource and return dataResourceId
-        String dataResourceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+        String dataResourceId = (String) context.get(x.dataResourceId);
         try {
             dataResource = EntityQuery.use(delegator).from("DataResource").where("dataResourceId", dataResourceId).queryOne();
         } catch (GenericEntityException e) {
@@ -403,16 +404,16 @@ public class DataServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         GenericValue electronicText = null;
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        String dataResourceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+        Locale locale = (Locale) context.get(x.locale);
+        String dataResourceId = (String) context.get(x.dataResourceId);
         result.put("dataResourceId", dataResourceId);
-        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        String contentId = (String) context.get(x.contentId);
         result.put("contentId", contentId);
         if (UtilValidate.isEmpty(dataResourceId)) {
             Debug.logError("dataResourceId is null.", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentDataResourceIsNull", locale));
         }
-        String textData = (String) context.get(org.apache.ofbiz.persistence.entity.x.textData);
+        String textData = (String) context.get(x.textData);
         if (Debug.verboseOn()) {
             Debug.logVerbose("in updateElectronicText, textData:" + textData, MODULE);
         }
@@ -451,11 +452,11 @@ public class DataServices {
     public static Map<String, Object> updateFileMethod(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> result = new HashMap<>();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        String dataResourceTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId);
-        String objectInfo = (String) context.get(org.apache.ofbiz.persistence.entity.x.objectInfo);
-        String textData = (String) context.get(org.apache.ofbiz.persistence.entity.x.textData);
-        ByteBuffer binData = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.binData);
+        Locale locale = (Locale) context.get(x.locale);
+        String dataResourceTypeId = (String) context.get(x.dataResourceTypeId);
+        String objectInfo = (String) context.get(x.objectInfo);
+        String textData = (String) context.get(x.textData);
+        ByteBuffer binData = (ByteBuffer) context.get(x.binData);
         String prefix = "";
         File file = null;
         String fileName = "";
@@ -474,7 +475,7 @@ public class DataServices {
                 }
                 file = new File(prefix + sep + objectInfo);
             } else if (dataResourceTypeId.startsWith("CONTEXT_FILE")) {
-                prefix = (String) context.get(org.apache.ofbiz.persistence.entity.x.rootDir);
+                prefix = (String) context.get(x.rootDir);
                 if (objectInfo.indexOf('/') != 0 && prefix.lastIndexOf('/') != (prefix.length() - 1)) {
                     sep = "/";
                 }
@@ -541,19 +542,19 @@ public class DataServices {
             throws GeneralException, IOException {
         Map<String, Object> results = new HashMap<>();
         //LocalDispatcher dispatcher = dctx.getDispatcher();
-        Writer out = (Writer) context.get(org.apache.ofbiz.persistence.entity.x.outWriter);
-        Map<String, Object> templateContext = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.templateContext));
+        Writer out = (Writer) context.get(x.outWriter);
+        Map<String, Object> templateContext = UtilGenerics.cast(context.get(x.templateContext));
         //GenericValue userLogin = (GenericValue) context.get("userLogin");
-        String dataResourceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+        String dataResourceId = (String) context.get(x.dataResourceId);
         if (templateContext != null && UtilValidate.isEmpty(dataResourceId)) {
             dataResourceId = (String) templateContext.get("dataResourceId");
         }
-        String mimeTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
+        String mimeTypeId = (String) context.get(x.mimeTypeId);
         if (templateContext != null && UtilValidate.isEmpty(mimeTypeId)) {
             mimeTypeId = (String) templateContext.get("mimeTypeId");
         }
 
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
         if (templateContext == null) {
             templateContext = new HashMap<>();
@@ -583,8 +584,8 @@ public class DataServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         //Locale locale = (Locale) context.get("locale");
-        String dataResourceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
-        ByteBuffer byteBuffer = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.imageData);
+        String dataResourceId = (String) context.get(x.dataResourceId);
+        ByteBuffer byteBuffer = (ByteBuffer) context.get(x.imageData);
         if (byteBuffer != null) {
             byte[] imageBytes = byteBuffer.array();
             try {
@@ -597,7 +598,7 @@ public class DataServices {
                 if (imageDataResource == null) {
                     return createImageMethod(dctx, context);
                 }
-                imageDataResource.setBytes(org.apache.ofbiz.persistence.entity.x.imageData, imageBytes);
+                imageDataResource.setBytes(x.imageData, imageBytes);
                 imageDataResource.store();
             } catch (GenericEntityException e) {
                 return ServiceUtil.returnError(e.getMessage());
@@ -617,13 +618,13 @@ public class DataServices {
     public static Map<String, Object> createImageMethod(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        String dataResourceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
-        ByteBuffer byteBuffer = (ByteBuffer) context.get(org.apache.ofbiz.persistence.entity.x.imageData);
+        String dataResourceId = (String) context.get(x.dataResourceId);
+        ByteBuffer byteBuffer = (ByteBuffer) context.get(x.imageData);
         if (byteBuffer != null) {
             byte[] imageBytes = byteBuffer.array();
             try {
                 GenericValue imageDataResource = delegator.makeValue("ImageDataResource", UtilMisc.toMap("dataResourceId", dataResourceId));
-                imageDataResource.setBytes(org.apache.ofbiz.persistence.entity.x.imageData, imageBytes);
+                imageDataResource.setBytes(x.imageData, imageBytes);
                 if (Debug.infoOn()) {
                     Debug.logInfo("imageDataResource(C):" + imageDataResource, MODULE);
                 }
@@ -653,12 +654,12 @@ public class DataServices {
             throws GenericServiceException {
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> result = new HashMap<>();
-        GenericValue dataResource = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.dataResource);
-        String dataResourceTypeId = (String) dataResource.get(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId);
-        String objectInfo = (String) dataResource.get(org.apache.ofbiz.persistence.entity.x.objectInfo);
-        byte[] imageData = (byte[]) context.get(org.apache.ofbiz.persistence.entity.x.imageData);
-        String rootDir = (String) context.get(org.apache.ofbiz.persistence.entity.x.rootDir);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue dataResource = (GenericValue) context.get(x.dataResource);
+        String dataResourceTypeId = (String) dataResource.get(x.dataResourceTypeId);
+        String objectInfo = (String) dataResource.get(x.objectInfo);
+        byte[] imageData = (byte[]) context.get(x.imageData);
+        String rootDir = (String) context.get(x.rootDir);
+        Locale locale = (Locale) context.get(x.locale);
         File file = null;
         if (Debug.infoOn()) {
             Debug.logInfo("in createBinaryFileMethod, dataResourceTypeId:" + dataResourceTypeId, MODULE);
@@ -713,12 +714,12 @@ public class DataServices {
             throws GenericServiceException {
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> result = new HashMap<>();
-        GenericValue dataResource = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.dataResource);
-        String dataResourceTypeId = (String) dataResource.get(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId);
-        String objectInfo = (String) dataResource.get(org.apache.ofbiz.persistence.entity.x.objectInfo);
-        byte[] imageData = (byte[]) context.get(org.apache.ofbiz.persistence.entity.x.imageData);
-        String rootDir = (String) context.get(org.apache.ofbiz.persistence.entity.x.rootDir);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue dataResource = (GenericValue) context.get(x.dataResource);
+        String dataResourceTypeId = (String) dataResource.get(x.dataResourceTypeId);
+        String objectInfo = (String) dataResource.get(x.objectInfo);
+        byte[] imageData = (byte[]) context.get(x.imageData);
+        String rootDir = (String) context.get(x.rootDir);
+        Locale locale = (Locale) context.get(x.locale);
         File file = null;
         if (Debug.infoOn()) {
             Debug.logInfo("in updateBinaryFileMethod, dataResourceTypeId:" + dataResourceTypeId, MODULE);

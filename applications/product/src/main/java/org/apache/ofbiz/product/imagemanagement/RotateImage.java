@@ -43,6 +43,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 public class RotateImage {
 
     private static final String MODULE = RotateImage.class.getName();
@@ -51,16 +52,16 @@ public class RotateImage {
 
     public static Map<String, Object> imageRotate(DispatchContext dctx, Map<String, ? extends Object> context)
             throws IOException {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         String nameOfThumb = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
                 "image.management.nameofthumbnail", delegator), context);
 
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        String imageName = (String) context.get(org.apache.ofbiz.persistence.entity.x.imageName);
-        String angle = (String) context.get(org.apache.ofbiz.persistence.entity.x.angle);
+        String productId = (String) context.get(x.productId);
+        String imageName = (String) context.get(x.imageName);
+        String angle = (String) context.get(x.angle);
 
         if (UtilValidate.isNotEmpty(imageName)) {
             Map<String, Object> contentCtx = new HashMap<>();

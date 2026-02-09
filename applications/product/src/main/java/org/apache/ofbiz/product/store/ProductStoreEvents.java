@@ -34,6 +34,7 @@ import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class ProductStoreEvents {
 
     private static final String MODULE = ProductStoreWorker.class.getName();
@@ -56,7 +57,7 @@ public class ProductStoreEvents {
                         parentGroupId).cache(true).filterByDate().queryList();
                 if (UtilValidate.isNotEmpty(children)) {
                     for (GenericValue child : children) {
-                        String productStoreGroupId = child.getString(org.apache.ofbiz.persistence.entity.x.productStoreGroupId);
+                        String productStoreGroupId = child.getString(x.productStoreGroupId);
                         Map<Object, Object> josonMap = new HashMap<>();
                         List<GenericValue> childList = null;
                         // Get the child list of chosen category
@@ -74,13 +75,13 @@ public class ProductStoreEvents {
                         dataAttrMap.put("href", hrefStr);
 
                         dataMap.put("attr", dataAttrMap);
-                        dataMap.put("title", child.get(org.apache.ofbiz.persistence.entity.x.productStoreGroupName) + " [" + child.get(org.apache.ofbiz.persistence.entity.x.productStoreGroupId) + "]");
+                        dataMap.put("title", child.get(x.productStoreGroupName) + " [" + child.get(x.productStoreGroupId) + "]");
                         josonMap.put("data", dataMap);
                         Map<String, String> attrMap = new HashMap<>();
                         attrMap.put("parentGroupId", productStoreGroupId);
                         josonMap.put("attr", attrMap);
-                        josonMap.put("sequenceNum", child.get(org.apache.ofbiz.persistence.entity.x.sequenceNum));
-                        josonMap.put("title", child.get(org.apache.ofbiz.persistence.entity.x.productStoreGroupName));
+                        josonMap.put("sequenceNum", child.get(x.sequenceNum));
+                        josonMap.put("title", child.get(x.productStoreGroupName));
 
                         productStoreGroupList.add(josonMap);
                     }

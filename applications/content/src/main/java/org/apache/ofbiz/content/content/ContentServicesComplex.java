@@ -47,6 +47,7 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ContentServicesComplex Class
  */
@@ -65,15 +66,15 @@ public class ContentServicesComplex {
     */
     public static Map<String, Object> getAssocAndContentAndDataResource(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        List<String> assocTypes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.assocTypes));
-        List<String> contentTypes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.contentTypes));
-        Timestamp fromDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
-        Timestamp thruDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.thruDate);
-        String fromDateStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromDateStr);
-        String thruDateStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.thruDateStr);
-        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
-        String direction = (String) context.get(org.apache.ofbiz.persistence.entity.x.direction);
-        String mapKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.mapKey);
+        List<String> assocTypes = UtilGenerics.cast(context.get(x.assocTypes));
+        List<String> contentTypes = UtilGenerics.cast(context.get(x.contentTypes));
+        Timestamp fromDate = (Timestamp) context.get(x.fromDate);
+        Timestamp thruDate = (Timestamp) context.get(x.thruDate);
+        String fromDateStr = (String) context.get(x.fromDateStr);
+        String thruDateStr = (String) context.get(x.thruDateStr);
+        String contentId = (String) context.get(x.contentId);
+        String direction = (String) context.get(x.direction);
+        String mapKey = (String) context.get(x.mapKey);
         Map<String, Object> results = getAssocAndContentAndDataResourceMethod(delegator, contentId, mapKey, direction, fromDate, thruDate,
                 fromDateStr, thruDateStr, assocTypes, contentTypes);
         return results;
@@ -142,8 +143,8 @@ public class ContentServicesComplex {
         }
         for (GenericValue a : relatedAssocs) {
             if (Debug.verboseOn()) {
-                Debug.logVerbose(" contentId:" + a.get(org.apache.ofbiz.persistence.entity.x.contentId) + " To:" + a.get(org.apache.ofbiz.persistence.entity.x.caContentIdTo) + " fromDate:" + a.get(org.apache.ofbiz.persistence.entity.x.caFromDate)
-                        + " thruDate:" + a.get(org.apache.ofbiz.persistence.entity.x.caThruDate) + " AssocTypeId:" + a.get(org.apache.ofbiz.persistence.entity.x.caContentAssocTypeId), null);
+                Debug.logVerbose(" contentId:" + a.get(x.contentId) + " To:" + a.get(x.caContentIdTo) + " fromDate:" + a.get(x.caFromDate)
+                        + " thruDate:" + a.get(x.caThruDate) + " AssocTypeId:" + a.get(x.caContentAssocTypeId), null);
             }
         }
         Map<String, Object> results = new HashMap<>();
@@ -161,8 +162,8 @@ public class ContentServicesComplex {
     */
     public static Map<String, Object> getAssocAndContentAndDataResourceCache(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        List<String> assocTypes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.assocTypes));
-        String assocTypesString = (String) context.get(org.apache.ofbiz.persistence.entity.x.assocTypesString);
+        List<String> assocTypes = UtilGenerics.cast(context.get(x.assocTypes));
+        String assocTypesString = (String) context.get(x.assocTypesString);
         if (UtilValidate.isNotEmpty(assocTypesString)) {
             List<String> lst = StringUtil.split(assocTypesString, "|");
             if (assocTypes == null) {
@@ -170,8 +171,8 @@ public class ContentServicesComplex {
             }
             assocTypes.addAll(lst);
         }
-        List<String> contentTypes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.contentTypes));
-        String contentTypesString = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentTypesString);
+        List<String> contentTypes = UtilGenerics.cast(context.get(x.contentTypes));
+        String contentTypesString = (String) context.get(x.contentTypesString);
         if (UtilValidate.isNotEmpty(contentTypesString)) {
             List<String> lst = StringUtil.split(contentTypesString, "|");
             if (contentTypes == null) {
@@ -179,13 +180,13 @@ public class ContentServicesComplex {
             }
             contentTypes.addAll(lst);
         }
-        Timestamp fromDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
-        String fromDateStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromDateStr);
-        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
-        String direction = (String) context.get(org.apache.ofbiz.persistence.entity.x.direction);
-        String mapKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.mapKey);
-        String contentAssocPredicateId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentAssocPredicateId);
-        Boolean nullThruDatesOnly = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.nullThruDatesOnly);
+        Timestamp fromDate = (Timestamp) context.get(x.fromDate);
+        String fromDateStr = (String) context.get(x.fromDateStr);
+        String contentId = (String) context.get(x.contentId);
+        String direction = (String) context.get(x.direction);
+        String mapKey = (String) context.get(x.mapKey);
+        String contentAssocPredicateId = (String) context.get(x.contentAssocPredicateId);
+        Boolean nullThruDatesOnly = (Boolean) context.get(x.nullThruDatesOnly);
         Map<String, Object> results = null;
         try {
             results = getAssocAndContentAndDataResourceCacheMethod(delegator, contentId, mapKey, direction, fromDate, fromDateStr, assocTypes,
@@ -250,13 +251,13 @@ public class ContentServicesComplex {
         try {
             for (GenericValue contentAssocView : contentAssocsTypeFiltered) {
                 GenericValue contentAssoc = EntityQuery.use(delegator).from("ContentAssoc").where(UtilMisc.toMap("contentId",
-                        contentAssocView.getString(org.apache.ofbiz.persistence.entity.x.contentId),
+                        contentAssocView.getString(x.contentId),
                         "contentIdTo", contentAssocView.getString(contentFieldName), "contentAssocTypeId", contentAssocView.getString(
-                                org.apache.ofbiz.persistence.entity.x.caContentAssocTypeId),
-                        "fromDate", contentAssocView.getTimestamp(org.apache.ofbiz.persistence.entity.x.caFromDate))).queryOne();
+                                x.caContentAssocTypeId),
+                        "fromDate", contentAssocView.getTimestamp(x.caFromDate))).queryOne();
                 content = contentAssoc.getRelatedOne(assocRelationName, true);
                 if (UtilValidate.isNotEmpty(contentTypes)) {
-                    String contentTypeId = (String) content.get(org.apache.ofbiz.persistence.entity.x.contentTypeId);
+                    String contentTypeId = (String) content.get(x.contentTypeId);
                     if (contentTypes.contains(contentTypeId)) {
                         contentAssocDataResourceView = delegator.makeValue(viewName);
                         contentAssocDataResourceView.setAllFields(content, true, null, null);
@@ -267,9 +268,9 @@ public class ContentServicesComplex {
                 }
                 SimpleMapProcessor.runSimpleMapProcessor("component://content/minilang/ContentManagementMapProcessors.xml", "contentAssocOut",
                         contentAssoc, contentAssocDataResourceView, new LinkedList<>(), locale);
-                String dataResourceId = content.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+                String dataResourceId = content.getString(x.dataResourceId);
                 if (UtilValidate.isNotEmpty(dataResourceId)) {
-                    dataResource = content.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DataResource, true);
+                    dataResource = content.getRelatedOne(x.DataResource, true);
                 }
                 if (dataResource != null) {
                     SimpleMapProcessor.runSimpleMapProcessor("component://content/minilang/ContentManagementMapProcessors.xml", "dataResourceOut",

@@ -35,6 +35,7 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityTypeUtil;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Common Workers
  */
@@ -75,7 +76,7 @@ public final class CommonWorkers {
             boolean removeDefaultGeo = UtilValidate.isEmpty(countriesList);
             if (!removeDefaultGeo) {
                 for (GenericValue country : countriesList) {
-                    if (country.get(org.apache.ofbiz.persistence.entity.x.geoId).equals(defaultGeo.get(org.apache.ofbiz.persistence.entity.x.geoId))) {
+                    if (country.get(x.geoId).equals(defaultGeo.get(x.geoId))) {
                         removeDefaultGeo = true;
                     }
                 }
@@ -135,12 +136,12 @@ public final class CommonWorkers {
                 for (GenericValue region : regionList) {
                     List<GenericValue> tmpState = EntityQuery.use(delegator)
                                                              .from("GeoAssocAndGeoTo")
-                                                             .where("geoId", region.getString(org.apache.ofbiz.persistence.entity.x.geoIdFrom))
+                                                             .where("geoId", region.getString(x.geoIdFrom))
                                                              .orderBy(sortList)
                                                              .cache(true)
                                                              .queryList();
                     for (GenericValue state : tmpState) {
-                        geoList.addAll(getAssociatedStateList(delegator, state.getString(org.apache.ofbiz.persistence.entity.x.geoIdFrom), listOrderBy));
+                        geoList.addAll(getAssociatedStateList(delegator, state.getString(x.geoIdFrom), listOrderBy));
                     }
                 }
             }

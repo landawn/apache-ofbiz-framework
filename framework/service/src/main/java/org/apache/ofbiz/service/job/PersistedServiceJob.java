@@ -58,6 +58,7 @@ import org.xml.sax.SAXException;
 import com.ibm.icu.util.Calendar;
 import com.ibm.icu.util.TimeZone;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * A {@link Job} that is backed by the entity engine. Job data is stored
  * in the JobSandbox entity.
@@ -90,7 +91,7 @@ public class PersistedServiceJob extends GenericServiceJob {
      * @param req
      */
     public PersistedServiceJob(DispatchContext dctx, GenericValue jobValue, GenericRequester req) {
-        super(dctx, jobValue.getString(org.apache.ofbiz.persistence.entity.x.jobId), jobValue.getString(org.apache.ofbiz.persistence.entity.x.jobName), null, null, req);
+        super(dctx, jobValue.getString(x.jobId), jobValue.getString(x.jobName), null, null, req);
         this.delegator = dctx.getDelegator();
         this.jobValue = jobValue;
         /*
@@ -98,11 +99,11 @@ public class PersistedServiceJob extends GenericServiceJob {
          UTC-based time for scheduling and rescheduling recurring jobs, even when DST changes affect the local time.
          */
         ZonedDateTime startTimeZD = ZonedDateTime.parse(
-                jobValue.getString(org.apache.ofbiz.persistence.entity.x.runTime), FORMATTER).withZoneSameInstant(ZoneId.of("UTC"));
-        this.startTime = UtilValidate.isNotEmpty(jobValue.get(org.apache.ofbiz.persistence.entity.x.runTimeEpoch))
-                ? jobValue.getLong(org.apache.ofbiz.persistence.entity.x.runTimeEpoch) : startTimeZD.toInstant().toEpochMilli();
-        this.maxRetry = jobValue.get(org.apache.ofbiz.persistence.entity.x.maxRetry) != null ? jobValue.getLong(org.apache.ofbiz.persistence.entity.x.maxRetry) : 0;
-        Long retryCount = jobValue.getLong(org.apache.ofbiz.persistence.entity.x.currentRetryCount);
+                jobValue.getString(x.runTime), FORMATTER).withZoneSameInstant(ZoneId.of("UTC"));
+        this.startTime = UtilValidate.isNotEmpty(jobValue.get(x.runTimeEpoch))
+                ? jobValue.getLong(x.runTimeEpoch) : startTimeZD.toInstant().toEpochMilli();
+        this.maxRetry = jobValue.get(x.maxRetry) != null ? jobValue.getLong(x.maxRetry) : 0;
+        Long retryCount = jobValue.getLong(x.currentRetryCount);
         if (retryCount != null) {
             this.currentRetryCount = retryCount;
         } else {
@@ -119,16 +120,16 @@ public class PersistedServiceJob extends GenericServiceJob {
         } catch (GenericEntityException e) {
             throw new InvalidJobException("Unable to refresh JobSandbox value", e);
         }
-        if (!JobManager.INSTANCE_ID.equals(jobValue.getString(org.apache.ofbiz.persistence.entity.x.runByInstanceId))) {
+        if (!JobManager.INSTANCE_ID.equals(jobValue.getString(x.runByInstanceId))) {
             throw new InvalidJobException("Job has been accepted by a different instance");
         }
-        Timestamp cancelTime = jobValue.getTimestamp(org.apache.ofbiz.persistence.entity.x.cancelDateTime);
-        Timestamp startTime = jobValue.getTimestamp(org.apache.ofbiz.persistence.entity.x.startDateTime);
+        Timestamp cancelTime = jobValue.getTimestamp(x.cancelDateTime);
+        Timestamp startTime = jobValue.getTimestamp(x.startDateTime);
         if (cancelTime != null || startTime != null) {
             // job not available
             throw new InvalidJobException("Job [" + getJobId() + "] is not available");
         }
-        jobValue.set(org.apache.ofbiz.persistence.entity.x.statusId, "SERVICE_QUEUED");
+        jobValue.set(x.statusId, "SERVICE_QUEUED");
         try {
             jobValue.store();
         } catch (GenericEntityException e) {
@@ -147,15 +148,15 @@ public class PersistedServiceJob extends GenericServiceJob {
         } catch (GenericEntityException e) {
             throw new InvalidJobException("Unable to refresh JobSandbox value", e);
         }
-        if (!JobManager.INSTANCE_ID.equals(jobValue.getString(org.apache.ofbiz.persistence.entity.x.runByInstanceId))) {
+        if (!JobManager.INSTANCE_ID.equals(jobValue.getString(x.runByInstanceId))) {
             throw new InvalidJobException("Job has been accepted by a different instance");
         }
-        if (jobValue.getTimestamp(org.apache.ofbiz.persistence.entity.x.cancelDateTime) != null) {
+        if (jobValue.getTimestamp(x.cancelDateTime) != null) {
             // Job cancelled
             throw new InvalidJobException("Job [" + getJobId() + "] was cancelled");
         }
-        jobValue.set(org.apache.ofbiz.persistence.entity.x.startDateTime, UtilDateTime.nowTimestamp());
-        jobValue.set(org.apache.ofbiz.persistence.entity.x.statusId, "SERVICE_RUNNING");
+        jobValue.set(x.startDateTime, UtilDateTime.nowTimestamp());
+        jobValue.set(x.statusId, "SERVICE_RUNNING");
         try {
             jobValue.store();
         } catch (GenericEntityException e) {
@@ -174,29 +175,29 @@ public class PersistedServiceJob extends GenericServiceJob {
             currentRecurrenceCount = recurrence.getCurrentCount();
             expr = RecurrenceInfo.toTemporalExpression(recurrence);
         }
-        if (expr == null && UtilValidate.isNotEmpty(jobValue.getString(org.apache.ofbiz.persistence.entity.x.tempExprId))) {
+        if (expr == null && UtilValidate.isNotEmpty(jobValue.getString(x.tempExprId))) {
             try {
-                expr = TemporalExpressionWorker.getTemporalExpression(this.delegator, jobValue.getString(org.apache.ofbiz.persistence.entity.x.tempExprId));
+                expr = TemporalExpressionWorker.getTemporalExpression(this.delegator, jobValue.getString(x.tempExprId));
             } catch (GenericEntityException e) {
                 throw new RuntimeException(e.getMessage());
             }
         }
-        if (jobValue.get(org.apache.ofbiz.persistence.entity.x.maxRecurrenceCount) != null) {
-            maxRecurrenceCount = jobValue.getLong(org.apache.ofbiz.persistence.entity.x.maxRecurrenceCount);
+        if (jobValue.get(x.maxRecurrenceCount) != null) {
+            maxRecurrenceCount = jobValue.getLong(x.maxRecurrenceCount);
         }
-        if (jobValue.get(org.apache.ofbiz.persistence.entity.x.currentRecurrenceCount) != null) {
-            currentRecurrenceCount = jobValue.getLong(org.apache.ofbiz.persistence.entity.x.currentRecurrenceCount);
+        if (jobValue.get(x.currentRecurrenceCount) != null) {
+            currentRecurrenceCount = jobValue.getLong(x.currentRecurrenceCount);
         }
         if (maxRecurrenceCount != -1) {
             currentRecurrenceCount++;
-            jobValue.set(org.apache.ofbiz.persistence.entity.x.currentRecurrenceCount, currentRecurrenceCount);
+            jobValue.set(x.currentRecurrenceCount, currentRecurrenceCount);
         }
         try {
             if (expr != null && (maxRecurrenceCount == -1 || currentRecurrenceCount <= maxRecurrenceCount)) {
                 if (recurrence != null) {
                     recurrence.incrementCurrentCount();
                 }
-                TimeZone timeZone = jobValue.get(org.apache.ofbiz.persistence.entity.x.recurrenceTimeZone) != null ? TimeZone.getTimeZone(jobValue.getString(org.apache.ofbiz.persistence.entity.x.recurrenceTimeZone))
+                TimeZone timeZone = jobValue.get(x.recurrenceTimeZone) != null ? TimeZone.getTimeZone(jobValue.getString(x.recurrenceTimeZone))
                         : TimeZone.getDefault();
                 Calendar next = expr.next(Calendar.getInstance(timeZone));
 
@@ -222,28 +223,28 @@ public class PersistedServiceJob extends GenericServiceJob {
         */
         ZonedDateTime nextRunTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(next), ZoneId.of("UTC"));
         if (nextRunTime.toInstant().toEpochMilli() > startTime) {
-            String pJobId = jobValue.getString(org.apache.ofbiz.persistence.entity.x.parentJobId);
+            String pJobId = jobValue.getString(x.parentJobId);
             if (pJobId == null) {
-                pJobId = jobValue.getString(org.apache.ofbiz.persistence.entity.x.jobId);
+                pJobId = jobValue.getString(x.jobId);
             }
             GenericValue newJob = GenericValue.create(jobValue);
             newJob.remove("jobId");
-            newJob.set(org.apache.ofbiz.persistence.entity.x.previousJobId, jobValue.getString(org.apache.ofbiz.persistence.entity.x.jobId));
-            newJob.set(org.apache.ofbiz.persistence.entity.x.parentJobId, pJobId);
-            newJob.set(org.apache.ofbiz.persistence.entity.x.statusId, "SERVICE_PENDING");
-            newJob.set(org.apache.ofbiz.persistence.entity.x.startDateTime, null);
-            newJob.set(org.apache.ofbiz.persistence.entity.x.runByInstanceId, null);
-            newJob.set(org.apache.ofbiz.persistence.entity.x.runTime, Timestamp.from(nextRunTime.toInstant()));
-            newJob.set(org.apache.ofbiz.persistence.entity.x.runTimeEpoch, nextRunTime.toInstant().toEpochMilli());
+            newJob.set(x.previousJobId, jobValue.getString(x.jobId));
+            newJob.set(x.parentJobId, pJobId);
+            newJob.set(x.statusId, "SERVICE_PENDING");
+            newJob.set(x.startDateTime, null);
+            newJob.set(x.runByInstanceId, null);
+            newJob.set(x.runTime, Timestamp.from(nextRunTime.toInstant()));
+            newJob.set(x.runTimeEpoch, nextRunTime.toInstant().toEpochMilli());
             if (isRetryOnFailure) {
-                newJob.set(org.apache.ofbiz.persistence.entity.x.currentRetryCount, currentRetryCount + 1);
+                newJob.set(x.currentRetryCount, currentRetryCount + 1);
             } else {
-                newJob.set(org.apache.ofbiz.persistence.entity.x.currentRetryCount, 0L);
+                newJob.set(x.currentRetryCount, 0L);
             }
             nextRecurrence = next;
             // Set priority if missing
-            if (newJob.getLong(org.apache.ofbiz.persistence.entity.x.priority) == null) {
-                newJob.set(org.apache.ofbiz.persistence.entity.x.priority, JobPriority.NORMAL);
+            if (newJob.getLong(x.priority) == null) {
+                newJob.set(x.priority, JobPriority.NORMAL);
             }
             delegator.createSetNextSeqId(newJob);
             if (Debug.verboseOn()) {
@@ -256,8 +257,8 @@ public class PersistedServiceJob extends GenericServiceJob {
     protected void finish(Map<String, Object> result) throws InvalidJobException {
         super.finish(result);
         // set the finish date
-        jobValue.set(org.apache.ofbiz.persistence.entity.x.statusId, "SERVICE_FINISHED");
-        jobValue.set(org.apache.ofbiz.persistence.entity.x.finishDateTime, UtilDateTime.nowTimestamp());
+        jobValue.set(x.statusId, "SERVICE_FINISHED");
+        jobValue.set(x.finishDateTime, UtilDateTime.nowTimestamp());
         String jobResult = null;
         if (ServiceUtil.isError(result)) {
             jobResult = StringUtils.substring(ServiceUtil.getErrorMessage(result), 0, 255);
@@ -265,7 +266,7 @@ public class PersistedServiceJob extends GenericServiceJob {
             jobResult = StringUtils.substring(ServiceUtil.makeSuccessMessage(result, "", "", "", ""), 0, 255);
         }
         if (UtilValidate.isNotEmpty(jobResult)) {
-            jobValue.set(org.apache.ofbiz.persistence.entity.x.jobResult, jobResult);
+            jobValue.set(x.jobResult, jobResult);
         }
         try {
             jobValue.store();
@@ -299,9 +300,9 @@ public class PersistedServiceJob extends GenericServiceJob {
             }
         }
         // set the failed status
-        jobValue.set(org.apache.ofbiz.persistence.entity.x.statusId, "SERVICE_FAILED");
-        jobValue.set(org.apache.ofbiz.persistence.entity.x.finishDateTime, UtilDateTime.nowTimestamp());
-        jobValue.set(org.apache.ofbiz.persistence.entity.x.jobResult, StringUtils.substring(t.getMessage(), 0, 255));
+        jobValue.set(x.statusId, "SERVICE_FAILED");
+        jobValue.set(x.finishDateTime, UtilDateTime.nowTimestamp());
+        jobValue.set(x.jobResult, StringUtils.substring(t.getMessage(), 0, 255));
         try {
             jobValue.store();
         } catch (GenericEntityException e) {
@@ -311,20 +312,20 @@ public class PersistedServiceJob extends GenericServiceJob {
 
     @Override
     protected String getServiceName() {
-        if (jobValue == null || jobValue.get(org.apache.ofbiz.persistence.entity.x.serviceName) == null) {
+        if (jobValue == null || jobValue.get(x.serviceName) == null) {
             return null;
         }
-        return jobValue.getString(org.apache.ofbiz.persistence.entity.x.serviceName);
+        return jobValue.getString(x.serviceName);
     }
 
     @Override
     protected Map<String, Object> getContext() throws InvalidJobException {
         Map<String, Object> context = null;
         try {
-            if (UtilValidate.isNotEmpty(jobValue.getString(org.apache.ofbiz.persistence.entity.x.runtimeDataId))) {
-                GenericValue contextObj = jobValue.getRelatedOne(org.apache.ofbiz.persistence.entity.x.RuntimeData, false);
+            if (UtilValidate.isNotEmpty(jobValue.getString(x.runtimeDataId))) {
+                GenericValue contextObj = jobValue.getRelatedOne(x.RuntimeData, false);
                 if (contextObj != null) {
-                    context = UtilGenerics.checkMap(XmlSerializer.deserialize(contextObj.getString(org.apache.ofbiz.persistence.entity.x.runtimeInfo),
+                    context = UtilGenerics.checkMap(XmlSerializer.deserialize(contextObj.getString(x.runtimeInfo),
                             delegator), String.class, Object.class);
                 }
             }
@@ -333,9 +334,9 @@ public class PersistedServiceJob extends GenericServiceJob {
             }
 
             // check the runAsUser
-            GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-            if (UtilValidate.isNotEmpty(jobValue.getString(org.apache.ofbiz.persistence.entity.x.runAsUser))) {
-                context.put(org.apache.ofbiz.persistence.entity.x.userLogin, ServiceUtil.getUserLogin(getDctx(), context, jobValue.getString(org.apache.ofbiz.persistence.entity.x.runAsUser)));
+            GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+            if (UtilValidate.isNotEmpty(jobValue.getString(x.runAsUser))) {
+                context.put(x.userLogin, ServiceUtil.getUserLogin(getDctx(), context, jobValue.getString(x.runAsUser)));
             } else if (userLogin != null) {
                 userLogin.refresh();
             }
@@ -359,7 +360,7 @@ public class PersistedServiceJob extends GenericServiceJob {
 
     // returns the number of current retries
     private long getRetries(Delegator delegator) {
-        String pJobId = jobValue.getString(org.apache.ofbiz.persistence.entity.x.parentJobId);
+        String pJobId = jobValue.getString(x.parentJobId);
         if (pJobId == null) {
             return 0;
         }
@@ -381,8 +382,8 @@ public class PersistedServiceJob extends GenericServiceJob {
 
     private RecurrenceInfo getRecurrenceInfo() {
         try {
-            if (UtilValidate.isNotEmpty(jobValue.getString(org.apache.ofbiz.persistence.entity.x.recurrenceInfoId))) {
-                GenericValue ri = jobValue.getRelatedOne(org.apache.ofbiz.persistence.entity.x.RecurrenceInfo, false);
+            if (UtilValidate.isNotEmpty(jobValue.getString(x.recurrenceInfoId))) {
+                GenericValue ri = jobValue.getRelatedOne(x.RecurrenceInfo, false);
                 if (ri != null) {
                     return new RecurrenceInfo(ri);
                 }
@@ -403,9 +404,9 @@ public class PersistedServiceJob extends GenericServiceJob {
         setCurrentState(State.CREATED);
         try {
             jobValue.refresh();
-            jobValue.set(org.apache.ofbiz.persistence.entity.x.startDateTime, null);
-            jobValue.set(org.apache.ofbiz.persistence.entity.x.runByInstanceId, null);
-            jobValue.set(org.apache.ofbiz.persistence.entity.x.statusId, "SERVICE_PENDING");
+            jobValue.set(x.startDateTime, null);
+            jobValue.set(x.runByInstanceId, null);
+            jobValue.set(x.statusId, "SERVICE_PENDING");
             jobValue.store();
         } catch (GenericEntityException e) {
             throw new InvalidJobException("Unable to dequeue job [" + getJobId() + "]", e);
@@ -426,7 +427,7 @@ public class PersistedServiceJob extends GenericServiceJob {
      */
     @Override
     public long getPriority() {
-        Long priority = jobValue.getLong(org.apache.ofbiz.persistence.entity.x.priority);
+        Long priority = jobValue.getLong(x.priority);
         if (priority == null) {
             return super.getPriority();
         }

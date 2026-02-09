@@ -65,6 +65,7 @@ import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.webapp.control.RequestHandler;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Shopping cart events.
  */
@@ -110,7 +111,7 @@ public class ShoppingCartEvents {
                 productPromoCode = cart.getDelegator().findOne("ProductPromoCode",
                                                     UtilMisc.toMap("productPromoCodeId", promoCodeId), false);
                 if (!productPromoCode.isEmpty()) {
-                    String productPromoId = productPromoCode.getString(org.apache.ofbiz.persistence.entity.x.productPromoId);
+                    String productPromoId = productPromoCode.getString(x.productPromoId);
 
                     long productPromoActionCount = EntityQuery.use(cart.getDelegator())
                                     .from("ProductPromoAction").where("productPromoId", productPromoId).queryCount();
@@ -128,7 +129,7 @@ public class ShoppingCartEvents {
                             if (!itemAdjustments.isEmpty()) {
                                 index = 0;
                                 for (GenericValue adjustment : itemAdjustments) {
-                                    if (adjustment.get(org.apache.ofbiz.persistence.entity.x.productPromoId).equals(productPromoId)) {
+                                    if (adjustment.get(x.productPromoId).equals(productPromoId)) {
                                         checkItem.getAdjustments().remove(index);
                                         result = "success";
                                     }
@@ -576,7 +577,7 @@ public class ShoppingCartEvents {
                     GenericValue userLogin = cart.getUserLogin();
                     String partyId = null;
                     if (userLogin != null) {
-                        partyId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+                        partyId = userLogin.getString(x.partyId);
                     }
                     String formAction = "/additemsurvey";
                     String nextPage = RequestHandler.getOverrideViewUri(request.getPathInfo());
@@ -596,8 +597,8 @@ public class ShoppingCartEvents {
 
         GenericValue productStore = ProductStoreWorker.getProductStore(request);
         if (productStore != null) {
-            String addToCartRemoveIncompat = productStore.getString(org.apache.ofbiz.persistence.entity.x.addToCartRemoveIncompat);
-            String addToCartReplaceUpsell = productStore.getString(org.apache.ofbiz.persistence.entity.x.addToCartReplaceUpsell);
+            String addToCartRemoveIncompat = productStore.getString(x.addToCartRemoveIncompat);
+            String addToCartReplaceUpsell = productStore.getString(x.addToCartReplaceUpsell);
             try {
                 if ("Y".equals(addToCartRemoveIncompat)) {
                     List<GenericValue> productAssocs = null;
@@ -608,12 +609,12 @@ public class ShoppingCartEvents {
                     productAssocs = EntityQuery.use(delegator).from("ProductAssoc").where(cond).filterByDate().queryList();
                     List<String> productList = new LinkedList<>();
                     for (GenericValue productAssoc : productAssocs) {
-                        if (productId.equals(productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productId))) {
-                            productList.add(productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo));
+                        if (productId.equals(productAssoc.getString(x.productId))) {
+                            productList.add(productAssoc.getString(x.productIdTo));
                             continue;
                         }
-                        if (productId.equals(productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productIdTo))) {
-                            productList.add(productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productId));
+                        if (productId.equals(productAssoc.getString(x.productIdTo))) {
+                            productList.add(productAssoc.getString(x.productId));
                             continue;
                         }
                     }
@@ -658,7 +659,7 @@ public class ShoppingCartEvents {
             }
             BigDecimal piecesIncluded = BigDecimal.ZERO;
             if (parentProduct != null) {
-                piecesIncluded = new BigDecimal(parentProduct.getLong(org.apache.ofbiz.persistence.entity.x.piecesIncluded));
+                piecesIncluded = new BigDecimal(parentProduct.getLong(x.piecesIncluded));
                 quantity = quantity.multiply(piecesIncluded);
             }
         }
@@ -759,8 +760,8 @@ public class ShoppingCartEvents {
         ShoppingCart cart = null;
         try {
             GenericValue supplierParty = EntityQuery.use(delegator).from("Party").where("partyId", supplierPartyId).queryOne();
-            if (UtilValidate.isNotEmpty(supplierParty.getString(org.apache.ofbiz.persistence.entity.x.preferredCurrencyUomId))) {
-                cart = new WebShoppingCart(request, locale, supplierParty.getString(org.apache.ofbiz.persistence.entity.x.preferredCurrencyUomId));
+            if (UtilValidate.isNotEmpty(supplierParty.getString(x.preferredCurrencyUomId))) {
+                cart = new WebShoppingCart(request, locale, supplierParty.getString(x.preferredCurrencyUomId));
             } else {
                 cart = new WebShoppingCart(request);
             }
@@ -931,7 +932,7 @@ public class ShoppingCartEvents {
         // we don't want this to mess up additional orders and such
         HttpSession session = request.getSession();
         GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
-        if (userLogin != null && "anonymous".equals(userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId))) {
+        if (userLogin != null && "anonymous".equals(userLogin.get(x.userLoginId))) {
             Locale locale = UtilHttp.getLocale(session);
 
             // here we want to do a full logout, but not using the normal logout stuff because it saves things in the UserLogin
@@ -1135,9 +1136,9 @@ public class ShoppingCartEvents {
             Iterator<GenericValue> checkOrderAdjustments = UtilMisc.toIterator(cartLine.getAdjustments());
             while (checkOrderAdjustments != null && checkOrderAdjustments.hasNext()) {
                 GenericValue checkOrderAdjustment = checkOrderAdjustments.next();
-                if (UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoId))
-                        && UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoRuleId))
-                        && UtilValidate.isNotEmpty(checkOrderAdjustment.getString(org.apache.ofbiz.persistence.entity.x.productPromoActionSeqId))) {
+                if (UtilValidate.isNotEmpty(checkOrderAdjustment.getString(x.productPromoId))
+                        && UtilValidate.isNotEmpty(checkOrderAdjustment.getString(x.productPromoRuleId))
+                        && UtilValidate.isNotEmpty(checkOrderAdjustment.getString(x.productPromoActionSeqId))) {
                     GenericPK productPromoActionPk = delegator.makeValidValue("ProductPromoAction", checkOrderAdjustment).getPrimaryKey();
                     cart.setDesiredAlternateGiftByAction(productPromoActionPk, alternateGwpProductId);
                     if ("SALES_ORDER".equals(cart.getOrderType())) {
@@ -1342,7 +1343,7 @@ public class ShoppingCartEvents {
         }
 
         if (("FIN_PAYMENT_TERM".equals(termTypeId) && UtilValidate.isEmpty(termDaysStr)) || (UtilValidate.isNotEmpty(termType)
-                && "FIN_PAYMENT_TERM".equals(termType.get(org.apache.ofbiz.persistence.entity.x.parentTypeId)) && UtilValidate.isEmpty(termDaysStr))) {
+                && "FIN_PAYMENT_TERM".equals(termType.get(x.parentTypeId)) && UtilValidate.isEmpty(termDaysStr))) {
             request.setAttribute("_ERROR_MESSAGE_", UtilProperties.getMessage(RES_ERROR, "OrderOrderTermDaysIsRequired", locale));
             return "error";
         }
@@ -1513,24 +1514,24 @@ public class ShoppingCartEvents {
                 shipGroupSeqId = UtilFormatOut.formatPaddedNumber(itr, 5);
                 List<GenericValue> duplicateAdjustmentList = new ArrayList<>();
                 for (GenericValue adjustment: orderAdjustmentList) {
-                    if ("PROMOTION_ADJUSTMENT".equals(adjustment.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
+                    if ("PROMOTION_ADJUSTMENT".equals(adjustment.get(x.orderAdjustmentTypeId))) {
                         cart.addAdjustment(adjustment);
                     }
-                    if ("SALES_TAX".equals(adjustment.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId))) {
-                        if (adjustment.get(org.apache.ofbiz.persistence.entity.x.description) != null
-                                && ((String) adjustment.get(org.apache.ofbiz.persistence.entity.x.description)).startsWith("Tax adjustment due")) {
+                    if ("SALES_TAX".equals(adjustment.get(x.orderAdjustmentTypeId))) {
+                        if (adjustment.get(x.description) != null
+                                && ((String) adjustment.get(x.description)).startsWith("Tax adjustment due")) {
                             cart.addAdjustment(adjustment);
                         }
-                        if ("Y".equals(adjustment.getString(org.apache.ofbiz.persistence.entity.x.isManual))) {
+                        if ("Y".equals(adjustment.getString(x.isManual))) {
                             cart.addAdjustment(adjustment);
                         }
                     }
                 }
                 for (GenericValue orderAdjustment: orderAdjustments) {
                     if ("OrderAdjustment".equals(orderAdjustment.getEntityName())) {
-                        if (("SHIPPING_CHARGES".equals(orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.orderAdjustmentTypeId)))
-                                && orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.orderId).equals(orderId)
-                                && orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId).equals(shipGroupSeqId) && orderAdjustment.get(org.apache.ofbiz.persistence.entity.x.comments) == null) {
+                        if (("SHIPPING_CHARGES".equals(orderAdjustment.get(x.orderAdjustmentTypeId)))
+                                && orderAdjustment.get(x.orderId).equals(orderId)
+                                && orderAdjustment.get(x.shipGroupSeqId).equals(shipGroupSeqId) && orderAdjustment.get(x.comments) == null) {
                             // Removing objects from list for old Shipping and Handling Charges Adjustment and Sales Tax Adjustment.
                             duplicateAdjustmentList.add(orderAdjustment);
                         }
@@ -1661,8 +1662,8 @@ public class ShoppingCartEvents {
                         List<GenericValue> storeReps = null;
                         try {
                             storeReps = EntityQuery.use(delegator).from("ProductStoreRole")
-                                    .where("productStoreId", productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId), "partyId",
-                                            userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId), "roleTypeId", "SALES_REP")
+                                    .where("productStoreId", productStore.getString(x.productStoreId), "partyId",
+                                            userLogin.getString(x.partyId), "roleTypeId", "SALES_REP")
                                     .filterByDate()
                                     .queryList();
                         } catch (GenericEntityException gee) {
@@ -1676,7 +1677,7 @@ public class ShoppingCartEvents {
                 }
 
                 if (hasPermission) {
-                    cart = getCartObject(request, null, productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultCurrencyUomId));
+                    cart = getCartObject(request, null, productStore.getString(x.defaultCurrencyUomId));
                 } else {
                     request.setAttribute("_ERROR_MESSAGE_", UtilProperties.getMessage(RES_ERROR,
                             "OrderYouDoNotHavePermissionToTakeOrdersForThisStore", locale));
@@ -1722,7 +1723,7 @@ public class ShoppingCartEvents {
                     return "error";
                 }
                 if (thisUserLogin != null) {
-                    partyId = thisUserLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+                    partyId = thisUserLogin.getString(x.partyId);
                 } else {
                     partyId = userLoginId;
                 }

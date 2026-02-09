@@ -49,6 +49,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ShipmentServices
  */
@@ -65,9 +66,9 @@ public class ShipmentServices {
     public static Map<String, Object> createShipmentEstimate(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         List<GenericValue> storeAll = new LinkedList<>();
-        String productStoreShipMethId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreShipMethId);
+        String productStoreShipMethId = (String) context.get(x.productStoreShipMethId);
 
         GenericValue productStoreShipMeth = null;
         try {
@@ -83,34 +84,34 @@ public class ShipmentServices {
         // Create the basic entity.
         GenericValue estimate = delegator.makeValue("ShipmentCostEstimate");
 
-        estimate.set(org.apache.ofbiz.persistence.entity.x.shipmentCostEstimateId, delegator.getNextSeqId("ShipmentCostEstimate"));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.productStoreShipMethId, productStoreShipMethId);
-        estimate.set(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId, productStoreShipMeth.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.carrierPartyId, productStoreShipMeth.getString(org.apache.ofbiz.persistence.entity.x.partyId));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId, "CARRIER");
-        estimate.set(org.apache.ofbiz.persistence.entity.x.productStoreId, productStoreShipMeth.getString(org.apache.ofbiz.persistence.entity.x.productStoreId));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.geoIdTo, context.get(org.apache.ofbiz.persistence.entity.x.toGeo));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.geoIdFrom, context.get(org.apache.ofbiz.persistence.entity.x.fromGeo));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.partyId, context.get(org.apache.ofbiz.persistence.entity.x.partyId));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.roleTypeId, context.get(org.apache.ofbiz.persistence.entity.x.roleTypeId));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.orderPricePercent, context.get(org.apache.ofbiz.persistence.entity.x.flatPercent));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.orderFlatPrice, context.get(org.apache.ofbiz.persistence.entity.x.flatPrice));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.orderItemFlatPrice, context.get(org.apache.ofbiz.persistence.entity.x.flatItemPrice));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.shippingPricePercent, context.get(org.apache.ofbiz.persistence.entity.x.shippingPricePercent));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.productFeatureGroupId, context.get(org.apache.ofbiz.persistence.entity.x.productFeatureGroupId));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.oversizeUnit, context.get(org.apache.ofbiz.persistence.entity.x.oversizeUnit));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.oversizePrice, context.get(org.apache.ofbiz.persistence.entity.x.oversizePrice));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.featurePercent, context.get(org.apache.ofbiz.persistence.entity.x.featurePercent));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.featurePrice, context.get(org.apache.ofbiz.persistence.entity.x.featurePrice));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.weightBreakId, context.get(org.apache.ofbiz.persistence.entity.x.weightBreakId));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.weightUnitPrice, context.get(org.apache.ofbiz.persistence.entity.x.wprice));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.weightUomId, context.get(org.apache.ofbiz.persistence.entity.x.wuom));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.quantityBreakId, context.get(org.apache.ofbiz.persistence.entity.x.quantityBreakId));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.quantityUnitPrice, context.get(org.apache.ofbiz.persistence.entity.x.qprice));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.quantityUomId, context.get(org.apache.ofbiz.persistence.entity.x.quom));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.priceBreakId, context.get(org.apache.ofbiz.persistence.entity.x.priceBreakId));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.priceUnitPrice, context.get(org.apache.ofbiz.persistence.entity.x.pprice));
-        estimate.set(org.apache.ofbiz.persistence.entity.x.priceUomId, context.get(org.apache.ofbiz.persistence.entity.x.puom));
+        estimate.set(x.shipmentCostEstimateId, delegator.getNextSeqId("ShipmentCostEstimate"));
+        estimate.set(x.productStoreShipMethId, productStoreShipMethId);
+        estimate.set(x.shipmentMethodTypeId, productStoreShipMeth.getString(x.shipmentMethodTypeId));
+        estimate.set(x.carrierPartyId, productStoreShipMeth.getString(x.partyId));
+        estimate.set(x.carrierRoleTypeId, "CARRIER");
+        estimate.set(x.productStoreId, productStoreShipMeth.getString(x.productStoreId));
+        estimate.set(x.geoIdTo, context.get(x.toGeo));
+        estimate.set(x.geoIdFrom, context.get(x.fromGeo));
+        estimate.set(x.partyId, context.get(x.partyId));
+        estimate.set(x.roleTypeId, context.get(x.roleTypeId));
+        estimate.set(x.orderPricePercent, context.get(x.flatPercent));
+        estimate.set(x.orderFlatPrice, context.get(x.flatPrice));
+        estimate.set(x.orderItemFlatPrice, context.get(x.flatItemPrice));
+        estimate.set(x.shippingPricePercent, context.get(x.shippingPricePercent));
+        estimate.set(x.productFeatureGroupId, context.get(x.productFeatureGroupId));
+        estimate.set(x.oversizeUnit, context.get(x.oversizeUnit));
+        estimate.set(x.oversizePrice, context.get(x.oversizePrice));
+        estimate.set(x.featurePercent, context.get(x.featurePercent));
+        estimate.set(x.featurePrice, context.get(x.featurePrice));
+        estimate.set(x.weightBreakId, context.get(x.weightBreakId));
+        estimate.set(x.weightUnitPrice, context.get(x.wprice));
+        estimate.set(x.weightUomId, context.get(x.wuom));
+        estimate.set(x.quantityBreakId, context.get(x.quantityBreakId));
+        estimate.set(x.quantityUnitPrice, context.get(x.qprice));
+        estimate.set(x.quantityUomId, context.get(x.quom));
+        estimate.set(x.priceBreakId, context.get(x.priceBreakId));
+        estimate.set(x.priceUnitPrice, context.get(x.pprice));
+        estimate.set(x.priceUomId, context.get(x.puom));
         storeAll.add(estimate);
 
         if (!applyQuantityBreak(context, result, storeAll, delegator, estimate, "weight")) {
@@ -133,15 +134,15 @@ public class ShipmentServices {
             return result;
         }
 
-        result.put("shipmentCostEstimateId", estimate.get(org.apache.ofbiz.persistence.entity.x.shipmentCostEstimateId));
+        result.put("shipmentCostEstimateId", estimate.get(x.shipmentCostEstimateId));
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
     }
 
     public static Map<String, Object> removeShipmentEstimate(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentCostEstimateId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentCostEstimateId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipmentCostEstimateId = (String) context.get(x.shipmentCostEstimateId);
+        Locale locale = (Locale) context.get(x.locale);
 
         GenericValue estimate = null;
 
@@ -199,19 +200,19 @@ public class ShipmentServices {
     // ShippingEstimate Calc Service
     public static Map<String, Object> calcShipmentCostEstimate(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
         // prepare the data
-        String productStoreShipMethId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreShipMethId);
-        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
-        String carrierRoleTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId);
-        String carrierPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId);
-        String shipmentMethodTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId);
-        String shippingContactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shippingContactMechId);
-        String shippingPostalCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.shippingPostalCode);
-        String shippingCountryCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.shippingCountryCode);
+        String productStoreShipMethId = (String) context.get(x.productStoreShipMethId);
+        String productStoreId = (String) context.get(x.productStoreId);
+        String carrierRoleTypeId = (String) context.get(x.carrierRoleTypeId);
+        String carrierPartyId = (String) context.get(x.carrierPartyId);
+        String shipmentMethodTypeId = (String) context.get(x.shipmentMethodTypeId);
+        String shippingContactMechId = (String) context.get(x.shippingContactMechId);
+        String shippingPostalCode = (String) context.get(x.shippingPostalCode);
+        String shippingCountryCode = (String) context.get(x.shippingCountryCode);
 
-        List<Map<String, Object>> shippableItemInfo = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.shippableItemInfo));
+        List<Map<String, Object>> shippableItemInfo = UtilGenerics.cast(context.get(x.shippableItemInfo));
         final BigDecimal shippableTotal = UtilNumber.getBigDecimal(context, "shippableTotal", BigDecimal.ZERO);
         final BigDecimal shippableQuantity = UtilNumber.getBigDecimal(context, "shippableQuantity", BigDecimal.ZERO);
         final BigDecimal shippableWeight = UtilNumber.getBigDecimal(context, "shippableWeight", BigDecimal.ZERO);
@@ -352,7 +353,7 @@ public class ShipmentServices {
         BigDecimal featurePercent = UtilNumber.getBigDecimal(estimate, "featurePercent", BigDecimal.ZERO);
         BigDecimal featurePrice = UtilNumber.getBigDecimal(estimate, "featurePrice", BigDecimal.ZERO);
 
-        String featureGroupId = estimate.getString(org.apache.ofbiz.persistence.entity.x.productFeatureGroupId);
+        String featureGroupId = estimate.getString(x.productFeatureGroupId);
         if (UtilValidate.isNotEmpty(featureGroupId)) {
             for (Map.Entry<String, BigDecimal> entry: shippableFeatureMap.entrySet()) {
                 String featureId = entry.getKey();
@@ -377,8 +378,8 @@ public class ShipmentServices {
 
         // size surcharges
         BigDecimal sizeSurcharge = BigDecimal.ZERO;
-        BigDecimal sizeUnit = estimate.getBigDecimal(org.apache.ofbiz.persistence.entity.x.oversizeUnit);
-        BigDecimal sizePrice = estimate.getBigDecimal(org.apache.ofbiz.persistence.entity.x.oversizePrice);
+        BigDecimal sizeUnit = estimate.getBigDecimal(x.oversizeUnit);
+        BigDecimal sizePrice = estimate.getBigDecimal(x.oversizePrice);
         if (sizeUnit != null && sizeUnit.compareTo(BigDecimal.ZERO) > 0) {
             for (BigDecimal size : shippableItemSizes) {
                 if (size != null && size.compareTo(sizeUnit) >= 0) {
@@ -417,7 +418,7 @@ public class ShipmentServices {
                     .cache()
                     .queryFirst();
             if (countryGeo != null) {
-                countryGeoId = countryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoId);
+                countryGeoId = countryGeo.getString(x.geoId);
             }
             return delegator.makeValue("PostalAddress",
                     UtilMisc.toMap("countryGeoId", countryGeoId,
@@ -430,7 +431,7 @@ public class ShipmentServices {
                                                     BigDecimal shippableQuantity, BigDecimal shippableWeight,
                                                     GenericValue shipAddress, GenericValue thisEstimate) {
         try {
-            String toGeo = thisEstimate.getString(org.apache.ofbiz.persistence.entity.x.geoIdTo);
+            String toGeo = thisEstimate.getString(x.geoIdTo);
             if (UtilValidate.isNotEmpty(toGeo) && shipAddress == null) {
                 // This estimate requires shipping address details. We don't have it so we cannot use this estimate.
                 return false;
@@ -439,14 +440,14 @@ public class ShipmentServices {
             List<GenericValue> toGeoList = GeoWorker.expandGeoGroup(toGeo, delegator);
             // Make sure we have a valid GEOID.
             if (UtilValidate.isEmpty(toGeoList)
-                    || GeoWorker.containsGeo(toGeoList, shipAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId), delegator)
-                    || GeoWorker.containsGeo(toGeoList, shipAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId), delegator)
-                    || GeoWorker.containsGeo(toGeoList, shipAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId), delegator)) {
+                    || GeoWorker.containsGeo(toGeoList, shipAddress.getString(x.countryGeoId), delegator)
+                    || GeoWorker.containsGeo(toGeoList, shipAddress.getString(x.stateProvinceGeoId), delegator)
+                    || GeoWorker.containsGeo(toGeoList, shipAddress.getString(x.postalCodeGeoId), delegator)) {
 
                 // now check if some break quantity are present and valid the matching value
-                GenericValue wv = thisEstimate.getRelatedOne(org.apache.ofbiz.persistence.entity.x.WeightQuantityBreak, true);
-                GenericValue qv = thisEstimate.getRelatedOne(org.apache.ofbiz.persistence.entity.x.QuantityQuantityBreak, true);
-                GenericValue pv = thisEstimate.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PriceQuantityBreak, true);
+                GenericValue wv = thisEstimate.getRelatedOne(x.WeightQuantityBreak, true);
+                GenericValue qv = thisEstimate.getRelatedOne(x.QuantityQuantityBreak, true);
+                GenericValue pv = thisEstimate.getRelatedOne(x.PriceQuantityBreak, true);
                 return (wv == null && qv == null && pv == null) || (
                         isBreakQuantityValid(shippableWeight, wv)
                                 && isBreakQuantityValid(shippableQuantity, qv)
@@ -462,15 +463,15 @@ public class ShipmentServices {
         if (breakQuantity == null) {
             return true;
         }
-        BigDecimal min = breakQuantity.getBigDecimal(org.apache.ofbiz.persistence.entity.x.fromQuantity);
-        BigDecimal max = breakQuantity.getBigDecimal(org.apache.ofbiz.persistence.entity.x.thruQuantity);
+        BigDecimal min = breakQuantity.getBigDecimal(x.fromQuantity);
+        BigDecimal max = breakQuantity.getBigDecimal(x.thruQuantity);
         return qty.compareTo(min) >= 0 && (max.compareTo(BigDecimal.ZERO) == 0 || qty.compareTo(max) <= 0);
     }
 
     public static Map<String, Object> fillShipmentStagingTables(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipmentId = (String) context.get(x.shipmentId);
+        Locale locale = (Locale) context.get(x.locale);
 
         GenericValue shipment = null;
         if (shipmentId != null) {
@@ -486,11 +487,11 @@ public class ShipmentServices {
                     "ProductShipmentNotFoundId", locale));
         }
 
-        String shipmentStatusId = shipment.getString(org.apache.ofbiz.persistence.entity.x.statusId);
+        String shipmentStatusId = shipment.getString(x.statusId);
         if ("SHIPMENT_PACKED".equals(shipmentStatusId)) {
             GenericValue address = null;
             try {
-                address = shipment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestinationPostalAddress, false);
+                address = shipment.getRelatedOne(x.DestinationPostalAddress, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
@@ -502,7 +503,7 @@ public class ShipmentServices {
 
             List<GenericValue> packages = null;
             try {
-                packages = shipment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentPackage, null, null, false);
+                packages = shipment.getRelated(x.ShipmentPackage, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
@@ -515,7 +516,7 @@ public class ShipmentServices {
 
             List<GenericValue> routeSegs = null;
             try {
-                routeSegs = shipment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentRouteSegment, null, null, false);
+                routeSegs = shipment.getRelated(x.ShipmentRouteSegment, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
@@ -527,33 +528,33 @@ public class ShipmentServices {
 
             // make the staging records
             GenericValue stageShip = delegator.makeValue("OdbcShipmentOut");
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.shipmentId, shipment.get(org.apache.ofbiz.persistence.entity.x.shipmentId));
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.partyId, shipment.get(org.apache.ofbiz.persistence.entity.x.partyIdTo));
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.carrierPartyId, routeSeg.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId));
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId, routeSeg.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId));
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.toName, address.get(org.apache.ofbiz.persistence.entity.x.toName));
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.attnName, address.get(org.apache.ofbiz.persistence.entity.x.attnName));
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.address1, address.get(org.apache.ofbiz.persistence.entity.x.address1));
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.address2, address.get(org.apache.ofbiz.persistence.entity.x.address2));
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.directions, address.get(org.apache.ofbiz.persistence.entity.x.directions));
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.city, address.get(org.apache.ofbiz.persistence.entity.x.city));
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.postalCode, address.get(org.apache.ofbiz.persistence.entity.x.postalCode));
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.postalCodeExt, address.get(org.apache.ofbiz.persistence.entity.x.postalCodeExt));
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.countryGeoId, address.get(org.apache.ofbiz.persistence.entity.x.countryGeoId));
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId, address.get(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId));
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.numberOfPackages, (long) packages.size());
-            stageShip.set(org.apache.ofbiz.persistence.entity.x.handlingInstructions, shipment.get(org.apache.ofbiz.persistence.entity.x.handlingInstructions));
+            stageShip.set(x.shipmentId, shipment.get(x.shipmentId));
+            stageShip.set(x.partyId, shipment.get(x.partyIdTo));
+            stageShip.set(x.carrierPartyId, routeSeg.get(x.carrierPartyId));
+            stageShip.set(x.shipmentMethodTypeId, routeSeg.get(x.shipmentMethodTypeId));
+            stageShip.set(x.toName, address.get(x.toName));
+            stageShip.set(x.attnName, address.get(x.attnName));
+            stageShip.set(x.address1, address.get(x.address1));
+            stageShip.set(x.address2, address.get(x.address2));
+            stageShip.set(x.directions, address.get(x.directions));
+            stageShip.set(x.city, address.get(x.city));
+            stageShip.set(x.postalCode, address.get(x.postalCode));
+            stageShip.set(x.postalCodeExt, address.get(x.postalCodeExt));
+            stageShip.set(x.countryGeoId, address.get(x.countryGeoId));
+            stageShip.set(x.stateProvinceGeoId, address.get(x.stateProvinceGeoId));
+            stageShip.set(x.numberOfPackages, (long) packages.size());
+            stageShip.set(x.handlingInstructions, shipment.get(x.handlingInstructions));
             toStore.add(stageShip);
 
 
             for (GenericValue shipmentPkg: packages) {
                 GenericValue stagePkg = delegator.makeValue("OdbcPackageOut");
-                stagePkg.set(org.apache.ofbiz.persistence.entity.x.shipmentId, shipmentPkg.get(org.apache.ofbiz.persistence.entity.x.shipmentId));
-                stagePkg.set(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId, shipmentPkg.get(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId));
-                stagePkg.set(org.apache.ofbiz.persistence.entity.x.orderId, shipment.get(org.apache.ofbiz.persistence.entity.x.primaryOrderId));
-                stagePkg.set(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId, shipment.get(org.apache.ofbiz.persistence.entity.x.primaryShipGroupSeqId));
-                stagePkg.set(org.apache.ofbiz.persistence.entity.x.shipmentBoxTypeId, shipmentPkg.get(org.apache.ofbiz.persistence.entity.x.shipmentBoxTypeId));
-                stagePkg.set(org.apache.ofbiz.persistence.entity.x.weight, shipmentPkg.get(org.apache.ofbiz.persistence.entity.x.weight));
+                stagePkg.set(x.shipmentId, shipmentPkg.get(x.shipmentId));
+                stagePkg.set(x.shipmentPackageSeqId, shipmentPkg.get(x.shipmentPackageSeqId));
+                stagePkg.set(x.orderId, shipment.get(x.primaryOrderId));
+                stagePkg.set(x.shipGroupSeqId, shipment.get(x.primaryShipGroupSeqId));
+                stagePkg.set(x.shipmentBoxTypeId, shipmentPkg.get(x.shipmentBoxTypeId));
+                stagePkg.set(x.weight, shipmentPkg.get(x.weight));
                 toStore.add(stagePkg);
             }
 
@@ -573,8 +574,8 @@ public class ShipmentServices {
     public static Map<String, Object> updateShipmentsFromStaging(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
         Map<String, String> shipmentMap = new HashMap<>();
 
         EntityQuery eq = EntityQuery.use(delegator)
@@ -584,8 +585,8 @@ public class ShipmentServices {
         try (EntityListIterator eli = eq.queryIterator()) {
             GenericValue pkgInfo;
             while ((pkgInfo = eli.next()) != null) {
-                String packageSeqId = pkgInfo.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId);
-                String shipmentId = pkgInfo.getString(org.apache.ofbiz.persistence.entity.x.shipmentId);
+                String packageSeqId = pkgInfo.getString(x.shipmentPackageSeqId);
+                String shipmentId = pkgInfo.getString(x.shipmentId);
 
                 // locate the shipment package
                 GenericValue shipmentPackage = EntityQuery.use(delegator).from("ShipmentPackage").where("shipmentId", shipmentId,
@@ -608,10 +609,10 @@ public class ShipmentServices {
                             }
                         }
 
-                        rtSeg.set(org.apache.ofbiz.persistence.entity.x.actualStartDate, pkgInfo.get(org.apache.ofbiz.persistence.entity.x.shippedDate));
-                        rtSeg.set(org.apache.ofbiz.persistence.entity.x.billingWeight, pkgInfo.get(org.apache.ofbiz.persistence.entity.x.billingWeight));
-                        rtSeg.set(org.apache.ofbiz.persistence.entity.x.actualCost, pkgInfo.get(org.apache.ofbiz.persistence.entity.x.shippingTotal));
-                        rtSeg.set(org.apache.ofbiz.persistence.entity.x.trackingIdNumber, pkgInfo.get(org.apache.ofbiz.persistence.entity.x.trackingNumber));
+                        rtSeg.set(x.actualStartDate, pkgInfo.get(x.shippedDate));
+                        rtSeg.set(x.billingWeight, pkgInfo.get(x.billingWeight));
+                        rtSeg.set(x.actualCost, pkgInfo.get(x.shippingTotal));
+                        rtSeg.set(x.trackingIdNumber, pkgInfo.get(x.trackingNumber));
                         delegator.store(rtSeg);
                     }
 
@@ -630,7 +631,7 @@ public class ShipmentServices {
                                         "shipmentId", shipmentId), locale));
                     }
 
-                    pkg.set(org.apache.ofbiz.persistence.entity.x.weight, pkgInfo.get(org.apache.ofbiz.persistence.entity.x.packageWeight));
+                    pkg.set(x.weight, pkgInfo.get(x.packageWeight));
                     delegator.store(pkg);
 
                     // need if we are the first package (only) update the route seg info
@@ -648,11 +649,11 @@ public class ShipmentServices {
                         }
                     }
 
-                    pkgRtSeg.set(org.apache.ofbiz.persistence.entity.x.trackingCode, pkgInfo.get(org.apache.ofbiz.persistence.entity.x.trackingNumber));
-                    pkgRtSeg.set(org.apache.ofbiz.persistence.entity.x.boxNumber, pkgInfo.get(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId));
-                    pkgRtSeg.set(org.apache.ofbiz.persistence.entity.x.packageServiceCost, pkgInfo.get(org.apache.ofbiz.persistence.entity.x.packageTotal));
+                    pkgRtSeg.set(x.trackingCode, pkgInfo.get(x.trackingNumber));
+                    pkgRtSeg.set(x.boxNumber, pkgInfo.get(x.shipmentPackageSeqId));
+                    pkgRtSeg.set(x.packageServiceCost, pkgInfo.get(x.packageTotal));
                     delegator.store(pkgRtSeg);
-                    shipmentMap.put(shipmentId, pkgInfo.getString(org.apache.ofbiz.persistence.entity.x.voidIndicator));
+                    shipmentMap.put(shipmentId, pkgInfo.getString(x.voidIndicator));
                 }
             }
         } catch (GenericEntityException e) {
@@ -702,7 +703,7 @@ public class ShipmentServices {
 
     public static Map<String, Object> clearShipmentStagingInfo(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
+        String shipmentId = (String) context.get(x.shipmentId);
         try {
             delegator.removeByAnd("OdbcPackageIn", UtilMisc.toMap("shipmentId", shipmentId));
             delegator.removeByAnd("OdbcPackageOut", UtilMisc.toMap("shipmentId", shipmentId));
@@ -724,8 +725,8 @@ public class ShipmentServices {
     public static Map<String, Object> updatePurchaseShipmentFromReceipt(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String shipmentId = (String) context.get(x.shipmentId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         try {
 
             List<GenericValue> shipmentReceipts = EntityQuery.use(delegator).from("ShipmentReceipt").where("shipmentId", shipmentId).queryList();
@@ -734,7 +735,7 @@ public class ShipmentServices {
             // If there are shipment receipts, the shipment must have been shipped, so set the shipment status to
             // PURCH_SHIP_SHIPPED if it's only PURCH_SHIP_CREATED
             GenericValue shipment = EntityQuery.use(delegator).from("Shipment").where("shipmentId", shipmentId).queryOne();
-            if ((!UtilValidate.isEmpty(shipment)) && "PURCH_SHIP_CREATED".equals(shipment.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
+            if ((!UtilValidate.isEmpty(shipment)) && "PURCH_SHIP_CREATED".equals(shipment.getString(x.statusId))) {
                 Map<String, Object> updateShipmentMap = dispatcher.runSync("updateShipment",
                         UtilMisc.<String, Object>toMap("shipmentId", shipmentId, "statusId", "PURCH_SHIP_SHIPPED", "userLogin", userLogin));
                 if (ServiceUtil.isError(updateShipmentMap)) {
@@ -751,19 +752,19 @@ public class ShipmentServices {
             // store the quantity of each product shipped in a hashmap keyed to productId
             Map<String, BigDecimal> shippedCountMap = new HashMap<>();
             for (GenericValue item: shipmentAndItems) {
-                BigDecimal shippedQuantity = item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
-                BigDecimal quantity = shippedCountMap.get(item.getString(org.apache.ofbiz.persistence.entity.x.productId));
+                BigDecimal shippedQuantity = item.getBigDecimal(x.quantity);
+                BigDecimal quantity = shippedCountMap.get(item.getString(x.productId));
                 quantity = quantity == null ? shippedQuantity : shippedQuantity.add(quantity);
-                shippedCountMap.put(item.getString(org.apache.ofbiz.persistence.entity.x.productId), quantity);
+                shippedCountMap.put(item.getString(x.productId), quantity);
             }
 
             // store the quantity of each product received in a hashmap keyed to productId
             Map<String, BigDecimal> receivedCountMap = new HashMap<>();
             for (GenericValue item: shipmentReceipts) {
-                BigDecimal receivedQuantity = item.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantityAccepted);
-                BigDecimal quantity = receivedCountMap.get(item.getString(org.apache.ofbiz.persistence.entity.x.productId));
+                BigDecimal receivedQuantity = item.getBigDecimal(x.quantityAccepted);
+                BigDecimal quantity = receivedCountMap.get(item.getString(x.productId));
                 quantity = quantity == null ? receivedQuantity : receivedQuantity.add(quantity);
-                receivedCountMap.put(item.getString(org.apache.ofbiz.persistence.entity.x.productId), quantity);
+                receivedCountMap.put(item.getString(x.productId), quantity);
             }
 
             // let Map.equals do all the hard comparison work
@@ -787,10 +788,10 @@ public class ShipmentServices {
     public static Map<String, Object> duplicateShipmentRouteSegment(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
-        String shipmentRouteSegmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String shipmentId = (String) context.get(x.shipmentId);
+        String shipmentRouteSegmentId = (String) context.get(x.shipmentRouteSegmentId);
+        Locale locale = (Locale) context.get(x.locale);
 
         Map<String, Object> results = ServiceUtil.returnSuccess();
 
@@ -805,15 +806,15 @@ public class ShipmentServices {
             }
 
             Map<String, Object> params = UtilMisc.<String, Object>toMap("shipmentId", shipmentId, "carrierPartyId",
-                    shipmentRouteSeg.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId), "shipmentMethodTypeId", shipmentRouteSeg.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId),
-                    "originFacilityId", shipmentRouteSeg.getString(org.apache.ofbiz.persistence.entity.x.originFacilityId), "originContactMechId",
-                    shipmentRouteSeg.getString(org.apache.ofbiz.persistence.entity.x.originContactMechId),
-                    "originTelecomNumberId", shipmentRouteSeg.getString(org.apache.ofbiz.persistence.entity.x.originTelecomNumberId));
-            params.put("destFacilityId", shipmentRouteSeg.getString(org.apache.ofbiz.persistence.entity.x.destFacilityId));
-            params.put("destContactMechId", shipmentRouteSeg.getString(org.apache.ofbiz.persistence.entity.x.destContactMechId));
-            params.put("destTelecomNumberId", shipmentRouteSeg.getString(org.apache.ofbiz.persistence.entity.x.destTelecomNumberId));
-            params.put("billingWeight", shipmentRouteSeg.get(org.apache.ofbiz.persistence.entity.x.billingWeight));
-            params.put("billingWeightUomId", shipmentRouteSeg.get(org.apache.ofbiz.persistence.entity.x.billingWeightUomId));
+                    shipmentRouteSeg.getString(x.carrierPartyId), "shipmentMethodTypeId", shipmentRouteSeg.getString(x.shipmentMethodTypeId),
+                    "originFacilityId", shipmentRouteSeg.getString(x.originFacilityId), "originContactMechId",
+                    shipmentRouteSeg.getString(x.originContactMechId),
+                    "originTelecomNumberId", shipmentRouteSeg.getString(x.originTelecomNumberId));
+            params.put("destFacilityId", shipmentRouteSeg.getString(x.destFacilityId));
+            params.put("destContactMechId", shipmentRouteSeg.getString(x.destContactMechId));
+            params.put("destTelecomNumberId", shipmentRouteSeg.getString(x.destTelecomNumberId));
+            params.put("billingWeight", shipmentRouteSeg.get(x.billingWeight));
+            params.put("billingWeightUomId", shipmentRouteSeg.get(x.billingWeightUomId));
             params.put("userLogin", userLogin);
 
             Map<String, Object> tmpResult = dispatcher.runSync("createShipmentRouteSegment", params);
@@ -833,10 +834,10 @@ public class ShipmentServices {
     public static Map<String, Object> quickScheduleShipmentRouteSegment(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
 
-        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
-        String shipmentRouteSegmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId);
+        String shipmentId = (String) context.get(x.shipmentId);
+        String shipmentRouteSegmentId = (String) context.get(x.shipmentRouteSegmentId);
         String carrierPartyId = null;
 
         // get the carrierPartyId
@@ -845,7 +846,7 @@ public class ShipmentServices {
                     .where("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId)
                     .cache(true)
                     .queryOne();
-            carrierPartyId = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId);
+            carrierPartyId = shipmentRouteSegment.getString(x.carrierPartyId);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -882,12 +883,12 @@ public class ShipmentServices {
     public static Map<String, Object> getShipmentPackageValueFromOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
-        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
-        String shipmentPackageSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId);
-        String currencyUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.currencyUomId);
+        String shipmentId = (String) context.get(x.shipmentId);
+        String shipmentPackageSeqId = (String) context.get(x.shipmentPackageSeqId);
+        String currencyUomId = (String) context.get(x.currencyUomId);
 
         BigDecimal packageTotalValue = ZERO;
 
@@ -913,8 +914,8 @@ public class ShipmentServices {
             List<GenericValue> packageContents = EntityQuery.use(delegator).from("PackedQtyVsOrderItemQuantity").where("shipmentId", shipmentId,
                     "shipmentPackageSeqId", shipmentPackageSeqId).queryList();
             for (GenericValue packageContent: packageContents) {
-                String orderId = packageContent.getString(org.apache.ofbiz.persistence.entity.x.orderId);
-                String orderItemSeqId = packageContent.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+                String orderId = packageContent.getString(x.orderId);
+                String orderItemSeqId = packageContent.getString(x.orderItemSeqId);
 
                 // Get the value of the orderItem by calling the getOrderItemInvoicedAmountAndQuantity service
                 Map<String, Object> getOrderItemValueResult = dispatcher.runSync("getOrderItemInvoicedAmountAndQuantity",
@@ -926,7 +927,7 @@ public class ShipmentServices {
                 BigDecimal invoicedQuantity = (BigDecimal) getOrderItemValueResult.get("invoicedQuantity");
 
                 // How much of the invoiced quantity does the issued quantity represent?
-                BigDecimal issuedQuantity = packageContent.getBigDecimal(org.apache.ofbiz.persistence.entity.x.issuedQuantity);
+                BigDecimal issuedQuantity = packageContent.getBigDecimal(x.issuedQuantity);
                 BigDecimal proportionOfInvoicedQuantity = invoicedQuantity.signum() == 0 ? ZERO : issuedQuantity.divide(invoicedQuantity,
                         10, ROUNDING);
 
@@ -934,9 +935,9 @@ public class ShipmentServices {
                 BigDecimal packageContentValue = proportionOfInvoicedQuantity.multiply(invoicedAmount).setScale(DECIMALS, ROUNDING);
 
                 // Convert the value to the shipment currency, if necessary
-                GenericValue orderHeader = packageContent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
+                GenericValue orderHeader = packageContent.getRelatedOne(x.OrderHeader, false);
                 Map<String, Object> convertUomResult = dispatcher.runSync("convertUom", UtilMisc.<String, Object>toMap("uomId",
-                        orderHeader.getString(org.apache.ofbiz.persistence.entity.x.currencyUom), "uomIdTo", currencyUomId, "originalValue", packageContentValue));
+                        orderHeader.getString(x.currencyUom), "uomIdTo", currencyUomId, "originalValue", packageContentValue));
                 if (ServiceUtil.isError(convertUomResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(convertUomResult));
                 }
@@ -960,50 +961,50 @@ public class ShipmentServices {
     public static Map<String, Object> sendShipmentCompleteNotification(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
-        String sendTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.sendTo);
-        String screenUri = (String) context.get(org.apache.ofbiz.persistence.entity.x.screenUri);
-        Locale localePar = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String shipmentId = (String) context.get(x.shipmentId);
+        String sendTo = (String) context.get(x.sendTo);
+        String screenUri = (String) context.get(x.screenUri);
+        Locale localePar = (Locale) context.get(x.locale);
         // prepare the shipment information
         Map<String, Object> sendMap = new HashMap<>();
         GenericValue shipment = null;
         GenericValue orderHeader = null;
         try {
             shipment = EntityQuery.use(delegator).from("Shipment").where("shipmentId", shipmentId).queryOne();
-            orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", shipment.getString(org.apache.ofbiz.persistence.entity.x.primaryOrderId)).queryOne();
+            orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", shipment.getString(x.primaryOrderId)).queryOne();
         } catch (GenericEntityException e) {
             Debug.logError(e, "Problem getting info from database", MODULE);
         }
         GenericValue productStoreEmail = null;
         try {
             productStoreEmail = EntityQuery.use(delegator).from("ProductStoreEmailSetting").where("productStoreId",
-                    orderHeader.get(org.apache.ofbiz.persistence.entity.x.productStoreId), "emailType", "PRDS_ODR_SHIP_COMPLT").queryOne();
+                    orderHeader.get(x.productStoreId), "emailType", "PRDS_ODR_SHIP_COMPLT").queryOne();
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Problem getting the ProductStoreEmailSetting for productStoreId =" + orderHeader.get(org.apache.ofbiz.persistence.entity.x.productStoreId)
+            Debug.logError(e, "Problem getting the ProductStoreEmailSetting for productStoreId =" + orderHeader.get(x.productStoreId)
                     + " and emailType = PRDS_ODR_SHIP_COMPLT", MODULE);
         }
         if (productStoreEmail == null) {
             return ServiceUtil.returnFailure(UtilProperties.getMessage(RESOURCE,
                     "ProductProductStoreEmailSettingsNotValid",
-                    UtilMisc.toMap("productStoreId", orderHeader.get(org.apache.ofbiz.persistence.entity.x.productStoreId),
+                    UtilMisc.toMap("productStoreId", orderHeader.get(x.productStoreId),
                             "emailType", "PRDS_ODR_SHIP_COMPLT"), localePar));
         }
         // the override screenUri
         if (UtilValidate.isEmpty(screenUri)) {
-            String bodyScreenLocation = productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.bodyScreenLocation);
+            String bodyScreenLocation = productStoreEmail.getString(x.bodyScreenLocation);
             sendMap.put("bodyScreenUri", bodyScreenLocation);
         } else {
             sendMap.put("bodyScreenUri", screenUri);
         }
 
-        String partyId = shipment.getString(org.apache.ofbiz.persistence.entity.x.partyIdTo);
+        String partyId = shipment.getString(x.partyIdTo);
 
         // get the email address
         String emailString = null;
         GenericValue email = PartyWorker.findPartyLatestContactMech(partyId, "EMAIL_ADDRESS", delegator);
         if (UtilValidate.isNotEmpty(email)) {
-            emailString = email.getString(org.apache.ofbiz.persistence.entity.x.infoString);
+            emailString = email.getString(x.infoString);
         }
         if (UtilValidate.isEmpty(emailString)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -1016,15 +1017,15 @@ public class ShipmentServices {
         }
 
         Map<String, Object> bodyParameters = UtilMisc.<String, Object>toMap("partyId", partyId, "shipmentId", shipmentId, "orderId",
-                shipment.getString(org.apache.ofbiz.persistence.entity.x.primaryOrderId), "userLogin", userLogin, "locale", locale);
+                shipment.getString(x.primaryOrderId), "userLogin", userLogin, "locale", locale);
         sendMap.put("bodyParameters", bodyParameters);
         sendMap.put("userLogin", userLogin);
 
-        sendMap.put("subject", productStoreEmail.getString(org.apache.ofbiz.persistence.entity.x.subject));
-        sendMap.put("contentType", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.contentType));
-        sendMap.put("sendFrom", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.fromAddress));
-        sendMap.put("sendCc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.ccAddress));
-        sendMap.put("sendBcc", productStoreEmail.get(org.apache.ofbiz.persistence.entity.x.bccAddress));
+        sendMap.put("subject", productStoreEmail.getString(x.subject));
+        sendMap.put("contentType", productStoreEmail.get(x.contentType));
+        sendMap.put("sendFrom", productStoreEmail.get(x.fromAddress));
+        sendMap.put("sendCc", productStoreEmail.get(x.ccAddress));
+        sendMap.put("sendBcc", productStoreEmail.get(x.bccAddress));
 
         if ((sendTo != null) && UtilValidate.isEmail(sendTo)) {
             sendMap.put("sendTo", sendTo);
@@ -1055,34 +1056,34 @@ public class ShipmentServices {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "ProductShipmentNotFoundId", locale) + shipmentId);
             }
-            GenericValue primaryOrderHeader = shipment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PrimaryOrderHeader, false);
+            GenericValue primaryOrderHeader = shipment.getRelatedOne(x.PrimaryOrderHeader, false);
             if (primaryOrderHeader == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "ProductShipmentPrimaryOrderHeaderNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId), locale));
             }
-            String productStoreId = primaryOrderHeader.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
+            String productStoreId = primaryOrderHeader.getString(x.productStoreId);
             if (UtilValidate.isEmpty(productStoreId)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "ProductShipmentPrimaryOrderHeaderProductStoreNotFound",
                         UtilMisc.toMap("productStoreId", productStoreId, "shipmentId", shipmentId), locale));
             }
-            GenericValue primaryOrderItemShipGroup = shipment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PrimaryOrderItemShipGroup, false);
+            GenericValue primaryOrderItemShipGroup = shipment.getRelatedOne(x.PrimaryOrderItemShipGroup, false);
             if (primaryOrderItemShipGroup == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "ProductShipmentPrimaryOrderHeaderItemShipGroupNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId), locale));
             }
-            String shipmentMethodTypeId = primaryOrderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId);
-            String carrierPartyId = primaryOrderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId);
-            String carrierRoleTypeId = primaryOrderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId);
+            String shipmentMethodTypeId = primaryOrderItemShipGroup.getString(x.shipmentMethodTypeId);
+            String carrierPartyId = primaryOrderItemShipGroup.getString(x.carrierPartyId);
+            String carrierRoleTypeId = primaryOrderItemShipGroup.getString(x.carrierRoleTypeId);
             GenericValue productStoreShipmentMeth = EntityQuery.use(delegator).from("ProductStoreShipmentMeth")
                     .where("productStoreId", productStoreId, "shipmentMethodTypeId", shipmentMethodTypeId,
                              "partyId", carrierPartyId, "roleTypeId", carrierRoleTypeId)
                     .queryFirst();
             if (productStoreShipmentMeth != null) {
-                shipmentGatewayConfig.put("shipmentGatewayConfigId", productStoreShipmentMeth.getString(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId));
-                shipmentGatewayConfig.put("configProps", productStoreShipmentMeth.getString(org.apache.ofbiz.persistence.entity.x.configProps));
+                shipmentGatewayConfig.put("shipmentGatewayConfigId", productStoreShipmentMeth.getString(x.shipmentGatewayConfigId));
+                shipmentGatewayConfig.put("configProps", productStoreShipmentMeth.getString(x.configProps));
             } else {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                         "ProductStoreShipmentMethodNotFound",

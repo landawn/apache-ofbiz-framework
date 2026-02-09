@@ -44,6 +44,7 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceContainer;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Product Config Item Content Worker: gets product content to display
  */
@@ -137,7 +138,7 @@ public class ProductConfigItemContentWrapper implements ContentWrapper {
          * there was no content to retrieve)
          */
         String cacheKey = confItemContentTypeId + CACHE_KEY_SEPARATOR + locale + CACHE_KEY_SEPARATOR + mimeTypeId + CACHE_KEY_SEPARATOR
-                + productConfigItem.get(org.apache.ofbiz.persistence.entity.x.configItemId) + CACHE_KEY_SEPARATOR + encoderType + CACHE_KEY_SEPARATOR + delegator;
+                + productConfigItem.get(x.configItemId) + CACHE_KEY_SEPARATOR + encoderType + CACHE_KEY_SEPARATOR + delegator;
         String cachedValue = CONFIG_ITEM_CONTENT_CACHE.get(cacheKey);
         if (cachedValue != null || CONFIG_ITEM_CONTENT_CACHE.containsKey(cacheKey)) {
             return cachedValue;
@@ -185,7 +186,7 @@ public class ProductConfigItemContentWrapper implements ContentWrapper {
             Locale locale, String mimeTypeId, Delegator delegator, LocalDispatcher dispatcher, Writer outWriter, boolean cache)
             throws GeneralException, IOException {
         if (configItemId == null && productConfigItem != null) {
-            configItemId = productConfigItem.getString(org.apache.ofbiz.persistence.entity.x.configItemId);
+            configItemId = productConfigItem.getString(x.configItemId);
         }
 
         if (delegator == null && productConfigItem != null) {
@@ -208,7 +209,7 @@ public class ProductConfigItemContentWrapper implements ContentWrapper {
             Map<String, Object> inContext = new HashMap<>();
             inContext.put("productConfigItem", productConfigItem);
             inContext.put("productConfigItemContent", productConfigItemContent);
-            ContentWorker.renderContentAsText(dispatcher, productConfigItemContent.getString(org.apache.ofbiz.persistence.entity.x.contentId), outWriter, inContext, locale,
+            ContentWorker.renderContentAsText(dispatcher, productConfigItemContent.getString(x.contentId), outWriter, inContext, locale,
                     mimeTypeId, null, null, cache);
         } else {
             String candidateValue = null;

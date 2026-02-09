@@ -31,6 +31,7 @@ import org.apache.ofbiz.entity.transaction.GenericTransactionException;
 import org.apache.ofbiz.entity.transaction.TransactionUtil;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class OfbizPathShortener {
     public static final String SHORTENED_PATH = "s/";
     public static final String RESTORE_PATH = "../";
@@ -103,7 +104,7 @@ public class OfbizPathShortener {
                 .where("originalPathHash", generateHash(path))
                 .cache()
                 .queryFirst();
-        return existingPath != null ? existingPath.getString(org.apache.ofbiz.persistence.entity.x.shortenedPath) : null;
+        return existingPath != null ? existingPath.getString(x.shortenedPath) : null;
     }
 
     /**
@@ -169,7 +170,7 @@ public class OfbizPathShortener {
                 .cache()
                 .queryOne();
         return existingPath != null
-                ? existingPath.getString(org.apache.ofbiz.persistence.entity.x.originalPath)
+                ? existingPath.getString(x.originalPath)
                 : null;
     }
 

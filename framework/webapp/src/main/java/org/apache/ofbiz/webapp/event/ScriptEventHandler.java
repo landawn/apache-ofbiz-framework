@@ -38,6 +38,7 @@ import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.webapp.control.ConfigXMLReader.Event;
 import org.apache.ofbiz.webapp.control.ConfigXMLReader.RequestMap;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Generic Script Event Handler. This event handler uses the javax.script package (JSR-223) to invoke scripts or script functions.
  * <p>The script event handler will put the following artifacts in the script engine's bindings:</p>
@@ -86,16 +87,16 @@ public final class ScriptEventHandler implements EventHandler {
     public String invoke(Event event, RequestMap requestMap, HttpServletRequest request, HttpServletResponse response) throws EventHandlerException {
         try {
             Map<String, Object> context = new HashMap<>();
-            context.put(org.apache.ofbiz.persistence.entity.x.request, request);
-            context.put(org.apache.ofbiz.persistence.entity.x.response, response);
+            context.put(x.request, request);
+            context.put(x.response, response);
             HttpSession session = request.getSession();
-            context.put(org.apache.ofbiz.persistence.entity.x.session, session);
-            context.put(org.apache.ofbiz.persistence.entity.x.dispatcher, request.getAttribute("dispatcher"));
-            context.put(org.apache.ofbiz.persistence.entity.x.delegator, request.getAttribute("delegator"));
-            context.put(org.apache.ofbiz.persistence.entity.x.security, request.getAttribute("security"));
-            context.put(org.apache.ofbiz.persistence.entity.x.locale, UtilHttp.getLocale(request));
-            context.put(org.apache.ofbiz.persistence.entity.x.timeZone, UtilHttp.getTimeZone(request));
-            context.put(org.apache.ofbiz.persistence.entity.x.userLogin, session.getAttribute("userLogin"));
+            context.put(x.session, session);
+            context.put(x.dispatcher, request.getAttribute("dispatcher"));
+            context.put(x.delegator, request.getAttribute("delegator"));
+            context.put(x.security, request.getAttribute("security"));
+            context.put(x.locale, UtilHttp.getLocale(request));
+            context.put(x.timeZone, UtilHttp.getTimeZone(request));
+            context.put(x.userLogin, session.getAttribute("userLogin"));
             context.put(ScriptUtil.PARAMETERS_KEY, UtilHttp.getCombinedMap(request,
                     UtilMisc.toSet("delegator", "dispatcher", "security", "locale", "timeZone", "userLogin")));
             Object result = null;

@@ -36,6 +36,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class GlEvents {
 
     private static final String MODULE = GlEvents.class.getName();
@@ -69,11 +70,11 @@ public class GlEvents {
                         "acctgTransEntrySeqId", acctgTransEntrySeqId).queryOne();
                 if (acctgTransEntry != null) {
                     //calculate amount for each AcctgTransEntry according to glAccountId based on debit and credit
-                    debitCreditFlag = acctgTransEntry.getString(org.apache.ofbiz.persistence.entity.x.debitCreditFlag);
+                    debitCreditFlag = acctgTransEntry.getString(x.debitCreditFlag);
                     if ("D".equalsIgnoreCase(debitCreditFlag)) {
-                        reconciledBalance = reconciledBalance.add(acctgTransEntry.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));  //total balance per glAccountId
+                        reconciledBalance = reconciledBalance.add(acctgTransEntry.getBigDecimal(x.amount));  //total balance per glAccountId
                     } else {
-                        reconciledBalance = reconciledBalance.subtract(acctgTransEntry.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount));  //total balance per glAccountId
+                        reconciledBalance = reconciledBalance.subtract(acctgTransEntry.getBigDecimal(x.amount));  //total balance per glAccountId
                     }
                 }
             } catch (GenericEntityException e) {
@@ -109,9 +110,9 @@ public class GlEvents {
                 GenericValue acctgTransEntry = EntityQuery.use(delegator).from("AcctgTransEntry").where("acctgTransId", acctgTransId,
                         "acctgTransEntrySeqId", acctgTransEntrySeqId).queryOne();
                 if (acctgTransEntry != null) {
-                    reconciledAmount = acctgTransEntry.getString(org.apache.ofbiz.persistence.entity.x.amount);
-                    acctgTransId = acctgTransEntry.getString(org.apache.ofbiz.persistence.entity.x.acctgTransId);
-                    acctgTransEntrySeqId = acctgTransEntry.getString(org.apache.ofbiz.persistence.entity.x.acctgTransEntrySeqId);
+                    reconciledAmount = acctgTransEntry.getString(x.amount);
+                    acctgTransId = acctgTransEntry.getString(x.acctgTransId);
+                    acctgTransEntrySeqId = acctgTransEntry.getString(x.acctgTransEntrySeqId);
                     Map<String, Object> glReconEntryMap = UtilMisc.toMap("glReconciliationId", glReconciliationId, "acctgTransId", acctgTransId,
                             "acctgTransEntrySeqId", acctgTransEntrySeqId, "reconciledAmount", reconciledAmount, "userLogin", userLogin);
                     Map<String, Object> glReconEntryResult = null;

@@ -41,6 +41,7 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.apache.ofbiz.persistence.entity.x;
 public final class UrlServletHelper {
 
     private static final String MODULE = UrlServletHelper.class.getName();
@@ -66,7 +67,7 @@ public final class UrlServletHelper {
                 GenericValue tenantDomainName = EntityQuery.use(baseDelegator).from("TenantDomainName").where("domainName", serverName).queryOne();
 
                 if (UtilValidate.isNotEmpty(tenantDomainName)) {
-                    String tenantId = tenantDomainName.getString(org.apache.ofbiz.persistence.entity.x.tenantId);
+                    String tenantId = tenantDomainName.getString(x.tenantId);
                     // make that tenant active, setup a new delegator and a new dispatcher
                     String tenantDelegatorName = delegator.getDelegatorBaseName() + "#" + tenantId;
                     httpRequest.getSession().setAttribute("delegatorName", tenantDelegatorName);
@@ -169,8 +170,8 @@ public final class UrlServletHelper {
             Debug.logError(e, MODULE);
         }
         if (pathAlias != null) {
-            String alias = pathAlias.getString(org.apache.ofbiz.persistence.entity.x.aliasTo);
-            String contentId = pathAlias.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+            String alias = pathAlias.getString(x.aliasTo);
+            String contentId = pathAlias.getString(x.contentId);
             if (contentId == null && UtilValidate.isNotEmpty(alias)) {
                 if (!alias.startsWith("/")) {
                     alias = "/" + alias;

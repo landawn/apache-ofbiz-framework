@@ -42,6 +42,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceContainer;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * The type Verify pick session.
  */
@@ -137,12 +138,12 @@ public class VerifyPickSession implements Serializable {
 
             for (GenericValue reservation : reservations) {
                 if (qtyRemain.compareTo(BigDecimal.ZERO) > 0) {
-                    if (!productId.equals(reservation.getRelatedOne(org.apache.ofbiz.persistence.entity.x.InventoryItem, false).getString("productId"))) {
+                    if (!productId.equals(reservation.getRelatedOne(x.InventoryItem, false).getString("productId"))) {
                         continue;
                     }
-                    BigDecimal reservedQty = reservation.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                    BigDecimal reservedQty = reservation.getBigDecimal(x.quantity);
                     BigDecimal resVerifiedQty = this.getVerifiedQuantity(orderId, orderItemSeqId, shipGroupSeqId, productId,
-                            reservation.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId));
+                            reservation.getString(x.inventoryItemId));
                     if (resVerifiedQty.compareTo(reservedQty) >= 0) {
                         continue;
                     } else {
@@ -206,13 +207,13 @@ public class VerifyPickSession implements Serializable {
                 // get the reservations for the item
                 Map<String, Object> inventoryLookupMap = new HashMap<>();
                 inventoryLookupMap.put("orderId", orderId);
-                inventoryLookupMap.put("orderItemSeqId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                inventoryLookupMap.put("orderItemSeqId", orderItem.getString(x.orderItemSeqId));
                 inventoryLookupMap.put("shipGroupSeqId", shipGroupSeqId);
                 List<GenericValue> reservations = this.getDelegator().findByAnd("OrderItemShipGrpInvRes", inventoryLookupMap, null, false);
                 for (GenericValue reservation : reservations) {
-                    BigDecimal qty = reservation.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                    BigDecimal qty = reservation.getBigDecimal(x.quantity);
                     if (quantity.compareTo(qty) <= 0) {
-                        orderItemSeqId = orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId);
+                        orderItemSeqId = orderItem.getString(x.orderItemSeqId);
                         break;
                     }
                 }
@@ -241,8 +242,8 @@ public class VerifyPickSession implements Serializable {
     protected int checkRowForAdd(GenericValue reservation, String orderId, String orderItemSeqId, String shipGroupSeqId, String productId,
                                  BigDecimal quantity) {
         // check to see if the reservation can hold the requested quantity amount
-        String inventoryItemId = reservation.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId);
-        BigDecimal resQty = reservation.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+        String inventoryItemId = reservation.getString(x.inventoryItemId);
+        BigDecimal resQty = reservation.getBigDecimal(x.quantity);
         VerifyPickSessionRow pickRow = this.getPickRow(orderId, orderItemSeqId, shipGroupSeqId, productId, inventoryItemId);
 
         if (pickRow == null) {
@@ -288,7 +289,7 @@ public class VerifyPickSession implements Serializable {
             break;
         case 2:
             // need to create a new item
-            String inventoryItemId = res.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId);
+            String inventoryItemId = res.getString(x.inventoryItemId);
             pickRows.add(new VerifyPickSessionRow(orderId, orderItemSeqId, shipGroupSeqId, productId, originGeoId, inventoryItemId, quantity));
             break;
         default:
@@ -490,7 +491,7 @@ public class VerifyPickSession implements Serializable {
         try {
             GenericValue reservation = EntityUtil.getFirst(this.getDelegator().findByAnd("OrderItemAndShipGrpInvResAndItemSum",
                     UtilMisc.toMap("orderId", orderId, "orderItemSeqId", orderItemSeqId, "shipGroupSeqId", shipGroupSeqId), null, false));
-            reservedQty = reservation.getBigDecimal(org.apache.ofbiz.persistence.entity.x.totQuantityAvailable);
+            reservedQty = reservation.getBigDecimal(x.totQuantityAvailable);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
@@ -511,7 +512,7 @@ public class VerifyPickSession implements Serializable {
         List<GenericValue> orderItems = this.getDelegator().findByAnd("OrderItem", UtilMisc.toMap("orderId", orderId,
                 "statusId", "ITEM_APPROVED"), null, false);
         for (GenericValue orderItem : orderItems) {
-            orderedQty = orderedQty.add(orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
+            orderedQty = orderedQty.add(orderItem.getBigDecimal(x.quantity));
         }
 
         for (VerifyPickSessionRow pickRow : this.getPickRows(orderId)) {
@@ -576,29 +577,29 @@ public class VerifyPickSession implements Serializable {
         GenericValue orderRoleShipTo = EntityQuery.use(delegator).from("OrderRole").where("orderId", orderId, "roleTypeId",
                 "SHIP_TO_CUSTOMER").queryFirst();
         if (UtilValidate.isNotEmpty(orderRoleShipTo)) {
-            newShipment.put("partyIdTo", orderRoleShipTo.getString(org.apache.ofbiz.persistence.entity.x.partyId));
+            newShipment.put("partyIdTo", orderRoleShipTo.getString(x.partyId));
         }
         String partyIdFrom = null;
         GenericValue orderItemShipGroup = EntityQuery.use(delegator).from("OrderItemShipGroup").where("orderId", orderId, "shipGroupSeqId",
                 line.getShipGroupSeqId()).queryFirst();
-        if (UtilValidate.isNotEmpty(orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.vendorPartyId))) {
-            partyIdFrom = orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.vendorPartyId);
-        } else if (UtilValidate.isNotEmpty(orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.facilityId))) {
+        if (UtilValidate.isNotEmpty(orderItemShipGroup.getString(x.vendorPartyId))) {
+            partyIdFrom = orderItemShipGroup.getString(x.vendorPartyId);
+        } else if (UtilValidate.isNotEmpty(orderItemShipGroup.getString(x.facilityId))) {
             GenericValue facility = EntityQuery.use(delegator).from("Facility").where("facilityId",
-                    orderItemShipGroup.getString(org.apache.ofbiz.persistence.entity.x.facilityId)).queryOne();
-            if (UtilValidate.isNotEmpty(facility.getString(org.apache.ofbiz.persistence.entity.x.ownerPartyId))) {
-                partyIdFrom = facility.getString(org.apache.ofbiz.persistence.entity.x.ownerPartyId);
+                    orderItemShipGroup.getString(x.facilityId)).queryOne();
+            if (UtilValidate.isNotEmpty(facility.getString(x.ownerPartyId))) {
+                partyIdFrom = facility.getString(x.ownerPartyId);
             }
         }
         if (UtilValidate.isEmpty(partyIdFrom)) {
             GenericValue orderRoleShipFrom = EntityQuery.use(delegator).from("OrderRole").where("orderId", orderId,
                     "roleTypeId", "SHIP_FROM_VENDOR").queryFirst();
             if (UtilValidate.isNotEmpty(orderRoleShipFrom)) {
-                partyIdFrom = orderRoleShipFrom.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+                partyIdFrom = orderRoleShipFrom.getString(x.partyId);
             } else {
                 orderRoleShipFrom = EntityQuery.use(delegator).from("OrderRole").where("orderId", orderId, "roleTypeId",
                         "BILL_FROM_VENDOR").queryFirst();
-                partyIdFrom = orderRoleShipFrom.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+                partyIdFrom = orderRoleShipFrom.getString(x.partyId);
             }
         }
         newShipment.put("partyIdFrom", partyIdFrom);

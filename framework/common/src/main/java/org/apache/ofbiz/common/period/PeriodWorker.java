@@ -29,6 +29,7 @@ import org.apache.ofbiz.entity.condition.EntityConditionList;
 import org.apache.ofbiz.entity.condition.EntityExpr;
 import org.apache.ofbiz.entity.condition.EntityOperator;
 
+import org.apache.ofbiz.persistence.entity.x;
 public final class PeriodWorker {
     private static final String MODULE = PeriodWorker.class.getName();
 
@@ -40,12 +41,12 @@ public final class PeriodWorker {
     public static EntityCondition getFilterByPeriodExpr(String fieldName, GenericValue timePeriod) {
         Timestamp fromDate;
         Timestamp thruDate;
-        if (timePeriod.get(org.apache.ofbiz.persistence.entity.x.fromDate) instanceof Timestamp) {
-            fromDate = timePeriod.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate);
-            thruDate = timePeriod.getTimestamp(org.apache.ofbiz.persistence.entity.x.thruDate);
+        if (timePeriod.get(x.fromDate) instanceof Timestamp) {
+            fromDate = timePeriod.getTimestamp(x.fromDate);
+            thruDate = timePeriod.getTimestamp(x.thruDate);
         } else {
-            fromDate = UtilDateTime.toTimestamp(timePeriod.getDate(org.apache.ofbiz.persistence.entity.x.fromDate));
-            thruDate = UtilDateTime.toTimestamp(timePeriod.getDate(org.apache.ofbiz.persistence.entity.x.thruDate));
+            fromDate = UtilDateTime.toTimestamp(timePeriod.getDate(x.fromDate));
+            thruDate = UtilDateTime.toTimestamp(timePeriod.getDate(x.thruDate));
         }
 
         EntityConditionList<EntityExpr> betweenCondition = EntityCondition.makeCondition(

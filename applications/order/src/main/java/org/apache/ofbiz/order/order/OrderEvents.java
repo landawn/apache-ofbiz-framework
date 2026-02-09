@@ -43,6 +43,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Order Events
  */
@@ -60,7 +61,7 @@ public class OrderEvents {
         try {
             // has the userLogin.partyId ordered a product with DIGITAL_DOWNLOAD content associated for the given dataResourceId?
             GenericValue orderRoleAndProductContentInfo = EntityQuery.use(delegator).from("OrderRoleAndProductContentInfo")
-                    .where("partyId", userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId),
+                    .where("partyId", userLogin.get(x.partyId),
                             "dataResourceId", dataResourceId,
                             "productContentTypeId", "DIGITAL_DOWNLOAD",
                             "statusId", "ITEM_COMPLETED")
@@ -75,8 +76,8 @@ public class OrderEvents {
 
             // TODO: check validity based on ProductContent fields: useCountLimit, useTime/useTimeUomId
 
-            if (orderRoleAndProductContentInfo.getString(org.apache.ofbiz.persistence.entity.x.mimeTypeId) != null) {
-                response.setContentType(orderRoleAndProductContentInfo.getString(org.apache.ofbiz.persistence.entity.x.mimeTypeId));
+            if (orderRoleAndProductContentInfo.getString(x.mimeTypeId) != null) {
+                response.setContentType(orderRoleAndProductContentInfo.getString(x.mimeTypeId));
             }
             OutputStream os = response.getOutputStream();
             GenericValue dataResource = EntityQuery.use(delegator).from("DataResource").where("dataResourceId", dataResourceId).cache().queryOne();

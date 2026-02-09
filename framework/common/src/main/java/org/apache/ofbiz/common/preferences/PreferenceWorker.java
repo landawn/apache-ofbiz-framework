@@ -31,6 +31,7 @@ import org.apache.ofbiz.security.Security;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * User preference worker methods.
  */
@@ -61,12 +62,12 @@ public final class PreferenceWorker {
      * @return user preference map
      */
     private static Map<String, Object> addPrefToMap(GenericValue rec, Map<String, Object> userPrefMap) throws GeneralException {
-        String prefDataType = rec.getString(org.apache.ofbiz.persistence.entity.x.userPrefDataType);
+        String prefDataType = rec.getString(x.userPrefDataType);
         if (UtilValidate.isEmpty(prefDataType)) {
             // default to String
-            userPrefMap.put(rec.getString(org.apache.ofbiz.persistence.entity.x.userPrefTypeId), rec.getString(org.apache.ofbiz.persistence.entity.x.userPrefValue));
+            userPrefMap.put(rec.getString(x.userPrefTypeId), rec.getString(x.userPrefValue));
         } else {
-            userPrefMap.put(rec.getString(org.apache.ofbiz.persistence.entity.x.userPrefTypeId), ObjectType.simpleTypeOrObjectConvert(rec.get(org.apache.ofbiz.persistence.entity.x.userPrefValue),
+            userPrefMap.put(rec.getString(x.userPrefTypeId), ObjectType.simpleTypeOrObjectConvert(rec.get(x.userPrefValue),
                     prefDataType, null, null, false));
         }
         return userPrefMap;
@@ -85,9 +86,9 @@ public final class PreferenceWorker {
      */
     public static Map<String, Object> checkCopyPermission(DispatchContext ctx, Map<String, ?> context) {
         boolean hasPermission = false;
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         if (userLogin != null) {
-            String userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
+            String userLoginId = userLogin.getString(x.userLoginId);
             String userLoginIdArg = (String) context.get(LOGINID_PARAMETER_NAME); // is an optional parameters which defaults to the logged on user
             if (userLoginIdArg == null || userLoginId.equals(userLoginIdArg)) {
                 hasPermission = true; // users can copy to their own preferences
@@ -112,7 +113,7 @@ public final class PreferenceWorker {
      */
     public static Map<String, Object> checkPermission(DispatchContext ctx, Map<String, ?> context) {
         boolean hasPermission = false;
-        String mainAction = (String) context.get(org.apache.ofbiz.persistence.entity.x.mainAction);
+        String mainAction = (String) context.get(x.mainAction);
         if ("VIEW".equals(mainAction)) {
             if (DEFAULT_UID.equals(context.get(LOGINID_PARAMETER_NAME))) {
                 hasPermission = true;
@@ -169,9 +170,9 @@ public final class PreferenceWorker {
     static String getUserLoginId(Map<String, ?> context, boolean returnDefault) {
         String userLoginId = (String) context.get(LOGINID_PARAMETER_NAME);
         if (UtilValidate.isEmpty(userLoginId)) {
-            GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+            GenericValue userLogin = (GenericValue) context.get(x.userLogin);
             if (userLogin != null) {
-                userLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
+                userLoginId = userLogin.getString(x.userLoginId);
             }
         }
         if (UtilValidate.isEmpty(userLoginId) && returnDefault) {
@@ -199,11 +200,11 @@ public final class PreferenceWorker {
      */
     static boolean isValidGetId(DispatchContext ctx, Map<String, ?> context) {
         String currentUserLoginId = null;
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         if (userLogin == null) {
             currentUserLoginId = DEFAULT_UID;
         } else {
-            currentUserLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
+            currentUserLoginId = userLogin.getString(x.userLoginId);
         }
         String userLoginIdArg = (String) context.get(LOGINID_PARAMETER_NAME);
         if (!currentUserLoginId.equals(DEFAULT_UID) && !currentUserLoginId.equals(userLoginIdArg)
@@ -232,11 +233,11 @@ public final class PreferenceWorker {
      * @return true if arguments are valid
      */
     private static boolean isValidSetId(DispatchContext ctx, Map<String, ?> context) {
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         if (userLogin == null) {
             return false;
         }
-        String currentUserLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
+        String currentUserLoginId = userLogin.getString(x.userLoginId);
         String userLoginIdArg = (String) context.get(LOGINID_PARAMETER_NAME);
         if (!currentUserLoginId.equals(userLoginIdArg) && userLoginIdArg != null) {
             Security security = ctx.getSecurity();

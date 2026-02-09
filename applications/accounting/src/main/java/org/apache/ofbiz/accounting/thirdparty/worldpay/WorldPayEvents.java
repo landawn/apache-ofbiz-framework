@@ -50,6 +50,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * WorldPay Select Junior Integration Events/Services
  */
@@ -75,7 +76,7 @@ public class WorldPayEvents {
             return "error";
         }
         // get the order total
-        String orderTotal = orderHeader.getBigDecimal(org.apache.ofbiz.persistence.entity.x.grandTotal).toPlainString();
+        String orderTotal = orderHeader.getBigDecimal(x.grandTotal).toPlainString();
         // get the product store
         GenericValue productStore = ProductStoreWorker.getProductStore(request);
         if (productStore == null) {
@@ -85,13 +86,13 @@ public class WorldPayEvents {
             return "error";
         }
         // get the payment properties file
-        GenericValue paymentConfig = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId),
+        GenericValue paymentConfig = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStore.getString(x.productStoreId),
                 "EXT_WORLDPAY", null, true);
         String configString = null;
         String paymentGatewayConfigId = null;
         if (paymentConfig != null) {
-            paymentGatewayConfigId = paymentConfig.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
-            configString = paymentConfig.getString(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath);
+            paymentGatewayConfigId = paymentConfig.getString(x.paymentGatewayConfigId);
+            configString = paymentConfig.getString(x.paymentPropertiesPath);
         }
         if (configString == null) {
             configString = "payment.properties";
@@ -130,7 +131,7 @@ public class WorldPayEvents {
                 addressOcm = shippingAddress;
             }
             contactAddress = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId",
-                    addressOcm.getString(org.apache.ofbiz.persistence.entity.x.contactMechId)).queryOne();
+                    addressOcm.getString(x.contactMechId)).queryOne();
         } catch (GenericEntityException e) {
             Debug.logWarning(e, "Problems getting order contact information", MODULE);
         }
@@ -139,9 +140,9 @@ public class WorldPayEvents {
         String country = "";
         if (contactAddress != null) {
             try {
-                countryGeo = contactAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
+                countryGeo = contactAddress.getRelatedOne(x.CountryGeo, false);
                 if (countryGeo != null) {
-                    country = countryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode);
+                    country = countryGeo.getString(x.geoCode);
                 }
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, "Problems getting country geo entity", MODULE);
@@ -150,39 +151,39 @@ public class WorldPayEvents {
         // string of customer's name
         String name = "";
         if (contactAddress != null) {
-            if (UtilValidate.isNotEmpty(contactAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName))) {
-                name = contactAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName);
-            } else if (UtilValidate.isNotEmpty(contactAddress.getString(org.apache.ofbiz.persistence.entity.x.toName))) {
-                name = contactAddress.getString(org.apache.ofbiz.persistence.entity.x.toName);
+            if (UtilValidate.isNotEmpty(contactAddress.getString(x.attnName))) {
+                name = contactAddress.getString(x.attnName);
+            } else if (UtilValidate.isNotEmpty(contactAddress.getString(x.toName))) {
+                name = contactAddress.getString(x.toName);
             }
         }
         // build an address string
         StringBuilder address = new StringBuilder();
         String postalCode = "";
         if (contactAddress != null) {
-            if (contactAddress.get(org.apache.ofbiz.persistence.entity.x.address1) != null) {
-                address.append(contactAddress.getString(org.apache.ofbiz.persistence.entity.x.address1).trim());
+            if (contactAddress.get(x.address1) != null) {
+                address.append(contactAddress.getString(x.address1).trim());
             }
-            if (contactAddress.get(org.apache.ofbiz.persistence.entity.x.address2) != null) {
+            if (contactAddress.get(x.address2) != null) {
                 if (address.length() > 0) {
                     address.append("&#10;");
                 }
-                address.append(contactAddress.getString(org.apache.ofbiz.persistence.entity.x.address2).trim());
+                address.append(contactAddress.getString(x.address2).trim());
             }
-            if (contactAddress.get(org.apache.ofbiz.persistence.entity.x.city) != null) {
+            if (contactAddress.get(x.city) != null) {
                 if (address.length() > 0) {
                     address.append("&#10;");
                 }
-                address.append(contactAddress.getString(org.apache.ofbiz.persistence.entity.x.city).trim());
+                address.append(contactAddress.getString(x.city).trim());
             }
-            if (contactAddress.get(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId) != null) {
-                if (contactAddress.get(org.apache.ofbiz.persistence.entity.x.city) != null) {
+            if (contactAddress.get(x.stateProvinceGeoId) != null) {
+                if (contactAddress.get(x.city) != null) {
                     address.append(", ");
                 }
-                address.append(contactAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId).trim());
+                address.append(contactAddress.getString(x.stateProvinceGeoId).trim());
             }
-            if (contactAddress.get(org.apache.ofbiz.persistence.entity.x.postalCode) != null) {
-                postalCode = contactAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode);
+            if (contactAddress.get(x.postalCode) != null) {
+                postalCode = contactAddress.getString(x.postalCode);
             }
         }
         // get the email address to pass over
@@ -191,8 +192,8 @@ public class WorldPayEvents {
         try {
             GenericValue emailOcm = EntityQuery.use(delegator).from("OrderContactMech").where("orderId", orderId,
                     "contactMechPurposeTypeId", "ORDER_EMAIL").queryFirst();
-            emailContact = emailOcm.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ContactMech, false);
-            emailAddress = emailContact.getString(org.apache.ofbiz.persistence.entity.x.infoString);
+            emailContact = emailOcm.getRelatedOne(x.ContactMech, false);
+            emailAddress = emailContact.getString(x.infoString);
         } catch (GenericEntityException e) {
             Debug.logWarning(e, "Problems getting order email address", MODULE);
         }
@@ -202,37 +203,37 @@ public class WorldPayEvents {
         String shipName = "";
         if (shippingAddress != null) {
             try {
-                contactAddressShip = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId", shippingAddress.get(org.apache.ofbiz.persistence.entity.x.contactMechId))
+                contactAddressShip = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId", shippingAddress.get(x.contactMechId))
                         .queryOne();
                 if (UtilValidate.isNotEmpty(contactAddressShip)) {
-                    if (UtilValidate.isNotEmpty(contactAddressShip.getString(org.apache.ofbiz.persistence.entity.x.attnName))) {
-                        shipName = contactAddressShip.getString(org.apache.ofbiz.persistence.entity.x.attnName);
-                    } else if (UtilValidate.isNotEmpty(contactAddressShip.getString(org.apache.ofbiz.persistence.entity.x.toName))) {
-                        shipName = contactAddressShip.getString(org.apache.ofbiz.persistence.entity.x.toName);
+                    if (UtilValidate.isNotEmpty(contactAddressShip.getString(x.attnName))) {
+                        shipName = contactAddressShip.getString(x.attnName);
+                    } else if (UtilValidate.isNotEmpty(contactAddressShip.getString(x.toName))) {
+                        shipName = contactAddressShip.getString(x.toName);
                     }
-                    if (contactAddressShip.get(org.apache.ofbiz.persistence.entity.x.address1) != null) {
-                        shipAddress.append(contactAddressShip.getString(org.apache.ofbiz.persistence.entity.x.address1).trim());
+                    if (contactAddressShip.get(x.address1) != null) {
+                        shipAddress.append(contactAddressShip.getString(x.address1).trim());
                     }
-                    if (contactAddressShip.get(org.apache.ofbiz.persistence.entity.x.address2) != null) {
+                    if (contactAddressShip.get(x.address2) != null) {
                         if (shipAddress.length() > 0) {
                             shipAddress.append("&#10;");
                         }
-                        shipAddress.append(contactAddressShip.getString(org.apache.ofbiz.persistence.entity.x.address2).trim());
+                        shipAddress.append(contactAddressShip.getString(x.address2).trim());
                     }
-                    if (contactAddressShip.get(org.apache.ofbiz.persistence.entity.x.city) != null) {
+                    if (contactAddressShip.get(x.city) != null) {
                         if (shipAddress.length() > 0) {
                             shipAddress.append("&#10;");
                         }
-                        shipAddress.append(contactAddressShip.getString(org.apache.ofbiz.persistence.entity.x.city).trim());
+                        shipAddress.append(contactAddressShip.getString(x.city).trim());
                     }
-                    if (contactAddressShip.get(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId) != null) {
-                        if (contactAddressShip.get(org.apache.ofbiz.persistence.entity.x.city) != null) {
+                    if (contactAddressShip.get(x.stateProvinceGeoId) != null) {
+                        if (contactAddressShip.get(x.city) != null) {
                             shipAddress.append(", ");
                         }
-                        shipAddress.append(contactAddressShip.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId).trim());
+                        shipAddress.append(contactAddressShip.getString(x.stateProvinceGeoId).trim());
                     }
-                    if (contactAddressShip.get(org.apache.ofbiz.persistence.entity.x.postalCode) != null) {
-                        shipPostalCode = contactAddressShip.getString(org.apache.ofbiz.persistence.entity.x.postalCode);
+                    if (contactAddressShip.get(x.postalCode) != null) {
+                        shipPostalCode = contactAddressShip.getString(x.postalCode);
                     }
                 }
             } catch (GenericEntityException e) {
@@ -240,9 +241,9 @@ public class WorldPayEvents {
             }
         }
         // get the company name
-        String company = UtilFormatOut.checkEmpty(productStore.getString(org.apache.ofbiz.persistence.entity.x.companyName), "");
+        String company = UtilFormatOut.checkEmpty(productStore.getString(x.companyName), "");
         // get the currency
-        String defCur = UtilFormatOut.checkEmpty(productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultCurrencyUomId), "USD");
+        String defCur = UtilFormatOut.checkEmpty(productStore.getString(x.defaultCurrencyUomId), "USD");
         // order description
         String description = UtilProperties.getMessage(RESOURCE, "AccountingOrderNr", locale) + orderId + " "
                                  + (company != null ? UtilProperties.getMessage(COMMON_RES, "CommonFrom", locale) + " " + company : "");
@@ -460,32 +461,32 @@ public class WorldPayEvents {
             Debug.logError(e, "Cannot create date from long: " + paymentDate, MODULE);
             authDate = UtilDateTime.nowTimestamp();
         }
-        paymentPreference.set(org.apache.ofbiz.persistence.entity.x.maxAmount, new BigDecimal(paymentAmount));
+        paymentPreference.set(x.maxAmount, new BigDecimal(paymentAmount));
         if ("Y".equals(paymentStatus)) {
-            paymentPreference.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_RECEIVED");
+            paymentPreference.set(x.statusId, "PAYMENT_RECEIVED");
         } else if ("C".equals(paymentStatus)) {
-            paymentPreference.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_CANCELLED");
+            paymentPreference.set(x.statusId, "PAYMENT_CANCELLED");
         } else {
-            paymentPreference.set(org.apache.ofbiz.persistence.entity.x.statusId, "PAYMENT_NOT_RECEIVED");
+            paymentPreference.set(x.statusId, "PAYMENT_NOT_RECEIVED");
         }
         toStore.add(paymentPreference);
         Delegator delegator = paymentPreference.getDelegator();
         // create the PaymentGatewayResponse
         String responseId = delegator.getNextSeqId("PaymentGatewayResponse");
         GenericValue response = delegator.makeValue("PaymentGatewayResponse");
-        response.set(org.apache.ofbiz.persistence.entity.x.paymentGatewayResponseId, responseId);
-        response.set(org.apache.ofbiz.persistence.entity.x.paymentServiceTypeEnumId, "PRDS_PAY_EXTERNAL");
-        response.set(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId, paymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId));
-        response.set(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId, paymentPreference.get(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId));
-        response.set(org.apache.ofbiz.persistence.entity.x.paymentMethodId, paymentPreference.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        response.set(x.paymentGatewayResponseId, responseId);
+        response.set(x.paymentServiceTypeEnumId, "PRDS_PAY_EXTERNAL");
+        response.set(x.orderPaymentPreferenceId, paymentPreference.get(x.orderPaymentPreferenceId));
+        response.set(x.paymentMethodTypeId, paymentPreference.get(x.paymentMethodTypeId));
+        response.set(x.paymentMethodId, paymentPreference.get(x.paymentMethodId));
         // set the auth info
-        response.set(org.apache.ofbiz.persistence.entity.x.amount, new BigDecimal(paymentAmount));
-        response.set(org.apache.ofbiz.persistence.entity.x.referenceNum, transactionId);
-        response.set(org.apache.ofbiz.persistence.entity.x.gatewayCode, paymentStatus);
-        response.set(org.apache.ofbiz.persistence.entity.x.gatewayFlag, gatewayFlag);
-        response.set(org.apache.ofbiz.persistence.entity.x.transactionDate, authDate);
-        response.set(org.apache.ofbiz.persistence.entity.x.gatewayAvsResult, avs);
-        response.set(org.apache.ofbiz.persistence.entity.x.gatewayCvResult, avs.substring(0, 1));
+        response.set(x.amount, new BigDecimal(paymentAmount));
+        response.set(x.referenceNum, transactionId);
+        response.set(x.gatewayCode, paymentStatus);
+        response.set(x.gatewayFlag, gatewayFlag);
+        response.set(x.transactionDate, authDate);
+        response.set(x.gatewayAvsResult, avs);
+        response.set(x.gatewayCvResult, avs.substring(0, 1));
 
         toStore.add(response);
         try {
@@ -499,7 +500,7 @@ public class WorldPayEvents {
         try {
             String comment = UtilProperties.getMessage(RESOURCE, "AccountingPaymentReceiveViaWorldPay", locale);
             results = dispatcher.runSync("createPaymentFromPreference", UtilMisc.toMap("userLogin", userLogin,
-                    "orderPaymentPreferenceId", paymentPreference.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreferenceId), "comments", comment));
+                    "orderPaymentPreferenceId", paymentPreference.get(x.orderPaymentPreferenceId), "comments", comment));
         } catch (GenericServiceException e) {
             Debug.logError(e, "Failed to execute service createPaymentFromPreference", MODULE);
             request.setAttribute("_ERROR_MESSAGE_", UtilProperties.getMessage(RES_ERROR,

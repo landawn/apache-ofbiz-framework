@@ -42,6 +42,7 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.service.LocalDispatcher;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Category Content Worker: gets category content to display
  */
@@ -106,7 +107,7 @@ public class CategoryContentWrapper implements ContentWrapper {
          * there was no content to retrieve)
          */
         String cacheKey = prodCatContentTypeId + CACHE_KEY_SEPARATOR + locale + CACHE_KEY_SEPARATOR + mimeTypeId + CACHE_KEY_SEPARATOR
-                + productCategory.get(org.apache.ofbiz.persistence.entity.x.productCategoryId)
+                + productCategory.get(x.productCategoryId)
                 + CACHE_KEY_SEPARATOR + encoderType + CACHE_KEY_SEPARATOR + delegator;
         String cachedValue = CATEGORY_CONTENT_CACHE.get(cacheKey);
         if (cachedValue != null || CATEGORY_CONTENT_CACHE.containsKey(cacheKey)) {
@@ -155,7 +156,7 @@ public class CategoryContentWrapper implements ContentWrapper {
             Locale locale, String mimeTypeId, Delegator delegator, LocalDispatcher dispatcher, Writer outWriter, boolean cache)
             throws GeneralException, IOException {
         if (productCategory != null) {
-            productCategoryId = productCategory.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId);
+            productCategoryId = productCategory.getString(x.productCategoryId);
         } else if (productCategoryId != null) {
             productCategory = EntityQuery.use(delegator).from("ProductCategory").where("productCategoryId",
                     productCategoryId).cache(cache).queryOne();
@@ -179,7 +180,7 @@ public class CategoryContentWrapper implements ContentWrapper {
             Map<String, Object> inContext = new HashMap<>();
             inContext.put("productCategory", productCategory);
             inContext.put("categoryContent", categoryContent);
-            ContentWorker.renderContentAsText(dispatcher, categoryContent.getString(org.apache.ofbiz.persistence.entity.x.contentId), outWriter, inContext,
+            ContentWorker.renderContentAsText(dispatcher, categoryContent.getString(x.contentId), outWriter, inContext,
                     locale, mimeTypeId, null, null, cache);
         } else {
             String candidateValue = ContentWrapper.getCandidateFieldValue(productCategory, prodCatContentTypeId);

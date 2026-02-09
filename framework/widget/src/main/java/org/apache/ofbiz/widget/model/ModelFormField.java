@@ -86,6 +86,7 @@ import org.apache.ofbiz.widget.renderer.VisualTheme;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.w3c.dom.Element;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Models the &lt;field&gt; element.
  *
@@ -255,7 +256,7 @@ public final class ModelFormField {
         String idName = FlexibleStringExpander.expandString(this.getIdName(), context);
 
         if (modelForm != null) {
-            Integer itemIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.itemIndex);
+            Integer itemIndex = (Integer) context.get(x.itemIndex);
             if ("list".equals(modelForm.getType()) || "multi".equals(modelForm.getType())) {
                 if (itemIndex != null) {
                     return idName + modelForm.getItemIndexSeparator() + itemIndex;
@@ -289,27 +290,27 @@ public final class ModelFormField {
     }
 
     public String getEntry(Map<String, ? extends Object> context, String defaultValue) {
-        Boolean isError = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.isError);
-        Boolean useRequestParametersGlobal = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.useRequestParameters);
-        Boolean useRequestParametersSpecific = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.useRequestParameters_ + modelForm.getName());
+        Boolean isError = (Boolean) context.get(x.isError);
+        Boolean useRequestParametersGlobal = (Boolean) context.get(x.useRequestParameters);
+        Boolean useRequestParametersSpecific = (Boolean) context.get(x.useRequestParameters_ + modelForm.getName());
         Boolean useRequestParameters = useRequestParametersSpecific != null ? useRequestParametersSpecific : useRequestParametersGlobal;
 
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         if (locale == null) {
             locale = Locale.getDefault();
         }
-        TimeZone timeZone = (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone);
+        TimeZone timeZone = (TimeZone) context.get(x.timeZone);
         if (timeZone == null) {
             timeZone = TimeZone.getDefault();
         }
 
-        UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
+        UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(x.simpleEncoder);
 
         String returnValue;
 
         if ((Boolean.TRUE.equals(isError) && !Boolean.FALSE.equals(useRequestParameters))
                 || (Boolean.TRUE.equals(useRequestParameters))) {
-            Map<String, Object> parameters = UtilGenerics.checkMap(context.get(org.apache.ofbiz.persistence.entity.x.parameters), String.class, Object.class);
+            Map<String, Object> parameters = UtilGenerics.checkMap(context.get(x.parameters), String.class, Object.class);
             String parameterName = this.getParameterName(context);
             if (parameters != null && parameters.get(parameterName) != null) {
                 Object parameterValue = parameters.get(parameterName);
@@ -353,7 +354,7 @@ public final class ModelFormField {
 
             // this is a special case to fill in fields during a create by default from parameters passed in
             if (dataMapIsContext && retVal == null && !Boolean.FALSE.equals(useRequestParameters)) {
-                Map<String, ? extends Object> parameters = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.parameters));
+                Map<String, ? extends Object> parameters = UtilGenerics.cast(context.get(x.parameters));
                 if (parameters != null) {
                     if (UtilValidate.isNotEmpty(this.entryAcsr)) {
                         retVal = this.entryAcsr.get(parameters);
@@ -563,7 +564,7 @@ public final class ModelFormField {
             baseName = this.name;
         }
 
-        Integer itemIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.itemIndex);
+        Integer itemIndex = (Integer) context.get(x.itemIndex);
         if (itemIndex != null && "multi".equals(this.modelForm.getType())) {
             return baseName + this.modelForm.getItemIndexSeparator() + itemIndex;
         }
@@ -659,7 +660,7 @@ public final class ModelFormField {
         }
 
         // search for a localized label for the field's name
-        Map<String, String> uiLabelMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.uiLabelMap));
+        Map<String, String> uiLabelMap = UtilGenerics.cast(context.get(x.uiLabelMap));
         if (uiLabelMap != null) {
             String titleFieldName = "FormFieldTitle_" + this.name;
             String localizedName = uiLabelMap.get(titleFieldName);
@@ -723,7 +724,7 @@ public final class ModelFormField {
         if (this.getEncodeOutput()) {
             UtilCodec.SimpleEncoder simpleEncoder = null;
             if (tooltipString.equals(StringEscapeUtils.unescapeEcmaScript(StringEscapeUtils.unescapeHtml4(tooltipString)))) {
-                simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
+                simpleEncoder = (UtilCodec.SimpleEncoder) context.get(x.simpleEncoder);
             } else {
                 simpleEncoder = UtilCodec.getEncoder("string");
             }
@@ -1226,7 +1227,7 @@ public final class ModelFormField {
         public String getDefaultOptionFrom(Map<String, Object> context) {
             String defaultOption = getDefaultOptionFrom();
 
-            Map<String, Object> parameters = UtilGenerics.checkMap(context.get(org.apache.ofbiz.persistence.entity.x.parameters), String.class, Object.class);
+            Map<String, Object> parameters = UtilGenerics.checkMap(context.get(x.parameters), String.class, Object.class);
             if (UtilValidate.isNotEmpty(parameters)) {
                 String fieldName = this.getModelFormField().getName();
                 if (parameters.containsKey(fieldName.concat("_fld0_value"))) {
@@ -1252,7 +1253,7 @@ public final class ModelFormField {
         public String getDefaultOptionThru(Map<String, Object> context) {
             String defaultOption = getDefaultOptionThru();
 
-            Map<String, Object> parameters = UtilGenerics.checkMap(context.get(org.apache.ofbiz.persistence.entity.x.parameters), String.class, Object.class);
+            Map<String, Object> parameters = UtilGenerics.checkMap(context.get(x.parameters), String.class, Object.class);
             if (UtilValidate.isNotEmpty(parameters)) {
                 String fieldName = this.getModelFormField().getName();
                 if (parameters.containsKey(fieldName.concat("_fld1_value"))) {
@@ -1991,7 +1992,7 @@ public final class ModelFormField {
 
         @Override
         public String getDescription(Map<String, Object> context) {
-            Locale locale = UtilMisc.ensureLocale(context.get(org.apache.ofbiz.persistence.entity.x.locale));
+            Locale locale = UtilMisc.ensureLocale(context.get(x.locale));
 
             // rather than using the context to expand the string, lookup the given entity and use it to expand the string
             GenericValue value = null;
@@ -2032,7 +2033,7 @@ public final class ModelFormField {
             } else if (this.getModelFormField().getEncodeOutput()) {
                 UtilCodec.SimpleEncoder simpleEncoder = null;
                 if (retVal.equals(StringEscapeUtils.unescapeEcmaScript(StringEscapeUtils.unescapeHtml4(retVal)))) {
-                    simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
+                    simpleEncoder = (UtilCodec.SimpleEncoder) context.get(x.simpleEncoder);
                 } else {
                     simpleEncoder = UtilCodec.getEncoder("string");
                 }
@@ -2261,7 +2262,7 @@ public final class ModelFormField {
             } else if ("currency".equals(type)) {
                 retVal = retVal.replace("&nbsp;", " ");
                 // FIXME : encoding currency is a problem for some locale, we should not have any &nbsp; in retVal other case may arise in future...
-                Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+                Locale locale = (Locale) context.get(x.locale);
                 if (locale == null) {
                     locale = Locale.getDefault();
                 }
@@ -2281,7 +2282,7 @@ public final class ModelFormField {
                     throw new IllegalArgumentException(errMsg);
                 }
             } else if ("date".equals(this.type) && retVal.length() > 9) {
-                Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+                Locale locale = (Locale) context.get(x.locale);
                 if (locale == null) {
                     locale = Locale.getDefault();
                 }
@@ -2302,8 +2303,8 @@ public final class ModelFormField {
                 }
 
             } else if ("date-time".equals(this.type) && retVal.length() > 16) {
-                Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-                TimeZone timeZone = (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone);
+                Locale locale = (Locale) context.get(x.locale);
+                TimeZone timeZone = (TimeZone) context.get(x.timeZone);
                 if (locale == null) {
                     locale = Locale.getDefault();
                 }
@@ -2326,7 +2327,7 @@ public final class ModelFormField {
                     retVal = retVal.substring(0, 16);
                 }
             } else if ("number".equals(this.type) || (this.type != null && this.type.endsWith("-number"))) {
-                Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+                Locale locale = (Locale) context.get(x.locale);
                 if (locale == null) {
                     locale = Locale.getDefault();
                 }
@@ -2338,7 +2339,7 @@ public final class ModelFormField {
                         ? this.type.replaceFirst("-number", "")
                         : "default";
                 }
-                Delegator delegator = (Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator);
+                Delegator delegator = (Delegator) context.get(x.delegator);
                 try {
                     Double parsedRetVal = (Double) ObjectType.simpleTypeOrObjectConvert(retVal, "Double", null, locale, false);
                     retVal = UtilFormatOut.formatNumber(parsedRetVal, formatVal, delegator, locale);
@@ -2351,7 +2352,7 @@ public final class ModelFormField {
             if (UtilValidate.isNotEmpty(this.description) && retVal != null && this.getModelFormField().getEncodeOutput()) {
                 UtilCodec.SimpleEncoder simpleEncoder = null;
                 if (retVal.equals(StringEscapeUtils.unescapeEcmaScript(StringEscapeUtils.unescapeHtml4(retVal)))) {
-                    simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
+                    simpleEncoder = (UtilCodec.SimpleEncoder) context.get(x.simpleEncoder);
                 } else {
                     simpleEncoder = UtilCodec.getEncoder("string");
                 }
@@ -2602,7 +2603,7 @@ public final class ModelFormField {
             }
 
             baseName += "_OTHER";
-            Integer itemIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.itemIndex);
+            Integer itemIndex = (Integer) context.get(x.itemIndex);
             if (itemIndex != null && "multi".equals(getModelFormField().modelForm.getType())) {
                 return baseName + getModelFormField().modelForm.getItemIndexSeparator() + itemIndex;
             }
@@ -2897,7 +2898,7 @@ public final class ModelFormField {
             }
 
             try {
-                Locale locale = UtilMisc.ensureLocale(context.get(org.apache.ofbiz.persistence.entity.x.locale));
+                Locale locale = UtilMisc.ensureLocale(context.get(x.locale));
                 ModelEntity modelEntity = delegator.getModelEntity(this.entityName);
                 Boolean localizedOrderBy = UtilValidate.isNotEmpty(this.orderByList)
                         && ModelUtil.isPotentialLocalizedFields(modelEntity, this.orderByList);
@@ -3273,11 +3274,11 @@ public final class ModelFormField {
             String location = this.getFormLocation(context);
             ModelForm modelForm = null;
             try {
-                org.apache.ofbiz.entity.model.ModelReader entityModelReader = ((org.apache.ofbiz.entity.Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator))
+                org.apache.ofbiz.entity.model.ModelReader entityModelReader = ((org.apache.ofbiz.entity.Delegator) context.get(x.delegator))
                         .getModelReader();
-                org.apache.ofbiz.service.DispatchContext dispatchContext = ((org.apache.ofbiz.service.LocalDispatcher) context.get(org.apache.ofbiz.persistence.entity.x.dispatcher))
+                org.apache.ofbiz.service.DispatchContext dispatchContext = ((org.apache.ofbiz.service.LocalDispatcher) context.get(x.dispatcher))
                         .getDispatchContext();
-                VisualTheme visualTheme = (VisualTheme) context.get(org.apache.ofbiz.persistence.entity.x.visualTheme);
+                VisualTheme visualTheme = (VisualTheme) context.get(x.visualTheme);
                 modelForm = FormFactory.getFormFromLocation(location, name, entityModelReader, visualTheme, dispatchContext);
             } catch (RuntimeException e) {
                 throw e;
@@ -3380,11 +3381,11 @@ public final class ModelFormField {
             String location = this.getGridLocation(context);
             ModelForm modelForm = null;
             try {
-                org.apache.ofbiz.entity.model.ModelReader entityModelReader = ((org.apache.ofbiz.entity.Delegator) context.get(org.apache.ofbiz.persistence.entity.x.delegator))
+                org.apache.ofbiz.entity.model.ModelReader entityModelReader = ((org.apache.ofbiz.entity.Delegator) context.get(x.delegator))
                         .getModelReader();
-                org.apache.ofbiz.service.DispatchContext dispatchContext = ((org.apache.ofbiz.service.LocalDispatcher) context.get(org.apache.ofbiz.persistence.entity.x.dispatcher))
+                org.apache.ofbiz.service.DispatchContext dispatchContext = ((org.apache.ofbiz.service.LocalDispatcher) context.get(x.dispatcher))
                         .getDispatchContext();
-                VisualTheme visualTheme = (VisualTheme) context.get(org.apache.ofbiz.persistence.entity.x.visualTheme);
+                VisualTheme visualTheme = (VisualTheme) context.get(x.visualTheme);
                 modelForm = GridFactory.getGridFromLocation(location, name, entityModelReader, visualTheme, dispatchContext);
             } catch (RuntimeException e) {
                 throw e;
@@ -3457,7 +3458,7 @@ public final class ModelFormField {
                 String valueEnc = this.value.expandString(context);
                 UtilCodec.SimpleEncoder simpleEncoder = null;
                 if (valueEnc.equals(StringEscapeUtils.unescapeEcmaScript(StringEscapeUtils.unescapeHtml4(valueEnc)))) {
-                    simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
+                    simpleEncoder = (UtilCodec.SimpleEncoder) context.get(x.simpleEncoder);
                 } else {
                     simpleEncoder = UtilCodec.getEncoder("string");
                 }
@@ -4780,7 +4781,7 @@ public final class ModelFormField {
         public void renderFieldString(Appendable writer, Map<String, Object> context, FormStringRenderer formStringRenderer)
                 throws IOException {
             // Output format might not support menus, so make menu rendering optional.
-            MenuStringRenderer menuStringRenderer = (MenuStringRenderer) context.get(org.apache.ofbiz.persistence.entity.x.menuStringRenderer);
+            MenuStringRenderer menuStringRenderer = (MenuStringRenderer) context.get(x.menuStringRenderer);
             if (menuStringRenderer == null) {
                 if (Debug.verboseOn()) {
                     Debug.logVerbose("MenuStringRenderer instance not found in rendering context, menu not rendered.", MODULE);
@@ -4801,7 +4802,7 @@ public final class ModelFormField {
             String location = this.getMenuLocation(context);
             ModelMenu modelMenu = null;
             try {
-                modelMenu = MenuFactory.getMenuFromLocation(location, name, (VisualTheme) context.get(org.apache.ofbiz.persistence.entity.x.visualTheme));
+                modelMenu = MenuFactory.getMenuFromLocation(location, name, (VisualTheme) context.get(x.visualTheme));
             } catch (Exception e) {
                 String errMsg = "Error rendering menu named [" + name + "] at location [" + location + "]: ";
                 Debug.logError(e, errMsg, MODULE);
@@ -5100,7 +5101,7 @@ public final class ModelFormField {
             String name = this.getScreenName(context);
             String location = this.getScreenLocation(context);
             try {
-                ScreenRenderer renderer = (ScreenRenderer) context.get(org.apache.ofbiz.persistence.entity.x.screens);
+                ScreenRenderer renderer = (ScreenRenderer) context.get(x.screens);
                 if (renderer != null) {
                     MapStack<String> mapStack = UtilGenerics.cast(context);
                     ScreenRenderer subRenderer = new ScreenRenderer(writer, mapStack, renderer.getScreenStringRenderer());
@@ -6229,7 +6230,7 @@ public final class ModelFormField {
         public String getDefaultOption(Map<String, Object> context) {
             String defaultOption = getDefaultOption();
 
-            Map<String, Object> parameters = UtilGenerics.checkMap(context.get(org.apache.ofbiz.persistence.entity.x.parameters), String.class, Object.class);
+            Map<String, Object> parameters = UtilGenerics.checkMap(context.get(x.parameters), String.class, Object.class);
             if (UtilValidate.isNotEmpty(parameters)) {
                 String fieldName = this.getModelFormField().getName();
                 if (parameters.containsKey(fieldName)) {
@@ -6269,7 +6270,7 @@ public final class ModelFormField {
         public boolean getIgnoreCase(Map<String, Object> context) {
             boolean ignoreCase = getIgnoreCase();
 
-            Map<String, Object> parameters = UtilGenerics.checkMap(context.get(org.apache.ofbiz.persistence.entity.x.parameters), String.class, Object.class);
+            Map<String, Object> parameters = UtilGenerics.checkMap(context.get(x.parameters), String.class, Object.class);
             if (UtilValidate.isNotEmpty(parameters)) {
                 String fieldName = this.getModelFormField().getName();
                 if (parameters.containsKey(fieldName)) {

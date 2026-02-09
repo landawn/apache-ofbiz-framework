@@ -53,6 +53,7 @@ import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * UtilMisc - Misc Utility Functions
  */
@@ -649,7 +650,7 @@ public final class UtilMisc {
             PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
             String defaultCountry = EntityUtilProperties.getPropertyValue("general", "country.geo.id.default", delegator);
             GenericValue defaultGeo = EntityQuery.use(delegator).from("Geo").where("geoId", defaultCountry).cache().queryOne();
-            String defaultGeoCode = defaultGeo != null ? defaultGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode) : "US";
+            String defaultGeoCode = defaultGeo != null ? defaultGeo.getString(x.geoCode) : "US";
             PhoneNumber phNumber = phoneUtil.parse(phoneNumber, defaultGeoCode);
             if (phoneUtil.isValidNumber(phNumber) || phoneUtil.isPossibleNumber(phNumber)) {
                 String nationalSignificantNumber = phoneUtil.getNationalSignificantNumber(phNumber);

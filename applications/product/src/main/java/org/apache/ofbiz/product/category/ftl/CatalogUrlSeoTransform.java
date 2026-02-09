@@ -63,6 +63,7 @@ import freemarker.template.SimpleScalar;
 import freemarker.template.TemplateModelException;
 import freemarker.template.TemplateTransformModel;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class CatalogUrlSeoTransform implements TemplateTransformModel {
     private static final String MODULE = CatalogUrlSeoTransform.class.getName();
 
@@ -197,10 +198,10 @@ public class CatalogUrlSeoTransform implements TemplateTransformModel {
                 Collection<GenericValue> allCategories = delegator.findList("ProductCategory", null,
                         UtilMisc.toSet("productCategoryId", "categoryName"), null, null, false);
                 for (GenericValue category : allCategories) {
-                    String categoryName = category.getString(org.apache.ofbiz.persistence.entity.x.categoryName);
+                    String categoryName = category.getString(x.categoryName);
                     String categoryNameId = null;
                     String categoryIdName = null;
-                    String categoryId = category.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId);
+                    String categoryId = category.getString(x.productCategoryId);
                     if (UtilValidate.isNotEmpty(categoryName)) {
                         categoryName = SeoUrlUtil.replaceSpecialCharsUrl(categoryName.trim());
                         if (matcher.matches(categoryName, asciiPattern)) {
@@ -305,7 +306,7 @@ public class CatalogUrlSeoTransform implements TemplateTransformModel {
 
         if (UtilValidate.isNotEmpty(productId)) {
             if (product != null) {
-                String productName = product.getString(org.apache.ofbiz.persistence.entity.x.productName);
+                String productName = product.getString(x.productName);
                 productName = SeoUrlUtil.replaceSpecialCharsUrl(productName);
                 if (UtilValidate.isNotEmpty(productName)) {
                     urlBuilder.append(productName + URL_HYPHEN);
@@ -754,7 +755,7 @@ public class CatalogUrlSeoTransform implements TemplateTransformModel {
 
         if (UtilValidate.isNotEmpty(productId)) {
             if (product != null) {
-                String productName = product.getString(org.apache.ofbiz.persistence.entity.x.productName);
+                String productName = product.getString(x.productName);
                 productName = SeoUrlUtil.replaceSpecialCharsUrl(productName);
                 if (UtilValidate.isNotEmpty(productName)) {
                     urlBuilder.append(productName + URL_HYPHEN);

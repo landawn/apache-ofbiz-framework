@@ -93,6 +93,7 @@ import org.apache.ofbiz.widget.renderer.macro.renderable.RenderableFtl;
 import org.apache.ofbiz.widget.renderer.macro.renderable.RenderableFtlMacroCall;
 import org.jsoup.nodes.Element;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Widget Library - Form Renderer implementation based on Freemarker macros
  */
@@ -166,7 +167,7 @@ public final class MacroFormRenderer implements FormStringRenderer {
         if (UtilValidate.isEmpty(value)) {
             return value;
         }
-        UtilCodec.SimpleEncoder encoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
+        UtilCodec.SimpleEncoder encoder = (UtilCodec.SimpleEncoder) context.get(x.simpleEncoder);
         if (modelFormField.getEncodeOutput() && encoder != null) {
             value = encoder.encode(value);
         } else {
@@ -683,7 +684,7 @@ public final class MacroFormRenderer implements FormStringRenderer {
             String displayHelpText = UtilProperties.getPropertyValue("widget", "widget.form.displayhelpText");
             if ("Y".equals(displayHelpText)) {
                 Delegator delegator = WidgetWorker.getDelegator(context);
-                Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+                Locale locale = (Locale) context.get(x.locale);
                 String entityName = modelFormField.getEntityName();
                 String fieldName = modelFormField.getFieldName();
                 String helpText = UtilHelpText.getEntityFieldDescription(entityName, fieldName, delegator, locale);
@@ -825,7 +826,7 @@ public final class MacroFormRenderer implements FormStringRenderer {
         sr.append("<@renderMultiFormClose />");
         executeMacro(writer, sr.toString());
         // see if there is anything that needs to be added outside of the multi-form
-        Map<String, Object> wholeFormContext = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.wholeFormContext));
+        Map<String, Object> wholeFormContext = UtilGenerics.cast(context.get(x.wholeFormContext));
         Appendable postMultiFormWriter = wholeFormContext != null ? (Appendable) wholeFormContext.get("postMultiFormWriter") : null;
         if (postMultiFormWriter != null) {
             writer.append(postMultiFormWriter.toString());
@@ -839,8 +840,8 @@ public final class MacroFormRenderer implements FormStringRenderer {
 
     @Override
     public void renderFormatListWrapperOpen(Appendable writer, Map<String, Object> context, ModelForm modelForm) throws IOException {
-        Map<String, Object> inputFields = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.requestParameters));
-        Object obj = context.get(org.apache.ofbiz.persistence.entity.x.queryStringMap);
+        Map<String, Object> inputFields = UtilGenerics.cast(context.get(x.requestParameters));
+        Object obj = context.get(x.queryStringMap);
         Map<String, Object> queryStringMap = (obj instanceof Map) ? UtilGenerics.cast(obj) : null;
         if (UtilValidate.isNotEmpty(queryStringMap)) {
             inputFields.putAll(queryStringMap);
@@ -849,7 +850,7 @@ public final class MacroFormRenderer implements FormStringRenderer {
             inputFields = UtilHttp.removeMultiFormParameters(inputFields);
         }
         String queryString = UtilHttp.urlEncodeArgs(inputFields);
-        context.put(org.apache.ofbiz.persistence.entity.x._QBESTRING_, queryString);
+        context.put(x._QBESTRING_, queryString);
         if (modelForm instanceof ModelSingleForm) {
             renderBeginningBoundaryComment(writer, "Form Widget - Form Element", modelForm);
         } else {
@@ -1015,7 +1016,7 @@ public final class MacroFormRenderer implements FormStringRenderer {
 
     @Override
     public void renderFormatItemRowOpen(Appendable writer, Map<String, Object> context, ModelForm modelForm) throws IOException {
-        Integer itemIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.itemIndex);
+        Integer itemIndex = (Integer) context.get(x.itemIndex);
         String altRowStyles = "";
         String evenRowStyle = "";
         String oddRowStyle = "";
@@ -1208,7 +1209,7 @@ public final class MacroFormRenderer implements FormStringRenderer {
                 alert = "true";
             }
         }
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         if (!textFindField.getHideOptions()) {
             opEquals = UtilProperties.getMessage("conditionalUiLabels", "equals", locale);
             opBeginsWith = UtilProperties.getMessage("conditionalUiLabels", "begins_with", locale);
@@ -1285,7 +1286,7 @@ public final class MacroFormRenderer implements FormStringRenderer {
     @Override
     public void renderRangeFindField(Appendable writer, Map<String, Object> context, RangeFindField rangeFindField) throws IOException {
         ModelFormField modelFormField = rangeFindField.getModelFormField();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         String opEquals = UtilProperties.getMessage("conditionalUiLabels", "equals", locale);
         String opGreaterThan = UtilProperties.getMessage("conditionalUiLabels", "greater_than", locale);
         String opGreaterThanEquals = UtilProperties.getMessage("conditionalUiLabels", "greater_than_equals", locale);
@@ -1481,7 +1482,7 @@ public final class MacroFormRenderer implements FormStringRenderer {
         }
         Boolean isInitiallyCollapsed = lookupField.getInitiallyCollapsed();
         String clearText = "";
-        Map<String, Object> uiLabelMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.uiLabelMap));
+        Map<String, Object> uiLabelMap = UtilGenerics.cast(context.get(x.uiLabelMap));
         if (uiLabelMap != null) {
             clearText = (String) uiLabelMap.get("CommonClear");
         } else {
@@ -1575,7 +1576,7 @@ public final class MacroFormRenderer implements FormStringRenderer {
         sr.append("\" disabled=");
         sr.append(Boolean.toString(disabled));
         sr.append(" delegatorName=\"");
-        sr.append(((HttpSession) context.get(org.apache.ofbiz.persistence.entity.x.session)).getAttribute("delegatorName").toString());
+        sr.append(((HttpSession) context.get(x.session)).getAttribute("delegatorName").toString());
         sr.append("\" />");
         executeMacro(writer, sr.toString());
         this.addAsterisks(writer, context, modelFormField);
@@ -1610,7 +1611,7 @@ public final class MacroFormRenderer implements FormStringRenderer {
         int highIndex = Paginator.getHighIndex(context);
         int actualPageSize = Paginator.getActualPageSize(context);
         // needed for the "Page" and "rows" labels
-        Map<String, String> uiLabelMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.uiLabelMap));
+        Map<String, String> uiLabelMap = UtilGenerics.cast(context.get(x.uiLabelMap));
         String pageLabel = "";
         String commonDisplaying = "";
         if (uiLabelMap == null) {
@@ -1618,7 +1619,7 @@ public final class MacroFormRenderer implements FormStringRenderer {
         } else {
             pageLabel = uiLabelMap.get("CommonPage");
             Map<String, Integer> messageMap = UtilMisc.toMap("lowCount", lowIndex + 1, "highCount", lowIndex + actualPageSize, "total", listSize);
-            commonDisplaying = UtilProperties.getMessage("CommonUiLabels", "CommonDisplaying", messageMap, (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale));
+            commonDisplaying = UtilProperties.getMessage("CommonUiLabels", "CommonDisplaying", messageMap, (Locale) context.get(x.locale));
         }
         // for legacy support, the viewSizeParam is VIEW_SIZE and viewIndexParam is VIEW_INDEX when the fields are "viewSize" and "viewIndex"
         if (("viewIndex" + "_" + paginatorNumber).equals(viewIndexParam)) {
@@ -1627,7 +1628,7 @@ public final class MacroFormRenderer implements FormStringRenderer {
         if (("viewSize" + "_" + paginatorNumber).equals(viewSizeParam)) {
             viewSizeParam = "VIEW_SIZE" + "_" + paginatorNumber;
         }
-        String str = (String) context.get(org.apache.ofbiz.persistence.entity.x._QBESTRING_);
+        String str = (String) context.get(x._QBESTRING_);
 
         // refresh any csrf token in the query string for pagination
         String tokenValue = CsrfUtil.generateTokenForNonAjax(request, targetService);
@@ -2131,7 +2132,7 @@ public final class MacroFormRenderer implements FormStringRenderer {
         }
         String queryString = UtilHttp.getQueryStringFromTarget(paginateTarget).replace("?", "");
         Map<String, Object> paramMap = UtilHttp.getQueryStringOnlyParameterMap(queryString);
-        String qbeString = (String) context.get(org.apache.ofbiz.persistence.entity.x._QBESTRING_);
+        String qbeString = (String) context.get(x._QBESTRING_);
         if (qbeString != null) {
             qbeString = qbeString.replaceAll("&amp;", "&");
             paramMap.putAll(UtilHttp.getQueryStringOnlyParameterMap(qbeString));
@@ -2252,7 +2253,7 @@ public final class MacroFormRenderer implements FormStringRenderer {
                 writer.append(anchorElement.outerHtml());
                 // this is a bit trickier, since we can't do a nested form we'll have to put the link to submit the form in place,
                 // but put the actual form def elsewhere, ie after the big form is closed
-                Map<String, Object> wholeFormContext = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.wholeFormContext));
+                Map<String, Object> wholeFormContext = UtilGenerics.cast(context.get(x.wholeFormContext));
                 Appendable postMultiFormWriter = wholeFormContext != null ? (Appendable) wholeFormContext.get("postMultiFormWriter") : null;
                 if (postMultiFormWriter == null) {
                     postMultiFormWriter = new StringWriter();

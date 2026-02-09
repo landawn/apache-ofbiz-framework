@@ -48,6 +48,7 @@ import org.apache.ofbiz.widget.model.ModelTree.ModelNode;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Abstract tree action.
  */
@@ -319,7 +320,7 @@ public abstract class ModelTreeAction extends AbstractModelAction {
 
         @Override
         public void runAction(Map<String, Object> context) {
-            context.put(org.apache.ofbiz.persistence.entity.x._LIST_ITERATOR_, null);
+            context.put(x._LIST_ITERATOR_, null);
             if (location.endsWith(".xml")) {
                 Map<String, Object> localContext = new HashMap<>();
                 localContext.putAll(context);
@@ -334,7 +335,7 @@ public abstract class ModelTreeAction extends AbstractModelAction {
             } else {
                 ScriptUtil.executeScript(this.location, this.method, context);
             }
-            Object obj = context.get(org.apache.ofbiz.persistence.entity.x._LIST_ITERATOR_);
+            Object obj = context.get(x._LIST_ITERATOR_);
             if (this.getModelSubNode() != null) {
                 if (obj != null && (obj instanceof EntityListIterator || obj instanceof ListIterator<?>)) {
                     ListIterator<? extends Map<String, ? extends Object>> listIt = UtilGenerics.cast(obj);

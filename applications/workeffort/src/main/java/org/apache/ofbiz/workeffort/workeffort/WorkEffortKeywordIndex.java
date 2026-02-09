@@ -40,6 +40,7 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class WorkEffortKeywordIndex {
     private static final String MODULE = WorkEffortKeywordIndex.class.getName();
     public static void indexKeywords(GenericValue workEffort) throws GenericEntityException {
@@ -51,7 +52,7 @@ public class WorkEffortKeywordIndex {
         if (delegator == null) {
             return;
         }
-        String workEffortId = workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
+        String workEffortId = workEffort.getString(x.workEffortId);
         String separators = KeywordSearchUtil.getSeparators();
         String stopWordBagOr = KeywordSearchUtil.getStopWordBagOr();
         String stopWordBagAnd = KeywordSearchUtil.getStopWordBagAnd();
@@ -66,7 +67,7 @@ public class WorkEffortKeywordIndex {
         } catch (Exception e) {
             Debug.logWarning("Could not parse weight number: " + e.toString(), MODULE);
         }
-        keywords.put(workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId).toLowerCase(Locale.getDefault()), (long) widWeight);
+        keywords.put(workEffort.getString(x.workEffortId).toLowerCase(Locale.getDefault()), (long) widWeight);
 
         addWeightedKeywordSourceString(workEffort, "workEffortName", strings);
         addWeightedKeywordSourceString(workEffort, "workEffortTypeId", strings);
@@ -103,7 +104,7 @@ public class WorkEffortKeywordIndex {
                     workEffortId, "workEffortContentTypeId", workEffortContentTypeId).queryList();
             for (GenericValue workEffortContentAndInfo: workEffortContentAndInfos) {
                 addWeightedDataResourceString(workEffortContentAndInfo, weight, strings, delegator, workEffort);
-                List<GenericValue> alternateViews = workEffortContentAndInfo.getRelated(org.apache.ofbiz.persistence.entity.x.ContentAssocDataResourceViewTo,
+                List<GenericValue> alternateViews = workEffortContentAndInfo.getRelated(x.ContentAssocDataResourceViewTo,
                         UtilMisc.toMap("caContentAssocTypeId", "ALTERNATE_LOCALE"), UtilMisc.toList("-caFromDate"), false);
                 alternateViews = EntityUtil.filterByDate(alternateViews, UtilDateTime.nowTimestamp(), "caFromDate", "caThruDate", true);
                 for (GenericValue thisView: alternateViews) {
@@ -120,14 +121,14 @@ public class WorkEffortKeywordIndex {
         for (Map.Entry<String, Long> entry: keywords.entrySet()) {
             if (entry.getKey().length() < 60) { // ignore very long strings, cannot be stored anyway
                 GenericValue workEffortKeyword = delegator.makeValue("WorkEffortKeyword", UtilMisc.toMap("workEffortId",
-                        workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId), "keyword", entry.getKey(), "relevancyWeight", entry.getValue()));
+                        workEffort.getString(x.workEffortId), "keyword", entry.getKey(), "relevancyWeight", entry.getValue()));
                 toBeStored.add(workEffortKeyword);
             }
         }
         if (!toBeStored.isEmpty()) {
             if (Debug.verboseOn()) {
                 Debug.logVerbose("WorkEffortKeywordIndex indexKeywords Storing " + toBeStored.size() + " keywords for workEffortId "
-                        + workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId), MODULE);
+                        + workEffort.getString(x.workEffortId), MODULE);
             }
             delegator.storeAll(toBeStored);
         }
@@ -138,7 +139,7 @@ public class WorkEffortKeywordIndex {
                                                      GenericValue workEffort) {
         Map<String, Object> workEffortCtx = UtilMisc.<String, Object>toMap("workEffort", workEffort);
         try {
-            String contentText = DataResourceWorker.renderDataResourceAsText(null, delegator, dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId),
+            String contentText = DataResourceWorker.renderDataResourceAsText(null, delegator, dataResource.getString(x.dataResourceId),
                     workEffortCtx, null, null, false);
             for (int i = 0; i < weight; i++) {
                 strings.add(contentText);

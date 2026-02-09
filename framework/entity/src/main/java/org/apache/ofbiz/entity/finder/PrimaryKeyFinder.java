@@ -38,6 +38,7 @@ import org.apache.ofbiz.entity.model.ModelField;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.w3c.dom.Element;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Uses the delegator to find entity values by a condition
  *
@@ -103,7 +104,7 @@ public class PrimaryKeyFinder extends Finder {
         Map<String, Object> entityContext = new HashMap<>();
         if (autoFieldMap) {
             // try a map called "parameters", try it first so values from here are overridden by values in the main context
-            Object parametersObj = context.get(org.apache.ofbiz.persistence.entity.x.parameters);
+            Object parametersObj = context.get(x.parameters);
             Boolean parametersObjExists = parametersObj != null && parametersObj instanceof Map<?, ?>;
             // only need PK fields
             Iterator<ModelField> iter = modelEntity.getPksIterator();
@@ -124,8 +125,8 @@ public class PrimaryKeyFinder extends Finder {
         // then convert the types...
 
         // need the timeZone and locale for conversion, so add here and remove after
-        entityContext.put("locale", context.get(org.apache.ofbiz.persistence.entity.x.locale));
-        entityContext.put("timeZone", context.get(org.apache.ofbiz.persistence.entity.x.timeZone));
+        entityContext.put("locale", context.get(x.locale));
+        entityContext.put("timeZone", context.get(x.timeZone));
         modelEntity.convertFieldMapInPlace(entityContext, delegator);
         entityContext.remove("locale");
         entityContext.remove("timeZone");

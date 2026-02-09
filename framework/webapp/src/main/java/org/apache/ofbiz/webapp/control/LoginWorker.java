@@ -93,6 +93,7 @@ import org.apache.ofbiz.webapp.stats.VisitHandler;
 import org.apache.ofbiz.webapp.website.WebSiteProperties;
 import org.apache.ofbiz.widget.model.ThemeFactory;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Common Workers
  */
@@ -158,7 +159,7 @@ public final class LoginWorker {
                 if (userLogin == null) {
                     Debug.logError("Could not find UserLogin record for setLoggedOut with userLoginId [" + userLoginId + "]", MODULE);
                 } else {
-                    userLogin.set(org.apache.ofbiz.persistence.entity.x.hasLoggedOut, "Y");
+                    userLogin.set(x.hasLoggedOut, "Y");
                     userLogin.store();
                 }
             } catch (GenericEntityException e) {
@@ -198,7 +199,7 @@ public final class LoginWorker {
         GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
 
         // anonymous shoppers are not logged in
-        if (userLogin != null && "anonymous".equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId))) {
+        if (userLogin != null && "anonymous".equals(userLogin.getString(x.userLoginId))) {
             userLogin = null;
         }
 
@@ -245,7 +246,7 @@ public final class LoginWorker {
             try {
                 userLoginHistory = EntityQuery.use(userLogin.getDelegator())
                         .from("UserLoginHistory")
-                        .where(EntityCondition.makeCondition("userLoginId", userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId)),
+                        .where(EntityCondition.makeCondition("userLoginId", userLogin.get(x.userLoginId)),
                                 EntityCondition.makeCondition("originUserLoginId", EntityOperator.NOT_EQUAL, null))
                         .filterByDate()
                         .queryFirst();
@@ -586,7 +587,7 @@ public final class LoginWorker {
 
             // check to see if a password change is required for the user
             Map<String, Object> userLoginSession = checkMap(result.get("userLoginSession"), String.class, Object.class);
-            if (userLogin != null && "Y".equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.requirePasswordChange))) {
+            if (userLogin != null && "Y".equals(userLogin.getString(x.requirePasswordChange))) {
                 return "requirePasswordChange";
             }
             String autoChangePassword = EntityUtilProperties.getPropertyValue("security", "user.auto.change.password.enable", "false", delegator);
@@ -745,8 +746,8 @@ public final class LoginWorker {
         //update the userLogin history, only one impersonation of this user can be active at the same time
         GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
         EntityCondition conditions = EntityCondition.makeCondition(
-                EntityCondition.makeCondition("userLoginId", userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId)),
-                EntityCondition.makeCondition("originUserLoginId", originUserLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId)),
+                EntityCondition.makeCondition("userLoginId", userLogin.get(x.userLoginId)),
+                EntityCondition.makeCondition("originUserLoginId", originUserLogin.get(x.userLoginId)),
                 EntityUtil.getFilterByDateExpr());
         try {
             //check impersonation process existence to avoid depersonation abuse
@@ -857,8 +858,8 @@ public final class LoginWorker {
         if (modelUserLogin.isField("partyId")) {
             // if partyId is a field, then we should have these relations defined
             try {
-                GenericValue person = userLogin.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Person, false);
-                GenericValue partyGroup = userLogin.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PartyGroup, false);
+                GenericValue person = userLogin.getRelatedOne(x.Person, false);
+                GenericValue partyGroup = userLogin.getRelatedOne(x.PartyGroup, false);
                 if (person != null) session.setAttribute("person", person);
                 if (partyGroup != null) session.setAttribute("partyGroup", partyGroup);
             } catch (GenericEntityException e) {
@@ -904,7 +905,7 @@ public final class LoginWorker {
 
         // set the logged out flag
         if (userLogin != null) {
-            LoginWorker.setLoggedOut(userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId), delegator);
+            LoginWorker.setLoggedOut(userLogin.getString(x.userLoginId), delegator);
         }
 
         // this is a setting we don't want to lose, although it would be good to have a more general solution here...
@@ -972,7 +973,7 @@ public final class LoginWorker {
         if (userLogin != null
                 // When using an empty mountpoint, ie using root as mountpoint. Beware: works only for 1 webapp!
                 && webappInfo.map(WebappInfo::isAutologinCookieUsed).orElse(!webappInfo.isPresent())) {
-            Cookie autoLoginCookie = new Cookie(getAutoLoginCookieName(request), userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
+            Cookie autoLoginCookie = new Cookie(getAutoLoginCookieName(request), userLogin.getString(x.userLoginId));
             autoLoginCookie.setMaxAge(60 * 60 * 24 * 365);
             autoLoginCookie.setDomain(EntityUtilProperties.getPropertyValue("url", "cookie.domain", delegator));
             autoLoginCookie.setPath("root".equals(applicationName) ? "/" : request.getContextPath());
@@ -980,7 +981,7 @@ public final class LoginWorker {
             autoLoginCookie.setHttpOnly(true);
             response.addCookie(autoLoginCookie);
 
-            return autoLoginCheck(delegator, session, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
+            return autoLoginCheck(delegator, session, userLogin.getString(x.userLoginId));
         } else {
             return "success";
         }
@@ -993,7 +994,7 @@ public final class LoginWorker {
         GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
         String applicationName = UtilHttp.getApplicationName(request);
         if (userLogin != null) {
-            Cookie securedLoginIdCookie = new Cookie(getSecuredLoginIdCookieName(request), userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
+            Cookie securedLoginIdCookie = new Cookie(getSecuredLoginIdCookieName(request), userLogin.getString(x.userLoginId));
             securedLoginIdCookie.setMaxAge(-1);
             securedLoginIdCookie.setDomain(EntityUtilProperties.getPropertyValue("url", "cookie.domain", delegator));
             securedLoginIdCookie.setPath("root".equals(applicationName) ? "/" : request.getContextPath());
@@ -1018,7 +1019,7 @@ public final class LoginWorker {
                 String cookieName = "securedLoginToken";
                 Cookie securedLoginTokenCookie = new Cookie(cookieName,
                         SecurityUtil.generateJwtToAuthenticateUserLogin(
-                                delegator, userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId)));
+                                delegator, userLogin.getString(x.userLoginId)));
                 String cookieDomain = "";
                 try {
                     WebSiteProperties webSiteProperties = WebSiteProperties.from(request);
@@ -1129,14 +1130,14 @@ public final class LoginWorker {
 
                     ModelEntity modelUserLogin = autoUserLogin.getModelEntity();
                     if (modelUserLogin.isField("partyId")) {
-                        person = EntityQuery.use(delegator).from("Person").where("partyId", autoUserLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId)).queryOne();
-                        group = EntityQuery.use(delegator).from("PartyGroup").where("partyId", autoUserLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId)).queryOne();
+                        person = EntityQuery.use(delegator).from("Person").where("partyId", autoUserLogin.getString(x.partyId)).queryOne();
+                        group = EntityQuery.use(delegator).from("PartyGroup").where("partyId", autoUserLogin.getString(x.partyId)).queryOne();
                     }
                 }
                 if (person != null) {
-                    session.setAttribute("autoName", person.getString(org.apache.ofbiz.persistence.entity.x.firstName) + " " + person.getString(org.apache.ofbiz.persistence.entity.x.lastName));
+                    session.setAttribute("autoName", person.getString(x.firstName) + " " + person.getString(x.lastName));
                 } else if (group != null) {
-                    session.setAttribute("autoName", group.getString(org.apache.ofbiz.persistence.entity.x.groupName));
+                    session.setAttribute("autoName", group.getString(x.groupName));
                 }
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Cannot get autoUserLogin information: " + e.getMessage(), MODULE);
@@ -1153,7 +1154,7 @@ public final class LoginWorker {
         if (userLogin != null) {
             Delegator delegator = (Delegator) request.getAttribute("delegator");
             String applicationName = UtilHttp.getApplicationName(request);
-            Cookie autoLoginCookie = new Cookie(getAutoLoginCookieName(request), userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
+            Cookie autoLoginCookie = new Cookie(getAutoLoginCookieName(request), userLogin.getString(x.userLoginId));
             autoLoginCookie.setMaxAge(0);
             autoLoginCookie.setDomain(EntityUtilProperties.getPropertyValue("url", "cookie.domain", delegator));
             autoLoginCookie.setPath("root".equals(applicationName) ? "/" : request.getContextPath());
@@ -1173,7 +1174,7 @@ public final class LoginWorker {
         HttpSession session = request.getSession();
         GenericValue currentUserLogin = (GenericValue) session.getAttribute("userLogin");
         if (currentUserLogin != null) {
-            String hasLoggedOut = currentUserLogin.getString(org.apache.ofbiz.persistence.entity.x.hasLoggedOut);
+            String hasLoggedOut = currentUserLogin.getString(x.hasLoggedOut);
             if (hasLoggedOut != null && "N".equals(hasLoggedOut)) {
                 return true;
             }
@@ -1195,9 +1196,9 @@ public final class LoginWorker {
         try {
             GenericValue userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", userLoginId).queryOne();
             if (userLogin != null) {
-                String enabled = userLogin.getString(org.apache.ofbiz.persistence.entity.x.enabled);
+                String enabled = userLogin.getString(x.enabled);
                 if (enabled == null || "Y".equals(enabled)) {
-                    userLogin.set(org.apache.ofbiz.persistence.entity.x.hasLoggedOut, "N");
+                    userLogin.set(x.hasLoggedOut, "N");
                     userLogin.store();
 
                     // login the user
@@ -1281,7 +1282,7 @@ public final class LoginWorker {
             HttpSession session = request.getSession();
             GenericValue currentUserLogin = (GenericValue) session.getAttribute("userLogin");
             if (currentUserLogin != null) {
-                String hasLoggedOut = currentUserLogin.getString(org.apache.ofbiz.persistence.entity.x.hasLoggedOut);
+                String hasLoggedOut = currentUserLogin.getString(x.hasLoggedOut);
                 if (hasLoggedOut != null && "Y".equals(hasLoggedOut)) {
                     currentUserLogin = null;
                 }
@@ -1326,9 +1327,9 @@ public final class LoginWorker {
                                 // CN should match the userLoginId
                                 GenericValue userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", userLoginId).queryOne();
                                 if (userLogin != null) {
-                                    String enabled = userLogin.getString(org.apache.ofbiz.persistence.entity.x.enabled);
+                                    String enabled = userLogin.getString(x.enabled);
                                     if (enabled == null || "Y".equals(enabled)) {
-                                        userLogin.set(org.apache.ofbiz.persistence.entity.x.hasLoggedOut, "N");
+                                        userLogin.set(x.hasLoggedOut, "N");
                                         userLogin.store();
 
                                         // login the user
@@ -1390,7 +1391,7 @@ public final class LoginWorker {
         if ("true".equalsIgnoreCase(EntityUtilProperties.getPropertyValue("security", "login.disable.global.logout", delegator))) {
             return false;
         }
-        if (userLogin == null || userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId) == null) {
+        if (userLogin == null || userLogin.get(x.userLoginId) == null) {
             return true;
         }
         // refresh the login object -- maybe cache this?
@@ -1401,8 +1402,8 @@ public final class LoginWorker {
                 Debug.logWarning(e, "Unable to refresh UserLogin", MODULE);
             }
         }
-        return (userLogin.get(org.apache.ofbiz.persistence.entity.x.hasLoggedOut) != null
-                ? "Y".equalsIgnoreCase(userLogin.getString(org.apache.ofbiz.persistence.entity.x.hasLoggedOut)) : false);
+        return (userLogin.get(x.hasLoggedOut) != null
+                ? "Y".equalsIgnoreCase(userLogin.getString(x.hasLoggedOut)) : false);
     }
 
     /**
@@ -1479,15 +1480,15 @@ public final class LoginWorker {
         GenericValue userLoginSession;
         Map<String, Object> userLoginSessionMap = null;
         try {
-            userLoginSession = userLogin.getRelatedOne(org.apache.ofbiz.persistence.entity.x.UserLoginSession, false);
+            userLoginSession = userLogin.getRelatedOne(x.UserLoginSession, false);
             if (userLoginSession != null) {
-                Object deserObj = XmlSerializer.deserialize(userLoginSession.getString(org.apache.ofbiz.persistence.entity.x.sessionData), delegator);
+                Object deserObj = XmlSerializer.deserialize(userLoginSession.getString(x.sessionData), delegator);
                 //don't check, just cast, if it fails it will get caught and reported below; if (deserObj instanceof Map)
                 userLoginSessionMap = checkMap(deserObj, String.class, Object.class);
             }
         } catch (GenericEntityException ge) {
             if (Debug.warningOn()) {
-                Debug.logWarning(ge, "Cannot get UserLoginSession for UserLogin ID: " + userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId), MODULE);
+                Debug.logWarning(ge, "Cannot get UserLoginSession for UserLogin ID: " + userLogin.getString(x.userLoginId), MODULE);
             }
         } catch (Exception e) {
             if (Debug.warningOn()) {
@@ -1512,7 +1513,7 @@ public final class LoginWorker {
             }
             if (UtilValidate.isNotEmpty(passwordHistories)) {
                 GenericValue passwordHistory = EntityUtil.getFirst(EntityUtil.filterByDate(passwordHistories));
-                Timestamp passwordCreationDate = passwordHistory.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate);
+                Timestamp passwordCreationDate = passwordHistory.getTimestamp(x.fromDate);
                 Integer passwordValidDays = reqToChangePwdInDays - passwordNoticePeriod; // Notification starts after days.
                 Timestamp startNotificationFromDate = UtilDateTime.addDaysToTimestamp(passwordCreationDate, passwordValidDays);
                 Timestamp passwordExpirationDate = UtilDateTime.addDaysToTimestamp(passwordCreationDate, reqToChangePwdInDays);
@@ -1542,6 +1543,6 @@ public final class LoginWorker {
      * @return boolean
      */
     public static boolean isUserLoginActive(GenericValue userLogin) {
-        return !"N".equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.enabled)) && UtilValidate.isEmpty(userLogin.getString(org.apache.ofbiz.persistence.entity.x.disabledBy));
+        return !"N".equals(userLogin.getString(x.enabled)) && UtilValidate.isEmpty(userLogin.getString(x.disabledBy));
     }
 }

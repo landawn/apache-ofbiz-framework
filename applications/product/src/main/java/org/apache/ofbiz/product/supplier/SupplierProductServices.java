@@ -40,6 +40,7 @@ import org.apache.ofbiz.product.product.ProductWorker;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Services for suppliers of products
  */
@@ -58,12 +59,12 @@ public class SupplierProductServices {
         Delegator delegator = dctx.getDelegator();
 
         GenericValue product = null;
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
-        String currencyUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.currencyUomId);
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
-        String canDropShip = (String) context.get(org.apache.ofbiz.persistence.entity.x.canDropShip);
-        String agreementId = (String) context.get(org.apache.ofbiz.persistence.entity.x.agreementId);
+        String productId = (String) context.get(x.productId);
+        String partyId = (String) context.get(x.partyId);
+        String currencyUomId = (String) context.get(x.currencyUomId);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
+        String canDropShip = (String) context.get(x.canDropShip);
+        String agreementId = (String) context.get(x.agreementId);
 
         try {
             product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache().queryOne();
@@ -72,15 +73,15 @@ public class SupplierProductServices {
                 results.put("supplierProducts", null);
                 return results;
             }
-            List<GenericValue> supplierProducts = product.getRelated(org.apache.ofbiz.persistence.entity.x.SupplierProduct, null, null, true);
+            List<GenericValue> supplierProducts = product.getRelated(x.SupplierProduct, null, null, true);
 
             // if there were no related SupplierProduct entities and the item is a variant, then get the SupplierProducts of the
             // virtual parent product
-            if (supplierProducts.isEmpty() && product.getString(org.apache.ofbiz.persistence.entity.x.isVariant) != null && "Y".equals(product.getString(org.apache.ofbiz.persistence.entity.x.isVariant))) {
+            if (supplierProducts.isEmpty() && product.getString(x.isVariant) != null && "Y".equals(product.getString(x.isVariant))) {
                 String virtualProductId = ProductWorker.getVariantVirtualId(product);
                 GenericValue virtualProduct = EntityQuery.use(delegator).from("Product").where("productId", virtualProductId).cache().queryOne();
                 if (virtualProduct != null) {
-                    supplierProducts = virtualProduct.getRelated(org.apache.ofbiz.persistence.entity.x.SupplierProduct, null, null, true);
+                    supplierProducts = virtualProduct.getRelated(x.SupplierProduct, null, null, true);
                 }
             }
             if (agreementId != null) {
@@ -131,25 +132,25 @@ public class SupplierProductServices {
      */
     public static Map<String, Object> convertFeaturesForSupplier(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> results;
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
-        Collection<GenericValue> features = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.productFeatures));
+        String partyId = (String) context.get(x.partyId);
+        Collection<GenericValue> features = UtilGenerics.cast(context.get(x.productFeatures));
 
         try {
             if (partyId != null && UtilValidate.isNotEmpty(features)) {
                 // loop through all the features, find the related SupplierProductFeature for the given partyId, and
                 // substitue description and idCode
                 for (GenericValue nextFeature: features) {
-                    List<GenericValue> supplierFeatures = EntityUtil.filterByAnd(nextFeature.getRelated(org.apache.ofbiz.persistence.entity.x.SupplierProductFeature, null, null, false),
+                    List<GenericValue> supplierFeatures = EntityUtil.filterByAnd(nextFeature.getRelated(x.SupplierProductFeature, null, null, false),
                                                                    UtilMisc.toMap("partyId", partyId));
                     GenericValue supplierFeature = null;
 
                     if ((supplierFeatures != null) && (!supplierFeatures.isEmpty())) {
                         supplierFeature = supplierFeatures.get(0);
-                        if (supplierFeature.get(org.apache.ofbiz.persistence.entity.x.description) != null) {
-                            nextFeature.put("description", supplierFeature.get(org.apache.ofbiz.persistence.entity.x.description));
+                        if (supplierFeature.get(x.description) != null) {
+                            nextFeature.put("description", supplierFeature.get(x.description));
                         }
-                        if (supplierFeature.get(org.apache.ofbiz.persistence.entity.x.idCode) != null) {
-                            nextFeature.put("idCode", supplierFeature.get(org.apache.ofbiz.persistence.entity.x.idCode));
+                        if (supplierFeature.get(x.idCode) != null) {
+                            nextFeature.put("idCode", supplierFeature.get(x.idCode));
                         }
                         // TODO: later, do some kind of uom/quantity conoversion with the UomConversion entity
                     }

@@ -56,6 +56,7 @@ import com.google.zxing.qrcode.detector.Detector;
 
 import freemarker.template.utility.StringUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Services for QRCode.
  */
@@ -72,16 +73,16 @@ public class QRCodeServices {
      * Streams QR Code to the result.
      */
     public static Map<String, Object> generateQRCodeImage(DispatchContext ctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        String message = (String) context.get(org.apache.ofbiz.persistence.entity.x.message);
-        Integer width = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.width);
-        Integer height = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.height);
-        String format = (String) context.get(org.apache.ofbiz.persistence.entity.x.format);
-        String encoding = (String) context.get(org.apache.ofbiz.persistence.entity.x.encoding);
-        Boolean verifyOutput = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.verifyOutput);
-        String logoImage = (String) context.get(org.apache.ofbiz.persistence.entity.x.logoImage);
-        Integer logoImageMaxWidth = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.logoImageMaxWidth);
-        Integer logoImageMaxHeight = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.logoImageMaxHeight);
+        Locale locale = (Locale) context.get(x.locale);
+        String message = (String) context.get(x.message);
+        Integer width = (Integer) context.get(x.width);
+        Integer height = (Integer) context.get(x.height);
+        String format = (String) context.get(x.format);
+        String encoding = (String) context.get(x.encoding);
+        Boolean verifyOutput = (Boolean) context.get(x.verifyOutput);
+        String logoImage = (String) context.get(x.logoImage);
+        Integer logoImageMaxWidth = (Integer) context.get(x.logoImageMaxWidth);
+        Integer logoImageMaxHeight = (Integer) context.get(x.logoImageMaxHeight);
         Delegator delegator = ctx.getDelegator();
 
         if (UtilValidate.isEmpty(message)) {

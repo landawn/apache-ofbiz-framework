@@ -54,6 +54,7 @@ import org.apache.ofbiz.entity.condition.OrderByList;
 import org.apache.ofbiz.entity.model.ModelEntity;
 import org.apache.ofbiz.entity.model.ModelField;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Helper methods when dealing with Entities, especially ones that follow certain conventions
  */
@@ -427,14 +428,14 @@ public final class EntityUtil {
         if (UtilValidate.isNotEmpty(entities)) {
             search = null;
             for (GenericValue entity : entities) {
-                if (now.equals(entity.get(org.apache.ofbiz.persistence.entity.x.fromDate))) {
+                if (now.equals(entity.get(x.fromDate))) {
                     search = new HashMap<>();
                     for (Map.Entry<String, ? super Object> entry : entity.getPrimaryKey().entrySet()) {
                         search.put(entry.getKey(), entry.getValue());
                     }
                     entity.remove("thruDate");
                 } else {
-                    entity.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
+                    entity.set(x.thruDate, now);
                 }
                 entity.store();
             }
@@ -467,7 +468,7 @@ public final class EntityUtil {
             throws GenericEntityException {
         List<GenericValue> entities = findDatedInclusionEntity(delegator, entityName, search, now);
         for (GenericValue entity : entities) {
-            entity.set(org.apache.ofbiz.persistence.entity.x.thruDate, now);
+            entity.set(x.thruDate, now);
             entity.store();
         }
     }

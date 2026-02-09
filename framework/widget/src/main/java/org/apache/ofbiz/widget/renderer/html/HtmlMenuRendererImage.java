@@ -33,6 +33,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.widget.content.WidgetContentWorker;
 import org.apache.ofbiz.widget.model.ModelMenuItem;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Widget Library - HTML Menu Renderer implementation
  *
@@ -69,7 +70,7 @@ public class HtmlMenuRendererImage extends HtmlMenuRenderer {
         } catch (GenericEntityException e) {
             throw new RuntimeException(e.getMessage());
         }
-        String medallionLogoStr = webSitePublishPoint.getString(org.apache.ofbiz.persistence.entity.x.medallionLogo);
+        String medallionLogoStr = webSitePublishPoint.getString(x.medallionLogo);
         StringWriter buf = new StringWriter();
         appendContentUrl(buf, medallionLogoStr);
         imgStr.append(buf.toString());

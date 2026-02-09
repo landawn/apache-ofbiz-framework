@@ -38,6 +38,7 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Services for Agreement (Accounting)
  */
@@ -69,22 +70,22 @@ public class AgreementServices {
      */
     public static Map<String, Object> getCommissionForProduct(DispatchContext ctx, Map<String, Object> context) {
         Delegator delegator = ctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         String errMsg = null;
         List<Map<String, Object>> commissions = new LinkedList<>();
 
         try {
-            BigDecimal amount = ((BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount));
-            BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
+            BigDecimal amount = ((BigDecimal) context.get(x.amount));
+            BigDecimal quantity = (BigDecimal) context.get(x.quantity);
             quantity = quantity == null ? BigDecimal.ONE : quantity;
             boolean negative = amount.signum() < 0;
             // Ensure that price and quantity are positive since the terms may not be linear.
             amount = amount.abs();
             quantity = quantity.abs();
-            String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-            String invoiceItemTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.invoiceItemTypeId);
-            String invoiceItemSeqId = (String) context.get(org.apache.ofbiz.persistence.entity.x.invoiceItemSeqId);
-            String invoiceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.invoiceId);
+            String productId = (String) context.get(x.productId);
+            String invoiceItemTypeId = (String) context.get(x.invoiceItemTypeId);
+            String invoiceItemSeqId = (String) context.get(x.invoiceItemSeqId);
+            String invoiceId = (String) context.get(x.invoiceId);
 
             // Collect agreementItems applicable to this orderItem/returnItem
             // TODO: partyIds should be part of this query!
@@ -98,15 +99,15 @@ public class AgreementServices {
                         .cache().filterByDate().queryFirst();
                 if (productAssoc != null) {
                     agreementItems = EntityQuery.use(delegator).from("AgreementItemAndProductAppl")
-                            .where("productId", productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productId), "agreementItemTypeId", "AGREEMENT_COMMISSION")
+                            .where("productId", productAssoc.getString(x.productId), "agreementItemTypeId", "AGREEMENT_COMMISSION")
                             .cache().filterByDate().queryList();
                 }
             }
 
             for (GenericValue agreementItem : agreementItems) {
                 List<GenericValue> terms = EntityQuery.use(delegator).from("AgreementTerm")
-                        .where("agreementId", agreementItem.getString(org.apache.ofbiz.persistence.entity.x.agreementId),
-                                "agreementItemSeqId", agreementItem.getString(org.apache.ofbiz.persistence.entity.x.agreementItemSeqId),
+                        .where("agreementId", agreementItem.getString(x.agreementId),
+                                "agreementItemSeqId", agreementItem.getString(x.agreementItemSeqId),
                                 "invoiceItemTypeId", invoiceItemTypeId)
                                 .cache().queryList();
                 if (!terms.isEmpty()) {
@@ -117,8 +118,8 @@ public class AgreementServices {
                     // number of days due for commission, which will be the lowest termDays of all the AgreementTerms
                     long days = -1;
                     for (GenericValue term : terms) {
-                        String termTypeId = term.getString(org.apache.ofbiz.persistence.entity.x.termTypeId);
-                        BigDecimal termValue = term.getBigDecimal(org.apache.ofbiz.persistence.entity.x.termValue);
+                        String termTypeId = term.getString(x.termTypeId);
+                        BigDecimal termValue = term.getBigDecimal(x.termValue);
                         if (termValue != null) {
                             if ("FIN_COMM_FIXED".equals(termTypeId)) {
                                 commission = commission.add(termValue);
@@ -134,7 +135,7 @@ public class AgreementServices {
                         }
 
                         // see if we need to update the number of days for paying commission
-                        Long termDays = term.getLong(org.apache.ofbiz.persistence.entity.x.termDays);
+                        Long termDays = term.getLong(x.termDays);
                         if (termDays != null) {
                             // if days is greater than zero, then it has been set with another value, so we use the lowest term days
                             // if days is less than zero, then it has not been set yet.
@@ -155,13 +156,13 @@ public class AgreementServices {
                     commission = commission.setScale(DECIMALS, ROUNDING);
 
                     Map<String, Object> partyCommissionResult = UtilMisc.toMap(
-                            "partyIdFrom", agreementItem.getString(org.apache.ofbiz.persistence.entity.x.partyIdFrom),
-                            "partyIdTo", agreementItem.getString(org.apache.ofbiz.persistence.entity.x.partyIdTo),
+                            "partyIdFrom", agreementItem.getString(x.partyIdFrom),
+                            "partyIdTo", agreementItem.getString(x.partyIdTo),
                             "invoiceItemSeqId", invoiceItemSeqId,
                             "invoiceId", invoiceId,
                             "commission", commission,
                             "quantity", quantity,
-                            "currencyUomId", agreementItem.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId),
+                            "currencyUomId", agreementItem.getString(x.currencyUomId),
                             "productId", productId);
                     if (days >= 0) {
                         partyCommissionResult.put("days", days);

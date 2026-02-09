@@ -71,6 +71,7 @@ import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ValueLinkApi - Implementation of ValueLink Encryption and Transport
  */
@@ -745,14 +746,14 @@ public class ValueLinkApi {
         }
 
         // merchant timestamp
-        String merchTime = (String) context.get(org.apache.ofbiz.persistence.entity.x.MerchTime);
+        String merchTime = (String) context.get(x.MerchTime);
         if (merchTime == null) {
             merchTime = this.getDateString();
         }
         request.put("MerchTime", merchTime);
 
         // transaction number
-        String termTxNo = (String) context.get(org.apache.ofbiz.persistence.entity.x.TermTxnNo);
+        String termTxNo = (String) context.get(x.TermTxnNo);
         if (termTxNo == null) {
             termTxNo = delegator.getNextSeqId("ValueLinkKey");
         }

@@ -28,6 +28,7 @@ import java.util.Map;
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.service.GenericServiceException;
 
+import org.apache.ofbiz.persistence.entity.x;
 /** An example of how to remotely access the Service Engine's RemoteDispatcher.
  *
  * The following files from OFBiz need to be on the client's classpath:
@@ -68,7 +69,7 @@ public class ExampleRemoteClient {
      */
     public Map<String, Object> runTestService() throws RemoteException, GenericServiceException {
         Map<String, Object> context = new HashMap<>();
-        context.put(org.apache.ofbiz.persistence.entity.x.message, "Remote Service Test");
+        context.put(x.message, "Remote Service Test");
         return rd.runSync("testScv", context);
     }
 

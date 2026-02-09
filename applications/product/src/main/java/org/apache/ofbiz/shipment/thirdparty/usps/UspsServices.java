@@ -68,6 +68,7 @@ import org.apache.ofbiz.shipment.shipment.ShipmentWorker;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * USPS Webtools API Services
  */
@@ -87,11 +88,11 @@ public class UspsServices {
 
     public static Map<String, Object> uspsRateInquire(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId);
-        String resource = (String) context.get(org.apache.ofbiz.persistence.entity.x.configProps);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
+        String resource = (String) context.get(x.configProps);
+        Locale locale = (Locale) context.get(x.locale);
         // check for 0 weight
-        BigDecimal shippableWeight = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.shippableWeight);
+        BigDecimal shippableWeight = (BigDecimal) context.get(x.shippableWeight);
         if (shippableWeight.compareTo(BigDecimal.ZERO) == 0) {
             // TODO: should we return an error, or $0.00 ?
             return ServiceUtil.returnFailure(UtilProperties.getMessage(RES_ERROR,
@@ -100,16 +101,16 @@ public class UspsServices {
 
         // get the origination ZIP
         String originationZip = null;
-        GenericValue productStore = ProductStoreWorker.getProductStore(((String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId)), delegator);
-        if (productStore != null && productStore.get(org.apache.ofbiz.persistence.entity.x.inventoryFacilityId) != null) {
+        GenericValue productStore = ProductStoreWorker.getProductStore(((String) context.get(x.productStoreId)), delegator);
+        if (productStore != null && productStore.get(x.inventoryFacilityId) != null) {
             GenericValue facilityContactMech = ContactMechWorker.getFacilityContactMechByPurpose(delegator, productStore
-                    .getString(org.apache.ofbiz.persistence.entity.x.inventoryFacilityId), UtilMisc.toList("SHIP_ORIG_LOCATION", "PRIMARY_LOCATION"));
+                    .getString(x.inventoryFacilityId), UtilMisc.toList("SHIP_ORIG_LOCATION", "PRIMARY_LOCATION"));
             if (facilityContactMech != null) {
                 try {
                     GenericValue shipFromAddress = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId", facilityContactMech
-                            .getString(org.apache.ofbiz.persistence.entity.x.contactMechId)).queryOne();
+                            .getString(x.contactMechId)).queryOne();
                     if (shipFromAddress != null) {
-                        originationZip = shipFromAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode);
+                        originationZip = shipFromAddress.getString(x.postalCode);
                     }
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
@@ -123,17 +124,17 @@ public class UspsServices {
 
         // get the destination ZIP
         String destinationZip = null;
-        String shippingContactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shippingContactMechId);
+        String shippingContactMechId = (String) context.get(x.shippingContactMechId);
         if (UtilValidate.isNotEmpty(shippingContactMechId)) {
             try {
                 GenericValue shipToAddress = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId",
                         shippingContactMechId).queryOne();
                 if (shipToAddress != null) {
-                    if (!domesticCountries.contains(shipToAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId))) {
+                    if (!domesticCountries.contains(shipToAddress.getString(x.countryGeoId))) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                                 "FacilityShipmentUspsRateInquiryOnlyInUsDestinations", locale));
                     }
-                    destinationZip = shipToAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode);
+                    destinationZip = shipToAddress.getString(x.postalCode);
                 }
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
@@ -148,12 +149,12 @@ public class UspsServices {
         String serviceCode = null;
         try {
             GenericValue carrierShipmentMethod = EntityQuery.use(delegator).from("CarrierShipmentMethod")
-                    .where("shipmentMethodTypeId", context.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId),
-                           "partyId", context.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId),
-                           "roleTypeId", context.get(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId))
+                    .where("shipmentMethodTypeId", context.get(x.shipmentMethodTypeId),
+                           "partyId", context.get(x.carrierPartyId),
+                           "roleTypeId", context.get(x.carrierRoleTypeId))
                     .queryOne();
             if (carrierShipmentMethod != null) {
-                serviceCode = carrierShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceCode).toUpperCase(Locale.getDefault());
+                serviceCode = carrierShipmentMethod.getString(x.carrierServiceCode).toUpperCase(Locale.getDefault());
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -177,7 +178,7 @@ public class UspsServices {
             maxWeight = new BigDecimal("70");
         }
 
-        List<Map<String, Object>> shippableItemInfo = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.shippableItemInfo));
+        List<Map<String, Object>> shippableItemInfo = UtilGenerics.cast(context.get(x.shippableItemInfo));
         List<Map<String, BigDecimal>> packages = ShipmentWorker.getPackageSplit(dctx, shippableItemInfo, maxWeight);
         boolean isOnePackage = packages.size() == 1; // use shippableWeight if there's only one package
         // TODO: Up to 25 packages can be included per request - handle more than 25
@@ -281,12 +282,12 @@ public class UspsServices {
      */
     public static Map<String, Object> uspsInternationalRateInquire(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId);
-        String resource = (String) context.get(org.apache.ofbiz.persistence.entity.x.configProps);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
+        String resource = (String) context.get(x.configProps);
+        Locale locale = (Locale) context.get(x.locale);
 
         // check for 0 weight
-        BigDecimal shippableWeight = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.shippableWeight);
+        BigDecimal shippableWeight = (BigDecimal) context.get(x.shippableWeight);
         if (shippableWeight.compareTo(BigDecimal.ZERO) == 0) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "FacilityShipmentUspsShippableWeightMustGreaterThanZero", locale));
@@ -294,19 +295,19 @@ public class UspsServices {
 
         // get the destination country
         String destinationCountry = null;
-        String shippingContactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shippingContactMechId);
+        String shippingContactMechId = (String) context.get(x.shippingContactMechId);
         if (UtilValidate.isNotEmpty(shippingContactMechId)) {
             try {
                 GenericValue shipToAddress = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId",
                         shippingContactMechId).queryOne();
-                if (domesticCountries.contains(shipToAddress.get(org.apache.ofbiz.persistence.entity.x.countryGeoId))) {
+                if (domesticCountries.contains(shipToAddress.get(x.countryGeoId))) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "FacilityShipmentUspsRateInternationCannotBeUsedForUsDestinations", locale));
                 }
-                if (UtilValidate.isNotEmpty(shipToAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId))) {
-                    GenericValue countryGeo = shipToAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
+                if (UtilValidate.isNotEmpty(shipToAddress.getString(x.countryGeoId))) {
+                    GenericValue countryGeo = shipToAddress.getRelatedOne(x.CountryGeo, false);
                     // TODO: Test against all country geoNames against what USPS expects
-                    destinationCountry = countryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoName);
+                    destinationCountry = countryGeo.getString(x.geoName);
                 }
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
@@ -321,12 +322,12 @@ public class UspsServices {
         String serviceCode = null;
         try {
             GenericValue carrierShipmentMethod = EntityQuery.use(delegator).from("CarrierShipmentMethod")
-                    .where("shipmentMethodTypeId", context.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId),
-                           "partyId", context.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId),
-                           "roleTypeId", context.get(org.apache.ofbiz.persistence.entity.x.carrierRoleTypeId))
+                    .where("shipmentMethodTypeId", context.get(x.shipmentMethodTypeId),
+                           "partyId", context.get(x.carrierPartyId),
+                           "roleTypeId", context.get(x.carrierRoleTypeId))
                     .queryOne();
             if (carrierShipmentMethod != null) {
-                serviceCode = carrierShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceCode);
+                serviceCode = carrierShipmentMethod.getString(x.carrierServiceCode);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -346,7 +347,7 @@ public class UspsServices {
             maxWeight = new BigDecimal("70");
         }
 
-        List<Map<String, Object>> shippableItemInfo = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.shippableItemInfo));
+        List<Map<String, Object>> shippableItemInfo = UtilGenerics.cast(context.get(x.shippableItemInfo));
         List<Map<String, BigDecimal>> packages = ShipmentWorker.getPackageSplit(dctx, shippableItemInfo, maxWeight);
         boolean isOnePackage = packages.size() == 1; // use shippableWeight if there's only one package
 
@@ -459,14 +460,14 @@ public class UspsServices {
 
     public static Map<String, Object> uspsTrackConfirm(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId);
-        String resource = (String) context.get(org.apache.ofbiz.persistence.entity.x.configProps);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
+        String resource = (String) context.get(x.configProps);
+        Locale locale = (Locale) context.get(x.locale);
 
         Document requestDocument = createUspsRequestDocument("TrackRequest", true, delegator, shipmentGatewayConfigId, resource);
 
         Element trackingElement = UtilXml.addChildElement(requestDocument.getDocumentElement(), "TrackID", requestDocument);
-        trackingElement.setAttribute("ID", (String) context.get(org.apache.ofbiz.persistence.entity.x.trackingId));
+        trackingElement.setAttribute("ID", (String) context.get(x.trackingId));
 
         Document responseDocument = null;
         try {
@@ -535,12 +536,12 @@ public class UspsServices {
 
     public static Map<String, Object> uspsAddressValidation(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId);
-        String resource = (String) context.get(org.apache.ofbiz.persistence.entity.x.configProps);
-        String state = (String) context.get(org.apache.ofbiz.persistence.entity.x.state);
-        String city = (String) context.get(org.apache.ofbiz.persistence.entity.x.city);
-        String zip5 = (String) context.get(org.apache.ofbiz.persistence.entity.x.zip5);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
+        String resource = (String) context.get(x.configProps);
+        String state = (String) context.get(x.state);
+        String city = (String) context.get(x.city);
+        String zip5 = (String) context.get(x.zip5);
+        Locale locale = (Locale) context.get(x.locale);
         if ((UtilValidate.isEmpty(state) && UtilValidate.isEmpty(city) && UtilValidate.isEmpty(zip5)) // No state, city or zip5
                 || (UtilValidate.isEmpty(zip5) && (UtilValidate.isEmpty(state) || UtilValidate.isEmpty(city)))) {
             // Both state and city are required if no zip5
@@ -555,17 +556,17 @@ public class UspsServices {
         addressElement.setAttribute("ID", "0");
 
         // 38 chars max
-        UtilXml.addChildElementValue(addressElement, "FirmName", (String) context.get(org.apache.ofbiz.persistence.entity.x.firmName), requestDocument);
+        UtilXml.addChildElementValue(addressElement, "FirmName", (String) context.get(x.firmName), requestDocument);
         // 38 chars max
-        UtilXml.addChildElementValue(addressElement, "Address1", (String) context.get(org.apache.ofbiz.persistence.entity.x.address2), requestDocument);
+        UtilXml.addChildElementValue(addressElement, "Address1", (String) context.get(x.address2), requestDocument);
         // 38 chars max
-        UtilXml.addChildElementValue(addressElement, "Address2", (String) context.get(org.apache.ofbiz.persistence.entity.x.address1), requestDocument);
+        UtilXml.addChildElementValue(addressElement, "Address2", (String) context.get(x.address1), requestDocument);
         // 15 chars max
-        UtilXml.addChildElementValue(addressElement, "City", (String) context.get(org.apache.ofbiz.persistence.entity.x.city), requestDocument);
+        UtilXml.addChildElementValue(addressElement, "City", (String) context.get(x.city), requestDocument);
 
-        UtilXml.addChildElementValue(addressElement, "State", (String) context.get(org.apache.ofbiz.persistence.entity.x.state), requestDocument);
-        UtilXml.addChildElementValue(addressElement, "Zip5", (String) context.get(org.apache.ofbiz.persistence.entity.x.zip5), requestDocument);
-        UtilXml.addChildElementValue(addressElement, "Zip4", (String) context.get(org.apache.ofbiz.persistence.entity.x.zip4), requestDocument);
+        UtilXml.addChildElementValue(addressElement, "State", (String) context.get(x.state), requestDocument);
+        UtilXml.addChildElementValue(addressElement, "Zip5", (String) context.get(x.zip5), requestDocument);
+        UtilXml.addChildElementValue(addressElement, "Zip4", (String) context.get(x.zip4), requestDocument);
 
         Document responseDocument = null;
         try {
@@ -639,16 +640,16 @@ public class UspsServices {
 
     public static Map<String, Object> uspsCityStateLookup(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId);
-        String resource = (String) context.get(org.apache.ofbiz.persistence.entity.x.configProps);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
+        String resource = (String) context.get(x.configProps);
+        Locale locale = (Locale) context.get(x.locale);
 
         Document requestDocument = createUspsRequestDocument("CityStateLookupRequest", true, delegator, shipmentGatewayConfigId, resource);
 
         Element zipCodeElement = UtilXml.addChildElement(requestDocument.getDocumentElement(), "ZipCode", requestDocument);
         zipCodeElement.setAttribute("ID", "0");
 
-        String zipCode = ((String) context.get(org.apache.ofbiz.persistence.entity.x.zip5)).trim(); // trim leading/trailing spaces
+        String zipCode = ((String) context.get(x.zip5)).trim(); // trim leading/trailing spaces
 
         // only the first 5 digits are used, the rest are ignored
         UtilXml.addChildElementValue(zipCodeElement, "Zip5", zipCode, requestDocument);
@@ -750,10 +751,10 @@ public class UspsServices {
 
     private static Map<String, Object> uspsServiceStandards(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId);
-        String resource = (String) context.get(org.apache.ofbiz.persistence.entity.x.configProps);
-        String type = (String) context.get(org.apache.ofbiz.persistence.entity.x.serviceType);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
+        String resource = (String) context.get(x.configProps);
+        String type = (String) context.get(x.serviceType);
+        Locale locale = (Locale) context.get(x.locale);
         if (!type.matches("PriorityMail|StandardB")) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                     "FacilityShipmentUspsUnsupporteServiceType",
@@ -763,9 +764,9 @@ public class UspsServices {
         Document requestDocument = createUspsRequestDocument(type + "Request", true, delegator, shipmentGatewayConfigId, resource);
 
         UtilXml.addChildElementValue(requestDocument.getDocumentElement(), "OriginZip",
-                (String) context.get(org.apache.ofbiz.persistence.entity.x.originZip), requestDocument);
+                (String) context.get(x.originZip), requestDocument);
         UtilXml.addChildElementValue(requestDocument.getDocumentElement(), "DestinationZip",
-                (String) context.get(org.apache.ofbiz.persistence.entity.x.destinationZip), requestDocument);
+                (String) context.get(x.destinationZip), requestDocument);
 
         Document responseDocument = null;
         try {
@@ -839,34 +840,34 @@ public class UspsServices {
 
     public static Map<String, Object> uspsDomesticRate(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId);
-        String resource = (String) context.get(org.apache.ofbiz.persistence.entity.x.configProps);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
+        String resource = (String) context.get(x.configProps);
+        Locale locale = (Locale) context.get(x.locale);
 
         Document requestDocument = createUspsRequestDocument("RateRequest", true, delegator, shipmentGatewayConfigId, resource);
 
         Element packageElement = UtilXml.addChildElement(requestDocument.getDocumentElement(), "Package", requestDocument);
         packageElement.setAttribute("ID", "0");
 
-        UtilXml.addChildElementValue(packageElement, "Service", (String) context.get(org.apache.ofbiz.persistence.entity.x.service), requestDocument);
-        UtilXml.addChildElementValue(packageElement, "ZipOrigination", (String) context.get(org.apache.ofbiz.persistence.entity.x.originZip), requestDocument);
-        UtilXml.addChildElementValue(packageElement, "ZipDestination", (String) context.get(org.apache.ofbiz.persistence.entity.x.destinationZip), requestDocument);
-        UtilXml.addChildElementValue(packageElement, "Pounds", (String) context.get(org.apache.ofbiz.persistence.entity.x.pounds), requestDocument);
-        UtilXml.addChildElementValue(packageElement, "Ounces", (String) context.get(org.apache.ofbiz.persistence.entity.x.ounces), requestDocument);
+        UtilXml.addChildElementValue(packageElement, "Service", (String) context.get(x.service), requestDocument);
+        UtilXml.addChildElementValue(packageElement, "ZipOrigination", (String) context.get(x.originZip), requestDocument);
+        UtilXml.addChildElementValue(packageElement, "ZipDestination", (String) context.get(x.destinationZip), requestDocument);
+        UtilXml.addChildElementValue(packageElement, "Pounds", (String) context.get(x.pounds), requestDocument);
+        UtilXml.addChildElementValue(packageElement, "Ounces", (String) context.get(x.ounces), requestDocument);
 
-        String container = (String) context.get(org.apache.ofbiz.persistence.entity.x.container);
+        String container = (String) context.get(x.container);
         if (UtilValidate.isEmpty(container)) {
             container = "None";
         }
         UtilXml.addChildElementValue(packageElement, "Container", container, requestDocument);
 
-        String size = (String) context.get(org.apache.ofbiz.persistence.entity.x.size);
+        String size = (String) context.get(x.size);
         if (UtilValidate.isEmpty(size)) {
             size = "Regular";
         }
         UtilXml.addChildElementValue(packageElement, "Size", size, requestDocument);
 
-        String machinable = (String) context.get(org.apache.ofbiz.persistence.entity.x.machinable);
+        String machinable = (String) context.get(x.machinable);
         if (UtilValidate.isEmpty(machinable)) {
             machinable = "False";
         }
@@ -931,9 +932,9 @@ public class UspsServices {
     public static Map<String, Object> uspsUpdateShipmentRateInfo(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
-        String shipmentRouteSegmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipmentId = (String) context.get(x.shipmentId);
+        String shipmentRouteSegmentId = (String) context.get(x.shipmentRouteSegmentId);
+        Locale locale = (Locale) context.get(x.locale);
 
         Map<String, Object> shipmentGatewayConfig = ShipmentServices.getShipmentGatewayConfigFromShipment(delegator, shipmentId, locale);
         String shipmentGatewayConfigId = (String) shipmentGatewayConfig.get("shipmentGatewayConfigId");
@@ -953,53 +954,53 @@ public class UspsServices {
             }
 
             // ensure the carrier is USPS
-            if (!"USPS".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId))) {
+            if (!"USPS".equals(shipmentRouteSegment.getString(x.carrierPartyId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentUspsNotRouteSegmentCarrier",
                         UtilMisc.toMap("shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId), locale));
             }
 
             // get the origin address
-            GenericValue originAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginPostalAddress, false);
+            GenericValue originAddress = shipmentRouteSegment.getRelatedOne(x.OriginPostalAddress, false);
             if (originAddress == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentOriginPostalAddressNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            if (!"USA".equals(originAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId))) {
+            if (!"USA".equals(originAddress.getString(x.countryGeoId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentUspsRouteSegmentOriginCountryGeoNotInUsa",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            String originZip = originAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode);
+            String originZip = originAddress.getString(x.postalCode);
             if (UtilValidate.isEmpty(originZip)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentUspsRouteSegmentOriginZipCodeMissing",
-                        UtilMisc.toMap("contactMechId", originAddress.getString(org.apache.ofbiz.persistence.entity.x.contactMechId)), locale));
+                        UtilMisc.toMap("contactMechId", originAddress.getString(x.contactMechId)), locale));
             }
 
             // get the destination address
-            GenericValue destinationAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestPostalAddress, false);
+            GenericValue destinationAddress = shipmentRouteSegment.getRelatedOne(x.DestPostalAddress, false);
             if (destinationAddress == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentDestPostalAddressNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            if (!"USA".equals(destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId))) {
+            if (!"USA".equals(destinationAddress.getString(x.countryGeoId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentUspsRouteSegmentOriginCountryGeoNotInUsa",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            String destinationZip = destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode);
+            String destinationZip = destinationAddress.getString(x.postalCode);
             if (UtilValidate.isEmpty(destinationZip)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentUspsRouteSegmentDestinationZipCodeMissing",
-                        UtilMisc.toMap("contactMechId", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.contactMechId)), locale));
+                        UtilMisc.toMap("contactMechId", destinationAddress.getString(x.contactMechId)), locale));
             }
 
             // get the service type from the CarrierShipmentMethod
-            String shipmentMethodTypeId = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId);
-            String partyId = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId);
+            String shipmentMethodTypeId = shipmentRouteSegment.getString(x.shipmentMethodTypeId);
+            String partyId = shipmentRouteSegment.getString(x.carrierPartyId);
 
             GenericValue carrierShipmentMethod = EntityQuery.use(delegator).from("CarrierShipmentMethod").where("partyId", partyId,
                     "roleTypeId", "CARRIER", "shipmentMethodTypeId", shipmentMethodTypeId).queryOne();
@@ -1008,7 +1009,7 @@ public class UspsServices {
                         "FacilityShipmentUspsNoCarrierShipmentMethod",
                         UtilMisc.toMap("carrierPartyId", partyId, "shipmentMethodTypeId", shipmentMethodTypeId), locale));
             }
-            String serviceType = carrierShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceCode);
+            String serviceType = carrierShipmentMethod.getString(x.carrierServiceCode);
             if (UtilValidate.isEmpty(serviceType)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentUspsNoCarrierServiceCodeFound",
@@ -1016,7 +1017,7 @@ public class UspsServices {
             }
 
             // get the packages for this shipment route segment
-            List<GenericValue> shipmentPackageRouteSegList = shipmentRouteSegment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentPackageRouteSeg,
+            List<GenericValue> shipmentPackageRouteSegList = shipmentRouteSegment.getRelated(x.ShipmentPackageRouteSeg,
                     null, UtilMisc.toList("+shipmentPackageSeqId"), false);
             if (UtilValidate.isEmpty(shipmentPackageRouteSegList)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -1044,15 +1045,15 @@ public class UspsServices {
                 UtilXml.addChildElementValue(packageElement, "ZipDestination", destinationZip, requestDocument);
 
                 GenericValue shipmentPackage = null;
-                shipmentPackage = shipmentPackageRouteSeg.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentPackage, false);
+                shipmentPackage = shipmentPackageRouteSeg.getRelatedOne(x.ShipmentPackage, false);
 
                 // weight elements - Pounds, Ounces
-                String weightStr = shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.weight);
+                String weightStr = shipmentPackage.getString(x.weight);
                 if (UtilValidate.isEmpty(weightStr)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "FacilityShipmentUspsWeightNotFound",
-                            UtilMisc.toMap("shipmentId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentId),
-                                    "shipmentPackageSeqId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId)), locale));
+                            UtilMisc.toMap("shipmentId", shipmentPackage.getString(x.shipmentId),
+                                    "shipmentPackageSeqId", shipmentPackage.getString(x.shipmentPackageSeqId)), locale));
                 }
 
                 BigDecimal weight = BigDecimal.ZERO;
@@ -1062,7 +1063,7 @@ public class UspsServices {
                     Debug.logError(nfe, MODULE); // TODO: handle exception
                 }
 
-                String weightUomId = shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.weightUomId);
+                String weightUomId = shipmentPackage.getString(x.weightUomId);
                 if (UtilValidate.isEmpty(weightUomId)) {
                     weightUomId = "WT_lb"; // assume weight is in pounds
                 }
@@ -1086,8 +1087,8 @@ public class UspsServices {
                     } else {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                                 "FacilityShipmentUspsWeightUnsupported",
-                                UtilMisc.toMap("weightUomId", weightUomId, "shipmentId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentId),
-                                        "shipmentPackageSeqId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId),
+                                UtilMisc.toMap("weightUomId", weightUomId, "shipmentId", shipmentPackage.getString(x.shipmentId),
+                                        "shipmentPackageSeqId", shipmentPackage.getString(x.shipmentPackageSeqId),
                                         "weightUom", "WT_lb"), locale));
                     }
 
@@ -1103,16 +1104,16 @@ public class UspsServices {
                 // Container element
                 GenericValue carrierShipmentBoxType = null;
                 List<GenericValue> carrierShipmentBoxTypes = null;
-                carrierShipmentBoxTypes = shipmentPackage.getRelated(org.apache.ofbiz.persistence.entity.x.CarrierShipmentBoxType, UtilMisc.toMap("partyId", "USPS"), null, false);
+                carrierShipmentBoxTypes = shipmentPackage.getRelated(x.CarrierShipmentBoxType, UtilMisc.toMap("partyId", "USPS"), null, false);
 
                 if (!carrierShipmentBoxTypes.isEmpty()) {
                     carrierShipmentBoxType = carrierShipmentBoxTypes.get(0);
                 }
 
                 if (carrierShipmentBoxType != null
-                        && UtilValidate.isNotEmpty(carrierShipmentBoxType.getString(org.apache.ofbiz.persistence.entity.x.packagingTypeCode))) {
+                        && UtilValidate.isNotEmpty(carrierShipmentBoxType.getString(x.packagingTypeCode))) {
                     UtilXml.addChildElementValue(packageElement, "Container",
-                            carrierShipmentBoxType.getString(org.apache.ofbiz.persistence.entity.x.packagingTypeCode), requestDocument);
+                            carrierShipmentBoxType.getString(x.packagingTypeCode), requestDocument);
                 } else {
                     // default to "None", for customers using their own package
                     UtilXml.addChildElementValue(packageElement, "Container", "None", requestDocument);
@@ -1121,7 +1122,7 @@ public class UspsServices {
                 // Size element
                 if (carrierShipmentBoxType != null && UtilValidate.isNotEmpty("oversizeCode")) {
                     UtilXml.addChildElementValue(packageElement, "Size",
-                            carrierShipmentBoxType.getString(org.apache.ofbiz.persistence.entity.x.oversizeCode), requestDocument);
+                            carrierShipmentBoxType.getString(x.oversizeCode), requestDocument);
                 } else {
                     // default to "Regular", length + girth measurement <= 84 inches
                     UtilXml.addChildElementValue(packageElement, "Size", "Regular", requestDocument);
@@ -1168,7 +1169,7 @@ public class UspsServices {
                 }
                 actualTransportCost = actualTransportCost.add(postage);
 
-                shipmentPackageRouteSeg.setString(org.apache.ofbiz.persistence.entity.x.packageTransportCost, postageString);
+                shipmentPackageRouteSeg.setString(x.packageTransportCost, postageString);
                 shipmentPackageRouteSeg.store();
 
                 // if this is the last package, get the zone and APO/FPO restrictions for the ShipmentRouteSegment
@@ -1180,10 +1181,10 @@ public class UspsServices {
             }
 
             // update the ShipmentRouteSegment
-            shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.carrierDeliveryZone, carrierDeliveryZone);
-            shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.carrierRestrictionCodes, carrierRestrictionCodes);
-            shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.carrierRestrictionDesc, carrierRestrictionDesc);
-            shipmentRouteSegment.setString(org.apache.ofbiz.persistence.entity.x.actualTransportCost, String.valueOf(actualTransportCost));
+            shipmentRouteSegment.set(x.carrierDeliveryZone, carrierDeliveryZone);
+            shipmentRouteSegment.set(x.carrierRestrictionCodes, carrierRestrictionCodes);
+            shipmentRouteSegment.set(x.carrierRestrictionDesc, carrierRestrictionDesc);
+            shipmentRouteSegment.setString(x.actualTransportCost, String.valueOf(actualTransportCost));
             shipmentRouteSegment.store();
 
         } catch (GenericEntityException gee) {
@@ -1233,9 +1234,9 @@ public class UspsServices {
 
     public static Map<String, Object> uspsDeliveryConfirmation(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
-        String shipmentRouteSegmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipmentId = (String) context.get(x.shipmentId);
+        String shipmentRouteSegmentId = (String) context.get(x.shipmentRouteSegmentId);
+        Locale locale = (Locale) context.get(x.locale);
 
         Map<String, Object> shipmentGatewayConfig = ShipmentServices.getShipmentGatewayConfigFromShipment(delegator, shipmentId, locale);
         String shipmentGatewayConfigId = (String) shipmentGatewayConfig.get("shipmentGatewayConfigId");
@@ -1261,41 +1262,41 @@ public class UspsServices {
             }
 
             // ensure the carrier is USPS
-            if (!"USPS".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId))) {
+            if (!"USPS".equals(shipmentRouteSegment.getString(x.carrierPartyId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentUspsNotRouteSegmentCarrier",
                         UtilMisc.toMap("shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId), locale));
             }
 
             // get the origin address
-            GenericValue originAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginPostalAddress, false);
+            GenericValue originAddress = shipmentRouteSegment.getRelatedOne(x.OriginPostalAddress, false);
             if (originAddress == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentOriginPostalAddressNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            if (!"USA".equals(originAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId))) {
+            if (!"USA".equals(originAddress.getString(x.countryGeoId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentUspsRouteSegmentOriginCountryGeoNotInUsa",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
             // get the destination address
-            GenericValue destinationAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestPostalAddress, false);
+            GenericValue destinationAddress = shipmentRouteSegment.getRelatedOne(x.DestPostalAddress, false);
             if (destinationAddress == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentDestPostalAddressNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            if (!"USA".equals(destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId))) {
+            if (!"USA".equals(destinationAddress.getString(x.countryGeoId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentUspsRouteSegmentOriginCountryGeoNotInUsa",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
             // get the service type from the CarrierShipmentMethod
-            String shipmentMethodTypeId = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId);
-            String partyId = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId);
+            String shipmentMethodTypeId = shipmentRouteSegment.getString(x.shipmentMethodTypeId);
+            String partyId = shipmentRouteSegment.getString(x.carrierPartyId);
 
             GenericValue carrierShipmentMethod = EntityQuery.use(delegator).from("CarrierShipmentMethod").where("partyId", partyId, "roleTypeId",
                     "CARRIER", "shipmentMethodTypeId", shipmentMethodTypeId).queryOne();
@@ -1304,14 +1305,14 @@ public class UspsServices {
                         "FacilityShipmentUspsNoCarrierShipmentMethod",
                         UtilMisc.toMap("carrierPartyId", partyId, "shipmentMethodTypeId", shipmentMethodTypeId), locale));
             }
-            String serviceType = carrierShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceCode);
+            String serviceType = carrierShipmentMethod.getString(x.carrierServiceCode);
             if (UtilValidate.isEmpty(serviceType)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentUspsUnableDetermineServiceCode", locale));
             }
 
             // get the packages for this shipment route segment
-            List<GenericValue> shipmentPackageRouteSegList = shipmentRouteSegment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentPackageRouteSeg, null,
+            List<GenericValue> shipmentPackageRouteSegList = shipmentRouteSegment.getRelated(x.ShipmentPackageRouteSeg, null,
                     UtilMisc.toList("+shipmentPackageSeqId"), false);
             if (UtilValidate.isEmpty(shipmentPackageRouteSegList)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -1328,44 +1329,44 @@ public class UspsServices {
                 UtilXml.addChildElement(requestElement, "ImageParameters", requestDocument);
 
                 // From address
-                if (UtilValidate.isNotEmpty(originAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName))) {
-                    UtilXml.addChildElementValue(requestElement, "FromName", originAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName), requestDocument);
-                    UtilXml.addChildElementValue(requestElement, "FromFirm", originAddress.getString(org.apache.ofbiz.persistence.entity.x.toName), requestDocument);
+                if (UtilValidate.isNotEmpty(originAddress.getString(x.attnName))) {
+                    UtilXml.addChildElementValue(requestElement, "FromName", originAddress.getString(x.attnName), requestDocument);
+                    UtilXml.addChildElementValue(requestElement, "FromFirm", originAddress.getString(x.toName), requestDocument);
                 } else {
-                    UtilXml.addChildElementValue(requestElement, "FromName", originAddress.getString(org.apache.ofbiz.persistence.entity.x.toName), requestDocument);
+                    UtilXml.addChildElementValue(requestElement, "FromName", originAddress.getString(x.toName), requestDocument);
                 }
                 // The following 2 assignments are not typos - USPS address1 = OFBiz address2, USPS address2 = OFBiz address1
-                UtilXml.addChildElementValue(requestElement, "FromAddress1", originAddress.getString(org.apache.ofbiz.persistence.entity.x.address2), requestDocument);
-                UtilXml.addChildElementValue(requestElement, "FromAddress2", originAddress.getString(org.apache.ofbiz.persistence.entity.x.address1), requestDocument);
-                UtilXml.addChildElementValue(requestElement, "FromCity", originAddress.getString(org.apache.ofbiz.persistence.entity.x.city), requestDocument);
-                UtilXml.addChildElementValue(requestElement, "FromState", originAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId), requestDocument);
-                UtilXml.addChildElementValue(requestElement, "FromZip5", originAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode), requestDocument);
+                UtilXml.addChildElementValue(requestElement, "FromAddress1", originAddress.getString(x.address2), requestDocument);
+                UtilXml.addChildElementValue(requestElement, "FromAddress2", originAddress.getString(x.address1), requestDocument);
+                UtilXml.addChildElementValue(requestElement, "FromCity", originAddress.getString(x.city), requestDocument);
+                UtilXml.addChildElementValue(requestElement, "FromState", originAddress.getString(x.stateProvinceGeoId), requestDocument);
+                UtilXml.addChildElementValue(requestElement, "FromZip5", originAddress.getString(x.postalCode), requestDocument);
                 UtilXml.addChildElement(requestElement, "FromZip4", requestDocument);
 
                 // To address
-                if (UtilValidate.isNotEmpty(destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName))) {
-                    UtilXml.addChildElementValue(requestElement, "ToName", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName), requestDocument);
-                    UtilXml.addChildElementValue(requestElement, "ToFirm", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.toName), requestDocument);
+                if (UtilValidate.isNotEmpty(destinationAddress.getString(x.attnName))) {
+                    UtilXml.addChildElementValue(requestElement, "ToName", destinationAddress.getString(x.attnName), requestDocument);
+                    UtilXml.addChildElementValue(requestElement, "ToFirm", destinationAddress.getString(x.toName), requestDocument);
                 } else {
-                    UtilXml.addChildElementValue(requestElement, "ToName", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.toName), requestDocument);
+                    UtilXml.addChildElementValue(requestElement, "ToName", destinationAddress.getString(x.toName), requestDocument);
                 }
                 // The following 2 assignments are not typos - USPS address1 = OFBiz address2, USPS address2 = OFBiz address1
-                UtilXml.addChildElementValue(requestElement, "ToAddress1", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.address2), requestDocument);
-                UtilXml.addChildElementValue(requestElement, "ToAddress2", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.address1), requestDocument);
-                UtilXml.addChildElementValue(requestElement, "ToCity", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.city), requestDocument);
-                UtilXml.addChildElementValue(requestElement, "ToState", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId), requestDocument);
-                UtilXml.addChildElementValue(requestElement, "ToZip5", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode), requestDocument);
+                UtilXml.addChildElementValue(requestElement, "ToAddress1", destinationAddress.getString(x.address2), requestDocument);
+                UtilXml.addChildElementValue(requestElement, "ToAddress2", destinationAddress.getString(x.address1), requestDocument);
+                UtilXml.addChildElementValue(requestElement, "ToCity", destinationAddress.getString(x.city), requestDocument);
+                UtilXml.addChildElementValue(requestElement, "ToState", destinationAddress.getString(x.stateProvinceGeoId), requestDocument);
+                UtilXml.addChildElementValue(requestElement, "ToZip5", destinationAddress.getString(x.postalCode), requestDocument);
                 UtilXml.addChildElement(requestElement, "ToZip4", requestDocument);
 
-                GenericValue shipmentPackage = shipmentPackageRouteSeg.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentPackage, false);
+                GenericValue shipmentPackage = shipmentPackageRouteSeg.getRelatedOne(x.ShipmentPackage, false);
 
                 // WeightInOunces
-                String weightStr = shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.weight);
+                String weightStr = shipmentPackage.getString(x.weight);
                 if (UtilValidate.isEmpty(weightStr)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "FacilityShipmentUspsWeightNotFound",
-                            UtilMisc.toMap("shipmentId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentId),
-                                    "shipmentPackageSeqId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId)), locale));
+                            UtilMisc.toMap("shipmentId", shipmentPackage.getString(x.shipmentId),
+                                    "shipmentPackageSeqId", shipmentPackage.getString(x.shipmentPackageSeqId)), locale));
                 }
 
                 BigDecimal weight = BigDecimal.ZERO;
@@ -1375,7 +1376,7 @@ public class UspsServices {
                     Debug.logError(nfe, MODULE); // TODO: handle exception
                 }
 
-                String weightUomId = shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.weightUomId);
+                String weightUomId = shipmentPackage.getString(x.weightUomId);
                 if (UtilValidate.isEmpty(weightUomId)) {
                     // assume weight is in pounds for consistency (this assumption is made in uspsDomesticRate also)
                     weightUomId = "WT_lb";
@@ -1384,14 +1385,14 @@ public class UspsServices {
                     // attempt a conversion to pounds
                     GenericValue uomConversion = EntityQuery.use(delegator).from("UomConversion").where("uomId", weightUomId,
                             "uomIdTo", "WT_oz").queryOne();
-                    if (uomConversion == null || UtilValidate.isEmpty(uomConversion.getString(org.apache.ofbiz.persistence.entity.x.conversionFactor))) {
+                    if (uomConversion == null || UtilValidate.isEmpty(uomConversion.getString(x.conversionFactor))) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                                 "FacilityShipmentUspsWeightUnsupported",
-                                UtilMisc.toMap("weightUomId", weightUomId, "shipmentId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentId),
-                                        "shipmentPackageSeqId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId),
+                                UtilMisc.toMap("weightUomId", weightUomId, "shipmentId", shipmentPackage.getString(x.shipmentId),
+                                        "shipmentPackageSeqId", shipmentPackage.getString(x.shipmentPackageSeqId),
                                         "weightUom", "WT_oz"), locale));
                     }
-                    weight = weight.multiply(uomConversion.getBigDecimal(org.apache.ofbiz.persistence.entity.x.conversionFactor));
+                    weight = weight.multiply(uomConversion.getBigDecimal(x.conversionFactor));
                 }
 
                 DecimalFormat df = new DecimalFormat("#");
@@ -1417,8 +1418,8 @@ public class UspsServices {
                 if (respErrorElement != null) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "FacilityShipmentUspsDeliveryConfirmationResponseError",
-                            UtilMisc.toMap("shipmentId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentId),
-                                    "shipmentPackageSeqId", shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId),
+                            UtilMisc.toMap("shipmentId", shipmentPackage.getString(x.shipmentId),
+                                    "shipmentPackageSeqId", shipmentPackage.getString(x.shipmentPackageSeqId),
                                     "errorString", UtilXml.childElementValue(respErrorElement, "Description")), locale));
                 }
 
@@ -1427,13 +1428,13 @@ public class UspsServices {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "FacilityShipmentUspsDeliveryConfirmationResponseIncompleteElementDeliveryConfirmationLabel", locale));
                 }
-                shipmentPackageRouteSeg.setBytes(org.apache.ofbiz.persistence.entity.x.labelImage, Base64.getMimeDecoder().decode(labelImageString.getBytes(StandardCharsets.UTF_8)));
+                shipmentPackageRouteSeg.setBytes(x.labelImage, Base64.getMimeDecoder().decode(labelImageString.getBytes(StandardCharsets.UTF_8)));
                 String trackingCode = UtilXml.childElementValue(responseElement, "DeliveryConfirmationNumber");
                 if (UtilValidate.isEmpty(trackingCode)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                             "FacilityShipmentUspsDeliveryConfirmationResponsenIncompleteElementDeliveryConfirmationNumber", locale));
                 }
-                shipmentPackageRouteSeg.set(org.apache.ofbiz.persistence.entity.x.trackingCode, trackingCode);
+                shipmentPackageRouteSeg.set(x.trackingCode, trackingCode);
                 shipmentPackageRouteSeg.store();
             }
 
@@ -1454,21 +1455,21 @@ public class UspsServices {
         Delegator delegator = dctx.getDelegator();
 
         try {
-            String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
-            String shipmentRouteSegmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId);
+            String shipmentId = (String) context.get(x.shipmentId);
+            String shipmentRouteSegmentId = (String) context.get(x.shipmentRouteSegmentId);
 
             GenericValue shipmentRouteSegment = EntityQuery.use(delegator).from("ShipmentRouteSegment").where("shipmentId", shipmentId,
                     "shipmentRouteSegmentId", shipmentRouteSegmentId).queryOne();
 
-            List<GenericValue> shipmentPackageRouteSegList = shipmentRouteSegment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentPackageRouteSeg,
+            List<GenericValue> shipmentPackageRouteSegList = shipmentRouteSegment.getRelated(x.ShipmentPackageRouteSeg,
                     null, UtilMisc.toList("+shipmentPackageSeqId"), false);
 
             for (GenericValue shipmentPackageRouteSeg: shipmentPackageRouteSegList) {
-                byte[] labelImageBytes = shipmentPackageRouteSeg.getBytes(org.apache.ofbiz.persistence.entity.x.labelImage);
+                byte[] labelImageBytes = shipmentPackageRouteSeg.getBytes(x.labelImage);
 
-                String outFileName = "UspsLabelImage" + shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.shipmentId) + "_"
-                        + shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId) + "_"
-                        + shipmentPackageRouteSeg.getString(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId) + ".gif";
+                String outFileName = "UspsLabelImage" + shipmentRouteSegment.getString(x.shipmentId) + "_"
+                        + shipmentRouteSegment.getString(x.shipmentRouteSegmentId) + "_"
+                        + shipmentPackageRouteSeg.getString(x.shipmentPackageSeqId) + ".gif";
 
                 try (FileOutputStream fileOut = new FileOutputStream(outFileName)) {
                     fileOut.write(labelImageBytes);
@@ -1488,10 +1489,10 @@ public class UspsServices {
     public static Map<String, Object> uspsPriorityMailInternationalLabel(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String shipmentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId);
-        String resource = (String) context.get(org.apache.ofbiz.persistence.entity.x.configProps);
-        GenericValue shipmentRouteSegment = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegment);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
+        String resource = (String) context.get(x.configProps);
+        GenericValue shipmentRouteSegment = (GenericValue) context.get(x.shipmentRouteSegment);
+        Locale locale = (Locale) context.get(x.locale);
 
         // Start the document
         Document requestDocument;
@@ -1514,15 +1515,15 @@ public class UspsServices {
         GenericValue destinationTelecomNumber = null;
         List<GenericValue> shipmentPackageRouteSegs = null;
         try {
-            originAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginPostalAddress, false);
-            originTelecomNumber = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginTelecomNumber, false);
-            destinationAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestPostalAddress, false);
+            originAddress = shipmentRouteSegment.getRelatedOne(x.OriginPostalAddress, false);
+            originTelecomNumber = shipmentRouteSegment.getRelatedOne(x.OriginTelecomNumber, false);
+            destinationAddress = shipmentRouteSegment.getRelatedOne(x.DestPostalAddress, false);
             if (destinationAddress != null) {
-                destinationProvince = destinationAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.StateProvinceGeo, false);
-                destinationCountry = destinationAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
+                destinationProvince = destinationAddress.getRelatedOne(x.StateProvinceGeo, false);
+                destinationCountry = destinationAddress.getRelatedOne(x.CountryGeo, false);
             }
-            destinationTelecomNumber = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestTelecomNumber, false);
-            shipmentPackageRouteSegs = shipmentRouteSegment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentPackageRouteSeg, null, null, false);
+            destinationTelecomNumber = shipmentRouteSegment.getRelatedOne(x.DestTelecomNumber, false);
+            shipmentPackageRouteSegs = shipmentRouteSegment.getRelated(x.ShipmentPackageRouteSeg, null, null, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
@@ -1534,37 +1535,37 @@ public class UspsServices {
         // Origin Info
         // USPS wants a separate first name and last, best we can do is split the string on the white space, if that doesn't work then
         // default to putting the attnName in both fields
-        String fromAttnName = originAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName);
+        String fromAttnName = originAddress.getString(x.attnName);
         String fromFirstName = StringUtils.defaultIfEmpty(StringUtils.substringBefore(fromAttnName, " "), fromAttnName);
         String fromLastName = StringUtils.defaultIfEmpty(StringUtils.substringAfter(fromAttnName, " "), fromAttnName);
         UtilXml.addChildElementValue(rootElement, "FromFirstName", fromFirstName, requestDocument);
         UtilXml.addChildElementValue(rootElement, "FromLastName", fromLastName, requestDocument);
-        UtilXml.addChildElementValue(rootElement, "FromFirm", originAddress.getString(org.apache.ofbiz.persistence.entity.x.toName), requestDocument);
+        UtilXml.addChildElementValue(rootElement, "FromFirm", originAddress.getString(x.toName), requestDocument);
         // The following 2 assignments are not typos - USPS address1 = OFBiz address2, USPS address2 = OFBiz address1
-        UtilXml.addChildElementValue(rootElement, "FromAddress1", originAddress.getString(org.apache.ofbiz.persistence.entity.x.address2), requestDocument);
-        UtilXml.addChildElementValue(rootElement, "FromAddress2", originAddress.getString(org.apache.ofbiz.persistence.entity.x.address1), requestDocument);
-        UtilXml.addChildElementValue(rootElement, "FromCity", originAddress.getString(org.apache.ofbiz.persistence.entity.x.city), requestDocument);
-        UtilXml.addChildElementValue(rootElement, "FromState", originAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId), requestDocument);
-        UtilXml.addChildElementValue(rootElement, "FromZip5", originAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode), requestDocument);
+        UtilXml.addChildElementValue(rootElement, "FromAddress1", originAddress.getString(x.address2), requestDocument);
+        UtilXml.addChildElementValue(rootElement, "FromAddress2", originAddress.getString(x.address1), requestDocument);
+        UtilXml.addChildElementValue(rootElement, "FromCity", originAddress.getString(x.city), requestDocument);
+        UtilXml.addChildElementValue(rootElement, "FromState", originAddress.getString(x.stateProvinceGeoId), requestDocument);
+        UtilXml.addChildElementValue(rootElement, "FromZip5", originAddress.getString(x.postalCode), requestDocument);
         // USPS expects a phone number consisting of area code + contact number as a single numeric string
-        String fromPhoneNumber = originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.areaCode) + originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.contactNumber);
+        String fromPhoneNumber = originTelecomNumber.getString(x.areaCode) + originTelecomNumber.getString(x.contactNumber);
         fromPhoneNumber = StringUtil.removeNonNumeric(fromPhoneNumber);
         UtilXml.addChildElementValue(rootElement, "FromPhone", fromPhoneNumber, requestDocument);
 
         // Destination Info
-        UtilXml.addChildElementValue(rootElement, "ToName", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName), requestDocument);
-        UtilXml.addChildElementValue(rootElement, "ToFirm", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.toName), requestDocument);
-        UtilXml.addChildElementValue(rootElement, "ToAddress1", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.address1), requestDocument);
-        UtilXml.addChildElementValue(rootElement, "ToAddress2", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.address2), requestDocument);
-        UtilXml.addChildElementValue(rootElement, "ToCity", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.city), requestDocument);
-        UtilXml.addChildElementValue(rootElement, "ToProvince", destinationProvince.getString(org.apache.ofbiz.persistence.entity.x.geoName), requestDocument);
+        UtilXml.addChildElementValue(rootElement, "ToName", destinationAddress.getString(x.attnName), requestDocument);
+        UtilXml.addChildElementValue(rootElement, "ToFirm", destinationAddress.getString(x.toName), requestDocument);
+        UtilXml.addChildElementValue(rootElement, "ToAddress1", destinationAddress.getString(x.address1), requestDocument);
+        UtilXml.addChildElementValue(rootElement, "ToAddress2", destinationAddress.getString(x.address2), requestDocument);
+        UtilXml.addChildElementValue(rootElement, "ToCity", destinationAddress.getString(x.city), requestDocument);
+        UtilXml.addChildElementValue(rootElement, "ToProvince", destinationProvince.getString(x.geoName), requestDocument);
         // TODO: Test these country names, I think we're going to need to maintain a list of USPS names
-        UtilXml.addChildElementValue(rootElement, "ToCountry", destinationCountry.getString(org.apache.ofbiz.persistence.entity.x.geoName), requestDocument);
-        UtilXml.addChildElementValue(rootElement, "ToPostalCode", destinationAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode), requestDocument);
+        UtilXml.addChildElementValue(rootElement, "ToCountry", destinationCountry.getString(x.geoName), requestDocument);
+        UtilXml.addChildElementValue(rootElement, "ToPostalCode", destinationAddress.getString(x.postalCode), requestDocument);
         // TODO: Figure out how to answer this question accurately
         UtilXml.addChildElementValue(rootElement, "ToPOBoxFlag", "N", requestDocument);
-        String toPhoneNumber = destinationTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode) + destinationTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.areaCode)
-                + destinationTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.contactNumber);
+        String toPhoneNumber = destinationTelecomNumber.getString(x.countryCode) + destinationTelecomNumber.getString(x.areaCode)
+                + destinationTelecomNumber.getString(x.contactNumber);
         UtilXml.addChildElementValue(rootElement, "ToPhone", toPhoneNumber, requestDocument);
         UtilXml.addChildElementValue(rootElement, "NonDeliveryOption", "RETURN", requestDocument);
 
@@ -1575,9 +1576,9 @@ public class UspsServices {
             String fromCustomsReference;
             fromCustomsReference = StringUtils.join(
                     UtilMisc.toList(
-                            shipmentRouteSegment.get(org.apache.ofbiz.persistence.entity.x.shipmentId),
-                            shipmentPackageRouteSeg.get(org.apache.ofbiz.persistence.entity.x.shipmentPackageSeqId),
-                            shipmentRouteSegment.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegementId)), ':');
+                            shipmentRouteSegment.get(x.shipmentId),
+                            shipmentPackageRouteSeg.get(x.shipmentPackageSeqId),
+                            shipmentRouteSegment.get(x.shipmentRouteSegementId)), ':');
             UtilXml.addChildElementValue(rootElement, "FromCustomsReference", fromCustomsReference, packageDocument);
             // Determine the container type for this package
             String container = "VARIABLE";
@@ -1585,14 +1586,14 @@ public class UspsServices {
             GenericValue shipmentPackage = null;
             List<GenericValue> shipmentPackageContents = null;
             try {
-                shipmentPackage = shipmentPackageRouteSeg.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentPackage, false);
-                shipmentPackageContents = shipmentPackage.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentPackageContent, null, null, false);
-                GenericValue shipmentBoxType = shipmentPackage.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentBoxType, false);
+                shipmentPackage = shipmentPackageRouteSeg.getRelatedOne(x.ShipmentPackage, false);
+                shipmentPackageContents = shipmentPackage.getRelated(x.ShipmentPackageContent, null, null, false);
+                GenericValue shipmentBoxType = shipmentPackage.getRelatedOne(x.ShipmentBoxType, false);
                 if (shipmentBoxType != null) {
-                    GenericValue carrierShipmentBoxType = EntityUtil.getFirst(shipmentBoxType.getRelated(org.apache.ofbiz.persistence.entity.x.CarrierShipmentBoxType,
+                    GenericValue carrierShipmentBoxType = EntityUtil.getFirst(shipmentBoxType.getRelated(x.CarrierShipmentBoxType,
                             UtilMisc.toMap("partyId", "USPS"), null, false));
                     if (carrierShipmentBoxType != null) {
-                        packageTypeCode = carrierShipmentBoxType.getString(org.apache.ofbiz.persistence.entity.x.packageTypeCode);
+                        packageTypeCode = carrierShipmentBoxType.getString(x.packageTypeCode);
                         // Supported type codes
                         List<String> supportedPackageTypeCodes = UtilMisc.toList(
                                 "LGFLATRATEBOX",
@@ -1612,8 +1613,8 @@ public class UspsServices {
             // According to the docs sending an empty postage tag will cause the postage to be calculated
             UtilXml.addChildElementValue(rootElement, "Postage", "", packageDocument);
 
-            BigDecimal packageWeight = shipmentPackage.getBigDecimal(org.apache.ofbiz.persistence.entity.x.weight);
-            String weightUomId = shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.weightUomId);
+            BigDecimal packageWeight = shipmentPackage.getBigDecimal(x.weight);
+            String weightUomId = shipmentPackage.getString(x.weightUomId);
             BigDecimal packageWeightPounds = UomWorker.convertUom(packageWeight, weightUomId, "WT_lb", dispatcher);
             Integer[] packagePoundsOunces = convertPoundsToPoundsOunces(packageWeightPounds);
             UtilXml.addChildElementValue(rootElement, "GrossPounds", packagePoundsOunces[0].toString(), packageDocument);
@@ -1633,16 +1634,16 @@ public class UspsServices {
                 GenericValue product = null;
                 GenericValue originGeo = null;
                 try {
-                    GenericValue shipmentItem = shipmentPackageContent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentItem, false);
-                    product = shipmentItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
-                    originGeo = product.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginGeo, false);
+                    GenericValue shipmentItem = shipmentPackageContent.getRelatedOne(x.ShipmentItem, false);
+                    product = shipmentItem.getRelatedOne(x.Product, false);
+                    originGeo = product.getRelatedOne(x.OriginGeo, false);
                 } catch (GenericEntityException e) {
                     Debug.logInfo(e, MODULE);
                 }
 
                 if (product != null) {
-                    UtilXml.addChildElementValue(itemDetail, "Description", product.getString(org.apache.ofbiz.persistence.entity.x.productName), packageDocument);
-                    UtilXml.addChildElementValue(itemDetail, "Quantity", shipmentPackageContent.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity)
+                    UtilXml.addChildElementValue(itemDetail, "Description", product.getString(x.productName), packageDocument);
+                    UtilXml.addChildElementValue(itemDetail, "Quantity", shipmentPackageContent.getBigDecimal(x.quantity)
                             .setScale(0, RoundingMode.CEILING).toPlainString(), packageDocument);
                     String packageContentValue = ShipmentWorker.getShipmentPackageContentValue(shipmentPackageContent)
                             .setScale(2, RoundingMode.HALF_UP).toPlainString();
@@ -1653,7 +1654,7 @@ public class UspsServices {
                     UtilXml.addChildElementValue(itemDetail, "NetOunces", productPoundsOunces[1].toString(), packageDocument);
                     UtilXml.addChildElementValue(itemDetail, "HSTariffNumber", "", packageDocument);
                     if (originGeo != null) {
-                        UtilXml.addChildElementValue(itemDetail, "CountryOfOrigin", originGeo.getString(org.apache.ofbiz.persistence.entity.x.geoName), packageDocument);
+                        UtilXml.addChildElementValue(itemDetail, "CountryOfOrigin", originGeo.getString(x.geoName), packageDocument);
                     }
                 }
             }
@@ -1678,13 +1679,13 @@ public class UspsServices {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentUspsPriorityMailLabelResponseIncompleteElementLabelImage", locale));
             }
-            shipmentPackageRouteSeg.setBytes(org.apache.ofbiz.persistence.entity.x.labelImage, Base64.getMimeDecoder().decode(labelImageString.getBytes(StandardCharsets.UTF_8)));
+            shipmentPackageRouteSeg.setBytes(x.labelImage, Base64.getMimeDecoder().decode(labelImageString.getBytes(StandardCharsets.UTF_8)));
             String trackingCode = UtilXml.childElementValue(responseElement, "BarcodeNumber");
             if (UtilValidate.isEmpty(trackingCode)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentUspsPriorityMailLabelResponseIncompleteElementBarcodeNumber", locale));
             }
-            shipmentPackageRouteSeg.set(org.apache.ofbiz.persistence.entity.x.trackingCode, trackingCode);
+            shipmentPackageRouteSeg.set(x.trackingCode, trackingCode);
             try {
                 shipmentPackageRouteSeg.store();
             } catch (GenericEntityException e) {

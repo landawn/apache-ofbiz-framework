@@ -48,6 +48,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.webapp.website.WebSiteWorker;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ProductStoreWorker - Worker class for store related functionality
  */
@@ -85,7 +86,7 @@ public final class ProductStoreWorker {
         } else {
             GenericValue webSite = WebSiteWorker.getWebSite(httpRequest);
             if (webSite != null) {
-                String productStoreId = webSite.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
+                String productStoreId = webSite.getString(x.productStoreId);
                 // might be nice to do this, but not needed and has a problem with dependencies: setSessionProductStore(productStoreId, httpRequest);
                 return productStoreId;
             }
@@ -100,7 +101,7 @@ public final class ProductStoreWorker {
                     "No product store found in request, cannot set CurrencyUomId!", MODULE);
             return null;
         } else {
-            return UtilHttp.getCurrencyUom(request.getSession(), productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultCurrencyUomId));
+            return UtilHttp.getCurrencyUom(request.getSession(), productStore.getString(x.defaultCurrencyUomId));
         }
     }
 
@@ -111,7 +112,7 @@ public final class ProductStoreWorker {
                     "No product store found in request, cannot set locale!", MODULE);
             return null;
         } else {
-            return UtilHttp.getLocale(request, request.getSession(), productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultLocaleString));
+            return UtilHttp.getLocale(request, request.getSession(), productStore.getString(x.defaultLocaleString));
         }
     }
 
@@ -121,7 +122,7 @@ public final class ProductStoreWorker {
             Debug.logError("No product store found in request, cannot set timezone!", MODULE);
             return null;
         } else {
-            return UtilHttp.getTimeZone(request, request.getSession(), productStore.getString(org.apache.ofbiz.persistence.entity.x.defaultTimeZoneString));
+            return UtilHttp.getTimeZone(request, request.getSession(), productStore.getString(x.defaultTimeZoneString));
         }
     }
 
@@ -133,8 +134,8 @@ public final class ProductStoreWorker {
             Debug.logError(e, MODULE);
         }
         if (productStore != null) {
-            if ("Y".equalsIgnoreCase(productStore.getString(org.apache.ofbiz.persistence.entity.x.oneInventoryFacility))) {
-                return productStore.getString(org.apache.ofbiz.persistence.entity.x.inventoryFacilityId);
+            if ("Y".equalsIgnoreCase(productStore.getString(x.oneInventoryFacility))) {
+                return productStore.getString(x.inventoryFacilityId);
             }
         }
         return null;
@@ -145,7 +146,7 @@ public final class ProductStoreWorker {
     }
 
     public static boolean autoSaveCart(GenericValue productStore) {
-        return productStore == null ? false : "Y".equalsIgnoreCase(productStore.getString(org.apache.ofbiz.persistence.entity.x.autoSaveCart));
+        return productStore == null ? false : "Y".equalsIgnoreCase(productStore.getString(x.autoSaveCart));
     }
 
     public static String getProductStorePayToPartyId(String productStoreId, Delegator delegator) {
@@ -154,8 +155,8 @@ public final class ProductStoreWorker {
 
     public static String getProductStorePayToPartyId(GenericValue productStore) {
         String payToPartyId = "Company"; // default value
-        if (productStore != null && productStore.get(org.apache.ofbiz.persistence.entity.x.payToPartyId) != null) {
-            payToPartyId = productStore.getString(org.apache.ofbiz.persistence.entity.x.payToPartyId);
+        if (productStore != null && productStore.get(x.payToPartyId) != null) {
+            payToPartyId = productStore.getString(x.payToPartyId);
         }
         return payToPartyId;
     }
@@ -174,8 +175,8 @@ public final class ProductStoreWorker {
                 paymentServiceTypeEnumId, anyServiceType);
 
         String payProps = "payment.properties";
-        if (setting != null && setting.get(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath) != null) {
-            payProps = setting.getString(org.apache.ofbiz.persistence.entity.x.paymentPropertiesPath);
+        if (setting != null && setting.get(x.paymentPropertiesPath) != null) {
+            payProps = setting.getString(x.paymentPropertiesPath);
         }
         return payProps;
     }
@@ -256,8 +257,8 @@ public final class ProductStoreWorker {
             for (GenericValue method: shippingMethods) {
 
                 // test min/max weight first
-                BigDecimal minWeight = method.getBigDecimal(org.apache.ofbiz.persistence.entity.x.minWeight);
-                BigDecimal maxWeight = method.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxWeight);
+                BigDecimal minWeight = method.getBigDecimal(x.minWeight);
+                BigDecimal maxWeight = method.getBigDecimal(x.maxWeight);
                 if (minWeight != null && minWeight.compareTo(BigDecimal.ZERO) > 0 && minWeight.compareTo(weight) > 0) {
                     returnShippingMethods.remove(method);
                     continue;
@@ -268,8 +269,8 @@ public final class ProductStoreWorker {
                 }
 
                 // test order total
-                BigDecimal minTotal = method.getBigDecimal(org.apache.ofbiz.persistence.entity.x.minTotal);
-                BigDecimal maxTotal = method.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxTotal);
+                BigDecimal minTotal = method.getBigDecimal(x.minTotal);
+                BigDecimal maxTotal = method.getBigDecimal(x.maxTotal);
                 if (minTotal != null && minTotal.compareTo(BigDecimal.ZERO) > 0 && minTotal.compareTo(orderTotal) > 0) {
                     returnShippingMethods.remove(method);
                     continue;
@@ -280,8 +281,8 @@ public final class ProductStoreWorker {
                 }
 
                 // test product sizes
-                BigDecimal minSize = method.getBigDecimal(org.apache.ofbiz.persistence.entity.x.minSize);
-                BigDecimal maxSize = method.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxSize);
+                BigDecimal minSize = method.getBigDecimal(x.minSize);
+                BigDecimal maxSize = method.getBigDecimal(x.maxSize);
                 if (minSize != null && minSize.compareTo(BigDecimal.ZERO) > 0) {
                     if (itemSizes == null || itemSizes.stream().anyMatch(size -> size.compareTo(minSize) < 0)) {
                         returnShippingMethods.remove(method);
@@ -296,8 +297,8 @@ public final class ProductStoreWorker {
                 }
 
                 // check USPS address
-                String allowUspsAddr = method.getString(org.apache.ofbiz.persistence.entity.x.allowUspsAddr);
-                String requireUspsAddr = method.getString(org.apache.ofbiz.persistence.entity.x.requireUspsAddr);
+                String allowUspsAddr = method.getString(x.allowUspsAddr);
+                String requireUspsAddr = method.getString(x.requireUspsAddr);
                 boolean isUspsAddress = ContactMechWorker.isUspsAddress(shippingAddress);
                 if ("N".equals(allowUspsAddr) && isUspsAddress) {
                     returnShippingMethods.remove(method);
@@ -309,9 +310,9 @@ public final class ProductStoreWorker {
                 }
 
                 // check company address
-                String companyPartyId = method.getString(org.apache.ofbiz.persistence.entity.x.companyPartyId);
-                String allowCompanyAddr = method.getString(org.apache.ofbiz.persistence.entity.x.allowCompanyAddr);
-                String requireCompanyAddr = method.getString(org.apache.ofbiz.persistence.entity.x.requireCompanyAddr);
+                String companyPartyId = method.getString(x.companyPartyId);
+                String allowCompanyAddr = method.getString(x.allowCompanyAddr);
+                String requireCompanyAddr = method.getString(x.requireCompanyAddr);
                 boolean isCompanyAddress = ContactMechWorker.isCompanyAddress(shippingAddress, companyPartyId);
                 if ("N".equals(allowCompanyAddr) && isCompanyAddress) {
                     returnShippingMethods.remove(method);
@@ -323,7 +324,7 @@ public final class ProductStoreWorker {
                 }
 
                 // check the items excluded from shipping
-                String includeFreeShipping = method.getString(org.apache.ofbiz.persistence.entity.x.includeNoChargeItems);
+                String includeFreeShipping = method.getString(x.includeNoChargeItems);
                 if (includeFreeShipping != null && "N".equalsIgnoreCase(includeFreeShipping)) {
                     if (UtilValidate.isEmpty(itemSizes) && orderTotal.compareTo(BigDecimal.ZERO) == 0) {
                         returnShippingMethods.remove(method);
@@ -332,8 +333,8 @@ public final class ProductStoreWorker {
                 }
 
                 // check the geos
-                String includeGeoId = method.getString(org.apache.ofbiz.persistence.entity.x.includeGeoId);
-                String excludeGeoId = method.getString(org.apache.ofbiz.persistence.entity.x.excludeGeoId);
+                String includeGeoId = method.getString(x.includeGeoId);
+                String excludeGeoId = method.getString(x.excludeGeoId);
                 if (UtilValidate.isNotEmpty(includeGeoId) || UtilValidate.isNotEmpty(excludeGeoId)) {
                     if (shippingAddress == null) {
                         returnShippingMethods.remove(method);
@@ -342,9 +343,9 @@ public final class ProductStoreWorker {
                 }
                 if (UtilValidate.isNotEmpty(includeGeoId)) {
                     List<GenericValue> includeGeoGroup = GeoWorker.expandGeoGroup(includeGeoId, delegator);
-                    if (!GeoWorker.containsGeo(includeGeoGroup, shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId), delegator)
-                            && !GeoWorker.containsGeo(includeGeoGroup, shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId), delegator)
-                            && !GeoWorker.containsGeo(includeGeoGroup, shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId), delegator)) {
+                    if (!GeoWorker.containsGeo(includeGeoGroup, shippingAddress.getString(x.countryGeoId), delegator)
+                            && !GeoWorker.containsGeo(includeGeoGroup, shippingAddress.getString(x.stateProvinceGeoId), delegator)
+                            && !GeoWorker.containsGeo(includeGeoGroup, shippingAddress.getString(x.postalCodeGeoId), delegator)) {
                         // not in required included geos
                         returnShippingMethods.remove(method);
                         continue;
@@ -352,9 +353,9 @@ public final class ProductStoreWorker {
                 }
                 if (UtilValidate.isNotEmpty(excludeGeoId)) {
                     List<GenericValue> excludeGeoGroup = GeoWorker.expandGeoGroup(excludeGeoId, delegator);
-                    if (GeoWorker.containsGeo(excludeGeoGroup, shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId), delegator)
-                            || GeoWorker.containsGeo(excludeGeoGroup, shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId), delegator)
-                            || GeoWorker.containsGeo(excludeGeoGroup, shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCodeGeoId), delegator)) {
+                    if (GeoWorker.containsGeo(excludeGeoGroup, shippingAddress.getString(x.countryGeoId), delegator)
+                            || GeoWorker.containsGeo(excludeGeoGroup, shippingAddress.getString(x.stateProvinceGeoId), delegator)
+                            || GeoWorker.containsGeo(excludeGeoGroup, shippingAddress.getString(x.postalCodeGeoId), delegator)) {
                         // in excluded geos
                         returnShippingMethods.remove(method);
                         continue;
@@ -362,8 +363,8 @@ public final class ProductStoreWorker {
                 }
 
                 // check the features
-                String includeFeatures = method.getString(org.apache.ofbiz.persistence.entity.x.includeFeatureGroup);
-                String excludeFeatures = method.getString(org.apache.ofbiz.persistence.entity.x.excludeFeatureGroup);
+                String includeFeatures = method.getString(x.includeFeatureGroup);
+                String excludeFeatures = method.getString(x.excludeFeatureGroup);
                 if (UtilValidate.isNotEmpty(includeFeatures)) {
                     List<GenericValue> includedFeatures = null;
                     try {
@@ -375,7 +376,7 @@ public final class ProductStoreWorker {
                     if (includedFeatures != null
                             && (featureIdMap == null
                                 || includedFeatures.stream().noneMatch(
-                                    appl -> featureIdMap.containsKey(appl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId))))) {
+                                    appl -> featureIdMap.containsKey(appl.getString(x.productFeatureId))))) {
                         returnShippingMethods.remove(method);
                         continue;
                     }
@@ -389,7 +390,7 @@ public final class ProductStoreWorker {
                         Debug.logError(e, "Unable to lookup ProductFeatureGroupAppl records for group : " + excludeFeatures, MODULE);
                     }
                     if (excludedFeatures != null && featureIdMap != null
-                            && excludedFeatures.stream().anyMatch(appl -> featureIdMap.containsKey(appl.getString(org.apache.ofbiz.persistence.entity.x.productFeatureId)))) {
+                            && excludedFeatures.stream().anyMatch(appl -> featureIdMap.containsKey(appl.getString(x.productFeatureId)))) {
                         returnShippingMethods.remove(method);
                     }
                 }
@@ -411,11 +412,11 @@ public final class ProductStoreWorker {
             userLogin = (GenericValue) session.getAttribute("autoUserLogin");
         }
 
-        String partyId = userLogin != null ? userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId) : null;
+        String partyId = userLogin != null ? userLogin.getString(x.partyId) : null;
         String origParamMapId = UtilHttp.stashParameterMap(request);
         Map<String, Object> passThruFields = UtilMisc.<String, Object>toMap("_ORIG_PARAM_MAP_ID_", origParamMapId);
 
-        return getRandomSurveyWrapper(productStore.getDelegator(), productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId), groupName, partyId, passThruFields);
+        return getRandomSurveyWrapper(productStore.getDelegator(), productStore.getString(x.productStoreId), groupName, partyId, passThruFields);
     }
 
     public static ProductStoreSurveyWrapper getRandomSurveyWrapper(Delegator delegator, String productStoreId, String groupName, String
@@ -469,7 +470,7 @@ public final class ProductStoreWorker {
                 // if the item is a variant, get its virtual productId
                 try {
                     product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache().queryOne();
-                    if ((product != null) && ("Y".equals(product.get(org.apache.ofbiz.persistence.entity.x.isVariant)))) {
+                    if ((product != null) && ("Y".equals(product.get(x.isVariant)))) {
                         if (parentProductId != null) {
                             virtualProductId = parentProductId;
                         } else {
@@ -482,26 +483,26 @@ public final class ProductStoreWorker {
                 }
 
                 // use survey if productId or virtualProductId of the variant product is in the ProductStoreSurveyAppl
-                if (surveyAppl.get(org.apache.ofbiz.persistence.entity.x.productId) != null) {
-                    if (surveyAppl.get(org.apache.ofbiz.persistence.entity.x.productId).equals(productId)) {
+                if (surveyAppl.get(x.productId) != null) {
+                    if (surveyAppl.get(x.productId).equals(productId)) {
                         surveys.add(surveyAppl);
-                    } else if ((virtualProductId != null) && (surveyAppl.getString(org.apache.ofbiz.persistence.entity.x.productId).equals(virtualProductId))) {
+                    } else if ((virtualProductId != null) && (surveyAppl.getString(x.productId).equals(virtualProductId))) {
                         surveys.add(surveyAppl);
                     }
-                } else if (surveyAppl.get(org.apache.ofbiz.persistence.entity.x.productCategoryId) != null) {
+                } else if (surveyAppl.get(x.productCategoryId) != null) {
                     List<GenericValue> categoryMembers = null;
                     try {
                         categoryMembers = EntityQuery.use(delegator).from("ProductCategoryMember").where("productCategoryId",
-                                surveyAppl.get(org.apache.ofbiz.persistence.entity.x.productCategoryId)).cache(true).queryList();
+                                surveyAppl.get(x.productCategoryId)).cache(true).queryList();
                     } catch (GenericEntityException e) {
                         Debug.logError(e, "Unable to get ProductCategoryMember records for survey application : " + surveyAppl, MODULE);
                     }
                     if (categoryMembers != null) {
                         for (GenericValue member: categoryMembers) {
-                            if (productId != null && productId.equals(member.getString(org.apache.ofbiz.persistence.entity.x.productId))) {
+                            if (productId != null && productId.equals(member.getString(x.productId))) {
                                 surveys.add(surveyAppl);
                                 break;
-                            } else if ((virtualProductId != null) && (virtualProductId.equals(member.getString(org.apache.ofbiz.persistence.entity.x.productId)))) {
+                            } else if ((virtualProductId != null) && (virtualProductId.equals(member.getString(x.productId)))) {
                                 // similarly, check if virtual productId is in category
                                 surveys.add(surveyAppl);
                                 break;
@@ -526,7 +527,7 @@ public final class ProductStoreWorker {
             return -1;
         }
 
-        return checkSurveyResponse(delegator, userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId), productStoreId, surveyId);
+        return checkSurveyResponse(delegator, userLogin.getString(x.partyId), productStoreId, surveyId);
     }
 
     /** Returns the number of responses for this survey by party */
@@ -581,14 +582,14 @@ public final class ProductStoreWorker {
 
         if (quantity == null) quantity = BigDecimal.ONE;
 
-        String productStoreId = productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
+        String productStoreId = productStore.getString(x.productStoreId);
         LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
 
         try {
             Boolean requiredOkay = null;
             if (wantRequired != null) {
                 Map<String, Object> invReqResult = dispatcher.runSync("isStoreInventoryRequired",
-                        UtilMisc.toMap("productStoreId", productStoreId, "productId", product.get(org.apache.ofbiz.persistence.entity.x.productId), "product", product,
+                        UtilMisc.toMap("productStoreId", productStoreId, "productId", product.get(x.productId), "product", product,
                                 "productStore", productStore));
                 if (ServiceUtil.isError(invReqResult)) {
                     Debug.logError("Error calling isStoreInventoryRequired service, result is: " + invReqResult, MODULE);
@@ -600,7 +601,7 @@ public final class ProductStoreWorker {
             Boolean availableOkay = null;
             if (wantAvailable != null) {
                 Map<String, Object> invAvailResult = dispatcher.runSync("isStoreInventoryAvailable",
-                        UtilMisc.toMap("productStoreId", productStoreId, "productId", product.get(org.apache.ofbiz.persistence.entity.x.productId), "product", product,
+                        UtilMisc.toMap("productStoreId", productStoreId, "productId", product.get(x.productId), "product", product,
                                 "productStore", productStore, "quantity", quantity));
                 if (ServiceUtil.isError(invAvailResult)) {
                     Debug.logError("Error calling isStoreInventoryAvailable service, result is: " + invAvailResult, MODULE);
@@ -625,7 +626,7 @@ public final class ProductStoreWorker {
             return false;
         }
 
-        String productStoreId = productStore.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
+        String productStoreId = productStore.getString(x.productStoreId);
         Delegator delegator = (Delegator) request.getAttribute("delegator");
         LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
         return isStoreInventoryAvailable(productStoreId, productConfig, quantity, delegator, dispatcher);
@@ -642,7 +643,7 @@ public final class ProductStoreWorker {
         }
 
         // if prodCatalog is set to not check inventory break here
-        if ("N".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.checkInventory))) {
+        if ("N".equals(productStore.getString(x.checkInventory))) {
             // note: if not set, defaults to yes, check inventory
             if (Debug.verboseOn()) {
                 Debug.logVerbose("ProductStore with id " + productStoreId
@@ -652,8 +653,8 @@ public final class ProductStoreWorker {
         }
         boolean isInventoryAvailable = false;
 
-        if ("Y".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.oneInventoryFacility))) {
-            String inventoryFacilityId = productStore.getString(org.apache.ofbiz.persistence.entity.x.inventoryFacilityId);
+        if ("Y".equals(productStore.getString(x.oneInventoryFacility))) {
+            String inventoryFacilityId = productStore.getString(x.inventoryFacilityId);
 
             if (UtilValidate.isEmpty(inventoryFacilityId)) {
                 Debug.logWarning("ProductStore with id " + productStoreId
@@ -668,7 +669,7 @@ public final class ProductStoreWorker {
             List<GenericValue> productFacilities = null;
 
             try {
-                productFacilities = product.getRelated(org.apache.ofbiz.persistence.entity.x.ProductFacility, null, null, true);
+                productFacilities = product.getRelated(x.ProductFacility, null, null, true);
             } catch (GenericEntityException e) {
                 Debug.logWarning(e, "Error invoking getRelated in isCatalogInventoryAvailable", MODULE);
                 return false;
@@ -677,7 +678,7 @@ public final class ProductStoreWorker {
             if (UtilValidate.isNotEmpty(productFacilities)) {
                 for (GenericValue pfValue: productFacilities) {
                     isInventoryAvailable = ProductWorker.isProductInventoryAvailableByFacility(productConfig,
-                            pfValue.getString(org.apache.ofbiz.persistence.entity.x.facilityId), quantity, dispatcher);
+                            pfValue.getString(x.facilityId), quantity, dispatcher);
                     if (isInventoryAvailable) {
                         return isInventoryAvailable;
                     }

@@ -29,6 +29,7 @@ import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 public final class ImportProductHelper {
 
     private static final String MODULE = ImportProductHelper.class.getName();
@@ -67,7 +68,7 @@ public final class ImportProductHelper {
         try {
             tmpProductGV = EntityQuery.use(delegator).from("Product").where("productId", productId).queryOne();
             if (tmpProductGV != null
-                    && productId.equals(tmpProductGV.getString(org.apache.ofbiz.persistence.entity.x.productId))) {
+                    && productId.equals(tmpProductGV.getString(x.productId))) {
                 productExists = true;
             }
         } catch (GenericEntityException e) {

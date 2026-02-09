@@ -50,6 +50,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * LayoutEvents Class
  */
@@ -87,7 +88,7 @@ public class LayoutEvents {
             if (locale == null) {
                 locale = Locale.getDefault();
             }
-            context.put(org.apache.ofbiz.persistence.entity.x.locale, locale);
+            context.put(x.locale, locale);
 
             try {
                 SimpleMapProcessor.runSimpleMapProcessor("component://content/minilang/ContentManagementMapProcessors.xml",
@@ -101,16 +102,16 @@ public class LayoutEvents {
                 return "error";
             }
 
-            context.put(org.apache.ofbiz.persistence.entity.x.dataResourceName, context.get(org.apache.ofbiz.persistence.entity.x.contentName));
-            context.put(org.apache.ofbiz.persistence.entity.x.userLogin, session.getAttribute("userLogin"));
-            context.put(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId, "IMAGE_OBJECT");
-            context.put(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId, "SUB_CONTENT");
-            context.put(org.apache.ofbiz.persistence.entity.x.contentTypeId, "DOCUMENT");
-            context.put(org.apache.ofbiz.persistence.entity.x.contentIdTo, formInput.get("contentIdTo"));
-            context.put(org.apache.ofbiz.persistence.entity.x.textData, formInput.get("textData"));
+            context.put(x.dataResourceName, context.get(x.contentName));
+            context.put(x.userLogin, session.getAttribute("userLogin"));
+            context.put(x.dataResourceTypeId, "IMAGE_OBJECT");
+            context.put(x.contentAssocTypeId, "SUB_CONTENT");
+            context.put(x.contentTypeId, "DOCUMENT");
+            context.put(x.contentIdTo, formInput.get("contentIdTo"));
+            context.put(x.textData, formInput.get("textData"));
             String contentPurposeTypeId = (String) formInput.get("contentPurposeTypeId");
             if (UtilValidate.isNotEmpty(contentPurposeTypeId)) {
-                context.put(org.apache.ofbiz.persistence.entity.x.contentPurposeList, UtilMisc.toList(contentPurposeTypeId));
+                context.put(x.contentPurposeList, UtilMisc.toList(contentPurposeTypeId));
             }
 
             Map<String, Object> result = dispatcher.runSync("persistContentAndAssoc", context);
@@ -148,8 +149,8 @@ public class LayoutEvents {
             GenericValue dataResource = EntityQuery.use(delegator).from("DataResource").where("dataResourceId", dataResourceId).queryOne();
             // Use objectInfo field to store the name of the file, since there is no place in ImageDataResource for it.
             if (dataResource != null) {
-                dataResource.set(org.apache.ofbiz.persistence.entity.x.objectInfo, imageFileName);
-                dataResource.set(org.apache.ofbiz.persistence.entity.x.mimeTypeId, mimeTypeId);
+                dataResource.set(x.objectInfo, imageFileName);
+                dataResource.set(x.mimeTypeId, mimeTypeId);
                 dataResource.store();
             }
 
@@ -157,10 +158,10 @@ public class LayoutEvents {
             GenericValue imageDataResource = EntityQuery.use(delegator).from("ImageDataResource").where("dataResourceId", dataResourceId).queryOne();
             if (imageDataResource == null) {
                 imageDataResource = delegator.makeValue("ImageDataResource", UtilMisc.toMap("dataResourceId", dataResourceId));
-                imageDataResource.set(org.apache.ofbiz.persistence.entity.x.imageData, byteWrap.array());
+                imageDataResource.set(x.imageData, byteWrap.array());
                 imageDataResource.create();
             } else {
-                imageDataResource.set(org.apache.ofbiz.persistence.entity.x.imageData, byteWrap.array());
+                imageDataResource.set(x.imageData, byteWrap.array());
                 imageDataResource.store();
             }
         } catch (GenericEntityException | GenericServiceException e3) {
@@ -187,17 +188,17 @@ public class LayoutEvents {
             if (Debug.verboseOn()) {
                 Debug.logVerbose("in createLayoutImage(java), context:" + context, "");
             }
-            context.put(org.apache.ofbiz.persistence.entity.x.userLogin, session.getAttribute("userLogin"));
-            context.put(org.apache.ofbiz.persistence.entity.x.dataResourceTypeId, "IMAGE_OBJECT");
-            context.put(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId, "SUB_CONTENT");
-            context.put(org.apache.ofbiz.persistence.entity.x.contentTypeId, "DOCUMENT");
-            context.put(org.apache.ofbiz.persistence.entity.x.mimeType, context.get(org.apache.ofbiz.persistence.entity.x.drMimeType));
-            context.put(org.apache.ofbiz.persistence.entity.x.drMimeType, null);
-            context.put(org.apache.ofbiz.persistence.entity.x.objectInfo, context.get(org.apache.ofbiz.persistence.entity.x.drobjectInfo));
-            context.put(org.apache.ofbiz.persistence.entity.x.drObjectInfo, null);
-            context.put(org.apache.ofbiz.persistence.entity.x.drDataResourceTypeId, null);
+            context.put(x.userLogin, session.getAttribute("userLogin"));
+            context.put(x.dataResourceTypeId, "IMAGE_OBJECT");
+            context.put(x.contentAssocTypeId, "SUB_CONTENT");
+            context.put(x.contentTypeId, "DOCUMENT");
+            context.put(x.mimeType, context.get(x.drMimeType));
+            context.put(x.drMimeType, null);
+            context.put(x.objectInfo, context.get(x.drobjectInfo));
+            context.put(x.drObjectInfo, null);
+            context.put(x.drDataResourceTypeId, null);
 
-            String dataResourceId = (String) context.get(org.apache.ofbiz.persistence.entity.x.drDataResourceId);
+            String dataResourceId = (String) context.get(x.drDataResourceId);
             if (Debug.verboseOn()) {
                 Debug.logVerbose("in createLayoutImage(java), dataResourceId:" + dataResourceId, "");
             }
@@ -220,10 +221,10 @@ public class LayoutEvents {
             GenericValue imageDataResource = EntityQuery.use(delegator).from("ImageDataResource").where("dataResourceId", dataResourceId).queryOne();
             if (imageDataResource == null) {
                 imageDataResource = delegator.makeValue("ImageDataResource", UtilMisc.toMap("dataResourceId", dataResourceId));
-                imageDataResource.set(org.apache.ofbiz.persistence.entity.x.imageData, byteWrap.array());
+                imageDataResource.set(x.imageData, byteWrap.array());
                 imageDataResource.create();
             } else {
-                imageDataResource.set(org.apache.ofbiz.persistence.entity.x.imageData, byteWrap.array());
+                imageDataResource.set(x.imageData, byteWrap.array());
                 imageDataResource.store();
             }
         } catch (GenericEntityException e3) {
@@ -256,15 +257,15 @@ public class LayoutEvents {
         }
         String mapKey = (String) paramMap.get("mapKey");
 
-        context.put(org.apache.ofbiz.persistence.entity.x.dataResourceId, dataResourceId);
+        context.put(x.dataResourceId, dataResourceId);
         String contentId = (String) paramMap.get("contentId");
-        context.put(org.apache.ofbiz.persistence.entity.x.userLogin, session.getAttribute("userLogin"));
+        context.put(x.userLogin, session.getAttribute("userLogin"));
 
         if (UtilValidate.isNotEmpty(contentId)) {
-            context.put(org.apache.ofbiz.persistence.entity.x.contentId, contentId);
-            context.put(org.apache.ofbiz.persistence.entity.x.contentIdTo, contentIdTo);
-            context.put(org.apache.ofbiz.persistence.entity.x.mapKey, mapKey);
-            context.put(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId, "SUB_CONTENT");
+            context.put(x.contentId, contentId);
+            context.put(x.contentIdTo, contentIdTo);
+            context.put(x.mapKey, mapKey);
+            context.put(x.contentAssocTypeId, "SUB_CONTENT");
 
             try {
                 Map<String, Object> result = dispatcher.runSync("persistContentAndAssoc", context);
@@ -324,7 +325,7 @@ public class LayoutEvents {
         GenericValue content = null;
         GenericValue newContent = null;
         GenericValue userLogin = (GenericValue) request.getSession().getAttribute("userLogin");
-        String userLoginId = (String) userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+        String userLoginId = (String) userLogin.get(x.userLoginId);
         List<GenericValue> entityList = null;
         String newId = null;
         String newDataResourceId = null;
@@ -342,41 +343,41 @@ public class LayoutEvents {
             if (Debug.verboseOn()) {
                 Debug.logVerbose("in cloneLayout, newContent:" + newContent, "");
             }
-            String oldName = (String) content.get(org.apache.ofbiz.persistence.entity.x.contentName);
+            String oldName = (String) content.get(x.contentName);
             newId = delegator.getNextSeqId("Content");
-            newContent.set(org.apache.ofbiz.persistence.entity.x.contentId, newId);
-            String dataResourceId = (String) content.get(org.apache.ofbiz.persistence.entity.x.dataResourceId);
+            newContent.set(x.contentId, newId);
+            String dataResourceId = (String) content.get(x.dataResourceId);
             GenericValue dataResource = EntityQuery.use(delegator).from("DataResource").where("dataResourceId", dataResourceId).queryOne();
             if (dataResource != null) {
                 GenericValue newDataResource = delegator.makeValue("DataResource", dataResource);
                 if (Debug.verboseOn()) {
                     Debug.logVerbose("in cloneLayout, newDataResource:" + newDataResource, "");
                 }
-                String dataResourceName = "Copy:" + (String) dataResource.get(org.apache.ofbiz.persistence.entity.x.dataResourceName);
-                newDataResource.set(org.apache.ofbiz.persistence.entity.x.dataResourceName, dataResourceName);
+                String dataResourceName = "Copy:" + (String) dataResource.get(x.dataResourceName);
+                newDataResource.set(x.dataResourceName, dataResourceName);
                 newDataResourceId = delegator.getNextSeqId("DataResource");
-                newDataResource.set(org.apache.ofbiz.persistence.entity.x.dataResourceId, newDataResourceId);
-                newDataResource.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
-                newDataResource.set(org.apache.ofbiz.persistence.entity.x.lastModifiedDate, UtilDateTime.nowTimestamp());
-                newDataResource.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLoginId);
-                newDataResource.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLoginId);
+                newDataResource.set(x.dataResourceId, newDataResourceId);
+                newDataResource.set(x.createdDate, UtilDateTime.nowTimestamp());
+                newDataResource.set(x.lastModifiedDate, UtilDateTime.nowTimestamp());
+                newDataResource.set(x.createdByUserLogin, userLoginId);
+                newDataResource.set(x.lastModifiedByUserLogin, userLoginId);
                 newDataResource.create();
             }
-            newContent.set(org.apache.ofbiz.persistence.entity.x.contentName, "Copy - " + oldName);
-            newContent.set(org.apache.ofbiz.persistence.entity.x.createdDate, UtilDateTime.nowTimestamp());
-            newContent.set(org.apache.ofbiz.persistence.entity.x.lastModifiedDate, UtilDateTime.nowTimestamp());
-            newContent.set(org.apache.ofbiz.persistence.entity.x.createdByUserLogin, userLoginId);
-            newContent.set(org.apache.ofbiz.persistence.entity.x.lastModifiedByUserLogin, userLoginId);
+            newContent.set(x.contentName, "Copy - " + oldName);
+            newContent.set(x.createdDate, UtilDateTime.nowTimestamp());
+            newContent.set(x.lastModifiedDate, UtilDateTime.nowTimestamp());
+            newContent.set(x.createdByUserLogin, userLoginId);
+            newContent.set(x.lastModifiedByUserLogin, userLoginId);
             newContent.create();
             if (Debug.verboseOn()) {
                 Debug.logVerbose("in cloneLayout, newContent:" + newContent, "");
             }
 
             GenericValue newContentAssoc = delegator.makeValue("ContentAssoc");
-            newContentAssoc.set(org.apache.ofbiz.persistence.entity.x.contentId, newId);
-            newContentAssoc.set(org.apache.ofbiz.persistence.entity.x.contentIdTo, "TEMPLATE_MASTER");
-            newContentAssoc.set(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId, "SUB_CONTENT");
-            newContentAssoc.set(org.apache.ofbiz.persistence.entity.x.fromDate, UtilDateTime.nowTimestamp());
+            newContentAssoc.set(x.contentId, newId);
+            newContentAssoc.set(x.contentIdTo, "TEMPLATE_MASTER");
+            newContentAssoc.set(x.contentAssocTypeId, "SUB_CONTENT");
+            newContentAssoc.set(x.fromDate, UtilDateTime.nowTimestamp());
             newContentAssoc.create();
             if (Debug.verboseOn()) {
                 Debug.logVerbose("in cloneLayout, newContentAssoc:" + newContentAssoc, "");
@@ -428,10 +429,10 @@ public class LayoutEvents {
                 request.setAttribute("_ERROR_MESSAGE_", e.getMessage());
                 return "error";
             }
-            String contentIdFrom = (String) view.get(org.apache.ofbiz.persistence.entity.x.contentId);
-            String mapKey = (String) view.get(org.apache.ofbiz.persistence.entity.x.caMapKey);
-            Timestamp fromDate = (Timestamp) view.get(org.apache.ofbiz.persistence.entity.x.caFromDate);
-            Timestamp thruDate = (Timestamp) view.get(org.apache.ofbiz.persistence.entity.x.caThruDate);
+            String contentIdFrom = (String) view.get(x.contentId);
+            String mapKey = (String) view.get(x.caMapKey);
+            Timestamp fromDate = (Timestamp) view.get(x.caFromDate);
+            Timestamp thruDate = (Timestamp) view.get(x.caThruDate);
             if (Debug.verboseOn()) {
                 Debug.logVerbose("in cloneLayout, contentIdFrom:" + contentIdFrom + " fromDate:" + fromDate + " thruDate:" + thruDate
                         + " mapKey:" + mapKey, "");
@@ -458,14 +459,14 @@ public class LayoutEvents {
         }
 
         GenericValue view = delegator.makeValue("ContentDataResourceView");
-        view.set(org.apache.ofbiz.persistence.entity.x.contentId, newId);
-        view.set(org.apache.ofbiz.persistence.entity.x.drDataResourceId, newDataResourceId);
+        view.set(x.contentId, newId);
+        view.set(x.drDataResourceId, newDataResourceId);
         if (Debug.verboseOn()) {
             Debug.logVerbose("in cloneLayout, view:" + view, "");
         }
         ContentManagementWorker.setCurrentEntityMap(request, view);
-        request.setAttribute("contentId", view.get(org.apache.ofbiz.persistence.entity.x.contentId));
-        request.setAttribute("drDataResourceId", view.get(org.apache.ofbiz.persistence.entity.x.drDataResourceId));
+        request.setAttribute("contentId", view.get(x.contentId));
+        request.setAttribute("drDataResourceId", view.get(x.drDataResourceId));
         return "success";
     }
 
@@ -487,10 +488,10 @@ public class LayoutEvents {
                 loc = Locale.getDefault();
             }
             GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
-            context.put(org.apache.ofbiz.persistence.entity.x.userLogin, userLogin);
+            context.put(x.userLogin, userLogin);
 
             String rootDir = request.getSession().getServletContext().getRealPath("/");
-            context.put(org.apache.ofbiz.persistence.entity.x.rootDir, rootDir);
+            context.put(x.rootDir, rootDir);
             try {
                 SimpleMapProcessor.runSimpleMapProcessor("component://content/minilang/ContentManagementMapProcessors.xml",
                         "contentIn", paramMap, context, errorMessages, loc);
@@ -503,15 +504,15 @@ public class LayoutEvents {
                 return "error";
             }
 
-            context.put(org.apache.ofbiz.persistence.entity.x.dataResourceName, context.get(org.apache.ofbiz.persistence.entity.x.contentName));
+            context.put(x.dataResourceName, context.get(x.contentName));
             String contentPurposeTypeId = (String) paramMap.get("contentPurposeTypeId");
             if (UtilValidate.isNotEmpty(contentPurposeTypeId)) {
-                context.put(org.apache.ofbiz.persistence.entity.x.contentPurposeList, UtilMisc.toList(contentPurposeTypeId));
+                context.put(x.contentPurposeList, UtilMisc.toList(contentPurposeTypeId));
             }
-            context.put(org.apache.ofbiz.persistence.entity.x.contentIdTo, paramMap.get("contentIdTo"));
-            context.put(org.apache.ofbiz.persistence.entity.x.mapKey, paramMap.get("mapKey"));
-            context.put(org.apache.ofbiz.persistence.entity.x.textData, paramMap.get("textData"));
-            context.put(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId, "SUB_CONTENT");
+            context.put(x.contentIdTo, paramMap.get("contentIdTo"));
+            context.put(x.mapKey, paramMap.get("mapKey"));
+            context.put(x.textData, paramMap.get("textData"));
+            context.put(x.contentAssocTypeId, "SUB_CONTENT");
             if (Debug.verboseOn()) {
                 Debug.logVerbose("in createSubContent, context:" + context, MODULE);
             }
@@ -564,12 +565,12 @@ public class LayoutEvents {
             if (loc == null) {
                 loc = Locale.getDefault();
             }
-            context.put(org.apache.ofbiz.persistence.entity.x.locale, loc);
+            context.put(x.locale, loc);
             GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
-            context.put(org.apache.ofbiz.persistence.entity.x.userLogin, userLogin);
+            context.put(x.userLogin, userLogin);
 
             String rootDir = request.getSession().getServletContext().getRealPath("/");
-            context.put(org.apache.ofbiz.persistence.entity.x.rootDir, rootDir);
+            context.put(x.rootDir, rootDir);
             try {
                 SimpleMapProcessor.runSimpleMapProcessor("component://content/minilang/ContentManagementMapProcessors.xml",
                         "contentIn", paramMap, context, errorMessages, loc);
@@ -582,14 +583,14 @@ public class LayoutEvents {
                 return "error";
             }
 
-            context.put(org.apache.ofbiz.persistence.entity.x.dataResourceName, context.get(org.apache.ofbiz.persistence.entity.x.contentName));
+            context.put(x.dataResourceName, context.get(x.contentName));
             String contentPurposeTypeId = (String) paramMap.get("contentPurposeTypeId");
             if (UtilValidate.isNotEmpty(contentPurposeTypeId)) {
-                context.put(org.apache.ofbiz.persistence.entity.x.contentPurposeList, UtilMisc.toList(contentPurposeTypeId));
+                context.put(x.contentPurposeList, UtilMisc.toList(contentPurposeTypeId));
             }
-            context.put(org.apache.ofbiz.persistence.entity.x.contentIdTo, paramMap.get("contentIdTo"));
-            context.put(org.apache.ofbiz.persistence.entity.x.textData, paramMap.get("textData"));
-            context.put(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId, null);
+            context.put(x.contentIdTo, paramMap.get("contentIdTo"));
+            context.put(x.textData, paramMap.get("textData"));
+            context.put(x.contentAssocTypeId, null);
             Map<String, Object> result = dispatcher.runSync("persistContentAndAssoc", context);
             if (ServiceUtil.isError(result)) {
                 String errorMessage = ServiceUtil.getErrorMessage(result);

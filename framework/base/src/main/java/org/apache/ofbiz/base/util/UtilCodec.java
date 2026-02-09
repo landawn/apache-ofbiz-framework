@@ -50,6 +50,7 @@ import org.owasp.html.PolicyFactory;
 import org.owasp.html.Sanitizers;
 import org.owasp.html.TagBalancingHtmlStreamEventReceiver;
 
+import org.apache.ofbiz.persistence.entity.x;
 @SuppressWarnings("rawtypes")
 public class UtilCodec {
     private static final String MODULE = UtilCodec.class.getName();
@@ -407,7 +408,7 @@ public class UtilCodec {
      * @return encoding url with OFBiz rule
      */
     public static String encodeUrl(String queryString, Map<String, Object> context) {
-        return "true".equalsIgnoreCase((String) context.get(org.apache.ofbiz.persistence.entity.x.escapeUrlEncode))
+        return "true".equalsIgnoreCase((String) context.get(x.escapeUrlEncode))
                 ? queryString
                 : encodeUrl(queryString);
     }

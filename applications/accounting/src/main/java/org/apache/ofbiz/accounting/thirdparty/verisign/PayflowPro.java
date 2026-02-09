@@ -52,6 +52,7 @@ import org.apache.ofbiz.service.ServiceUtil;
 
 import paypal.payflow.PayflowAPI;
 import paypal.payflow.SDKProperties;
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * PayflowPro - Verisign PayFlow Pro <=> OFBiz Service Module
  */
@@ -68,17 +69,17 @@ public class PayflowPro {
      */
     public static Map<String, Object> ccProcessor(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        GenericValue authTrans = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
-        String cvv2 = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardSecurityCode);
-        BigDecimal processAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
-        GenericValue party = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.billToParty);
-        GenericValue cc = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.creditCard);
-        GenericValue payPalPaymentMethod = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.payPalPaymentMethod);
-        GenericValue ps = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.billingAddress);
-        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
-        String configString = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
+        GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
+        GenericValue authTrans = (GenericValue) context.get(x.authTrans);
+        String orderId = (String) context.get(x.orderId);
+        String cvv2 = (String) context.get(x.cardSecurityCode);
+        BigDecimal processAmount = (BigDecimal) context.get(x.processAmount);
+        GenericValue party = (GenericValue) context.get(x.billToParty);
+        GenericValue cc = (GenericValue) context.get(x.creditCard);
+        GenericValue payPalPaymentMethod = (GenericValue) context.get(x.payPalPaymentMethod);
+        GenericValue ps = (GenericValue) context.get(x.billingAddress);
+        String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
+        String configString = (String) context.get(x.paymentConfig);
 
         if (configString == null) {
             configString = "payment.properties";
@@ -86,7 +87,7 @@ public class PayflowPro {
 
         boolean isPayPal = false;
         // Are we doing a cc or a paypal payment?
-        if ("EXT_PAYPAL".equals(paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+        if ("EXT_PAYPAL".equals(paymentPref.getString(x.paymentMethodTypeId))) {
             isPayPal = true;
         }
 
@@ -96,7 +97,7 @@ public class PayflowPro {
         if (isPayPal) {
             data.put("TRXTYPE", "A");
             data.put("TENDER", "P");
-            data.put("ORIGID", payPalPaymentMethod.getString(org.apache.ofbiz.persistence.entity.x.transactionId));
+            data.put("ORIGID", payPalPaymentMethod.getString(x.transactionId));
         } else {
             if (authTrans == null) {
                 authTrans = PaymentGatewayServices.getAuthTransaction(paymentPref);
@@ -105,14 +106,14 @@ public class PayflowPro {
             // set the orderId as comment1 so we can query in PF Manager
             data.put("COMMENT1", orderId);
             data.put("PONUM", orderId);
-            data.put("CUSTCODE", party.getString(org.apache.ofbiz.persistence.entity.x.partyId));
+            data.put("CUSTCODE", party.getString(x.partyId));
 
             // transaction type
             if (comparePaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "preAuth", configString, "payment.verisign.preAuth", "Y")) {
                 data.put("TRXTYPE", "A");
                 // only support re-auth for auth types; sale types don't do it
                 if (authTrans != null) {
-                    String refNum = authTrans.getString(org.apache.ofbiz.persistence.entity.x.referenceNum);
+                    String refNum = authTrans.getString(x.referenceNum);
                     data.put("ORIGID", refNum);
                     isReAuth = true;
                 }
@@ -129,15 +130,15 @@ public class PayflowPro {
             }
 
             // get the payment information
-            data.put("ACCT", cc.getString(org.apache.ofbiz.persistence.entity.x.cardNumber));
+            data.put("ACCT", cc.getString(x.cardNumber));
 
             // name on card
-            String name = cc.getString(org.apache.ofbiz.persistence.entity.x.firstNameOnCard) + " " + cc.getString(org.apache.ofbiz.persistence.entity.x.lastNameOnCard);
-            data.put("FIRSTNAME", cc.getString(org.apache.ofbiz.persistence.entity.x.firstNameOnCard));
-            data.put("LASTNAME", cc.getString(org.apache.ofbiz.persistence.entity.x.lastNameOnCard));
+            String name = cc.getString(x.firstNameOnCard) + " " + cc.getString(x.lastNameOnCard);
+            data.put("FIRSTNAME", cc.getString(x.firstNameOnCard));
+            data.put("LASTNAME", cc.getString(x.lastNameOnCard));
             data.put("COMMENT2", name);
-            if (cc.get(org.apache.ofbiz.persistence.entity.x.expireDate) != null) {
-                String exp = cc.getString(org.apache.ofbiz.persistence.entity.x.expireDate);
+            if (cc.get(x.expireDate) != null) {
+                String exp = cc.getString(x.expireDate);
                 String expDate = exp.substring(0, 2);
 
                 expDate = expDate + exp.substring(exp.length() - 2);
@@ -146,9 +147,9 @@ public class PayflowPro {
 
             // gather the address info
             if (ps != null) {
-                String street = ps.getString(org.apache.ofbiz.persistence.entity.x.address1) + ((UtilValidate.isNotEmpty(ps.getString(org.apache.ofbiz.persistence.entity.x.address2))) ? " " + ps.getString(org.apache.ofbiz.persistence.entity.x.address2) : "");
+                String street = ps.getString(x.address1) + ((UtilValidate.isNotEmpty(ps.getString(x.address2))) ? " " + ps.getString(x.address2) : "");
                 data.put("STREET" + "[" + street.length() + "]", street);
-                data.put("ZIP", ps.getString(org.apache.ofbiz.persistence.entity.x.postalCode));
+                data.put("ZIP", ps.getString(x.postalCode));
             }
         }
 
@@ -179,7 +180,7 @@ public class PayflowPro {
         }
         if (isPayPal) {
             // Attach the avs info returned in doExpressCheckout and stored in PayPalPaymentMethod
-            resp += "&AVSADDR=" + payPalPaymentMethod.getString(org.apache.ofbiz.persistence.entity.x.avsAddr) + "&AVSZIP=" + payPalPaymentMethod.getString(org.apache.ofbiz.persistence.entity.x.avsZip);
+            resp += "&AVSADDR=" + payPalPaymentMethod.getString(x.avsAddr) + "&AVSZIP=" + payPalPaymentMethod.getString(x.avsZip);
         }
 
         // check the response
@@ -191,19 +192,19 @@ public class PayflowPro {
 
     public static Map<String, Object> ccCapture(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        GenericValue authTrans = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
-        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.captureAmount);
-        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
-        String configString = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
+        GenericValue authTrans = (GenericValue) context.get(x.authTrans);
+        BigDecimal amount = (BigDecimal) context.get(x.captureAmount);
+        String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
+        String configString = (String) context.get(x.paymentConfig);
+        Locale locale = (Locale) context.get(x.locale);
         if (configString == null) {
             configString = "payment.properties";
         }
 
         boolean isPayPal = false;
         // Are we doing a cc or a paypal payment?
-        if ("EXT_PAYPAL".equals(paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+        if ("EXT_PAYPAL".equals(paymentPref.getString(x.paymentMethodTypeId))) {
             isPayPal = true;
         }
 
@@ -217,7 +218,7 @@ public class PayflowPro {
         }
 
         // auth ref number
-        String refNum = authTrans.getString(org.apache.ofbiz.persistence.entity.x.referenceNum);
+        String refNum = authTrans.getString(x.referenceNum);
         Map<String, String> data = UtilMisc.toMap("ORIGID", refNum);
 
         // tx type (Delayed Capture)
@@ -232,7 +233,7 @@ public class PayflowPro {
             data.put("TENDER", "C");
 
             // get the orderID
-            String orderId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+            String orderId = paymentPref.getString(x.orderId);
             data.put("COMMENT1", orderId);
         }
 
@@ -272,12 +273,12 @@ public class PayflowPro {
 
     public static Map<String, Object> ccVoid(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        GenericValue authTrans = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
-        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.releaseAmount);
-        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
-        String configString = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
+        GenericValue authTrans = (GenericValue) context.get(x.authTrans);
+        BigDecimal amount = (BigDecimal) context.get(x.releaseAmount);
+        String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
+        String configString = (String) context.get(x.paymentConfig);
+        Locale locale = (Locale) context.get(x.locale);
         if (configString == null) {
             configString = "payment.properties";
         }
@@ -293,19 +294,19 @@ public class PayflowPro {
 
         boolean isPayPal = false;
         // Are we doing a cc or a paypal payment?
-        if ("EXT_PAYPAL".equals(paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+        if ("EXT_PAYPAL".equals(paymentPref.getString(x.paymentMethodTypeId))) {
             isPayPal = true;
         }
 
         // auth ref number
-        String refNum = authTrans.getString(org.apache.ofbiz.persistence.entity.x.referenceNum);
+        String refNum = authTrans.getString(x.referenceNum);
         Map<String, String> data = UtilMisc.toMap("ORIGID", refNum);
 
         // tx type (Void)
         data.put("TRXTYPE", "V");
 
         // get the orderID
-        String orderId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderId = paymentPref.getString(x.orderId);
 
         if (isPayPal) {
             data.put("TENDER", "P");
@@ -354,11 +355,11 @@ public class PayflowPro {
 
     public static Map<String, Object> ccRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.refundAmount);
-        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
-        String configString = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
+        BigDecimal amount = (BigDecimal) context.get(x.refundAmount);
+        String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
+        String configString = (String) context.get(x.paymentConfig);
+        Locale locale = (Locale) context.get(x.locale);
         if (configString == null) {
             configString = "payment.properties";
         }
@@ -372,26 +373,26 @@ public class PayflowPro {
 
         boolean isPayPal = false;
         // Are we doing a cc or a paypal payment?
-        if ("EXT_PAYPAL".equals(paymentPref.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodTypeId))) {
+        if ("EXT_PAYPAL".equals(paymentPref.getString(x.paymentMethodTypeId))) {
             isPayPal = true;
         }
 
         // auth ref number
-        String refNum = captureTrans.getString(org.apache.ofbiz.persistence.entity.x.referenceNum);
+        String refNum = captureTrans.getString(x.referenceNum);
         Map<String, String> data = UtilMisc.toMap("ORIGID", refNum);
 
         // tx type (Credit)
         data.put("TRXTYPE", "C");
 
         // get the orderID
-        String orderId = paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderId);
+        String orderId = paymentPref.getString(x.orderId);
 
         if (isPayPal) {
             data.put("TENDER", "P");
 
             data.put("MEMO", orderId);
             // PayPal won't allow us to refund more than the capture amount
-            BigDecimal captureAmount = captureTrans.getBigDecimal(org.apache.ofbiz.persistence.entity.x.amount);
+            BigDecimal captureAmount = captureTrans.getBigDecimal(x.amount);
             amount = amount.min(captureAmount);
         } else {
             // credit card tender
@@ -436,10 +437,10 @@ public class PayflowPro {
 
     public static Map<String, Object> setExpressCheckout(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        ShoppingCart cart = (ShoppingCart) context.get(org.apache.ofbiz.persistence.entity.x.cart);
+        ShoppingCart cart = (ShoppingCart) context.get(x.cart);
         Locale locale = cart.getLocale();
         GenericValue payPalPaymentSetting = ProductStoreWorker.getProductStorePaymentSetting(delegator, cart.getProductStoreId(), "EXT_PAYPAL", null, true);
-        String paymentGatewayConfigId = payPalPaymentSetting.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        String paymentGatewayConfigId = payPalPaymentSetting.getString(x.paymentGatewayConfigId);
         String configString = "payment.properties";
 
         if (cart == null || cart.items().size() <= 0) {
@@ -539,26 +540,26 @@ public class PayflowPro {
         } else {
             GenericValue shippingAddress = cart.getShippingAddress();
             parameterMap.put("ADDROVERRIDE", "1");
-            parameterMap.put("SHIPTOSTREET", StringUtils.left(shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.address1), 30));
-            parameterMap.put("SHIPTOSTREET2", StringUtils.left(shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.address2), 30));
-            parameterMap.put("SHIPTOCITY", StringUtils.left(shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.city), 40));
-            if (shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId) != null && !"_NA_".equals(shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId))) {
-                GenericValue stateProvinceGeo = shippingAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.StateProvinceGeo, false);
-                parameterMap.put("SHIPTOSTATE", StringUtils.left(stateProvinceGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode), 40));
+            parameterMap.put("SHIPTOSTREET", StringUtils.left(shippingAddress.getString(x.address1), 30));
+            parameterMap.put("SHIPTOSTREET2", StringUtils.left(shippingAddress.getString(x.address2), 30));
+            parameterMap.put("SHIPTOCITY", StringUtils.left(shippingAddress.getString(x.city), 40));
+            if (shippingAddress.getString(x.stateProvinceGeoId) != null && !"_NA_".equals(shippingAddress.getString(x.stateProvinceGeoId))) {
+                GenericValue stateProvinceGeo = shippingAddress.getRelatedOne(x.StateProvinceGeo, false);
+                parameterMap.put("SHIPTOSTATE", StringUtils.left(stateProvinceGeo.getString(x.geoCode), 40));
             }
-            parameterMap.put("SHIPTOZIP", StringUtils.left(shippingAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode), 16));
-            GenericValue countryGeo = shippingAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
-            parameterMap.put("SHIPTOCOUNTRY", StringUtils.left(countryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoCode), 2));
+            parameterMap.put("SHIPTOZIP", StringUtils.left(shippingAddress.getString(x.postalCode), 16));
+            GenericValue countryGeo = shippingAddress.getRelatedOne(x.CountryGeo, false);
+            parameterMap.put("SHIPTOCOUNTRY", StringUtils.left(countryGeo.getString(x.geoCode), 2));
         }
     }
 
     public static Map<String, Object> getExpressCheckout(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        ShoppingCart cart = (ShoppingCart) context.get(org.apache.ofbiz.persistence.entity.x.cart);
+        ShoppingCart cart = (ShoppingCart) context.get(x.cart);
         Locale locale = cart.getLocale();
         GenericValue payPalPaymentSetting = ProductStoreWorker.getProductStorePaymentSetting(delegator, cart.getProductStoreId(), "EXT_PAYPAL", null, true);
-        String paymentGatewayConfigId = payPalPaymentSetting.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        String paymentGatewayConfigId = payPalPaymentSetting.getString(x.paymentGatewayConfigId);
         String configString = "payment.properties";
 
         Map<String, String> data = new HashMap<>();
@@ -626,27 +627,27 @@ public class PayflowPro {
     public static Map<String, Object> doExpressCheckout(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        OrderReadHelper orh = new OrderReadHelper(delegator, paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
+        OrderReadHelper orh = new OrderReadHelper(delegator, paymentPref.getString(x.orderId));
         GenericValue payPalPaymentSetting = ProductStoreWorker.getProductStorePaymentSetting(delegator, orh.getProductStoreId(), "EXT_PAYPAL", null, true);
-        String paymentGatewayConfigId = payPalPaymentSetting.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        String paymentGatewayConfigId = payPalPaymentSetting.getString(x.paymentGatewayConfigId);
         String configString = "payment.properties";
         GenericValue payPalPaymentMethod = null;
         try {
-            payPalPaymentMethod = paymentPref.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PaymentMethod, false);
-            payPalPaymentMethod = payPalPaymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PayPalPaymentMethod, false);
+            payPalPaymentMethod = paymentPref.getRelatedOne(x.PaymentMethod, false);
+            payPalPaymentMethod = payPalPaymentMethod.getRelatedOne(x.PayPalPaymentMethod, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
-        BigDecimal processAmount = paymentPref.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount);
+        BigDecimal processAmount = paymentPref.getBigDecimal(x.maxAmount);
 
         Map<String, String> data = new HashMap<>();
         data.put("TRXTYPE", "O");
         data.put("TENDER", "P");
-        data.put("PAYERID", payPalPaymentMethod.getString(org.apache.ofbiz.persistence.entity.x.payerId));
-        data.put("TOKEN", payPalPaymentMethod.getString(org.apache.ofbiz.persistence.entity.x.expressCheckoutToken));
+        data.put("PAYERID", payPalPaymentMethod.getString(x.payerId));
+        data.put("TOKEN", payPalPaymentMethod.getString(x.expressCheckoutToken));
         data.put("ACTION", "D");
         // set the amount
         data.put("AMT", processAmount.setScale(2).toPlainString());
@@ -674,7 +675,7 @@ public class PayflowPro {
 
         Map<String, Object> inMap = new HashMap<>();
         inMap.put("userLogin", userLogin);
-        inMap.put("paymentMethodId", payPalPaymentMethod.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        inMap.put("paymentMethodId", payPalPaymentMethod.get(x.paymentMethodId));
         inMap.put("transactionId", responseMap.get("PNREF"));
         Map<String, Object> outMap = null;
         try {

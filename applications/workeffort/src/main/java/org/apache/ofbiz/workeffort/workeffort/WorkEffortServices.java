@@ -61,6 +61,7 @@ import org.apache.ofbiz.service.calendar.TemporalExpressionWorker;
 
 import com.ibm.icu.util.Calendar;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * WorkEffortServices - WorkEffort related Services
  */
@@ -71,17 +72,17 @@ public class WorkEffortServices {
 
     public static Map<String, Object> getWorkEffortAssignedEventsForRole(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String roleTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.roleTypeId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String roleTypeId = (String) context.get(x.roleTypeId);
+        Locale locale = (Locale) context.get(x.locale);
 
         List<GenericValue> validWorkEfforts = null;
 
-        if (userLogin != null && userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId) != null) {
+        if (userLogin != null && userLogin.get(x.partyId) != null) {
             try {
                 EntityConditionList<EntityExpr> ecl = EntityCondition.makeCondition(
                         EntityOperator.AND,
-                        EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId)),
+                        EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, userLogin.get(x.partyId)),
                         EntityCondition.makeCondition("roleTypeId", EntityOperator.EQUALS, roleTypeId),
                         EntityCondition.makeCondition("workEffortTypeId", EntityOperator.EQUALS, "EVENT"),
                         EntityCondition.makeCondition("currentStatusId", EntityOperator.NOT_EQUAL, "CAL_DECLINED"),
@@ -107,8 +108,8 @@ public class WorkEffortServices {
 
     public static Map<String, Object> getWorkEffortAssignedEventsForRoleOfAllParties(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        String roleTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.roleTypeId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String roleTypeId = (String) context.get(x.roleTypeId);
+        Locale locale = (Locale) context.get(x.locale);
 
         List<GenericValue> validWorkEfforts = null;
 
@@ -140,16 +141,16 @@ public class WorkEffortServices {
 
     public static Map<String, Object> getWorkEffortAssignedTasks(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         List<GenericValue> validWorkEfforts = null;
 
-        if (userLogin != null && userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId) != null) {
+        if (userLogin != null && userLogin.get(x.partyId) != null) {
             try {
                 EntityConditionList<EntityExpr> ecl = EntityCondition.makeCondition(
                         EntityOperator.AND,
-                        EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId)),
+                        EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, userLogin.get(x.partyId)),
                         EntityCondition.makeCondition("workEffortTypeId", EntityOperator.EQUALS, "TASK"),
                         EntityCondition.makeCondition("currentStatusId", EntityOperator.NOT_EQUAL, "CAL_DECLINED"),
                         EntityCondition.makeCondition("currentStatusId", EntityOperator.NOT_EQUAL, "CAL_DELEGATED"),
@@ -160,7 +161,7 @@ public class WorkEffortServices {
                         .queryList();
                 ecl = EntityCondition.makeCondition(
                         EntityOperator.AND,
-                        EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId)),
+                        EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, userLogin.get(x.partyId)),
                         EntityCondition.makeCondition("workEffortTypeId", EntityOperator.EQUALS, "PROD_ORDER_TASK"),
                         EntityCondition.makeCondition("currentStatusId", EntityOperator.NOT_EQUAL, "PRUN_CANCELLED "),
                         EntityCondition.makeCondition("currentStatusId", EntityOperator.NOT_EQUAL, "PRUN_COMPLETED"),
@@ -185,16 +186,16 @@ public class WorkEffortServices {
 
     public static Map<String, Object> getWorkEffortAssignedActivities(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         List<GenericValue> validWorkEfforts = null;
 
-        if (userLogin != null && userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId) != null) {
+        if (userLogin != null && userLogin.get(x.partyId) != null) {
             try {
                 List<EntityExpr> constraints = new LinkedList<>();
 
-                constraints.add(EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId)));
+                constraints.add(EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, userLogin.get(x.partyId)));
                 constraints.add(EntityCondition.makeCondition("workEffortTypeId", EntityOperator.EQUALS, "ACTIVITY"));
                 constraints.add(EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "CAL_DECLINED"));
                 constraints.add(EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "CAL_DELEGATED"));
@@ -224,16 +225,16 @@ public class WorkEffortServices {
 
     public static Map<String, Object> getWorkEffortAssignedActivitiesByRole(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         List<GenericValue> roleWorkEfforts = null;
 
-        if (userLogin != null && userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId) != null) {
+        if (userLogin != null && userLogin.get(x.partyId) != null) {
             try {
                 List<EntityExpr> constraints = new LinkedList<>();
 
-                constraints.add(EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId)));
+                constraints.add(EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, userLogin.get(x.partyId)));
                 constraints.add(EntityCondition.makeCondition("workEffortTypeId", EntityOperator.EQUALS, "ACTIVITY"));
                 constraints.add(EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "CAL_DECLINED"));
                 constraints.add(EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "CAL_DELEGATED"));
@@ -263,16 +264,16 @@ public class WorkEffortServices {
 
     public static Map<String, Object> getWorkEffortAssignedActivitiesByGroup(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         List<GenericValue> groupWorkEfforts = null;
 
-        if (userLogin != null && userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId) != null) {
+        if (userLogin != null && userLogin.get(x.partyId) != null) {
             try {
                 List<EntityExpr> constraints = new LinkedList<>();
 
-                constraints.add(EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId)));
+                constraints.add(EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, userLogin.get(x.partyId)));
                 constraints.add(EntityCondition.makeCondition("workEffortTypeId", EntityOperator.EQUALS, "ACTIVITY"));
                 constraints.add(EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "CAL_DECLINED"));
                 constraints.add(EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "CAL_DELEGATED"));
@@ -302,11 +303,11 @@ public class WorkEffortServices {
 
     public static Map<String, Object> getWorkEffort(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Security security = ctx.getSecurity();
         Map<String, Object> resultMap = new HashMap<>();
 
-        String workEffortId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortId);
+        String workEffortId = (String) context.get(x.workEffortId);
         GenericValue workEffort = null;
 
         try {
@@ -324,7 +325,7 @@ public class WorkEffortServices {
             tryEntity = Boolean.FALSE;
             canView = Boolean.TRUE;
 
-            String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.currentStatusId);
+            String statusId = (String) context.get(x.currentStatusId);
 
             if (UtilValidate.isNotEmpty(statusId)) {
                 try {
@@ -335,10 +336,10 @@ public class WorkEffortServices {
             }
         } else {
             // get a list of workEffortPartyAssignments, if empty then this user CANNOT view the event, unless they have permission to view all
-            if (userLogin != null && userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId) != null && workEffortId != null) {
+            if (userLogin != null && userLogin.get(x.partyId) != null && workEffortId != null) {
                 try {
                     workEffortPartyAssignments = EntityQuery.use(delegator).from("WorkEffortPartyAssignment").where("workEffortId", workEffortId,
-                            "partyId", userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId)).queryList();
+                            "partyId", userLogin.get(x.partyId)).queryList();
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e, MODULE);
                 }
@@ -350,9 +351,9 @@ public class WorkEffortServices {
 
             tryEntity = Boolean.TRUE;
 
-            if (workEffort.get(org.apache.ofbiz.persistence.entity.x.currentStatusId) != null) {
+            if (workEffort.get(x.currentStatusId) != null) {
                 try {
-                    currentStatus = EntityQuery.use(delegator).from("StatusItem").where("statusId", workEffort.get(org.apache.ofbiz.persistence.entity.x.currentStatusId))
+                    currentStatus = EntityQuery.use(delegator).from("StatusItem").where("statusId", workEffort.get(x.currentStatusId))
                             .cache().queryOne();
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e, MODULE);
@@ -514,25 +515,25 @@ public class WorkEffortServices {
          */
         Delegator delegator = ctx.getDelegator();
         Security security = ctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        TimeZone timeZone = (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        TimeZone timeZone = (TimeZone) context.get(x.timeZone);
 
-        Timestamp startDay = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.start);
-        Integer numPeriodsInteger = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.numPeriods);
+        Timestamp startDay = (Timestamp) context.get(x.start);
+        Integer numPeriodsInteger = (Integer) context.get(x.numPeriods);
 
-        String calendarType = (String) context.get(org.apache.ofbiz.persistence.entity.x.calendarType);
+        String calendarType = (String) context.get(x.calendarType);
         if (UtilValidate.isEmpty(calendarType)) {
             // This is a bad idea. This causes the service to return only those work efforts that are assigned
             // to the current user even when the service parameters have nothing to do with the current user.
             calendarType = "CAL_PERSONAL";
         }
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
-        Collection<String> partyIds = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.partyIds));
-        String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId);
-        String fixedAssetId = (String) context.get(org.apache.ofbiz.persistence.entity.x.fixedAssetId);
-        String workEffortTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.workEffortTypeId);
-        Boolean filterOutCanceledEvents = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.filterOutCanceledEvents);
+        String partyId = (String) context.get(x.partyId);
+        Collection<String> partyIds = UtilGenerics.cast(context.get(x.partyIds));
+        String facilityId = (String) context.get(x.facilityId);
+        String fixedAssetId = (String) context.get(x.fixedAssetId);
+        String workEffortTypeId = (String) context.get(x.workEffortTypeId);
+        Boolean filterOutCanceledEvents = (Boolean) context.get(x.filterOutCanceledEvents);
         if (filterOutCanceledEvents == null) {
             filterOutCanceledEvents = Boolean.FALSE;
         }
@@ -540,7 +541,7 @@ public class WorkEffortServices {
         // To be returned, the max concurrent entries for a single period
         int maxConcurrentEntries = 0;
 
-        Integer periodTypeObject = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.periodType);
+        Integer periodTypeObject = (Integer) context.get(x.periodType);
         int periodType = 0;
         if (periodTypeObject != null) {
             periodType = periodTypeObject;
@@ -565,15 +566,15 @@ public class WorkEffortServices {
             partyIdsToUse = new HashSet<>();
         }
         if (UtilValidate.isNotEmpty(partyId)) {
-            if (partyId.equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId)) || security.hasEntityPermission("WORKEFFORTMGR", "_VIEW", userLogin)) {
+            if (partyId.equals(userLogin.getString(x.partyId)) || security.hasEntityPermission("WORKEFFORTMGR", "_VIEW", userLogin)) {
                 partyIdsToUse.add(partyId);
             } else {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "WorkEffortPartyPermissionError", UtilMisc.toMap("partyId", partyId), locale));
             }
         } else {
-            if ("CAL_PERSONAL".equals(calendarType) && UtilValidate.isNotEmpty(userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId))) {
-                partyIdsToUse.add(userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId));
+            if ("CAL_PERSONAL".equals(calendarType) && UtilValidate.isNotEmpty(userLogin.getString(x.partyId))) {
+                partyIdsToUse.add(userLogin.getString(x.partyId));
             }
         }
 
@@ -584,7 +585,7 @@ public class WorkEffortServices {
                 EntityCondition.makeCondition("currentStatusId", EntityOperator.NOT_EQUAL, "PRUN_CANCELLED"));
 
 
-        List<EntityCondition> entityExprList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.entityExprList));
+        List<EntityCondition> entityExprList = UtilGenerics.cast(context.get(x.entityExprList));
         if (entityExprList == null) {
             entityExprList = getDefaultWorkEffortExprList(calendarType, partyIdsToUse, workEffortTypeId, cancelledCheckAndList);
         }
@@ -671,37 +672,37 @@ public class WorkEffortServices {
                 DateRange range = new DateRange(startStamp, endStamp);
                 Calendar cal = UtilDateTime.toCalendar(startStamp, timeZone, locale);
                 for (GenericValue workEffort : validWorkEfforts) {
-                    if (UtilValidate.isNotEmpty(workEffort.getString(org.apache.ofbiz.persistence.entity.x.tempExprId))) {
+                    if (UtilValidate.isNotEmpty(workEffort.getString(x.tempExprId))) {
                         // check if either the workeffort is public or the requested party is a member
-                        if (UtilValidate.isNotEmpty(partyIdsToUse) && !"WES_PUBLIC".equals(workEffort.getString(org.apache.ofbiz.persistence.entity.x.scopeEnumId))
-                                && !partyIdsToUse.contains(workEffort.getString(org.apache.ofbiz.persistence.entity.x.partyId))) {
+                        if (UtilValidate.isNotEmpty(partyIdsToUse) && !"WES_PUBLIC".equals(workEffort.getString(x.scopeEnumId))
+                                && !partyIdsToUse.contains(workEffort.getString(x.partyId))) {
                             continue;
                         }
                         // if the workeffort has actual date time, using temporal expression has no sense
-                        if (UtilValidate.isNotEmpty(workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.actualStartDate))
-                                || UtilValidate.isNotEmpty(workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.actualCompletionDate))) {
+                        if (UtilValidate.isNotEmpty(workEffort.getTimestamp(x.actualStartDate))
+                                || UtilValidate.isNotEmpty(workEffort.getTimestamp(x.actualCompletionDate))) {
                             continue;
                         }
-                        TemporalExpression tempExpr = TemporalExpressionWorker.getTemporalExpression(delegator, workEffort.getString(org.apache.ofbiz.persistence.entity.x.tempExprId));
-                        DateRange weRange = new DateRange(workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedStartDate),
-                                workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate));
+                        TemporalExpression tempExpr = TemporalExpressionWorker.getTemporalExpression(delegator, workEffort.getString(x.tempExprId));
+                        DateRange weRange = new DateRange(workEffort.getTimestamp(x.estimatedStartDate),
+                                workEffort.getTimestamp(x.estimatedCompletionDate));
 
                         Set<Date> occurrences = tempExpr.getRange(range, cal);
                         for (Date occurrence : occurrences) {
                             for (DateRange periodRange : periodRanges) {
                                 if (periodRange.includesDate(occurrence)) {
                                     GenericValue cloneWorkEffort = (GenericValue) workEffort.clone();
-                                    TimeDuration duration = TimeDuration.fromNumber(workEffort.getDouble(org.apache.ofbiz.persistence.entity.x.estimatedMilliSeconds));
+                                    TimeDuration duration = TimeDuration.fromNumber(workEffort.getDouble(x.estimatedMilliSeconds));
                                     if (!duration.isZero()) {
                                         Calendar endCal = UtilDateTime.toCalendar(occurrence, timeZone, locale);
                                         Date endDate = duration.addToCalendar(endCal).getTime();
-                                        cloneWorkEffort.set(org.apache.ofbiz.persistence.entity.x.estimatedStartDate, new Timestamp(occurrence.getTime()));
-                                        cloneWorkEffort.set(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate, new Timestamp(endDate.getTime()));
+                                        cloneWorkEffort.set(x.estimatedStartDate, new Timestamp(occurrence.getTime()));
+                                        cloneWorkEffort.set(x.estimatedCompletionDate, new Timestamp(endDate.getTime()));
                                     } else {
-                                        cloneWorkEffort.set(org.apache.ofbiz.persistence.entity.x.estimatedStartDate, periodRange.startStamp());
-                                        cloneWorkEffort.set(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate, periodRange.endStamp());
+                                        cloneWorkEffort.set(x.estimatedStartDate, periodRange.startStamp());
+                                        cloneWorkEffort.set(x.estimatedCompletionDate, periodRange.endStamp());
                                     }
-                                    if (weRange.includes(cloneWorkEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedStartDate))) {
+                                    if (weRange.includes(cloneWorkEffort.getTimestamp(x.estimatedStartDate))) {
                                         inclusions.add(cloneWorkEffort);
                                     }
                                 }
@@ -722,13 +723,13 @@ public class WorkEffortServices {
                 List<Map<String, Object>> curWorkEfforts = new LinkedList<>();
                 Map<String, Object> entry = new HashMap<>();
                 for (GenericValue workEffort : validWorkEfforts) {
-                    Timestamp startDate = workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedStartDate);
-                    if (workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.actualStartDate) != null) {
-                        startDate = workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.actualStartDate);
+                    Timestamp startDate = workEffort.getTimestamp(x.estimatedStartDate);
+                    if (workEffort.getTimestamp(x.actualStartDate) != null) {
+                        startDate = workEffort.getTimestamp(x.actualStartDate);
                     }
-                    Timestamp endDate = workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedCompletionDate);
-                    if (workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.actualCompletionDate) != null) {
-                        endDate = workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.actualCompletionDate);
+                    Timestamp endDate = workEffort.getTimestamp(x.estimatedCompletionDate);
+                    if (workEffort.getTimestamp(x.actualCompletionDate) != null) {
+                        endDate = workEffort.getTimestamp(x.actualCompletionDate);
                     }
                     if (endDate == null) {
                         endDate = startDate;
@@ -777,9 +778,9 @@ public class WorkEffortServices {
 
     public static Map<String, Object> getProductManufacturingSummaryByFacility(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        String facilityId = (String) context.get(org.apache.ofbiz.persistence.entity.x.facilityId); // optional
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String productId = (String) context.get(x.productId);
+        String facilityId = (String) context.get(x.facilityId); // optional
+        Locale locale = (Locale) context.get(x.locale);
 
         Map<String, Map<String, Object>> summaryInByFacility = new HashMap<>();
         Map<String, Map<String, Object>> summaryOutByFacility = new HashMap<>();
@@ -808,30 +809,30 @@ public class WorkEffortServices {
                     .orderBy("-estimatedCompletionDate").queryList();
             for (GenericValue incomingProductionRun: incomingProductionRuns) {
                 double producedQtyTot = 0.0;
-                if ("PRUN_COMPLETED".equals(incomingProductionRun.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId))) {
+                if ("PRUN_COMPLETED".equals(incomingProductionRun.getString(x.currentStatusId))) {
                     List<GenericValue> inventoryItems = EntityQuery.use(delegator).from("WorkEffortAndInventoryProduced")
-                            .where("productId", productId, "workEffortId", incomingProductionRun.getString(org.apache.ofbiz.persistence.entity.x.workEffortId)).queryList();
+                            .where("productId", productId, "workEffortId", incomingProductionRun.getString(x.workEffortId)).queryList();
                     for (GenericValue inventoryItem: inventoryItems) {
                         GenericValue inventoryItemDetail = EntityQuery.use(delegator).from("InventoryItemDetail")
-                                .where("inventoryItemId", inventoryItem.getString(org.apache.ofbiz.persistence.entity.x.inventoryItemId)).orderBy("inventoryItemDetailSeqId")
+                                .where("inventoryItemId", inventoryItem.getString(x.inventoryItemId)).orderBy("inventoryItemDetailSeqId")
                                 .queryFirst();
-                        if (inventoryItemDetail != null && inventoryItemDetail.get(org.apache.ofbiz.persistence.entity.x.quantityOnHandDiff) != null) {
-                            Double inventoryItemQty = inventoryItemDetail.getDouble(org.apache.ofbiz.persistence.entity.x.quantityOnHandDiff);
+                        if (inventoryItemDetail != null && inventoryItemDetail.get(x.quantityOnHandDiff) != null) {
+                            Double inventoryItemQty = inventoryItemDetail.getDouble(x.quantityOnHandDiff);
                             producedQtyTot = producedQtyTot + inventoryItemQty;
                         }
                     }
                 }
                 double estimatedQuantity = 0.0;
-                if (incomingProductionRun.get(org.apache.ofbiz.persistence.entity.x.estimatedQuantity) != null) {
-                    estimatedQuantity = incomingProductionRun.getDouble(org.apache.ofbiz.persistence.entity.x.estimatedQuantity);
+                if (incomingProductionRun.get(x.estimatedQuantity) != null) {
+                    estimatedQuantity = incomingProductionRun.getDouble(x.estimatedQuantity);
                 }
                 double remainingQuantity = estimatedQuantity - producedQtyTot; // the qty that still needs to be produced
                 if (remainingQuantity > 0) {
-                    incomingProductionRun.set(org.apache.ofbiz.persistence.entity.x.estimatedQuantity, remainingQuantity);
+                    incomingProductionRun.set(x.estimatedQuantity, remainingQuantity);
                 } else {
                     continue;
                 }
-                String weFacilityId = incomingProductionRun.getString(org.apache.ofbiz.persistence.entity.x.facilityId);
+                String weFacilityId = incomingProductionRun.getString(x.facilityId);
 
                 Map<String, Object> quantitySummary = UtilGenerics.cast(summaryInByFacility.get(weFacilityId));
                 if (quantitySummary == null) {
@@ -876,8 +877,8 @@ public class WorkEffortServices {
             List<GenericValue> outgoingProductionRuns = EntityQuery.use(delegator).from("WorkEffortAndGoods").where(findOutgoingProductionRunsConds)
                     .orderBy("-estimatedStartDate").queryList();
             for (GenericValue outgoingProductionRun: outgoingProductionRuns) {
-                String weFacilityId = outgoingProductionRun.getString(org.apache.ofbiz.persistence.entity.x.facilityId);
-                Double neededQuantity = outgoingProductionRun.getDouble(org.apache.ofbiz.persistence.entity.x.estimatedQuantity);
+                String weFacilityId = outgoingProductionRun.getString(x.facilityId);
+                Double neededQuantity = outgoingProductionRun.getDouble(x.estimatedQuantity);
                 if (neededQuantity == null) {
                     neededQuantity = (double) 0;
                 }
@@ -921,7 +922,7 @@ public class WorkEffortServices {
     public static Map<String, Object> processWorkEffortEventReminders(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale localePar = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale localePar = (Locale) context.get(x.locale);
         Timestamp now = new Timestamp(System.currentTimeMillis());
         List<GenericValue> eventReminders = null;
         try {
@@ -934,14 +935,14 @@ public class WorkEffortServices {
                     "WorkEffortEventRemindersRetrivingError", UtilMisc.toMap("errorString", e), localePar));
         }
         for (GenericValue reminder : eventReminders) {
-            if (UtilValidate.isEmpty(reminder.get(org.apache.ofbiz.persistence.entity.x.contactMechId))) {
+            if (UtilValidate.isEmpty(reminder.get(x.contactMechId))) {
                 continue;
             }
-            int repeatCount = reminder.get(org.apache.ofbiz.persistence.entity.x.repeatCount) == null ? 0 : reminder.getLong(org.apache.ofbiz.persistence.entity.x.repeatCount).intValue();
-            int currentCount = reminder.get(org.apache.ofbiz.persistence.entity.x.currentCount) == null ? 0 : reminder.getLong(org.apache.ofbiz.persistence.entity.x.currentCount).intValue();
+            int repeatCount = reminder.get(x.repeatCount) == null ? 0 : reminder.getLong(x.repeatCount).intValue();
+            int currentCount = reminder.get(x.currentCount) == null ? 0 : reminder.getLong(x.currentCount).intValue();
             GenericValue workEffort = null;
             try {
-                workEffort = reminder.getRelatedOne(org.apache.ofbiz.persistence.entity.x.WorkEffort, false);
+                workEffort = reminder.getRelatedOne(x.WorkEffort, false);
             } catch (GenericEntityException e) {
                 Debug.logWarning("Error while getting work effort: " + e, MODULE);
             }
@@ -953,18 +954,18 @@ public class WorkEffortServices {
                 }
                 continue;
             }
-            Locale locale = reminder.getString(org.apache.ofbiz.persistence.entity.x.localeId) == null ? Locale.getDefault() : new Locale(reminder.getString(org.apache.ofbiz.persistence.entity.x.localeId));
-            TimeZone timeZone = reminder.getString(org.apache.ofbiz.persistence.entity.x.timeZoneId) == null ? TimeZone.getDefault()
-                    : TimeZone.getTimeZone(reminder.getString(org.apache.ofbiz.persistence.entity.x.timeZoneId));
-            Map<String, Object> parameters = UtilMisc.toMap("locale", locale, "timeZone", timeZone, "workEffortId", reminder.get(org.apache.ofbiz.persistence.entity.x.workEffortId));
+            Locale locale = reminder.getString(x.localeId) == null ? Locale.getDefault() : new Locale(reminder.getString(x.localeId));
+            TimeZone timeZone = reminder.getString(x.timeZoneId) == null ? TimeZone.getDefault()
+                    : TimeZone.getTimeZone(reminder.getString(x.timeZoneId));
+            Map<String, Object> parameters = UtilMisc.toMap("locale", locale, "timeZone", timeZone, "workEffortId", reminder.get(x.workEffortId));
 
             Map<String, Object> processCtx = UtilMisc.toMap("reminder", reminder, "bodyParameters", parameters,
-                    "userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
+                    "userLogin", context.get(x.userLogin));
 
             Calendar cal = UtilDateTime.toCalendar(now, timeZone, locale);
-            Timestamp reminderStamp = reminder.getTimestamp(org.apache.ofbiz.persistence.entity.x.reminderDateTime);
-            Date eventDateTime = workEffort.getTimestamp(org.apache.ofbiz.persistence.entity.x.estimatedStartDate);
-            String tempExprId = workEffort.getString(org.apache.ofbiz.persistence.entity.x.tempExprId);
+            Timestamp reminderStamp = reminder.getTimestamp(x.reminderDateTime);
+            Date eventDateTime = workEffort.getTimestamp(x.estimatedStartDate);
+            String tempExprId = workEffort.getString(x.tempExprId);
             if (UtilValidate.isNotEmpty(tempExprId)) {
                 TemporalExpression temporalExpression = null;
                 try {
@@ -975,7 +976,7 @@ public class WorkEffortServices {
                 if (temporalExpression != null) {
                     eventDateTime = temporalExpression.first(cal).getTime();
                     Date reminderDateTime = null;
-                    long reminderOffset = reminder.get(org.apache.ofbiz.persistence.entity.x.reminderOffset) == null ? 0 : reminder.getLong(org.apache.ofbiz.persistence.entity.x.reminderOffset);
+                    long reminderOffset = reminder.get(x.reminderOffset) == null ? 0 : reminder.getLong(x.reminderOffset);
                     if (reminderStamp == null) {
                         if (reminderOffset != 0) {
                             cal.setTime(eventDateTime);
@@ -1011,8 +1012,8 @@ public class WorkEffortServices {
                                 } else {
                                     newReminderDateTime = temporalExpression.next(cal).getTime();
                                 }
-                                reminder.set(org.apache.ofbiz.persistence.entity.x.currentCount, (long) (currentCount + 1));
-                                reminder.set(org.apache.ofbiz.persistence.entity.x.reminderDateTime, new Timestamp(newReminderDateTime.getTime()));
+                                reminder.set(x.currentCount, (long) (currentCount + 1));
+                                reminder.set(x.reminderDateTime, new Timestamp(newReminderDateTime.getTime()));
                                 reminder.store();
                             }
                         } catch (GenericEntityException e) {
@@ -1022,7 +1023,7 @@ public class WorkEffortServices {
                         }
                     } else if (reminderStamp == null) {
                         try {
-                            reminder.set(org.apache.ofbiz.persistence.entity.x.reminderDateTime, new Timestamp(reminderDateTime.getTime()));
+                            reminder.set(x.reminderDateTime, new Timestamp(reminderDateTime.getTime()));
                             reminder.store();
                         } catch (GenericEntityException e) {
                             Debug.logWarning("Error while processing temporal expression reminder, id = " + tempExprId + ": " + e, MODULE);
@@ -1040,15 +1041,15 @@ public class WorkEffortServices {
                         if (ServiceUtil.isError(result)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
                         }
-                        TimeDuration duration = TimeDuration.fromNumber(reminder.getLong(org.apache.ofbiz.persistence.entity.x.repeatInterval));
+                        TimeDuration duration = TimeDuration.fromNumber(reminder.getLong(x.repeatInterval));
                         if ((repeatCount != 0 && currentCount + 1 >= repeatCount) || duration.isZero()) {
                             reminder.remove();
                         } else {
                             cal.setTime(now);
                             duration.addToCalendar(cal);
                             reminderDateTime = cal.getTime();
-                            reminder.set(org.apache.ofbiz.persistence.entity.x.currentCount, (long) (currentCount + 1));
-                            reminder.set(org.apache.ofbiz.persistence.entity.x.reminderDateTime, new Timestamp(reminderDateTime.getTime()));
+                            reminder.set(x.currentCount, (long) (currentCount + 1));
+                            reminder.set(x.reminderDateTime, new Timestamp(reminderDateTime.getTime()));
                             reminder.store();
                         }
                     } catch (GenericEntityException e) {
@@ -1065,16 +1066,16 @@ public class WorkEffortServices {
     public static Map<String, Object> processWorkEffortEventReminder(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Map<String, Object> parameters = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.bodyParameters));
-        GenericValue reminder = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.reminder);
+        Map<String, Object> parameters = UtilGenerics.cast(context.get(x.bodyParameters));
+        GenericValue reminder = (GenericValue) context.get(x.reminder);
         GenericValue contactMech = null;
         try {
-            contactMech = reminder.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ContactMech, false);
+            contactMech = reminder.getRelatedOne(x.ContactMech, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
-        if (contactMech != null && "EMAIL_ADDRESS".equals(contactMech.get(org.apache.ofbiz.persistence.entity.x.contactMechTypeId))) {
-            String toAddress = contactMech.getString(org.apache.ofbiz.persistence.entity.x.infoString);
+        if (contactMech != null && "EMAIL_ADDRESS".equals(contactMech.get(x.contactMechTypeId))) {
+            String toAddress = contactMech.getString(x.infoString);
 
             GenericValue emailTemplateSetting = null;
             try {
@@ -1089,8 +1090,8 @@ public class WorkEffortServices {
                 try {
                     dispatcher.runAsync("sendMailFromTemplateSetting", emailCtx);
                 } catch (GenericServiceException e) {
-                    Debug.logWarning("Error while emailing event reminder - workEffortId = " + reminder.get(org.apache.ofbiz.persistence.entity.x.workEffortId) + ", contactMechId = "
-                            + reminder.get(org.apache.ofbiz.persistence.entity.x.contactMechId) + ": " + e, MODULE);
+                    Debug.logWarning("Error while emailing event reminder - workEffortId = " + reminder.get(x.workEffortId) + ", contactMechId = "
+                            + reminder.get(x.contactMechId) + ": " + e, MODULE);
                 }
             } else {
                 Debug.logError("No email template (WEFF_EVENT_REMINDER) has been configured, reminder cannot be send.", MODULE);
@@ -1098,20 +1099,20 @@ public class WorkEffortServices {
             return ServiceUtil.returnSuccess();
         }
         // TODO: Other contact mechanism types
-        Debug.logWarning("Invalid event reminder contact mech, workEffortId = " + reminder.get(org.apache.ofbiz.persistence.entity.x.workEffortId) + ", contactMechId = "
-                + reminder.get(org.apache.ofbiz.persistence.entity.x.contactMechId), MODULE);
+        Debug.logWarning("Invalid event reminder contact mech, workEffortId = " + reminder.get(x.workEffortId) + ", contactMechId = "
+                + reminder.get(x.contactMechId), MODULE);
         return ServiceUtil.returnSuccess();
     }
 
     public static Map<String, Object> removeDuplicateWorkEfforts(DispatchContext ctx, Map<String, ? extends Object> context) {
         List<GenericValue> resultList = null;
-        try (EntityListIterator eli = (EntityListIterator) context.get(org.apache.ofbiz.persistence.entity.x.workEffortIterator)) {
+        try (EntityListIterator eli = (EntityListIterator) context.get(x.workEffortIterator)) {
             if (eli != null) {
                 Set<String> keys = new HashSet<>();
                 resultList = new LinkedList<>();
                 GenericValue workEffort = eli.next();
                 while (workEffort != null) {
-                    String workEffortId = workEffort.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
+                    String workEffortId = workEffort.getString(x.workEffortId);
                     if (!keys.contains(workEffortId)) {
                         resultList.add(workEffort);
                         keys.add(workEffortId);
@@ -1119,7 +1120,7 @@ public class WorkEffortServices {
                     workEffort = eli.next();
                 }
             } else {
-                List<GenericValue> workEfforts = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.workEfforts));
+                List<GenericValue> workEfforts = UtilGenerics.cast(context.get(x.workEfforts));
                 if (workEfforts != null) {
                     resultList = WorkEffortWorker.removeDuplicateWorkEfforts(workEfforts);
                 }

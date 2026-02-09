@@ -61,6 +61,7 @@ import freemarker.template.TemplateModel;
 import freemarker.template.TemplateModelException;
 import freemarker.template.Version;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Widget Library - Screen model HTML class.
  */
@@ -180,7 +181,7 @@ public class HtmlWidget extends ModelScreenWidget {
                     writer.append(HtmlWidgetRenderer.buildBoundaryComment("Begin", "Template", location));
                 }
                 if (HtmlWidgetRenderer.NAMED_BORDER_TYPE != ModelWidget.NamedBorderType.NONE && !location.endsWith(".fo.ftl")) {
-                    HttpServletRequest request = ((HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request));
+                    HttpServletRequest request = ((HttpServletRequest) context.get(x.request));
                     writer.append(HtmlWidgetRenderer.beginNamedBorder("Template", location, request.getContextPath()));
                 }
                 Template template = null;
@@ -330,7 +331,7 @@ public class HtmlWidget extends ModelScreenWidget {
                         if (fileName.endsWith(".ftl")) {
                             fileName = fileName.substring(0, fileName.length() - 4);
                         }
-                        HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
+                        HttpServletRequest request = (HttpServletRequest) context.get(x.request);
                         ScriptLinkHelper.prepareScriptLinkForBodyEnd(request, fileName, scripts.toString());
                     }
                 }
@@ -391,7 +392,7 @@ public class HtmlWidget extends ModelScreenWidget {
 
             // put the sectionMap in the context, make sure it is in the sub-scope, ie after calling push on the MapStack
             contextMs.push();
-            context.put(org.apache.ofbiz.persistence.entity.x.sections, sections);
+            context.put(x.sections, sections);
 
             renderHtmlTemplate(writer, this.locationExdr, context);
             contextMs.pop();

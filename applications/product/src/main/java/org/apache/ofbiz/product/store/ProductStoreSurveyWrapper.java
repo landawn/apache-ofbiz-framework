@@ -25,6 +25,7 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.content.survey.SurveyWrapper;
 import org.apache.ofbiz.entity.GenericValue;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Product Store Survey Wrapper
  */
@@ -46,9 +47,9 @@ public class ProductStoreSurveyWrapper extends SurveyWrapper {
         if (this.productStoreSurveyAppl != null) {
             this.setPartyId(partyId);
             this.setDelegator(productStoreSurveyAppl.getDelegator());
-            this.setSurveyId(productStoreSurveyAppl.getString(org.apache.ofbiz.persistence.entity.x.surveyId));
-            this.surveyTemplate = productStoreSurveyAppl.getString(org.apache.ofbiz.persistence.entity.x.surveyTemplate);
-            this.resultTemplate = productStoreSurveyAppl.getString(org.apache.ofbiz.persistence.entity.x.resultTemplate);
+            this.setSurveyId(productStoreSurveyAppl.getString(x.surveyId));
+            this.surveyTemplate = productStoreSurveyAppl.getString(x.surveyTemplate);
+            this.resultTemplate = productStoreSurveyAppl.getString(x.resultTemplate);
         } else {
             throw new IllegalArgumentException("Required parameter productStoreSurveyAppl missing");
         }

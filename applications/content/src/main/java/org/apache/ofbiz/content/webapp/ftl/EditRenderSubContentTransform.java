@@ -41,6 +41,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import freemarker.core.Environment;
 import freemarker.template.TemplateTransformModel;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * EditRenderSubContentTransform - Freemarker Transform for URLs (links)
  *
@@ -126,19 +127,19 @@ public class EditRenderSubContentTransform implements TemplateTransformModel {
 
         String dataResourceIdTemp = null;
         String subContentIdSubTemp = null;
-        if (subContentDataResourceView != null && subContentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.contentId) != null) {
-            dataResourceIdTemp = (String) subContentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.drDataResourceId);
-            subContentIdSubTemp = (String) subContentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        if (subContentDataResourceView != null && subContentDataResourceView.get(x.contentId) != null) {
+            dataResourceIdTemp = (String) subContentDataResourceView.get(x.drDataResourceId);
+            subContentIdSubTemp = (String) subContentDataResourceView.get(x.contentId);
             if (UtilValidate.isEmpty(subDataResourceTypeIdTemp)) {
-                subDataResourceTypeIdTemp = (String) subContentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.drDataResourceTypeId);
+                subDataResourceTypeIdTemp = (String) subContentDataResourceView.get(x.drDataResourceTypeId);
             }
             if (UtilValidate.isEmpty(mimeTypeIdTemp)) {
-                mimeTypeIdTemp = (String) subContentDataResourceView.get(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
+                mimeTypeIdTemp = (String) subContentDataResourceView.get(x.mimeTypeId);
                 if (UtilValidate.isEmpty(mimeTypeIdTemp) && UtilValidate.isNotEmpty(contentId)) { // will need these below
                     try {
                         parentContent = EntityQuery.use(delegator).from("Content").where("contentId", contentId).queryOne();
                         if (parentContent != null) {
-                            mimeTypeIdTemp = (String) parentContent.get(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
+                            mimeTypeIdTemp = (String) parentContent.get(x.mimeTypeId);
                         }
                     } catch (GenericEntityException e) {
                         throw new RuntimeException(e.getMessage());

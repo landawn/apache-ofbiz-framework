@@ -37,6 +37,7 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.service.config.ServiceConfigUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class JobServices {
 
     private static final String MODULE = JobServices.class.getName();
@@ -46,15 +47,15 @@ public class JobServices {
         Delegator delegator = dctx.getDelegator();
         Locale locale = ServiceUtil.getLocale(context);
 
-        String jobId = (String) context.get(org.apache.ofbiz.persistence.entity.x.jobId);
+        String jobId = (String) context.get(x.jobId);
         Map<String, Object> fields = UtilMisc.<String, Object>toMap("jobId", jobId);
 
         GenericValue job = null;
         try {
             job = EntityQuery.use(delegator).from("JobSandbox").where("jobId", jobId).queryOne();
             if (job != null) {
-                job.set(org.apache.ofbiz.persistence.entity.x.cancelDateTime, UtilDateTime.nowTimestamp());
-                job.set(org.apache.ofbiz.persistence.entity.x.statusId, "SERVICE_CANCELLED");
+                job.set(x.cancelDateTime, UtilDateTime.nowTimestamp());
+                job.set(x.statusId, "SERVICE_CANCELLED");
                 job.store();
             }
         } catch (GenericEntityException e) {
@@ -64,7 +65,7 @@ public class JobServices {
         }
 
         if (job != null) {
-            Timestamp cancelDate = job.getTimestamp(org.apache.ofbiz.persistence.entity.x.cancelDateTime);
+            Timestamp cancelDate = job.getTimestamp(x.cancelDateTime);
             Map<String, Object> result = ServiceUtil.returnSuccess();
             result.put("cancelDateTime", cancelDate);
             result.put("statusId", "SERVICE_PENDING"); // To more easily see current pending jobs and possibly cancel some others
@@ -77,21 +78,21 @@ public class JobServices {
     public static Map<String, Object> cancelJobRetries(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         Security security = dctx.getSecurity();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Locale locale = ServiceUtil.getLocale(context);
         if (!security.hasPermission("SERVICE_INVOKE_ANY", userLogin)) {
             String errMsg = UtilProperties.getMessage(RESOURCE, "serviceUtil.no_permission_to_run", locale) + ".";
             return ServiceUtil.returnError(errMsg);
         }
 
-        String jobId = (String) context.get(org.apache.ofbiz.persistence.entity.x.jobId);
+        String jobId = (String) context.get(x.jobId);
         Map<String, Object> fields = UtilMisc.<String, Object>toMap("jobId", jobId);
 
         GenericValue job = null;
         try {
             job = EntityQuery.use(delegator).from("JobSandbox").where("jobId", jobId).queryOne();
             if (job != null) {
-                job.set(org.apache.ofbiz.persistence.entity.x.maxRetry, 0L);
+                job.set(x.maxRetry, 0L);
                 job.store();
             }
         } catch (GenericEntityException e) {
@@ -108,10 +109,10 @@ public class JobServices {
     }
 
     public static Map<String, Object> purgeOldJobs(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        String sendPool = (String) context.get(org.apache.ofbiz.persistence.entity.x.poolId);
-        Integer daysToKeep = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.daysToKeep);
-        Integer limit = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.limit);
+        Locale locale = (Locale) context.get(x.locale);
+        String sendPool = (String) context.get(x.poolId);
+        Integer daysToKeep = (Integer) context.get(x.daysToKeep);
+        Integer limit = (Integer) context.get(x.limit);
         try {
             if (sendPool == null) sendPool = ServiceConfigUtil.getServiceEngine().getThreadPool().getSendToPool();
             if (daysToKeep == null) daysToKeep = ServiceConfigUtil.getServiceEngine().getThreadPool().getPurgeJobDays();
@@ -136,7 +137,7 @@ public class JobServices {
     public static Map<String, Object> resetJob(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
 
-        String jobId = (String) context.get(org.apache.ofbiz.persistence.entity.x.jobId);
+        String jobId = (String) context.get(x.jobId);
         GenericValue job;
         try {
             job = EntityQuery.use(delegator).from("JobSandbox").where("jobId", jobId).queryOne();
@@ -147,11 +148,11 @@ public class JobServices {
 
         // update the job
         if (job != null) {
-            job.set(org.apache.ofbiz.persistence.entity.x.statusId, "SERVICE_PENDING");
-            job.set(org.apache.ofbiz.persistence.entity.x.startDateTime, null);
-            job.set(org.apache.ofbiz.persistence.entity.x.finishDateTime, null);
-            job.set(org.apache.ofbiz.persistence.entity.x.cancelDateTime, null);
-            job.set(org.apache.ofbiz.persistence.entity.x.runByInstanceId, null);
+            job.set(x.statusId, "SERVICE_PENDING");
+            job.set(x.startDateTime, null);
+            job.set(x.finishDateTime, null);
+            job.set(x.cancelDateTime, null);
+            job.set(x.runByInstanceId, null);
 
             // save the job
             try {

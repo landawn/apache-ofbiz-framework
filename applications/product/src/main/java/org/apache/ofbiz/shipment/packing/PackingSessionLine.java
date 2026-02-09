@@ -31,6 +31,7 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 @SuppressWarnings("serial")
 public class PackingSessionLine implements java.io.Serializable {
 
@@ -330,7 +331,7 @@ public class PackingSessionLine implements java.io.Serializable {
                                       .queryOne();
             if (plItem != null) {
                 Debug.logInfo("Found picklist bin: " + plItem, MODULE);
-                BigDecimal itemQty = plItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                BigDecimal itemQty = plItem.getBigDecimal(x.quantity);
                 if (itemQty.compareTo(quantity) == 0) {
                     // set to complete
                     itemLookup.put("itemStatusId", "PICKITEM_COMPLETED");

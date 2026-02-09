@@ -47,6 +47,7 @@ import org.apache.ofbiz.product.product.ProductWorker;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * CategoryWorker - Worker class to reduce code in JSPs.
  */
@@ -97,7 +98,7 @@ public final class CategoryWorker {
             Collection<GenericValue> allCategories = EntityQuery.use(delegator).from("ProductCategory").queryList();
 
             for (GenericValue curCat: allCategories) {
-                Collection<GenericValue> parentCats = curCat.getRelated(org.apache.ofbiz.persistence.entity.x.CurrentProductCategoryRollup, null, null, true);
+                Collection<GenericValue> parentCats = curCat.getRelated(x.CurrentProductCategoryRollup, null, null, true);
 
                 if (parentCats.isEmpty()) results.add(curCat);
             }
@@ -172,7 +173,7 @@ public final class CategoryWorker {
                 GenericValue cv = null;
 
                 try {
-                    cv = parent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CurrentProductCategory, true);
+                    cv = parent.getRelatedOne(x.CurrentProductCategory, true);
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e.getMessage(), MODULE);
                 }
@@ -181,14 +182,14 @@ public final class CategoryWorker {
                         if (!isCategoryEmpty(cv)) {
                             categories.add(cv);
                             if (recursive) {
-                                categories.addAll(getRelatedCategoriesRet(delegator, attributeName, cv.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId),
+                                categories.addAll(getRelatedCategoriesRet(delegator, attributeName, cv.getString(x.productCategoryId),
                                         limitView, excludeEmpty, recursive));
                             }
                         }
                     } else {
                         categories.add(cv);
                         if (recursive) {
-                            categories.addAll(getRelatedCategoriesRet(delegator, attributeName, cv.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId),
+                            categories.addAll(getRelatedCategoriesRet(delegator, attributeName, cv.getString(x.productCategoryId),
                                     limitView, excludeEmpty, recursive));
                         }
                     }
@@ -223,7 +224,7 @@ public final class CategoryWorker {
         long count = 0;
         try {
             count = EntityQuery.use(delegator).from("ProductCategoryMember").where("productCategoryId",
-                    category.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId)).queryCount();
+                    category.getString(x.productCategoryId)).queryCount();
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
@@ -238,7 +239,7 @@ public final class CategoryWorker {
         long count = 0;
         try {
             count = EntityQuery.use(delegator).from("ProductCategoryRollup").where("parentProductCategoryId",
-                    category.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId)).queryCount();
+                    category.getString(x.productCategoryId)).queryCount();
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
@@ -366,7 +367,7 @@ public final class CategoryWorker {
             //this does take into account that a product could be a variant of multiple products, but this shouldn't ever really happen...
             if (productAssocs != null) {
                 for (GenericValue productAssoc: productAssocs) {
-                    if (isProductInCategory(delegator, productAssoc.getString(org.apache.ofbiz.persistence.entity.x.productId), productCategoryId)) {
+                    if (isProductInCategory(delegator, productAssoc.getString(x.productId), productCategoryId)) {
                         return true;
                     }
                 }
@@ -405,7 +406,7 @@ public final class CategoryWorker {
             return;
         }
         for (GenericValue cat: categoryList) {
-            String productCategoryId = (String) cat.get(org.apache.ofbiz.persistence.entity.x.productCategoryId);
+            String productCategoryId = (String) cat.get(x.productCategoryId);
 
             if (catContentWrappers.containsKey(productCategoryId)) {
                 // if this ID is already in the Map, skip it (avoids inefficiency, infinite recursion, etc.)
@@ -431,7 +432,7 @@ public final class CategoryWorker {
      * @return Map organized trail from root point to categoryId.
      * */
     public static Map<String, Object> getCategoryTrail(DispatchContext dctx, Map<String, Object> context) {
-        String productCategoryId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productCategoryId);
+        String productCategoryId = (String) context.get(x.productCategoryId);
         Map<String, Object> results = ServiceUtil.returnSuccess();
         Delegator delegator = dctx.getDelegator();
         List<String> trailElements = new LinkedList<>();
@@ -448,7 +449,7 @@ public final class CategoryWorker {
                 if (UtilValidate.isNotEmpty(productCategoryRollups)) {
                     // add only categories that belong to the top category to trail
                     for (GenericValue productCategoryRollup : productCategoryRollups) {
-                        String trailCategoryId = productCategoryRollup.getString(org.apache.ofbiz.persistence.entity.x.parentProductCategoryId);
+                        String trailCategoryId = productCategoryRollup.getString(x.parentProductCategoryId);
                         parentProductCategoryId = trailCategoryId;
                         if (trailElements.contains(trailCategoryId)) {
                             break;
@@ -460,7 +461,7 @@ public final class CategoryWorker {
                 }
             } catch (GenericEntityException e) {
                 Map<String, String> messageMap = UtilMisc.toMap("errMessage", ". Cannot generate trail from product category. ");
-                String errMsg = UtilProperties.getMessage("CommonUiLabels", "CommonDatabaseProblem", messageMap, (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale));
+                String errMsg = UtilProperties.getMessage("CommonUiLabels", "CommonDatabaseProblem", messageMap, (Locale) context.get(x.locale));
                 Debug.logError(e, errMsg, MODULE);
                 return ServiceUtil.returnError(errMsg);
             }

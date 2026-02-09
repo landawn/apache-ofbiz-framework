@@ -27,6 +27,7 @@ import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Makes it easier to deal with entities that follow the
  * extensibility pattern and that can be of various types as identified in the database.
@@ -54,7 +55,7 @@ public final class EntityTypeUtil {
     private static GenericValue getParentType(GenericValue typeValue) {
         // assumes Parent relation is "Parent<entityName>"
         try {
-            return typeValue.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Parent + typeValue.getEntityName(), true);
+            return typeValue.getRelatedOne(x.Parent + typeValue.getEntityName(), true);
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
             return null;
@@ -68,7 +69,7 @@ public final class EntityTypeUtil {
         // first get all childrenTypes ...
         List<GenericValue> childrenTypes = null;
         try {
-            childrenTypes = typeValue.getRelated(org.apache.ofbiz.persistence.entity.x.Child + typeValue.getEntityName(), null, null, true);
+            childrenTypes = typeValue.getRelated(x.Child + typeValue.getEntityName(), null, null, true);
         } catch (GenericEntityException e) {
             Debug.logWarning(e, MODULE);
             return null;

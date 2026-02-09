@@ -52,6 +52,7 @@ import org.apache.oro.text.regex.PatternMatcher;
 import org.apache.oro.text.regex.Perl5Matcher;
 import org.w3c.dom.Element;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Abstract base class for the condition models.
  */
@@ -455,11 +456,11 @@ public abstract class AbstractModelCondition implements Serializable, ModelCondi
         @Override
         public boolean eval(Map<String, Object> context) {
             // if no user is logged in, treat as if the user does not have permission
-            GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+            GenericValue userLogin = (GenericValue) context.get(x.userLogin);
             if (userLogin != null) {
                 String permission = permissionExdr.expandString(context);
                 String action = actionExdr.expandString(context);
-                Security security = (Security) context.get(org.apache.ofbiz.persistence.entity.x.security);
+                Security security = (Security) context.get(x.security);
                 if (UtilValidate.isNotEmpty(action)) {
                     // run hasEntityPermission
                     if (security.hasEntityPermission(permission, action, userLogin)) {
@@ -521,8 +522,8 @@ public abstract class AbstractModelCondition implements Serializable, ModelCondi
             }
             String fieldString = null;
             try {
-                fieldString = (String) ObjectType.simpleTypeOrObjectConvert(fieldVal, "String", null, (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone),
-                        (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale), true);
+                fieldString = (String) ObjectType.simpleTypeOrObjectConvert(fieldVal, "String", null, (TimeZone) context.get(x.timeZone),
+                        (Locale) context.get(x.locale), true);
             } catch (GeneralException e) {
                 Debug.logError(e, "Could not convert object to String, using empty String", MODULE);
             }
@@ -569,7 +570,7 @@ public abstract class AbstractModelCondition implements Serializable, ModelCondi
         @Override
         public boolean eval(Map<String, Object> context) {
             // if no user is logged in, treat as if the user does not have permission
-            GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+            GenericValue userLogin = (GenericValue) context.get(x.userLogin);
             if (userLogin != null) {
                 String serviceName = serviceExdr.expandString(context);
                 String mainAction = actionExdr.expandString(context);
@@ -586,13 +587,13 @@ public abstract class AbstractModelCondition implements Serializable, ModelCondi
                 Map<String, Object> serviceContext = (obj instanceof Map) ? UtilGenerics.cast(obj) : null;
                 if (serviceContext != null) {
                     // copy the required internal fields
-                    serviceContext.put("userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
-                    serviceContext.put("locale", context.get(org.apache.ofbiz.persistence.entity.x.locale));
+                    serviceContext.put("userLogin", context.get(x.userLogin));
+                    serviceContext.put("locale", context.get(x.locale));
                 } else {
                     serviceContext = context;
                 }
                 // get the service engine objects
-                LocalDispatcher dispatcher = (LocalDispatcher) context.get(org.apache.ofbiz.persistence.entity.x.dispatcher);
+                LocalDispatcher dispatcher = (LocalDispatcher) context.get(x.dispatcher);
                 DispatchContext dctx = dispatcher.getDispatchContext();
                 // get the service
                 ModelService permService;
@@ -679,7 +680,7 @@ public abstract class AbstractModelCondition implements Serializable, ModelCondi
             if (fieldVal != null) {
                 try {
                     fieldString = (String) ObjectType.simpleTypeOrObjectConvert(fieldVal, "String", null,
-                            (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone), (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale), true);
+                            (TimeZone) context.get(x.timeZone), (Locale) context.get(x.locale), true);
                 } catch (GeneralException e) {
                     Debug.logError(e, "Could not convert object to String, using empty String", MODULE);
                 }

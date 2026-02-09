@@ -45,6 +45,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class RitaServices {
 
     private static final String MODULE = RitaServices.class.getName();
@@ -55,7 +56,7 @@ public class RitaServices {
     private static final RoundingMode ROUNDING = UtilNumber.getRoundingMode("invoice.rounding");
 
     public static Map<String, Object> ccAuth(DispatchContext dctx, Map<String, ? extends Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
         Properties props = buildPccProperties(context, delegator);
         RitaApi api = getApi(props, "CREDIT");
@@ -72,7 +73,7 @@ public class RitaServices {
 
         // basic tx info
         api.set(RitaApi.TRANS_AMOUNT, getAmountString(context, "processAmount"));
-        api.set(RitaApi.INVOICE, context.get(org.apache.ofbiz.persistence.entity.x.orderId));
+        api.set(RitaApi.INVOICE, context.get(x.orderId));
 
         // command setting
         if ("1".equals(props.getProperty("autoBill"))) {
@@ -111,7 +112,7 @@ public class RitaServices {
         }
 
         result.put("authRefNum", out.get(RitaApi.INTRN_SEQ_NUM) != null ? out.get(RitaApi.INTRN_SEQ_NUM) : "");
-        result.put("processAmount", context.get(org.apache.ofbiz.persistence.entity.x.processAmount));
+        result.put("processAmount", context.get(x.processAmount));
         result.put("authCode", out.get(RitaApi.AUTH_CODE));
         result.put("authFlag", out.get(RitaApi.REFERENCE));
         result.put("authMessage", out.get(RitaApi.RESULT));
@@ -134,12 +135,12 @@ public class RitaServices {
     }
 
     public static Map<String, Object> ccCapture(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
+        Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
 
         // lets see if there is a auth transaction already in context
-        GenericValue authTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
+        GenericValue authTransaction = (GenericValue) context.get(x.authTrans);
 
         if (authTransaction == null) {
             authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
@@ -158,7 +159,7 @@ public class RitaServices {
                     "AccountingRitaErrorGettingPaymentGatewayConfig", locale));
         }
 
-        api.set(RitaApi.ORIG_SEQ_NUM, authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
+        api.set(RitaApi.ORIG_SEQ_NUM, authTransaction.getString(x.referenceNum));
         api.set(RitaApi.COMMAND, "COMPLETION");
 
         // send the transaction
@@ -177,7 +178,7 @@ public class RitaServices {
         } else {
             result.put("captureResult", Boolean.FALSE);
         }
-        result.put("captureAmount", context.get(org.apache.ofbiz.persistence.entity.x.captureAmount));
+        result.put("captureAmount", context.get(x.captureAmount));
         result.put("captureRefNum", out.get(RitaApi.INTRN_SEQ_NUM) != null ? out.get(RitaApi.INTRN_SEQ_NUM) : "");
         result.put("captureCode", out.get(RitaApi.AUTH_CODE));
         result.put("captureFlag", out.get(RitaApi.REFERENCE));
@@ -195,12 +196,12 @@ public class RitaServices {
     }
 
     private static Map<String, Object> ccVoid(DispatchContext dctx, Map<String, ? extends Object> context, boolean isRefund) {
-        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
+        Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
 
         // lets see if there is a auth transaction already in context
-        GenericValue authTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
+        GenericValue authTransaction = (GenericValue) context.get(x.authTrans);
 
         if (authTransaction == null) {
             authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
@@ -220,7 +221,7 @@ public class RitaServices {
         }
 
         api.set(RitaApi.TRANS_AMOUNT, getAmountString(context, isRefund ? "refundAmount" : "releaseAmount"));
-        api.set(RitaApi.ORIG_SEQ_NUM, authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
+        api.set(RitaApi.ORIG_SEQ_NUM, authTransaction.getString(x.referenceNum));
         api.set(RitaApi.COMMAND, "VOID");
 
         // check to make sure we are configured for SALE mode
@@ -257,12 +258,12 @@ public class RitaServices {
     }
 
     public static Map<String, Object> ccCreditRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
+        Locale locale = (Locale) context.get(x.locale);
         Delegator delegator = dctx.getDelegator();
 
         // lets see if there is a auth transaction already in context
-        GenericValue authTransaction = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
+        GenericValue authTransaction = (GenericValue) context.get(x.authTrans);
 
         if (authTransaction == null) {
             authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
@@ -289,7 +290,7 @@ public class RitaServices {
         }
 
         api.set(RitaApi.TRANS_AMOUNT, getAmountString(context, "refundAmount"));
-        api.set(RitaApi.ORIG_SEQ_NUM, authTransaction.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
+        api.set(RitaApi.ORIG_SEQ_NUM, authTransaction.getString(x.referenceNum));
         api.set(RitaApi.COMMAND, "CREDIT");
 
         // send the transaction
@@ -308,7 +309,7 @@ public class RitaServices {
         } else {
             result.put("refundResult", Boolean.FALSE);
         }
-        result.put("refundAmount", context.get(org.apache.ofbiz.persistence.entity.x.refundAmount));
+        result.put("refundAmount", context.get(x.refundAmount));
         result.put("refundRefNum", out.get(RitaApi.INTRN_SEQ_NUM) != null ? out.get(RitaApi.INTRN_SEQ_NUM) : "");
         result.put("refundCode", out.get(RitaApi.AUTH_CODE));
         result.put("refundFlag", out.get(RitaApi.REFERENCE));
@@ -320,22 +321,22 @@ public class RitaServices {
     public static Map<String, Object> ccRefund(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
+        Locale locale = (Locale) context.get(x.locale);
         GenericValue orderHeader = null;
         try {
-            orderHeader = orderPaymentPreference.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderHeader, false);
+            orderHeader = orderPaymentPreference.getRelatedOne(x.OrderHeader, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER,
-                    "OrderOrderNotFound", UtilMisc.toMap("orderId", orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId)), locale));
+                    "OrderOrderNotFound", UtilMisc.toMap("orderId", orderPaymentPreference.getString(x.orderId)), locale));
         }
 
         if (orderHeader != null) {
-            String terminalId = orderHeader.getString(org.apache.ofbiz.persistence.entity.x.terminalId);
+            String terminalId = orderHeader.getString(x.terminalId);
             boolean isVoid = false;
             if (terminalId != null) {
-                Timestamp orderDate = orderHeader.getTimestamp(org.apache.ofbiz.persistence.entity.x.orderDate);
+                Timestamp orderDate = orderHeader.getTimestamp(x.orderDate);
                 GenericValue terminalState = null;
                 try {
                     terminalState = EntityQuery.use(delegator).from("PosTerminalState")
@@ -346,7 +347,7 @@ public class RitaServices {
 
                 // this is the current opened terminal
                 if (terminalState != null) {
-                    Timestamp openDate = terminalState.getTimestamp(org.apache.ofbiz.persistence.entity.x.openedDate);
+                    Timestamp openDate = terminalState.getTimestamp(x.openedDate);
                     // if the order date is after the open date of the current state
                     // the order happend within the current open/close of the terminal
                     if (orderDate.after(openDate)) {
@@ -370,27 +371,27 @@ public class RitaServices {
             return refundResp;
         }
         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER,
-                "OrderOrderNotFound", UtilMisc.toMap("orderId", orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId)), locale));
+                "OrderOrderNotFound", UtilMisc.toMap("orderId", orderPaymentPreference.getString(x.orderId)), locale));
     }
 
     private static void setCreditCardInfo(RitaApi api, Delegator delegator, Map<String, ? extends Object> context) throws GeneralException {
-        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        GenericValue creditCard = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.creditCard);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
+        GenericValue creditCard = (GenericValue) context.get(x.creditCard);
         if (creditCard == null) {
-            creditCard = EntityQuery.use(delegator).from("CreditCard").where("paymentMethodId", orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.paymentMethodId))
+            creditCard = EntityQuery.use(delegator).from("CreditCard").where("paymentMethodId", orderPaymentPreference.getString(x.paymentMethodId))
                     .queryOne();
         }
         if (creditCard != null) {
-            List<String> expDateList = StringUtil.split(creditCard.getString(org.apache.ofbiz.persistence.entity.x.expireDate), "/");
+            List<String> expDateList = StringUtil.split(creditCard.getString(x.expireDate), "/");
             String month = expDateList.get(0);
             String year = expDateList.get(1);
             String y2d = year.substring(2);
 
-            String title = creditCard.getString(org.apache.ofbiz.persistence.entity.x.titleOnCard);
-            String fname = creditCard.getString(org.apache.ofbiz.persistence.entity.x.firstNameOnCard);
-            String mname = creditCard.getString(org.apache.ofbiz.persistence.entity.x.middleNameOnCard);
-            String lname = creditCard.getString(org.apache.ofbiz.persistence.entity.x.lastNameOnCard);
-            String sufix = creditCard.getString(org.apache.ofbiz.persistence.entity.x.suffixOnCard);
+            String title = creditCard.getString(x.titleOnCard);
+            String fname = creditCard.getString(x.firstNameOnCard);
+            String mname = creditCard.getString(x.middleNameOnCard);
+            String lname = creditCard.getString(x.lastNameOnCard);
+            String sufix = creditCard.getString(x.suffixOnCard);
             StringBuilder name = new StringBuilder();
             if (UtilValidate.isNotEmpty(title)) {
                 name.append(title).append(" ");
@@ -408,8 +409,8 @@ public class RitaServices {
                 name.append(sufix);
             }
             String nameOnCard = name.toString().trim();
-            String acctNumber = creditCard.getString(org.apache.ofbiz.persistence.entity.x.cardNumber);
-            String cvNum = (String) context.get(org.apache.ofbiz.persistence.entity.x.cardSecurityCode);
+            String acctNumber = creditCard.getString(x.cardNumber);
+            String cvNum = (String) context.get(x.cardSecurityCode);
 
             api.set(RitaApi.ACCT_NUM, acctNumber);
             api.set(RitaApi.EXP_MONTH, month);
@@ -420,19 +421,19 @@ public class RitaServices {
             }
 
             // billing address information
-            GenericValue billingAddress = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.billingAddress);
+            GenericValue billingAddress = (GenericValue) context.get(x.billingAddress);
             if (billingAddress != null) {
-                api.set(RitaApi.CUSTOMER_STREET, billingAddress.getString(org.apache.ofbiz.persistence.entity.x.address1));
-                api.set(RitaApi.CUSTOMER_ZIP, billingAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode));
+                api.set(RitaApi.CUSTOMER_STREET, billingAddress.getString(x.address1));
+                api.set(RitaApi.CUSTOMER_ZIP, billingAddress.getString(x.postalCode));
             } else {
-                String zipCode = orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.billingPostalCode);
+                String zipCode = orderPaymentPreference.getString(x.billingPostalCode);
                 if (UtilValidate.isNotEmpty(zipCode)) {
                     api.set(RitaApi.CUSTOMER_ZIP, zipCode);
                 }
             }
 
             // set the present flag
-            String presentFlag = orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.presentFlag);
+            String presentFlag = orderPaymentPreference.getString(x.presentFlag);
             if (presentFlag == null) {
                 presentFlag = "N";
             }
@@ -479,7 +480,7 @@ public class RitaServices {
     }
 
     private static Properties buildPccProperties(Map<String, ? extends Object> context, Delegator delegator) {
-        String configString = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentConfig);
+        String configString = (String) context.get(x.paymentConfig);
         if (configString == null) {
             configString = "payment.properties";
         }

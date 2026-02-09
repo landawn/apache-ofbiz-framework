@@ -55,6 +55,7 @@ import org.apache.ofbiz.widget.renderer.VisualTheme;
 import freemarker.ext.jakarta.servlet.ServletContextHashModel;
 import freemarker.template.Template;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ControlServlet.java - Master servlet for the web application.
  */
@@ -125,7 +126,7 @@ public class ControlServlet extends HttpServlet {
 
         // set the Entity Engine user info if we have a userLogin
         if (userLogin != null) {
-            GenericDelegator.pushUserIdentifier(userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
+            GenericDelegator.pushUserIdentifier(userLogin.getString(x.userLoginId));
         }
 
         // workaraound if we are in the root webapp
@@ -266,16 +267,16 @@ public class ControlServlet extends HttpServlet {
             Debug.logError("An error occurred, going to the errorPage: " + errorPage, MODULE);
 
             Map<String, Object> context = new HashMap<>();
-            context.put(org.apache.ofbiz.persistence.entity.x.request, request);
-            context.put(org.apache.ofbiz.persistence.entity.x.response, response);
-            context.put(org.apache.ofbiz.persistence.entity.x.session, session);
-            context.put(org.apache.ofbiz.persistence.entity.x.dispatcher, dispatcher);
-            context.put(org.apache.ofbiz.persistence.entity.x.delegator, delegator);
-            context.put(org.apache.ofbiz.persistence.entity.x.security, security);
-            context.put(org.apache.ofbiz.persistence.entity.x.locale, UtilHttp.getLocale(request));
-            context.put(org.apache.ofbiz.persistence.entity.x.timeZone, UtilHttp.getTimeZone(request));
-            context.put(org.apache.ofbiz.persistence.entity.x.userLogin, session.getAttribute("userLogin"));
-            context.put(org.apache.ofbiz.persistence.entity.x.visualTheme, UtilHttp.getVisualTheme(request));
+            context.put(x.request, request);
+            context.put(x.response, response);
+            context.put(x.session, session);
+            context.put(x.dispatcher, dispatcher);
+            context.put(x.delegator, delegator);
+            context.put(x.security, security);
+            context.put(x.locale, UtilHttp.getLocale(request));
+            context.put(x.timeZone, UtilHttp.getTimeZone(request));
+            context.put(x.userLogin, session.getAttribute("userLogin"));
+            context.put(x.visualTheme, UtilHttp.getVisualTheme(request));
 
             boolean errorPageFailed = false;
             if (errorPage.endsWith(".jsp")) {

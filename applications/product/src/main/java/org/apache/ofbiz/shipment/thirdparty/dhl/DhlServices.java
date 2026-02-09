@@ -58,6 +58,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * DHL ShipmentServices
  *
@@ -154,13 +155,13 @@ public class DhlServices {
     public static Map<String, Object> dhlRateEstimate(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
         // some of these can be refactored
-        String carrierPartyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.carrierPartyId);
-        String shipmentMethodTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId);
-        String shippingContactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shippingContactMechId);
-        BigDecimal shippableWeight = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.shippableWeight);
+        String carrierPartyId = (String) context.get(x.carrierPartyId);
+        String shipmentMethodTypeId = (String) context.get(x.shipmentMethodTypeId);
+        String shippingContactMechId = (String) context.get(x.shippingContactMechId);
+        BigDecimal shippableWeight = (BigDecimal) context.get(x.shippableWeight);
 
         if ("NO_SHIPPING".equals(shipmentMethodTypeId)) {
             Map<String, Object> result = ServiceUtil.returnSuccess();
@@ -179,13 +180,13 @@ public class DhlServices {
                         "FacilityShipmentDhlNoCarrierShipmentMethod",
                         UtilMisc.toMap("carrierPartyId", carrierPartyId, "shipmentMethodTypeId", shipmentMethodTypeId), locale));
             }
-            dhlShipmentDetailCode = carrierShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceCode);
+            dhlShipmentDetailCode = carrierShipmentMethod.getString(x.carrierServiceCode);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Failed to get rate estimate: " + e.getMessage(), MODULE);
         }
 
-        String resource = (String) context.get(org.apache.ofbiz.persistence.entity.x.serviceConfigProps);
-        String shipmentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId);
+        String resource = (String) context.get(x.serviceConfigProps);
+        String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
 
         // shipping credentials (configured in properties)
         String userid = getShipmentGatewayConfigValue(delegator, shipmentGatewayConfigId,
@@ -256,12 +257,12 @@ public class DhlServices {
         inContext.put("shipDate", UtilDateTime.nowTimestamp());
         inContext.put("dhlShipmentDetailCode", dhlShipmentDetailCode);
         inContext.put("weight", weight);
-        inContext.put("state", shipToAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId));
+        inContext.put("state", shipToAddress.getString(x.stateProvinceGeoId));
         // DHL ShipIT API does not accept ZIP+4
-        if ((shipToAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode) != null) && (shipToAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode).length() > 5)) {
-            inContext.put("postalCode", shipToAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode).substring(0, 5));
+        if ((shipToAddress.getString(x.postalCode) != null) && (shipToAddress.getString(x.postalCode).length() > 5)) {
+            inContext.put("postalCode", shipToAddress.getString(x.postalCode).substring(0, 5));
         } else {
-            inContext.put("postalCode", shipToAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode));
+            inContext.put("postalCode", shipToAddress.getString(x.postalCode));
         }
         try {
             ContentWorker.renderContentAsText(dispatcher, templateName, outWriter, inContext, locale, "text/plain", null, null, false);
@@ -380,11 +381,11 @@ public class DhlServices {
      */
     public static Map<String, Object> dhlRegisterInquire(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String resource = (String) context.get(org.apache.ofbiz.persistence.entity.x.serviceConfigProps);
-        String shipmentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String resource = (String) context.get(x.serviceConfigProps);
+        String shipmentGatewayConfigId = (String) context.get(x.shipmentGatewayConfigId);
+        Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result;
-        String postalCode = (String) context.get(org.apache.ofbiz.persistence.entity.x.postalCode);
+        String postalCode = (String) context.get(x.postalCode);
         String accountNbr = getShipmentGatewayConfigValue(delegator, shipmentGatewayConfigId, "accessAccountNbr",
                 resource, "shipment.dhl.access.accountNbr");
         if (accountNbr.isEmpty()) {
@@ -471,11 +472,11 @@ public class DhlServices {
     public static Map<String, Object> dhlShipmentConfirm(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
-        String shipmentRouteSegmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentRouteSegmentId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String shipmentId = (String) context.get(x.shipmentId);
+        String shipmentRouteSegmentId = (String) context.get(x.shipmentRouteSegmentId);
 
         Map<String, Object> shipmentGatewayConfig = ShipmentServices.getShipmentGatewayConfigFromShipment(delegator, shipmentId, locale);
         String shipmentGatewayConfigId = (String) shipmentGatewayConfig.get("shipmentGatewayConfigId");
@@ -499,45 +500,45 @@ public class DhlServices {
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
-            if (!"DHL".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierPartyId))) {
+            if (!"DHL".equals(shipmentRouteSegment.getString(x.carrierPartyId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentDhlNotRouteSegmentCarrier",
                         UtilMisc.toMap("shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId), locale));
             }
 
             // add ShipmentRouteSegment carrierServiceStatusId, check before all DHL services
-            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId))
-                    && !"SHRSCS_NOT_STARTED".equals(shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId))) {
+            if (UtilValidate.isNotEmpty(shipmentRouteSegment.getString(x.carrierServiceStatusId))
+                    && !"SHRSCS_NOT_STARTED".equals(shipmentRouteSegment.getString(x.carrierServiceStatusId))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentDhlRouteSegmentStatusNotStarted",
                         UtilMisc.toMap("shipmentRouteSegmentId", shipmentRouteSegmentId, "shipmentId", shipmentId,
-                                "shipmentRouteSegmentStatus", shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceStatusId)), locale));
+                                "shipmentRouteSegmentStatus", shipmentRouteSegment.getString(x.carrierServiceStatusId)), locale));
             }
 
             // Get Origin Info
-            GenericValue originPostalAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginPostalAddress, false);
+            GenericValue originPostalAddress = shipmentRouteSegment.getRelatedOne(x.OriginPostalAddress, false);
             if (originPostalAddress == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentOriginPostalAddressNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            GenericValue originTelecomNumber = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OriginTelecomNumber, false);
+            GenericValue originTelecomNumber = shipmentRouteSegment.getRelatedOne(x.OriginTelecomNumber, false);
             if (originTelecomNumber == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentOriginTelecomNumberNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
-            String originPhoneNumber = originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.areaCode) + originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.contactNumber);
+            String originPhoneNumber = originTelecomNumber.getString(x.areaCode) + originTelecomNumber.getString(x.contactNumber);
             // don't put on country code if not specified or is the US country code (UPS wants it this way and assuming DHL will accept this)
-            if (UtilValidate.isNotEmpty(originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))
-                    && !"001".equals(originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))) {
-                originPhoneNumber = originTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode) + originPhoneNumber;
+            if (UtilValidate.isNotEmpty(originTelecomNumber.getString(x.countryCode))
+                    && !"001".equals(originTelecomNumber.getString(x.countryCode))) {
+                originPhoneNumber = originTelecomNumber.getString(x.countryCode) + originPhoneNumber;
             }
             originPhoneNumber = StringUtil.replaceString(originPhoneNumber, "-", "");
             originPhoneNumber = StringUtil.replaceString(originPhoneNumber, " ", "");
 
             // lookup the two letter country code (in the geoCode field)
-            GenericValue originCountryGeo = originPostalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
+            GenericValue originCountryGeo = originPostalAddress.getRelatedOne(x.CountryGeo, false);
             if (originCountryGeo == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentOriginCountryGeoNotFound",
@@ -545,7 +546,7 @@ public class DhlServices {
             }
 
             // Get Dest Info
-            GenericValue destPostalAddress = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestPostalAddress, false);
+            GenericValue destPostalAddress = shipmentRouteSegment.getRelatedOne(x.DestPostalAddress, false);
             if (destPostalAddress == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentDestPostalAddressNotFound",
@@ -554,13 +555,13 @@ public class DhlServices {
 
             // DHL requires destination phone number, default to sender # if no customer number
             String destPhoneNumber = originPhoneNumber;
-            GenericValue destTelecomNumber = shipmentRouteSegment.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DestTelecomNumber, false);
+            GenericValue destTelecomNumber = shipmentRouteSegment.getRelatedOne(x.DestTelecomNumber, false);
             if (destTelecomNumber != null) {
-                destPhoneNumber = destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.areaCode) + destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.contactNumber);
+                destPhoneNumber = destTelecomNumber.getString(x.areaCode) + destTelecomNumber.getString(x.contactNumber);
                 // don't put on country code if not specified or is the US country code (UPS wants it this way)
-                if (UtilValidate.isNotEmpty(destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))
-                        && !"001".equals(destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode))) {
-                    destPhoneNumber = destTelecomNumber.getString(org.apache.ofbiz.persistence.entity.x.countryCode) + destPhoneNumber;
+                if (UtilValidate.isNotEmpty(destTelecomNumber.getString(x.countryCode))
+                        && !"001".equals(destTelecomNumber.getString(x.countryCode))) {
+                    destPhoneNumber = destTelecomNumber.getString(x.countryCode) + destPhoneNumber;
                 }
                 destPhoneNumber = StringUtil.replaceString(destPhoneNumber, "-", "");
                 destPhoneNumber = StringUtil.replaceString(destPhoneNumber, " ", "");
@@ -568,7 +569,7 @@ public class DhlServices {
 
             String recipientEmail = null;
             Map<String, Object> results = dispatcher.runSync("getPartyEmail", UtilMisc.toMap("partyId",
-                    shipment.get(org.apache.ofbiz.persistence.entity.x.partyIdTo), "userLogin", userLogin));
+                    shipment.get(x.partyIdTo), "userLogin", userLogin));
             if (ServiceUtil.isError(results)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(results));
             }
@@ -577,14 +578,14 @@ public class DhlServices {
             }
 
             // lookup the two letter country code (in the geoCode field)
-            GenericValue destCountryGeo = destPostalAddress.getRelatedOne(org.apache.ofbiz.persistence.entity.x.CountryGeo, false);
+            GenericValue destCountryGeo = destPostalAddress.getRelatedOne(x.CountryGeo, false);
             if (destCountryGeo == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
                         "FacilityShipmentRouteSegmentDestCountryGeoNotFound",
                         UtilMisc.toMap("shipmentId", shipmentId, "shipmentRouteSegmentId", shipmentRouteSegmentId), locale));
             }
 
-            List<GenericValue> shipmentPackageRouteSegs = shipmentRouteSegment.getRelated(org.apache.ofbiz.persistence.entity.x.ShipmentPackageRouteSeg,
+            List<GenericValue> shipmentPackageRouteSegs = shipmentRouteSegment.getRelated(x.ShipmentPackageRouteSeg,
                     null, UtilMisc.toList("+shipmentPackageSeqId"), false);
             if (UtilValidate.isEmpty(shipmentPackageRouteSegs)) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
@@ -598,8 +599,8 @@ public class DhlServices {
 
             // get the weight from the ShipmentRouteSegment first, which overrides all later weight computations
             boolean hasBillingWeight = false;  // for later overrides
-            BigDecimal billingWeight = shipmentRouteSegment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.billingWeight);
-            String billingWeightUomId = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.billingWeightUomId);
+            BigDecimal billingWeight = shipmentRouteSegment.getBigDecimal(x.billingWeight);
+            String billingWeightUomId = shipmentRouteSegment.getString(x.billingWeightUomId);
             if ((billingWeight != null) && (billingWeight.compareTo(BigDecimal.ZERO) > 0)) {
                 hasBillingWeight = true;
                 if (billingWeightUomId == null) {
@@ -621,8 +622,8 @@ public class DhlServices {
             // loop through Shipment segments (NOTE: only one supported, loop is here for future refactoring reference)
             BigDecimal packageWeight = null;
             for (GenericValue shipmentPackageRouteSeg: shipmentPackageRouteSegs) {
-                GenericValue shipmentPackage = shipmentPackageRouteSeg.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentPackage, false);
-                GenericValue shipmentBoxType = shipmentPackage.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentBoxType, false);
+                GenericValue shipmentPackage = shipmentPackageRouteSeg.getRelatedOne(x.ShipmentPackage, false);
+                GenericValue shipmentBoxType = shipmentPackage.getRelatedOne(x.ShipmentBoxType, false);
 
                 //if (shipmentBoxType != null) {
                     // TODO: determine what default UoM is (assuming inches) - there should be a defaultDimensionUomId in Facility
@@ -632,8 +633,8 @@ public class DhlServices {
                 if (hasBillingWeight) continue;
 
                 // compute total packageWeight (for now, just one package)
-                if (shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.weight) != null) {
-                    packageWeight = new BigDecimal(shipmentPackage.getString(org.apache.ofbiz.persistence.entity.x.weight));
+                if (shipmentPackage.getString(x.weight) != null) {
+                    packageWeight = new BigDecimal(shipmentPackage.getString(x.weight));
                 } else {
                     // use default weight if available
                     try {
@@ -645,7 +646,7 @@ public class DhlServices {
                     }
                 }
                 // convert weight
-                String weightUomId = (String) shipmentPackage.get(org.apache.ofbiz.persistence.entity.x.weightUomId);
+                String weightUomId = (String) shipmentPackage.get(x.weightUomId);
                 if (weightUomId == null) {
                     Debug.logWarning("Shipment Route Segment missing weightUomId in shipmentId " + shipmentId, MODULE);
                     weightUomId = "WT_lb"; // TODO: this should be specified in a properties file
@@ -675,7 +676,7 @@ public class DhlServices {
             String roundedWeight = weight.setScale(0, RoundingMode.HALF_UP).toPlainString();
 
             // translate shipmentMethodTypeId to DHL service code
-            String shipmentMethodTypeId = shipmentRouteSegment.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId);
+            String shipmentMethodTypeId = shipmentRouteSegment.getString(x.shipmentMethodTypeId);
             String dhlShipmentDetailCode = null;
             GenericValue carrierShipmentMethod = EntityQuery.use(delegator).from("CarrierShipmentMethod")
                     .where("shipmentMethodTypeId", shipmentMethodTypeId, "partyId", "DHL", "roleTypeId", "CARRIER")
@@ -685,7 +686,7 @@ public class DhlServices {
                         "FacilityShipmentDhlNoCarrierShipmentMethod",
                         UtilMisc.toMap("carrierPartyId", "DHL", "shipmentMethodTypeId", shipmentMethodTypeId), locale));
             }
-            dhlShipmentDetailCode = carrierShipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.carrierServiceCode);
+            dhlShipmentDetailCode = carrierShipmentMethod.getString(x.carrierServiceCode);
 
             // shipping credentials (configured in properties)
             String userid = getShipmentGatewayConfigValue(delegator, shipmentGatewayConfigId,
@@ -732,22 +733,22 @@ public class DhlServices {
             inContext.put("dhlShipmentDetailCode", dhlShipmentDetailCode);
             inContext.put("weight", roundedWeight);
             inContext.put("senderPhoneNbr", originPhoneNumber);
-            inContext.put("companyName", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.toName));
-            inContext.put("attnTo", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.attnName));
-            inContext.put("street", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address1));
-            inContext.put("streetLine2", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.address2));
-            inContext.put("city", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.city));
-            inContext.put("state", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId));
+            inContext.put("companyName", destPostalAddress.getString(x.toName));
+            inContext.put("attnTo", destPostalAddress.getString(x.attnName));
+            inContext.put("street", destPostalAddress.getString(x.address1));
+            inContext.put("streetLine2", destPostalAddress.getString(x.address2));
+            inContext.put("city", destPostalAddress.getString(x.city));
+            inContext.put("state", destPostalAddress.getString(x.stateProvinceGeoId));
 
             // DHL ShipIT API does not accept ZIP+4
-            if ((destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode) != null) && (destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode).length() > 5)) {
-                inContext.put("postalCode", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode).substring(0, 5));
+            if ((destPostalAddress.getString(x.postalCode) != null) && (destPostalAddress.getString(x.postalCode).length() > 5)) {
+                inContext.put("postalCode", destPostalAddress.getString(x.postalCode).substring(0, 5));
             } else {
-                inContext.put("postalCode", destPostalAddress.getString(org.apache.ofbiz.persistence.entity.x.postalCode));
+                inContext.put("postalCode", destPostalAddress.getString(x.postalCode));
             }
             inContext.put("phoneNbr", destPhoneNumber);
             inContext.put("labelImageType", labelImagePreference);
-            inContext.put("shipperReference", shipment.getString(org.apache.ofbiz.persistence.entity.x.primaryOrderId) + "-" + shipment.getString(org.apache.ofbiz.persistence.entity.x.primaryShipGroupSeqId));
+            inContext.put("shipperReference", shipment.getString(x.primaryOrderId) + "-" + shipment.getString(x.primaryShipGroupSeqId));
             inContext.put("notifyEmailAddress", recipientEmail);
 
             try {
@@ -832,17 +833,17 @@ public class DhlServices {
 
         if (labelBytes != null) {
             // store in db blob
-            shipmentPackageRouteSeg.setBytes(org.apache.ofbiz.persistence.entity.x.labelImage, labelBytes);
+            shipmentPackageRouteSeg.setBytes(x.labelImage, labelBytes);
         } else {
             Debug.logInfo("Failed to either decode returned DHL label or no data found in eCommerce/Shipment/Label/Image.", MODULE);
             // TODO: VOID
         }
 
-        shipmentPackageRouteSeg.set(org.apache.ofbiz.persistence.entity.x.trackingCode, trackingNumber);
-        shipmentPackageRouteSeg.set(org.apache.ofbiz.persistence.entity.x.labelHtml, sb.toString());
+        shipmentPackageRouteSeg.set(x.trackingCode, trackingNumber);
+        shipmentPackageRouteSeg.set(x.labelHtml, sb.toString());
         shipmentPackageRouteSeg.store();
 
-        shipmentRouteSegment.set(org.apache.ofbiz.persistence.entity.x.trackingIdNumber, trackingNumber);
+        shipmentRouteSegment.set(x.trackingIdNumber, trackingNumber);
         shipmentRouteSegment.put("carrierServiceStatusId", "SHRSCS_CONFIRMED");
         shipmentRouteSegment.store();
 

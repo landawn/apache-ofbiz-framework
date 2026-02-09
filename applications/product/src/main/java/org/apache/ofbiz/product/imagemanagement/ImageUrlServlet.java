@@ -35,6 +35,7 @@ import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ControlServlet.java - Master servlet for the web application.
  */
@@ -92,11 +93,11 @@ public class ImageUrlServlet extends HttpServlet {
         if (content != null) {
             GenericValue dataResource = null;
             try {
-                dataResource = content.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DataResource, false);
+                dataResource = content.getRelatedOne(x.DataResource, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
-            String imageUrl = dataResource.getString(org.apache.ofbiz.persistence.entity.x.objectInfo);
+            String imageUrl = dataResource.getString(x.objectInfo);
             RequestDispatcher rd = request.getRequestDispatcher("/control/viewImage?drObjectInfo=" + imageUrl);
             rd.forward(request, response);
         } else {

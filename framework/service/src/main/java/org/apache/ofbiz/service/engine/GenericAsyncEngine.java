@@ -43,6 +43,7 @@ import org.apache.ofbiz.service.job.JobManager;
 import org.apache.ofbiz.service.job.JobManagerException;
 import org.apache.ofbiz.service.job.JobPriority;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Generic Asynchronous Engine
  */
@@ -86,14 +87,14 @@ public abstract class GenericAsyncEngine extends AbstractEngine {
 
                 GenericValue runtimeData = getDispatcher().getDelegator().makeValue("RuntimeData", "runtimeDataId", dataId);
 
-                runtimeData.set(org.apache.ofbiz.persistence.entity.x.runtimeInfo, XmlSerializer.serialize(context));
+                runtimeData.set(x.runtimeInfo, XmlSerializer.serialize(context));
                 runtimeData.create();
 
                 // Get the userLoginId out of the context
                 String authUserLoginId = null;
-                if (context.get(org.apache.ofbiz.persistence.entity.x.userLogin) != null) {
-                    GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-                    authUserLoginId = userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId);
+                if (context.get(x.userLogin) != null) {
+                    GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+                    authUserLoginId = userLogin.getString(x.userLoginId);
                 }
 
                 // Create the job info
@@ -122,7 +123,7 @@ public abstract class GenericAsyncEngine extends AbstractEngine {
                 throw new GenericServiceException("Problem serializing service attributes", e);
             }
 
-            Debug.logInfo("Persisted job queued : " + jobV.getString(org.apache.ofbiz.persistence.entity.x.jobName), MODULE);
+            Debug.logInfo("Persisted job queued : " + jobV.getString(x.jobName), MODULE);
         } else {
             JobManager jMgr = getDispatcher().getJobManager();
             if (jMgr != null) {

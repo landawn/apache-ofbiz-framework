@@ -43,6 +43,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Order Processing Services
  */
@@ -54,7 +55,7 @@ public class OrderTestServices {
 
     public static Map<String, Object> createTestSalesOrders(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Integer numberOfOrders = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.numberOfOrders);
+        Integer numberOfOrders = (Integer) context.get(x.numberOfOrders);
 
         int numberOfOrdersInt = numberOfOrders;
         for (int i = 1; i <= numberOfOrdersInt; i++) {
@@ -78,15 +79,15 @@ public class OrderTestServices {
     public static Map<String, Object> createTestSalesOrderSingle(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String productCategoryId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productCategoryId);
-        String productStoreId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productStoreId);
-        String currencyUomId = (String) context.get(org.apache.ofbiz.persistence.entity.x.currencyUomId);
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        Integer numberOfProductsPerOrder = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.numberOfProductsPerOrder);
-        String salesChannel = (String) context.get(org.apache.ofbiz.persistence.entity.x.salesChannel);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String productCategoryId = (String) context.get(x.productCategoryId);
+        String productStoreId = (String) context.get(x.productStoreId);
+        String currencyUomId = (String) context.get(x.currencyUomId);
+        String partyId = (String) context.get(x.partyId);
+        String productId = (String) context.get(x.productId);
+        Integer numberOfProductsPerOrder = (Integer) context.get(x.numberOfProductsPerOrder);
+        String salesChannel = (String) context.get(x.salesChannel);
         if (UtilValidate.isEmpty(salesChannel)) {
             salesChannel = "WEB_SALES_CHANNEL";
         }
@@ -106,7 +107,7 @@ public class OrderTestServices {
                     if (productCategoryMembers != null) {
                         for (GenericValue prodCatMemb : productCategoryMembers) {
                             if (prodCatMemb != null) {
-                                productsList.add(prodCatMemb.getString(org.apache.ofbiz.persistence.entity.x.productId));
+                                productsList.add(prodCatMemb.getString(x.productId));
                             }
                         }
                     }
@@ -160,7 +161,7 @@ public class OrderTestServices {
             Debug.logInfo("Test order with id: " + orderId + " has been approved: " + approved, MODULE);
             resultMap.put("orderId", orderId);
         }
-        Boolean shipOrder = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.shipOrder);
+        Boolean shipOrder = (Boolean) context.get(x.shipOrder);
         if (shipOrder && UtilValidate.isNotEmpty(orderId)) {
             try {
                 Map<String, Object> result = dispatcher.runSync("quickShipEntireOrder", UtilMisc.toMap("orderId", orderId, "userLogin", userLogin));

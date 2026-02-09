@@ -43,6 +43,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.CellType;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class ImportProductServices {
 
     private static final String MODULE = ImportProductServices.class.getName();
@@ -62,7 +63,7 @@ public class ImportProductServices {
      */
     public static Map<String, Object> productImportFromSpreadsheet(DispatchContext dctx, Map<String, ? extends Object> context) throws IOException {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         // System.getProperty("user.dir") returns the path upto ofbiz home
         // directory
         String path = System.getProperty("user.dir") + "/spreadsheet";
@@ -155,7 +156,7 @@ public class ImportProductServices {
             for (int j = 0; j < products.size(); j++) {
                 GenericValue productGV = delegator.makeValue("Product", products.get(j));
                 GenericValue inventoryItemGV = delegator.makeValue("InventoryItem", inventoryItems.get(j));
-                if (!ImportProductHelper.checkProductExists(productGV.getString(org.apache.ofbiz.persistence.entity.x.productId), delegator)) {
+                if (!ImportProductHelper.checkProductExists(productGV.getString(x.productId), delegator)) {
                     try {
                         delegator.create(productGV);
                         delegator.create(inventoryItemGV);

@@ -37,6 +37,7 @@ import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.widget.WidgetWorker;
 import org.w3c.dom.Element;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Abstract form action.
  */
@@ -221,7 +222,7 @@ public abstract class ModelFormAction {
                                 + "] calling service with name [" + serviceNameExpanded
                                 + "]: the result that is supposed to be a List or ListIterator and is not.");
                     }
-                    context.put(org.apache.ofbiz.persistence.entity.x.listName, listName);
+                    context.put(x.listName, listName);
                     context.put(listName, listObj);
                 }
             } catch (GenericServiceException e) {

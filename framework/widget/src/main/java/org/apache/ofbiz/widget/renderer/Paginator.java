@@ -34,6 +34,7 @@ import org.apache.ofbiz.entity.util.EntityListIterator;
 import org.apache.ofbiz.widget.WidgetWorker;
 import org.apache.ofbiz.widget.model.ModelForm;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Utility methods for handling list pagination.
  *
@@ -43,12 +44,12 @@ public final class Paginator {
     private static final String MODULE = Paginator.class.getName();
 
     public static int getActualPageSize(Map<String, Object> context) {
-        Integer value = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.actualPageSize);
+        Integer value = (Integer) context.get(x.actualPageSize);
         return value != null ? value : (getHighIndex(context) - getLowIndex(context));
     }
 
     public static int getHighIndex(Map<String, Object> context) {
-        Integer value = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.highIndex);
+        Integer value = (Integer) context.get(x.highIndex);
         return value != null ? value : 0;
     }
 
@@ -73,7 +74,7 @@ public final class Paginator {
             List<?> items = (List<?>) entryList;
             listSize = items.size();
             if (context.containsKey("result")) {
-                Map<String, Object> resultMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.result));
+                Map<String, Object> resultMap = UtilGenerics.cast(context.get(x.result));
                 if (resultMap.containsKey("listSize")) {
                     listSize = (int) resultMap.get("listSize");
                 }
@@ -93,20 +94,20 @@ public final class Paginator {
             lowIndex = 0;
             highIndex = ModelForm.MAX_PAGE_SIZE;
         }
-        context.put(org.apache.ofbiz.persistence.entity.x.listSize, listSize);
-        context.put(org.apache.ofbiz.persistence.entity.x.viewIndex, viewIndex);
-        context.put(org.apache.ofbiz.persistence.entity.x.viewSize, viewSize);
-        context.put(org.apache.ofbiz.persistence.entity.x.lowIndex, lowIndex);
-        context.put(org.apache.ofbiz.persistence.entity.x.highIndex, highIndex);
+        context.put(x.listSize, listSize);
+        context.put(x.viewIndex, viewIndex);
+        context.put(x.viewSize, viewSize);
+        context.put(x.lowIndex, lowIndex);
+        context.put(x.highIndex, highIndex);
     }
 
     public static int getListSize(Map<String, Object> context) {
-        Integer value = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.listSize);
+        Integer value = (Integer) context.get(x.listSize);
         return value != null ? value : 0;
     }
 
     public static int getLowIndex(Map<String, Object> context) {
-        Integer value = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.lowIndex);
+        Integer value = (Integer) context.get(x.lowIndex);
         return value != null ? value : 0;
     }
 
@@ -117,7 +118,7 @@ public final class Paginator {
             Object value = context.get(field);
             if (value == null) {
                 // try parameters.VIEW_INDEX as that is an old OFBiz convention
-                Map<String, Object> parameters = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.parameters));
+                Map<String, Object> parameters = UtilGenerics.cast(context.get(x.parameters));
                 if (parameters != null) {
                     value = parameters.get("VIEW_INDEX" + "_" + WidgetWorker.getPaginatorNumber(context));
 
@@ -149,7 +150,7 @@ public final class Paginator {
             Object value = context.get(field);
             if (value == null) {
                 // try parameters.VIEW_SIZE as that is an old OFBiz convention
-                Map<String, Object> parameters = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.parameters));
+                Map<String, Object> parameters = UtilGenerics.cast(context.get(x.parameters));
                 if (parameters != null) {
                     value = parameters.get("VIEW_SIZE" + "_" + WidgetWorker.getPaginatorNumber(context));
 
@@ -201,14 +202,14 @@ public final class Paginator {
         // set low and high index
         getListLimits(modelForm, context, obj);
 
-        int listSize = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.listSize);
-        int lowIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.lowIndex);
-        int highIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.highIndex);
+        int listSize = (Integer) context.get(x.listSize);
+        int lowIndex = (Integer) context.get(x.lowIndex);
+        int highIndex = (Integer) context.get(x.highIndex);
 
         // we're passed a subset of the list, so use (0, viewSize) range
         if (modelForm.isOverridenListSize()) {
             lowIndex = 0;
-            highIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.viewSize);
+            highIndex = (Integer) context.get(x.viewSize);
         }
 
         if (iter == null) {
@@ -227,9 +228,9 @@ public final class Paginator {
         if ((itemIndex + 1) < highIndex) {
             highIndex = itemIndex + 1;
             // if list size is overridden, use full listSize
-            context.put(org.apache.ofbiz.persistence.entity.x.highIndex, modelForm.isOverridenListSize() ? listSize : highIndex);
+            context.put(x.highIndex, modelForm.isOverridenListSize() ? listSize : highIndex);
         }
-        context.put(org.apache.ofbiz.persistence.entity.x.actualPageSize, highIndex - lowIndex);
+        context.put(x.actualPageSize, highIndex - lowIndex);
 
         if (iter instanceof EntityListIterator) {
             // The EntityListIterator will be closed at the end of FormRenderer.renderItemRows()

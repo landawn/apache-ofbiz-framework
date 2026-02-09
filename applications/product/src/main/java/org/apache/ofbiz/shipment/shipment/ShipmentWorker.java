@@ -39,6 +39,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ShipmentWorker - Worker methods for Shipment and related entities
  */
@@ -58,15 +59,15 @@ public final class ShipmentWorker {
      * Note: No rounding of the calculation is performed so you will need to round it to the accuracy that you require
      */
     public static BigDecimal getShipmentPackageContentValue(GenericValue shipmentPackageContent) {
-        BigDecimal quantity = shipmentPackageContent.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+        BigDecimal quantity = shipmentPackageContent.getBigDecimal(x.quantity);
 
         BigDecimal value;
 
         // lookup the issuance to find the order
         List<GenericValue> issuances = null;
         try {
-            GenericValue shipmentItem = shipmentPackageContent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ShipmentItem, false);
-            issuances = shipmentItem.getRelated(org.apache.ofbiz.persistence.entity.x.ItemIssuance, null, null, false);
+            GenericValue shipmentItem = shipmentPackageContent.getRelatedOne(x.ShipmentItem, false);
+            issuances = shipmentItem.getRelated(x.ItemIssuance, null, null, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
@@ -76,27 +77,27 @@ public final class ShipmentWorker {
         if (UtilValidate.isNotEmpty(issuances)) {
             for (GenericValue issuance : issuances) {
                 // we only need one
-                BigDecimal issuanceQuantity = issuance.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
-                BigDecimal issuanceCancelQuantity = issuance.getBigDecimal(org.apache.ofbiz.persistence.entity.x.cancelQuantity);
+                BigDecimal issuanceQuantity = issuance.getBigDecimal(x.quantity);
+                BigDecimal issuanceCancelQuantity = issuance.getBigDecimal(x.cancelQuantity);
                 if (issuanceCancelQuantity != null) {
                     issuanceQuantity = issuanceQuantity.subtract(issuanceCancelQuantity);
                 }
                 // get the order item
                 GenericValue orderItem = null;
                 try {
-                    orderItem = issuance.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItem, false);
+                    orderItem = issuance.getRelatedOne(x.OrderItem, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                 }
 
                 if (orderItem != null) {
                     // get the value per unit - (base price * amount)
-                    BigDecimal selectedAmount = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.selectedAmount);
+                    BigDecimal selectedAmount = orderItem.getBigDecimal(x.selectedAmount);
                     if (selectedAmount == null || selectedAmount.compareTo(BigDecimal.ZERO) <= 0) {
                         selectedAmount = BigDecimal.ONE;
                     }
 
-                    BigDecimal unitPrice = orderItem.getBigDecimal(org.apache.ofbiz.persistence.entity.x.unitPrice);
+                    BigDecimal unitPrice = orderItem.getBigDecimal(x.unitPrice);
                     BigDecimal itemValue = unitPrice.multiply(selectedAmount);
 
                     // total value for package (per unit * quantity)

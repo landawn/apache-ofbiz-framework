@@ -29,6 +29,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Web site properties.
  */
@@ -125,23 +126,23 @@ public final class WebSiteProperties {
             throw new IllegalArgumentException("webSiteValue is not a WebSite entity value");
         }
         WebSiteProperties defaults = new WebSiteProperties(webSiteValue.getDelegator());
-        if (webSiteValue.get(org.apache.ofbiz.persistence.entity.x.httpPort) != null) {
-            defaults = defaults.updateHttpPort(webSiteValue.getString(org.apache.ofbiz.persistence.entity.x.httpPort));
+        if (webSiteValue.get(x.httpPort) != null) {
+            defaults = defaults.updateHttpPort(webSiteValue.getString(x.httpPort));
         }
-        if (webSiteValue.get(org.apache.ofbiz.persistence.entity.x.httpHost) != null) {
-            defaults = defaults.updateHttpHost(webSiteValue.getString(org.apache.ofbiz.persistence.entity.x.httpHost));
+        if (webSiteValue.get(x.httpHost) != null) {
+            defaults = defaults.updateHttpHost(webSiteValue.getString(x.httpHost));
         }
-        if (webSiteValue.get(org.apache.ofbiz.persistence.entity.x.httpsPort) != null) {
-            defaults = defaults.updateHttpsPort(webSiteValue.getString(org.apache.ofbiz.persistence.entity.x.httpsPort));
+        if (webSiteValue.get(x.httpsPort) != null) {
+            defaults = defaults.updateHttpsPort(webSiteValue.getString(x.httpsPort));
         }
-        if (webSiteValue.get(org.apache.ofbiz.persistence.entity.x.httpsHost) != null) {
-            defaults = defaults.updateHttpsHost(webSiteValue.getString(org.apache.ofbiz.persistence.entity.x.httpsHost));
+        if (webSiteValue.get(x.httpsHost) != null) {
+            defaults = defaults.updateHttpsHost(webSiteValue.getString(x.httpsHost));
         }
-        if (webSiteValue.get(org.apache.ofbiz.persistence.entity.x.webappPath) != null) {
-            defaults = defaults.updateWebappPath(webSiteValue.getString(org.apache.ofbiz.persistence.entity.x.webappPath));
+        if (webSiteValue.get(x.webappPath) != null) {
+            defaults = defaults.updateWebappPath(webSiteValue.getString(x.webappPath));
         }
-        if (webSiteValue.get(org.apache.ofbiz.persistence.entity.x.enableHttps) != null) {
-            defaults = defaults.updateEnableHttps(webSiteValue.getBoolean(org.apache.ofbiz.persistence.entity.x.enableHttps));
+        if (webSiteValue.get(x.enableHttps) != null) {
+            defaults = defaults.updateEnableHttps(webSiteValue.getBoolean(x.enableHttps));
         }
         // Here unlike above we trust the user and don't rely on the request, so addPortoffset
         defaults = defaults.addPortOffset(true);

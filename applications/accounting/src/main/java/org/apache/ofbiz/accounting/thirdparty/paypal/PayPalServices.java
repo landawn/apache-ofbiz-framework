@@ -77,6 +77,7 @@ import com.paypal.sdk.profiles.APIProfile;
 import com.paypal.sdk.profiles.ProfileFactory;
 import com.paypal.sdk.services.NVPCallerServices;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * PayPalServices for NVP API communication
  */
@@ -93,7 +94,7 @@ public class PayPalServices {
     private static Map<TokenWrapper, WeakReference<ShoppingCart>> tokenCartMap = new WeakHashMap<>();
 
     public static Map<String, Object> setExpressCheckout(DispatchContext dctx, Map<String, ? extends Object> context) {
-        ShoppingCart cart = (ShoppingCart) context.get(org.apache.ofbiz.persistence.entity.x.cart);
+        ShoppingCart cart = (ShoppingCart) context.get(x.cart);
         Locale locale = cart.getLocale();
         if (cart == null || cart.items().size() <= 0) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -115,15 +116,15 @@ public class PayPalServices {
         if (UtilValidate.isNotEmpty(token)) {
             encoder.add("TOKEN", token);
         }
-        encoder.add("RETURNURL", payPalConfig.getString(org.apache.ofbiz.persistence.entity.x.returnUrl));
-        encoder.add("CANCELURL", payPalConfig.getString(org.apache.ofbiz.persistence.entity.x.cancelReturnUrl));
+        encoder.add("RETURNURL", payPalConfig.getString(x.returnUrl));
+        encoder.add("CANCELURL", payPalConfig.getString(x.cancelReturnUrl));
         if (!cart.shippingApplies()) {
             encoder.add("NOSHIPPING", "1");
         } else {
-            encoder.add("CALLBACK", payPalConfig.getString(org.apache.ofbiz.persistence.entity.x.shippingCallbackUrl));
+            encoder.add("CALLBACK", payPalConfig.getString(x.shippingCallbackUrl));
             encoder.add("CALLBACKTIMEOUT", "6");
             // Default to no
-            String reqConfirmShipping = "Y".equals(payPalConfig.getString(org.apache.ofbiz.persistence.entity.x.requireConfirmedShipping)) ? "1" : "0";
+            String reqConfirmShipping = "Y".equals(payPalConfig.getString(x.requireConfirmedShipping)) ? "1" : "0";
             encoder.add("REQCONFIRMSHIPPING", reqConfirmShipping);
             // Default shipment method
             encoder.add("L_SHIPPINGOPTIONISDEFAULT0", "true");
@@ -132,7 +133,7 @@ public class PayPalServices {
         }
         encoder.add("ALLOWNOTE", "1");
         encoder.add("INSURANCEOPTIONOFFERED", "false");
-        if (UtilValidate.isNotEmpty(payPalConfig.getString(org.apache.ofbiz.persistence.entity.x.imageUrl)));
+        if (UtilValidate.isNotEmpty(payPalConfig.getString(x.imageUrl)));
         encoder.add("PAYMENTACTION", "Order");
 
         // Cart information
@@ -173,8 +174,8 @@ public class PayPalServices {
     public static Map<String, Object> payPalCheckoutUpdate(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
-        HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
+        HttpServletRequest request = (HttpServletRequest) context.get(x.request);
+        HttpServletResponse response = (HttpServletResponse) context.get(x.response);
 
         Map<String, Object> paramMap = UtilHttp.getParameterMap(request);
 
@@ -246,15 +247,15 @@ public class PayPalServices {
             if (estimate == null || estimate.compareTo(BigDecimal.ZERO) < 0) {
                 continue;
             }
-            cart.setAllShipmentMethodTypeId(shipMethod.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId));
-            cart.setAllCarrierPartyId(shipMethod.getString(org.apache.ofbiz.persistence.entity.x.partyId));
+            cart.setAllShipmentMethodTypeId(shipMethod.getString(x.shipmentMethodTypeId));
+            cart.setAllCarrierPartyId(shipMethod.getString(x.partyId));
             try {
                 coh.calcAndAddTax();
             } catch (GeneralException e) {
                 Debug.logError(e, MODULE);
                 continue;
             }
-            String estimateLabel = shipMethod.getString(org.apache.ofbiz.persistence.entity.x.partyId) + " - " + shipMethod.getString(org.apache.ofbiz.persistence.entity.x.description);
+            String estimateLabel = shipMethod.getString(x.partyId) + " - " + shipMethod.getString(x.description);
             encoder.add("L_SHIPINGPOPTIONLABEL" + line, estimateLabel);
             encoder.add("L_SHIPPINGOPTIONAMOUNT" + line, estimate.setScale(2, RoundingMode.HALF_UP).toPlainString());
             // Just make this first one default for now
@@ -346,11 +347,11 @@ public class PayPalServices {
     }
 
     public static Map<String, Object> getExpressCheckout(DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
-        ShoppingCart cart = (ShoppingCart) context.get(org.apache.ofbiz.persistence.entity.x.cart);
+        ShoppingCart cart = (ShoppingCart) context.get(x.cart);
         GenericValue payPalConfig = getPaymentMethodGatewayPayPal(dctx, context, null);
         if (payPalConfig == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
@@ -451,7 +452,7 @@ public class PayPalServices {
             try {
                 GenericValue matchingEmail = EntityQuery.use(delegator).from("PartyAndContactMech").where(cond).orderBy("fromDate").filterByDate().queryFirst();
                 if (matchingEmail != null) {
-                    emailContactMechId = matchingEmail.getString(org.apache.ofbiz.persistence.entity.x.contactMechId);
+                    emailContactMechId = matchingEmail.getString(x.contactMechId);
                 } else {
                     // No email found so we'll need to create one but first check if it should be PRIMARY or just BILLING
                     long primaryEmails = EntityQuery.use(delegator)
@@ -537,7 +538,7 @@ public class PayPalServices {
                 GenericValue postalMatch = EntityQuery.use(delegator).from("PartyAndPostalAddress")
                         .where(cond).orderBy("fromDate").filterByDate().queryFirst();
                 if (postalMatch != null) {
-                    postalContactId = postalMatch.getString(org.apache.ofbiz.persistence.entity.x.contactMechId);
+                    postalContactId = postalMatch.getString(x.contactMechId);
                     List<GenericValue> postalPurposes = EntityQuery.use(delegator).from("PartyContactMechPurpose")
                             .where("partyId", partyId, "contactMechId", postalContactId)
                             .filterByDate().queryList();
@@ -602,7 +603,7 @@ public class PayPalServices {
                                 "roleTypeId", "CARRIER",
                                 "description", shippingMethodTypeDesc)
                         .queryFirst();
-                cart.setAllShipmentMethodTypeId(shipmentMethod.getString(org.apache.ofbiz.persistence.entity.x.shipmentMethodTypeId));
+                cart.setAllShipmentMethodTypeId(shipmentMethod.getString(x.shipmentMethodTypeId));
             } catch (GenericEntityException e1) {
                 Debug.logError(e1, MODULE);
             }
@@ -667,27 +668,27 @@ public class PayPalServices {
     public static Map<String, Object> doExpressCheckout(DispatchContext dctx, Map<String, Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        OrderReadHelper orh = new OrderReadHelper(delegator, paymentPref.getString(org.apache.ofbiz.persistence.entity.x.orderId));
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
+        OrderReadHelper orh = new OrderReadHelper(delegator, paymentPref.getString(x.orderId));
+        Locale locale = (Locale) context.get(x.locale);
 
         GenericValue payPalPaymentSetting = getPaymentMethodGatewayPayPal(dctx, context, null);
         GenericValue payPalPaymentMethod = null;
         try {
-            payPalPaymentMethod = paymentPref.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PaymentMethod, false);
-            payPalPaymentMethod = payPalPaymentMethod.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PayPalPaymentMethod, false);
+            payPalPaymentMethod = paymentPref.getRelatedOne(x.PaymentMethod, false);
+            payPalPaymentMethod = payPalPaymentMethod.getRelatedOne(x.PayPalPaymentMethod, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
-        BigDecimal processAmount = paymentPref.getBigDecimal(org.apache.ofbiz.persistence.entity.x.maxAmount);
+        BigDecimal processAmount = paymentPref.getBigDecimal(x.maxAmount);
 
         NVPEncoder encoder = new NVPEncoder();
         encoder.add("METHOD", "DoExpressCheckoutPayment");
-        encoder.add("TOKEN", payPalPaymentMethod.getString(org.apache.ofbiz.persistence.entity.x.expressCheckoutToken));
+        encoder.add("TOKEN", payPalPaymentMethod.getString(x.expressCheckoutToken));
         encoder.add("PAYMENTACTION", "Order");
-        encoder.add("PAYERID", payPalPaymentMethod.getString(org.apache.ofbiz.persistence.entity.x.payerId));
+        encoder.add("PAYERID", payPalPaymentMethod.getString(x.payerId));
         // set the amount
         encoder.add("AMT", processAmount.setScale(2).toPlainString());
         encoder.add("CURRENCYCODE", orh.getCurrency());
@@ -716,9 +717,9 @@ public class PayPalServices {
             if (errorMessages.containsKey("10417")) {
                 // "The transaction cannot complete successfully, Instruct the customer to use an alternative payment method"
                 // I've only encountered this once and there's no indication of the cause so the temporary solution is to try again
-                boolean retry = context.get(org.apache.ofbiz.persistence.entity.x._RETRY_) == null || (Boolean) context.get(org.apache.ofbiz.persistence.entity.x._RETRY_);
+                boolean retry = context.get(x._RETRY_) == null || (Boolean) context.get(x._RETRY_);
                 if (retry) {
-                    context.put(org.apache.ofbiz.persistence.entity.x._RETRY_, false);
+                    context.put(x._RETRY_, false);
                     return PayPalServices.doExpressCheckout(dctx, context);
                 }
             }
@@ -727,7 +728,7 @@ public class PayPalServices {
 
         Map<String, Object> inMap = new HashMap<>();
         inMap.put("userLogin", userLogin);
-        inMap.put("paymentMethodId", payPalPaymentMethod.get(org.apache.ofbiz.persistence.entity.x.paymentMethodId));
+        inMap.put("paymentMethodId", payPalPaymentMethod.get(x.paymentMethodId));
         inMap.put("transactionId", decoder.get("TRANSACTIONID"));
 
         Map<String, Object> outMap = null;
@@ -746,19 +747,19 @@ public class PayPalServices {
 
     public static Map<String, Object> doAuthorization(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
-        BigDecimal processAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.processAmount);
-        GenericValue payPalPaymentMethod = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.payPalPaymentMethod);
+        String orderId = (String) context.get(x.orderId);
+        BigDecimal processAmount = (BigDecimal) context.get(x.processAmount);
+        GenericValue payPalPaymentMethod = (GenericValue) context.get(x.payPalPaymentMethod);
         OrderReadHelper orh = new OrderReadHelper(delegator, orderId);
         GenericValue payPalConfig = getPaymentMethodGatewayPayPal(dctx, context, PaymentGatewayServices.AUTH_SERVICE_TYPE);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
         NVPEncoder encoder = new NVPEncoder();
         encoder.add("METHOD", "DoAuthorization");
-        encoder.add("TRANSACTIONID", payPalPaymentMethod.getString(org.apache.ofbiz.persistence.entity.x.transactionId));
+        encoder.add("TRANSACTIONID", payPalPaymentMethod.getString(x.transactionId));
         encoder.add("AMT", processAmount.setScale(2, RoundingMode.HALF_UP).toPlainString());
         encoder.add("TRANSACTIONENTITY", "Order");
-        String currency = (String) context.get(org.apache.ofbiz.persistence.entity.x.currency);
+        String currency = (String) context.get(x.currency);
         if (currency == null) {
             currency = orh.getCurrency();
         }
@@ -801,20 +802,20 @@ public class PayPalServices {
     }
 
     public static Map<String, Object> doCapture(DispatchContext dctx, Map<String, Object> context) {
-        GenericValue paymentPref = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
-        BigDecimal captureAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.captureAmount);
+        GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
+        BigDecimal captureAmount = (BigDecimal) context.get(x.captureAmount);
         GenericValue payPalConfig = getPaymentMethodGatewayPayPal(dctx, context, PaymentGatewayServices.AUTH_SERVICE_TYPE);
-        GenericValue authTrans = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.authTrans);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue authTrans = (GenericValue) context.get(x.authTrans);
+        Locale locale = (Locale) context.get(x.locale);
         if (authTrans == null) {
             authTrans = PaymentGatewayServices.getAuthTransaction(paymentPref);
         }
 
         NVPEncoder encoder = new NVPEncoder();
         encoder.add("METHOD", "DoCapture");
-        encoder.add("AUTHORIZATIONID", authTrans.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
+        encoder.add("AUTHORIZATIONID", authTrans.getString(x.referenceNum));
         encoder.add("AMT", captureAmount.setScale(2, RoundingMode.HALF_UP).toPlainString());
-        encoder.add("CURRENCYCODE", authTrans.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId));
+        encoder.add("CURRENCYCODE", authTrans.getString(x.currencyUomId));
         encoder.add("COMPLETETYPE", "NotComplete");
 
         NVPDecoder decoder = null;
@@ -855,16 +856,16 @@ public class PayPalServices {
 
     public static Map<String, Object> doVoid(DispatchContext dctx, Map<String, Object> context) {
         GenericValue payPalConfig = getPaymentMethodGatewayPayPal(dctx, context, null);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         if (payPalConfig == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPayPalPaymentGatewayConfigCannotFind", locale));
         }
-        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         GenericValue authTrans = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         NVPEncoder encoder = new NVPEncoder();
         encoder.add("METHOD", "DoVoid");
-        encoder.add("AUTHORIZATIONID", authTrans.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
+        encoder.add("AUTHORIZATIONID", authTrans.getString(x.referenceNum));
         NVPDecoder decoder = null;
         try {
             decoder = sendNVPRequest(payPalConfig, encoder);
@@ -882,7 +883,7 @@ public class PayPalServices {
         Map<String, String> errors = getErrorMessageMap(decoder);
         if (UtilValidate.isNotEmpty(errors)) {
             result.put("releaseResult", false);
-            result.put("releaseRefNum", authTrans.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
+            result.put("releaseRefNum", authTrans.getString(x.referenceNum));
             result.put("releaseAmount", BigDecimal.ZERO);
             if (errors.size() == 1) {
                 Map.Entry<String, String> error = errors.entrySet().iterator().next();
@@ -896,29 +897,29 @@ public class PayPalServices {
             result.put("releaseResult", true);
             // PayPal voids the entire order amount minus any captures, that's a little difficult to figure out here
             // so until further testing proves we should do otherwise I'm just going to return requested void amount
-            result.put("releaseAmount", context.get(org.apache.ofbiz.persistence.entity.x.releaseAmount));
+            result.put("releaseAmount", context.get(x.releaseAmount));
             result.put("releaseRefNum", decoder.get("AUTHORIZATIONID"));
         }
         return result;
     }
 
     public static Map<String, Object> doRefund (DispatchContext dctx, Map<String, Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         GenericValue payPalConfig = getPaymentMethodGatewayPayPal(dctx, context, null);
         if (payPalConfig == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
                     "AccountingPayPalPaymentGatewayConfigCannotFind", locale));
         }
-        GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+        GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         GenericValue captureTrans = PaymentGatewayServices.getCaptureTransaction(orderPaymentPreference);
-        BigDecimal refundAmount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.refundAmount);
+        BigDecimal refundAmount = (BigDecimal) context.get(x.refundAmount);
         NVPEncoder encoder = new NVPEncoder();
         encoder.add("METHOD", "RefundTransaction");
-        encoder.add("TRANSACTIONID", captureTrans.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
+        encoder.add("TRANSACTIONID", captureTrans.getString(x.referenceNum));
         encoder.add("REFUNDTYPE", "Partial");
-        encoder.add("CURRENCYCODE", captureTrans.getString(org.apache.ofbiz.persistence.entity.x.currencyUomId));
+        encoder.add("CURRENCYCODE", captureTrans.getString(x.currencyUomId));
         encoder.add("AMT", refundAmount.setScale(2, RoundingMode.HALF_UP).toPlainString());
-        encoder.add("NOTE", "Order #" + orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+        encoder.add("NOTE", "Order #" + orderPaymentPreference.getString(x.orderId));
         NVPDecoder decoder = null;
         try {
             decoder = sendNVPRequest(payPalConfig, encoder);
@@ -936,7 +937,7 @@ public class PayPalServices {
         Map<String, String> errors = getErrorMessageMap(decoder);
         if (UtilValidate.isNotEmpty(errors)) {
             result.put("refundResult", false);
-            result.put("refundRefNum", captureTrans.getString(org.apache.ofbiz.persistence.entity.x.referenceNum));
+            result.put("refundRefNum", captureTrans.getString(x.referenceNum));
             result.put("refundAmount", BigDecimal.ZERO);
             if (errors.size() == 1) {
                 Map.Entry<String, String> error = errors.entrySet().iterator().next();
@@ -956,17 +957,17 @@ public class PayPalServices {
 
     private static GenericValue getPaymentMethodGatewayPayPal(DispatchContext dctx, Map<String, ? extends Object> context, String paymentServiceTypeEnumId) {
         Delegator delegator = dctx.getDelegator();
-        String paymentGatewayConfigId = (String) context.get(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+        String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
         GenericValue payPalGatewayConfig = null;
 
         if (paymentGatewayConfigId == null) {
             String productStoreId = null;
-            GenericValue orderPaymentPreference = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.orderPaymentPreference);
+            GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
             if (orderPaymentPreference != null) {
-                OrderReadHelper orh = new OrderReadHelper(delegator, orderPaymentPreference.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                OrderReadHelper orh = new OrderReadHelper(delegator, orderPaymentPreference.getString(x.orderId));
                 productStoreId = orh.getProductStoreId();
             } else {
-                ShoppingCart cart = (ShoppingCart) context.get(org.apache.ofbiz.persistence.entity.x.cart);
+                ShoppingCart cart = (ShoppingCart) context.get(x.cart);
                 if (cart != null) {
                     productStoreId = cart.getProductStoreId();
                 }
@@ -974,7 +975,7 @@ public class PayPalServices {
             if (productStoreId != null) {
                 GenericValue payPalPaymentSetting = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStoreId, "EXT_PAYPAL", paymentServiceTypeEnumId, true);
                 if (payPalPaymentSetting != null) {
-                    paymentGatewayConfigId = payPalPaymentSetting.getString(org.apache.ofbiz.persistence.entity.x.paymentGatewayConfigId);
+                    paymentGatewayConfigId = payPalPaymentSetting.getString(x.paymentGatewayConfigId);
                 }
             }
         }
@@ -992,10 +993,10 @@ public class PayPalServices {
         NVPCallerServices caller = new NVPCallerServices();
         try {
             APIProfile profile = ProfileFactory.createSignatureAPIProfile();
-            profile.setAPIUsername(payPalConfig.getString(org.apache.ofbiz.persistence.entity.x.apiUserName));
-            profile.setAPIPassword(payPalConfig.getString(org.apache.ofbiz.persistence.entity.x.apiPassword));
-            profile.setSignature(payPalConfig.getString(org.apache.ofbiz.persistence.entity.x.apiSignature));
-            profile.setEnvironment(payPalConfig.getString(org.apache.ofbiz.persistence.entity.x.apiEnvironment));
+            profile.setAPIUsername(payPalConfig.getString(x.apiUserName));
+            profile.setAPIPassword(payPalConfig.getString(x.apiPassword));
+            profile.setSignature(payPalConfig.getString(x.apiSignature));
+            profile.setEnvironment(payPalConfig.getString(x.apiEnvironment));
             caller.setAPIProfile(profile);
         } catch (PayPalException e) {
             Debug.logError(e.getMessage(), MODULE);
@@ -1019,7 +1020,7 @@ public class PayPalServices {
             GenericValue countryGeo = EntityQuery.use(delegator).from("Geo")
                     .where("geoTypeId", "COUNTRY", "geoCode", geoCode).cache().queryFirst();
             if (countryGeo != null) {
-                geoId = countryGeo.getString(org.apache.ofbiz.persistence.entity.x.geoId);
+                geoId = countryGeo.getString(x.geoId);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -1047,7 +1048,7 @@ public class PayPalServices {
             Debug.logError(e, MODULE);
         }
         if (geoAssocAndGeoTo != null) {
-            return geoAssocAndGeoTo.getString(org.apache.ofbiz.persistence.entity.x.geoId);
+            return geoAssocAndGeoTo.getString(x.geoId);
         }
         return null;
     }

@@ -79,6 +79,7 @@ import org.apache.ofbiz.webapp.website.WebSiteProperties;
 import org.apache.ofbiz.webapp.website.WebSiteWorker;
 import org.apache.ofbiz.widget.model.ThemeFactory;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * RequestHandler - Request Processor Object
  */
@@ -488,7 +489,7 @@ public final class RequestHandler {
                     if (webSiteId != null) {
                         try {
                             GenericValue webSite = EntityQuery.use(delegator).from("WebSite").where("webSiteId", webSiteId).cache().queryOne();
-                            if (webSite != null) enableHttps = webSite.getBoolean(org.apache.ofbiz.persistence.entity.x.enableHttps);
+                            if (webSite != null) enableHttps = webSite.getBoolean(x.enableHttps);
                         } catch (GenericEntityException e) {
                             Debug.logWarning(e, "Problems with WebSite entity; using global defaults", MODULE);
                         }
@@ -1449,10 +1450,10 @@ public final class RequestHandler {
                 if (webSiteValue != null) {
                     ServletContext application = (request.getServletContext());
                     String domainName = request.getLocalName();
-                    if (application.getAttribute("MULTI_SITE_ENABLED") != null && UtilValidate.isNotEmpty(webSiteValue.getString(org.apache.ofbiz.persistence.entity.x.hostedPathAlias))
-                            && !domainName.equals(webSiteValue.getString(org.apache.ofbiz.persistence.entity.x.httpHost))) {
+                    if (application.getAttribute("MULTI_SITE_ENABLED") != null && UtilValidate.isNotEmpty(webSiteValue.getString(x.hostedPathAlias))
+                            && !domainName.equals(webSiteValue.getString(x.httpHost))) {
                         newURL.append('/');
-                        newURL.append(webSiteValue.getString(org.apache.ofbiz.persistence.entity.x.hostedPathAlias));
+                        newURL.append(webSiteValue.getString(x.hostedPathAlias));
                     }
                 }
             } catch (GenericEntityException e) {

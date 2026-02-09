@@ -31,6 +31,7 @@ import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.service.testtools.OFBizTestCase;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Tests for USPS Webtools API services
  *
@@ -216,16 +217,16 @@ public class UspsServicesTests extends OFBizTestCase {
         // prepare the context
         Map<String, Object> context = new HashMap<>();
 
-        context.put(org.apache.ofbiz.persistence.entity.x.service, "Priority");
-        context.put(org.apache.ofbiz.persistence.entity.x.originZip, "20770");
-        context.put(org.apache.ofbiz.persistence.entity.x.destinationZip, "09021");
-        context.put(org.apache.ofbiz.persistence.entity.x.pounds, "5");
-        context.put(org.apache.ofbiz.persistence.entity.x.ounces, "1");
-        context.put(org.apache.ofbiz.persistence.entity.x.container, "None");
-        context.put(org.apache.ofbiz.persistence.entity.x.size, "Regular");
-        context.put(org.apache.ofbiz.persistence.entity.x.machinable, "False");
-        context.put(org.apache.ofbiz.persistence.entity.x.shipmentGatewayConfigId, "USPS_CONFIG");
-        context.put(org.apache.ofbiz.persistence.entity.x.configProps, "shipment");
+        context.put(x.service, "Priority");
+        context.put(x.originZip, "20770");
+        context.put(x.destinationZip, "09021");
+        context.put(x.pounds, "5");
+        context.put(x.ounces, "1");
+        context.put(x.container, "None");
+        context.put(x.size, "Regular");
+        context.put(x.machinable, "False");
+        context.put(x.shipmentGatewayConfigId, "USPS_CONFIG");
+        context.put(x.configProps, "shipment");
 
         // run the service
         Map<String, Object> result = getDispatcher().runSync("uspsDomesticRate", context);

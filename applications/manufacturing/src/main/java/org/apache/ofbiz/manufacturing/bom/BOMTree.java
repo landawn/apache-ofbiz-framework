@@ -35,6 +35,7 @@ import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.product.store.ProductStoreWorker;
 import org.apache.ofbiz.service.LocalDispatcher;
 
+import org.apache.ofbiz.persistence.entity.x;
 /** It represents an (in-memory) bill of materials (in which each
   * component is an BOMNode)
   * Useful for tree traversal (breakdown, explosion, implosion).
@@ -107,7 +108,7 @@ public class BOMTree {
         GenericValue oneProductFeatureAppl = null;
         for (GenericValue genericValue : productFeaturesAppl) {
             oneProductFeatureAppl = genericValue;
-            productFeatures.add(oneProductFeatureAppl.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductFeature, false));
+            productFeatures.add(oneProductFeatureAppl.getRelatedOne(x.ProductFeature, false));
         }
         // If the product is manufactured as a different product,
         // load the new product
@@ -115,7 +116,7 @@ public class BOMTree {
         // We load the information about the product that needs to be manufactured
         // from Product entity
         GenericValue product = EntityQuery.use(delegator).from("Product")
-                .where("productId", (manufacturedAsProduct != null ? manufacturedAsProduct.getString(org.apache.ofbiz.persistence.entity.x.productIdTo) : productId))
+                .where("productId", (manufacturedAsProduct != null ? manufacturedAsProduct.getString(x.productIdTo) : productId))
                 .queryOne();
         if (product == null) return;
         BOMNode originalNode = new BOMNode(product, dispatcher, userLogin);
@@ -124,18 +125,18 @@ public class BOMTree {
         // the bill of materials of its virtual product (if the current
         // product is variant).
         if (!hasBom(product, inDate)) {
-            List<GenericValue> virtualProducts = product.getRelated(org.apache.ofbiz.persistence.entity.x.AssocProductAssoc, UtilMisc.toMap("productAssocTypeId",
+            List<GenericValue> virtualProducts = product.getRelated(x.AssocProductAssoc, UtilMisc.toMap("productAssocTypeId",
                     "PRODUCT_VARIANT"), null, false);
             virtualProducts = EntityUtil.filterByDate(virtualProducts, inDate);
             GenericValue virtualProduct = EntityUtil.getFirst(virtualProducts);
             if (virtualProduct != null) {
                 // If the virtual product is manufactured as a different product,
                 // load the new product
-                productIdForRules = virtualProduct.getString(org.apache.ofbiz.persistence.entity.x.productId);
-                manufacturedAsProduct = manufacturedAsProduct(virtualProduct.getString(org.apache.ofbiz.persistence.entity.x.productId), inDate);
+                productIdForRules = virtualProduct.getString(x.productId);
+                manufacturedAsProduct = manufacturedAsProduct(virtualProduct.getString(x.productId), inDate);
                 product = EntityQuery.use(delegator).from("Product")
-                        .where("productId", (manufacturedAsProduct != null ? manufacturedAsProduct.getString(org.apache.ofbiz.persistence.entity.x.productIdTo)
-                                : virtualProduct.get(org.apache.ofbiz.persistence.entity.x.productId)))
+                        .where("productId", (manufacturedAsProduct != null ? manufacturedAsProduct.getString(x.productIdTo)
+                                : virtualProduct.get(x.productId)))
                         .queryOne();
             }
         }
@@ -175,7 +176,7 @@ public class BOMTree {
     }
 
     private boolean hasBom(GenericValue product, Date inDate) throws GenericEntityException {
-        List<GenericValue> children = product.getRelated(org.apache.ofbiz.persistence.entity.x.MainProductAssoc, UtilMisc.toMap("productAssocTypeId", bomTypeId),
+        List<GenericValue> children = product.getRelated(x.MainProductAssoc, UtilMisc.toMap("productAssocTypeId", bomTypeId),
                 null, false);
         children = EntityUtil.filterByDate(children, inDate);
         return UtilValidate.isNotEmpty(children);
@@ -340,18 +341,18 @@ public class BOMTree {
             if (UtilValidate.isEmpty(facilityId)) {
                 if (orderId != null) {
                     GenericValue order = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
-                    String productStoreId = order.getString(org.apache.ofbiz.persistence.entity.x.productStoreId);
+                    String productStoreId = order.getString(x.productStoreId);
                     if (productStoreId != null) {
                         GenericValue productStore = ProductStoreWorker.getProductStore(productStoreId, delegator);
                         if (productStore != null) {
-                            facilityId = productStore.getString(org.apache.ofbiz.persistence.entity.x.inventoryFacilityId);
+                            facilityId = productStore.getString(x.inventoryFacilityId);
                         }
                     }
 
                 }
                 if (facilityId == null && shipmentId != null) {
                     GenericValue shipment = EntityQuery.use(delegator).from("Shipment").where("shipmentId", shipmentId).queryOne();
-                    facilityId = shipment.getString(org.apache.ofbiz.persistence.entity.x.originFacilityId);
+                    facilityId = shipment.getString(x.originFacilityId);
                 }
             }
             Map<String, Object> tmpMap = root.createManufacturingOrder(facilityId, date, workEffortName, description, routingId, orderId,

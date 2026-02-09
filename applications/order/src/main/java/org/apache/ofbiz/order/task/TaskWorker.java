@@ -25,6 +25,7 @@ import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Order Processing Task Worker
  */
@@ -37,8 +38,8 @@ public final class TaskWorker {
     private TaskWorker() { }
 
     public static String getCustomerName(GenericValue orderTaskList) {
-        String lastName = orderTaskList.getString(org.apache.ofbiz.persistence.entity.x.customerLastName);
-        String firstName = orderTaskList.getString(org.apache.ofbiz.persistence.entity.x.customerFirstName);
+        String lastName = orderTaskList.getString(x.customerLastName);
+        String firstName = orderTaskList.getString(x.customerFirstName);
         if (lastName != null) {
             String name = lastName;
             if (firstName != null) {
@@ -52,7 +53,7 @@ public final class TaskWorker {
 
 
     public static String getPrettyStatus(GenericValue orderTaskList) {
-        String statusId = orderTaskList.getString(org.apache.ofbiz.persistence.entity.x.currentStatusId);
+        String statusId = orderTaskList.getString(x.currentStatusId);
         String prettyStatus = STATUS_MAPPING.get(statusId);
         if (prettyStatus == null) {
             prettyStatus = "?";
@@ -64,13 +65,13 @@ public final class TaskWorker {
     public static String getRoleDescription(GenericValue orderTaskList) {
         GenericValue role = null;
         try {
-            Map<String, ? extends Object> pkFields = UtilMisc.toMap("roleTypeId", orderTaskList.getString(org.apache.ofbiz.persistence.entity.x.roleTypeId));
+            Map<String, ? extends Object> pkFields = UtilMisc.toMap("roleTypeId", orderTaskList.getString(x.roleTypeId));
             role = orderTaskList.getDelegator().findOne("RoleType", pkFields, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, "Cannot get RoleType entity value", MODULE);
-            return orderTaskList.getString(org.apache.ofbiz.persistence.entity.x.roleTypeId);
+            return orderTaskList.getString(x.roleTypeId);
         }
-        return role.getString(org.apache.ofbiz.persistence.entity.x.description);
+        return role.getString(x.description);
     }
 
 }

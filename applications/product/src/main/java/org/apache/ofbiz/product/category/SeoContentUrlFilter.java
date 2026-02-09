@@ -42,6 +42,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.entity.util.EntityQuery;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class SeoContentUrlFilter implements Filter {
     private static final String MODULE = SeoContentUrlFilter.class.getName();
     protected static final String DEFAULT_LOCALE_STRING = null;
@@ -71,10 +72,10 @@ public class SeoContentUrlFilter implements Filter {
                         contentDataResourceViews = EntityUtil.orderBy(contentDataResourceViews, UtilMisc.toList("createdDate DESC"));
                         GenericValue contentDataResourceView = EntityUtil.getFirst(contentDataResourceViews);
                         List<GenericValue> contents = EntityQuery.use(delegator).from("ContentAssoc").where("contentAssocTypeId",
-                                "ALTERNATIVE_URL", "contentIdTo", contentDataResourceView.getString(org.apache.ofbiz.persistence.entity.x.contentId)).filterByDate().queryList();
+                                "ALTERNATIVE_URL", "contentIdTo", contentDataResourceView.getString(x.contentId)).filterByDate().queryList();
                         if (!contents.isEmpty()) {
                             GenericValue content = EntityUtil.getFirst(contents);
-                            urlContentId = content.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+                            urlContentId = content.getString(x.contentId);
                         }
                     }
                 } catch (Exception e) {

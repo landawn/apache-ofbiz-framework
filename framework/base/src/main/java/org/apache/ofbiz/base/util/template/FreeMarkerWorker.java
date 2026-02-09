@@ -66,6 +66,7 @@ import freemarker.template.TemplateModel;
 import freemarker.template.TemplateModelException;
 import freemarker.template.Version;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * FreeMarkerWorker - Freemarker Template Engine Utilities.
  */
@@ -249,13 +250,13 @@ public final class FreeMarkerWorker {
      * @param context The context Map containing the user settings
      */
     private static void applyUserSettings(Environment env, Map<String, Object> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         if (locale == null) {
             locale = Locale.getDefault();
         }
         env.setLocale(locale);
 
-        TimeZone timeZone = (TimeZone) context.get(org.apache.ofbiz.persistence.entity.x.timeZone);
+        TimeZone timeZone = (TimeZone) context.get(x.timeZone);
         if (timeZone == null) {
             timeZone = TimeZone.getDefault();
         }

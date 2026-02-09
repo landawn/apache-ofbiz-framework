@@ -27,6 +27,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class EntityWatchServices {
 
     private static final String MODULE = EntityWatchServices.class.getName();
@@ -38,8 +39,8 @@ public class EntityWatchServices {
      * @return the result of the service execution
      */
     public static Map<String, Object> watchEntity(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue newValue = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.newValue);
-        String fieldName = (String) context.get(org.apache.ofbiz.persistence.entity.x.fieldName);
+        GenericValue newValue = (GenericValue) context.get(x.newValue);
+        String fieldName = (String) context.get(x.fieldName);
 
         if (newValue == null) {
             return ServiceUtil.returnSuccess();

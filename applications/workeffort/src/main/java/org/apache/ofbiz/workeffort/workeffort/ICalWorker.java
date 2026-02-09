@@ -54,6 +54,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import org.apache.ofbiz.persistence.entity.x;
 /** iCalendar worker class. This class handles the WebDAV requests and
  * delegates the calendar conversion tasks to <code>ICalConverter</code>.
  */
@@ -79,8 +80,8 @@ public final class ICalWorker {
             String attributeName = attributeEnum.nextElement();
             context.put(attributeName, request.getAttribute(attributeName));
         }
-        context.put(org.apache.ofbiz.persistence.entity.x.parameters, request.getParameterMap());
-        context.put(org.apache.ofbiz.persistence.entity.x.locale, UtilHttp.getLocale(request));
+        context.put(x.parameters, request.getParameterMap());
+        context.put(x.locale, UtilHttp.getLocale(request));
         return context;
     }
 
@@ -130,11 +131,11 @@ public final class ICalWorker {
         String workEffortId = (String) request.getAttribute("workEffortId");
         Delegator delegator = (Delegator) request.getAttribute("delegator");
         GenericValue publishProperties = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", workEffortId).queryOne();
-        GenericValue iCalData = publishProperties.getRelatedOne(org.apache.ofbiz.persistence.entity.x.WorkEffortIcalData, false);
+        GenericValue iCalData = publishProperties.getRelatedOne(x.WorkEffortIcalData, false);
         if (iCalData != null) {
-            return iCalData.getTimestamp(org.apache.ofbiz.persistence.entity.x.lastUpdatedStamp);
+            return iCalData.getTimestamp(x.lastUpdatedStamp);
         }
-        return publishProperties.getTimestamp(org.apache.ofbiz.persistence.entity.x.lastUpdatedStamp);
+        return publishProperties.getTimestamp(x.lastUpdatedStamp);
     }
 
     public static void handleGetRequest(HttpServletRequest request, HttpServletResponse response, ServletContext context) throws IOException {
@@ -275,11 +276,11 @@ public final class ICalWorker {
         request.setAttribute("userLogin", userLogin);
         session.setAttribute("userLogin", userLogin);
         VisitHandler.getVisitor(request, response);
-        GenericValue person = userLogin.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Person, false);
+        GenericValue person = userLogin.getRelatedOne(x.Person, false);
         if (person != null) {
             request.setAttribute("person", person);
         } else {
-            GenericValue partyGroup = userLogin.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PartyGroup, false);
+            GenericValue partyGroup = userLogin.getRelatedOne(x.PartyGroup, false);
             if (partyGroup != null) {
                 request.setAttribute("partyGroup", partyGroup);
             }

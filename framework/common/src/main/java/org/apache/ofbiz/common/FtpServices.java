@@ -39,6 +39,7 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * FTP Services.
  *
@@ -49,11 +50,11 @@ public class FtpServices {
     private static final String RESOURCE = "CommonUiLabels";
 
     public static Map<String, Object> putFile(DispatchContext dctx, Map<String, ?> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         Debug.logInfo("[putFile] starting...", MODULE);
         InputStream localFile = null;
         try {
-            localFile = new FileInputStream((String) context.get(org.apache.ofbiz.persistence.entity.x.localFilename));
+            localFile = new FileInputStream((String) context.get(x.localFilename));
         } catch (IOException ioe) {
             Debug.logError(ioe, "[putFile] Problem opening local file", MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonFtpFileCannotBeOpen", locale));
@@ -61,43 +62,43 @@ public class FtpServices {
         List<String> errorList = new LinkedList<>();
         FTPClient ftp = new FTPClient();
         try {
-            Integer defaultTimeout = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.defaultTimeout);
+            Integer defaultTimeout = (Integer) context.get(x.defaultTimeout);
             if (UtilValidate.isNotEmpty(defaultTimeout)) {
                 Debug.logInfo("[putFile] set default timeout to: " + defaultTimeout + " milliseconds", MODULE);
                 ftp.setDefaultTimeout(defaultTimeout);
             }
-            Debug.logInfo("[putFile] connecting to: " + (String) context.get(org.apache.ofbiz.persistence.entity.x.hostname), MODULE);
-            ftp.connect((String) context.get(org.apache.ofbiz.persistence.entity.x.hostname));
+            Debug.logInfo("[putFile] connecting to: " + (String) context.get(x.hostname), MODULE);
+            ftp.connect((String) context.get(x.hostname));
             if (!FTPReply.isPositiveCompletion(ftp.getReplyCode())) {
                 Debug.logInfo("[putFile] Server refused connection", MODULE);
                 errorList.add(UtilProperties.getMessage(RESOURCE, "CommonFtpConnectionRefused", locale));
             } else {
-                String username = (String) context.get(org.apache.ofbiz.persistence.entity.x.username);
-                String password = (String) context.get(org.apache.ofbiz.persistence.entity.x.password);
+                String username = (String) context.get(x.username);
+                String password = (String) context.get(x.password);
                 Debug.logInfo("[putFile] logging in: username=" + username + ", password=" + password, MODULE);
                 if (!ftp.login(username, password)) {
                     Debug.logInfo("[putFile] login failed", MODULE);
                     errorList.add(UtilProperties.getMessage(RESOURCE, "CommonFtpLoginFailure", UtilMisc.toMap("username",
                             username, "password", password), locale));
                 } else {
-                    Boolean binaryTransfer = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.binaryTransfer);
+                    Boolean binaryTransfer = (Boolean) context.get(x.binaryTransfer);
                     boolean binary = (binaryTransfer == null) ? false : binaryTransfer;
                     if (binary) {
                         ftp.setFileType(FTP.BINARY_FILE_TYPE);
                     }
-                    Boolean passiveMode = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.passiveMode);
+                    Boolean passiveMode = (Boolean) context.get(x.passiveMode);
                     boolean passive = (passiveMode == null) ? true : passiveMode;
                     if (passive) {
                         ftp.enterLocalPassiveMode();
                     }
-                    Debug.logInfo("[putFile] storing local file remotely as: " + context.get(org.apache.ofbiz.persistence.entity.x.remoteFilename), MODULE);
-                    if (!ftp.storeFile((String) context.get(org.apache.ofbiz.persistence.entity.x.remoteFilename), localFile)) {
+                    Debug.logInfo("[putFile] storing local file remotely as: " + context.get(x.remoteFilename), MODULE);
+                    if (!ftp.storeFile((String) context.get(x.remoteFilename), localFile)) {
                         Debug.logInfo("[putFile] store was unsuccessful", MODULE);
                         errorList.add(UtilProperties.getMessage(RESOURCE, "CommonFtpFileNotSentSuccesfully",
                                 UtilMisc.toMap("replyString", ftp.getReplyString()), locale));
                     } else {
                         Debug.logInfo("[putFile] store was successful", MODULE);
-                        List<String> siteCommands = checkCollection(context.get(org.apache.ofbiz.persistence.entity.x.siteCommands), String.class);
+                        List<String> siteCommands = checkCollection(context.get(x.siteCommands), String.class);
                         if (siteCommands != null) {
                             for (String command : siteCommands) {
                                 Debug.logInfo("[putFile] sending SITE command: " + command, MODULE);
@@ -133,8 +134,8 @@ public class FtpServices {
     }
 
     public static Map<String, Object> getFile(DispatchContext dctx, Map<String, ?> context) {
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        String localFilename = (String) context.get(org.apache.ofbiz.persistence.entity.x.localFilename);
+        Locale locale = (Locale) context.get(x.locale);
+        String localFilename = (String) context.get(x.localFilename);
         OutputStream localFile = null;
         try {
             localFile = new FileOutputStream(localFilename);
@@ -145,32 +146,32 @@ public class FtpServices {
         List<String> errorList = new LinkedList<>();
         FTPClient ftp = new FTPClient();
         try {
-            Integer defaultTimeout = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.defaultTimeout);
+            Integer defaultTimeout = (Integer) context.get(x.defaultTimeout);
             if (UtilValidate.isNotEmpty(defaultTimeout)) {
                 Debug.logInfo("[getFile] Set default timeout to: " + defaultTimeout + " milliseconds", MODULE);
                 ftp.setDefaultTimeout(defaultTimeout);
             }
-            ftp.connect((String) context.get(org.apache.ofbiz.persistence.entity.x.hostname));
+            ftp.connect((String) context.get(x.hostname));
             if (!FTPReply.isPositiveCompletion(ftp.getReplyCode())) {
                 errorList.add(UtilProperties.getMessage(RESOURCE, "CommonFtpConnectionRefused", locale));
             } else {
-                String username = (String) context.get(org.apache.ofbiz.persistence.entity.x.username);
-                String password = (String) context.get(org.apache.ofbiz.persistence.entity.x.password);
+                String username = (String) context.get(x.username);
+                String password = (String) context.get(x.password);
                 if (!ftp.login(username, password)) {
                     errorList.add(UtilProperties.getMessage(RESOURCE, "CommonFtpLoginFailure", UtilMisc.toMap("username",
                             username, "password", password), locale));
                 } else {
-                    Boolean binaryTransfer = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.binaryTransfer);
+                    Boolean binaryTransfer = (Boolean) context.get(x.binaryTransfer);
                     boolean binary = (binaryTransfer == null) ? false : binaryTransfer;
                     if (binary) {
                         ftp.setFileType(FTP.BINARY_FILE_TYPE);
                     }
-                    Boolean passiveMode = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.passiveMode);
+                    Boolean passiveMode = (Boolean) context.get(x.passiveMode);
                     boolean passive = (passiveMode == null) ? false : passiveMode;
                     if (passive) {
                         ftp.enterLocalPassiveMode();
                     }
-                    if (!ftp.retrieveFile((String) context.get(org.apache.ofbiz.persistence.entity.x.remoteFilename), localFile)) {
+                    if (!ftp.retrieveFile((String) context.get(x.remoteFilename), localFile)) {
                         errorList.add(UtilProperties.getMessage(RESOURCE, "CommonFtpFileNotSentSuccesfully",
                                 UtilMisc.toMap("replyString", ftp.getReplyString()), locale));
                     }

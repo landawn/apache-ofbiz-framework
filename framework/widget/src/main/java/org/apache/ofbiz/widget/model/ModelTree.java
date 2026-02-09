@@ -56,6 +56,7 @@ import org.apache.ofbiz.widget.renderer.TreeStringRenderer;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Models the &lt;tree&gt; element.
  *
@@ -181,7 +182,7 @@ public class ModelTree extends ModelWidget {
     public String getExpandCollapseRequest(Map<String, Object> context) {
         String expColReq = this.expandCollapseRequestExdr.expandString(context);
         if (UtilValidate.isEmpty(expColReq)) {
-            HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
+            HttpServletRequest request = (HttpServletRequest) context.get(x.request);
             String s1 = request.getRequestURI();
             int pos = s1.lastIndexOf('/');
             if (pos >= 0) {
@@ -191,7 +192,7 @@ public class ModelTree extends ModelWidget {
             }
         }
         //append also the request parameters
-        Map<String, Object> paramMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.requestParameters));
+        Map<String, Object> paramMap = UtilGenerics.cast(context.get(x.requestParameters));
         if (UtilValidate.isNotEmpty(paramMap)) {
             Map<String, Object> requestParameters = new HashMap<>(paramMap);
             requestParameters.remove(this.getTrailName(context));
@@ -267,7 +268,7 @@ public class ModelTree extends ModelWidget {
     @SuppressWarnings("rawtypes")
     public void renderTreeString(Appendable writer, Map<String, Object> context, TreeStringRenderer treeStringRenderer)
             throws GeneralException {
-        Map<String, Object> parameters = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.parameters));
+        Map<String, Object> parameters = UtilGenerics.cast(context.get(x.parameters));
         ModelNode node = nodeMap.get(rootNodeName);
         String trailName = trailNameExdr.expandString(context);
         String treeString = (String) context.get(trailName);
@@ -280,13 +281,13 @@ public class ModelTree extends ModelWidget {
             if (UtilValidate.isEmpty(trail)) {
                 throw new RuntimeException("Tree 'trail' value is empty.");
             }
-            context.put(org.apache.ofbiz.persistence.entity.x.rootEntityId, trail.get(0));
+            context.put(x.rootEntityId, trail.get(0));
             context.put(getDefaultPkName(context), trail.get(0));
         } else {
             trail = new LinkedList<>();
         }
-        context.put(org.apache.ofbiz.persistence.entity.x.targetNodeTrail, trail);
-        context.put(org.apache.ofbiz.persistence.entity.x.currentNodeTrail, new LinkedList());
+        context.put(x.targetNodeTrail, trail);
+        context.put(x.currentNodeTrail, new LinkedList());
         try {
             node.renderNodeString(writer, context, treeStringRenderer, 0);
         } catch (IOException e2) {
@@ -668,9 +669,9 @@ public class ModelTree extends ModelWidget {
                 }
             }
             if (passed) {
-                Object obj = context.get(org.apache.ofbiz.persistence.entity.x.currentNodeTrail);
+                Object obj = context.get(x.currentNodeTrail);
                 List<String> currentNodeTrail = (obj instanceof List) ? UtilGenerics.cast(obj) : null;
-                context.put(org.apache.ofbiz.persistence.entity.x.processChildren, Boolean.TRUE);
+                context.put(x.processChildren, Boolean.TRUE);
                 // this action will usually obtain the "current" entity
                 ModelTreeAction.runSubActions(this.actions, context);
                 String pkName = getPkName(context);
@@ -705,7 +706,7 @@ public class ModelTree extends ModelWidget {
                         link.renderLinkString(writer, context, treeStringRenderer);
                     }
                     treeStringRenderer.renderLastElement(writer, context, this);
-                    Boolean processChildren = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.processChildren);
+                    Boolean processChildren = (Boolean) context.get(x.processChildren);
                     if (processChildren) {
                         List<Object[]> subNodeValues = getChildren(context);
                         int newDepth = depth + 1;
@@ -723,7 +724,7 @@ public class ModelTree extends ModelWidget {
                                 newContext.putAll(val);
                             }
                             String targetEntityId = null;
-                            List<String> targetNodeTrail = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.targetNodeTrail));
+                            List<String> targetNodeTrail = UtilGenerics.cast(context.get(x.targetNodeTrail));
                             if (newDepth < targetNodeTrail.size()) {
                                 targetEntityId = targetNodeTrail.get(newDepth);
                             }
@@ -757,7 +758,7 @@ public class ModelTree extends ModelWidget {
          */
         public boolean showPeers(int currentDepth, Map<String, Object> context) {
             int trailSize = 0;
-            List<?> trail = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.targetNodeTrail));
+            List<?> trail = UtilGenerics.cast(context.get(x.targetNodeTrail));
             int openDepth = modelTree.getOpenDepth();
             int postTrailOpenDepth = modelTree.getPostTrailOpenDepth();
             if (trail != null) {
@@ -996,7 +997,7 @@ public class ModelTree extends ModelWidget {
             public String getText(Map<String, Object> context) {
                 String text = this.textExdr.expandString(context);
                 // FIXME: Encoding should be done by the renderer, not by the model.
-                UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
+                UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(x.simpleEncoder);
                 if (simpleEncoder != null) {
                     text = simpleEncoder.encode(text);
                 }
@@ -1206,7 +1207,7 @@ public class ModelTree extends ModelWidget {
              * @return the target
              */
             public String getTarget(Map<String, Object> context) {
-                UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
+                UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(x.simpleEncoder);
                 if (simpleEncoder != null) {
                     return this.targetExdr.expandString(UtilCodec.HtmlEncodingMapWrapper.getHtmlEncodingMapWrapper(context,
                             simpleEncoder));
@@ -1231,7 +1232,7 @@ public class ModelTree extends ModelWidget {
             public String getText(Map<String, Object> context) {
                 String text = this.textExdr.expandString(context);
                 // FIXME: Encoding should be done by the renderer, not by the model.
-                UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
+                UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(x.simpleEncoder);
                 if (simpleEncoder != null) {
                     text = simpleEncoder.encode(text);
                 }
@@ -1246,7 +1247,7 @@ public class ModelTree extends ModelWidget {
             public String getTitle(Map<String, Object> context) {
                 String title = this.titleExdr.expandString(context);
                 // FIXME: Encoding should be done by the renderer, not by the model.
-                UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(org.apache.ofbiz.persistence.entity.x.simpleEncoder);
+                UtilCodec.SimpleEncoder simpleEncoder = (UtilCodec.SimpleEncoder) context.get(x.simpleEncoder);
                 if (simpleEncoder != null) {
                     title = simpleEncoder.encode(title);
                 }

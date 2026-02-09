@@ -48,6 +48,7 @@ import org.apache.ofbiz.widget.renderer.ScreenStringRenderer;
 import org.w3c.dom.Element;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Widget Library - Screen model HTML class
  */
@@ -152,19 +153,19 @@ public class IterateSectionWidget extends ModelScreenWidget {
 
         if (getPaginate(context)) {
             try {
-                Map<String, String> params = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.parameters));
+                Map<String, String> params = UtilGenerics.cast(context.get(x.parameters));
                 String viewIndexString = params.get("VIEW_INDEX" + "_" + WidgetWorker.getPaginatorNumber(context));
                 String viewSizeString = params.get("VIEW_SIZE" + "_" + WidgetWorker.getPaginatorNumber(context));
                 viewIndex = Integer.parseInt(viewIndexString);
                 locViewSize = Integer.parseInt(viewSizeString);
             } catch (NumberFormatException e) {
                 try {
-                    viewIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.viewIndex);
+                    viewIndex = (Integer) context.get(x.viewIndex);
                 } catch (Exception e2) {
                     viewIndex = 0;
                 }
             }
-            context.put(org.apache.ofbiz.persistence.entity.x.viewIndex, viewIndex);
+            context.put(x.viewIndex, viewIndex);
             lowIndex = viewIndex * locViewSize;
             highIndex = (viewIndex + 1) * locViewSize;
         } else {
@@ -210,7 +211,7 @@ public class IterateSectionWidget extends ModelScreenWidget {
         if (getPaginate(context)) {
             try {
                 Integer lastPageNumber = null;
-                Map<String, Object> globalCtx = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.globalContext));
+                Map<String, Object> globalCtx = UtilGenerics.cast(context.get(x.globalContext));
                 if (globalCtx != null) {
                     lastPageNumber = (Integer) globalCtx.get("PAGINATOR_NUMBER");
                     globalCtx.put("PAGINATOR_NUMBER", startPageNumber);
@@ -270,8 +271,8 @@ public class IterateSectionWidget extends ModelScreenWidget {
             targetService = "${targetService}";
         }
 
-        Map<String, Object> inputFields = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.requestParameters));
-        Object obj = context.get(org.apache.ofbiz.persistence.entity.x.queryStringMap);
+        Map<String, Object> inputFields = UtilGenerics.cast(context.get(x.requestParameters));
+        Object obj = context.get(x.queryStringMap);
         Map<String, Object> queryStringMap = (obj instanceof Map) ? UtilGenerics.cast(obj) : null;
         if (UtilValidate.isNotEmpty(queryStringMap)) {
             inputFields.putAll(queryStringMap);
@@ -291,14 +292,14 @@ public class IterateSectionWidget extends ModelScreenWidget {
 
         int viewIndex = -1;
         try {
-            viewIndex = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.viewIndex);
+            viewIndex = (Integer) context.get(x.viewIndex);
         } catch (Exception e) {
             viewIndex = 0;
         }
 
         int viewSize = -1;
         try {
-            viewSize = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.viewSize);
+            viewSize = (Integer) context.get(x.viewSize);
         } catch (Exception e) {
             viewSize = this.getViewSize();
         }
@@ -310,8 +311,8 @@ public class IterateSectionWidget extends ModelScreenWidget {
             return;
         }
 
-        HttpServletRequest request = (HttpServletRequest) context.get(org.apache.ofbiz.persistence.entity.x.request);
-        HttpServletResponse response = (HttpServletResponse) context.get(org.apache.ofbiz.persistence.entity.x.response);
+        HttpServletRequest request = (HttpServletRequest) context.get(x.request);
+        HttpServletResponse response = (HttpServletResponse) context.get(x.response);
 
         RequestHandler rh = RequestHandler.from(request);
 
@@ -335,13 +336,13 @@ public class IterateSectionWidget extends ModelScreenWidget {
 
             // make the link
             writer.append(rh.makeLink(request, response, linkText.toString(), false, false, false));
-            String previous = UtilProperties.getMessage("CommonUiLabels", "CommonPrevious", (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale));
+            String previous = UtilProperties.getMessage("CommonUiLabels", "CommonPrevious", (Locale) context.get(x.locale));
             writer.append(" class=\"buttontext\">[").append(previous).append("]</a>\n");
 
         }
         if (listSize > 0) {
             Map<String, Integer> messageMap = UtilMisc.toMap("lowCount", lowIndex + 1, "highCount", lowIndex + actualPageSize, "total", listSize);
-            String commonDisplaying = UtilProperties.getMessage("CommonUiLabels", "CommonDisplaying", messageMap, (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale));
+            String commonDisplaying = UtilProperties.getMessage("CommonUiLabels", "CommonDisplaying", messageMap, (Locale) context.get(x.locale));
             writer.append(" <span class=\"tabletext\">").append(commonDisplaying).append("</span> \n");
         }
         if (highIndex < listSize) {
@@ -360,7 +361,7 @@ public class IterateSectionWidget extends ModelScreenWidget {
 
             // make the link
             writer.append(rh.makeLink(request, response, linkText.toString(), false, false, false));
-            String next = UtilProperties.getMessage("CommonUiLabels", "CommonNext", (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale));
+            String next = UtilProperties.getMessage("CommonUiLabels", "CommonNext", (Locale) context.get(x.locale));
             writer.append(" class=\"buttontext\">[").append(next).append("]</a>\n");
 
         }

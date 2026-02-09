@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class ServiceEngineTestPermissionServices {
 
     public static Map<String, Object> genericTestService(DispatchContext dctx, Map<String, ? extends Object> context) {
@@ -31,7 +32,7 @@ public class ServiceEngineTestPermissionServices {
 
     public static Map<String, Object> testPermissionPing(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("hasPermission", "Y".equalsIgnoreCase((String) context.get(org.apache.ofbiz.persistence.entity.x.givePermission)));
+        result.put("hasPermission", "Y".equalsIgnoreCase((String) context.get(x.givePermission)));
         return result;
     }
 

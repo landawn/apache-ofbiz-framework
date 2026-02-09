@@ -35,6 +35,7 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * StatusServices
  */
@@ -45,8 +46,8 @@ public class StatusServices {
 
     public static Map<String, Object> getStatusItems(DispatchContext ctx, Map<String, ?> context) {
         Delegator delegator = ctx.getDelegator();
-        List<String> statusTypes = checkCollection(context.get(org.apache.ofbiz.persistence.entity.x.statusTypeIds), String.class);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        List<String> statusTypes = checkCollection(context.get(x.statusTypeIds), String.class);
+        Locale locale = (Locale) context.get(x.locale);
         if (UtilValidate.isEmpty(statusTypes)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonStatusMandatory", locale));
         }
@@ -73,7 +74,7 @@ public class StatusServices {
     public static Map<String, Object> getStatusValidChangeToDetails(DispatchContext ctx, Map<String, ?> context) {
         Delegator delegator = ctx.getDelegator();
         List<GenericValue> statusValidChangeToDetails = null;
-        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
+        String statusId = (String) context.get(x.statusId);
         try {
             statusValidChangeToDetails = EntityQuery.use(delegator)
                                                     .from("StatusValidChangeToDetail")

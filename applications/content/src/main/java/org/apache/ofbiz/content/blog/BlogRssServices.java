@@ -46,6 +46,7 @@ import com.rometools.rome.feed.synd.SyndEntryImpl;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.feed.synd.SyndFeedImpl;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * BlogRssServices
  */
@@ -57,14 +58,14 @@ public class BlogRssServices {
     public static final String MAP_KEY = "SUMMARY";
 
     public static Map<String, Object> generateBlogRssFeed(DispatchContext dctx, Map<String, ? extends Object> context) {
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.blogContentId);
-        String entryLink = (String) context.get(org.apache.ofbiz.persistence.entity.x.entryLink);
-        String feedType = (String) context.get(org.apache.ofbiz.persistence.entity.x.feedType);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String contentId = (String) context.get(x.blogContentId);
+        String entryLink = (String) context.get(x.entryLink);
+        String feedType = (String) context.get(x.feedType);
+        Locale locale = (Locale) context.get(x.locale);
 
         // create the main link
-        String mainLink = (String) context.get(org.apache.ofbiz.persistence.entity.x.mainLink);
+        String mainLink = (String) context.get(x.mainLink);
         mainLink = mainLink + "?blogContentId=" + contentId;
 
         LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -89,8 +90,8 @@ public class BlogRssServices {
         feed.setFeedType(feedType);
         feed.setLink(mainLink);
 
-        feed.setTitle(content.getString(org.apache.ofbiz.persistence.entity.x.contentName));
-        feed.setDescription(content.getString(org.apache.ofbiz.persistence.entity.x.description));
+        feed.setTitle(content.getString(x.contentName));
+        feed.setDescription(content.getString(x.description));
         feed.setEntries(generateEntryList(dispatcher, delegator, contentId, entryLink, locale, userLogin));
 
         Map<String, Object> resp = ServiceUtil.returnSuccess();
@@ -118,22 +119,22 @@ public class BlogRssServices {
                 String sub = null;
                 try {
                     Map<String, Object> dummy = new HashMap<>();
-                    sub = ContentWorker.renderSubContentAsText(dispatcher, v.getString(org.apache.ofbiz.persistence.entity.x.contentId), MAP_KEY, dummy, locale, MIME_TYPE_ID, true);
+                    sub = ContentWorker.renderSubContentAsText(dispatcher, v.getString(x.contentId), MAP_KEY, dummy, locale, MIME_TYPE_ID, true);
                 } catch (GeneralException | IOException e) {
                     Debug.logError(e, MODULE);
                 }
                 if (sub != null) {
-                    String thisLink = entryLink + "?articleContentId=" + v.getString(org.apache.ofbiz.persistence.entity.x.contentId) + "&blogContentId=" + contentId;
+                    String thisLink = entryLink + "?articleContentId=" + v.getString(x.contentId) + "&blogContentId=" + contentId;
                     SyndContent desc = new SyndContentImpl();
                     desc.setType("text/plain");
                     desc.setValue(sub);
 
                     SyndEntry entry = new SyndEntryImpl();
-                    entry.setTitle(v.getString(org.apache.ofbiz.persistence.entity.x.contentName));
-                    entry.setPublishedDate(v.getTimestamp(org.apache.ofbiz.persistence.entity.x.createdDate));
+                    entry.setTitle(v.getString(x.contentName));
+                    entry.setPublishedDate(v.getTimestamp(x.createdDate));
                     entry.setDescription(desc);
                     entry.setLink(thisLink);
-                    entry.setAuthor((v.getString(org.apache.ofbiz.persistence.entity.x.createdByUserLogin)));
+                    entry.setAuthor((v.getString(x.createdByUserLogin)));
                     entries.add(entry);
                 }
             }

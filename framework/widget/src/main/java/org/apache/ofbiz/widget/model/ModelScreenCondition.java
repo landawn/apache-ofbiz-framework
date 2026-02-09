@@ -25,6 +25,7 @@ import org.apache.ofbiz.base.util.string.FlexibleStringExpander;
 import org.apache.ofbiz.widget.model.AbstractModelCondition.DefaultConditionFactory;
 import org.w3c.dom.Element;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Models the &lt;condition&gt; element.
  *
@@ -62,7 +63,7 @@ public final class ModelScreenCondition {
 
         @Override
         public boolean eval(Map<String, Object> context) {
-            Object obj = context.get(org.apache.ofbiz.persistence.entity.x.sections);
+            Object obj = context.get(x.sections);
             Map<String, Object> sectionsMap = (obj instanceof Map) ? UtilGenerics.cast(obj) : null;
             if (sectionsMap != null) {
                 return !sectionsMap.containsKey(this.sectionExdr.expandString(context));

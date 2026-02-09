@@ -43,6 +43,7 @@ import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericValue;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * TaxwareUTL - Taxware Universal Tax Link
  * Requires taxcommon.class found w/ UTL.
@@ -205,17 +206,17 @@ public class TaxwareUTL {
         // set the address info from the value objects
         if (shipToAddress != null) {
             // set the ship to address
-            if (shipToAddress.get(org.apache.ofbiz.persistence.entity.x.countryGeoId) == null) {
+            if (shipToAddress.get(x.countryGeoId) == null) {
                 record.set("ST_COUNTRY_CODE", "US");
-            } else if ("USA".equals(shipToAddress.getString(org.apache.ofbiz.persistence.entity.x.countryGeoId))) {
+            } else if ("USA".equals(shipToAddress.getString(x.countryGeoId))) {
                 record.set("ST_COUNTRY_CODE", "US");
             } else {
-                record.set("ST_COUNTRY_CODE", shipToAddress.get(org.apache.ofbiz.persistence.entity.x.countryGeoId));
+                record.set("ST_COUNTRY_CODE", shipToAddress.get(x.countryGeoId));
             }
             record.set("ST_COUNTRY_CODE", "US");
-            record.set("ST_STATE_PROVINCE", shipToAddress.get(org.apache.ofbiz.persistence.entity.x.stateProvinceGeoId));
-            record.set("ST_CITY", shipToAddress.get(org.apache.ofbiz.persistence.entity.x.city));
-            record.set("ST_POSTAL_CODE", shipToAddress.get(org.apache.ofbiz.persistence.entity.x.postalCode));
+            record.set("ST_STATE_PROVINCE", shipToAddress.get(x.stateProvinceGeoId));
+            record.set("ST_CITY", shipToAddress.get(x.city));
+            record.set("ST_POSTAL_CODE", shipToAddress.get(x.postalCode));
         }
     }
 

@@ -67,6 +67,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.webapp.control.RequestHandler;
 import org.apache.ofbiz.webapp.stats.VisitHandler;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  *  Utility class with methods to prepare and perform ProductSearch operations in the content of an HttpSession
  */
@@ -463,10 +464,10 @@ public class ProductSearchSession {
 
                 if (UtilValidate.isNotEmpty(productStoreKeywordOvrdList)) {
                     for (GenericValue productStoreKeywordOvrd: productStoreKeywordOvrdList) {
-                        String ovrdKeyword = productStoreKeywordOvrd.getString(org.apache.ofbiz.persistence.entity.x.keyword);
+                        String ovrdKeyword = productStoreKeywordOvrd.getString(x.keyword);
                         if (keywords.contains(ovrdKeyword)) {
-                            String targetTypeEnumId = productStoreKeywordOvrd.getString(org.apache.ofbiz.persistence.entity.x.targetTypeEnumId);
-                            String target = productStoreKeywordOvrd.getString(org.apache.ofbiz.persistence.entity.x.target);
+                            String targetTypeEnumId = productStoreKeywordOvrd.getString(x.targetTypeEnumId);
+                            String target = productStoreKeywordOvrd.getString(x.target);
                             RequestHandler rh = RequestHandler.from(request);
                             if ("KOTT_PRODCAT".equals(targetTypeEnumId)) {
                                 String requestName = "/category/~category_id=" + target;
@@ -839,7 +840,7 @@ public class ProductSearchSession {
         }
 
         // check the ProductStore to see if we should add the ExcludeVariantsConstraint
-        if (productStore != null && !"N".equals(productStore.getString(org.apache.ofbiz.persistence.entity.x.prodSearchExcludeVariants))) {
+        if (productStore != null && !"N".equals(productStore.getString(x.prodSearchExcludeVariants))) {
             searchAddConstraint(new ProductSearch.ExcludeVariantsConstraint(), session);
             // not consider this a change for now, shouldn't change often: constraintsChanged = true;
         }
@@ -1001,7 +1002,7 @@ public class ProductSearchSession {
                     addOnTopProductCategoryMembers = pli.getPartialList(lowIndex, viewSize);
                     addOnTopListSize = addOnTopProductCategoryMembers.size();
                     for (GenericValue alwaysAddProductCategoryMember: addOnTopProductCategoryMembers) {
-                        productIds.add(alwaysAddProductCategoryMember.getString(org.apache.ofbiz.persistence.entity.x.productId));
+                        productIds.add(alwaysAddProductCategoryMember.getString(x.productId));
                     }
                     addOnTopTotalListSize = pli.getResultsSizeAfterPartialList();
                     listSize = listSize + addOnTopTotalListSize;
@@ -1300,9 +1301,9 @@ public class ProductSearchSession {
             featureCountList = new LinkedList<>();
             GenericValue searchResult = null;
             while ((searchResult = eli.next()) != null) {
-                featureCountList.add(UtilMisc.<String, String>toMap("productFeatureId", (String) searchResult.get(org.apache.ofbiz.persistence.entity.x.pfacProductFeatureId),
-                        "productFeatureTypeId", (String) searchResult.get(org.apache.ofbiz.persistence.entity.x.pfcProductFeatureTypeId), "description", (String)
-                                searchResult.get(org.apache.ofbiz.persistence.entity.x.pfcDescription), "featureCount", Long.toString((Long) searchResult.get(org.apache.ofbiz.persistence.entity.x.featureCount))));
+                featureCountList.add(UtilMisc.<String, String>toMap("productFeatureId", (String) searchResult.get(x.pfacProductFeatureId),
+                        "productFeatureTypeId", (String) searchResult.get(x.pfcProductFeatureTypeId), "description", (String)
+                                searchResult.get(x.pfcDescription), "featureCount", Long.toString((Long) searchResult.get(x.featureCount))));
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, "Error in product search", MODULE);
@@ -1373,7 +1374,7 @@ public class ProductSearchSession {
         try (EntityListIterator eli = eq.queryIterator()) {
             GenericValue searchResult = null;
             while ((searchResult = eli.next()) != null) {
-                priceRangeCount = searchResult.getLong(org.apache.ofbiz.persistence.entity.x.priceRangeCount);
+                priceRangeCount = searchResult.getLong(x.priceRangeCount);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, "Error in product search", MODULE);
@@ -1431,7 +1432,7 @@ public class ProductSearchSession {
         try (EntityListIterator eli = eq.queryIterator()) {
             GenericValue searchResult = null;
             while ((searchResult = eli.next()) != null) {
-                categoryCount = searchResult.getLong(org.apache.ofbiz.persistence.entity.x.categoryCount);
+                categoryCount = searchResult.getLong(x.categoryCount);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, "Error in product search", MODULE);

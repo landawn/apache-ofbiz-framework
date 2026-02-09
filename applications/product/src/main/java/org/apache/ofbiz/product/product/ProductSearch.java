@@ -62,6 +62,7 @@ import org.apache.ofbiz.product.category.CategoryContentWrapper;
 import org.apache.ofbiz.service.LocalDispatcher;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  *  Utilities for product search based on various constraints including categories, features and keywords.
  */
@@ -129,7 +130,7 @@ public class ProductSearch {
             List<GenericValue> productCategoryRollupList = EntityQuery.use(delegator).from("ProductCategoryRollup")
                     .where("parentProductCategoryId", productCategoryId).cache(true).queryList();
             for (GenericValue productCategoryRollup: productCategoryRollupList) {
-                String subProductCategoryId = productCategoryRollup.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId);
+                String subProductCategoryId = productCategoryRollup.getString(x.productCategoryId);
                 if (productCategoryIdSet.contains(subProductCategoryId)) {
                     // if this category has already been traversed, no use doing it again; this will also avoid infinite loops
                     continue;
@@ -889,11 +890,11 @@ public class ProductSearch {
 
                 Set<String> productIdSet = new HashSet<>();
 
-                productIds.add(searchResult.getString(org.apache.ofbiz.persistence.entity.x.mainProductId));
-                productIdSet.add(searchResult.getString(org.apache.ofbiz.persistence.entity.x.mainProductId));
+                productIds.add(searchResult.getString(x.mainProductId));
+                productIdSet.add(searchResult.getString(x.mainProductId));
 
                 while ((maxResults == null || numRetreived < maxResults) && ((searchResult = eli.next()) != null)) {
-                    String productId = searchResult.getString(org.apache.ofbiz.persistence.entity.x.mainProductId);
+                    String productId = searchResult.getString(x.mainProductId);
                     if (!productIdSet.contains(productId)) {
                         productIds.add(productId);
                         productIdSet.add(productId);
@@ -940,21 +941,21 @@ public class ProductSearch {
                     GenericValue productSearchResult = delegator.makeValue("ProductSearchResult");
                     String productSearchResultId = delegator.getNextSeqId("ProductSearchResult");
 
-                    productSearchResult.set(org.apache.ofbiz.persistence.entity.x.productSearchResultId, productSearchResultId);
-                    productSearchResult.set(org.apache.ofbiz.persistence.entity.x.visitId, this.visitId);
+                    productSearchResult.set(x.productSearchResultId, productSearchResultId);
+                    productSearchResult.set(x.visitId, this.visitId);
                     if (this.resultSortOrder != null) {
-                        productSearchResult.set(org.apache.ofbiz.persistence.entity.x.orderByName, this.resultSortOrder.getOrderName());
-                        productSearchResult.set(org.apache.ofbiz.persistence.entity.x.isAscending, this.resultSortOrder.isAscending() ? "Y" : "N");
+                        productSearchResult.set(x.orderByName, this.resultSortOrder.getOrderName());
+                        productSearchResult.set(x.isAscending, this.resultSortOrder.isAscending() ? "Y" : "N");
                     }
-                    productSearchResult.set(org.apache.ofbiz.persistence.entity.x.numResults, numResults);
-                    productSearchResult.set(org.apache.ofbiz.persistence.entity.x.secondsTotal, secondsTotal);
-                    productSearchResult.set(org.apache.ofbiz.persistence.entity.x.searchDate, nowTimestamp);
+                    productSearchResult.set(x.numResults, numResults);
+                    productSearchResult.set(x.secondsTotal, secondsTotal);
+                    productSearchResult.set(x.searchDate, nowTimestamp);
                     productSearchResult.create();
 
                     int seqId = 1;
                     for (GenericValue productSearchConstraint: productSearchConstraintList) {
-                        productSearchConstraint.set(org.apache.ofbiz.persistence.entity.x.productSearchResultId, productSearchResultId);
-                        productSearchConstraint.set(org.apache.ofbiz.persistence.entity.x.constraintSeqId, Integer.toString(seqId));
+                        productSearchConstraint.set(x.productSearchResultId, productSearchResultId);
+                        productSearchConstraint.set(x.constraintSeqId, Integer.toString(seqId));
                         productSearchConstraint.create();
                         seqId++;
                     }
@@ -1001,7 +1002,7 @@ public class ProductSearch {
         public void addConstraint(ProductSearchContext productSearchContext) {
             List<String> productCategoryIds = new LinkedList<>();
             for (GenericValue category: productCategories) {
-                productCategoryIds.add(category.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId));
+                productCategoryIds.add(category.getString(x.productCategoryId));
             }
 
             // make index based values and increment
@@ -1039,7 +1040,7 @@ public class ProductSearch {
             StringBuilder ppBuf = new StringBuilder();
             ppBuf.append(UtilProperties.getMessage(RESOURCE, "ProductCatalog", locale)).append(": ");
             if (prodCatalog != null) {
-                ppBuf.append(prodCatalog.getString(org.apache.ofbiz.persistence.entity.x.catalogName));
+                ppBuf.append(prodCatalog.getString(x.catalogName));
             }
             return ppBuf.toString();
         }
@@ -1317,7 +1318,7 @@ public class ProductSearch {
             GenericValue productFeatureType = null;
             try {
                 productFeature = EntityQuery.use(delegator).from("ProductFeature").where("productFeatureId", productFeatureId).cache().queryOne();
-                productFeatureType = productFeature == null ? null : productFeature.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductFeatureType, false);
+                productFeatureType = productFeature == null ? null : productFeature.getRelatedOne(x.ProductFeatureType, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, "Error finding ProductFeature and Type information for constraint pretty print", MODULE);
             }
@@ -1327,8 +1328,8 @@ public class ProductSearch {
                 ppBuf.append("[").append(this.productFeatureId).append("]");
             } else {
                 // TODO getString to be localized like get("description", locale)
-                ppBuf.append(productFeatureType.getString(org.apache.ofbiz.persistence.entity.x.description)).append(": ");
-                ppBuf.append(productFeature.getString(org.apache.ofbiz.persistence.entity.x.description));
+                ppBuf.append(productFeatureType.getString(x.description)).append(": ");
+                ppBuf.append(productFeature.getString(x.description));
             }
             if (this.exclude != null) {
                 if (Boolean.TRUE.equals(this.exclude)) {
@@ -1446,8 +1447,8 @@ public class ProductSearch {
             StringBuilder ppBuf = new StringBuilder();
             if (productFeatureCategory != null) {
                 ppBuf.append(UtilProperties.getMessage(RESOURCE, "ProductFeatureCategory", locale)).append(": ");
-                if (productFeatureCategory.get(org.apache.ofbiz.persistence.entity.x.description) != null) {
-                    ppBuf.append(productFeatureCategory.get(org.apache.ofbiz.persistence.entity.x.description));
+                if (productFeatureCategory.get(x.description) != null) {
+                    ppBuf.append(productFeatureCategory.get(x.description));
                 } else {
                     ppBuf.append("[").append(this.productFeatureCategoryId).append("]");
                 }
@@ -1570,8 +1571,8 @@ public class ProductSearch {
             StringBuilder ppBuf = new StringBuilder();
             if (productFeatureGroup != null) {
                 ppBuf.append(UtilProperties.getMessage(RESOURCE, "ProductFeatureGroup", locale)).append(": ");
-                if (productFeatureGroup.get(org.apache.ofbiz.persistence.entity.x.description) != null) {
-                    ppBuf.append(productFeatureGroup.get(org.apache.ofbiz.persistence.entity.x.description));
+                if (productFeatureGroup.get(x.description) != null) {
+                    ppBuf.append(productFeatureGroup.get(x.description));
                 } else {
                     ppBuf.append("[").append(this.productFeatureGroupId).append("]");
                 }
@@ -1687,11 +1688,11 @@ public class ProductSearch {
                     }
                     GenericValue productFeature = EntityQuery.use(delegator).from("ProductFeature").where("productFeatureId", featureId)
                             .cache().queryOne();
-                    GenericValue productFeatureType = productFeature == null ? null : productFeature.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductFeatureType, true);
+                    GenericValue productFeatureType = productFeature == null ? null : productFeature.getRelatedOne(x.ProductFeatureType, true);
                     if (productFeatureType == null) {
                         infoOut.append(UtilProperties.getMessage(RESOURCE, "ProductFeature", locale)).append(": ");
                     } else {
-                        infoOut.append(productFeatureType.getString(org.apache.ofbiz.persistence.entity.x.description));
+                        infoOut.append(productFeatureType.getString(x.description));
                         infoOut.append(": ");
                     }
                     if (productFeature == null) {
@@ -1699,7 +1700,7 @@ public class ProductSearch {
                         infoOut.append(featureId);
                         infoOut.append("]");
                     } else {
-                        infoOut.append(productFeature.getString(org.apache.ofbiz.persistence.entity.x.description));
+                        infoOut.append(productFeature.getString(x.description));
                     }
 
                 }

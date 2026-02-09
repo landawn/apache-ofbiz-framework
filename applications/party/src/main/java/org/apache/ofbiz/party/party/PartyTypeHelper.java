@@ -26,6 +26,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityTypeUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * PartyTypeHelper
  */
@@ -48,7 +49,7 @@ public final class PartyTypeHelper {
         try {
             party = EntityQuery.use(delegator).from("Party").where("partyId", partyId).queryOne();
             if (party != null) {
-                partyType = party.getRelatedOne(org.apache.ofbiz.persistence.entity.x.PartyType, true);
+                partyType = party.getRelatedOne(x.PartyType, true);
                 checkedTypeOfParty = EntityQuery.use(delegator).from("PartyType").where("partyTypeId", checkedPartyType).cache().queryOne();
             } else {
                 return false;

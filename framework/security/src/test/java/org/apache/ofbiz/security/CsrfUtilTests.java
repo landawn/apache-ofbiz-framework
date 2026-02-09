@@ -40,6 +40,7 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class CsrfUtilTests {
 
     @Test
@@ -59,8 +60,8 @@ public class CsrfUtilTests {
 
         // add userLogin to session
         GenericValue userLogin = mock(GenericValue.class);
-        when(userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId)).thenReturn("10000");
-        when(userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId)).thenReturn("10000");
+        when(userLogin.get(x.partyId)).thenReturn("10000");
+        when(userLogin.getString(x.partyId)).thenReturn("10000");
         when(session.getAttribute("userLogin")).thenReturn(userLogin);
 
         // with userLogin in session, test token map is not retrieved from session
@@ -101,8 +102,8 @@ public class CsrfUtilTests {
 
         // add userLogin to session
         GenericValue userLogin = mock(GenericValue.class);
-        when(userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId)).thenReturn("10000");
-        when(userLogin.getString(org.apache.ofbiz.persistence.entity.x.partyId)).thenReturn("10000");
+        when(userLogin.get(x.partyId)).thenReturn("10000");
+        when(userLogin.getString(x.partyId)).thenReturn("10000");
         when(session.getAttribute("userLogin")).thenReturn(userLogin);
 
         String token = CsrfUtil.generateTokenForNonAjax(request, "");

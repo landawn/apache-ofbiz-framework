@@ -33,6 +33,7 @@ import org.apache.ofbiz.service.config.ServiceConfigUtil;
 import org.apache.ofbiz.service.config.model.NotificationGroup;
 import org.apache.ofbiz.service.config.model.Notify;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ModelNotification
  */
@@ -124,7 +125,7 @@ public class ModelNotification {
      */
     public Map<String, Object> buildContext(Map<String, ? extends Object> context, Map<String, Object> result, ModelService model)
             throws GenericServiceException {
-        Map<String, Object> userLogin = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
+        Map<String, Object> userLogin = UtilGenerics.cast(context.get(x.userLogin));
         String partyId = null;
         if (userLogin != null) {
             partyId = (String) userLogin.get("partyId");

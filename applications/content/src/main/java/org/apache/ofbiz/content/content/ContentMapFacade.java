@@ -44,6 +44,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.webapp.control.RequestHandler;
 import org.apache.ofbiz.webapp.website.WebSiteWorker;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ContentMapFacade
  */
@@ -94,7 +95,7 @@ public class ContentMapFacade implements Map<Object, Object> {
         this.locale = locale;
         this.mimeType = mimeTypeId;
         this.cache = cache;
-        this.contentId = content.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+        this.contentId = content.getString(x.contentId);
         this.delegator = content.getDelegator();
         this.allowRender = false;
         init();
@@ -279,9 +280,9 @@ public class ContentMapFacade implements Map<Object, Object> {
         } else if ("link".equalsIgnoreCase(name)) {
             // link to this content
 
-            RequestHandler rh = (RequestHandler) this.context.get(org.apache.ofbiz.persistence.entity.x._REQUEST_HANDLER_);
-            HttpServletRequest request = (HttpServletRequest) this.context.get(org.apache.ofbiz.persistence.entity.x.request);
-            HttpServletResponse response = (HttpServletResponse) this.context.get(org.apache.ofbiz.persistence.entity.x.response);
+            RequestHandler rh = (RequestHandler) this.context.get(x._REQUEST_HANDLER_);
+            HttpServletRequest request = (HttpServletRequest) this.context.get(x.request);
+            HttpServletResponse response = (HttpServletResponse) this.context.get(x.response);
 
             if (rh != null && request != null && response != null) {
                 String webSiteId = WebSiteWorker.getWebSiteId(request);
@@ -299,7 +300,7 @@ public class ContentMapFacade implements Map<Object, Object> {
                                 .filterByDate()
                                 .queryFirst();
                         if (webSitePathAlias != null) {
-                            contentUri = webSitePathAlias.getString(org.apache.ofbiz.persistence.entity.x.pathAlias);
+                            contentUri = webSitePathAlias.getString(x.pathAlias);
                         }
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
@@ -337,7 +338,7 @@ public class ContentMapFacade implements Map<Object, Object> {
             }
             if (subs != null) {
                 for (GenericValue v: subs) {
-                    subContent.add(new ContentMapFacade(dispatcher, v.getString(org.apache.ofbiz.persistence.entity.x.contentId), context, locale, mimeType, cache));
+                    subContent.add(new ContentMapFacade(dispatcher, v.getString(x.contentId), context, locale, mimeType, cache));
                 }
             }
             return subContent;
@@ -478,7 +479,7 @@ public class ContentMapFacade implements Map<Object, Object> {
                 Debug.logError(e, MODULE);
             }
             if (content != null) {
-                return new ContentMapFacade(dispatcher, content.getString(org.apache.ofbiz.persistence.entity.x.contentId), context, locale, mimeType, cache);
+                return new ContentMapFacade(dispatcher, content.getString(x.contentId), context, locale, mimeType, cache);
             }
 
             return null;
@@ -517,7 +518,7 @@ public class ContentMapFacade implements Map<Object, Object> {
                 Debug.logError(e, MODULE);
             }
             if (sub != null) {
-                return new ContentMapFacade(dispatcher, sub.getString(org.apache.ofbiz.persistence.entity.x.contentId), context, locale, mimeType, cache);
+                return new ContentMapFacade(dispatcher, sub.getString(x.contentId), context, locale, mimeType, cache);
             }
 
             return null;
@@ -571,7 +572,7 @@ public class ContentMapFacade implements Map<Object, Object> {
                 // get the data RESOURCE value object
                 GenericValue dr = null;
                 try {
-                    dr = value.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DataResource, cache);
+                    dr = value.getRelatedOne(x.DataResource, cache);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                 }
@@ -579,7 +580,7 @@ public class ContentMapFacade implements Map<Object, Object> {
             } else if ("render".equalsIgnoreCase(name)) {
                 // render just the dataresource
                 try {
-                    return DataResourceWorker.renderDataResourceAsText(dispatcher, delegator, value.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId),
+                    return DataResourceWorker.renderDataResourceAsText(dispatcher, delegator, value.getString(x.dataResourceId),
                             context, locale, mimeType, cache);
                 } catch (GeneralException | IOException e) {
                     Debug.logError(e, MODULE);

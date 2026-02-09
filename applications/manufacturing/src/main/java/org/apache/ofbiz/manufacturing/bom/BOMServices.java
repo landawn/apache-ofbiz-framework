@@ -44,6 +44,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /** Bills of Materials' services implementation.
  * These services are useful when dealing with product's
  * bills of materials.
@@ -64,10 +65,10 @@ public class BOMServices {
     public static Map<String, Object> getMaxDepth(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        String fromDateStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
-        String bomType = (String) context.get(org.apache.ofbiz.persistence.entity.x.bomType);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String productId = (String) context.get(x.productId);
+        String fromDateStr = (String) context.get(x.fromDate);
+        String bomType = (String) context.get(x.bomType);
+        Locale locale = (Locale) context.get(x.locale);
 
         Date fromDate = null;
         if (UtilValidate.isNotEmpty(fromDateStr)) {
@@ -85,7 +86,7 @@ public class BOMServices {
                 List<GenericValue> bomTypesValues = EntityQuery.use(delegator).from("ProductAssocType")
                         .where("parentTypeId", "PRODUCT_COMPONENT").queryList();
                 for (GenericValue bomTypesValue : bomTypesValues) {
-                    bomTypes.add(bomTypesValue.getString(org.apache.ofbiz.persistence.entity.x.productAssocTypeId));
+                    bomTypes.add(bomTypesValue.getString(x.productAssocTypeId));
                 }
             } catch (GenericEntityException gee) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingBomErrorRunningMaxDethAlgorithm",
@@ -125,13 +126,13 @@ public class BOMServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productIdTo);
-        Boolean alsoComponents = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.alsoComponents);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String productId = (String) context.get(x.productIdTo);
+        Boolean alsoComponents = (Boolean) context.get(x.alsoComponents);
+        Locale locale = (Locale) context.get(x.locale);
         if (alsoComponents == null) {
             alsoComponents = Boolean.TRUE;
         }
-        Boolean alsoVariants = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.alsoVariants);
+        Boolean alsoVariants = (Boolean) context.get(x.alsoVariants);
         if (alsoVariants == null) {
             alsoVariants = Boolean.TRUE;
         }
@@ -155,9 +156,9 @@ public class BOMServices {
             for (GenericValue oneVirtualProductAssoc : virtualProducts) {
                 int virtualDepth = 0;
                 GenericValue virtualProduct = EntityQuery.use(delegator).from("Product").where("productId",
-                        oneVirtualProductAssoc.getString(org.apache.ofbiz.persistence.entity.x.productId)).queryOne();
-                if (virtualProduct.get(org.apache.ofbiz.persistence.entity.x.billOfMaterialLevel) != null) {
-                    virtualDepth = virtualProduct.getLong(org.apache.ofbiz.persistence.entity.x.billOfMaterialLevel).intValue();
+                        oneVirtualProductAssoc.getString(x.productId)).queryOne();
+                if (virtualProduct.get(x.billOfMaterialLevel) != null) {
+                    virtualDepth = virtualProduct.getLong(x.billOfMaterialLevel).intValue();
                 } else {
                     virtualDepth = 0;
                 }
@@ -168,7 +169,7 @@ public class BOMServices {
             if (virtualMaxDepth > llc.intValue()) {
                 llc = (long) virtualMaxDepth;
             }
-            product.set(org.apache.ofbiz.persistence.entity.x.billOfMaterialLevel, llc);
+            product.set(x.billOfMaterialLevel, llc);
             product.store();
             if (alsoComponents) {
                 Map<String, Object> treeResult = dispatcher.runSync("getBOMTree", UtilMisc.toMap("productId", productId,
@@ -182,11 +183,11 @@ public class BOMServices {
                 for (BOMNode oneNode : products) {
                     GenericValue oneProduct = oneNode.getProduct();
                     int lev = 0;
-                    if (oneProduct.get(org.apache.ofbiz.persistence.entity.x.billOfMaterialLevel) != null) {
-                        lev = oneProduct.getLong(org.apache.ofbiz.persistence.entity.x.billOfMaterialLevel).intValue();
+                    if (oneProduct.get(x.billOfMaterialLevel) != null) {
+                        lev = oneProduct.getLong(x.billOfMaterialLevel).intValue();
                     }
                     if (lev < oneNode.getDepth()) {
-                        oneProduct.set(org.apache.ofbiz.persistence.entity.x.billOfMaterialLevel, (long) oneNode.getDepth());
+                        oneProduct.set(x.billOfMaterialLevel, (long) oneNode.getDepth());
                         oneProduct.store();
                     }
                 }
@@ -198,8 +199,8 @@ public class BOMServices {
                         .filterByDate().queryList();
                 for (GenericValue oneVariantProductAssoc : variantProducts) {
                     GenericValue variantProduct = EntityQuery.use(delegator).from("Product").where("productId", oneVariantProductAssoc
-                            .getString(org.apache.ofbiz.persistence.entity.x.productId)).queryOne();
-                    variantProduct.set(org.apache.ofbiz.persistence.entity.x.billOfMaterialLevel, llc);
+                            .getString(x.productId)).queryOne();
+                    variantProduct.set(x.billOfMaterialLevel, llc);
                     variantProduct.store();
                 }
             }
@@ -221,14 +222,14 @@ public class BOMServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
         try {
             List<GenericValue> products = EntityQuery.use(delegator).from("Product").orderBy("isVirtual DESC").queryList();
             Long zero = 0L;
             List<GenericValue> allProducts = new LinkedList<>();
             for (GenericValue product : products) {
-                product.set(org.apache.ofbiz.persistence.entity.x.billOfMaterialLevel, zero);
+                product.set(x.billOfMaterialLevel, zero);
                 allProducts.add(product);
             }
             delegator.storeAll(allProducts);
@@ -237,11 +238,11 @@ public class BOMServices {
             for (GenericValue product : products) {
                 try {
                     Map<String, Object> depthResult = dispatcher.runSync("updateLowLevelCode", UtilMisc.<String, Object>toMap("productIdTo",
-                            product.getString(org.apache.ofbiz.persistence.entity.x.productId), "alsoComponents", Boolean.FALSE, "alsoVariants", Boolean.FALSE));
+                            product.getString(x.productId), "alsoComponents", Boolean.FALSE, "alsoVariants", Boolean.FALSE));
                     if (ServiceUtil.isError(depthResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(depthResult));
                     }
-                    Debug.logInfo("Product [" + product.getString(org.apache.ofbiz.persistence.entity.x.productId) + "] Low Level Code [" + depthResult.get("lowLevelCode")
+                    Debug.logInfo("Product [" + product.getString(x.productId) + "] Low Level Code [" + depthResult.get("lowLevelCode")
                             + "]", MODULE);
                 } catch (GenericServiceException exc) {
                     Debug.logWarning(exc.getMessage(), MODULE);
@@ -267,12 +268,12 @@ public class BOMServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        String productIdKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.productIdTo);
-        Timestamp fromDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
-        String bomType = (String) context.get(org.apache.ofbiz.persistence.entity.x.productAssocTypeId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        String productId = (String) context.get(x.productId);
+        String productIdKey = (String) context.get(x.productIdTo);
+        Timestamp fromDate = (Timestamp) context.get(x.fromDate);
+        String bomType = (String) context.get(x.productAssocTypeId);
         if (fromDate == null) {
             fromDate = Timestamp.valueOf((new Date()).toString());
         }
@@ -301,14 +302,14 @@ public class BOMServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        String fromDateStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
-        String bomType = (String) context.get(org.apache.ofbiz.persistence.entity.x.bomType);
-        Integer type = (Integer) context.get(org.apache.ofbiz.persistence.entity.x.type);
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
-        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String productId = (String) context.get(x.productId);
+        String fromDateStr = (String) context.get(x.fromDate);
+        String bomType = (String) context.get(x.bomType);
+        Integer type = (Integer) context.get(x.type);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
+        BigDecimal amount = (BigDecimal) context.get(x.amount);
+        Locale locale = (Locale) context.get(x.locale);
         if (type == null) {
             type = 0;
         }
@@ -353,13 +354,13 @@ public class BOMServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
-        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
-        String fromDateStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
-        Boolean excludeWIPs = (Boolean) context.get(org.apache.ofbiz.persistence.entity.x.excludeWIPs);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String productId = (String) context.get(x.productId);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
+        BigDecimal amount = (BigDecimal) context.get(x.amount);
+        String fromDateStr = (String) context.get(x.fromDate);
+        Boolean excludeWIPs = (Boolean) context.get(x.excludeWIPs);
+        Locale locale = (Locale) context.get(x.locale);
 
         if (quantity == null) {
             quantity = BigDecimal.ONE;
@@ -418,7 +419,7 @@ public class BOMServices {
                 routing = (GenericValue) routingOutMap.get("routing");
             }
             if (routing != null) {
-                workEffortId = routing.getString(org.apache.ofbiz.persistence.entity.x.workEffortId);
+                workEffortId = routing.getString(x.workEffortId);
             }
         } catch (GenericServiceException gse) {
             Debug.logWarning(gse.getMessage(), MODULE);
@@ -444,12 +445,12 @@ public class BOMServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
-        BigDecimal amount = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.amount);
-        String fromDateStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String productId = (String) context.get(x.productId);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
+        BigDecimal amount = (BigDecimal) context.get(x.amount);
+        String fromDateStr = (String) context.get(x.fromDate);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         if (quantity == null) {
             quantity = BigDecimal.ONE;
@@ -497,9 +498,9 @@ public class BOMServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String shipmentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.shipmentId);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String shipmentId = (String) context.get(x.shipmentId);
 
         try {
             List<GenericValue> packages = EntityQuery.use(delegator).from("ShipmentPackage").where("shipmentId", shipmentId).queryList();
@@ -524,17 +525,17 @@ public class BOMServices {
             try {
                 orderShipment = EntityQuery.use(delegator).from("OrderShipment")
                         .where("shipmentId", shipmentId,
-                                "shipmentItemSeqId", shipmentItem.get(org.apache.ofbiz.persistence.entity.x.shipmentItemSeqId))
+                                "shipmentItemSeqId", shipmentItem.get(x.shipmentItemSeqId))
                         .queryFirst();
             } catch (GenericEntityException e) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingPackageConfiguratorError", locale));
             }
-            if (orderShipment != null && !orderReadHelpers.containsKey(orderShipment.getString(org.apache.ofbiz.persistence.entity.x.orderId))) {
-                orderReadHelpers.put(orderShipment.getString(org.apache.ofbiz.persistence.entity.x.orderId), new OrderReadHelper(delegator, orderShipment.getString(org.apache.ofbiz.persistence.entity.x.orderId)));
+            if (orderShipment != null && !orderReadHelpers.containsKey(orderShipment.getString(x.orderId))) {
+                orderReadHelpers.put(orderShipment.getString(x.orderId), new OrderReadHelper(delegator, orderShipment.getString(x.orderId)));
             }
             OrderReadHelper orderReadHelper = null;
             if (orderShipment != null) {
-                orderReadHelper = (OrderReadHelper) orderReadHelpers.get(orderShipment.getString(org.apache.ofbiz.persistence.entity.x.orderId));
+                orderReadHelper = (OrderReadHelper) orderReadHelpers.get(orderShipment.getString(x.orderId));
             }
             if (orderReadHelper != null) {
                 Map<String, Object> orderShipmentReadMap = UtilMisc.toMap("orderShipment", orderShipment, "orderReadHelper", orderReadHelper);
@@ -558,11 +559,11 @@ public class BOMServices {
                 Map<String, Object> orderShipmentReadMap = UtilGenerics.cast(stringObjectMap);
                 GenericValue orderShipment = (GenericValue) orderShipmentReadMap.get("orderShipment");
                 OrderReadHelper orderReadHelper = (OrderReadHelper) orderShipmentReadMap.get("orderReadHelper");
-                GenericValue orderItem = orderReadHelper.getOrderItem(orderShipment.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                GenericValue orderItem = orderReadHelper.getOrderItem(orderShipment.getString(x.orderItemSeqId));
                 // getProductsInPackages
                 Map<String, Object> serviceContext = new HashMap<>();
-                serviceContext.put("productId", orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId));
-                serviceContext.put("quantity", orderShipment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity));
+                serviceContext.put("productId", orderItem.getString(x.productId));
+                serviceContext.put("quantity", orderShipment.getBigDecimal(x.quantity));
                 Map<String, Object> serviceResult = null;
                 try {
                     serviceResult = dispatcher.runSync("getProductsInPackages", serviceContext);
@@ -577,7 +578,7 @@ public class BOMServices {
                     BOMNode root = productsInPackages.get(0);
                     String rootProductId = (root.getSubstitutedNode() != null ? root.getSubstitutedNode().getProduct().getString("productId")
                             : root.getProduct().getString("productId"));
-                    if (orderItem.getString(org.apache.ofbiz.persistence.entity.x.productId).equals(rootProductId)) {
+                    if (orderItem.getString(x.productId).equals(rootProductId)) {
                         productsInPackages = null;
                     }
                 }
@@ -609,7 +610,7 @@ public class BOMServices {
                         boxTypeContentMap.put("content", orderShipmentReadMap);
                         boxTypeContentMap.put("componentIndex", j);
                         GenericValue product = component.getProduct();
-                        String boxTypeId = product.getString(org.apache.ofbiz.persistence.entity.x.shipmentBoxTypeId);
+                        String boxTypeId = product.getString(x.shipmentBoxTypeId);
                         if (boxTypeId != null) {
                             if (!boxTypes.containsKey(boxTypeId)) {
                                 GenericValue boxType = null;
@@ -632,14 +633,14 @@ public class BOMServices {
                     // this is a single package shipment item
                     Map<String, Object> boxTypeContentMap = new HashMap<>();
                     boxTypeContentMap.put("content", orderShipmentReadMap);
-                    GenericValue orderItem = orderReadHelper.getOrderItem(orderShipment.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                    GenericValue orderItem = orderReadHelper.getOrderItem(orderShipment.getString(x.orderItemSeqId));
                     GenericValue product = null;
                     try {
-                        product = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
+                        product = orderItem.getRelatedOne(x.Product, false);
                     } catch (GenericEntityException e) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingPackageConfiguratorError", locale));
                     }
-                    String boxTypeId = product.getString(org.apache.ofbiz.persistence.entity.x.shipmentBoxTypeId);
+                    String boxTypeId = product.getString(x.shipmentBoxTypeId);
                     if (boxTypeId != null) {
                         if (!boxTypes.containsKey(boxTypeId)) {
                             GenericValue boxType = null;
@@ -663,7 +664,7 @@ public class BOMServices {
                 String boxTypeId = boxTypeContentEntry.getKey();
                 List<Map<String, Object>> contentList = UtilGenerics.cast(boxTypeContentEntry.getValue());
                 GenericValue boxType = boxTypes.get(boxTypeId);
-                BigDecimal boxWidth = boxType.getBigDecimal(org.apache.ofbiz.persistence.entity.x.boxLength);
+                BigDecimal boxWidth = boxType.getBigDecimal(x.boxLength);
                 BigDecimal totalWidth = BigDecimal.ZERO;
                 if (boxWidth == null) {
                     boxWidth = BigDecimal.ZERO;
@@ -687,18 +688,18 @@ public class BOMServices {
                         quantity = component.getQuantity();
                     } else {
                         // single package
-                        GenericValue orderItem = orderReadHelper.getOrderItem(orderShipment.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId));
+                        GenericValue orderItem = orderReadHelper.getOrderItem(orderShipment.getString(x.orderItemSeqId));
                         try {
-                            product = orderItem.getRelatedOne(org.apache.ofbiz.persistence.entity.x.Product, false);
+                            product = orderItem.getRelatedOne(x.Product, false);
                         } catch (GenericEntityException e) {
                             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingPackageConfiguratorError", locale));
                         }
-                        quantity = orderShipment.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity);
+                        quantity = orderShipment.getBigDecimal(x.quantity);
                     }
 
-                    BigDecimal productDepth = product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.shippingDepth);
+                    BigDecimal productDepth = product.getBigDecimal(x.shippingDepth);
                     if (productDepth == null) {
-                        productDepth = product.getBigDecimal(org.apache.ofbiz.persistence.entity.x.productDepth);
+                        productDepth = product.getBigDecimal(x.productDepth);
                     }
                     if (productDepth == null) {
                         productDepth = BigDecimal.ONE;
@@ -725,7 +726,7 @@ public class BOMServices {
                         if (shipmentPackageSeqId == null) {
                             try {
                                 Map<String, Object> serviceResult = dispatcher.runSync("createShipmentPackage",
-                                        UtilMisc.<String, Object>toMap("shipmentId", orderShipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentId), "shipmentBoxTypeId",
+                                        UtilMisc.<String, Object>toMap("shipmentId", orderShipment.getString(x.shipmentId), "shipmentBoxTypeId",
                                                 boxTypeId, "userLogin", userLogin));
                                 if (ServiceUtil.isError(serviceResult)) {
                                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
@@ -739,16 +740,16 @@ public class BOMServices {
                         try {
                             Map<String, Object> inputMap = null;
                             if (subProduct) {
-                                inputMap = UtilMisc.toMap("shipmentId", orderShipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentId),
+                                inputMap = UtilMisc.toMap("shipmentId", orderShipment.getString(x.shipmentId),
                                         "shipmentPackageSeqId", shipmentPackageSeqId,
-                                        "shipmentItemSeqId", orderShipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentItemSeqId),
-                                        "subProductId", product.getString(org.apache.ofbiz.persistence.entity.x.productId),
+                                        "shipmentItemSeqId", orderShipment.getString(x.shipmentItemSeqId),
+                                        "subProductId", product.getString(x.productId),
                                         "userLogin", userLogin,
                                         "subProductQuantity", qty);
                             } else {
-                                inputMap = UtilMisc.toMap("shipmentId", orderShipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentId),
+                                inputMap = UtilMisc.toMap("shipmentId", orderShipment.getString(x.shipmentId),
                                         "shipmentPackageSeqId", shipmentPackageSeqId,
-                                        "shipmentItemSeqId", orderShipment.getString(org.apache.ofbiz.persistence.entity.x.shipmentItemSeqId),
+                                        "shipmentItemSeqId", orderShipment.getString(x.shipmentItemSeqId),
                                         "userLogin", userLogin,
                                         "quantity", qty);
                             }
@@ -780,11 +781,11 @@ public class BOMServices {
         Map<String, Object> result = new HashMap<>();
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        String productId = (String) context.get(org.apache.ofbiz.persistence.entity.x.productId);
-        BigDecimal quantity = (BigDecimal) context.get(org.apache.ofbiz.persistence.entity.x.quantity);
-        String fromDateStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        String productId = (String) context.get(x.productId);
+        BigDecimal quantity = (BigDecimal) context.get(x.quantity);
+        String fromDateStr = (String) context.get(x.fromDate);
 
         if (quantity == null) {
             quantity = BigDecimal.ONE;

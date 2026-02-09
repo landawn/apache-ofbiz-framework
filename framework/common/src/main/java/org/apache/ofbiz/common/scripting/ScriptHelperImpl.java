@@ -43,6 +43,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * An implementation of the <code>ScriptHelper</code> interface.
  */
@@ -58,7 +59,7 @@ public final class ScriptHelperImpl implements ScriptHelper {
         Map<String, Object> context = ctxHelper.getBindings();
         if (autoFieldMap) {
             GenericValue tempVal = delegator.makeValue(modelEntity.getEntityName());
-            Object parametersObj = context.get(org.apache.ofbiz.persistence.entity.x.parameters);
+            Object parametersObj = context.get(x.parameters);
             if (parametersObj != null && parametersObj instanceof Map<?, ?>) {
                 tempVal.setAllFields(UtilGenerics.cast(parametersObj), true, null, Boolean.TRUE);
             }
@@ -68,8 +69,8 @@ public final class ScriptHelperImpl implements ScriptHelper {
         if (fieldMap != null) {
             entityContext.putAll(fieldMap);
         }
-        entityContext.put("locale", context.get(org.apache.ofbiz.persistence.entity.x.locale));
-        entityContext.put("timeZone", context.get(org.apache.ofbiz.persistence.entity.x.timeZone));
+        entityContext.put("locale", context.get(x.locale));
+        entityContext.put("timeZone", context.get(x.timeZone));
         modelEntity.convertFieldMapInPlace(entityContext, delegator);
         entityContext.remove("locale");
         entityContext.remove("timeZone");

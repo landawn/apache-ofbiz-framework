@@ -33,6 +33,7 @@ import org.apache.ofbiz.entity.GenericValue;
 
 import com.ibm.icu.util.Calendar;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Recurrence Rule Object
  */
@@ -118,25 +119,25 @@ public class RecurrenceRule {
      */
     public void init() throws RecurrenceRuleException {
         // Check the validity of the rule
-        String freq = rule.getString(org.apache.ofbiz.persistence.entity.x.frequency);
+        String freq = rule.getString(x.frequency);
 
         if (!checkFreq(freq)) {
             throw new RecurrenceRuleException("Recurrence FREQUENCY is a required parameter.");
         }
-        if (rule.getLong(org.apache.ofbiz.persistence.entity.x.intervalNumber) < 1) {
+        if (rule.getLong(x.intervalNumber) < 1) {
             throw new RecurrenceRuleException("Recurrence INTERVAL must be a positive integer.");
         }
 
         // Initialize the byXXX lists
-        bySecondList = StringUtil.split(rule.getString(org.apache.ofbiz.persistence.entity.x.bySecondList), ",");
-        byMinuteList = StringUtil.split(rule.getString(org.apache.ofbiz.persistence.entity.x.byMinuteList), ",");
-        byHourList = StringUtil.split(rule.getString(org.apache.ofbiz.persistence.entity.x.byHourList), ",");
-        byDayList = StringUtil.split(rule.getString(org.apache.ofbiz.persistence.entity.x.byDayList), ",");
-        byMonthDayList = StringUtil.split(rule.getString(org.apache.ofbiz.persistence.entity.x.byMonthDayList), ",");
-        byYearDayList = StringUtil.split(rule.getString(org.apache.ofbiz.persistence.entity.x.byYearDayList), ",");
-        byWeekNoList = StringUtil.split(rule.getString(org.apache.ofbiz.persistence.entity.x.byWeekNoList), ",");
-        byMonthList = StringUtil.split(rule.getString(org.apache.ofbiz.persistence.entity.x.byMonthList), ",");
-        bySetPosList = StringUtil.split(rule.getString(org.apache.ofbiz.persistence.entity.x.bySetPosList), ",");
+        bySecondList = StringUtil.split(rule.getString(x.bySecondList), ",");
+        byMinuteList = StringUtil.split(rule.getString(x.byMinuteList), ",");
+        byHourList = StringUtil.split(rule.getString(x.byHourList), ",");
+        byDayList = StringUtil.split(rule.getString(x.byDayList), ",");
+        byMonthDayList = StringUtil.split(rule.getString(x.byMonthDayList), ",");
+        byYearDayList = StringUtil.split(rule.getString(x.byYearDayList), ",");
+        byWeekNoList = StringUtil.split(rule.getString(x.byWeekNoList), ",");
+        byMonthList = StringUtil.split(rule.getString(x.byMonthList), ",");
+        bySetPosList = StringUtil.split(rule.getString(x.bySetPosList), ",");
     }
 
     // Checks for a valid frequency property.
@@ -182,7 +183,7 @@ public class RecurrenceRule {
         long time = 0;
         java.sql.Timestamp stamp = null;
 
-        stamp = rule.getTimestamp(org.apache.ofbiz.persistence.entity.x.untilDateTime);
+        stamp = rule.getTimestamp(x.untilDateTime);
         if (Debug.verboseOn()) {
             Debug.logVerbose("Stamp value: " + stamp, MODULE);
         }
@@ -203,8 +204,8 @@ public class RecurrenceRule {
      *@return long The number of time this recurrence will run.
      */
     public long getCount() {
-        if (rule.get(org.apache.ofbiz.persistence.entity.x.countNumber) != null) {
-            return rule.getLong(org.apache.ofbiz.persistence.entity.x.countNumber);
+        if (rule.get(x.countNumber) != null) {
+            return rule.getLong(x.countNumber);
         }
         return 0;
     }
@@ -214,7 +215,7 @@ public class RecurrenceRule {
      *@return String The name of this frequency.
      */
     public String getFrequencyName() {
-        return rule.getString(org.apache.ofbiz.persistence.entity.x.frequency).toUpperCase(Locale.getDefault());
+        return rule.getString(x.frequency).toUpperCase(Locale.getDefault());
     }
 
     /**
@@ -222,7 +223,7 @@ public class RecurrenceRule {
      *@return int The reference value for the frequency
      */
     public int getFrequency() {
-        String freq = rule.getString(org.apache.ofbiz.persistence.entity.x.frequency);
+        String freq = rule.getString(x.frequency);
 
         if (freq == null) {
             return 0;
@@ -256,10 +257,10 @@ public class RecurrenceRule {
      *@return long Interval value
      */
     public long getInterval() {
-        if (rule.get(org.apache.ofbiz.persistence.entity.x.intervalNumber) == null) {
+        if (rule.get(x.intervalNumber) == null) {
             return 1;
         }
-        return rule.getLong(org.apache.ofbiz.persistence.entity.x.intervalNumber);
+        return rule.getLong(x.intervalNumber);
     }
 
     /**
@@ -794,7 +795,7 @@ public class RecurrenceRule {
      * @return the string
      */
     public String primaryKey() {
-        return rule.getString(org.apache.ofbiz.persistence.entity.x.recurrenceRuleId);
+        return rule.getString(x.recurrenceRuleId);
     }
 
     public static RecurrenceRule makeRule(Delegator delegator, int frequency, int interval, int count)
@@ -823,11 +824,11 @@ public class RecurrenceRule {
         try {
             GenericValue value = delegator.makeValue("RecurrenceRule");
 
-            value.set(org.apache.ofbiz.persistence.entity.x.frequency, freqStr);
-            value.set(org.apache.ofbiz.persistence.entity.x.intervalNumber, (long) interval);
-            value.set(org.apache.ofbiz.persistence.entity.x.countNumber, (long) count);
+            value.set(x.frequency, freqStr);
+            value.set(x.intervalNumber, (long) interval);
+            value.set(x.countNumber, (long) count);
             if (endTime > 0) {
-                value.set(org.apache.ofbiz.persistence.entity.x.untilDateTime, new java.sql.Timestamp(endTime));
+                value.set(x.untilDateTime, new java.sql.Timestamp(endTime));
             }
             delegator.createSetNextSeqId(value);
             RecurrenceRule newRule = new RecurrenceRule(value);

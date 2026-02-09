@@ -28,6 +28,7 @@ import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Marketing Report Helper
  */
@@ -53,7 +54,7 @@ public final class ReportHelper {
         for (GenericValue visit: visits) {
             Map<String, Object> reportValue = new HashMap<>();
             reportValue.put(keyFieldName, visit.getString(keyFieldName));
-            reportValue.put("visits", visit.getLong(org.apache.ofbiz.persistence.entity.x.visitId)); // actually # of visits
+            reportValue.put("visits", visit.getLong(x.visitId)); // actually # of visits
 
             // find the matching entry in orders for the given key field
             List<GenericValue> ordersForThisKey = EntityUtil.filterByAnd(orders, UtilMisc.toMap(keyFieldName, visit.getString(keyFieldName)));
@@ -63,17 +64,17 @@ public final class ReportHelper {
                 // note: there should be only one line of order stats per key, so .get(0) should work
                 GenericValue orderValue = ordersForThisKey.get(0);
 
-                reportValue.put("orders", orderValue.getLong(org.apache.ofbiz.persistence.entity.x.orderId)); // # of orders
-                if (orderValue.getDouble(org.apache.ofbiz.persistence.entity.x.grandTotal) == null) {
+                reportValue.put("orders", orderValue.getLong(x.orderId)); // # of orders
+                if (orderValue.getDouble(x.grandTotal) == null) {
                     reportValue.put("orderAmount", (double) 0);
                 } else {
-                    reportValue.put("orderAmount", orderValue.getDouble(org.apache.ofbiz.persistence.entity.x.grandTotal));
+                    reportValue.put("orderAmount", orderValue.getDouble(x.grandTotal));
                 }
-                if ((orderValue.getLong(org.apache.ofbiz.persistence.entity.x.orderId) == null) || (visit.getLong(org.apache.ofbiz.persistence.entity.x.visitId) == null)
-                        || (visit.getLong(org.apache.ofbiz.persistence.entity.x.visitId).intValue() == 0)) {
+                if ((orderValue.getLong(x.orderId) == null) || (visit.getLong(x.visitId) == null)
+                        || (visit.getLong(x.visitId).intValue() == 0)) {
                     reportValue.put("conversionRate", (double) 0);
                 } else {
-                    reportValue.put("conversionRate", orderValue.getLong(org.apache.ofbiz.persistence.entity.x.orderId).doubleValue() / visit.getLong(org.apache.ofbiz.persistence.entity.x.visitId).doubleValue());
+                    reportValue.put("conversionRate", orderValue.getLong(x.orderId).doubleValue() / visit.getLong(x.visitId).doubleValue());
                 }
             } else {
                 // no matching orders - all those values are zeroes

@@ -46,6 +46,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.webapp.WebAppUtil;
 import org.apache.ofbiz.webapp.website.WebSiteWorker;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ContextFilter - Configures objects for OFBiz applications
  */
@@ -131,7 +132,7 @@ public class ContextFilter implements Filter {
                 GenericValue tenantDomainName = EntityQuery.use(baseDelegator).from("TenantDomainName").where("domainName", serverName).queryOne();
                 String tenantId = null;
                 if (UtilValidate.isNotEmpty(tenantDomainName)) {
-                    tenantId = tenantDomainName.getString(org.apache.ofbiz.persistence.entity.x.tenantId);
+                    tenantId = tenantDomainName.getString(x.tenantId);
                 }
                 if (UtilValidate.isEmpty(tenantId)) {
                     tenantId = (String) httpRequest.getAttribute("userTenantId");
@@ -143,7 +144,7 @@ public class ContextFilter implements Filter {
                     // if the request path is a root mount then redirect to the initial path
                     if ("".equals(httpRequest.getContextPath()) && "".equals(httpRequest.getServletPath())) {
                         GenericValue tenant = EntityQuery.use(baseDelegator).from("Tenant").where("tenantId", tenantId).queryOne();
-                        String initialPath = tenant.getString(org.apache.ofbiz.persistence.entity.x.initialPath);
+                        String initialPath = tenant.getString(x.initialPath);
                         if (UtilValidate.isNotEmpty(initialPath) && !"/".equals(initialPath)) {
                             httpResponse.sendRedirect(initialPath);
                             return;

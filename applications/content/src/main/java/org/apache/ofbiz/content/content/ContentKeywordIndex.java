@@ -38,6 +38,7 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  *  Does indexing in preparation for a keyword search.
  */
@@ -57,7 +58,7 @@ public class ContentKeywordIndex {
         if (content == null) return;
 
         Delegator delegator = content.getDelegator();
-        String contentId = content.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+        String contentId = content.getString(x.contentId);
 
         // get these in advance just once since they will be used many times for the multiple strings to index
         String separators = KeywordSearchUtil.getSeparators();
@@ -70,7 +71,7 @@ public class ContentKeywordIndex {
         List<String> strings = new LinkedList<>();
 
         int pidWeight = 1;
-        keywords.put(content.getString(org.apache.ofbiz.persistence.entity.x.contentId).toLowerCase(Locale.getDefault()), (long) pidWeight);
+        keywords.put(content.getString(x.contentId).toLowerCase(Locale.getDefault()), (long) pidWeight);
 
         addWeightedKeywordSourceString(content, "dataResourceId", strings);
         addWeightedKeywordSourceString(content, "contentName", strings);
@@ -92,7 +93,7 @@ public class ContentKeywordIndex {
         // ContentRole
         List<GenericValue> contentRoles = EntityQuery.use(delegator).from("ContentRole").where("contentId", contentId).queryList();
         for (GenericValue contentRole: contentRoles) {
-            GenericValue party = EntityQuery.use(delegator).from("PartyNameView").where("partyId", contentRole.get(org.apache.ofbiz.persistence.entity.x.partyId)).queryOne();
+            GenericValue party = EntityQuery.use(delegator).from("PartyNameView").where("partyId", contentRole.get(x.partyId)).queryOne();
             if (party != null) {
                 addWeightedKeywordSourceString(party, "description", strings);
                 addWeightedKeywordSourceString(party, "firstName", strings);
@@ -104,9 +105,9 @@ public class ContentKeywordIndex {
 
         // DataResourceRole
         List<GenericValue> dataResourceRoles = EntityQuery.use(delegator).from("DataResourceRole").where("dataResourceId",
-                content.get(org.apache.ofbiz.persistence.entity.x.dataResourceId)).queryList();
+                content.get(x.dataResourceId)).queryList();
         for (GenericValue dataResourceRole: dataResourceRoles) {
-            GenericValue party = EntityQuery.use(delegator).from("PartyNameView").where("partyId", dataResourceRole.get(org.apache.ofbiz.persistence.entity.x.partyId)).queryOne();
+            GenericValue party = EntityQuery.use(delegator).from("PartyNameView").where("partyId", dataResourceRole.get(x.partyId)).queryOne();
             if (party != null) {
                 addWeightedKeywordSourceString(party, "description", strings);
                 addWeightedKeywordSourceString(party, "firstName", strings);
@@ -119,7 +120,7 @@ public class ContentKeywordIndex {
         // Product
         List<GenericValue> productContentList = EntityQuery.use(delegator).from("ProductContent").where("contentId", contentId).queryList();
         for (GenericValue productContent: productContentList) {
-            GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productContent.get(org.apache.ofbiz.persistence.entity.x.productId)).queryOne();
+            GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productContent.get(x.productId)).queryOne();
             if (product != null) {
                 addWeightedKeywordSourceString(product, "productName", strings);
                 addWeightedKeywordSourceString(product, "internalName", strings);
@@ -134,7 +135,7 @@ public class ContentKeywordIndex {
                 .where("contentId", contentId).queryList();
         for (GenericValue productCategoryContent: productCategoryContentList) {
             GenericValue productCategory = EntityQuery.use(delegator).from("ProductCategory").where("productCategoryId",
-                    productCategoryContent.getString(org.apache.ofbiz.persistence.entity.x.productCategoryId)).queryOne();
+                    productCategoryContent.getString(x.productCategoryId)).queryOne();
             if (productCategory != null) {
                 addWeightedKeywordSourceString(productCategory, "categoryName", strings);
                 addWeightedKeywordSourceString(productCategory, "description", strings);
@@ -145,7 +146,7 @@ public class ContentKeywordIndex {
         // PartyContent
         List<GenericValue> partyContents = EntityQuery.use(delegator).from("PartyContent").where("contentId", contentId).queryList();
         for (GenericValue partyContent: partyContents) {
-            GenericValue party = EntityQuery.use(delegator).from("PartyNameView").where("partyId", partyContent.get(org.apache.ofbiz.persistence.entity.x.partyId)).queryOne();
+            GenericValue party = EntityQuery.use(delegator).from("PartyNameView").where("partyId", partyContent.get(x.partyId)).queryOne();
             if (party != null) {
                 addWeightedKeywordSourceString(party, "description", strings);
                 addWeightedKeywordSourceString(party, "firstName", strings);
@@ -158,7 +159,7 @@ public class ContentKeywordIndex {
         // WebSiteContent
         List<GenericValue> webSiteContents = EntityQuery.use(delegator).from("WebSiteContent").where("contentId", contentId).queryList();
         for (GenericValue webSiteContent: webSiteContents) {
-            GenericValue webSite = EntityQuery.use(delegator).from("WebSite").where("webSiteId", webSiteContent.get(org.apache.ofbiz.persistence.entity.x.webSiteId)).queryOne();
+            GenericValue webSite = EntityQuery.use(delegator).from("WebSite").where("webSiteId", webSiteContent.get(x.webSiteId)).queryOne();
             if (webSite != null) {
                 addWeightedKeywordSourceString(webSite, "siteName", strings);
                 addWeightedKeywordSourceString(webSite, "httpHost", strings);
@@ -170,14 +171,14 @@ public class ContentKeywordIndex {
         List<GenericValue> workEffortContents = EntityQuery.use(delegator).from("WorkEffortContent").where("contentId", contentId).queryList();
         for (GenericValue workEffortContent: workEffortContents) {
             GenericValue workEffort = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId",
-                    workEffortContent.get(org.apache.ofbiz.persistence.entity.x.workEffortId)).queryOne();
+                    workEffortContent.get(x.workEffortId)).queryOne();
             if (workEffort != null) {
                 addWeightedKeywordSourceString(workEffort, "workEffortName", strings);
             }
         }
 
         // DataResource
-        GenericValue dataResource = EntityQuery.use(delegator).from("DataResource").where("dataResourceId", content.get(org.apache.ofbiz.persistence.entity.x.dataResourceId)).queryOne();
+        GenericValue dataResource = EntityQuery.use(delegator).from("DataResource").where("dataResourceId", content.get(x.dataResourceId)).queryOne();
         if (dataResource != null) {
             addWeightedKeywordSourceString(dataResource, "dataResourceName", strings);
             addWeightedKeywordSourceString(dataResource, "objectInfo", strings);
@@ -195,19 +196,19 @@ public class ContentKeywordIndex {
         for (Map.Entry<String, Long> entry: keywords.entrySet()) {
             if (entry.getKey().length() <= keywordMaxLength) {
                 GenericValue contentKeyword = delegator.makeValue("ContentKeyword", UtilMisc.toMap("contentId",
-                        content.getString(org.apache.ofbiz.persistence.entity.x.contentId), "keyword", entry.getKey(), "relevancyWeight", entry.getValue()));
+                        content.getString(x.contentId), "keyword", entry.getKey(), "relevancyWeight", entry.getValue()));
                 toBeStored.add(contentKeyword);
             }
         }
         if (!toBeStored.isEmpty()) {
             if (Debug.verboseOn()) {
                 Debug.logVerbose("[ContentKeywordIndex.indexKeywords] Storing " + toBeStored.size() + " keywords for contentId "
-                        + content.getString(org.apache.ofbiz.persistence.entity.x.contentId), MODULE);
+                        + content.getString(x.contentId), MODULE);
             }
 
             if ("true".equals(EntityUtilProperties.getPropertyValue("contentsearch", "index.delete.on_index", "false", delegator))) {
                 // delete all keywords if the properties file says to
-                delegator.removeByAnd("ContentKeyword", UtilMisc.toMap("contentId", content.getString(org.apache.ofbiz.persistence.entity.x.contentId)));
+                delegator.removeByAnd("ContentKeyword", UtilMisc.toMap("contentId", content.getString(x.contentId)));
             }
 
             delegator.storeAll(toBeStored);
@@ -218,7 +219,7 @@ public class ContentKeywordIndex {
                                                      GenericValue content) {
         Map<String, Object> drContext = UtilMisc.<String, Object>toMap("content", content);
         try {
-            String contentText = DataResourceWorker.renderDataResourceAsText(null, delegator, drView.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId),
+            String contentText = DataResourceWorker.renderDataResourceAsText(null, delegator, drView.getString(x.dataResourceId),
                     drContext, null, null, false);
             for (int i = 0; i < weight; i++) {
                 strings.add(contentText);

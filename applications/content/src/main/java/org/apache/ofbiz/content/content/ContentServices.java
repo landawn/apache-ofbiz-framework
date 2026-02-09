@@ -51,6 +51,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * ContentServices Class
  */
@@ -66,20 +67,20 @@ public class ContentServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Map<String, Object> results = new HashMap<>();
 
-        GenericValue currentContent = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.currentContent);
-        String fromDate = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
-        String thruDate = (String) context.get(org.apache.ofbiz.persistence.entity.x.thruDate);
-        String toFrom = (String) context.get(org.apache.ofbiz.persistence.entity.x.toFrom);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue currentContent = (GenericValue) context.get(x.currentContent);
+        String fromDate = (String) context.get(x.fromDate);
+        String thruDate = (String) context.get(x.thruDate);
+        String toFrom = (String) context.get(x.toFrom);
+        Locale locale = (Locale) context.get(x.locale);
         if (toFrom == null) {
             toFrom = "TO";
         } else {
             toFrom = toFrom.toUpperCase(Locale.getDefault());
         }
 
-        List<String> assocTypes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeList));
-        List<String> targetOperations = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.targetOperationList));
-        List<String> contentTypes = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.contentTypeList));
+        List<String> assocTypes = UtilGenerics.cast(context.get(x.contentAssocTypeList));
+        List<String> targetOperations = UtilGenerics.cast(context.get(x.targetOperationList));
+        List<String> contentTypes = UtilGenerics.cast(context.get(x.contentTypeList));
         List<GenericValue> contentList = null;
 
         try {
@@ -95,9 +96,9 @@ public class ContentServices {
         }
 
         Map<String, Object> serviceInMap = new HashMap<>();
-        serviceInMap.put("userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
+        serviceInMap.put("userLogin", context.get(x.userLogin));
         serviceInMap.put("targetOperationList", targetOperations);
-        serviceInMap.put("entityOperation", context.get(org.apache.ofbiz.persistence.entity.x.entityOperation));
+        serviceInMap.put("entityOperation", context.get(x.entityOperation));
 
         List<GenericValue> permittedList = new LinkedList<>();
         Map<String, Object> permResults = null;
@@ -131,9 +132,9 @@ public class ContentServices {
         List<Object> parentList = new LinkedList<>();
         results.put("parentList", parentList);
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
-        String contentAssocTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId);
-        String direction = (String) context.get(org.apache.ofbiz.persistence.entity.x.direction);
+        String contentId = (String) context.get(x.contentId);
+        String contentAssocTypeId = (String) context.get(x.contentAssocTypeId);
+        String direction = (String) context.get(x.direction);
         if (UtilValidate.isEmpty(direction)) {
             direction = "To";
         }
@@ -170,10 +171,10 @@ public class ContentServices {
     public static Map<String, Object> traverseContent(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         Map<String, Object> results = new HashMap<>();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
 
-        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
-        String direction = (String) context.get(org.apache.ofbiz.persistence.entity.x.direction);
+        String contentId = (String) context.get(x.contentId);
+        String direction = (String) context.get(x.direction);
         if (direction != null && "From".equalsIgnoreCase(direction)) {
             direction = "From";
         } else {
@@ -193,8 +194,8 @@ public class ContentServices {
                     UtilMisc.toMap("contentId", contentId), locale));
         }
 
-        String fromDateStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.fromDateStr);
-        String thruDateStr = (String) context.get(org.apache.ofbiz.persistence.entity.x.thruDateStr);
+        String fromDateStr = (String) context.get(x.fromDateStr);
+        String thruDateStr = (String) context.get(x.thruDateStr);
         Timestamp fromDate = null;
         if (UtilValidate.isNotEmpty(fromDateStr)) {
             fromDate = UtilDateTime.toTimestamp(fromDateStr);
@@ -206,12 +207,12 @@ public class ContentServices {
         }
 
         Map<String, Object> whenMap = new HashMap<>();
-        whenMap.put("followWhen", context.get(org.apache.ofbiz.persistence.entity.x.followWhen));
-        whenMap.put("pickWhen", context.get(org.apache.ofbiz.persistence.entity.x.pickWhen));
-        whenMap.put("returnBeforePickWhen", context.get(org.apache.ofbiz.persistence.entity.x.returnBeforePickWhen));
-        whenMap.put("returnAfterPickWhen", context.get(org.apache.ofbiz.persistence.entity.x.returnAfterPickWhen));
+        whenMap.put("followWhen", context.get(x.followWhen));
+        whenMap.put("pickWhen", context.get(x.pickWhen));
+        whenMap.put("returnBeforePickWhen", context.get(x.returnBeforePickWhen));
+        whenMap.put("returnAfterPickWhen", context.get(x.returnAfterPickWhen));
 
-        String startContentAssocTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId);
+        String startContentAssocTypeId = (String) context.get(x.contentAssocTypeId);
         if (startContentAssocTypeId != null) {
             startContentAssocTypeId = "PUBLISH";
         }
@@ -231,13 +232,13 @@ public class ContentServices {
      */
     public static Map<String, Object> deactivateContentAssoc(DispatchContext dctx, Map<String, ? extends Object> rcontext) {
         Map<String, Object> context = UtilMisc.makeMapWritable(rcontext);
-        context.put(org.apache.ofbiz.persistence.entity.x.entityOperation, "_UPDATE");
+        context.put(x.entityOperation, "_UPDATE");
         List<String> targetOperationList = ContentWorker.prepTargetOperationList(context, "_UPDATE");
 
         List<String> contentPurposeList = ContentWorker.prepContentPurposeList(context);
-        context.put(org.apache.ofbiz.persistence.entity.x.targetOperationList, targetOperationList);
-        context.put(org.apache.ofbiz.persistence.entity.x.contentPurposeList, contentPurposeList);
-        context.put(org.apache.ofbiz.persistence.entity.x.skipPermissionCheck, null);
+        context.put(x.targetOperationList, targetOperationList);
+        context.put(x.contentPurposeList, contentPurposeList);
+        context.put(x.skipPermissionCheck, null);
 
         Map<String, Object> result = deactivateContentAssocMethod(dctx, context);
         return result;
@@ -252,13 +253,13 @@ public class ContentServices {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Map<String, Object> result = new HashMap<>();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        context.put(org.apache.ofbiz.persistence.entity.x.entityOperation, "_UPDATE");
+        Locale locale = (Locale) context.get(x.locale);
+        context.put(x.entityOperation, "_UPDATE");
         List<String> targetOperationList = ContentWorker.prepTargetOperationList(context, "_UPDATE");
 
         List<String> contentPurposeList = ContentWorker.prepContentPurposeList(context);
-        context.put(org.apache.ofbiz.persistence.entity.x.targetOperationList, targetOperationList);
-        context.put(org.apache.ofbiz.persistence.entity.x.contentPurposeList, contentPurposeList);
+        context.put(x.targetOperationList, targetOperationList);
+        context.put(x.contentPurposeList, contentPurposeList);
 
         GenericValue pk = delegator.makeValue("ContentAssoc");
         pk.setAllFields(context, false, null, Boolean.TRUE);
@@ -277,8 +278,8 @@ public class ContentServices {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentAssocDeactivatingError", locale));
         }
 
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String userLoginId = (String) userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String userLoginId = (String) userLogin.get(x.userLoginId);
         String lastModifiedByUserLogin = userLoginId;
         Timestamp lastModifiedDate = UtilDateTime.nowTimestamp();
         contentAssoc.put("lastModifiedByUserLogin", lastModifiedByUserLogin);
@@ -287,12 +288,12 @@ public class ContentServices {
 
         String permissionStatus = null;
         Map<String, Object> serviceInMap = new HashMap<>();
-        serviceInMap.put("userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
+        serviceInMap.put("userLogin", context.get(x.userLogin));
         serviceInMap.put("targetOperationList", targetOperationList);
         serviceInMap.put("contentPurposeList", contentPurposeList);
-        serviceInMap.put("entityOperation", context.get(org.apache.ofbiz.persistence.entity.x.entityOperation));
-        serviceInMap.put("contentIdTo", contentAssoc.get(org.apache.ofbiz.persistence.entity.x.contentIdTo));
-        serviceInMap.put("contentIdFrom", contentAssoc.get(org.apache.ofbiz.persistence.entity.x.contentId));
+        serviceInMap.put("entityOperation", context.get(x.entityOperation));
+        serviceInMap.put("contentIdTo", contentAssoc.get(x.contentIdTo));
+        serviceInMap.put("contentIdFrom", contentAssoc.get(x.contentId));
 
         Map<String, Object> permResults = null;
         try {
@@ -325,13 +326,13 @@ public class ContentServices {
      */
     public static Map<String, Object> deactivateAssocs(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
-        String contentIdTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentIdTo);
-        String mapKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.mapKey);
-        String contentAssocTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId);
-        String activeContentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.activeContentId);
-        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
-        Timestamp fromDate = (Timestamp) context.get(org.apache.ofbiz.persistence.entity.x.fromDate);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String contentIdTo = (String) context.get(x.contentIdTo);
+        String mapKey = (String) context.get(x.mapKey);
+        String contentAssocTypeId = (String) context.get(x.contentAssocTypeId);
+        String activeContentId = (String) context.get(x.activeContentId);
+        String contentId = (String) context.get(x.contentId);
+        Timestamp fromDate = (Timestamp) context.get(x.fromDate);
+        Locale locale = (Locale) context.get(x.locale);
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
         String sequenceNum = null;
         Map<String, Object> results = new HashMap<>();
@@ -346,7 +347,7 @@ public class ContentServices {
                             UtilMisc.toMap("activeContentId", activeContentId, "contentIdTo", contentIdTo, "contentAssocTypeId", contentAssocTypeId,
                                     "fromDate", fromDate), locale));
                 }
-                sequenceNum = (String) activeAssoc.get(org.apache.ofbiz.persistence.entity.x.sequenceNum);
+                sequenceNum = (String) activeAssoc.get(x.sequenceNum);
             }
 
             List<EntityCondition> exprList = new LinkedList<>();
@@ -372,7 +373,7 @@ public class ContentServices {
                     .orderBy("fromDate").filterByDate().queryList();
 
             for (GenericValue val : relatedAssocs) {
-                val.set(org.apache.ofbiz.persistence.entity.x.thruDate, nowTimestamp);
+                val.set(x.thruDate, nowTimestamp);
                 val.store();
             }
             results.put("deactivatedList", relatedAssocs);
@@ -391,26 +392,26 @@ public class ContentServices {
         Map<String, Object> results = new HashMap<>();
         LocalDispatcher dispatcher = dctx.getDispatcher();
 
-        Map<String, Object> templateContext = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.templateContext));
-        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        Map<String, Object> templateContext = UtilGenerics.cast(context.get(x.templateContext));
+        String contentId = (String) context.get(x.contentId);
 
         if (templateContext != null && UtilValidate.isEmpty(contentId)) {
             contentId = (String) templateContext.get("contentId");
         }
-        String mapKey = (String) context.get(org.apache.ofbiz.persistence.entity.x.mapKey);
+        String mapKey = (String) context.get(x.mapKey);
         if (templateContext != null && UtilValidate.isEmpty(mapKey)) {
             mapKey = (String) templateContext.get("mapKey");
         }
-        String mimeTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
+        String mimeTypeId = (String) context.get(x.mimeTypeId);
         if (templateContext != null && UtilValidate.isEmpty(mimeTypeId)) {
             mimeTypeId = (String) templateContext.get("mimeTypeId");
         }
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         if (templateContext != null && locale == null) {
             locale = (Locale) templateContext.get("locale");
         }
 
-        Writer out = (Writer) context.get(org.apache.ofbiz.persistence.entity.x.outWriter);
+        Writer out = (Writer) context.get(x.outWriter);
         Writer outWriter = new StringWriter();
 
         if (templateContext == null) {
@@ -437,18 +438,18 @@ public class ContentServices {
     public static Map<String, Object> renderContentAsText(DispatchContext dctx, Map<String, ? extends Object> context) {
         Map<String, Object> results = new HashMap<>();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        Writer out = (Writer) context.get(org.apache.ofbiz.persistence.entity.x.outWriter);
+        Writer out = (Writer) context.get(x.outWriter);
 
-        Map<String, Object> templateContext = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.templateContext));
-        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
+        Map<String, Object> templateContext = UtilGenerics.cast(context.get(x.templateContext));
+        String contentId = (String) context.get(x.contentId);
         if (templateContext != null && UtilValidate.isEmpty(contentId)) {
             contentId = (String) templateContext.get("contentId");
         }
-        String mimeTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.mimeTypeId);
+        String mimeTypeId = (String) context.get(x.mimeTypeId);
         if (templateContext != null && UtilValidate.isEmpty(mimeTypeId)) {
             mimeTypeId = (String) templateContext.get("mimeTypeId");
         }
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         if (templateContext != null && locale == null) {
             locale = (Locale) templateContext.get("locale");
         }
@@ -458,9 +459,9 @@ public class ContentServices {
         }
 
         Writer outWriter = new StringWriter();
-        GenericValue view = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.subContentDataResourceView);
+        GenericValue view = (GenericValue) context.get(x.subContentDataResourceView);
         if (view != null && view.containsKey("contentId")) {
-            contentId = view.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+            contentId = view.getString(x.contentId);
         }
 
         try {
@@ -479,12 +480,12 @@ public class ContentServices {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
 
-        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
-        String contentIdTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentIdTo);
-        String contentAssocTypeId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentAssocTypeId);
-        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
-        String privilegeEnumId = (String) context.get(org.apache.ofbiz.persistence.entity.x.privilegeEnumId);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        String contentId = (String) context.get(x.contentId);
+        String contentIdTo = (String) context.get(x.contentIdTo);
+        String contentAssocTypeId = (String) context.get(x.contentAssocTypeId);
+        String statusId = (String) context.get(x.statusId);
+        String privilegeEnumId = (String) context.get(x.privilegeEnumId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
 
         if (Debug.infoOn()) {
             Debug.logInfo("in publishContent, statusId:" + statusId, MODULE);
@@ -497,7 +498,7 @@ public class ContentServices {
         mapIn.put("contentId", contentId);
         mapIn.put("contentIdTo", contentIdTo);
         mapIn.put("contentAssocTypeId", contentAssocTypeId);
-        String publish = (String) context.get(org.apache.ofbiz.persistence.entity.x.publish);
+        String publish = (String) context.get(x.publish);
 
         try {
             boolean isPublished = false;
@@ -512,8 +513,8 @@ public class ContentServices {
             }
             if (UtilValidate.isNotEmpty(publish) && "Y".equalsIgnoreCase(publish)) {
                 GenericValue content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).queryOne();
-                String contentStatusId = (String) content.get(org.apache.ofbiz.persistence.entity.x.statusId);
-                String contentPrivilegeEnumId = (String) content.get(org.apache.ofbiz.persistence.entity.x.privilegeEnumId);
+                String contentStatusId = (String) content.get(x.statusId);
+                String contentPrivilegeEnumId = (String) content.get(x.privilegeEnumId);
 
                 if (Debug.infoOn()) {
                     Debug.logInfo("in publishContent, statusId:" + statusId + " contentStatusId:" + contentStatusId + " privilegeEnumId:"
@@ -529,12 +530,12 @@ public class ContentServices {
                     mapIn.put("contentId", contentId);
                     mapIn.put("contentIdTo", contentIdTo);
                     mapIn.put("contentAssocTypeId", contentAssocTypeId);
-                    mapIn.put("mapKey", context.get(org.apache.ofbiz.persistence.entity.x.mapKey));
+                    mapIn.put("mapKey", context.get(x.mapKey));
                     mapIn.put("fromDate", UtilDateTime.nowTimestamp());
                     mapIn.put("createdDate", UtilDateTime.nowTimestamp());
                     mapIn.put("lastModifiedDate", UtilDateTime.nowTimestamp());
-                    mapIn.put("createdByUserLogin", userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
-                    mapIn.put("lastModifiedByUserLogin", userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
+                    mapIn.put("createdByUserLogin", userLogin.get(x.userLoginId));
+                    mapIn.put("lastModifiedByUserLogin", userLogin.get(x.userLoginId));
                     delegator.create("ContentAssoc", mapIn);
                 }
             } else {
@@ -556,7 +557,7 @@ public class ContentServices {
 
     public static Map<String, Object> publishContent(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
-        GenericValue content = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.content);
+        GenericValue content = (GenericValue) context.get(x.content);
 
         try {
             content.put("statusId", "CTNT_PUBLISHED");
@@ -570,8 +571,8 @@ public class ContentServices {
 
     public static Map<String, Object> getPrefixedMembers(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
-        Map<String, Object> mapIn = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.mapIn));
-        String prefix = (String) context.get(org.apache.ofbiz.persistence.entity.x.prefix);
+        Map<String, Object> mapIn = UtilGenerics.cast(context.get(x.mapIn));
+        String prefix = (String) context.get(x.prefix);
         Map<String, Object> mapOut = new HashMap<>();
         result.put("mapOut", mapOut);
         if (mapIn != null) {
@@ -590,8 +591,8 @@ public class ContentServices {
     public static Map<String, Object> splitString(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         List<String> outputList = new LinkedList<>();
-        String delimiter = UtilFormatOut.checkEmpty((String) context.get(org.apache.ofbiz.persistence.entity.x.delimiter), "|");
-        String inputString = (String) context.get(org.apache.ofbiz.persistence.entity.x.inputString);
+        String delimiter = UtilFormatOut.checkEmpty((String) context.get(x.delimiter), "|");
+        String inputString = (String) context.get(x.inputString);
         if (UtilValidate.isNotEmpty(inputString)) {
             outputList = StringUtil.split(inputString, delimiter);
         }
@@ -602,8 +603,8 @@ public class ContentServices {
     public static Map<String, Object> joinString(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         String outputString = null;
-        String delimiter = UtilFormatOut.checkEmpty((String) context.get(org.apache.ofbiz.persistence.entity.x.delimiter), "|");
-        List<String> inputList = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.inputList));
+        String delimiter = UtilFormatOut.checkEmpty((String) context.get(x.delimiter), "|");
+        List<String> inputList = UtilGenerics.cast(context.get(x.inputList));
         if (inputList != null) {
             outputString = StringUtil.join(inputList, delimiter);
         }
@@ -614,7 +615,7 @@ public class ContentServices {
     public static Map<String, Object> urlEncodeArgs(DispatchContext dctx, Map<String, ? extends Object> context) throws GenericServiceException {
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> mapFiltered = new HashMap<>();
-        Map<String, Object> mapIn = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.mapIn));
+        Map<String, Object> mapIn = UtilGenerics.cast(context.get(x.mapIn));
         if (mapIn != null) {
             Set<Map.Entry<String, Object>> entrySet = mapIn.entrySet();
             for (Map.Entry<String, Object> entry : entrySet) {

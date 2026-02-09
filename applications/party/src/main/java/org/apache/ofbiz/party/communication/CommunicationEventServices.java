@@ -68,6 +68,7 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.service.mail.MimeMessageWrapper;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class CommunicationEventServices {
 
     private static final String MODULE = CommunicationEventServices.class.getName();
@@ -76,10 +77,10 @@ public class CommunicationEventServices {
     public static Map<String, Object> sendCommEventAsEmail(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
-        String communicationEventId = (String) context.get(org.apache.ofbiz.persistence.entity.x.communicationEventId);
+        String communicationEventId = (String) context.get(x.communicationEventId);
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         List<Object> errorMessages = new LinkedList<>(); // used to keep a list of all error messages returned from sending emails to contact list
@@ -92,7 +93,7 @@ public class CommunicationEventServices {
                 String errMsg = UtilProperties.getMessage(RESOURCE, "commeventservices.communication_event_not_found_failure", locale);
                 return ServiceUtil.returnError(errMsg + " " + communicationEventId);
             }
-            String communicationEventType = communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.communicationEventTypeId);
+            String communicationEventType = communicationEvent.getString(x.communicationEventTypeId);
             if (communicationEventType == null || !("EMAIL_COMMUNICATION".equals(communicationEventType)
                     || "AUTO_EMAIL_COMM".equals(communicationEventType))) {
                 String errMsg = UtilProperties.getMessage(RESOURCE, "commeventservices.communication_event_must_be_email_for_email", locale);
@@ -100,26 +101,26 @@ public class CommunicationEventServices {
             }
 
             // make sure the from contact mech is an email if it is specified
-            if ((communicationEvent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FromContactMech, false) == null)
-                    || (!("EMAIL_ADDRESS".equals(communicationEvent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FromContactMech, false).getString("contactMechTypeId")))
-                    || (communicationEvent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FromContactMech, false).getString("infoString") == null))) {
+            if ((communicationEvent.getRelatedOne(x.FromContactMech, false) == null)
+                    || (!("EMAIL_ADDRESS".equals(communicationEvent.getRelatedOne(x.FromContactMech, false).getString("contactMechTypeId")))
+                    || (communicationEvent.getRelatedOne(x.FromContactMech, false).getString("infoString") == null))) {
                 String errMsg = UtilProperties.getMessage(RESOURCE, "commeventservices.communication_event_from_contact_mech_must_be_email", locale);
                 return ServiceUtil.returnError(errMsg + " " + communicationEventId);
             }
 
             // assign some default values because required by sendmail and better not make them defaults over there
-            if (UtilValidate.isEmpty(communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.subject))) {
+            if (UtilValidate.isEmpty(communicationEvent.getString(x.subject))) {
                 communicationEvent.put("subject", " ");
             }
-            if (UtilValidate.isEmpty(communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.content))) {
+            if (UtilValidate.isEmpty(communicationEvent.getString(x.content))) {
                 communicationEvent.put("content", " ");
             }
 
             // prepare the email
             Map<String, Object> sendMailParams = new HashMap<>();
-            sendMailParams.put("sendFrom", communicationEvent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FromContactMech, false).getString("infoString"));
-            sendMailParams.put("subject", communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.subject));
-            sendMailParams.put("contentType", communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.contentMimeTypeId));
+            sendMailParams.put("sendFrom", communicationEvent.getRelatedOne(x.FromContactMech, false).getString("infoString"));
+            sendMailParams.put("subject", communicationEvent.getString(x.subject));
+            sendMailParams.put("contentType", communicationEvent.getString(x.contentMimeTypeId));
             sendMailParams.put("userLogin", userLogin);
 
             Debug.logInfo("Sending communicationEvent: " + communicationEventId, MODULE);
@@ -131,32 +132,32 @@ public class CommunicationEventServices {
             if (UtilValidate.isNotEmpty(comEventContents)) {
                 isMultiPart = true;
                 List<Map<String, ? extends Object>> bodyParts = new LinkedList<>();
-                if (UtilValidate.isNotEmpty(communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.content))) {
-                    bodyParts.add(UtilMisc.<String, Object>toMap("content", communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.content), "type",
-                            communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.contentMimeTypeId)));
+                if (UtilValidate.isNotEmpty(communicationEvent.getString(x.content))) {
+                    bodyParts.add(UtilMisc.<String, Object>toMap("content", communicationEvent.getString(x.content), "type",
+                            communicationEvent.getString(x.contentMimeTypeId)));
                 }
                 for (GenericValue comEventContent : comEventContents) {
-                    GenericValue content = comEventContent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FromContent, false);
-                    GenericValue dataResource = content.getRelatedOne(org.apache.ofbiz.persistence.entity.x.DataResource, false);
-                    ByteBuffer dataContent = DataResourceWorker.getContentAsByteBuffer(delegator, dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId),
+                    GenericValue content = comEventContent.getRelatedOne(x.FromContent, false);
+                    GenericValue dataResource = content.getRelatedOne(x.DataResource, false);
+                    ByteBuffer dataContent = DataResourceWorker.getContentAsByteBuffer(delegator, dataResource.getString(x.dataResourceId),
                             null, null, locale, null);
-                    bodyParts.add(UtilMisc.<String, Object>toMap("content", dataContent.array(), "type", dataResource.getString(org.apache.ofbiz.persistence.entity.x.mimeTypeId),
-                            "filename", dataResource.getString(org.apache.ofbiz.persistence.entity.x.dataResourceName)));
+                    bodyParts.add(UtilMisc.<String, Object>toMap("content", dataContent.array(), "type", dataResource.getString(x.mimeTypeId),
+                            "filename", dataResource.getString(x.dataResourceName)));
                 }
                 sendMailParams.put("bodyParts", bodyParts);
             } else {
-                sendMailParams.put("body", communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.content));
+                sendMailParams.put("body", communicationEvent.getString(x.content));
             }
 
             // if there is no contact list, then send look for a contactMechIdTo and partyId
-            if ((UtilValidate.isEmpty(communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.contactListId)))) {
+            if ((UtilValidate.isEmpty(communicationEvent.getString(x.contactListId)))) {
                 // send to address
-                String sendTo = communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.toString);
+                String sendTo = communicationEvent.getString(x.toString);
 
                 if (UtilValidate.isEmpty(sendTo)) {
-                    GenericValue toContactMech = communicationEvent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ToContactMech, false);
-                    if (toContactMech != null && "EMAIL_ADDRESS".equals(toContactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechTypeId))) {
-                        sendTo = toContactMech.getString(org.apache.ofbiz.persistence.entity.x.infoString);
+                    GenericValue toContactMech = communicationEvent.getRelatedOne(x.ToContactMech, false);
+                    if (toContactMech != null && "EMAIL_ADDRESS".equals(toContactMech.getString(x.contactMechTypeId))) {
+                        sendTo = toContactMech.getString(x.infoString);
                     }
                 }
                 if (UtilValidate.isEmpty(sendTo)) {
@@ -169,13 +170,13 @@ public class CommunicationEventServices {
                 List<String> alreadyLoaded = UtilMisc.toList(sendTo);
                 List<String> availableRoleTypeIds = UtilMisc.toList("ADDRESSEE", "CC", "BCC");
                 Map<String, Object> emailsCollector = UtilMisc.toMap("ADDRESSEE", UtilMisc.toList(sendTo));
-                List<GenericValue> commRoles = communicationEvent.getRelated(org.apache.ofbiz.persistence.entity.x.CommunicationEventRole, null, null, false);
+                List<GenericValue> commRoles = communicationEvent.getRelated(x.CommunicationEventRole, null, null, false);
                 if (UtilValidate.isNotEmpty(commRoles)) {
                     for (GenericValue commRole : commRoles) { // 'from' and 'to' already defined on communication event
-                        GenericValue contactMech = commRole.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ContactMech, false);
-                        if (contactMech != null && UtilValidate.isNotEmpty(contactMech.getString(org.apache.ofbiz.persistence.entity.x.infoString))) {
-                            String infoString = contactMech.getString(org.apache.ofbiz.persistence.entity.x.infoString);
-                            String roleTypeId = commRole.getString(org.apache.ofbiz.persistence.entity.x.roleTypeId);
+                        GenericValue contactMech = commRole.getRelatedOne(x.ContactMech, false);
+                        if (contactMech != null && UtilValidate.isNotEmpty(contactMech.getString(x.infoString))) {
+                            String infoString = contactMech.getString(x.infoString);
+                            String roleTypeId = commRole.getString(x.roleTypeId);
                             if (alreadyLoaded.contains(infoString)
                                     && !availableRoleTypeIds.contains(roleTypeId)) {
                                 continue;
@@ -194,7 +195,7 @@ public class CommunicationEventServices {
                         : null);
 
                 sendMailParams.put("communicationEventId", communicationEventId);
-                sendMailParams.put("partyId", communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.partyIdTo));  // who it's going to
+                sendMailParams.put("partyId", communicationEvent.getString(x.partyIdTo));  // who it's going to
 
                 // send it - using a new transaction
                 Map<String, Object> tmpResult = null;
@@ -213,7 +214,7 @@ public class CommunicationEventServices {
                 if (ServiceUtil.isError(tmpResult)) {
                     if (ServiceUtil.getErrorMessage(tmpResult).startsWith("[ADDRERR]")) {
                         // address error; mark the communication event as BOUNCED
-                        communicationEvent.set(org.apache.ofbiz.persistence.entity.x.statusId, "COM_BOUNCED");
+                        communicationEvent.set(x.statusId, "COM_BOUNCED");
                         try {
                             communicationEvent.store();
                         } catch (GenericEntityException e) {
@@ -227,7 +228,7 @@ public class CommunicationEventServices {
                 } else {
                     // set the message ID on this communication event
                     String messageId = (String) tmpResult.get("messageId");
-                    communicationEvent.set(org.apache.ofbiz.persistence.entity.x.messageId, messageId);
+                    communicationEvent.set(x.messageId, messageId);
                     try {
                         communicationEvent.store();
                     } catch (GenericEntityException e) {
@@ -237,7 +238,7 @@ public class CommunicationEventServices {
 
                     Map<String, Object> completeResult = dispatcher.runSync("setCommEventComplete",
                             UtilMisc.<String, Object>toMap("communicationEventId", communicationEventId, "partyIdFrom", communicationEvent
-                                    .getString(org.apache.ofbiz.persistence.entity.x.partyIdFrom), "userLogin", userLogin));
+                                    .getString(x.partyIdFrom), "userLogin", userLogin));
                     if (ServiceUtil.isError(completeResult)) {
                         errorMessages.add(ServiceUtil.getErrorMessage(completeResult));
                     }
@@ -246,7 +247,7 @@ public class CommunicationEventServices {
             } else {
                 // Call the sendEmailToContactList service if there's a contactListId present
                 Map<String, Object> sendEmailToContactListContext = new HashMap<>();
-                sendEmailToContactListContext.put("contactListId", communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.contactListId));
+                sendEmailToContactListContext.put("contactListId", communicationEvent.getString(x.contactListId));
                 sendEmailToContactListContext.put("communicationEventId", communicationEventId);
                 sendEmailToContactListContext.put("userLogin", userLogin);
                 try {
@@ -279,10 +280,10 @@ public class CommunicationEventServices {
     public static Map<String, Object> sendCommEventAsFtp(DispatchContext ctx, Map<String, ?> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
 
-        String communicationEventId = (String) context.get(org.apache.ofbiz.persistence.entity.x.communicationEventId);
+        String communicationEventId = (String) context.get(x.communicationEventId);
         List<String> errorMessages = new ArrayList<>();
         try {
             GenericValue communicationEvent = EntityQuery.use(delegator).from("CommunicationEvent").where("communicationEventId",
@@ -292,20 +293,20 @@ public class CommunicationEventServices {
                 return ServiceUtil.returnError(errMsg + " " + communicationEventId);
             }
 
-            if ("COM_COMPLETE".equals(communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.statusId))) return ServiceUtil.returnSuccess();
+            if ("COM_COMPLETE".equals(communicationEvent.getString(x.statusId))) return ServiceUtil.returnSuccess();
 
-            String communicationEventType = communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.communicationEventTypeId);
+            String communicationEventType = communicationEvent.getString(x.communicationEventTypeId);
             if (communicationEventType == null || !"FILE_TRANSFER_COMM".equals(communicationEventType)) {
                 String errMsg = UtilProperties.getMessage(RESOURCE, "commeventservices.communication_event_must_be_ftp_for_ftp", locale);
                 return ServiceUtil.returnError(errMsg + " " + communicationEventId);
             }
 
-            String contactMechId = communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.contactMechIdTo);
+            String contactMechId = communicationEvent.getString(x.contactMechIdTo);
 
             // Check contactMech type to FTP_ADDRESS
             GenericValue contactMech = EntityQuery.use(delegator).from("ContactMech").cache().where("contactMechId", contactMechId).queryOne();
             GenericValue ftpAddress = EntityQuery.use(delegator).from("FtpAddress").cache().where("contactMechId", contactMechId).queryOne();
-            if (null == contactMech || null == ftpAddress || !"FTP_ADDRESS".equals(contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechTypeId))) {
+            if (null == contactMech || null == ftpAddress || !"FTP_ADDRESS".equals(contactMech.getString(x.contactMechTypeId))) {
                 String errMsg = UtilProperties.getMessage(RESOURCE, "commeventservices.communication_event_to_contact_mech_must_be_ftp", locale);
                 return ServiceUtil.returnError(errMsg + " " + communicationEventId);
             }
@@ -320,7 +321,7 @@ public class CommunicationEventServices {
                     communicationEventId).cache().queryList();
 
             if (UtilValidate.isNotEmpty(contents)) {
-                if (UtilValidate.isEmpty(communicationEvent.getTimestamp(org.apache.ofbiz.persistence.entity.x.datetimeStarted))) {
+                if (UtilValidate.isEmpty(communicationEvent.getTimestamp(x.datetimeStarted))) {
                     //store the startDate into the communication
                     Map<String, Object> updateCommEventResult = dispatcher.runSync("updateCommunicationEvent",
                             UtilMisc.toMap("communicationEventId", communicationEventId, "datetimeStarted", UtilDateTime.nowTimestamp(),
@@ -335,25 +336,25 @@ public class CommunicationEventServices {
                     //store the child Communication Event, to keep track of errorMessages in note field
                     String childCommunicationEventId = "";
                     ftpServiceMap.put("userLogin", userLogin);
-                    ftpServiceMap.put("contentId", content.getString(org.apache.ofbiz.persistence.entity.x.contentId));
-                    ftpServiceMap.put("partyId", communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.partyIdTo));
+                    ftpServiceMap.put("contentId", content.getString(x.contentId));
+                    ftpServiceMap.put("partyId", communicationEvent.getString(x.partyIdTo));
                     ftpServiceMap.put("contactMechId", contactMechId);
                     // no need to create a child CommEvent if it is a single content transfer
                     if (contents.size() == 1) {
-                        ftpServiceMap.put("communicationEventId", communicationEvent.get(org.apache.ofbiz.persistence.entity.x.communicationEventId));
+                        ftpServiceMap.put("communicationEventId", communicationEvent.get(x.communicationEventId));
                     } else {
                         // check if currentContent is already sent by an existing children communicationEvent
                         EntityCondition sentCond = EntityCondition.makeCondition(UtilMisc.toList(
                                 EntityCondition.makeCondition("communicationEventId", EntityOperator.IN, childrenCommunicationEventIds),
-                                EntityCondition.makeCondition("contentId", content.getString(org.apache.ofbiz.persistence.entity.x.contentId))));
+                                EntityCondition.makeCondition("contentId", content.getString(x.contentId))));
                         GenericValue alreadySent = EntityQuery.use(delegator).from("CommEventContentAssoc").where(sentCond).cache().queryFirst();
 
                         if (null != alreadySent) {
                             GenericValue childCommEvent = EntityUtil.getFirst(EntityUtil.filterByCondition(childrenCommunicationEvent,
-                                    EntityCondition.makeCondition("communicationEventId", alreadySent.getString(org.apache.ofbiz.persistence.entity.x.communicationEventId))));
+                                    EntityCondition.makeCondition("communicationEventId", alreadySent.getString(x.communicationEventId))));
                             // if completely sent, continue to next content
-                            if ("COM_COMPLETE".equals(childCommEvent.getString(org.apache.ofbiz.persistence.entity.x.statusId))) continue;
-                            ftpServiceMap.put("communicationEventId", childCommEvent.getString(org.apache.ofbiz.persistence.entity.x.communicationEventId));
+                            if ("COM_COMPLETE".equals(childCommEvent.getString(x.statusId))) continue;
+                            ftpServiceMap.put("communicationEventId", childCommEvent.getString(x.communicationEventId));
                         }
                     }
 
@@ -369,10 +370,10 @@ public class CommunicationEventServices {
                     if (UtilValidate.isNotEmpty(childCommunicationEventId) && !childCommunicationEventId.equals(communicationEventId)) {
                         GenericValue childCommunicationEvent = EntityQuery.use(delegator).from("CommunicationEvent").where("communicationEventId",
                                 childCommunicationEventId).queryOne();
-                        childCommunicationEvent.set(org.apache.ofbiz.persistence.entity.x.parentCommEventId, communicationEventId);
+                        childCommunicationEvent.set(x.parentCommEventId, communicationEventId);
                         if (ServiceUtil.isError(resultTmp)) {
-                            childCommunicationEvent.set(org.apache.ofbiz.persistence.entity.x.statusId, "COM_BOUNCED");
-                            childCommunicationEvent.set(org.apache.ofbiz.persistence.entity.x.note, ServiceUtil.getErrorMessage(resultTmp));
+                            childCommunicationEvent.set(x.statusId, "COM_BOUNCED");
+                            childCommunicationEvent.set(x.note, ServiceUtil.getErrorMessage(resultTmp));
                         }
                         childCommunicationEvent.store();
                     }
@@ -382,14 +383,14 @@ public class CommunicationEventServices {
             }
 
             if (!errorMessages.isEmpty()) {
-                communicationEvent.set(org.apache.ofbiz.persistence.entity.x.statusId, "COM_BOUNCED");
-                communicationEvent.set(org.apache.ofbiz.persistence.entity.x.note, errorMessages.toString());
+                communicationEvent.set(x.statusId, "COM_BOUNCED");
+                communicationEvent.set(x.note, errorMessages.toString());
                 communicationEvent.store();
             } else {
                 //Update content status
                 for (GenericValue content : contents) {
                     Map<String, Object> updateContentResult = dispatcher.runSync("setContentStatus", UtilMisc.<String, Object>toMap("contentId",
-                            content.getString(org.apache.ofbiz.persistence.entity.x.contentId), "statusId", "CTNT_PUBLISHED", "userLogin", userLogin));
+                            content.getString(x.contentId), "statusId", "CTNT_PUBLISHED", "userLogin", userLogin));
                     if (ServiceUtil.isError(updateContentResult)) {
                         errorMessages.add(ServiceUtil.getErrorMessage(updateContentResult));
                     }
@@ -413,8 +414,8 @@ public class CommunicationEventServices {
     public static Map<String, Object> sendEmailToContactList(DispatchContext ctx, Map<String, ? extends Object> context) {
         Delegator delegator = ctx.getDelegator();
         LocalDispatcher dispatcher = ctx.getDispatcher();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
 
         List<Object> errorMessages = new LinkedList<>();
         String errorCallingUpdateContactListPartyService = UtilProperties.getMessage(RESOURCE,
@@ -424,8 +425,8 @@ public class CommunicationEventServices {
                 "commeventservices.errorInSendEmailToContactListService", locale);
         String skippingInvalidEmailAddress = UtilProperties.getMessage(RESOURCE, "commeventservices.skippingInvalidEmailAddress", locale);
 
-        String contactListId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactListId);
-        String communicationEventId = (String) context.get(org.apache.ofbiz.persistence.entity.x.communicationEventId);
+        String contactListId = (String) context.get(x.contactListId);
+        String communicationEventId = (String) context.get(x.communicationEventId);
 
         // Any exceptions thrown in this block will cause the service to return error
         try {
@@ -434,15 +435,15 @@ public class CommunicationEventServices {
             GenericValue contactList = EntityQuery.use(delegator).from("ContactList").where("contactListId", contactListId).queryOne();
 
             Map<String, Object> sendMailParams = new HashMap<>();
-            sendMailParams.put("sendFrom", communicationEvent.getRelatedOne(org.apache.ofbiz.persistence.entity.x.FromContactMech, false).getString("infoString"));
-            sendMailParams.put("subject", communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.subject));
-            sendMailParams.put("contentType", communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.contentMimeTypeId));
+            sendMailParams.put("sendFrom", communicationEvent.getRelatedOne(x.FromContactMech, false).getString("infoString"));
+            sendMailParams.put("subject", communicationEvent.getString(x.subject));
+            sendMailParams.put("contentType", communicationEvent.getString(x.contentMimeTypeId));
             sendMailParams.put("userLogin", userLogin);
 
             // Find a list of distinct email addresses from active, ACCEPTED parties in the contact list
             //      using a list iterator (because there can be a large number)
             List<EntityCondition> conditionList = UtilMisc.toList(
-                        EntityCondition.makeCondition("contactListId", EntityOperator.EQUALS, contactList.get(org.apache.ofbiz.persistence.entity.x.contactListId)),
+                        EntityCondition.makeCondition("contactListId", EntityOperator.EQUALS, contactList.get(x.contactListId)),
                         EntityCondition.makeCondition("statusId", EntityOperator.EQUALS, "CLPT_ACCEPTED"),
                         EntityCondition.makeCondition("preferredContactMechId", EntityOperator.NOT_EQUAL, null),
                         EntityUtil.getFilterByDateExpr(), EntityUtil.getFilterByDateExpr("contactFromDate", "contactThruDate"));
@@ -465,7 +466,7 @@ public class CommunicationEventServices {
                     //  only be logged and not cause the service to return an error
                     try {
 
-                        String emailAddress = contactListPartyAndContactMech.getString(org.apache.ofbiz.persistence.entity.x.infoString);
+                        String emailAddress = contactListPartyAndContactMech.getString(x.infoString);
                         if (UtilValidate.isEmpty(emailAddress)) {
                             continue;
                         }
@@ -494,14 +495,14 @@ public class CommunicationEventServices {
                             continue;
                         }
 
-                        String partyId = lastContactListPartyACM.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+                        String partyId = lastContactListPartyACM.getString(x.partyId);
 
                         sendMailParams.put("sendTo", emailAddress);
                         sendMailParams.put("partyId", partyId);
 
                         // Retrieve a record for this contactMechId from ContactListCommStatus
                         Map<String, String> contactListCommStatusRecordMap = UtilMisc.toMap("contactListId", contactListId, "communicationEventId",
-                                communicationEventId, "contactMechId", lastContactListPartyACM.getString(org.apache.ofbiz.persistence.entity.x.preferredContactMechId));
+                                communicationEventId, "contactMechId", lastContactListPartyACM.getString(x.preferredContactMechId));
                         GenericValue contactListCommStatusRecord = EntityQuery.use(delegator).from("ContactListCommStatus")
                                 .where(contactListCommStatusRecordMap)
                                 .queryOne();
@@ -513,8 +514,8 @@ public class CommunicationEventServices {
                             newContactListCommStatusRecordMap.put("statusId", "COM_IN_PROGRESS");
                             newContactListCommStatusRecordMap.put("partyId", partyId);
                             contactListCommStatusRecord = delegator.create("ContactListCommStatus", newContactListCommStatusRecordMap);
-                        } else if (contactListCommStatusRecord.get(org.apache.ofbiz.persistence.entity.x.statusId) != null && "COM_COMPLETE"
-                                .equals(contactListCommStatusRecord.getString(org.apache.ofbiz.persistence.entity.x.statusId))) {
+                        } else if (contactListCommStatusRecord.get(x.statusId) != null && "COM_COMPLETE"
+                                .equals(contactListCommStatusRecord.getString(x.statusId))) {
 
                             // There was a successful earlier attempt, so skip this address
                             continue;
@@ -528,32 +529,32 @@ public class CommunicationEventServices {
 
                         // Retrieve a contact list party status
                         GenericValue contactListPartyStatus = EntityQuery.use(delegator).from("ContactListPartyStatus")
-                                .where("contactListId", contactListId, "partyId", contactListPartyAndContactMech.getString(org.apache.ofbiz.persistence.entity.x.partyId),
-                                        "fromDate", contactListPartyAndContactMech.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate), "statusId", "CLPT_ACCEPTED")
+                                .where("contactListId", contactListId, "partyId", contactListPartyAndContactMech.getString(x.partyId),
+                                        "fromDate", contactListPartyAndContactMech.getTimestamp(x.fromDate), "statusId", "CLPT_ACCEPTED")
                                 .queryFirst();
                         if (contactListPartyStatus != null) {
                             // prepare body parameters
                             Map<String, Object> bodyParameters = new HashMap<>();
                             bodyParameters.put("contactListId", contactListId);
-                            bodyParameters.put("partyId", contactListPartyAndContactMech.getString(org.apache.ofbiz.persistence.entity.x.partyId));
-                            bodyParameters.put("preferredContactMechId", contactListPartyAndContactMech.getString(org.apache.ofbiz.persistence.entity.x.preferredContactMechId));
+                            bodyParameters.put("partyId", contactListPartyAndContactMech.getString(x.partyId));
+                            bodyParameters.put("preferredContactMechId", contactListPartyAndContactMech.getString(x.preferredContactMechId));
                             bodyParameters.put("emailAddress", emailAddress);
-                            bodyParameters.put("fromDate", contactListPartyAndContactMech.getTimestamp(org.apache.ofbiz.persistence.entity.x.fromDate));
-                            bodyParameters.put("optInVerifyCode", contactListPartyStatus.getString(org.apache.ofbiz.persistence.entity.x.optInVerifyCode));
-                            bodyParameters.put("content", communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.content));
-                            NotificationServices.setBaseUrl(delegator, contactList.getString(org.apache.ofbiz.persistence.entity.x.verifyEmailWebSiteId), bodyParameters);
+                            bodyParameters.put("fromDate", contactListPartyAndContactMech.getTimestamp(x.fromDate));
+                            bodyParameters.put("optInVerifyCode", contactListPartyStatus.getString(x.optInVerifyCode));
+                            bodyParameters.put("content", communicationEvent.getString(x.content));
+                            NotificationServices.setBaseUrl(delegator, contactList.getString(x.verifyEmailWebSiteId), bodyParameters);
 
                             GenericValue webSite = EntityQuery.use(delegator).from("WebSite").where("webSiteId", contactList
-                                    .getString(org.apache.ofbiz.persistence.entity.x.verifyEmailWebSiteId)).queryOne();
+                                    .getString(x.verifyEmailWebSiteId)).queryOne();
                             if (webSite != null) {
-                                GenericValue productStore = webSite.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ProductStore, false);
+                                GenericValue productStore = webSite.getRelatedOne(x.ProductStore, false);
                                 if (productStore != null) {
-                                    List<GenericValue> productStoreEmailSettings = productStore.getRelated(org.apache.ofbiz.persistence.entity.x.ProductStoreEmailSetting,
+                                    List<GenericValue> productStoreEmailSettings = productStore.getRelated(x.ProductStoreEmailSetting,
                                             UtilMisc.toMap("emailType", "CONT_EMAIL_TEMPLATE"), null, false);
                                     GenericValue productStoreEmailSetting = EntityUtil.getFirst(productStoreEmailSettings);
                                     if (productStoreEmailSetting != null) {
                                         // send e-mail using screen template
-                                        sendMailParams.put("bodyScreenUri", productStoreEmailSetting.getString(org.apache.ofbiz.persistence.entity.x.bodyScreenLocation));
+                                        sendMailParams.put("bodyScreenUri", productStoreEmailSetting.getString(x.bodyScreenLocation));
                                         sendMailParams.put("bodyParameters", bodyParameters);
                                         sendMailParams.remove("body");
                                         tmpResult = dispatcher.runSync("sendMailFromScreen", sendMailParams, 360, true);
@@ -567,7 +568,7 @@ public class CommunicationEventServices {
 
                         // If the e-mail does not be sent then send normal e-mail
                         if (UtilValidate.isEmpty(tmpResult)) {
-                            sendMailParams.put("body", communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.content));
+                            sendMailParams.put("body", communicationEvent.getString(x.content));
                             tmpResult = dispatcher.runSync("sendMail", sendMailParams, 360, true);
                             if (ServiceUtil.isError(tmpResult)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(tmpResult));
@@ -577,7 +578,7 @@ public class CommunicationEventServices {
                         if (tmpResult == null || ServiceUtil.isError(tmpResult)) {
                             if (tmpResult != null && ServiceUtil.getErrorMessage(tmpResult).startsWith("[ADDRERR]")) {
                                 // address error; mark the communication event as BOUNCED
-                                contactListCommStatusRecord.set(org.apache.ofbiz.persistence.entity.x.statusId, "COM_BOUNCED");
+                                contactListCommStatusRecord.set(x.statusId, "COM_BOUNCED");
                                 try {
                                     contactListCommStatusRecord.store();
                                 } catch (GenericEntityException e) {
@@ -586,9 +587,9 @@ public class CommunicationEventServices {
                                 }
                                 // deactivate from the contact list
                                 try {
-                                    GenericValue contactListParty = contactListPartyAndContactMech.getRelatedOne(org.apache.ofbiz.persistence.entity.x.ContactListParty, false);
+                                    GenericValue contactListParty = contactListPartyAndContactMech.getRelatedOne(x.ContactListParty, false);
                                     if (contactListParty != null) {
-                                        contactListParty.set(org.apache.ofbiz.persistence.entity.x.statusId, "CLPT_INVALID");
+                                        contactListParty.set(x.statusId, "CLPT_INVALID");
                                         contactListParty.store();
                                     }
                                 } catch (GenericEntityException e) {
@@ -611,18 +612,18 @@ public class CommunicationEventServices {
                             GenericValue thisCommEvent = EntityQuery.use(delegator).from("CommunicationEvent").where(
                                     "communicationEventId", thisCommEventId).queryOne();
                             if (thisCommEvent != null) {
-                                thisCommEvent.set(org.apache.ofbiz.persistence.entity.x.contactListId, contactListId);
-                                thisCommEvent.set(org.apache.ofbiz.persistence.entity.x.parentCommEventId, communicationEventId);
+                                thisCommEvent.set(x.contactListId, contactListId);
+                                thisCommEvent.set(x.parentCommEventId, communicationEventId);
                                 thisCommEvent.store();
                             }
                             String messageId = (String) tmpResult.get("messageId");
-                            contactListCommStatusRecord.set(org.apache.ofbiz.persistence.entity.x.messageId, messageId);
+                            contactListCommStatusRecord.set(x.messageId, messageId);
 
-                            if ("Y".equals(contactList.get(org.apache.ofbiz.persistence.entity.x.singleUse))) {
+                            if ("Y".equals(contactList.get(x.singleUse))) {
                                 // Expire the ContactListParty if the list is single use and sendEmail finishes successfully
                                 tmpResult = dispatcher.runSync("updateContactListParty", UtilMisc.toMap("contactListId",
-                                        lastContactListPartyACM.get(org.apache.ofbiz.persistence.entity.x.contactListId),
-                                        "partyId", partyId, "fromDate", lastContactListPartyACM.get(org.apache.ofbiz.persistence.entity.x.fromDate),
+                                        lastContactListPartyACM.get(x.contactListId),
+                                        "partyId", partyId, "fromDate", lastContactListPartyACM.get(x.fromDate),
                                         "thruDate", UtilDateTime.nowTimestamp(), "userLogin", userLogin));
                                 if (ServiceUtil.isError(tmpResult)) {
 
@@ -635,7 +636,7 @@ public class CommunicationEventServices {
                         }
 
                         // All is successful, so update the ContactListCommStatus record
-                        contactListCommStatusRecord.set(org.apache.ofbiz.persistence.entity.x.statusId, "COM_COMPLETE");
+                        contactListCommStatusRecord.set(x.statusId, "COM_COMPLETE");
                         delegator.store(contactListCommStatusRecord);
 
                         // Don't return a service error just because of failure for one address - just log the error and continue
@@ -658,18 +659,18 @@ public class CommunicationEventServices {
     public static Map<String, Object> setCommEventComplete(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String communicationEventId = (String) context.get(org.apache.ofbiz.persistence.entity.x.communicationEventId);
-        String partyIdFrom = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyIdFrom);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String communicationEventId = (String) context.get(x.communicationEventId);
+        String partyIdFrom = (String) context.get(x.partyIdFrom);
 
         try {
             GenericValue communicationEvent = EntityQuery.use(delegator).from("CommunicationEvent").where("communicationEventId",
                     communicationEventId).cache().queryOne();
             if (communicationEvent == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage("PartyUiLabels", "PartyCommunicationEventNotFound",
-                        UtilMisc.toMap("communicationEventId", communicationEventId), (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale)));
+                        UtilMisc.toMap("communicationEventId", communicationEventId), (Locale) context.get(x.locale)));
             }
-            Timestamp endDate = communicationEvent.getTimestamp(org.apache.ofbiz.persistence.entity.x.datetimeEnded);
+            Timestamp endDate = communicationEvent.getTimestamp(x.datetimeEnded);
             if (endDate == null) {
                 endDate = UtilDateTime.nowTimestamp();
             }
@@ -693,10 +694,10 @@ public class CommunicationEventServices {
     public static Map<String, Object> createCommEventFromFtpTransfer(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
 
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
-        String contactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechId);
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String contentId = (String) context.get(x.contentId);
+        String contactMechId = (String) context.get(x.contactMechId);
+        String partyId = (String) context.get(x.partyId);
         String communicationEventId;
 
         Timestamp now = UtilDateTime.nowTimestamp();
@@ -748,15 +749,15 @@ public class CommunicationEventServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
 
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String subject = (String) context.get(org.apache.ofbiz.persistence.entity.x.subject);
-        String sendFrom = (String) context.get(org.apache.ofbiz.persistence.entity.x.sendFrom);
-        String sendTo = (String) context.get(org.apache.ofbiz.persistence.entity.x.sendTo);
-        String partyId = (String) context.get(org.apache.ofbiz.persistence.entity.x.partyId);
-        String contentType = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentType);
-        String statusId = (String) context.get(org.apache.ofbiz.persistence.entity.x.statusId);
-        String orderId = (String) context.get(org.apache.ofbiz.persistence.entity.x.orderId);
-        String returnId = (String) context.get(org.apache.ofbiz.persistence.entity.x.returnId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String subject = (String) context.get(x.subject);
+        String sendFrom = (String) context.get(x.sendFrom);
+        String sendTo = (String) context.get(x.sendTo);
+        String partyId = (String) context.get(x.partyId);
+        String contentType = (String) context.get(x.contentType);
+        String statusId = (String) context.get(x.statusId);
+        String orderId = (String) context.get(x.orderId);
+        String returnId = (String) context.get(x.returnId);
         if (statusId == null) {
             statusId = "COM_PENDING";
         }
@@ -773,8 +774,8 @@ public class CommunicationEventServices {
             return ServiceUtil.returnError(e.getMessage());
         }
         if (fromCm != null) {
-            contactMechIdFrom = fromCm.getString(org.apache.ofbiz.persistence.entity.x.contactMechId);
-            partyIdFrom = fromCm.getString(org.apache.ofbiz.persistence.entity.x.partyId);
+            contactMechIdFrom = fromCm.getString(x.contactMechId);
+            partyIdFrom = fromCm.getString(x.partyId);
         }
 
         // get the to contact mech info
@@ -788,7 +789,7 @@ public class CommunicationEventServices {
             return ServiceUtil.returnError(e.getMessage());
         }
         if (toCm != null) {
-            contactMechIdTo = toCm.getString(org.apache.ofbiz.persistence.entity.x.contactMechId);
+            contactMechIdTo = toCm.getString(x.contactMechId);
         }
 
         Timestamp now = UtilDateTime.nowTimestamp();
@@ -843,9 +844,9 @@ public class CommunicationEventServices {
     public static Map<String, Object> updateCommEventAfterEmail(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
 
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        String communicationEventId = (String) context.get(org.apache.ofbiz.persistence.entity.x.communicationEventId);
-        MimeMessageWrapper wrapper = (MimeMessageWrapper) context.get(org.apache.ofbiz.persistence.entity.x.messageWrapper);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        String communicationEventId = (String) context.get(x.communicationEventId);
+        MimeMessageWrapper wrapper = (MimeMessageWrapper) context.get(x.messageWrapper);
 
         Map<String, Object> commEventMap = new HashMap<>();
         commEventMap.put("communicationEventId", communicationEventId);
@@ -905,10 +906,10 @@ public class CommunicationEventServices {
     public static Map<String, Object> storeIncomingEmail(DispatchContext dctx, Map<String, ? extends Object> context) {
         Delegator delegator = dctx.getDelegator();
         LocalDispatcher dispatcher = dctx.getDispatcher();
-        MimeMessageWrapper wrapper = (MimeMessageWrapper) context.get(org.apache.ofbiz.persistence.entity.x.messageWrapper);
+        MimeMessageWrapper wrapper = (MimeMessageWrapper) context.get(x.messageWrapper);
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Locale locale = (Locale) context.get(x.locale);
         String partyIdTo = null;
         String partyIdFrom = null;
         String communicationEventId = null;
@@ -996,7 +997,7 @@ public class CommunicationEventServices {
                 partyIdTo = (String) result.get("partyId");
                 contactMechIdTo = (String) result.get("contactMechId");
             }
-            if (userLogin.get(org.apache.ofbiz.persistence.entity.x.partyId) == null && partyIdTo != null) {
+            if (userLogin.get(x.partyId) == null && partyIdTo != null) {
                 int ch = 0;
                 for (ch = partyIdTo.length(); ch > 0 && Character.isDigit(partyIdTo.charAt(ch - 1)); ch--) {
                     Debug.log("Increase partyIdTo string to create a prefix", MODULE);
@@ -1062,8 +1063,8 @@ public class CommunicationEventServices {
                     Debug.logError(e, MODULE);
                 }
                 if (parentCommEvent != null) {
-                    String parentCommEventId = parentCommEvent.getString(org.apache.ofbiz.persistence.entity.x.communicationEventId);
-                    String orgCommEventId = parentCommEvent.getString(org.apache.ofbiz.persistence.entity.x.origCommEventId);
+                    String parentCommEventId = parentCommEvent.getString(x.communicationEventId);
+                    String orgCommEventId = parentCommEvent.getString(x.origCommEventId);
                     if (orgCommEventId == null) {
                         orgCommEventId = parentCommEventId;
                     }
@@ -1214,7 +1215,7 @@ public class CommunicationEventServices {
 
         List<String> attachmentNames = new ArrayList<>();
         for (GenericValue commEventContentAssoc : commEventContentAssocList) {
-            String dataResourceName = commEventContentAssoc.getString(org.apache.ofbiz.persistence.entity.x.drDataResourceName);
+            String dataResourceName = commEventContentAssoc.getString(x.drDataResourceName);
             attachmentNames.add(dataResourceName);
         }
 
@@ -1440,7 +1441,7 @@ public class CommunicationEventServices {
      */
     public static Map<String, Object> processBouncedMessage(DispatchContext dctx, Map<String, ? extends Object> context) {
         Debug.logInfo("Running process bounced message check...", MODULE);
-        MimeMessageWrapper wrapper = (MimeMessageWrapper) context.get(org.apache.ofbiz.persistence.entity.x.messageWrapper);
+        MimeMessageWrapper wrapper = (MimeMessageWrapper) context.get(x.messageWrapper);
 
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
@@ -1504,9 +1505,9 @@ public class CommunicationEventServices {
 
                             // update the communication event status
                             Map<String, Object> updateCtx = new HashMap<>();
-                            updateCtx.put("communicationEventId", value.getString(org.apache.ofbiz.persistence.entity.x.communicationEventId));
+                            updateCtx.put("communicationEventId", value.getString(x.communicationEventId));
                             updateCtx.put("statusId", "COM_BOUNCED");
-                            updateCtx.put("userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
+                            updateCtx.put("userLogin", context.get(x.userLogin));
                             Map<String, Object> result;
                             try {
                                 result = dispatcher.runSync("updateCommunicationEvent", updateCtx);
@@ -1538,12 +1539,12 @@ public class CommunicationEventServices {
                                 GenericValue value = values.get(0);
 
                                 Map<String, Object> updateCtx = new HashMap<>();
-                                updateCtx.put("communicationEventId", value.getString(org.apache.ofbiz.persistence.entity.x.communicationEventId));
-                                updateCtx.put("contactListId", value.getString(org.apache.ofbiz.persistence.entity.x.contactListId));
-                                updateCtx.put("contactMechId", value.getString(org.apache.ofbiz.persistence.entity.x.contactMechId));
-                                updateCtx.put("partyId", value.getString(org.apache.ofbiz.persistence.entity.x.partyId));
+                                updateCtx.put("communicationEventId", value.getString(x.communicationEventId));
+                                updateCtx.put("contactListId", value.getString(x.contactListId));
+                                updateCtx.put("contactMechId", value.getString(x.contactMechId));
+                                updateCtx.put("partyId", value.getString(x.partyId));
                                 updateCtx.put("statusId", "COM_BOUNCED");
-                                updateCtx.put("userLogin", context.get(org.apache.ofbiz.persistence.entity.x.userLogin));
+                                updateCtx.put("userLogin", context.get(x.userLogin));
                                 Map<String, Object> result;
                                 try {
                                     result = dispatcher.runSync("updateContactListCommStatus", updateCtx);
@@ -1571,7 +1572,7 @@ public class CommunicationEventServices {
     }
 
     public static Map<String, Object> logIncomingMessage(DispatchContext dctx, Map<String, ? extends Object> context) {
-        MimeMessageWrapper wrapper = (MimeMessageWrapper) context.get(org.apache.ofbiz.persistence.entity.x.messageWrapper);
+        MimeMessageWrapper wrapper = (MimeMessageWrapper) context.get(x.messageWrapper);
         Debug.logInfo("Message recevied         : " + wrapper.getSubject(), MODULE);
         Debug.logInfo("-- Content Type          : " + wrapper.getContentType(), MODULE);
         Debug.logInfo("-- Number of parts       : " + wrapper.getMainPartCount(), MODULE);
@@ -1629,7 +1630,7 @@ public class CommunicationEventServices {
             LocalDispatcher dispatcher = (LocalDispatcher) request.getAttribute("dispatcher");
             try {
                 dispatcher.runAsync("setCommEventRoleToRead", UtilMisc.toMap("communicationEventId", communicationEventId,
-                        "partyId", communicationEvent.getString(org.apache.ofbiz.persistence.entity.x.partyIdTo)));
+                        "partyId", communicationEvent.getString(x.partyIdTo)));
             } catch (GenericServiceException e) {
                 Debug.logError(e, MODULE);
             }

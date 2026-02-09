@@ -38,6 +38,7 @@ import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Generic Script Service Engine. This service engine uses the javax.script package (JSR-223) to invoke scripts or script functions.
  * <p>The script service engine will put the following artifacts in the script engine's bindings:</p>
@@ -77,9 +78,9 @@ public final class ScriptEngine extends GenericAsyncEngine {
         params.putAll(context);
         context.put(ScriptUtil.PARAMETERS_KEY, params);
         DispatchContext dctx = getDispatcher().getLocalContext(localName);
-        context.put(org.apache.ofbiz.persistence.entity.x.dctx, dctx);
-        context.put(org.apache.ofbiz.persistence.entity.x.dispatcher, dctx.getDispatcher());
-        context.put(org.apache.ofbiz.persistence.entity.x.delegator, getDispatcher().getDelegator());
+        context.put(x.dctx, dctx);
+        context.put(x.dispatcher, dctx.getDispatcher());
+        context.put(x.delegator, getDispatcher().getDelegator());
         try {
             ScriptContext scriptContext = ScriptUtil.createScriptContext(context, PROTECTED_KEYS);
             Object resultObj = ScriptUtil.executeScript(getLocation(modelService), modelService.getInvoke(), scriptContext, null);

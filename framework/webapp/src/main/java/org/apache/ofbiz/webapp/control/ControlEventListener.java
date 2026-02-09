@@ -40,6 +40,7 @@ import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.security.CsrfUtil;
 import org.apache.ofbiz.widget.model.ScriptLinkHelper;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * HttpSessionListener that gathers and tracks various information and statistics
  */
@@ -86,9 +87,9 @@ public class ControlEventListener implements HttpSessionListener {
             GenericValue visit = (GenericValue) session.getAttribute("visit");
             if (visit != null) {
                 Delegator delegator = visit.getDelegator();
-                visit = EntityQuery.use(delegator).from("Visit").where("visitId", visit.get(org.apache.ofbiz.persistence.entity.x.visitId)).queryOne();
+                visit = EntityQuery.use(delegator).from("Visit").where("visitId", visit.get(x.visitId)).queryOne();
                 if (visit != null) {
-                    visit.set(org.apache.ofbiz.persistence.entity.x.thruDate, new Timestamp(session.getLastAccessedTime()));
+                    visit.set(x.thruDate, new Timestamp(session.getLastAccessedTime()));
                     visit.store();
                 }
             } else {
@@ -101,15 +102,15 @@ public class ControlEventListener implements HttpSessionListener {
             GenericValue userLogin = (GenericValue) session.getAttribute("userLogin");
             if (userLogin != null && userLoginSessionString != null) {
                 GenericValue userLoginSession = null;
-                userLoginSession = userLogin.getRelatedOne(org.apache.ofbiz.persistence.entity.x.UserLoginSession, false);
+                userLoginSession = userLogin.getRelatedOne(x.UserLoginSession, false);
 
                 if (userLoginSession == null) {
                     userLoginSession = userLogin.getDelegator().makeValue("UserLoginSession",
-                            UtilMisc.toMap("userLoginId", userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId)));
+                            UtilMisc.toMap("userLoginId", userLogin.getString(x.userLoginId)));
                     userLogin.getDelegator().create(userLoginSession);
                 }
-                userLoginSession.set(org.apache.ofbiz.persistence.entity.x.savedDate, UtilDateTime.nowTimestamp());
-                userLoginSession.set(org.apache.ofbiz.persistence.entity.x.sessionData, userLoginSessionString);
+                userLoginSession.set(x.savedDate, UtilDateTime.nowTimestamp());
+                userLoginSession.set(x.sessionData, userLoginSessionString);
                 userLoginSession.store();
             }
 
@@ -154,18 +155,18 @@ public class ControlEventListener implements HttpSessionListener {
             Debug.logInfo("** note : this session has been counted as destroyed.", MODULE);
             Debug.logInfo("--------------------------------------------------------------------", MODULE);
             if (visit != null) {
-                Debug.logInfo("Visit ID       : " + visit.getString(org.apache.ofbiz.persistence.entity.x.visitId), MODULE);
-                Debug.logInfo("Party ID       : " + visit.getString(org.apache.ofbiz.persistence.entity.x.partyId), MODULE);
-                Debug.logInfo("Client IP      : " + visit.getString(org.apache.ofbiz.persistence.entity.x.clientIpAddress), MODULE);
-                Debug.logInfo("Client Host    : " + visit.getString(org.apache.ofbiz.persistence.entity.x.clientHostName), MODULE);
-                Debug.logInfo("Client User    : " + visit.getString(org.apache.ofbiz.persistence.entity.x.clientUser), MODULE);
-                Debug.logInfo("WebApp         : " + visit.getString(org.apache.ofbiz.persistence.entity.x.webappName), MODULE);
-                Debug.logInfo("Locale         : " + visit.getString(org.apache.ofbiz.persistence.entity.x.initialLocale), MODULE);
-                Debug.logInfo("UserAgent      : " + visit.getString(org.apache.ofbiz.persistence.entity.x.initialUserAgent), MODULE);
-                Debug.logInfo("Referrer       : " + visit.getString(org.apache.ofbiz.persistence.entity.x.initialReferrer), MODULE);
-                Debug.logInfo("Initial Req    : " + visit.getString(org.apache.ofbiz.persistence.entity.x.initialRequest), MODULE);
-                Debug.logInfo("Visit From     : " + visit.getString(org.apache.ofbiz.persistence.entity.x.fromDate), MODULE);
-                Debug.logInfo("Visit Thru     : " + visit.getString(org.apache.ofbiz.persistence.entity.x.thruDate), MODULE);
+                Debug.logInfo("Visit ID       : " + visit.getString(x.visitId), MODULE);
+                Debug.logInfo("Party ID       : " + visit.getString(x.partyId), MODULE);
+                Debug.logInfo("Client IP      : " + visit.getString(x.clientIpAddress), MODULE);
+                Debug.logInfo("Client Host    : " + visit.getString(x.clientHostName), MODULE);
+                Debug.logInfo("Client User    : " + visit.getString(x.clientUser), MODULE);
+                Debug.logInfo("WebApp         : " + visit.getString(x.webappName), MODULE);
+                Debug.logInfo("Locale         : " + visit.getString(x.initialLocale), MODULE);
+                Debug.logInfo("UserAgent      : " + visit.getString(x.initialUserAgent), MODULE);
+                Debug.logInfo("Referrer       : " + visit.getString(x.initialReferrer), MODULE);
+                Debug.logInfo("Initial Req    : " + visit.getString(x.initialRequest), MODULE);
+                Debug.logInfo("Visit From     : " + visit.getString(x.fromDate), MODULE);
+                Debug.logInfo("Visit Thru     : " + visit.getString(x.thruDate), MODULE);
             }
             Debug.logInfo("--------------------------------------------------------------------", MODULE);
             Debug.logInfo("--- Start Session Attributes: ---", MODULE);

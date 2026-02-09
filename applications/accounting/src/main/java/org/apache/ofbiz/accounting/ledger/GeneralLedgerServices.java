@@ -31,6 +31,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class GeneralLedgerServices {
 
     private static final String MODULE = GeneralLedgerServices.class.getName();
@@ -38,9 +39,9 @@ public class GeneralLedgerServices {
     public static Map<String, Object> createUpdateCostCenter(DispatchContext dctx, Map<String, ? extends Object> context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Map<String, Object> createGlAcctCatMemFromCostCentersMap = null;
-        String glAccountId = (String) context.get(org.apache.ofbiz.persistence.entity.x.glAccountId);
-        GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
-        Map<String, String> amountPercentageMap = UtilGenerics.cast(context.get(org.apache.ofbiz.persistence.entity.x.amountPercentageMap));
+        String glAccountId = (String) context.get(x.glAccountId);
+        GenericValue userLogin = (GenericValue) context.get(x.userLogin);
+        Map<String, String> amountPercentageMap = UtilGenerics.cast(context.get(x.amountPercentageMap));
         BigDecimal totalAmountPercentage = GeneralLedgerServices.calculateCostCenterTotal(amountPercentageMap);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         for (Map.Entry<String, String> rowEntry : amountPercentageMap.entrySet()) {

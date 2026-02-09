@@ -63,6 +63,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 
 
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * The global service dispatcher. This is the "engine" part of the Service Engine.
  */
@@ -377,7 +378,7 @@ public final class ServiceDispatcher {
                     isError = ServiceUtil.isError(result);
 
                     context = checkAuth(localName, context, modelService);
-                    GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+                    GenericValue userLogin = (GenericValue) context.get(x.userLogin);
 
 
                     if (modelService.isAuth() && userLogin == null && !modelService.getName().equals("SetTimeZoneFromBrowser")) {
@@ -387,8 +388,8 @@ public final class ServiceDispatcher {
                     }
 
                     // now that we have authed, if there is a userLogin, set the EE userIdentifier
-                    if (userLogin != null && userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId) != null) {
-                        GenericDelegator.pushUserIdentifier(userLogin.getString(org.apache.ofbiz.persistence.entity.x.userLoginId));
+                    if (userLogin != null && userLogin.getString(x.userLoginId) != null) {
+                        GenericDelegator.pushUserIdentifier(userLogin.getString(x.userLoginId));
                     }
 
                     // pre-validate ECA
@@ -737,7 +738,7 @@ public final class ServiceDispatcher {
                 }
 
                 context = checkAuth(localName, context, service);
-                Object userLogin = context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+                Object userLogin = context.get(x.userLogin);
 
                 if (service.isAuth() && userLogin == null && !service.getName().equals("SetTimeZoneFromBrowser")) {
                     throw new ServiceAuthException("User authorization is required for this service: " + service.getName() + service.debugInfo());
@@ -916,7 +917,7 @@ public final class ServiceDispatcher {
     private Map<String, Object> checkAuth(String localName, Map<String, Object> context, ModelService origService)
             throws ServiceAuthException, GenericServiceException {
         String service = null;
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Locale locale = (Locale) context.get(x.locale);
         try {
             service = ServiceConfigUtil.getServiceEngine().getAuthorization().getServiceName();
         } catch (GenericConfigException e) {
@@ -931,21 +932,21 @@ public final class ServiceDispatcher {
             return context;
         }
 
-        if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.login_username))) {
+        if (UtilValidate.isNotEmpty(context.get(x.login_username))) {
             // check for a username/password, if there log the user in and make the userLogin object
-            String username = (String) context.get(org.apache.ofbiz.persistence.entity.x.login_username);
+            String username = (String) context.get(x.login_username);
 
-            if (UtilValidate.isNotEmpty(context.get(org.apache.ofbiz.persistence.entity.x.login_password))) {
-                String password = (String) context.get(org.apache.ofbiz.persistence.entity.x.login_password);
-                context.put(org.apache.ofbiz.persistence.entity.x.userLogin, getLoginObject(service, localName, username, password, null, locale));
+            if (UtilValidate.isNotEmpty(context.get(x.login_password))) {
+                String password = (String) context.get(x.login_password);
+                context.put(x.userLogin, getLoginObject(service, localName, username, password, null, locale));
                 context.remove("login.password");
             } else {
-                context.put(org.apache.ofbiz.persistence.entity.x.userLogin, getLoginObject(service, localName, username, null, (String) context.get(org.apache.ofbiz.persistence.entity.x.login_token), locale));
+                context.put(x.userLogin, getLoginObject(service, localName, username, null, (String) context.get(x.login_token), locale));
             }
             context.remove("login.username");
         } else {
             // if a userLogin object is there, make sure the given username/password exists in our local database
-            GenericValue userLogin = (GenericValue) context.get(org.apache.ofbiz.persistence.entity.x.userLogin);
+            GenericValue userLogin = (GenericValue) context.get(x.userLogin);
 
             if (userLogin != null) {
                 // Because of encrypted passwords we can't just pass in the encrypted version of the password from the data, so we'll do something
@@ -955,7 +956,7 @@ public final class ServiceDispatcher {
                 // userLogin.getString("currentPassword"), (Locale) context.get("locale"));
                 GenericValue newUserLogin = null;
                 try {
-                    newUserLogin = this.getDelegator().findOne("UserLogin", true, "userLoginId", userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId));
+                    newUserLogin = this.getDelegator().findOne("UserLogin", true, "userLoginId", userLogin.get(x.userLoginId));
                 } catch (GenericEntityException e) {
                     Debug.logError(e, "Error looking up service authentication UserLogin: " + e.toString(), MODULE);
                     // leave newUserLogin null, will be handled below
@@ -964,13 +965,13 @@ public final class ServiceDispatcher {
                 if (newUserLogin == null) {
                     // uh oh, couldn't validate that one...
                     // we'll have to remove it from the incoming context which will cause an auth error later if auth is required
-                    Debug.logInfo("Service auth failed for userLoginId [" + userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId) + "] because UserLogin record not found.",
+                    Debug.logInfo("Service auth failed for userLoginId [" + userLogin.get(x.userLoginId) + "] because UserLogin record not found.",
                             MODULE);
                     context.remove("userLogin");
-                } else if (newUserLogin.getString(org.apache.ofbiz.persistence.entity.x.currentPassword) != null && !newUserLogin.getString(org.apache.ofbiz.persistence.entity.x.currentPassword)
-                        .equals(userLogin.getString(org.apache.ofbiz.persistence.entity.x.currentPassword))) {
+                } else if (newUserLogin.getString(x.currentPassword) != null && !newUserLogin.getString(x.currentPassword)
+                        .equals(userLogin.getString(x.currentPassword))) {
                     // passwords didn't match, remove the userLogin for failed auth
-                    Debug.logInfo("Service auth failed for userLoginId [" + userLogin.get(org.apache.ofbiz.persistence.entity.x.userLoginId) + "] because UserLogin record"
+                    Debug.logInfo("Service auth failed for userLoginId [" + userLogin.get(x.userLoginId) + "] because UserLogin record"
                             + "currentPassword fields did not match; note that the UserLogin object passed into a service may need to have the"
                             + "currentPassword encrypted.", MODULE);
                     context.remove("userLogin");
@@ -1021,7 +1022,7 @@ public final class ServiceDispatcher {
 
     // checks the locale object in the context
     private static Locale checkLocale(Map<String, Object> context) {
-        Object locale = context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        Object locale = context.get(x.locale);
         Locale newLocale = null;
 
         if (locale != null) {
@@ -1036,7 +1037,7 @@ public final class ServiceDispatcher {
         if (newLocale == null) {
             newLocale = Locale.getDefault();
         }
-        context.put(org.apache.ofbiz.persistence.entity.x.locale, newLocale);
+        context.put(x.locale, newLocale);
         return newLocale;
     }
 

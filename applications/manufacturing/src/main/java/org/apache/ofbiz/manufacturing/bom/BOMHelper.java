@@ -34,6 +34,7 @@ import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * Helper class containing static method useful when dealing
  * with product's bills of materials.
@@ -77,7 +78,7 @@ public final class BOMHelper {
         int depth = 0;
         for (GenericValue oneNode : productNodesList) {
             depth = 0;
-            depth = getMaxDepth(oneNode.getString(org.apache.ofbiz.persistence.entity.x.productId), bomType, inDate, delegator);
+            depth = getMaxDepth(oneNode.getString(x.productId), bomType, inDate, delegator);
             depth++;
             if (depth > maxDepth) {
                 maxDepth = depth;
@@ -123,11 +124,11 @@ public final class BOMHelper {
         GenericValue duplicatedNode = null;
         for (GenericValue oneNode : productNodesList) {
             for (String idKey : productIdKeys) {
-                if (oneNode.getString(org.apache.ofbiz.persistence.entity.x.productId).equals(idKey)) {
+                if (oneNode.getString(x.productId).equals(idKey)) {
                     return oneNode;
                 }
             }
-            duplicatedNode = searchDuplicatedAncestor(oneNode.getString(org.apache.ofbiz.persistence.entity.x.productId), productIdKey, productIdKeys, bomType, inDate, delegator,
+            duplicatedNode = searchDuplicatedAncestor(oneNode.getString(x.productId), productIdKey, productIdKeys, bomType, inDate, delegator,
                     dispatcher, userLogin);
             if (duplicatedNode != null) {
                 break;
@@ -148,22 +149,22 @@ public final class BOMHelper {
             List<GenericValue> shipmentPlans = EntityQuery.use(delegator).from("OrderShipment")
                     .where("shipmentId", shipmentId).queryList();
             for (GenericValue shipmentPlan : shipmentPlans) {
-                GenericValue orderItem = shipmentPlan.getRelatedOne(org.apache.ofbiz.persistence.entity.x.OrderItem, false);
+                GenericValue orderItem = shipmentPlan.getRelatedOne(x.OrderItem, false);
 
                 List<GenericValue> productionRuns = EntityQuery.use(delegator).from("WorkOrderItemFulfillment")
-                        .where("orderId", shipmentPlan.get(org.apache.ofbiz.persistence.entity.x.orderId),
-                                "orderItemSeqId", shipmentPlan.get(org.apache.ofbiz.persistence.entity.x.orderItemSeqId),
-                                "shipGroupSeqId", shipmentPlan.get(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId))
+                        .where("orderId", shipmentPlan.get(x.orderId),
+                                "orderItemSeqId", shipmentPlan.get(x.orderItemSeqId),
+                                "shipGroupSeqId", shipmentPlan.get(x.shipGroupSeqId))
                         .cache().queryList();
                 if (UtilValidate.isNotEmpty(productionRuns)) {
-                    Debug.logError("Production Run for order item (" + orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderId) + "/"
-                            + orderItem.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId) + ") not created.", MODULE);
+                    Debug.logError("Production Run for order item (" + orderItem.getString(x.orderId) + "/"
+                            + orderItem.getString(x.orderItemSeqId) + ") not created.", MODULE);
                     continue;
                 }
                 Map<String, Object> result = dispatcher.runSync("createProductionRunsForOrder", UtilMisc.<String, Object>toMap("quantity",
-                        shipmentPlan.getBigDecimal(org.apache.ofbiz.persistence.entity.x.quantity), "orderId",
-                        shipmentPlan.getString(org.apache.ofbiz.persistence.entity.x.orderId), "orderItemSeqId", shipmentPlan.getString(org.apache.ofbiz.persistence.entity.x.orderItemSeqId), "shipGroupSeqId",
-                        shipmentPlan.getString(org.apache.ofbiz.persistence.entity.x.shipGroupSeqId), "shipmentId",
+                        shipmentPlan.getBigDecimal(x.quantity), "orderId",
+                        shipmentPlan.getString(x.orderId), "orderItemSeqId", shipmentPlan.getString(x.orderItemSeqId), "shipGroupSeqId",
+                        shipmentPlan.getString(x.shipGroupSeqId), "shipmentId",
                         shipmentId, "userLogin", userLogin));
                 if (ServiceUtil.isError(result)) {
                     String errorMessage = ServiceUtil.getErrorMessage(result);

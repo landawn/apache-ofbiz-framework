@@ -36,6 +36,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * OFBIZ CDyne Services: for info see http://www.cdyne.com/developers/overview.aspx
  */
@@ -52,8 +53,8 @@ public class CdyneServices {
      *@return Map with the result of the service, the output parameters
      */
     public static Map<String, Object> cdyneReturnCityState(DispatchContext dctx, Map<String, ?> context) {
-        String zipcode = (String) context.get(org.apache.ofbiz.persistence.entity.x.zipcode);
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
+        String zipcode = (String) context.get(x.zipcode);
+        Locale locale = (Locale) context.get(x.locale);
         String serviceUrl = "http://ws.cdyne.com/psaddress/addresslookup.asmx/ReturnCityState?zipcode=" + zipcode + "&LicenseKey=" + LICENSE_KEY;
         try {
             String httpResponse = HttpClient.getUrlContent(serviceUrl);

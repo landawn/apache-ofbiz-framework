@@ -52,6 +52,7 @@ import org.apache.ofbiz.entity.util.EntityListIterator;
 import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 
+import org.apache.ofbiz.persistence.entity.x;
 public class ContentSearch {
 
     private static final String MODULE = ContentSearch.class.getName();
@@ -80,7 +81,7 @@ public class ContentSearch {
         try {
             List<GenericValue> contentAssocList = EntityQuery.use(delegator).from("ContentAssoc").where("contentId", contentId).cache().queryList();
             for (GenericValue contentAssoc: contentAssocList) {
-                String subContentId = contentAssoc.getString(org.apache.ofbiz.persistence.entity.x.contentIdTo);
+                String subContentId = contentAssoc.getString(x.contentIdTo);
                 if (contentIdSet.contains(subContentId)) {
                     // if this category has already been traversed, no use doing it again; this will also avoid infinite loops
                     continue;
@@ -98,7 +99,7 @@ public class ContentSearch {
                     .where("ownerContentId", contentId)
                     .cache().queryList();
             for (GenericValue childContent: childContentList) {
-                String subContentId = childContent.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+                String subContentId = childContent.getString(x.contentId);
                 if (contentIdSet.contains(subContentId)) {
                     // if this category has already been traversed, no use doing it again; this will also avoid infinite loops
                     continue;
@@ -395,11 +396,11 @@ public class ContentSearch {
 
                 Set<String> contentIdSet = new HashSet<>();
 
-                contentIds.add(searchResult.getString(org.apache.ofbiz.persistence.entity.x.contentId));
-                contentIdSet.add(searchResult.getString(org.apache.ofbiz.persistence.entity.x.contentId));
+                contentIds.add(searchResult.getString(x.contentId));
+                contentIdSet.add(searchResult.getString(x.contentId));
 
                 while (((searchResult = eli.next()) != null) && (maxResults == null || numRetreived < maxResults)) {
-                    String contentId = searchResult.getString(org.apache.ofbiz.persistence.entity.x.contentId);
+                    String contentId = searchResult.getString(x.contentId);
                     if (!contentIdSet.contains(contentId)) {
                         contentIds.add(contentId);
                         contentIdSet.add(contentId);
@@ -446,21 +447,21 @@ public class ContentSearch {
                     GenericValue contentSearchResult = delegator.makeValue("ContentSearchResult");
                     String contentSearchResultId = delegator.getNextSeqId("ContentSearchResult");
 
-                    contentSearchResult.set(org.apache.ofbiz.persistence.entity.x.contentSearchResultId, contentSearchResultId);
-                    contentSearchResult.set(org.apache.ofbiz.persistence.entity.x.visitId, this.visitId);
+                    contentSearchResult.set(x.contentSearchResultId, contentSearchResultId);
+                    contentSearchResult.set(x.visitId, this.visitId);
                     if (this.resultSortOrder != null) {
-                        contentSearchResult.set(org.apache.ofbiz.persistence.entity.x.orderByName, this.resultSortOrder.getOrderName());
-                        contentSearchResult.set(org.apache.ofbiz.persistence.entity.x.isAscending, this.resultSortOrder.isAscending() ? "Y" : "N");
+                        contentSearchResult.set(x.orderByName, this.resultSortOrder.getOrderName());
+                        contentSearchResult.set(x.isAscending, this.resultSortOrder.isAscending() ? "Y" : "N");
                     }
-                    contentSearchResult.set(org.apache.ofbiz.persistence.entity.x.numResults, numResults);
-                    contentSearchResult.set(org.apache.ofbiz.persistence.entity.x.secondsTotal, secondsTotal);
-                    contentSearchResult.set(org.apache.ofbiz.persistence.entity.x.searchDate, nowTimestamp);
+                    contentSearchResult.set(x.numResults, numResults);
+                    contentSearchResult.set(x.secondsTotal, secondsTotal);
+                    contentSearchResult.set(x.searchDate, nowTimestamp);
                     contentSearchResult.create();
 
                     int seqId = 1;
                     for (GenericValue contentSearchConstraint: contentSearchConstraintList) {
-                        contentSearchConstraint.set(org.apache.ofbiz.persistence.entity.x.contentSearchResultId, contentSearchResultId);
-                        contentSearchConstraint.set(org.apache.ofbiz.persistence.entity.x.constraintSeqId, Integer.toString(seqId));
+                        contentSearchConstraint.set(x.contentSearchResultId, contentSearchResultId);
+                        contentSearchConstraint.set(x.constraintSeqId, Integer.toString(seqId));
                         contentSearchConstraint.create();
                         seqId++;
                     }
@@ -594,7 +595,7 @@ public class ContentSearch {
             StringBuilder ppBuf = new StringBuilder();
             ppBuf.append(UtilProperties.getMessage(RESOURCE, "ContentAssoc", locale) + ": ");
             if (content != null) {
-                ppBuf.append(content.getString(org.apache.ofbiz.persistence.entity.x.contentName));
+                ppBuf.append(content.getString(x.contentName));
             }
             if (content == null || detailed) {
                 ppBuf.append(" [");
@@ -603,7 +604,7 @@ public class ContentSearch {
             }
             if (UtilValidate.isNotEmpty(this.contentAssocTypeId)) {
                 if (contentAssocType != null) {
-                    ppBuf.append(contentAssocType.getString(org.apache.ofbiz.persistence.entity.x.description));
+                    ppBuf.append(contentAssocType.getString(x.description));
                 }
                 if (contentAssocType == null || detailed) {
                     ppBuf.append(" [");

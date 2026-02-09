@@ -40,6 +40,7 @@ import java.util.Locale;
 import java.util.Map;
 
 
+import org.apache.ofbiz.persistence.entity.x;
 /**
  * FtpServices class
  * This class provide Ftp transfer services for content
@@ -68,10 +69,10 @@ public class FtpServices {
 
     public static Map<String, Object> sendContentToFtp(DispatchContext dctx, Map<String, Object> context) {
         Delegator delegator = dctx.getDelegator();
-        Locale locale = (Locale) context.get(org.apache.ofbiz.persistence.entity.x.locale);
-        String contactMechId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contactMechId);
-        String contentId = (String) context.get(org.apache.ofbiz.persistence.entity.x.contentId);
-        String communicationEventId = (String) context.get(org.apache.ofbiz.persistence.entity.x.communicationEventId);
+        Locale locale = (Locale) context.get(x.locale);
+        String contactMechId = (String) context.get(x.contactMechId);
+        String contentId = (String) context.get(x.contentId);
+        String communicationEventId = (String) context.get(x.communicationEventId);
         boolean forceTransferControlSuccess = EntityUtilProperties.propertyValueEqualsIgnoreCase("ftp",
                 "ftp.force.transfer.control", "Y", delegator);
         boolean ftpNotificationEnabled = EntityUtilProperties.propertyValueEqualsIgnoreCase("ftp",
@@ -89,7 +90,7 @@ public class FtpServices {
             //Retrieve and check contactMechType
             GenericValue contactMech = EntityQuery.use(delegator).from("ContactMech").where("contactMechId", contactMechId).cache().queryOne();
             GenericValue ftpAddress = EntityQuery.use(delegator).from("FtpAddress").where("contactMechId", contactMechId).cache().queryOne();
-            if (null == contactMech || null == ftpAddress || !"FTP_ADDRESS".equals(contactMech.getString(org.apache.ofbiz.persistence.entity.x.contactMechTypeId))) {
+            if (null == contactMech || null == ftpAddress || !"FTP_ADDRESS".equals(contactMech.getString(x.contactMechTypeId))) {
                 String errMsg = UtilProperties.getMessage("ContentErrorUiLabels", "ftpservices.contact_mech_must_be_ftp", locale);
                 return ServiceUtil.returnError(errMsg + " " + contactMechId);
             }
@@ -115,7 +116,7 @@ public class FtpServices {
                 ftpAddress.put("zipFile", UtilProperties.getPropertyValue("ftp", "ftp.notifications.redirectTo.zipFile"));
             }
 
-            String hostname = ftpAddress.getString(org.apache.ofbiz.persistence.entity.x.hostname);
+            String hostname = ftpAddress.getString(x.hostname);
             if (UtilValidate.isEmpty(hostname)) {
                 return ServiceUtil.returnError("Ftp destination server is null");
             } else if (hostname.indexOf("://") == -1) {
@@ -130,35 +131,35 @@ public class FtpServices {
                 return ServiceUtil.returnError("Server type : " + serverType + ", not supported for hostname " + hostname);
             }
 
-            Long defaultTimeout = ftpAddress.getLong(org.apache.ofbiz.persistence.entity.x.defaultTimeout);
-            Long port = ftpAddress.getLong(org.apache.ofbiz.persistence.entity.x.port);
-            String username = ftpAddress.getString(org.apache.ofbiz.persistence.entity.x.username);
-            String password = ftpAddress.getString(org.apache.ofbiz.persistence.entity.x.ftpPassword);
+            Long defaultTimeout = ftpAddress.getLong(x.defaultTimeout);
+            Long port = ftpAddress.getLong(x.port);
+            String username = ftpAddress.getString(x.username);
+            String password = ftpAddress.getString(x.ftpPassword);
 
             if (Debug.infoOn()) {
-                Debug.logInfo("connecting to: " + username + "@" + ftpAddress.getString(org.apache.ofbiz.persistence.entity.x.hostname) + ":" + port, MODULE);
+                Debug.logInfo("connecting to: " + username + "@" + ftpAddress.getString(x.hostname) + ":" + port, MODULE);
             }
             ftpClient.connect(hostname, username, password, port, defaultTimeout);
-            boolean binary = "Y".equalsIgnoreCase(ftpAddress.getString(org.apache.ofbiz.persistence.entity.x.binaryTransfer));
+            boolean binary = "Y".equalsIgnoreCase(ftpAddress.getString(x.binaryTransfer));
             ftpClient.setBinaryTransfer(binary);
-            boolean passive = "Y".equalsIgnoreCase(ftpAddress.getString(org.apache.ofbiz.persistence.entity.x.passiveMode));
+            boolean passive = "Y".equalsIgnoreCase(ftpAddress.getString(x.passiveMode));
             ftpClient.setPassiveMode(passive);
 
-            GenericValue dataResource = delegator.findOne("DataResource", true, "dataResourceId", content.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId));
+            GenericValue dataResource = delegator.findOne("DataResource", true, "dataResourceId", content.getString(x.dataResourceId));
             Map<String, Object> resultStream = DataResourceWorker.getDataResourceStream(dataResource, null, null, locale, null, true);
             InputStream contentStream = (InputStream) resultStream.get("stream");
             if (contentStream == null) {
-                return ServiceUtil.returnError("DataResource " + content.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId) + " return an empty stream");
+                return ServiceUtil.returnError("DataResource " + content.getString(x.dataResourceId) + " return an empty stream");
             }
 
-            String path = ftpAddress.getString(org.apache.ofbiz.persistence.entity.x.filePath);
+            String path = ftpAddress.getString(x.filePath);
             if (Debug.infoOn()) {
                 Debug.logInfo("storing local file remotely as: " + (UtilValidate.isNotEmpty(path) ? path + "/" : "")
-                        + content.getString(org.apache.ofbiz.persistence.entity.x.contentName), MODULE);
+                        + content.getString(x.contentName), MODULE);
             }
-            String fileName = content.getString(org.apache.ofbiz.persistence.entity.x.contentName);
+            String fileName = content.getString(x.contentName);
             String remoteFileName = fileName;
-            boolean zipFile = "Y".equalsIgnoreCase(ftpAddress.getString(org.apache.ofbiz.persistence.entity.x.zipFile));
+            boolean zipFile = "Y".equalsIgnoreCase(ftpAddress.getString(x.zipFile));
             if (zipFile) {
                 //Create zip file from content input stream
                 ByteArrayInputStream zipStream = FileUtil.zipFileStream(contentStream, fileName);
@@ -191,10 +192,10 @@ public class FtpServices {
                 }
 
                 if (fileNames == null || !fileNames.contains(remoteFileName)) {
-                    return ServiceUtil.returnError("DataResource " + content.getString(org.apache.ofbiz.persistence.entity.x.dataResourceId) + " return an empty stream");
+                    return ServiceUtil.returnError("DataResource " + content.getString(x.dataResourceId) + " return an empty stream");
                 }
                 if (Debug.infoOn()) {
-                    Debug.logInfo(" Ok the file " + content.getString(org.apache.ofbiz.persistence.entity.x.contentName) + " is present", MODULE);
+                    Debug.logInfo(" Ok the file " + content.getString(x.contentName) + " is present", MODULE);
                 }
             }
         } catch (GeneralException | IOException e) {
