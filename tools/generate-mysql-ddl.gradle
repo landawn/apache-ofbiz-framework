@@ -1,0 +1,361 @@
+import groovy.xml.XmlSlurper
+import java.nio.charset.StandardCharsets
+import java.util.Locale
+import javax.xml.stream.XMLInputFactory
+import javax.xml.stream.XMLStreamConstants
+import javax.xml.stream.XMLStreamException
+
+tasks.register('generateMysqlDdlFromEntityDefs') {
+    group = 'build'
+    description = 'Generate deterministic MySQL DDL from OFBiz entity definition XML files'
+    def outputFile = file("${rootDir}/docs/mysql_table.sql")
+    outputs.file(outputFile)
+
+    doLast {
+        def normalizedPath = { File file -> rootDir.toPath().relativize(file.toPath()).toString().replace('\\', '/') }
+        def toDb = { String name ->
+            if (name == null) return null
+            if (name.isEmpty()) return ''
+            def sb = new StringBuilder().append(Character.toUpperCase(name.charAt(0)))
+            for (int i = 1; i < name.length(); i++) {
+                char ch = name.charAt(i)
+                if (Character.isUpperCase(ch)) sb.append('_')
+                sb.append(Character.toUpperCase(ch))
+            }
+            sb.toString()
+        }
+        def locS = { Map loc -> "${loc.file}:${loc.line} <${loc.element}>" }
+        def fail = { String msg, Map loc -> throw new GradleException("${msg} @ ${locS(loc)}") }
+        def boolAttr = { String raw, boolean dft, Map loc, String attr ->
+            if (raw == null || raw.trim().isEmpty()) return dft
+            def v = raw.trim().toLowerCase(Locale.ROOT)
+            if (v == 'true') return true
+            if (v == 'false') return false
+            fail("Invalid boolean '${raw}' for '${attr}'", loc)
+        }
+        def q = { String id -> '`' + id.replace('`', '``') + '`' }
+        def idCheck = { String id, Map loc, String kind ->
+            if (id == null || id.trim().isEmpty()) fail("Empty ${kind} name", loc)
+            if (id.length() > 64) fail("${kind} '${id}' exceeds MySQL identifier length 64", loc)
+        }
+
+        def fTypes = [:] as LinkedHashMap<String, String>
+        new XmlSlurper(false, false).parse(file("${rootDir}/framework/entity/fieldtype/fieldtypemysql.xml")).'field-type-def'.each { n ->
+            def t = n.@type?.text()?.trim()
+            def s = n.@'sql-type'?.text()?.trim()
+            if (t) fTypes[t] = s
+        }
+
+        def entities = [:] as LinkedHashMap<String, Map>
+        def exts = [] as List<Map>
+        def fac = XMLInputFactory.newFactory()
+        if (fac.isPropertySupported(XMLInputFactory.SUPPORT_DTD)) fac.setProperty(XMLInputFactory.SUPPORT_DTD, false)
+        if (fac.isPropertySupported(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES)) {
+            fac.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false)
+        }
+
+        def files = fileTree(rootDir) {
+            include '**/entitydef/*.xml'
+            include '**/entitydef/**/*.xml'
+        }.files.findAll { it.isFile() }.sort { normalizedPath(it) }
+
+        files.each { File xmlFile ->
+            def relPath = normalizedPath(xmlFile)
+            InputStream is = null
+            def r = null
+            try {
+                is = new BufferedInputStream(new FileInputStream(xmlFile))
+                r = fac.createXMLStreamReader(is)
+                def a = { String n ->
+                    for (int i = 0; i < r.attributeCount; i++) if (r.getAttributeLocalName(i) == n) return r.getAttributeValue(i)
+                    null
+                }
+                boolean rootDone = false
+                boolean inModel = false
+                int ignore = 0
+                Map ce = null
+                Map cx = null
+                Map cr = null
+                Map crOwner = null
+                Map ci = null
+                Map ciOwner = null
+                while (r.hasNext()) {
+                    int ev = r.next()
+                    if (ev == XMLStreamConstants.START_ELEMENT) {
+                        def ln = r.localName
+                        def loc = [file: relPath, line: Math.max(1, r.location?.lineNumber ?: 1), element: ln] as LinkedHashMap
+                        if (!rootDone) {
+                            rootDone = true
+                            inModel = (ln == 'entitymodel')
+                            if (!inModel) break
+                            continue
+                        }
+                        if (!inModel) continue
+                        if (ignore > 0) { ignore++; continue }
+                        if (ln == 'view-entity') { ignore = 1; continue }
+
+                        if (ln == 'entity') {
+                            def en = a('entity-name')?.trim()
+                            if (!en) fail("Missing entity-name", loc)
+                            ce = [
+                                entityName: en,
+                                tableName: (a('table-name')?.trim() ?: toDb(en)),
+                                redefinition: boolAttr(a('redefinition'), false, loc, 'redefinition'),
+                                location: loc,
+                                fields: [] as List<Map>, fieldByName: [:] as LinkedHashMap<String, Map>,
+                                pkFields: [] as List<String>, relations: [] as List<Map>, indexes: [] as List<Map>
+                            ] as LinkedHashMap
+                            continue
+                        }
+                        if (ln == 'extend-entity') {
+                            def en = a('entity-name')?.trim()
+                            if (!en) fail("Missing extend-entity entity-name", loc)
+                            cx = [entityName: en, location: loc, fields: [] as List<Map>, fieldByName: [:] as LinkedHashMap<String, Map>,
+                                  relations: [] as List<Map>, indexes: [] as List<Map>] as LinkedHashMap
+                            continue
+                        }
+                        if (ln == 'field') {
+                            if (ce == null && cx == null) continue
+                            def fn = a('name')?.trim()
+                            def ft = a('type')?.trim()
+                            if (!fn) fail("Missing field name", loc)
+                            if (!ft) fail("Missing field type for '${fn}'", loc)
+                            def f = [name: fn, type: ft, colName: (a('col-name')?.trim() ?: toDb(fn)),
+                                     notNull: boolAttr(a('not-null'), false, loc, 'not-null'), location: loc] as LinkedHashMap
+                            def owner = ce != null ? ce : cx
+                            if (owner.fieldByName.containsKey(fn)) fail("Duplicate field '${fn}'", loc)
+                            owner.fields << f
+                            owner.fieldByName[fn] = f
+                            continue
+                        }
+                        if (ln == 'prim-key') {
+                            if (ce == null) continue
+                            def pk = a('field')?.trim()
+                            if (!pk) fail("Missing prim-key field", loc)
+                            if (ce.pkFields.contains(pk)) fail("Duplicate primary key field '${pk}'", loc)
+                            ce.pkFields << pk
+                            continue
+                        }
+                        if (ln == 'relation') {
+                            def owner = ce != null ? ce : cx
+                            if (owner == null) continue
+                            def rt = a('type')?.trim()
+                            def rn = a('rel-entity-name')?.trim()
+                            if (!(rt in ['one', 'many', 'one-nofk'])) fail("Unsupported relation type '${rt}'", loc)
+                            if (!rn) fail("Missing rel-entity-name", loc)
+                            cr = [type: rt, relEntityName: rn, title: a('title')?.trim() ?: '', fkName: a('fk-name')?.trim() ?: '',
+                                  keyMaps: [] as List<Map>, location: loc] as LinkedHashMap
+                            crOwner = owner
+                            continue
+                        }
+                        if (ln == 'key-map') {
+                            if (cr == null) continue
+                            def fn = a('field-name')?.trim()
+                            if (!fn) fail("Missing key-map field-name", loc)
+                            cr.keyMaps << ([fieldName: fn, relFieldName: (a('rel-field-name')?.trim() ?: fn), location: loc] as LinkedHashMap)
+                            continue
+                        }
+                        if (ln == 'index') {
+                            def owner = ce != null ? ce : cx
+                            if (owner == null) continue
+                            def nm = a('name')?.trim()
+                            if (!nm) fail("Missing index name", loc)
+                            ci = [name: nm, unique: boolAttr(a('unique'), false, loc, 'unique'),
+                                  fields: [] as List<Map>, location: loc] as LinkedHashMap
+                            ciOwner = owner
+                            continue
+                        }
+                        if (ln == 'index-field') {
+                            if (ci == null) continue
+                            def fn = a('name')?.trim()
+                            if (!fn) fail("Missing index-field name", loc)
+                            def fx = a('function')?.trim()
+                            if (fx) {
+                                fx = fx.toUpperCase(Locale.ROOT)
+                                if (!(fx in ['LOWER', 'UPPER'])) fail("Unsupported index function '${fx}'", loc)
+                            }
+                            ci.fields << ([name: fn, function: fx, location: loc] as LinkedHashMap)
+                            continue
+                        }
+                    }
+                    if (ev == XMLStreamConstants.END_ELEMENT) {
+                        def ln = r.localName
+                        if (ignore > 0) { ignore--; continue }
+                        if (ln == 'relation' && cr != null) {
+                            if (cr.keyMaps.isEmpty()) fail("Relation to '${cr.relEntityName}' has no key-map", cr.location as Map)
+                            crOwner.relations << cr
+                            cr = null
+                            crOwner = null
+                            continue
+                        }
+                        if (ln == 'index' && ci != null) {
+                            if (ci.fields.isEmpty()) fail("Index '${ci.name}' has no index-field", ci.location as Map)
+                            ciOwner.indexes << ci
+                            ci = null
+                            ciOwner = null
+                            continue
+                        }
+                        if (ln == 'entity' && ce != null) {
+                            def old = entities[ce.entityName]
+                            if (old != null && !ce.redefinition) fail("Duplicate entity '${ce.entityName}' without redefinition='true'", ce.location as Map)
+                            entities[ce.entityName] = ce
+                            ce = null
+                            continue
+                        }
+                        if (ln == 'extend-entity' && cx != null) {
+                            exts << cx
+                            cx = null
+                            continue
+                        }
+                    }
+                }
+            } catch (XMLStreamException e) {
+                def line = Math.max(1, e.location?.lineNumber ?: 1)
+                def col = Math.max(1, e.location?.columnNumber ?: 1)
+                throw new GradleException("Invalid XML in ${relPath}:${line}:${col}: ${e.message}", e)
+            } finally {
+                if (r != null) try { r.close() } catch (Exception ignored) {}
+                if (is != null) try { is.close() } catch (Exception ignored) {}
+            }
+        }
+
+        exts.each { Map ex ->
+            def t = entities[ex.entityName]
+            if (t == null) fail("extend-entity references unknown entity '${ex.entityName}'", ex.location as Map)
+            ex.fields.each { Map ef ->
+                def old = t.fieldByName[ef.name]
+                if (old != null) {
+                    def over = [name: old.name, type: ef.type, colName: ef.colName, notNull: old.notNull, location: ef.location] as LinkedHashMap
+                    def idx = t.fields.findIndexOf { it.name == old.name }
+                    t.fields[idx] = over
+                    t.fieldByName[old.name] = over
+                } else {
+                    t.fields << ef
+                    t.fieldByName[ef.name] = ef
+                }
+            }
+            t.relations.addAll(ex.relations as List<Map>)
+            t.indexes.addAll(ex.indexes as List<Map>)
+        }
+
+        def all = entities.values().toList().sort { a, b -> (a.tableName <=> b.tableName) ?: (a.entityName <=> b.entityName) }
+        def tableOwners = [:] as LinkedHashMap<String, Map>
+        all.each { Map e ->
+            idCheck(e.tableName as String, e.location as Map, 'Table')
+            def prev = tableOwners[e.tableName]
+            if (prev != null && prev.entityName != e.entityName) {
+                fail("Ambiguous table '${e.tableName}' shared by '${prev.entityName}' and '${e.entityName}'", e.location as Map)
+            }
+            tableOwners[e.tableName] = e
+        }
+
+        def tables = [] as List<String>
+        def indexes = [] as List<Map>
+        def fks = [] as List<Map>
+        def fkOwners = [:] as LinkedHashMap<String, Map>
+
+        all.each { Map e ->
+            if ((e.fields as List).isEmpty()) fail("Entity '${e.entityName}' has no fields", e.location as Map)
+
+            def colOwners = [:] as LinkedHashMap<String, Map>
+            e.fields.each { Map f ->
+                idCheck(f.colName as String, f.location as Map, 'Column')
+                def prev = colOwners[f.colName]
+                if (prev != null && prev.name != f.name) {
+                    fail("Ambiguous column '${f.colName}' shared by '${prev.name}' and '${f.name}' in '${e.entityName}'", f.location as Map)
+                }
+                colOwners[f.colName] = f
+            }
+
+            def pkSet = [] as LinkedHashSet<String>
+            (e.pkFields as List<String>).each { String pk ->
+                if (!e.fieldByName.containsKey(pk)) fail("Primary key field '${pk}' missing in '${e.entityName}'", e.location as Map)
+                pkSet.add(pk)
+            }
+
+            def defs = [] as List<String>
+            e.fields.each { Map f ->
+                def st = fTypes[f.type]
+                if (!st) fail("Unknown OFBiz field type '${f.type}' for '${e.entityName}.${f.name}'", f.location as Map)
+                defs << "  ${q(f.colName as String)} ${st}${((f.notNull as boolean) || pkSet.contains(f.name as String)) ? ' NOT NULL' : ''}"
+            }
+            if (!pkSet.isEmpty()) {
+                def pkCols = (e.pkFields as List<String>).collect { String pk ->
+                    q((e.fieldByName[pk] as Map).colName as String)
+                }
+                defs << "  PRIMARY KEY (${pkCols.join(', ')})"
+            }
+            tables << "CREATE TABLE ${q(e.tableName as String)} (\n${defs.join(",\n")}\n);"
+
+            def idxNames = [:] as LinkedHashMap<String, Map>
+            (e.indexes as List<Map>).sort { a, b ->
+                (a.name <=> b.name) ?: ((a.location.file as String) <=> (b.location.file as String)) ?: ((a.location.line as int) <=> (b.location.line as int))
+            }.each { Map idx ->
+                idCheck(idx.name as String, idx.location as Map, 'Index')
+                if (idxNames.containsKey(idx.name)) fail("Duplicate index '${idx.name}' in '${e.entityName}'", idx.location as Map)
+                idxNames[idx.name] = idx
+                def cols = [] as List<String>
+                (idx.fields as List<Map>).each { Map k ->
+                    def ef = e.fieldByName[k.name]
+                    if (ef == null) fail("Index '${idx.name}' references missing field '${k.name}' in '${e.entityName}'", k.location as Map)
+                    def c = q((ef as Map).colName as String)
+                    cols << (k.function ? "((${k.function}(${c})))" : c)
+                }
+                indexes << ([tableName: e.tableName, indexName: idx.name,
+                             sql: "CREATE ${(idx.unique as boolean) ? 'UNIQUE ' : ''}INDEX ${q(idx.name as String)} ON ${q(e.tableName as String)} (${cols.join(', ')});"] as LinkedHashMap)
+            }
+
+            (e.relations as List<Map>).findAll { it.type == 'one' }.sort { a, b ->
+                def ak = (a.fkName as String)?.trim()
+                def bk = (b.fkName as String)?.trim()
+                ak = ak ? ak : ((a.title as String) + (a.relEntityName as String)).toUpperCase(Locale.ROOT)
+                bk = bk ? bk : ((b.title as String) + (b.relEntityName as String)).toUpperCase(Locale.ROOT)
+                (ak <=> bk) ?: ((a.relEntityName as String) <=> (b.relEntityName as String))
+            }.each { Map rel ->
+                def re = entities[rel.relEntityName]
+                if (re == null) fail("Relation references unknown entity '${rel.relEntityName}'", rel.location as Map)
+                def fk = (rel.fkName as String)?.trim()
+                if (!fk) fk = ((rel.title as String) + (rel.relEntityName as String)).toUpperCase(Locale.ROOT)
+                idCheck(fk, rel.location as Map, 'Foreign key constraint')
+                if (fkOwners.containsKey(fk)) {
+                    fail("Duplicate foreign key constraint '${fk}' (already at ${locS((fkOwners[fk] as Map).location as Map)})", rel.location as Map)
+                }
+                fkOwners[fk] = rel
+                def src = [] as List<String>
+                def dst = [] as List<String>
+                (rel.keyMaps as List<Map>).each { Map km ->
+                    def sf = e.fieldByName[km.fieldName]
+                    if (sf == null) fail("Relation key-map references missing field '${km.fieldName}' in '${e.entityName}'", km.location as Map)
+                    def tf = re.fieldByName[km.relFieldName]
+                    if (tf == null) fail("Relation key-map references missing related field '${km.relFieldName}' in '${re.entityName}'", km.location as Map)
+                    src << q((sf as Map).colName as String)
+                    dst << q((tf as Map).colName as String)
+                }
+                fks << ([tableName: e.tableName, fkName: fk,
+                         sql: "ALTER TABLE ${q(e.tableName as String)} ADD CONSTRAINT ${q(fk)} FOREIGN KEY (${src.join(', ')}) REFERENCES ${q(re.tableName as String)} (${dst.join(', ')});"] as LinkedHashMap)
+            }
+        }
+
+        indexes.sort { a, b -> (a.tableName <=> b.tableName) ?: (a.indexName <=> b.indexName) }
+        fks.sort { a, b -> (a.tableName <=> b.tableName) ?: (a.fkName <=> b.fkName) }
+
+        def out = [] as List<String>
+        out << '-- Generated from OFBiz entity definitions under **/entitydef/**/*.xml'
+        out << '-- Deterministic ordering: tables, indexes, and foreign keys sorted by name'
+        out << ''
+        out.addAll(tables)
+        if (!indexes.isEmpty()) {
+            out << ''
+            out << '-- Declared indexes'
+            indexes.each { out << (it.sql as String) }
+        }
+        if (!fks.isEmpty()) {
+            out << ''
+            out << '-- Foreign keys from relation type=\"one\"'
+            fks.each { out << (it.sql as String) }
+        }
+        outputFile.parentFile.mkdirs()
+        outputFile.setText(out.join('\n') + '\n', StandardCharsets.UTF_8.name())
+        logger.lifecycle("Generated MySQL DDL for ${all.size()} entities at ${normalizedPath(outputFile)}")
+    }
+}

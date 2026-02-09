@@ -1,0 +1,364 @@
+import java.nio.charset.StandardCharsets
+import java.util.Locale
+
+def generatedDdlJavaDir = file("${buildDir}/generated/sources/mysql-ddl/main/java")
+
+tasks.register('generateAbacusPersistenceFromMysqlDdl') {
+    group = 'build'
+    description = 'Generate Lombok entity classes and abacus-jdbc DAO interfaces from docs/mysql_ddl.sql'
+    inputs.file(file("${rootDir}/docs/mysql_ddl.sql"))
+    outputs.dir(generatedDdlJavaDir)
+
+    doLast {
+        def ddlFile = file("${rootDir}/docs/mysql_ddl.sql")
+        if (!ddlFile.exists()) {
+            throw new GradleException("DDL file not found: ${ddlFile}")
+        }
+
+        def sqlText = ddlFile.getText(StandardCharsets.UTF_8.name()).replace('\r\n', '\n')
+
+        def javaKeywords = [
+                'abstract', 'assert', 'boolean', 'break', 'byte', 'case', 'catch', 'char', 'class', 'const',
+                'continue', 'default', 'do', 'double', 'else', 'enum', 'extends', 'final', 'finally', 'float',
+                'for', 'goto', 'if', 'implements', 'import', 'instanceof', 'int', 'interface', 'long', 'native',
+                'new', 'package', 'private', 'protected', 'public', 'return', 'short', 'static', 'strictfp',
+                'super', 'switch', 'synchronized', 'this', 'throw', 'throws', 'transient', 'try', 'void',
+                'volatile', 'while'
+        ] as Set
+
+        def splitTopLevel = { String text, Object separator ->
+            char sep = (separator instanceof Character) ? (separator as char) : separator.toString().charAt(0)
+            def parts = []
+            def sb = new StringBuilder()
+            int parenDepth = 0
+            boolean inSingleQuote = false
+            boolean inDoubleQuote = false
+            boolean inBacktick = false
+            char prev = '\u0000'
+
+            for (int i = 0; i < text.length(); i++) {
+                char ch = text.charAt(i)
+                if (ch == '\'' && !inDoubleQuote && !inBacktick && prev != '\\') {
+                    inSingleQuote = !inSingleQuote
+                } else if (ch == '"' && !inSingleQuote && !inBacktick && prev != '\\') {
+                    inDoubleQuote = !inDoubleQuote
+                } else if (ch == '`' && !inSingleQuote && !inDoubleQuote) {
+                    inBacktick = !inBacktick
+                } else if (!inSingleQuote && !inDoubleQuote && !inBacktick) {
+                    if (ch == '(') {
+                        parenDepth++
+                    } else if (ch == ')') {
+                        parenDepth = Math.max(0, parenDepth - 1)
+                    } else if (ch == sep && parenDepth == 0) {
+                        parts << sb.toString()
+                        sb.setLength(0)
+                        prev = ch
+                        continue
+                    }
+                }
+                sb.append(ch)
+                prev = ch
+            }
+
+            parts << sb.toString()
+            parts
+        }
+
+        def dbToClassName = { String dbName ->
+            def tokens = dbName.toLowerCase(Locale.ROOT).split('_').findAll { it }
+            tokens.collect { token -> token[0].toUpperCase() + token.substring(1) }.join('')
+        }
+
+        def dbToFieldName = { String dbName ->
+            def tokens = dbName.toLowerCase(Locale.ROOT).split('_').findAll { it }
+            if (tokens.isEmpty()) {
+                return 'field'
+            }
+            def head = tokens[0]
+            def tail = tokens.drop(1).collect { token -> token[0].toUpperCase() + token.substring(1) }.join('')
+            def candidate = head + tail
+            if (javaKeywords.contains(candidate)) {
+                return "${candidate}_"
+            }
+            candidate
+        }
+
+        def sanitizeIdentifier = { String name, String fallback ->
+            if (!name) {
+                return fallback
+            }
+            def cleaned = name.replaceAll(/[^A-Za-z0-9_]/, '_')
+            if (!(cleaned[0] in (('a'..'z') + ('A'..'Z') + ['_']))) {
+                cleaned = "_${cleaned}"
+            }
+            if (javaKeywords.contains(cleaned)) {
+                cleaned = "${cleaned}_"
+            }
+            cleaned
+        }
+
+        def parseColumnType = { String typeDef, String tableName, String columnName ->
+            def normalized = typeDef.trim().toUpperCase(Locale.ROOT)
+            def base = normalized.split(/\s+/)[0]
+            if (base.contains('(')) {
+                base = base.substring(0, base.indexOf('('))
+            }
+
+            switch (base) {
+                case ['CHAR', 'VARCHAR', 'TEXT', 'TINYTEXT', 'MEDIUMTEXT', 'LONGTEXT', 'ENUM', 'SET', 'JSON']:
+                    return 'String'
+                case ['INTEGER', 'INT', 'MEDIUMINT', 'SMALLINT', 'TINYINT']:
+                    return 'Integer'
+                case 'BIGINT':
+                    return 'Long'
+                case ['DECIMAL', 'NUMERIC']:
+                    return 'java.math.BigDecimal'
+                case 'FLOAT':
+                    return 'Float'
+                case ['DOUBLE', 'REAL']:
+                    return 'Double'
+                case 'DATE':
+                    return 'java.sql.Date'
+                case 'TIME':
+                    return 'java.sql.Time'
+                case ['DATETIME', 'TIMESTAMP']:
+                    return 'java.sql.Timestamp'
+                case ['BLOB', 'LONGBLOB', 'MEDIUMBLOB', 'TINYBLOB', 'BINARY', 'VARBINARY']:
+                    return 'byte[]'
+                case 'BIT':
+                    return 'Boolean'
+                default:
+                    throw new GradleException("Unsupported SQL type '${typeDef}' for ${tableName}.${columnName} in ${ddlFile}")
+            }
+        }
+
+        def parseTypePart = { String rest ->
+            def keywords = ['NOT', 'NULL', 'DEFAULT', 'PRIMARY', 'UNIQUE', 'KEY', 'COMMENT', 'AUTO_INCREMENT',
+                            'CHARACTER', 'COLLATE', 'REFERENCES', 'CONSTRAINT', 'CHECK', 'ON', 'UPDATE']
+            def sb = new StringBuilder()
+            int parenDepth = 0
+            def tokens = rest.trim().split(/\s+/)
+            for (int i = 0; i < tokens.length; i++) {
+                def token = tokens[i]
+                def tokenUpper = token.toUpperCase(Locale.ROOT)
+                if (parenDepth == 0 && keywords.contains(tokenUpper)) {
+                    break
+                }
+                if (sb.length() > 0) {
+                    sb.append(' ')
+                }
+                sb.append(token)
+                token.each { ch ->
+                    if (ch == '(') parenDepth++
+                    if (ch == ')') parenDepth = Math.max(0, parenDepth - 1)
+                }
+            }
+            sb.toString().trim()
+        }
+
+        def tablePattern = ~/(?is)CREATE\s+TABLE\s+`?([A-Za-z0-9_]+)`?\s*\((.*?)\)\s*;/
+        def matcher = tablePattern.matcher(sqlText)
+        def tables = []
+
+        while (matcher.find()) {
+            def tableName = matcher.group(1)
+            def body = matcher.group(2)
+            def items = splitTopLevel(body, ',')
+
+            def columns = []
+            def pkColumns = [] as LinkedHashSet<String>
+
+            items.each { rawItem ->
+                def item = rawItem.trim()
+                if (!item) {
+                    return
+                }
+
+                def upper = item.toUpperCase(Locale.ROOT)
+                if (upper.startsWith('PRIMARY KEY')) {
+                    def openIdx = item.indexOf('(')
+                    def closeIdx = item.lastIndexOf(')')
+                    if (openIdx > 0 && closeIdx > openIdx) {
+                        def pkInner = item.substring(openIdx + 1, closeIdx)
+                        splitTopLevel(pkInner, ',').each { pkColRaw ->
+                            def pkCol = pkColRaw.trim().replace('`', '')
+                            if (pkCol) {
+                                pkColumns << pkCol
+                            }
+                        }
+                    }
+                    return
+                }
+
+                if (upper.startsWith('CONSTRAINT') || upper.startsWith('UNIQUE KEY') || upper.startsWith('UNIQUE INDEX')
+                        || upper.startsWith('KEY ') || upper.startsWith('INDEX ') || upper.startsWith('FOREIGN KEY')) {
+                    return
+                }
+
+                String columnName
+                String rest
+                if (item.startsWith('`')) {
+                    def secondTick = item.indexOf('`', 1)
+                    if (secondTick < 0) {
+                        throw new GradleException("Invalid column definition in ${ddlFile}: ${item}")
+                    }
+                    columnName = item.substring(1, secondTick)
+                    rest = item.substring(secondTick + 1).trim()
+                } else {
+                    def firstSpace = item.indexOf(' ')
+                    if (firstSpace < 0) {
+                        throw new GradleException("Invalid column definition in ${ddlFile}: ${item}")
+                    }
+                    columnName = item.substring(0, firstSpace).trim()
+                    rest = item.substring(firstSpace + 1).trim()
+                }
+
+                def typeDef = parseTypePart(rest)
+                if (!typeDef) {
+                    throw new GradleException("Missing SQL type for ${tableName}.${columnName} in ${ddlFile}")
+                }
+
+                def javaType = parseColumnType(typeDef, tableName, columnName)
+                def notNull = rest.toUpperCase(Locale.ROOT).contains(' NOT NULL')
+                columns << [
+                        columnName: columnName,
+                        typeDef   : typeDef,
+                        javaType  : javaType,
+                        notNull   : notNull
+                ]
+            }
+
+            if (!columns.isEmpty()) {
+                tables << [tableName: tableName, columns: columns, pkColumns: pkColumns]
+            }
+        }
+
+        if (tables.isEmpty()) {
+            throw new GradleException("No CREATE TABLE statements found in ${ddlFile}")
+        }
+
+        tables.sort { a, b -> (a.tableName <=> b.tableName) }
+
+        delete(generatedDdlJavaDir)
+        generatedDdlJavaDir.mkdirs()
+
+        def entityPackageName = 'org.apache.ofbiz.persistence.entity'
+        def daoPackageName = 'org.apache.ofbiz.persistence.dao'
+
+        int entityCount = 0
+        int daoCount = 0
+
+        tables.each { table ->
+            def baseName = sanitizeIdentifier(dbToClassName(table.tableName as String), 'GeneratedEntity')
+            def entityClassName = "${baseName}Entity"
+            def daoClassName = "${baseName}Dao"
+
+            def usedFieldNames = [] as LinkedHashSet<String>
+            def fields = []
+            table.columns.each { col ->
+                def rawFieldName = dbToFieldName(col.columnName as String)
+                def fieldName = sanitizeIdentifier(rawFieldName, 'field')
+                if (usedFieldNames.contains(fieldName)) {
+                    int suffix = 2
+                    while (usedFieldNames.contains("${fieldName}${suffix}")) {
+                        suffix++
+                    }
+                    fieldName = "${fieldName}${suffix}"
+                }
+                usedFieldNames << fieldName
+                fields << [
+                        columnName: col.columnName,
+                        fieldName : fieldName,
+                        javaType  : col.javaType,
+                        isPk      : table.pkColumns.contains(col.columnName as String)
+                ]
+            }
+
+            def entityImports = new TreeSet<String>()
+            entityImports.add('com.landawn.abacus.annotation.Column')
+            entityImports.add('com.landawn.abacus.annotation.Entity')
+            entityImports.add('com.landawn.abacus.annotation.Id')
+            entityImports.add('com.landawn.abacus.annotation.Table')
+            entityImports.add('lombok.AllArgsConstructor')
+            entityImports.add('lombok.Builder')
+            entityImports.add('lombok.Data')
+            entityImports.add('lombok.NoArgsConstructor')
+
+            fields.each { field ->
+                def typeName = field.javaType as String
+                if (typeName.contains('.') && !typeName.startsWith('java.lang.')) {
+                    entityImports.add(typeName)
+                }
+            }
+
+            def simpleTypeName = { String canonical ->
+                if (canonical.endsWith('[]')) {
+                    return canonical
+                }
+                if (canonical.contains('.')) {
+                    return canonical.substring(canonical.lastIndexOf('.') + 1)
+                }
+                canonical
+            }
+
+            def entityLines = []
+            entityLines << "package ${entityPackageName};"
+            entityLines << ''
+            entityImports.each { entityLines << "import ${it};" }
+            entityLines << ''
+            entityLines << '@Data'
+            entityLines << '@Builder(toBuilder = true)'
+            entityLines << '@NoArgsConstructor'
+            entityLines << '@AllArgsConstructor'
+            entityLines << "@Entity(name = \"${table.tableName}\")"
+            entityLines << "@Table(name = \"${table.tableName}\")"
+            entityLines << "public class ${entityClassName} {"
+            fields.each { field ->
+                if (field.isPk as boolean) {
+                    entityLines << '    @Id'
+                }
+                entityLines << "    @Column(name = \"${field.columnName}\")"
+                entityLines << "    private ${simpleTypeName(field.javaType as String)} ${field.fieldName};"
+                entityLines << ''
+            }
+            if (entityLines.last() == '') {
+                entityLines.remove(entityLines.size() - 1)
+            }
+            entityLines << '}'
+            entityLines << ''
+
+            def entityFile = new File(generatedDdlJavaDir, "${entityPackageName.replace('.', '/')}/${entityClassName}.java")
+            entityFile.parentFile.mkdirs()
+            entityFile.setText(entityLines.join(System.lineSeparator()), StandardCharsets.UTF_8.name())
+            entityCount++
+
+            String idType
+            def pkFields = fields.findAll { it.isPk as boolean }
+            if (pkFields.size() == 1) {
+                idType = simpleTypeName(pkFields[0].javaType as String)
+            } else if (pkFields.size() > 1) {
+                idType = entityClassName
+            } else {
+                idType = 'Object'
+            }
+
+            def daoLines = []
+            daoLines << "package ${daoPackageName};"
+            daoLines << ''
+            daoLines << 'import com.landawn.abacus.jdbc.dao.CrudDao;'
+            daoLines << 'import com.landawn.abacus.query.SQLBuilder;'
+            daoLines << "import ${entityPackageName}.${entityClassName};"
+            daoLines << ''
+            daoLines << "public interface ${daoClassName} extends CrudDao<${entityClassName}, ${idType}, SQLBuilder.PSC, ${daoClassName}> {"
+            daoLines << '}'
+            daoLines << ''
+
+            def daoFile = new File(generatedDdlJavaDir, "${daoPackageName.replace('.', '/')}/${daoClassName}.java")
+            daoFile.parentFile.mkdirs()
+            daoFile.setText(daoLines.join(System.lineSeparator()), StandardCharsets.UTF_8.name())
+            daoCount++
+        }
+
+        logger.lifecycle("Generated ${entityCount} Lombok entities and ${daoCount} DAO interfaces from ${ddlFile} into ${generatedDdlJavaDir}")
+    }
+}

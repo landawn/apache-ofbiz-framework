@@ -260,3 +260,4 @@ tasks.matching { it.name == 'checkstyleMain' }.configureEach {
 }
 
 apply from: "${rootDir}/tools/generate-mysql-ddl.gradle"
+apply from: "${rootDir}/tools/generate-persistence-from-mysql-ddl.gradle"
