@@ -4,5 +4,7 @@ References and examples:
 	Abacus-jdbc APIs: ./docs/abacus-jdbc
 
 Sample DAO implementations:
+	C:\Users\haiyangl\Landawn\abacus-jdbc
 	C:\Users\haiyangl\Landawn\abacus-jdbc\samples
 	C:\Users\haiyangl\Landawn\abacus-jdbc\src\test\java
+	C:\Users\haiyangl\Landawn\abacus-core

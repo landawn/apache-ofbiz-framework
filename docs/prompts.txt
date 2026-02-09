@@ -32,6 +32,7 @@ Reference documentation and samples:
 - For abacus-common APIs, refer to: ./docs/abacus-common
 - For abacus-jdbc APIs, refer to: ./docs/abacus-jdbc
 - Reference DAO implementations can be found at:
+    - C:\Users\haiyangl\Landawn\abacus-jdbc
     - C:\Users\haiyangl\Landawn\abacus-jdbc\samples
     - C:\Users\haiyangl\Landawn\abacus-jdbc\src\test\java
 

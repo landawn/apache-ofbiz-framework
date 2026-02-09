@@ -252,6 +252,7 @@ tasks.register('generateAbacusPersistenceFromMysqlDdl') {
 
         int entityCount = 0
         int daoCount = 0
+        def generatedEntityClassNames = [] as List<String>
 
         tables.each { table ->
             def baseName = sanitizeIdentifier(dbToClassName(table.tableName as String), 'GeneratedEntity')
@@ -336,6 +337,7 @@ tasks.register('generateAbacusPersistenceFromMysqlDdl') {
             entityFile.parentFile.mkdirs()
             entityFile.setText(entityLines.join(System.lineSeparator()), StandardCharsets.UTF_8.name())
             entityCount++
+            generatedEntityClassNames << "${entityPackageName}.${entityClassName}"
 
             String idType
             def pkFields = fields.findAll { it.isPk as boolean }
@@ -362,6 +364,140 @@ tasks.register('generateAbacusPersistenceFromMysqlDdl') {
             daoFile.parentFile.mkdirs()
             daoFile.setText(daoLines.join(System.lineSeparator()), StandardCharsets.UTF_8.name())
             daoCount++
+        }
+
+        // Generate consolidated property/field constant table class `x` by calling:
+        // CodeGenerationUtil.generatePropNameTableClasses(allEntityClasses, "x")
+        def javaCompiler = javax.tools.ToolProvider.getSystemJavaCompiler()
+        if (javaCompiler == null) {
+            throw new GradleException("JDK compiler is not available (ToolProvider.getSystemJavaCompiler() returned null)")
+        }
+
+        def tempClassDir = file("${buildDir}/generated/tmp/mysql-ddl-entity-classes")
+        delete(tempClassDir)
+        tempClassDir.mkdirs()
+
+        def minimalClasspathFiles = sourceSets.main.compileClasspath.files.findAll { cpFile ->
+            def name = cpFile.name.toLowerCase(Locale.ROOT)
+            name.contains('abacus-common') || name.contains('lombok')
+        }.toSet()
+
+        if (minimalClasspathFiles.isEmpty()) {
+            throw new GradleException("Required compile dependencies not found for abacus-common/lombok in main compileClasspath")
+        }
+
+        def entityJavaFiles = fileTree(entityOutputDir) { include '**/*.java' }.files.sort { it.path }
+        if (!entityJavaFiles.isEmpty()) {
+            def compileClasspath = minimalClasspathFiles.collect { it.absolutePath }.join(File.pathSeparator)
+            def lombokProcessorPath = minimalClasspathFiles.findAll { cpFile ->
+                cpFile.name.toLowerCase(Locale.ROOT).contains('lombok')
+            }.collect { it.absolutePath }.join(File.pathSeparator)
+
+            def fileManager = javaCompiler.getStandardFileManager(null, Locale.ROOT, StandardCharsets.UTF_8)
+            try {
+                def compilationUnits = fileManager.getJavaFileObjectsFromFiles(entityJavaFiles)
+                def options = ['-d', tempClassDir.absolutePath]
+                if (compileClasspath) {
+                    options.addAll(['-classpath', compileClasspath])
+                }
+                if (lombokProcessorPath) {
+                    options.addAll(['-processorpath', lombokProcessorPath])
+                }
+
+                def task = javaCompiler.getTask(null, fileManager, null, options, null, compilationUnits)
+                if (!(task.call() as boolean)) {
+                    throw new GradleException("Failed to compile generated entity sources for property table generation")
+                }
+            } finally {
+                fileManager.close()
+            }
+        }
+
+        def classListFile = file("${buildDir}/generated/tmp/mysql-ddl-propname-entities.txt")
+        classListFile.parentFile.mkdirs()
+        classListFile.setText(generatedEntityClassNames.join(System.lineSeparator()) + System.lineSeparator(), StandardCharsets.UTF_8.name())
+
+        def runnerSrcDir = file("${buildDir}/generated/tmp/mysql-ddl-propname-runner-src")
+        def runnerClassDir = file("${buildDir}/generated/tmp/mysql-ddl-propname-runner-classes")
+        delete(runnerSrcDir)
+        delete(runnerClassDir)
+        runnerSrcDir.mkdirs()
+        runnerClassDir.mkdirs()
+
+        def runnerClassName = 'org.apache.ofbiz.persistence.codegen.PropNameTableGeneratorRunner'
+        def runnerJavaFile = new File(runnerSrcDir, 'org/apache/ofbiz/persistence/codegen/PropNameTableGeneratorRunner.java')
+        runnerJavaFile.parentFile.mkdirs()
+        runnerJavaFile.setText(
+                '''
+package org.apache.ofbiz.persistence.codegen;
+
+import com.landawn.abacus.util.CodeGenerationUtil;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public final class PropNameTableGeneratorRunner {
+    private PropNameTableGeneratorRunner() {
+    }
+
+    public static void main(String[] args) throws Exception {
+        if (args.length < 3) {
+            throw new IllegalArgumentException("Expected args: <srcRootDir> <entityClassNamesFile> <className>");
+        }
+
+        Path srcRootDir = Path.of(args[0]);
+        Path entityClassNamesFile = Path.of(args[1]);
+        String className = args[2];
+
+        List<String> classNames = Files.readAllLines(entityClassNamesFile, StandardCharsets.UTF_8);
+        Collection<Class<?>> allEntityClasses = new ArrayList<>();
+        for (String classNameLine : classNames) {
+            if (classNameLine != null && !classNameLine.isBlank()) {
+                allEntityClasses.add(Class.forName(classNameLine.trim()));
+            }
+        }
+
+        String code = CodeGenerationUtil.generatePropNameTableClasses(allEntityClasses, className);
+
+        Matcher packageMatcher = Pattern.compile("(?m)^\\\\s*package\\\\s+([A-Za-z0-9_.]+)\\\\s*;").matcher(code);
+        String packageName = packageMatcher.find() ? packageMatcher.group(1) : "";
+        Path outputDir = srcRootDir;
+        if (!packageName.isEmpty()) {
+            outputDir = srcRootDir.resolve(packageName.replace('.', '/'));
+        }
+        Files.createDirectories(outputDir);
+        Path outputFile = outputDir.resolve(className + ".java");
+        Files.writeString(outputFile, code, StandardCharsets.UTF_8);
+    }
+}
+                '''.trim() + System.lineSeparator(),
+                StandardCharsets.UTF_8.name()
+        )
+
+        def runnerClasspath = (minimalClasspathFiles + [tempClassDir] as Set<File>).collect { it.absolutePath }.join(File.pathSeparator)
+        def runnerFileManager = javaCompiler.getStandardFileManager(null, Locale.ROOT, StandardCharsets.UTF_8)
+        try {
+            def units = runnerFileManager.getJavaFileObjectsFromFiles([runnerJavaFile])
+            def options = ['-proc:none', '-d', runnerClassDir.absolutePath, '-classpath', runnerClasspath]
+            def task = javaCompiler.getTask(null, runnerFileManager, null, options, null, units)
+            if (!(task.call() as boolean)) {
+                throw new GradleException("Failed to compile prop-name table runner")
+            }
+        } finally {
+            runnerFileManager.close()
+        }
+
+        javaexec {
+            classpath = files(runnerClassDir, tempClassDir) + files(minimalClasspathFiles)
+            mainClass = runnerClassName
+            args generatedDdlJavaDir.absolutePath, classListFile.absolutePath, 'x'
         }
 
         logger.lifecycle("Generated ${entityCount} Lombok entities and ${daoCount} DAO interfaces from ${ddlFile} into ${generatedDdlJavaDir}")
