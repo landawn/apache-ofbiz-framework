@@ -1,0 +1,8 @@
+package org.apache.ofbiz.persistence.dao;
+
+import com.landawn.abacus.jdbc.dao.CrudDao;
+import com.landawn.abacus.query.SQLBuilder;
+import org.apache.ofbiz.persistence.entity.ProductKeywordNewEntity;
+
+public interface ProductKeywordNewDao extends CrudDao<ProductKeywordNewEntity, ProductKeywordNewEntity, SQLBuilder.PSC, ProductKeywordNewDao> {
+}

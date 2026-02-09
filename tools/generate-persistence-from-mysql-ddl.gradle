@@ -1,7 +1,7 @@
 import java.nio.charset.StandardCharsets
 import java.util.Locale
 
-def generatedDdlJavaDir = file("${buildDir}/generated/sources/mysql-ddl/main/java")
+def generatedDdlJavaDir = file("${rootDir}/framework/entity/src/main/java")
 
 tasks.register('generateAbacusPersistenceFromMysqlDdl') {
     group = 'build'
@@ -239,11 +239,16 @@ tasks.register('generateAbacusPersistenceFromMysqlDdl') {
 
         tables.sort { a, b -> (a.tableName <=> b.tableName) }
 
-        delete(generatedDdlJavaDir)
-        generatedDdlJavaDir.mkdirs()
-
         def entityPackageName = 'org.apache.ofbiz.persistence.entity'
         def daoPackageName = 'org.apache.ofbiz.persistence.dao'
+        def entityOutputDir = new File(generatedDdlJavaDir, entityPackageName.replace('.', '/'))
+        def daoOutputDir = new File(generatedDdlJavaDir, daoPackageName.replace('.', '/'))
+
+        // Only clear generated persistence package folders, never the whole source tree.
+        delete(entityOutputDir)
+        delete(daoOutputDir)
+        entityOutputDir.mkdirs()
+        daoOutputDir.mkdirs()
 
         int entityCount = 0
         int daoCount = 0
