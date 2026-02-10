@@ -37,9 +37,12 @@ import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.transaction.GenericTransactionException;
 import org.apache.ofbiz.entity.transaction.TransactionUtil;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.UserLoginDao;
+import org.apache.ofbiz.persistence.entity.UserLoginEntity;
 import org.apache.ofbiz.service.DispatchContext;
+import com.landawn.abacus.util.Beans;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -53,9 +56,9 @@ public class LdapAuthenticationServices {
 
     public static boolean userLogin(DispatchContext ctx, LdapAuthenticationServicesContext context) {
         if (Debug.verboseOn()) {
-            Debug.logVerbose("Starting LDAP authentication", MODULE);
+            Debug.logVerbose(x.Starting_LDAP_authentication, MODULE);
         }
-        Properties env = UtilProperties.getProperties("jndiLdap");
+        Properties env = UtilProperties.getProperties(x.jndiLdap);
         String username = (String) context.get(x.login_username);
         if (username == null) {
             username = (String) context.get(x.username);
@@ -66,27 +69,30 @@ public class LdapAuthenticationServices {
         }
         String dn = null;
         Delegator delegator = ctx.getDelegator();
-        boolean isServiceAuth = context.get(x.isServiceAuth) != null && (Boolean) context.get(x.isServiceAuth);
         GenericValue userLogin = null;
         try {
-            userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", username).cache(isServiceAuth).queryOne();
-        } catch (GenericEntityException e) {
-            Debug.logWarning(e, "", MODULE);
+            UserLoginDao userLoginDao = DaoRegistry.getDao(delegator, x.UserLogin, UserLoginDao.class);
+            UserLoginEntity userLoginEntity = userLoginDao.get(username).orElse(null);
+            if (userLoginEntity != null) {
+                userLogin = delegator.makeValue(x.UserLogin, Beans.beanToMap(userLoginEntity));
+            }
+        } catch (Exception e) {
+            Debug.logWarning(e, x.emptyString, MODULE);
         }
         if (userLogin != null) {
             dn = userLogin.getString(x.userLdapDn);
         }
         if (UtilValidate.isEmpty(dn)) {
-            String dnTemplate = (String) env.get("ldap.dn.template");
+            String dnTemplate = (String) env.get(x.ldap_dn_template);
             if (dnTemplate != null) {
-                dn = dnTemplate.replace("%u", username);
+                dn = dnTemplate.replace(x.u, username);
             }
             if (Debug.verboseOn()) {
-                Debug.logVerbose("Using DN template: " + dn, MODULE);
+                Debug.logVerbose(x.Using_DN_template + dn, MODULE);
             }
         } else {
             if (Debug.verboseOn()) {
-                Debug.logVerbose("Using UserLogin.userLdapDn: " + dn, MODULE);
+                Debug.logVerbose(x.Using_UserLogin_userLdapDn + dn, MODULE);
             }
         }
         env.put(Context.SECURITY_PRINCIPAL, dn);
@@ -97,19 +103,19 @@ public class LdapAuthenticationServices {
             ldapCtx.close();
         } catch (NamingException e) {
             if (Debug.verboseOn()) {
-                Debug.logVerbose("LDAP authentication failed: " + e.getMessage(), MODULE);
+                Debug.logVerbose(x.LDAP_authentication_failed + e.getMessage(), MODULE);
             }
             return false;
         }
         if (Debug.verboseOn()) {
-            Debug.logVerbose("LDAP authentication succeeded", MODULE);
+            Debug.logVerbose(x.LDAP_authentication_succeeded, MODULE);
         }
-        if (!"true".equals(env.get("ldap.synchronize.passwords"))) {
+        if (!x._true.equals(env.get(x.ldap_synchronize_passwords))) {
             return true;
         }
         // Synchronize user's OFBiz password with user's LDAP password
         if (userLogin != null) {
-            boolean useEncryption = "true".equals(EntityUtilProperties.getPropertyValue("security", "password.encrypt", delegator));
+            boolean useEncryption = x._true.equals(EntityUtilProperties.getPropertyValue(x.security, x.password_encrypt, delegator));
             String currentPassword = userLogin.getString(x.currentPassword);
             boolean samePassword;
             if (useEncryption) {
@@ -119,7 +125,7 @@ public class LdapAuthenticationServices {
             }
             if (!samePassword) {
                 if (Debug.verboseOn()) {
-                    Debug.logVerbose("Starting password synchronization", MODULE);
+                    Debug.logVerbose(x.Starting_password_synchronization, MODULE);
                 }
                 userLogin.set(x.currentPassword, useEncryption ? HashCrypt.cryptUTF8(LoginServices.getHashType(), null, password) : password, false);
                 Transaction parentTx = null;
@@ -128,26 +134,26 @@ public class LdapAuthenticationServices {
                     try {
                         parentTx = TransactionUtil.suspend();
                     } catch (GenericTransactionException e) {
-                        Debug.logError(e, "Could not suspend transaction: " + e.getMessage(), MODULE);
+                        Debug.logError(e, x.Could_not_suspend_transaction + e.getMessage(), MODULE);
                     }
                     try {
                         beganTransaction = TransactionUtil.begin();
                         userLogin.store();
                     } catch (GenericEntityException e) {
-                        Debug.logError(e, "Error saving UserLogin", MODULE);
+                        Debug.logError(e, x.Error_saving_UserLogin, MODULE);
                         try {
-                            TransactionUtil.rollback(beganTransaction, "Error saving UserLogin", e);
+                            TransactionUtil.rollback(beganTransaction, x.Error_saving_UserLogin, e);
                         } catch (GenericTransactionException e2) {
-                            Debug.logError(e2, "Could not rollback nested transaction: " + e2.getMessage(), MODULE);
+                            Debug.logError(e2, x.Could_not_rollback_nested_transaction + e2.getMessage(), MODULE);
                         }
                     } finally {
                         try {
                             TransactionUtil.commit(beganTransaction);
                             if (Debug.verboseOn()) {
-                                Debug.logVerbose("Password synchronized", MODULE);
+                                Debug.logVerbose(x.Password_synchronized, MODULE);
                             }
                         } catch (GenericTransactionException e) {
-                            Debug.logError(e, "Could not commit nested transaction: " + e.getMessage(), MODULE);
+                            Debug.logError(e, x.Could_not_commit_nested_transaction + e.getMessage(), MODULE);
                         }
                     }
                 } finally {
@@ -155,10 +161,10 @@ public class LdapAuthenticationServices {
                         try {
                             TransactionUtil.resume(parentTx);
                             if (Debug.verboseOn()) {
-                                Debug.logVerbose("Resumed the parent transaction.", MODULE);
+                                Debug.logVerbose(x.Resumed_the_parent_transaction, MODULE);
                             }
                         } catch (GenericTransactionException e) {
-                            Debug.logError(e, "Could not resume parent nested transaction: " + e.getMessage(), MODULE);
+                            Debug.logError(e, x.Could_not_resume_parent_nested_transaction + e.getMessage(), MODULE);
                         }
                     }
                 }
@@ -167,3 +173,4 @@ public class LdapAuthenticationServices {
         return true;
     }
 }
+

@@ -41,8 +41,8 @@ import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityConditionList;
 import org.apache.ofbiz.entity.condition.EntityExpr;
 import org.apache.ofbiz.entity.condition.EntityOperator;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
+import org.apache.ofbiz.persistence.dao.*;
 import org.apache.ofbiz.order.order.OrderReadHelper;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
@@ -60,7 +60,7 @@ import org.apache.ofbiz.model.RequirementServicesContext;
 public class RequirementServices {
 
     private static final String MODULE = RequirementServices.class.getName();
-    private static final String RES_ERROR = "OrderErrorUiLabels";
+    private static final String RES_ERROR = x.OrderErrorUiLabels;
 
     public static Map<String, Object> getRequirementsForSupplier(DispatchContext ctx, RequirementServicesContext context) {
         Delegator delegator = ctx.getDelegator();
@@ -74,29 +74,26 @@ public class RequirementServices {
         //TODO currencyUomId still not used
         try {
             List<EntityCondition> conditions = UtilMisc.toList(
-                    EntityCondition.makeCondition("requirementTypeId", EntityOperator.EQUALS, "PRODUCT_REQUIREMENT"),
+                    EntityCondition.makeCondition(x.requirementTypeId, EntityOperator.EQUALS, x.PRODUCT_REQUIREMENT),
                     EntityUtil.getFilterByDateExpr());
             if (UtilValidate.isNotEmpty(statusIds)) {
-                conditions.add(EntityCondition.makeCondition("statusId", EntityOperator.IN, statusIds));
+                conditions.add(EntityCondition.makeCondition(x.statusId, EntityOperator.IN, statusIds));
             } else {
-                conditions.add(EntityCondition.makeCondition("statusId", EntityOperator.EQUALS, "REQ_APPROVED"));
+                conditions.add(EntityCondition.makeCondition(x.statusId, EntityOperator.EQUALS, x.REQ_APPROVED));
             }
             if (requirementConditions != null) conditions.add(requirementConditions);
 
             // we're either getting the requirements for a given supplier, unassigned requirements, or requirements for all suppliers
             if (UtilValidate.isNotEmpty(partyId)) {
-                conditions.add(EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, partyId));
-                conditions.add(EntityCondition.makeCondition("roleTypeId", EntityOperator.EQUALS, "SUPPLIER"));
+                conditions.add(EntityCondition.makeCondition(x.partyId, EntityOperator.EQUALS, partyId));
+                conditions.add(EntityCondition.makeCondition(x.roleTypeId, EntityOperator.EQUALS, x.SUPPLIER));
             } else if (UtilValidate.isNotEmpty(unassignedRequirements)) {
-                conditions.add(EntityCondition.makeCondition("partyId", EntityOperator.EQUALS, null));
+                conditions.add(EntityCondition.makeCondition(x.partyId, EntityOperator.EQUALS, null));
             } else {
-                conditions.add(EntityCondition.makeCondition("roleTypeId", EntityOperator.EQUALS, "SUPPLIER"));
+                conditions.add(EntityCondition.makeCondition(x.roleTypeId, EntityOperator.EQUALS, x.SUPPLIER));
             }
 
-            List<GenericValue> requirementAndRoles = EntityQuery.use(delegator).from("RequirementAndRole")
-                    .where(conditions)
-                    .orderBy("partyId", "requirementId")
-                    .queryList();
+            List<GenericValue> requirementAndRoles = DaoRegistry.getDao(delegator, x.RequirementAndRole, RequirementAndRoleDao.class).findListByWhere(delegator, x.RequirementAndRole, conditions, null, UtilMisc.toList(x.partyId, x.requirementId), false);
 
             // maps to cache the associated suppliers and products data, so we don't do redundant DB and service requests
             Map<String, GenericValue> suppliers = new HashMap<>();
@@ -122,15 +119,16 @@ public class RequirementServices {
                 BigDecimal requiredQuantity = requirement.getBigDecimal(x.quantity);
 
                 // get an available supplier product, preferably the one with the smallest minimum quantity to order, followed by price
-                String supplierKey = partyId + "^" + productId;
+                String supplierKey = partyId + x.str_5e6f80a3 + productId;
                 GenericValue supplierProduct = suppliers.get(supplierKey);
                 if (supplierProduct == null) {
                     // TODO: it is possible to restrict to quantity > minimumOrderQuantity, but then the entire requirement must be skipped
-                    supplierProduct = EntityQuery.use(delegator).from("SupplierProduct")
-                            .where("partyId", partyId, "productId", productId)
-                            .orderBy("minimumOrderQuantity", "lastPrice")
-                            .filterByDate("availableFromDate", "availableThruDate")
-                            .queryFirst();
+                    EntityCondition supplierProductCond = EntityCondition.makeCondition(UtilMisc.toMap(x.partyId, partyId, x.productId, productId));
+                    supplierProductCond = EntityCondition.makeCondition(supplierProductCond,
+                            EntityUtil.getFilterByDateExpr(x.availableFromDate, x.availableThruDate));
+                    supplierProduct = DaoRegistry.getDao(delegator, x.SupplierProduct, SupplierProductDao.class)
+                            .findFirstByCondition(delegator, x.SupplierProduct, supplierProductCond, null,
+                                    UtilMisc.toList(x.minimumOrderQuantity, x.lastPrice), false);
                     suppliers.put(supplierKey, supplierProduct);
                 }
 
@@ -144,18 +142,18 @@ public class RequirementServices {
                 // for good identification, get the UPCA type (UPC code)
                 GenericValue gid = gids.get(productId);
                 if (gid == null) {
-                    gid = EntityQuery.use(delegator).from("GoodIdentification").where("goodIdentificationTypeId", "UPCA", "productId",
-                            requirement.get(x.productId)).queryOne();
+                    gid = DaoRegistry.getDao(delegator, x.GoodIdentification, GoodIdentificationDao.class).findOneByWhere(delegator, x.GoodIdentification, UtilMisc.toMap(x.goodIdentificationTypeId, x.UPCA, x.productId,
+                            requirement.get(x.productId)), null, null, false);
                     gids.put(productId, gid);
                 }
-                if (gid != null) union.put("idValue", gid.get(x.idValue));
+                if (gid != null) union.put(x.idValue, gid.get(x.idValue));
 
                 // the ATP and QOH quantities
                 if (UtilValidate.isNotEmpty(facilityId)) {
-                    String inventoryKey = facilityId + "^" + productId;
+                    String inventoryKey = facilityId + x.str_5e6f80a3 + productId;
                     Map<String, Object> inventory = inventories.get(inventoryKey);
                     if (inventory == null) {
-                        inventory = dispatcher.runSync("getInventoryAvailableByFacility", UtilMisc.toMap("productId", productId, "facilityId",
+                        inventory = dispatcher.runSync(x.getInventoryAvailableByFacility, UtilMisc.toMap(x.productId, productId, x.facilityId,
                                 facilityId));
                         if (ServiceUtil.isError(inventory)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(inventory));
@@ -163,8 +161,8 @@ public class RequirementServices {
                         inventories.put(inventoryKey, inventory);
                     }
                     if (inventory != null) {
-                        union.put("qoh", inventory.get("quantityOnHandTotal"));
-                        union.put("atp", inventory.get("availableToPromiseTotal"));
+                        union.put(x.qoh, inventory.get(x.quantityOnHandTotal));
+                        union.put(x.atp, inventory.get(x.availableToPromiseTotal));
                     }
                 }
 
@@ -172,26 +170,25 @@ public class RequirementServices {
                 BigDecimal sold = productsSold.get(productId);
                 if (sold == null) {
                     EntityCondition prodConditions = EntityCondition.makeCondition(UtilMisc.toList(
-                            EntityCondition.makeCondition("productId", EntityOperator.EQUALS, productId),
-                            EntityCondition.makeCondition("orderTypeId", EntityOperator.EQUALS, "SALES_ORDER"),
-                            EntityCondition.makeCondition("orderStatusId", EntityOperator.NOT_IN, UtilMisc.toList("ORDER_REJECTED",
-                                    "ORDER_CANCELLED")),
-                            EntityCondition.makeCondition("orderItemStatusId", EntityOperator.NOT_IN, UtilMisc.toList("ITEM_REJECTED",
-                                    "ITEM_CANCELLED")),
-                            EntityCondition.makeCondition("orderDate", EntityOperator.GREATER_THAN_EQUAL_TO, timePeriodStart)), EntityOperator.AND);
-                    GenericValue count = EntityQuery.use(delegator).select("quantityOrdered").from("OrderItemQuantityReportGroupByProduct")
-                            .where(prodConditions).queryFirst();
+                            EntityCondition.makeCondition(x.productId, EntityOperator.EQUALS, productId),
+                            EntityCondition.makeCondition(x.orderTypeId, EntityOperator.EQUALS, x.SALES_ORDER),
+                            EntityCondition.makeCondition(x.orderStatusId, EntityOperator.NOT_IN, UtilMisc.toList(x.ORDER_REJECTED,
+                                    x.ORDER_CANCELLED)),
+                            EntityCondition.makeCondition(x.orderItemStatusId, EntityOperator.NOT_IN, UtilMisc.toList(x.ITEM_REJECTED,
+                                    x.ITEM_CANCELLED)),
+                            EntityCondition.makeCondition(x.orderDate, EntityOperator.GREATER_THAN_EQUAL_TO, timePeriodStart)), EntityOperator.AND);
+                    GenericValue count = DaoRegistry.getDao(delegator, x.OrderItemQuantityReportGroupByProduct, OrderItemQuantityReportGroupByProductDao.class).findFirstByWhere(delegator, x.OrderItemQuantityReportGroupByProduct, prodConditions, UtilMisc.toList(x.quantityOrdered), null, false);
                     if (count != null) {
                         sold = count.getBigDecimal(x.quantityOrdered);
                         if (sold != null) productsSold.put(productId, sold);
                     }
                 }
                 if (sold != null) {
-                    union.put("qtySold", sold);
+                    union.put(x.qtySold, sold);
                 }
 
                 // keep a running total of distinct products and quantity to order
-                if (requirement.getBigDecimal(x.quantity) == null) requirement.put("quantity", BigDecimal.ONE); // default quantity = 1
+                if (requirement.getBigDecimal(x.quantity) == null) requirement.put(x.quantity, BigDecimal.ONE); // default quantity = 1
                 quantity = quantity.add(requiredQuantity);
                 products.add(productId);
 
@@ -201,17 +198,17 @@ public class RequirementServices {
             }
 
             Map<String, Object> results = ServiceUtil.returnSuccess();
-            results.put("requirementsForSupplier", requirements);
-            results.put("distinctProductCount", products.size());
-            results.put("quantityTotal", quantity);
-            results.put("amountTotal", amountTotal);
+            results.put(x.requirementsForSupplier, requirements);
+            results.put(x.distinctProductCount, products.size());
+            results.put(x.quantityTotal, quantity);
+            results.put(x.amountTotal, amountTotal);
             return results;
         } catch (GenericServiceException e) {
             Debug.logError(e, MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderServiceExceptionSeeLogs", locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderServiceExceptionSeeLogs, locale));
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderEntityExceptionSeeLogs", locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderEntityExceptionSeeLogs, locale));
         }
     }
 
@@ -224,42 +221,41 @@ public class RequirementServices {
 
         String orderId = (String) context.get(x.orderId);
         try {
-            GenericValue order = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
+            GenericValue order = DaoRegistry.getDao(delegator, x.OrderHeader, OrderHeaderDao.class).findOneByWhere(delegator, x.OrderHeader, UtilMisc.toMap(x.orderId, orderId), null, null, false);
             GenericValue productStore = order.getRelatedOne(x.ProductStore, true);
             if (productStore == null) {
-                Debug.logInfo("ProductStore for order ID " + orderId + " not found, requirements not created", MODULE);
+                Debug.logInfo(x.ProductStore_for_order_ID + orderId + x.not_found_requirements_not_created, MODULE);
                 return ServiceUtil.returnSuccess();
             }
-            List<GenericValue> orderItemAndShipGroups = EntityQuery.use(delegator).select("orderId", "shipGroupSeqId", "orderItemSeqId").from(
-                    "OrderItemAndShipGroupAssoc").where("orderId", orderId).distinct().queryList();
+            List<GenericValue> orderItemAndShipGroups = DaoRegistry.getDao(delegator, x.OrderItemAndShipGroupAssoc, OrderItemAndShipGroupAssocDao.class).findListByWhere(delegator, x.OrderItemAndShipGroupAssoc, UtilMisc.toMap(x.orderId, orderId), UtilMisc.toList(x.orderId, x.shipGroupSeqId, x.orderItemSeqId), null, false, true);
             for (GenericValue orderItemAndShipGroup : orderItemAndShipGroups) {
-                GenericValue item = EntityQuery.use(delegator).from("OrderItem").where("orderId", orderItemAndShipGroup.getString(x.orderId),
-                        "orderItemSeqId", orderItemAndShipGroup.getString(x.orderItemSeqId)).queryOne();
+                GenericValue item = DaoRegistry.getDao(delegator, x.OrderItem, OrderItemDao.class).findOneByWhere(delegator, x.OrderItem, UtilMisc.toMap(x.orderId, orderItemAndShipGroup.getString(x.orderId),
+                        x.orderItemSeqId, orderItemAndShipGroup.getString(x.orderItemSeqId)), null, null, false);
                 GenericValue product = item.getRelatedOne(x.Product, false);
                 if (product == null) continue;
-                if ((!"PRODRQM_AUTO".equals(product.get(x.requirementMethodEnumId))
-                        && !"PRODRQM_AUTO".equals(productStore.get(x.requirementMethodEnumId)))
+                if ((!x.PRODRQM_AUTO.equals(product.get(x.requirementMethodEnumId))
+                        && !x.PRODRQM_AUTO.equals(productStore.get(x.requirementMethodEnumId)))
                         || (product.get(x.requirementMethodEnumId) == null
-                        && !"PRODRQM_AUTO".equals(productStore.get(x.requirementMethodEnumId)))) {
+                        && !x.PRODRQM_AUTO.equals(productStore.get(x.requirementMethodEnumId)))) {
                     continue;
                 }
                 BigDecimal quantity = item.getBigDecimal(x.quantity);
                 BigDecimal cancelQuantity = item.getBigDecimal(x.cancelQuantity);
                 BigDecimal required = quantity.subtract(cancelQuantity == null ? BigDecimal.ZERO : cancelQuantity);
                 if (required.compareTo(BigDecimal.ZERO) <= 0) continue;
-                GenericValue orderItemShipGroup = EntityQuery.use(delegator).from("OrderItemShipGroup").where("orderId", orderId, "shipGroupSeqId",
-                        orderItemAndShipGroup.getString(x.shipGroupSeqId)).cache().queryOne();
-                Map<String, Object> input = UtilMisc.toMap("userLogin", userLogin, "facilityId", orderItemShipGroup.getString(x.facilityId),
-                        "productId", product.get(x.productId), "quantity", required, "requirementTypeId", "PRODUCT_REQUIREMENT");
-                Map<String, Object> results = dispatcher.runSync("createRequirement", input);
+                GenericValue orderItemShipGroup = DaoRegistry.getDao(delegator, x.OrderItemShipGroup, OrderItemShipGroupDao.class).findOneByWhere(delegator, x.OrderItemShipGroup, UtilMisc.toMap(x.orderId, orderId, x.shipGroupSeqId,
+                        orderItemAndShipGroup.getString(x.shipGroupSeqId)), null, null, true);
+                Map<String, Object> input = UtilMisc.toMap(x.userLogin, userLogin, x.facilityId, orderItemShipGroup.getString(x.facilityId),
+                        x.productId, product.get(x.productId), x.quantity, required, x.requirementTypeId, x.PRODUCT_REQUIREMENT);
+                Map<String, Object> results = dispatcher.runSync(x.createRequirement, input);
                 if (ServiceUtil.isError(results)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(results));
                 }
-                String requirementId = (String) results.get("requirementId");
+                String requirementId = (String) results.get(x.requirementId);
 
-                input = UtilMisc.toMap("userLogin", userLogin, "orderId", order.get(x.orderId), "orderItemSeqId", item.get(x.orderItemSeqId),
-                        "requirementId", requirementId, "quantity", required);
-                results = dispatcher.runSync("createOrderRequirementCommitment", input);
+                input = UtilMisc.toMap(x.userLogin, userLogin, x.orderId, order.get(x.orderId), x.orderItemSeqId, item.get(x.orderItemSeqId),
+                        x.requirementId, requirementId, x.quantity, required);
+                results = dispatcher.runSync(x.createOrderRequirementCommitment, input);
                 if (ServiceUtil.isError(results)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(results));
                 }
@@ -291,10 +287,10 @@ public class RequirementServices {
          */
         String orderId = (String) context.get(x.orderId);
         try {
-            GenericValue order = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
+            GenericValue order = DaoRegistry.getDao(delegator, x.OrderHeader, OrderHeaderDao.class).findOneByWhere(delegator, x.OrderHeader, UtilMisc.toMap(x.orderId, orderId), null, null, false);
             GenericValue productStore = order.getRelatedOne(x.ProductStore, true);
             if (productStore == null) {
-                Debug.logInfo("ProductStore for order ID " + orderId + " not found, ATP requirements not created", MODULE);
+                Debug.logInfo(x.ProductStore_for_order_ID + orderId + x.not_found_ATP_requirements_not_created, MODULE);
                 return ServiceUtil.returnSuccess();
             }
             String facilityId = productStore.getString(x.inventoryFacilityId);
@@ -305,8 +301,8 @@ public class RequirementServices {
                     continue;
                 }
 
-                if (!("PRODRQM_ATP".equals(product.get(x.requirementMethodEnumId))
-                        || ("PRODRQM_ATP".equals(productStore.get(x.requirementMethodEnumId)) && product.get(x.requirementMethodEnumId) == null))) {
+                if (!(x.PRODRQM_ATP.equals(product.get(x.requirementMethodEnumId))
+                        || (x.PRODRQM_ATP.equals(productStore.get(x.requirementMethodEnumId)) && product.get(x.requirementMethodEnumId) == null))) {
                     continue;
                 }
 
@@ -317,31 +313,31 @@ public class RequirementServices {
 
                 // get the minimum stock for this facility (if not configured assume a minimum of zero, ie create requirements when it goes into
                 // backorder)
-                GenericValue productFacility = EntityQuery.use(delegator).from("ProductFacility").where("facilityId", facilityId, "productId",
-                        product.get(x.productId)).queryOne();
+                GenericValue productFacility = DaoRegistry.getDao(delegator, x.ProductFacility, ProductFacilityDao.class).findOneByWhere(delegator, x.ProductFacility, UtilMisc.toMap(x.facilityId, facilityId, x.productId,
+                        product.get(x.productId)), null, null, false);
                 BigDecimal minimumStock = BigDecimal.ZERO;
                 if (productFacility != null && productFacility.get(x.minimumStock) != null) {
                     minimumStock = productFacility.getBigDecimal(x.minimumStock);
                 }
 
                 // get the facility ATP for product, which should be updated for this item's reservation
-                Map<String, Object> results = dispatcher.runSync("getInventoryAvailableByFacility", UtilMisc.toMap("userLogin", userLogin,
-                        "productId", product.get(x.productId), "facilityId", facilityId));
+                Map<String, Object> results = dispatcher.runSync(x.getInventoryAvailableByFacility, UtilMisc.toMap(x.userLogin, userLogin,
+                        x.productId, product.get(x.productId), x.facilityId, facilityId));
                 if (ServiceUtil.isError(results)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(results));
                 }
-                BigDecimal atp = ((BigDecimal) results.get("availableToPromiseTotal")); // safe since this is a required OUT param
+                BigDecimal atp = ((BigDecimal) results.get(x.availableToPromiseTotal)); // safe since this is a required OUT param
 
                 // count all current requirements for this product
                 BigDecimal pendingRequirements = BigDecimal.ZERO;
                 EntityConditionList<EntityExpr> ecl = EntityCondition.makeCondition(UtilMisc.toList(
-                        EntityCondition.makeCondition("facilityId", EntityOperator.EQUALS, facilityId),
-                        EntityCondition.makeCondition("productId", EntityOperator.EQUALS, product.get(x.productId)),
-                        EntityCondition.makeCondition("requirementTypeId", EntityOperator.EQUALS, "PRODUCT_REQUIREMENT"),
-                        EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "REQ_ORDERED"),
-                        EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "REQ_REJECTED")),
+                        EntityCondition.makeCondition(x.facilityId, EntityOperator.EQUALS, facilityId),
+                        EntityCondition.makeCondition(x.productId, EntityOperator.EQUALS, product.get(x.productId)),
+                        EntityCondition.makeCondition(x.requirementTypeId, EntityOperator.EQUALS, x.PRODUCT_REQUIREMENT),
+                        EntityCondition.makeCondition(x.statusId, EntityOperator.NOT_EQUAL, x.REQ_ORDERED),
+                        EntityCondition.makeCondition(x.statusId, EntityOperator.NOT_EQUAL, x.REQ_REJECTED)),
                         EntityOperator.AND);
-                List<GenericValue> requirements = EntityQuery.use(delegator).from("Requirement").where(ecl).queryList();
+                List<GenericValue> requirements = DaoRegistry.getDao(delegator, x.Requirement, RequirementDao.class).findListByWhere(delegator, x.Requirement, ecl, null, null, false);
                 for (GenericValue requirement : requirements) {
                     pendingRequirements = pendingRequirements.add(requirement.get(x.quantity) == null ? BigDecimal.ZERO
                             : requirement.getBigDecimal(x.quantity));
@@ -353,17 +349,17 @@ public class RequirementServices {
                 BigDecimal required = ordered.compareTo(shortfall) < 0 ? ordered : shortfall;
                 if (required.compareTo(BigDecimal.ZERO) <= 0) continue;
 
-                Map<String, Object> input = UtilMisc.toMap("userLogin", userLogin, "facilityId", facilityId, "productId", product.get(x.productId),
-                        "quantity", required, "requirementTypeId", "PRODUCT_REQUIREMENT");
-                results = dispatcher.runSync("createRequirement", input);
+                Map<String, Object> input = UtilMisc.toMap(x.userLogin, userLogin, x.facilityId, facilityId, x.productId, product.get(x.productId),
+                        x.quantity, required, x.requirementTypeId, x.PRODUCT_REQUIREMENT);
+                results = dispatcher.runSync(x.createRequirement, input);
                 if (ServiceUtil.isError(results)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(results));
                 }
-                String requirementId = (String) results.get("requirementId");
+                String requirementId = (String) results.get(x.requirementId);
 
-                input = UtilMisc.toMap("userLogin", userLogin, "orderId", order.get(x.orderId), "orderItemSeqId", item.get(x.orderItemSeqId),
-                        "requirementId", requirementId, "quantity", required);
-                results = dispatcher.runSync("createOrderRequirementCommitment", input);
+                input = UtilMisc.toMap(x.userLogin, userLogin, x.orderId, order.get(x.orderId), x.orderItemSeqId, item.get(x.orderItemSeqId),
+                        x.requirementId, requirementId, x.quantity, required);
+                results = dispatcher.runSync(x.createOrderRequirementCommitment, input);
                 if (ServiceUtil.isError(results)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(results));
                 }
@@ -382,16 +378,14 @@ public class RequirementServices {
         OrderReadHelper orh = new OrderReadHelper(delegator, orderId);
         try {
             for (GenericValue orderItem : orh.getOrderItems()) {
-                GenericValue orderRequirementCommitment = EntityQuery.use(delegator).from("OrderRequirementCommitment")
-                        .where(UtilMisc.toMap("orderId", orderId, "orderItemSeqId", orderItem.getString(x.orderItemSeqId)))
-                        .queryFirst();
+                GenericValue orderRequirementCommitment = DaoRegistry.getDao(delegator, x.OrderRequirementCommitment, OrderRequirementCommitmentDao.class).findFirstByWhere(delegator, x.OrderRequirementCommitment, UtilMisc.toMap(x.orderId, orderId, x.orderItemSeqId, orderItem.getString(x.orderItemSeqId)), null, null, false);
                 if (orderRequirementCommitment != null) {
                     String requirementId = orderRequirementCommitment.getString(x.requirementId);
                     /* Change status of requirement to ordered */
-                    Map<String, Object> inputMap = UtilMisc.<String, Object>toMap("userLogin", userLogin, "requirementId", requirementId, "statusId",
-                            "REQ_ORDERED", "quantity", orderItem.getBigDecimal(x.quantity));
+                    Map<String, Object> inputMap = UtilMisc.<String, Object>toMap(x.userLogin, userLogin, x.requirementId, requirementId, x.statusId,
+                            x.REQ_ORDERED, x.quantity, orderItem.getBigDecimal(x.quantity));
                     // TODO: check service result for an error return
-                    Map<String, Object> results = dispatcher.runSync("updateRequirement", inputMap);
+                    Map<String, Object> results = dispatcher.runSync(x.updateRequirement, inputMap);
                     if (ServiceUtil.isError(results)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(results));
                     }

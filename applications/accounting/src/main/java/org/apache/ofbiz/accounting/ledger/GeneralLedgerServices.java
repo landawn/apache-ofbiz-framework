@@ -50,16 +50,16 @@ public class GeneralLedgerServices {
         for (Map.Entry<String, String> rowEntry : amountPercentageMap.entrySet()) {
             String rowValue = rowEntry.getValue();
             if (UtilValidate.isNotEmpty(rowValue)) {
-                createGlAcctCatMemFromCostCentersMap = UtilMisc.toMap("glAccountId", glAccountId,
-                        "glAccountCategoryId", rowEntry.getKey(), "amountPercentage", new BigDecimal(rowValue),
-                        "userLogin", userLogin, "totalAmountPercentage", totalAmountPercentage);
+                createGlAcctCatMemFromCostCentersMap = UtilMisc.toMap(x.glAccountId, glAccountId,
+                        x.glAccountCategoryId, rowEntry.getKey(), x.amountPercentage, new BigDecimal(rowValue),
+                        x.userLogin, userLogin, x.totalAmountPercentage, totalAmountPercentage);
             } else {
-                createGlAcctCatMemFromCostCentersMap = UtilMisc.toMap("glAccountId", glAccountId,
-                        "glAccountCategoryId", rowEntry.getKey(), "amountPercentage", new BigDecimal(0),
-                        "userLogin", userLogin, "totalAmountPercentage", totalAmountPercentage);
+                createGlAcctCatMemFromCostCentersMap = UtilMisc.toMap(x.glAccountId, glAccountId,
+                        x.glAccountCategoryId, rowEntry.getKey(), x.amountPercentage, new BigDecimal(0),
+                        x.userLogin, userLogin, x.totalAmountPercentage, totalAmountPercentage);
             }
             try {
-                result = dispatcher.runSync("createGlAcctCatMemFromCostCenters", createGlAcctCatMemFromCostCentersMap);
+                result = dispatcher.runSync(x.createGlAcctCatMemFromCostCenters, createGlAcctCatMemFromCostCentersMap);
                 if (ServiceUtil.isError(result)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
                 }

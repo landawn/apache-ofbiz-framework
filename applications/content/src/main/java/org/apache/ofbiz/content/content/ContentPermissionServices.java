@@ -33,14 +33,19 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entityext.permission.EntityPermissionChecker;
+import org.apache.ofbiz.persistence.dao.ContentDao;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.UserLoginDao;
+import org.apache.ofbiz.persistence.entity.ContentEntity;
+import org.apache.ofbiz.persistence.entity.UserLoginEntity;
 import org.apache.ofbiz.security.Security;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
+import com.landawn.abacus.util.Beans;
 
 
 
@@ -55,7 +60,7 @@ import org.apache.ofbiz.model.ContentPermissionServicesContext;
 public class ContentPermissionServices {
 
     private static final String MODULE = ContentPermissionServices.class.getName();
-    private static final String RESOURCE = "ContentUiLabels";
+    private static final String RESOURCE = x.ContentUiLabels;
 
     public ContentPermissionServices() { }
 
@@ -90,7 +95,7 @@ public class ContentPermissionServices {
      * associated with the ownerContent entity.
      */
     public static Map<String, Object> checkContentPermission(DispatchContext dctx, ContentPermissionServicesContext context) {
-        Debug.logWarning(new Exception(), "This service has been depricated in favor of [genericContentPermission]", MODULE);
+        Debug.logWarning(new Exception(), x.This_service_has_been_depricated_in_favor_of_genericContentPermission, MODULE);
 
         Security security = dctx.getSecurity();
         Delegator delegator = dctx.getDelegator();
@@ -104,13 +109,13 @@ public class ContentPermissionServices {
         if (bDisplayFailCond != null && bDisplayFailCond) {
             displayFailCond = true;
         }
-        Debug.logInfo("displayFailCond(0):" + displayFailCond, "");
+        Debug.logInfo(x.displayFailCond_0 + displayFailCond, x.emptyString);
         Boolean bDisplayPassCond = (Boolean) context.get(x.displayPassCond);
         boolean displayPassCond = false;
         if (bDisplayPassCond != null && bDisplayPassCond) {
             displayPassCond = true;
         }
-        Debug.logInfo("displayPassCond(0):" + displayPassCond, "");
+        Debug.logInfo(x.displayPassCond_0 + displayPassCond, x.emptyString);
         Map<String, Object> results = new HashMap<>();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         String partyId = (String) context.get(x.partyId);
@@ -118,11 +123,15 @@ public class ContentPermissionServices {
             String passedUserLoginId = (String) context.get(x.userLoginId);
             if (UtilValidate.isNotEmpty(passedUserLoginId)) {
                 try {
-                    userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", passedUserLoginId).cache().queryOne();
+                    UserLoginDao userLoginDao = DaoRegistry.getDao(delegator, x.UserLogin, UserLoginDao.class);
+                    UserLoginEntity userLoginEntity = userLoginDao.get(passedUserLoginId).orElse(null);
+                    if (userLoginEntity != null) {
+                        userLogin = delegator.makeValue(x.UserLogin, Beans.beanToMap(userLoginEntity));
+                    }
                     if (userLogin != null) {
                         partyId = userLogin.getString(x.partyId);
                     }
-                } catch (GenericEntityException e) {
+                } catch (Exception e) {
                     return ServiceUtil.returnError(e.getMessage());
                 }
             }
@@ -140,7 +149,7 @@ public class ContentPermissionServices {
         List<String> passedPurposes = UtilGenerics.cast(context.get(x.contentPurposeList));
         String contentPurposeString = (String) context.get(x.contentPurposeString);
         if (UtilValidate.isNotEmpty(contentPurposeString)) {
-            List<String> purposesFromString = StringUtil.split(contentPurposeString, "|");
+            List<String> purposesFromString = StringUtil.split(contentPurposeString, x.str_3eb41622);
             if (passedPurposes == null) {
                 passedPurposes = new LinkedList<>();
             }
@@ -148,54 +157,54 @@ public class ContentPermissionServices {
         }
 
         EntityPermissionChecker.StdAuxiliaryValueGetter auxGetter = new EntityPermissionChecker
-                .StdAuxiliaryValueGetter("ContentPurpose", "contentPurposeTypeId", "contentId");
+                .StdAuxiliaryValueGetter(x.ContentPurpose, x.contentPurposeTypeId, x.contentId);
         // Sometimes permissions need to be checked before an entity is created, so
         // there needs to be a method for setting a purpose list
         auxGetter.setList(passedPurposes);
         List<String> targetOperations = UtilGenerics.cast(context.get(x.targetOperationList));
         String targetOperationString = (String) context.get(x.targetOperationString);
         if (UtilValidate.isNotEmpty(targetOperationString)) {
-            List<String> operationsFromString = StringUtil.split(targetOperationString, "|");
+            List<String> operationsFromString = StringUtil.split(targetOperationString, x.str_3eb41622);
             if (targetOperations == null) {
                 targetOperations = new LinkedList<>();
             }
             targetOperations.addAll(operationsFromString);
         }
         EntityPermissionChecker.StdPermissionConditionGetter permCondGetter = new EntityPermissionChecker
-                .StdPermissionConditionGetter("ContentPurposeOperation", "contentOperationId", "roleTypeId",
-                "statusId", "contentPurposeTypeId", "privilegeEnumId");
+                .StdPermissionConditionGetter(x.ContentPurposeOperation, x.contentOperationId, x.roleTypeId,
+                x.statusId, x.contentPurposeTypeId, x.privilegeEnumId);
         permCondGetter.setOperationList(targetOperations);
 
-        EntityPermissionChecker.StdRelatedRoleGetter roleGetter = new EntityPermissionChecker.StdRelatedRoleGetter("Content",
-                "roleTypeId", "contentId", "partyId", "ownerContentId", "ContentRole");
+        EntityPermissionChecker.StdRelatedRoleGetter roleGetter = new EntityPermissionChecker.StdRelatedRoleGetter(x.Content,
+                x.roleTypeId, x.contentId, x.partyId, x.ownerContentId, x.ContentRole);
         List<String> passedRoles = UtilGenerics.cast(context.get(x.roleTypeList));
         if (passedRoles == null) passedRoles = new LinkedList<>();
         String roleTypeString = (String) context.get(x.roleTypeString);
         if (UtilValidate.isNotEmpty(roleTypeString)) {
-            List<String> rolesFromString = StringUtil.split(roleTypeString, "|");
+            List<String> rolesFromString = StringUtil.split(roleTypeString, x.str_3eb41622);
             passedRoles.addAll(rolesFromString);
         }
         roleGetter.setList(passedRoles);
 
         String entityAction = (String) context.get(x.entityOperation);
-        if (entityAction == null) entityAction = "_ADMIN";
+        if (entityAction == null) entityAction = x.ADMIN;
         if (userLogin != null) {
-            passed = security.hasEntityPermission("CONTENTMGR", entityAction, userLogin);
+            passed = security.hasEntityPermission(x.CONTENTMGR, entityAction, userLogin);
         }
 
         StringBuilder errBuf = new StringBuilder();
         String permissionStatus = null;
         List<Object> entityIds = new LinkedList<>();
         if (passed) {
-            results.put("permissionStatus", "granted");
-            permissionStatus = "granted";
+            results.put(x.permissionStatus, x.granted);
+            permissionStatus = x.granted;
             if (displayPassCond) {
-                errBuf.append("\n    hasEntityPermission(" + entityAction + "): PASSED");
+                errBuf.append(x.hasEntityPermission + entityAction + x.PASSED);
             }
 
         } else {
             if (displayFailCond) {
-                errBuf.append("\n    hasEntityPermission(" + entityAction + "): FAILED");
+                errBuf.append(x.hasEntityPermission + entityAction + x.FAILED_4e2a5857);
             }
 
             if (content != null) {
@@ -203,53 +212,53 @@ public class ContentPermissionServices {
             }
             String quickCheckContentId = (String) context.get(x.quickCheckContentId);
             if (UtilValidate.isNotEmpty(quickCheckContentId)) {
-                List<String> quickList = StringUtil.split(quickCheckContentId, "|");
+                List<String> quickList = StringUtil.split(quickCheckContentId, x.str_3eb41622);
                 if (UtilValidate.isNotEmpty(quickList)) {
                     entityIds.addAll(quickList);
                 }
             }
             try {
-                boolean check = EntityPermissionChecker.checkPermissionMethod(delegator, partyId, "Content",
+                boolean check = EntityPermissionChecker.checkPermissionMethod(delegator, partyId, x.Content,
                         entityIds, auxGetter, roleGetter, permCondGetter);
                 if (check) {
-                    results.put("permissionStatus", "granted");
+                    results.put(x.permissionStatus, x.granted);
                 } else {
-                    results.put("permissionStatus", "rejected");
+                    results.put(x.permissionStatus, x.rejected);
                 }
             } catch (GenericEntityException e) {
                 return ServiceUtil.returnError(e.getMessage());
             }
-            permissionStatus = (String) results.get("permissionStatus");
-            errBuf.append("\n    permissionStatus:");
+            permissionStatus = (String) results.get(x.permissionStatus);
+            errBuf.append(x.permissionStatus_5c8db8e8);
             errBuf.append(permissionStatus);
         }
 
-        if (("granted".equals(permissionStatus) && displayPassCond)
-                || ("rejected".equals(permissionStatus) && displayFailCond)) {
+        if ((x.granted.equals(permissionStatus) && displayPassCond)
+                || (x.rejected.equals(permissionStatus) && displayFailCond)) {
             // Don't show this if passed on 'hasEntityPermission'
             if (displayFailCond || displayPassCond) {
                 if (!passed) {
-                    errBuf.append("\n    targetOperations:");
+                    errBuf.append(x.targetOperations);
                     errBuf.append(targetOperations);
 
                     String errMsg = permCondGetter.dumpAsText();
-                    errBuf.append("\n");
+                    errBuf.append(x.str_adc83b19);
                     errBuf.append(errMsg);
-                    errBuf.append("\n    partyId:");
+                    errBuf.append(x.partyId_ccf7b667);
                     errBuf.append(partyId);
-                    errBuf.append("\n    entityIds:");
+                    errBuf.append(x.entityIds);
                     errBuf.append(entityIds);
 
-                    errBuf.append("\n    auxList:");
+                    errBuf.append(x.auxList);
                     errBuf.append(auxGetter.getList());
 
-                    errBuf.append("\n    roleList:");
+                    errBuf.append(x.roleList);
                     errBuf.append(roleGetter.getList());
                 }
 
             }
         }
-        Debug.logInfo("displayPass/FailCond(0), errBuf:" + errBuf.toString(), "");
+        Debug.logInfo(x.displayPass_FailCond_0_errBuf + errBuf.toString(), x.emptyString);
         results.put(ModelService.ERROR_MESSAGE, errBuf.toString());
         return results;
     }
@@ -265,22 +274,29 @@ public class ContentPermissionServices {
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         String entityAction = (String) context.get(x.entityOperation);
         Locale locale = (Locale) context.get(x.locale);
-        if (entityAction == null) entityAction = "_ADMIN";
+        if (entityAction == null) entityAction = x.ADMIN;
         String permissionStatus = null;
 
         GenericValue contentTo = null;
         GenericValue contentFrom = null;
         try {
-            contentTo = EntityQuery.use(delegator).from("Content").where("contentId", contentIdTo).cache().queryOne();
-            contentFrom = EntityQuery.use(delegator).from("Content").where("contentId", contentIdFrom).cache().queryOne();
-        } catch (GenericEntityException e) {
+            ContentDao contentDao = DaoRegistry.getDao(delegator, x.Content, ContentDao.class);
+            ContentEntity contentToEntity = contentDao.get(contentIdTo).orElse(null);
+            ContentEntity contentFromEntity = contentDao.get(contentIdFrom).orElse(null);
+            if (contentToEntity != null) {
+                contentTo = delegator.makeValue(x.Content, Beans.beanToMap(contentToEntity));
+            }
+            if (contentFromEntity != null) {
+                contentFrom = delegator.makeValue(x.Content, Beans.beanToMap(contentFromEntity));
+            }
+        } catch (Exception e) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "ContentContentToOrFromErrorRetriving", locale));
+                    x.ContentContentToOrFromErrorRetriving, locale));
         }
         if (contentTo == null || contentFrom == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "ContentContentToOrFromIsNull",
-                    UtilMisc.toMap("contentTo", contentTo, "contentFrom", contentFrom), locale));
+                    x.ContentContentToOrFromIsNull,
+                    UtilMisc.toMap(x.contentTo, contentTo, x.contentFrom, contentFrom), locale));
         }
         Map<String, Object> permResults = new HashMap<>();
 
@@ -288,42 +304,42 @@ public class ContentPermissionServices {
         List<String> relatedPurposes = EntityPermissionChecker.getRelatedPurposes(contentFrom, null);
         List<String> relatedPurposesTo = EntityPermissionChecker.getRelatedPurposes(contentTo, relatedPurposes);
         Map<String, Object> serviceInMap = new HashMap<>();
-        serviceInMap.put("userLogin", userLogin);
-        serviceInMap.put("targetOperationList", UtilMisc.toList("CONTENT_LINK_TO"));
-        serviceInMap.put("contentPurposeList", relatedPurposesTo);
-        serviceInMap.put("currentContent", contentTo);
-        serviceInMap.put("displayFailCond", bDisplayFailCond);
+        serviceInMap.put(x.userLogin, userLogin);
+        serviceInMap.put(x.targetOperationList, UtilMisc.toList(x.CONTENT_LINK_TO));
+        serviceInMap.put(x.contentPurposeList, relatedPurposesTo);
+        serviceInMap.put(x.currentContent, contentTo);
+        serviceInMap.put(x.displayFailCond, bDisplayFailCond);
 
         try {
-            permResults = dispatcher.runSync("checkContentPermission", serviceInMap);
+            permResults = dispatcher.runSync(x.checkContentPermission, serviceInMap);
             if (ServiceUtil.isError(permResults)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(permResults));
             }
         } catch (GenericServiceException e) {
-            Debug.logError(e, "Problem checking permissions", "ContentServices");
+            Debug.logError(e, x.Problem_checking_permissions, x.ContentServices);
         }
-        permissionStatus = (String) permResults.get("permissionStatus");
-        if (permissionStatus == null || !"granted".equals(permissionStatus)) {
+        permissionStatus = (String) permResults.get(x.permissionStatus);
+        if (permissionStatus == null || !x.granted.equals(permissionStatus)) {
             if (bDisplayFailCond != null && bDisplayFailCond) {
                 String errMsg = (String) permResults.get(ModelService.ERROR_MESSAGE);
                 results.put(ModelService.ERROR_MESSAGE, errMsg);
             }
             return results;
         }
-        serviceInMap.put("currentContent", contentFrom);
-        serviceInMap.put("targetOperationList", UtilMisc.toList("CONTENT_LINK_FROM"));
-        serviceInMap.put("contentPurposeList", relatedPurposes);
+        serviceInMap.put(x.currentContent, contentFrom);
+        serviceInMap.put(x.targetOperationList, UtilMisc.toList(x.CONTENT_LINK_FROM));
+        serviceInMap.put(x.contentPurposeList, relatedPurposes);
         try {
-            permResults = dispatcher.runSync("checkContentPermission", serviceInMap);
+            permResults = dispatcher.runSync(x.checkContentPermission, serviceInMap);
             if (ServiceUtil.isError(permResults)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(permResults));
             }
         } catch (GenericServiceException e) {
-            Debug.logError(e, "Problem checking permissions", "ContentServices");
+            Debug.logError(e, x.Problem_checking_permissions, x.ContentServices);
         }
-        permissionStatus = (String) permResults.get("permissionStatus");
-        if (permissionStatus != null && "granted".equals(permissionStatus)) {
-            results.put("permissionStatus", "granted");
+        permissionStatus = (String) permResults.get(x.permissionStatus);
+        if (permissionStatus != null && x.granted.equals(permissionStatus)) {
+            results.put(x.permissionStatus, x.granted);
         } else {
             if (bDisplayFailCond != null && bDisplayFailCond) {
                 String errMsg = (String) permResults.get(ModelService.ERROR_MESSAGE);

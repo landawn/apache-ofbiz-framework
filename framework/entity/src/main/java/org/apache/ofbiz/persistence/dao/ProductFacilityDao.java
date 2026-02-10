@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.ProductFacilityEntity;
 
-public interface ProductFacilityDao extends CrudDao<ProductFacilityEntity, ProductFacilityEntity, SQLBuilder.PSC, ProductFacilityDao> {
+public interface ProductFacilityDao extends CrudDao<ProductFacilityEntity, ProductFacilityEntity, SQLBuilder.PSC, ProductFacilityDao> , DelegatorQueryDao{
 }

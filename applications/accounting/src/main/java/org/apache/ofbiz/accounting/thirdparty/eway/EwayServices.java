@@ -30,11 +30,14 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.PaymentGatewayEwayDao;
+import org.apache.ofbiz.persistence.entity.PaymentGatewayEwayEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import com.landawn.abacus.util.Beans;
 
 import org.apache.ofbiz.persistence.entity.x;
 import org.apache.ofbiz.model.ServiceContext;
@@ -42,7 +45,7 @@ import org.apache.ofbiz.model.EwayServicesContext;
 public class EwayServices {
 
     private static final String MODULE = EwayServices.class.getName();
-    private static final String RESOURCE = "AccountingUiLabels";
+    private static final String RESOURCE = x.AccountingUiLabels;
 
     // eway charge (auth w/ capture)
     public static Map<String, Object> ewayCharge(DispatchContext dctx, EwayServicesContext context) {
@@ -64,11 +67,11 @@ public class EwayServices {
         req.setCustomerLastName(UtilFormatOut.checkNull(party.getString(x.lastName)));
 
         // card info
-        String ccName = cc.getString(x.firstNameOnCard) + " " + cc.getString(x.lastNameOnCard);
+        String ccName = cc.getString(x.firstNameOnCard) + x.str_b858cb28 + cc.getString(x.lastNameOnCard);
         req.setCardHoldersName(ccName);
         req.setCardNumber(cc.getString(x.cardNumber));
         if (cc.get(x.expireDate) != null) {
-            String[] exp = cc.getString(x.expireDate).split("\\/");
+            String[] exp = cc.getString(x.expireDate).split(x.str_9d7df07c);
             req.setCardExpiryMonth(exp[0]);
             req.setCardExpiryYear(exp[1]);
         }
@@ -80,8 +83,8 @@ public class EwayServices {
 
         // billing address
         if (address != null) {
-            String street = address.getString(x.address1) + ((UtilValidate.isNotEmpty(address.getString(x.address2))) ? " "
-                    + address.getString(x.address2) : "");
+            String street = address.getString(x.address1) + ((UtilValidate.isNotEmpty(address.getString(x.address2))) ? x.str_b858cb28
+                    + address.getString(x.address2) : x.emptyString);
             req.setCustomerAddress(street);
             req.setCustomerPostcode(address.getString(x.postalCode));
             req.setCustomerBillingCountry(address.getString(x.countryGeoId));
@@ -99,16 +102,16 @@ public class EwayServices {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Boolean authResult = reply.getTrxnStatus();
         // auth fields
-        result.put("authResult", authResult);
-        result.put("authMessage", reply.getTrxnError());
-        result.put("authCode", reply.getAuthCode());
-        result.put("authRefNum", reply.getTrxnNumber());
-        result.put("scoreCode", Double.valueOf(reply.getBeagleScore()).toString());
-        result.put("processAmount", reply.getTransactionAmount());
+        result.put(x.authResult, authResult);
+        result.put(x.authMessage, reply.getTrxnError());
+        result.put(x.authCode, reply.getAuthCode());
+        result.put(x.authRefNum, reply.getTrxnNumber());
+        result.put(x.scoreCode, Double.valueOf(reply.getBeagleScore()).toString());
+        result.put(x.processAmount, reply.getTransactionAmount());
         // capture fields
-        result.put("captureResult", result.get("authResult"));
-        result.put("captureMessage", result.get("authMessage"));
-        result.put("captureRefNum", result.get("authRefNum"));
+        result.put(x.captureResult, result.get(x.authResult));
+        result.put(x.captureMessage, result.get(x.authMessage));
+        result.put(x.captureRefNum, result.get(x.authRefNum));
         return result;
     }
 
@@ -123,17 +126,17 @@ public class EwayServices {
         GenericValue chargeTrans = PaymentGatewayServices.getCaptureTransaction(paymentPref);
         if (chargeTrans == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPaymentTransactionAuthorizationNotFoundCannotRefund", locale));
+                    x.AccountingPaymentTransactionAuthorizationNotFoundCannotRefund, locale));
         }
 
         // credit card used for transaction
         GenericValue cc = null;
         try {
-            cc = delegator.getRelatedOne("CreditCard", paymentPref, false);
+            cc = delegator.getRelatedOne(x.CreditCard, paymentPref, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPaymentUnableToGetCCInfo", locale));
+                    x.AccountingPaymentUnableToGetCCInfo, locale));
         }
 
         // orig ref number
@@ -147,7 +150,7 @@ public class EwayServices {
 
         // set the card expire date
         if (cc.get(x.expireDate) != null) {
-            String[] exp = cc.getString(x.expireDate).split("\\/");
+            String[] exp = cc.getString(x.expireDate).split(x.str_9d7df07c);
             req.setCardExpiryMonth(exp[0]);
             req.setCardExpiryYear(exp[1]);
         }
@@ -163,11 +166,11 @@ public class EwayServices {
         // process the result
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Boolean refundResult = reply.getTrxnStatus();
-        result.put("refundResult", refundResult);
-        result.put("refundMessage", reply.getTrxnError());
-        result.put("refundCode", reply.getAuthCode());
-        result.put("refundRefNum", reply.getTrxnNumber());
-        result.put("refundAmount", reply.getTransactionAmount());
+        result.put(x.refundResult, refundResult);
+        result.put(x.refundMessage, reply.getTrxnError());
+        result.put(x.refundCode, reply.getAuthCode());
+        result.put(x.refundRefNum, reply.getTrxnNumber());
+        result.put(x.refundAmount, reply.getTransactionAmount());
 
         return result;
     }
@@ -186,16 +189,16 @@ public class EwayServices {
         }
         if (chargeTrans == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPaymentTransactionAuthorizationNotFoundCannotRelease", locale));
+                    x.AccountingPaymentTransactionAuthorizationNotFoundCannotRelease, locale));
         }
         // credit card used for transaction
         GenericValue cc = null;
         try {
-            cc = delegator.getRelatedOne("CreditCard", paymentPref, false);
+            cc = delegator.getRelatedOne(x.CreditCard, paymentPref, false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPaymentUnableToGetCCInfo", locale));
+                    x.AccountingPaymentUnableToGetCCInfo, locale));
         }
 
         // orig ref number
@@ -209,7 +212,7 @@ public class EwayServices {
 
         // set the card expire date
         if (cc.get(x.expireDate) != null) {
-            String[] exp = cc.getString(x.expireDate).split("\\/");
+            String[] exp = cc.getString(x.expireDate).split(x.str_9d7df07c);
             req.setCardExpiryMonth(exp[0]);
             req.setCardExpiryYear(exp[1]);
         }
@@ -224,11 +227,11 @@ public class EwayServices {
         // process the result
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Boolean refundResult = reply.getTrxnStatus();
-        result.put("releaseResult", refundResult);
-        result.put("releaseMessage", reply.getTrxnError());
-        result.put("releaseCode", reply.getAuthCode());
-        result.put("releaseRefNum", reply.getTrxnNumber());
-        result.put("releaseAmount", reply.getTransactionAmount());
+        result.put(x.releaseResult, refundResult);
+        result.put(x.releaseMessage, reply.getTrxnError());
+        result.put(x.releaseCode, reply.getAuthCode());
+        result.put(x.releaseRefNum, reply.getTrxnNumber());
+        result.put(x.releaseAmount, reply.getTransactionAmount());
         return result;
     }
     private static GatewayRequest initRequest(DispatchContext dctx, EwayServicesContext context, boolean refund) {
@@ -236,11 +239,11 @@ public class EwayServices {
         String cfgStr = (String) context.get(x.paymentConfig);
         Delegator delegator = dctx.getDelegator();
 
-        String customerId = getPaymentGatewayConfigValue(delegator, pgcId, "customerId", cfgStr, "payment.eway.customerId");
-        String refundPwd = getPaymentGatewayConfigValue(delegator, pgcId, "refundPwd", cfgStr, "payment.eway.refundPwd");
-        boolean testMode = "Y".equalsIgnoreCase(getPaymentGatewayConfigValue(delegator, pgcId, "testMode", cfgStr, "payment.eway.testMode"));
-        Boolean beagle = "Y".equalsIgnoreCase(getPaymentGatewayConfigValue(delegator, pgcId, "enableBeagle", cfgStr, "payment.eway.enableBeagle"));
-        Boolean cvn = "Y".equalsIgnoreCase(getPaymentGatewayConfigValue(delegator, pgcId, "enableCvn", cfgStr, "payment.eway.enableCvn"));
+        String customerId = getPaymentGatewayConfigValue(delegator, pgcId, x.customerId, cfgStr, x.payment_eway_customerId);
+        String refundPwd = getPaymentGatewayConfigValue(delegator, pgcId, x.refundPwd, cfgStr, x.payment_eway_refundPwd);
+        boolean testMode = x.Y.equalsIgnoreCase(getPaymentGatewayConfigValue(delegator, pgcId, x.testMode, cfgStr, x.payment_eway_testMode));
+        Boolean beagle = x.Y.equalsIgnoreCase(getPaymentGatewayConfigValue(delegator, pgcId, x.enableBeagle, cfgStr, x.payment_eway_enableBeagle));
+        Boolean cvn = x.Y.equalsIgnoreCase(getPaymentGatewayConfigValue(delegator, pgcId, x.enableCvn, cfgStr, x.payment_eway_enableCvn));
 
         // the request mode
         int requestMode = refund ? GatewayRequest.REQUEST_METHOD_REFUND : beagle ? GatewayRequest.REQUEST_METHOD_BEAGLE : cvn
@@ -257,18 +260,19 @@ public class EwayServices {
     }
     private static String getPaymentGatewayConfigValue(Delegator delegator, String cfgId, String cfgParamName,
             String resource, String resParamName) {
-        String returnValue = "";
+        String returnValue = x.emptyString;
         if (UtilValidate.isNotEmpty(cfgId)) {
             try {
-                GenericValue gv = EntityQuery.use(delegator).from("PaymentGatewayEway")
-                        .where("paymantGatewayConfigId", cfgId).cache().queryOne();
+                PaymentGatewayEwayDao paymentGatewayEwayDao = DaoRegistry.getDao(delegator, x.PaymentGatewayEway, PaymentGatewayEwayDao.class);
+                PaymentGatewayEwayEntity gv = paymentGatewayEwayDao.list(com.landawn.abacus.query.Filters.eq(x.paymantGatewayConfigId, cfgId))
+                        .stream().findFirst().orElse(null);
                 if (gv != null) {
-                    Object field = gv.get(cfgParamName);
+                    Object field = Beans.getPropValue(gv, cfgParamName, true);
                     if (field != null) {
                         returnValue = field.toString().trim();
                     }
                 }
-            } catch (GenericEntityException e) {
+            } catch (Exception e) {
                 Debug.logError(e, MODULE);
             }
         } else {
@@ -280,3 +284,4 @@ public class EwayServices {
         return returnValue;
     }
 }
+

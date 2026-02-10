@@ -37,10 +37,13 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.PaymentGatewaySagePayDao;
+import org.apache.ofbiz.persistence.entity.PaymentGatewaySagePayEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
+import com.landawn.abacus.util.Beans;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -48,7 +51,7 @@ import org.apache.ofbiz.model.ServiceContext;
 import org.apache.ofbiz.model.SagePayServicesContext;
 public class SagePayServices {
     private static final String MODULE = SagePayServices.class.getName();
-    private static final String RESOURCE = "AccountingUiLabels";
+    private static final String RESOURCE = x.AccountingUiLabels;
 
     private static Map<String, String> buildSagePayProperties(SagePayServicesContext context, Delegator delegator) {
 
@@ -58,10 +61,10 @@ public class SagePayServices {
 
         if (UtilValidate.isNotEmpty(paymentGatewayConfigId)) {
             try {
-                GenericValue sagePay = EntityQuery.use(delegator).from("PaymentGatewaySagePay").where("paymentGatewayConfigId",
-                        paymentGatewayConfigId).queryOne();
+                PaymentGatewaySagePayDao paymentGatewaySagePayDao = DaoRegistry.getDao(delegator, x.PaymentGatewaySagePay, PaymentGatewaySagePayDao.class);
+                PaymentGatewaySagePayEntity sagePay = paymentGatewaySagePayDao.get(paymentGatewayConfigId).orElse(null);
                 if (sagePay != null) {
-                    for (Entry<String, Object> set : sagePay.entrySet()) {
+                    for (Entry<String, Object> set : Beans.beanToMap(sagePay).entrySet()) {
                         if (set.getValue() == null) {
                             sagePayConfig.put(set.getKey(), null);
                         } else {
@@ -69,18 +72,18 @@ public class SagePayServices {
                         }
                     }
                 }
-            } catch (GenericEntityException e) {
+            } catch (Exception e) {
                 Debug.logError(e, MODULE);
             }
         }
 
-        Debug.logInfo("SagePay Configuration : " + sagePayConfig.toString(), MODULE);
+        Debug.logInfo(x.SagePay_Configuration + sagePayConfig.toString(), MODULE);
         return sagePayConfig;
     }
 
     public static Map<String, Object> paymentAuthentication(DispatchContext ctx, SagePayServicesContext context) {
-        Debug.logInfo("SagePay - Entered paymentAuthentication", MODULE);
-        Debug.logInfo("SagePay paymentAuthentication context : " + context, MODULE);
+        Debug.logInfo(x.SagePay_Entered_paymentAuthentication, MODULE);
+        Debug.logInfo(x.SagePay_paymentAuthentication_context + context, MODULE);
 
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> resultMap = new HashMap<>();
@@ -130,139 +133,139 @@ public class SagePayServices {
         //start - authentication parameters
         Map<String, String> parameters = new HashMap<>();
 
-        String vpsProtocol = props.get("protocolVersion");
-        String vendor = props.get("vendor");
-        String txType = props.get("authenticationTransType");
+        String vpsProtocol = props.get(x.protocolVersion);
+        String vendor = props.get(x.vendor);
+        String txType = props.get(x.authenticationTransType);
         //start - required parameters
         StringBuilder errorRequiredParameters = new StringBuilder();
         if (vpsProtocol == null) {
-            errorRequiredParameters.append("Required transaction parameter 'protocolVersion' is missing. ");
+            errorRequiredParameters.append(x.Required_transaction_parameter_protocolVersion_is_missing);
         }
         if (vendor == null) {
-            errorRequiredParameters.append("Required transaction parameter 'vendor' is missing. ");
+            errorRequiredParameters.append(x.Required_transaction_parameter_vendor_is_missing);
         }
         if (txType == null) {
-            errorRequiredParameters.append("Required transaction parameter 'authenticationsTransType' is missing. ");
+            errorRequiredParameters.append(x.Required_transaction_parameter_authenticationsTransType_is_missing);
         }
         if (errorRequiredParameters.length() > 0) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentAuthorisationException",
-                    UtilMisc.toMap("errorString", errorRequiredParameters), locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentAuthorisationException,
+                    UtilMisc.toMap(x.errorString, errorRequiredParameters), locale));
         }
-        parameters.put("VPSProtocol", vpsProtocol);
-        parameters.put("TxType", txType);
-        parameters.put("Vendor", vendor);
+        parameters.put(x.VPSProtocol, vpsProtocol);
+        parameters.put(x.TxType, txType);
+        parameters.put(x.Vendor, vendor);
 
         if (vendorTxCode != null) {
-            parameters.put("VendorTxCode", vendorTxCode);
+            parameters.put(x.VendorTxCode, vendorTxCode);
         }
         if (amount != null) {
-            parameters.put("Amount", amount);
+            parameters.put(x.Amount, amount);
         }
         if (currency != null) {
-            parameters.put("Currency", currency);
+            parameters.put(x.Currency, currency);
         } //GBP/USD
         if (description != null) {
-            parameters.put("Description", description);
+            parameters.put(x.Description, description);
         }
         if (cardHolder != null) {
-            parameters.put("CardHolder", cardHolder);
+            parameters.put(x.CardHolder, cardHolder);
         }
         if (cardNumber != null) {
-            parameters.put("CardNumber", cardNumber);
+            parameters.put(x.CardNumber, cardNumber);
         }
         if (cardType != null) {
-            parameters.put("CardType", cardType);
+            parameters.put(x.CardType, cardType);
         }
         if (expiryDate != null) {
-            parameters.put("ExpiryDate", expiryDate);
+            parameters.put(x.ExpiryDate, expiryDate);
         }
 
         //start - billing details
         if (billingSurname != null) {
-            parameters.put("BillingSurname", billingSurname);
+            parameters.put(x.BillingSurname, billingSurname);
         }
         if (billingFirstnames != null) {
-            parameters.put("BillingFirstnames", billingFirstnames);
+            parameters.put(x.BillingFirstnames, billingFirstnames);
         }
         if (billingAddress != null) {
-            parameters.put("BillingAddress", billingAddress);
+            parameters.put(x.BillingAddress, billingAddress);
         }
         if (billingAddress2 != null) {
-            parameters.put("BillingAddress2", billingAddress2);
+            parameters.put(x.BillingAddress2, billingAddress2);
         }
         if (billingCity != null) {
-            parameters.put("BillingCity", billingCity);
+            parameters.put(x.BillingCity, billingCity);
         }
         if (billingPostCode != null) {
-            parameters.put("BillingPostCode", billingPostCode);
+            parameters.put(x.BillingPostCode, billingPostCode);
         }
         if (billingCountry != null) {
-            parameters.put("BillingCountry", billingCountry);
+            parameters.put(x.BillingCountry, billingCountry);
         }
         if (billingState != null) {
-            parameters.put("BillingState", billingState);
+            parameters.put(x.BillingState, billingState);
         }
         if (billingPhone != null) {
-            parameters.put("BillingPhone", billingPhone);
+            parameters.put(x.BillingPhone, billingPhone);
         }
         //end - billing details
 
         //start - delivery details
         if (isBillingSameAsDelivery != null && isBillingSameAsDelivery) {
             if (billingSurname != null) {
-                parameters.put("DeliverySurname", billingSurname);
+                parameters.put(x.DeliverySurname, billingSurname);
             }
             if (billingFirstnames != null) {
-                parameters.put("DeliveryFirstnames", billingFirstnames);
+                parameters.put(x.DeliveryFirstnames, billingFirstnames);
             }
             if (billingAddress != null) {
-                parameters.put("DeliveryAddress", billingAddress);
+                parameters.put(x.DeliveryAddress, billingAddress);
             }
             if (billingAddress2 != null) {
-                parameters.put("DeliveryAddress2", billingAddress2);
+                parameters.put(x.DeliveryAddress2, billingAddress2);
             }
             if (billingCity != null) {
-                parameters.put("DeliveryCity", billingCity);
+                parameters.put(x.DeliveryCity, billingCity);
             }
             if (billingPostCode != null) {
-                parameters.put("DeliveryPostCode", billingPostCode);
+                parameters.put(x.DeliveryPostCode, billingPostCode);
             }
             if (billingCountry != null) {
-                parameters.put("DeliveryCountry", billingCountry);
+                parameters.put(x.DeliveryCountry, billingCountry);
             }
             if (billingState != null) {
-                parameters.put("DeliveryState", billingState);
+                parameters.put(x.DeliveryState, billingState);
             }
             if (billingPhone != null) {
-                parameters.put("DeliveryPhone", billingPhone);
+                parameters.put(x.DeliveryPhone, billingPhone);
             }
         } else {
             if (deliverySurname != null) {
-                parameters.put("DeliverySurname", deliverySurname);
+                parameters.put(x.DeliverySurname, deliverySurname);
             }
             if (deliveryFirstnames != null) {
-                parameters.put("DeliveryFirstnames", deliveryFirstnames);
+                parameters.put(x.DeliveryFirstnames, deliveryFirstnames);
             }
             if (deliveryAddress != null) {
-                parameters.put("DeliveryAddress", deliveryAddress);
+                parameters.put(x.DeliveryAddress, deliveryAddress);
             }
             if (deliveryAddress2 != null) {
-                parameters.put("DeliveryAddress2", deliveryAddress2);
+                parameters.put(x.DeliveryAddress2, deliveryAddress2);
             }
             if (deliveryCity != null) {
-                parameters.put("DeliveryCity", deliveryCity);
+                parameters.put(x.DeliveryCity, deliveryCity);
             }
             if (deliveryPostCode != null) {
-                parameters.put("DeliveryPostCode", deliveryPostCode);
+                parameters.put(x.DeliveryPostCode, deliveryPostCode);
             }
             if (deliveryCountry != null) {
-                parameters.put("DeliveryCountry", deliveryCountry);
+                parameters.put(x.DeliveryCountry, deliveryCountry);
             }
             if (deliveryState != null) {
-                parameters.put("DeliveryState", deliveryState);
+                parameters.put(x.DeliveryState, deliveryState);
             }
             if (deliveryPhone != null) {
-                parameters.put("DeliveryPhone", deliveryPhone);
+                parameters.put(x.DeliveryPhone, deliveryPhone);
             }
         }
         //end - delivery details
@@ -270,19 +273,19 @@ public class SagePayServices {
 
         //start - optional parameters
         if (cv2 != null) {
-            parameters.put("CV2", cv2);
+            parameters.put(x.CV2, cv2);
         }
         if (startDate != null) {
-            parameters.put("StartDate", startDate);
+            parameters.put(x.StartDate, startDate);
         }
         if (issueNumber != null) {
-            parameters.put("IssueNumber", issueNumber);
+            parameters.put(x.IssueNumber, issueNumber);
         }
         if (basket != null) {
-            parameters.put("Basket", basket);
+            parameters.put(x.Basket, basket);
         }
         if (clientIPAddress != null) {
-            parameters.put("ClientIPAddress", clientIPAddress);
+            parameters.put(x.ClientIPAddress, clientIPAddress);
         }
         //end - optional parameters
         //end - authentication parameters
@@ -290,72 +293,72 @@ public class SagePayServices {
         try (CloseableHttpClient httpClient = SagePayUtil.getHttpClient()) {
 
             String successMessage = null;
-            HttpPost httpPost = SagePayUtil.getHttpPost(props.get("authenticationUrl"), parameters);
+            HttpPost httpPost = SagePayUtil.getHttpPost(props.get(x.authenticationUrl), parameters);
             HttpResponse response = httpClient.execute(host, httpPost);
             Map<String, String> responseData = SagePayUtil.getResponseData(response);
 
-            String status = responseData.get("Status");
-            String statusDetail = responseData.get("StatusDetail");
+            String status = responseData.get(x.Status_bae7d5be);
+            String statusDetail = responseData.get(x.StatusDetail);
 
-            resultMap.put("status", status);
-            resultMap.put("statusDetail", statusDetail);
+            resultMap.put(x.status, status);
+            resultMap.put(x.statusDetail, statusDetail);
 
             //returning the below details back to the calling code, as it not returned back by the payment gateway
-            resultMap.put("vendorTxCode", vendorTxCode);
-            resultMap.put("amount", amount);
-            resultMap.put("transactionType", txType);
+            resultMap.put(x.vendorTxCode, vendorTxCode);
+            resultMap.put(x.amount, amount);
+            resultMap.put(x.transactionType, txType);
 
             //start - transaction authorized
-            if ("OK".equals(status)) {
-                resultMap.put("vpsTxId", responseData.get("VPSTxId"));
-                resultMap.put("securityKey", responseData.get("SecurityKey"));
-                resultMap.put("txAuthNo", responseData.get("TxAuthNo"));
-                resultMap.put("avsCv2", responseData.get("AVSCV2"));
-                resultMap.put("addressResult", responseData.get("AddressResult"));
-                resultMap.put("postCodeResult", responseData.get("PostCodeResult"));
-                resultMap.put("cv2Result", responseData.get("CV2Result"));
-                successMessage = "Payment authorized";
+            if (x.OK.equals(status)) {
+                resultMap.put(x.vpsTxId, responseData.get(x.VPSTxId));
+                resultMap.put(x.securityKey, responseData.get(x.SecurityKey));
+                resultMap.put(x.txAuthNo, responseData.get(x.TxAuthNo));
+                resultMap.put(x.avsCv2, responseData.get(x.AVSCV2));
+                resultMap.put(x.addressResult, responseData.get(x.AddressResult));
+                resultMap.put(x.postCodeResult, responseData.get(x.PostCodeResult));
+                resultMap.put(x.cv2Result, responseData.get(x.CV2Result));
+                successMessage = x.Payment_authorized;
             }
             //end - transaction authorized
 
-            if ("NOTAUTHED".equals(status)) {
-                resultMap.put("vpsTxId", responseData.get("VPSTxId"));
-                resultMap.put("securityKey", responseData.get("SecurityKey"));
-                resultMap.put("avsCv2", responseData.get("AVSCV2"));
-                resultMap.put("addressResult", responseData.get("AddressResult"));
-                resultMap.put("postCodeResult", responseData.get("PostCodeResult"));
-                resultMap.put("cv2Result", responseData.get("CV2Result"));
-                successMessage = "Payment not authorized";
+            if (x.NOTAUTHED.equals(status)) {
+                resultMap.put(x.vpsTxId, responseData.get(x.VPSTxId));
+                resultMap.put(x.securityKey, responseData.get(x.SecurityKey));
+                resultMap.put(x.avsCv2, responseData.get(x.AVSCV2));
+                resultMap.put(x.addressResult, responseData.get(x.AddressResult));
+                resultMap.put(x.postCodeResult, responseData.get(x.PostCodeResult));
+                resultMap.put(x.cv2Result, responseData.get(x.CV2Result));
+                successMessage = x.Payment_not_authorized_8d42a994;
             }
 
-            if ("MALFORMED".equals(status)) {
+            if (x.MALFORMED.equals(status)) {
                 //request not formed properly or parameters missing
-                resultMap.put("vpsTxId", responseData.get("VPSTxId"));
-                resultMap.put("securityKey", responseData.get("SecurityKey"));
-                resultMap.put("avsCv2", responseData.get("AVSCV2"));
-                resultMap.put("addressResult", responseData.get("AddressResult"));
-                resultMap.put("postCodeResult", responseData.get("PostCodeResult"));
-                resultMap.put("cv2Result", responseData.get("CV2Result"));
+                resultMap.put(x.vpsTxId, responseData.get(x.VPSTxId));
+                resultMap.put(x.securityKey, responseData.get(x.SecurityKey));
+                resultMap.put(x.avsCv2, responseData.get(x.AVSCV2));
+                resultMap.put(x.addressResult, responseData.get(x.AddressResult));
+                resultMap.put(x.postCodeResult, responseData.get(x.PostCodeResult));
+                resultMap.put(x.cv2Result, responseData.get(x.CV2Result));
             }
 
-            if ("INVALID".equals(status)) {
+            if (x.INVALID.equals(status)) {
                 //invalid information in request
-                resultMap.put("vpsTxId", responseData.get("VPSTxId"));
-                resultMap.put("securityKey", responseData.get("SecurityKey"));
-                resultMap.put("avsCv2", responseData.get("AVSCV2"));
-                resultMap.put("addressResult", responseData.get("AddressResult"));
-                resultMap.put("postCodeResult", responseData.get("PostCodeResult"));
-                resultMap.put("cv2Result", responseData.get("CV2Result"));
+                resultMap.put(x.vpsTxId, responseData.get(x.VPSTxId));
+                resultMap.put(x.securityKey, responseData.get(x.SecurityKey));
+                resultMap.put(x.avsCv2, responseData.get(x.AVSCV2));
+                resultMap.put(x.addressResult, responseData.get(x.AddressResult));
+                resultMap.put(x.postCodeResult, responseData.get(x.PostCodeResult));
+                resultMap.put(x.cv2Result, responseData.get(x.CV2Result));
             }
 
-            if ("REJECTED".equals(status)) {
+            if (x.REJECTED.equals(status)) {
                 //invalid information in request
-                resultMap.put("vpsTxId", responseData.get("VPSTxId"));
-                resultMap.put("securityKey", responseData.get("SecurityKey"));
-                resultMap.put("avsCv2", responseData.get("AVSCV2"));
-                resultMap.put("addressResult", responseData.get("AddressResult"));
-                resultMap.put("postCodeResult", responseData.get("PostCodeResult"));
-                resultMap.put("cv2Result", responseData.get("CV2Result"));
+                resultMap.put(x.vpsTxId, responseData.get(x.VPSTxId));
+                resultMap.put(x.securityKey, responseData.get(x.SecurityKey));
+                resultMap.put(x.avsCv2, responseData.get(x.AVSCV2));
+                resultMap.put(x.addressResult, responseData.get(x.AddressResult));
+                resultMap.put(x.postCodeResult, responseData.get(x.PostCodeResult));
+                resultMap.put(x.cv2Result, responseData.get(x.CV2Result));
             }
 
             resultMap.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
@@ -363,26 +366,26 @@ public class SagePayServices {
 
         } catch (UnsupportedEncodingException uee) {
             //exception in encoding parameters in httpPost
-            Debug.logError(uee, "Error occurred in encoding parameters for HttpPost (" + uee.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorEncodingParameters",
-                    UtilMisc.toMap("errorString", uee.getMessage()), locale));
+            Debug.logError(uee, x.Error_occurred_in_encoding_parameters_for_HttpPost + uee.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorEncodingParameters,
+                    UtilMisc.toMap(x.errorString, uee.getMessage()), locale));
         } catch (ClientProtocolException cpe) {
             //from httpClient execute
-            Debug.logError(cpe, "Error occurred in HttpClient execute(" + cpe.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorHttpClientExecute",
-                    UtilMisc.toMap("errorString", cpe.getMessage()), locale));
+            Debug.logError(cpe, x.Error_occurred_in_HttpClient_execute + cpe.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorHttpClientExecute,
+                    UtilMisc.toMap(x.errorString, cpe.getMessage()), locale));
         } catch (IOException ioe) {
             //from httpClient execute or getResponsedata
-            Debug.logError(ioe, "Error occurred in HttpClient execute or getting response (" + ioe.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorHttpClientExecuteOrGettingResponse",
-                    UtilMisc.toMap("errorString", ioe.getMessage()), locale));
+            Debug.logError(ioe, x.Error_occurred_in_HttpClient_execute_or_getting_response + ioe.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorHttpClientExecuteOrGettingResponse,
+                    UtilMisc.toMap(x.errorString, ioe.getMessage()), locale));
         }
         return resultMap;
     }
 
     public static Map<String, Object> paymentAuthorisation(DispatchContext ctx, SagePayServicesContext context) {
-        Debug.logInfo("SagePay - Entered paymentAuthorisation", MODULE);
-        Debug.logInfo("SagePay paymentAuthorisation context : " + context, MODULE);
+        Debug.logInfo(x.SagePay_Entered_paymentAuthorisation, MODULE);
+        Debug.logInfo(x.SagePay_paymentAuthorisation_context + context, MODULE);
 
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> resultMap = new HashMap<>();
@@ -401,55 +404,55 @@ public class SagePayServices {
         //start - authorization parameters
         Map<String, String> parameters = new HashMap<>();
 
-        String vpsProtocol = props.get("protocolVersion");
-        String vendor = props.get("vendor");
-        String txType = props.get("authoriseTransType");
+        String vpsProtocol = props.get(x.protocolVersion);
+        String vendor = props.get(x.vendor);
+        String txType = props.get(x.authoriseTransType);
 
-        parameters.put("VPSProtocol", vpsProtocol);
-        parameters.put("TxType", txType);
-        parameters.put("Vendor", vendor);
-        parameters.put("VendorTxCode", vendorTxCode);
-        parameters.put("VPSTxId", vpsTxId);
-        parameters.put("SecurityKey", securityKey);
-        parameters.put("TxAuthNo", txAuthNo);
-        parameters.put("ReleaseAmount", amount);
+        parameters.put(x.VPSProtocol, vpsProtocol);
+        parameters.put(x.TxType, txType);
+        parameters.put(x.Vendor, vendor);
+        parameters.put(x.VendorTxCode, vendorTxCode);
+        parameters.put(x.VPSTxId, vpsTxId);
+        parameters.put(x.SecurityKey, securityKey);
+        parameters.put(x.TxAuthNo, txAuthNo);
+        parameters.put(x.ReleaseAmount, amount);
 
-        Debug.logInfo("authorization parameters -> " + parameters, MODULE);
+        Debug.logInfo(x.authorization_parameters + parameters, MODULE);
         //end - authorization parameters
 
         try (CloseableHttpClient httpClient = SagePayUtil.getHttpClient()) {
             String successMessage = null;
-            HttpPost httpPost = SagePayUtil.getHttpPost(props.get("authoriseUrl"), parameters);
+            HttpPost httpPost = SagePayUtil.getHttpPost(props.get(x.authoriseUrl), parameters);
             HttpResponse response = httpClient.execute(host, httpPost);
 
             Map<String, String> responseData = SagePayUtil.getResponseData(response);
-            String status = responseData.get("Status");
-            String statusDetail = responseData.get("StatusDetail");
+            String status = responseData.get(x.Status_bae7d5be);
+            String statusDetail = responseData.get(x.StatusDetail);
 
-            resultMap.put("status", status);
-            resultMap.put("statusDetail", statusDetail);
+            resultMap.put(x.status, status);
+            resultMap.put(x.statusDetail, statusDetail);
 
             //start - payment refunded
-            if ("OK".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentReleased", locale);
+            if (x.OK.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentReleased, locale);
             }
             //end - payment refunded
 
             //start - refund request not formed properly or parameters missing
-            if ("MALFORMED".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentReleaseRequestMalformed", locale);
+            if (x.MALFORMED.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentReleaseRequestMalformed, locale);
             }
             //end - refund request not formed properly or parameters missing
 
             //start - invalid information passed in parameters
-            if ("INVALID".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentInvalidInformationPassed", locale);
+            if (x.INVALID.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentInvalidInformationPassed, locale);
             }
             //end - invalid information passed in parameters
 
             //start - problem at Sagepay
-            if ("ERROR".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentError", locale);
+            if (x.ERROR.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentError, locale);
             }
             //end - problem at Sagepay
 
@@ -458,26 +461,26 @@ public class SagePayServices {
 
         } catch (UnsupportedEncodingException uee) {
             //exception in encoding parameters in httpPost
-            Debug.logError(uee, "Error occurred in encoding parameters for HttpPost (" + uee.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorEncodingParameters",
-                    UtilMisc.toMap("errorString", uee.getMessage()), locale));
+            Debug.logError(uee, x.Error_occurred_in_encoding_parameters_for_HttpPost + uee.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorEncodingParameters,
+                    UtilMisc.toMap(x.errorString, uee.getMessage()), locale));
         } catch (ClientProtocolException cpe) {
             //from httpClient execute
-            Debug.logError(cpe, "Error occurred in HttpClient execute(" + cpe.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorHttpClientExecute",
-                    UtilMisc.toMap("errorString", cpe.getMessage()), locale));
+            Debug.logError(cpe, x.Error_occurred_in_HttpClient_execute + cpe.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorHttpClientExecute,
+                    UtilMisc.toMap(x.errorString, cpe.getMessage()), locale));
         } catch (IOException ioe) {
             //from httpClient execute or getResponsedata
-            Debug.logError(ioe, "Error occurred in HttpClient execute or getting response (" + ioe.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorHttpClientExecuteOrGettingResponse",
-                    UtilMisc.toMap("errorString", ioe.getMessage()), locale));
+            Debug.logError(ioe, x.Error_occurred_in_HttpClient_execute_or_getting_response + ioe.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorHttpClientExecuteOrGettingResponse,
+                    UtilMisc.toMap(x.errorString, ioe.getMessage()), locale));
         }
         return resultMap;
     }
 
     public static Map<String, Object> paymentRelease(DispatchContext ctx, SagePayServicesContext context) {
-        Debug.logInfo("SagePay - Entered paymentRelease", MODULE);
-        Debug.logInfo("SagePay paymentRelease context : " + context, MODULE);
+        Debug.logInfo(x.SagePay_Entered_paymentRelease, MODULE);
+        Debug.logInfo(x.SagePay_paymentRelease_context + context, MODULE);
 
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> resultMap = new HashMap<>();
@@ -495,53 +498,53 @@ public class SagePayServices {
         //start - release parameters
         Map<String, String> parameters = new HashMap<>();
 
-        String vpsProtocol = props.get("protocolVersion");
-        String vendor = props.get("vendor");
-        String txType = props.get("releaseTransType");
+        String vpsProtocol = props.get(x.protocolVersion);
+        String vendor = props.get(x.vendor);
+        String txType = props.get(x.releaseTransType);
 
-        parameters.put("VPSProtocol", vpsProtocol);
-        parameters.put("TxType", txType);
-        parameters.put("Vendor", vendor);
-        parameters.put("VendorTxCode", vendorTxCode);
-        parameters.put("VPSTxId", vpsTxId);
-        parameters.put("SecurityKey", securityKey);
-        parameters.put("TxAuthNo", txAuthNo);
+        parameters.put(x.VPSProtocol, vpsProtocol);
+        parameters.put(x.TxType, txType);
+        parameters.put(x.Vendor, vendor);
+        parameters.put(x.VendorTxCode, vendorTxCode);
+        parameters.put(x.VPSTxId, vpsTxId);
+        parameters.put(x.SecurityKey, securityKey);
+        parameters.put(x.TxAuthNo, txAuthNo);
         //end - release parameters
 
         try (CloseableHttpClient httpClient = SagePayUtil.getHttpClient()) {
             String successMessage = null;
-            HttpPost httpPost = SagePayUtil.getHttpPost(props.get("releaseUrl"), parameters);
+            HttpPost httpPost = SagePayUtil.getHttpPost(props.get(x.releaseUrl), parameters);
             HttpResponse response = httpClient.execute(host, httpPost);
 
             Map<String, String> responseData = SagePayUtil.getResponseData(response);
 
-            String status = responseData.get("Status");
-            String statusDetail = responseData.get("StatusDetail");
+            String status = responseData.get(x.Status_bae7d5be);
+            String statusDetail = responseData.get(x.StatusDetail);
 
-            resultMap.put("status", status);
-            resultMap.put("statusDetail", statusDetail);
+            resultMap.put(x.status, status);
+            resultMap.put(x.statusDetail, statusDetail);
 
             //start - payment released
-            if ("OK".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentReleased", locale);
+            if (x.OK.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentReleased, locale);
             }
             //end - payment released
 
             //start - release request not formed properly or parameters missing
-            if ("MALFORMED".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentReleaseRequestMalformed", locale);
+            if (x.MALFORMED.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentReleaseRequestMalformed, locale);
             }
             //end - release request not formed properly or parameters missing
 
             //start - invalid information passed in parameters
-            if ("INVALID".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentInvalidInformationPassed", locale);
+            if (x.INVALID.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentInvalidInformationPassed, locale);
             }
             //end - invalid information passed in parameters
 
             //start - problem at Sagepay
-            if ("ERROR".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentError", locale);
+            if (x.ERROR.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentError, locale);
             }
             //end - problem at Sagepay
 
@@ -550,26 +553,26 @@ public class SagePayServices {
 
         } catch (UnsupportedEncodingException uee) {
             //exception in encoding parameters in httpPost
-            Debug.logError(uee, "Error occurred in encoding parameters for HttpPost (" + uee.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorEncodingParameters",
-                    UtilMisc.toMap("errorString", uee.getMessage()), locale));
+            Debug.logError(uee, x.Error_occurred_in_encoding_parameters_for_HttpPost + uee.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorEncodingParameters,
+                    UtilMisc.toMap(x.errorString, uee.getMessage()), locale));
         } catch (ClientProtocolException cpe) {
             //from httpClient execute
-            Debug.logError(cpe, "Error occurred in HttpClient execute(" + cpe.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorHttpClientExecute",
-                    UtilMisc.toMap("errorString", cpe.getMessage()), locale));
+            Debug.logError(cpe, x.Error_occurred_in_HttpClient_execute + cpe.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorHttpClientExecute,
+                    UtilMisc.toMap(x.errorString, cpe.getMessage()), locale));
         } catch (IOException ioe) {
             //from httpClient execute or getResponsedata
-            Debug.logError(ioe, "Error occurred in HttpClient execute or getting response (" + ioe.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorHttpClientExecuteOrGettingResponse",
-                    UtilMisc.toMap("errorString", ioe.getMessage()), locale));
+            Debug.logError(ioe, x.Error_occurred_in_HttpClient_execute_or_getting_response + ioe.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorHttpClientExecuteOrGettingResponse,
+                    UtilMisc.toMap(x.errorString, ioe.getMessage()), locale));
         }
         return resultMap;
     }
 
     public static Map<String, Object> paymentVoid(DispatchContext ctx, SagePayServicesContext context) {
-        Debug.logInfo("SagePay - Entered paymentVoid", MODULE);
-        Debug.logInfo("SagePay paymentVoid context : " + context, MODULE);
+        Debug.logInfo(x.SagePay_Entered_paymentVoid, MODULE);
+        Debug.logInfo(x.SagePay_paymentVoid_context + context, MODULE);
 
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> resultMap = new HashMap<>();
@@ -587,51 +590,51 @@ public class SagePayServices {
         //start - void parameters
         Map<String, String> parameters = new HashMap<>();
 
-        String vpsProtocol = props.get("protocolVersion");
-        String vendor = props.get("vendor");
+        String vpsProtocol = props.get(x.protocolVersion);
+        String vendor = props.get(x.vendor);
 
-        parameters.put("VPSProtocol", vpsProtocol);
-        parameters.put("TxType", "VOID");
-        parameters.put("Vendor", vendor);
-        parameters.put("VendorTxCode", vendorTxCode);
-        parameters.put("VPSTxId", vpsTxId);
-        parameters.put("SecurityKey", securityKey);
-        parameters.put("TxAuthNo", txAuthNo);
+        parameters.put(x.VPSProtocol, vpsProtocol);
+        parameters.put(x.TxType, x.VOID);
+        parameters.put(x.Vendor, vendor);
+        parameters.put(x.VendorTxCode, vendorTxCode);
+        parameters.put(x.VPSTxId, vpsTxId);
+        parameters.put(x.SecurityKey, securityKey);
+        parameters.put(x.TxAuthNo, txAuthNo);
         //end - void parameters
 
         try (CloseableHttpClient httpClient = SagePayUtil.getHttpClient()) {
             String successMessage = null;
-            HttpPost httpPost = SagePayUtil.getHttpPost(props.get("voidUrl"), parameters);
+            HttpPost httpPost = SagePayUtil.getHttpPost(props.get(x.voidUrl), parameters);
             HttpResponse response = httpClient.execute(host, httpPost);
             Map<String, String> responseData = SagePayUtil.getResponseData(response);
 
-            String status = responseData.get("Status");
-            String statusDetail = responseData.get("StatusDetail");
+            String status = responseData.get(x.Status_bae7d5be);
+            String statusDetail = responseData.get(x.StatusDetail);
 
-            resultMap.put("status", status);
-            resultMap.put("statusDetail", statusDetail);
+            resultMap.put(x.status, status);
+            resultMap.put(x.statusDetail, statusDetail);
 
             //start - payment void
-            if ("OK".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentVoided", locale);
+            if (x.OK.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentVoided, locale);
             }
             //end - payment void
 
             //start - void request not formed properly or parameters missing
-            if ("MALFORMED".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentVoidRequestMalformed", locale);
+            if (x.MALFORMED.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentVoidRequestMalformed, locale);
             }
             //end - void request not formed properly or parameters missing
 
             //start - invalid information passed in parameters
-            if ("INVALID".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentInvalidInformationPassed", locale);
+            if (x.INVALID.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentInvalidInformationPassed, locale);
             }
             //end - invalid information passed in parameters
 
             //start - problem at Sagepay
-            if ("ERROR".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentError", locale);
+            if (x.ERROR.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentError, locale);
             }
             //end - problem at Sagepay
 
@@ -639,26 +642,26 @@ public class SagePayServices {
             resultMap.put(ModelService.SUCCESS_MESSAGE, successMessage);
         } catch (UnsupportedEncodingException uee) {
             //exception in encoding parameters in httpPost
-            Debug.logError(uee, "Error occurred in encoding parameters for HttpPost (" + uee.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorEncodingParameters",
-                    UtilMisc.toMap("errorString", uee.getMessage()), locale));
+            Debug.logError(uee, x.Error_occurred_in_encoding_parameters_for_HttpPost + uee.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorEncodingParameters,
+                    UtilMisc.toMap(x.errorString, uee.getMessage()), locale));
         } catch (ClientProtocolException cpe) {
             //from httpClient execute
-            Debug.logError(cpe, "Error occurred in HttpClient execute(" + cpe.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorHttpClientExecute",
-                    UtilMisc.toMap("errorString", cpe.getMessage()), locale));
+            Debug.logError(cpe, x.Error_occurred_in_HttpClient_execute + cpe.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorHttpClientExecute,
+                    UtilMisc.toMap(x.errorString, cpe.getMessage()), locale));
         } catch (IOException ioe) {
             //from httpClient execute or getResponsedata
-            Debug.logError(ioe, "Error occurred in HttpClient execute or getting response (" + ioe.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorHttpClientExecuteOrGettingResponse",
-                    UtilMisc.toMap("errorString", ioe.getMessage()), locale));
+            Debug.logError(ioe, x.Error_occurred_in_HttpClient_execute_or_getting_response + ioe.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorHttpClientExecuteOrGettingResponse,
+                    UtilMisc.toMap(x.errorString, ioe.getMessage()), locale));
         }
         return resultMap;
     }
 
     public static Map<String, Object> paymentRefund(DispatchContext ctx, SagePayServicesContext context) {
-        Debug.logInfo("SagePay - Entered paymentRefund", MODULE);
-        Debug.logInfo("SagePay paymentRefund context : " + context, MODULE);
+        Debug.logInfo(x.SagePay_Entered_paymentRefund, MODULE);
+        Debug.logInfo(x.SagePay_paymentRefund_context + context, MODULE);
 
         Delegator delegator = ctx.getDelegator();
         Map<String, Object> resultMap = new HashMap<>();
@@ -681,65 +684,65 @@ public class SagePayServices {
         //start - refund parameters
         Map<String, String> parameters = new HashMap<>();
 
-        String vpsProtocol = props.get("protocolVersion");
-        String vendor = props.get("vendor");
+        String vpsProtocol = props.get(x.protocolVersion);
+        String vendor = props.get(x.vendor);
 
-        parameters.put("VPSProtocol", vpsProtocol);
-        parameters.put("TxType", "REFUND");
-        parameters.put("Vendor", vendor);
-        parameters.put("VendorTxCode", vendorTxCode);
-        parameters.put("Amount", amount);
-        parameters.put("Currency", currency);
-        parameters.put("Description", description);
-        parameters.put("RelatedVPSTxId", relatedVPSTxId);
-        parameters.put("RelatedVendorTxCode", relatedVendorTxCode);
-        parameters.put("RelatedSecurityKey", relatedSecurityKey);
-        parameters.put("RelatedTxAuthNo", relatedTxAuthNo);
+        parameters.put(x.VPSProtocol, vpsProtocol);
+        parameters.put(x.TxType, x.REFUND);
+        parameters.put(x.Vendor, vendor);
+        parameters.put(x.VendorTxCode, vendorTxCode);
+        parameters.put(x.Amount, amount);
+        parameters.put(x.Currency, currency);
+        parameters.put(x.Description, description);
+        parameters.put(x.RelatedVPSTxId, relatedVPSTxId);
+        parameters.put(x.RelatedVendorTxCode, relatedVendorTxCode);
+        parameters.put(x.RelatedSecurityKey, relatedSecurityKey);
+        parameters.put(x.RelatedTxAuthNo, relatedTxAuthNo);
         //end - refund parameters
 
         try (CloseableHttpClient httpClient = SagePayUtil.getHttpClient()) {
             String successMessage = null;
-            HttpPost httpPost = SagePayUtil.getHttpPost(props.get("refundUrl"), parameters);
+            HttpPost httpPost = SagePayUtil.getHttpPost(props.get(x.refundUrl), parameters);
             HttpResponse response = httpClient.execute(host, httpPost);
             Map<String, String> responseData = SagePayUtil.getResponseData(response);
 
-            Debug.logInfo("response data -> " + responseData, MODULE);
+            Debug.logInfo(x.response_data + responseData, MODULE);
 
-            String status = responseData.get("Status");
-            String statusDetail = responseData.get("StatusDetail");
+            String status = responseData.get(x.Status_bae7d5be);
+            String statusDetail = responseData.get(x.StatusDetail);
 
-            resultMap.put("status", status);
-            resultMap.put("statusDetail", statusDetail);
+            resultMap.put(x.status, status);
+            resultMap.put(x.statusDetail, statusDetail);
 
             //start - payment refunded
-            if ("OK".equals(status)) {
-                resultMap.put("vpsTxId", responseData.get("VPSTxId"));
-                resultMap.put("txAuthNo", responseData.get("TxAuthNo"));
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentRefunded", locale);
+            if (x.OK.equals(status)) {
+                resultMap.put(x.vpsTxId, responseData.get(x.VPSTxId));
+                resultMap.put(x.txAuthNo, responseData.get(x.TxAuthNo));
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentRefunded, locale);
             }
             //end - payment refunded
 
             //start - refund not authorized by the acquiring bank
-            if ("NOTAUTHED".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentRefundNotAuthorized", locale);
+            if (x.NOTAUTHED.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentRefundNotAuthorized, locale);
             }
             //end - refund not authorized by the acquiring bank
 
             //start - refund request not formed properly or parameters missing
-            if ("MALFORMED".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentRefundRequestMalformed", locale);
+            if (x.MALFORMED.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentRefundRequestMalformed, locale);
             }
             //end - refund request not formed properly or parameters missing
 
             //start - invalid information passed in parameters
-            if ("INVALID".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentInvalidInformationPassed", locale);
+            if (x.INVALID.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentInvalidInformationPassed, locale);
             }
             //end - invalid information passed in parameters
 
             //start - problem at Sagepay
-            if ("ERROR".equals(status)) {
-                successMessage = UtilProperties.getMessage(RESOURCE, "AccountingSagePayPaymentError", locale);
+            if (x.ERROR.equals(status)) {
+                successMessage = UtilProperties.getMessage(RESOURCE, x.AccountingSagePayPaymentError, locale);
             }
             //end - problem at Sagepay
 
@@ -748,21 +751,22 @@ public class SagePayServices {
 
         } catch (UnsupportedEncodingException uee) {
             //exception in encoding parameters in httpPost
-            Debug.logError(uee, "Error occurred in encoding parameters for HttpPost (" + uee.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorEncodingParameters",
-                    UtilMisc.toMap("errorString", uee.getMessage()), locale));
+            Debug.logError(uee, x.Error_occurred_in_encoding_parameters_for_HttpPost + uee.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorEncodingParameters,
+                    UtilMisc.toMap(x.errorString, uee.getMessage()), locale));
         } catch (ClientProtocolException cpe) {
             //from httpClient execute
-            Debug.logError(cpe, "Error occurred in HttpClient execute(" + cpe.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorHttpClientExecute",
-                    UtilMisc.toMap("errorString", cpe.getMessage()), locale));
+            Debug.logError(cpe, x.Error_occurred_in_HttpClient_execute + cpe.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorHttpClientExecute,
+                    UtilMisc.toMap(x.errorString, cpe.getMessage()), locale));
         } catch (IOException ioe) {
             //from httpClient execute or getResponsedata
-            Debug.logError(ioe, "Error occurred in HttpClient execute or getting response (" + ioe.getMessage() + ")", MODULE);
-            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "AccountingSagePayErrorHttpClientExecuteOrGettingResponse",
-                    UtilMisc.toMap("errorString", ioe.getMessage()), locale));
+            Debug.logError(ioe, x.Error_occurred_in_HttpClient_execute_or_getting_response + ioe.getMessage() + x.str_e7064f0b, MODULE);
+            resultMap = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.AccountingSagePayErrorHttpClientExecuteOrGettingResponse,
+                    UtilMisc.toMap(x.errorString, ioe.getMessage()), locale));
         }
 
         return resultMap;
     }
 }
+

@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.TechDataCalendarExcDayEntity;
 
-public interface TechDataCalendarExcDayDao extends CrudDao<TechDataCalendarExcDayEntity, TechDataCalendarExcDayEntity, SQLBuilder.PSC, TechDataCalendarExcDayDao> {
+public interface TechDataCalendarExcDayDao extends CrudDao<TechDataCalendarExcDayEntity, TechDataCalendarExcDayEntity, SQLBuilder.PSC, TechDataCalendarExcDayDao>, DelegatorQueryDao {
 }

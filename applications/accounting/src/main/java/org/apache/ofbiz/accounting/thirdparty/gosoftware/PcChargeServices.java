@@ -47,9 +47,9 @@ import org.apache.ofbiz.model.PcChargeServicesContext;
 public class PcChargeServices {
 
     private static final String MODULE = PcChargeServices.class.getName();
-    private static final String RESOURCE = "AccountingUiLabels";
-    private static final int DECIMALS = UtilNumber.getBigDecimalScale("invoice.decimals");
-    private static final RoundingMode ROUNDING_MODE = UtilNumber.getRoundingMode("invoice.rounding");
+    private static final String RESOURCE = x.AccountingUiLabels;
+    private static final int DECIMALS = UtilNumber.getBigDecimalScale(x.invoice_decimals);
+    private static final RoundingMode ROUNDING_MODE = UtilNumber.getRoundingMode(x.invoice_rounding);
 
     public static Map<String, Object> ccAuth(DispatchContext dctx, PcChargeServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
@@ -59,7 +59,7 @@ public class PcChargeServices {
         PcChargeApi api = getApi(props);
         if (api == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPcChargeErrorGettingPaymentGatewayConfig", locale));
+                    x.AccountingPcChargeErrorGettingPaymentGatewayConfig, locale));
         }
 
         try {
@@ -69,18 +69,18 @@ public class PcChargeServices {
         }
 
         // basic tx info
-        api.set(PcChargeApi.TRANS_AMOUNT, getAmountString(context, "processAmount"));
+        api.set(PcChargeApi.TRANS_AMOUNT, getAmountString(context, x.processAmount));
         api.set(PcChargeApi.TICKET_NUM, context.get(x.orderId));
-        api.set(PcChargeApi.MANUAL_FLAG, "0");
-        api.set(PcChargeApi.PRESENT_FLAG, "1");
+        api.set(PcChargeApi.MANUAL_FLAG, x._0);
+        api.set(PcChargeApi.PRESENT_FLAG, x._1);
 
         // command setting
-        if ("1".equals(props.getProperty("autoBill"))) {
+        if (x._1.equals(props.getProperty(x.autoBill))) {
             // sale
-            api.set(PcChargeApi.COMMAND, "1");
+            api.set(PcChargeApi.COMMAND, x._1);
         } else {
             // pre-auth
-            api.set(PcChargeApi.COMMAND, "4");
+            api.set(PcChargeApi.COMMAND, x._4);
         }
 
         // send the transaction
@@ -95,39 +95,39 @@ public class PcChargeServices {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         String resultCode = out.get(PcChargeApi.RESULT);
         boolean passed = false;
-        if ("CAPTURED".equals(resultCode)) {
-            result.put("authResult", Boolean.TRUE);
-            result.put("captureResult", Boolean.TRUE);
+        if (x.CAPTURED.equals(resultCode)) {
+            result.put(x.authResult, Boolean.TRUE);
+            result.put(x.captureResult, Boolean.TRUE);
             passed = true;
-        } else if ("APPROVED".equals(resultCode)) {
-            result.put("authCode", out.get(PcChargeApi.AUTH_CODE));
-            result.put("authResult", Boolean.TRUE);
+        } else if (x.APPROVED.equals(resultCode)) {
+            result.put(x.authCode, out.get(PcChargeApi.AUTH_CODE));
+            result.put(x.authResult, Boolean.TRUE);
             passed = true;
-        } else if ("PROCESSED".equals(resultCode)) {
-            result.put("authResult", Boolean.TRUE);
+        } else if (x.PROCESSED.equals(resultCode)) {
+            result.put(x.authResult, Boolean.TRUE);
         } else {
-            result.put("authResult", Boolean.FALSE);
+            result.put(x.authResult, Boolean.FALSE);
         }
 
-        result.put("authRefNum", out.get(PcChargeApi.TROUTD) != null ? out.get(PcChargeApi.TROUTD) : "");
-        result.put("processAmount", context.get(x.processAmount));
-        result.put("authCode", out.get(PcChargeApi.AUTH_CODE));
-        result.put("authFlag", out.get(PcChargeApi.REFERENCE));
-        result.put("authMessage", out.get(PcChargeApi.RESULT));
-        result.put("cvCode", out.get(PcChargeApi.CVV2_CODE));
-        result.put("avsCode", out.get(PcChargeApi.AVS_CODE));
+        result.put(x.authRefNum, out.get(PcChargeApi.TROUTD) != null ? out.get(PcChargeApi.TROUTD) : x.emptyString);
+        result.put(x.processAmount, context.get(x.processAmount));
+        result.put(x.authCode, out.get(PcChargeApi.AUTH_CODE));
+        result.put(x.authFlag, out.get(PcChargeApi.REFERENCE));
+        result.put(x.authMessage, out.get(PcChargeApi.RESULT));
+        result.put(x.cvCode, out.get(PcChargeApi.CVV2_CODE));
+        result.put(x.avsCode, out.get(PcChargeApi.AVS_CODE));
 
         if (!passed) {
-            String respMsg = out.get(PcChargeApi.RESULT) + " / " + out.get(PcChargeApi.AUTH_CODE);
+            String respMsg = out.get(PcChargeApi.RESULT) + x.str_0d0c4ddd + out.get(PcChargeApi.AUTH_CODE);
             String refNum = out.get(PcChargeApi.TROUTD);
-            result.put("customerRespMsgs", UtilMisc.toList(respMsg, refNum));
+            result.put(x.customerRespMsgs, UtilMisc.toList(respMsg, refNum));
         }
 
-        if (result.get("captureResult") != null) {
-            result.put("captureCode", out.get(PcChargeApi.AUTH_CODE));
-            result.put("captureFlag", out.get(PcChargeApi.REFERENCE));
-            result.put("captureRefNum", out.get(PcChargeApi.TROUTD));
-            result.put("captureMessage", out.get(PcChargeApi.RESULT));
+        if (result.get(x.captureResult) != null) {
+            result.put(x.captureCode, out.get(PcChargeApi.AUTH_CODE));
+            result.put(x.captureFlag, out.get(PcChargeApi.REFERENCE));
+            result.put(x.captureRefNum, out.get(PcChargeApi.TROUTD));
+            result.put(x.captureMessage, out.get(PcChargeApi.RESULT));
         }
 
         return result;
@@ -147,7 +147,7 @@ public class PcChargeServices {
 
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPaymentTransactionAuthorizationNotFoundCannotCapture", locale));
+                    x.AccountingPaymentTransactionAuthorizationNotFoundCannotCapture, locale));
         }
 
         // setup the PCCharge Interface
@@ -155,11 +155,11 @@ public class PcChargeServices {
         PcChargeApi api = getApi(props);
         if (api == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPcChargeErrorGettingPaymentGatewayConfig", locale));
+                    x.AccountingPcChargeErrorGettingPaymentGatewayConfig, locale));
         }
 
         api.set(PcChargeApi.TROUTD, authTransaction.getString(x.referenceNum));
-        api.set(PcChargeApi.COMMAND, "5");
+        api.set(PcChargeApi.COMMAND, x._5);
 
         // send the transaction
         PcChargeApi out = null;
@@ -172,16 +172,16 @@ public class PcChargeServices {
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         String resultCode = out.get(PcChargeApi.RESULT);
-        if ("CAPTURED".equals(resultCode)) {
-            result.put("captureResult", Boolean.TRUE);
+        if (x.CAPTURED.equals(resultCode)) {
+            result.put(x.captureResult, Boolean.TRUE);
         } else {
-            result.put("captureResult", Boolean.FALSE);
+            result.put(x.captureResult, Boolean.FALSE);
         }
-        result.put("captureAmount", context.get(x.captureAmount));
-        result.put("captureRefNum", out.get(PcChargeApi.TROUTD) != null ? out.get(PcChargeApi.TROUTD) : "");
-        result.put("captureCode", out.get(PcChargeApi.AUTH_CODE));
-        result.put("captureFlag", out.get(PcChargeApi.REFERENCE));
-        result.put("captureMessage", out.get(PcChargeApi.RESULT));
+        result.put(x.captureAmount, context.get(x.captureAmount));
+        result.put(x.captureRefNum, out.get(PcChargeApi.TROUTD) != null ? out.get(PcChargeApi.TROUTD) : x.emptyString);
+        result.put(x.captureCode, out.get(PcChargeApi.AUTH_CODE));
+        result.put(x.captureFlag, out.get(PcChargeApi.REFERENCE));
+        result.put(x.captureMessage, out.get(PcChargeApi.RESULT));
 
         return result;
     }
@@ -199,7 +199,7 @@ public class PcChargeServices {
 
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPaymentTransactionAuthorizationNotFoundCannotRelease", locale));
+                    x.AccountingPaymentTransactionAuthorizationNotFoundCannotRelease, locale));
         }
 
         // setup the PCCharge Interface
@@ -207,16 +207,16 @@ public class PcChargeServices {
         PcChargeApi api = getApi(props);
         if (api == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPcChargeErrorGettingPaymentGatewayConfig", locale));
+                    x.AccountingPcChargeErrorGettingPaymentGatewayConfig, locale));
         }
 
         api.set(PcChargeApi.TROUTD, authTransaction.getString(x.referenceNum));
-        api.set(PcChargeApi.COMMAND, "3");
+        api.set(PcChargeApi.COMMAND, x._3);
 
         // check to make sure we are configured for SALE mode
-        if (!"true".equalsIgnoreCase(props.getProperty("autoBill"))) {
+        if (!x._true.equalsIgnoreCase(props.getProperty(x.autoBill))) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPcChargeCannotSupportReleasingPreAuth", locale));
+                    x.AccountingPcChargeCannotSupportReleasingPreAuth, locale));
         }
 
         // send the transaction
@@ -230,16 +230,16 @@ public class PcChargeServices {
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         String resultCode = out.get(PcChargeApi.RESULT);
-        if ("VOIDED".equals(resultCode)) {
-            result.put("releaseResult", Boolean.TRUE);
+        if (x.VOIDED.equals(resultCode)) {
+            result.put(x.releaseResult, Boolean.TRUE);
         } else {
-            result.put("releaseResult", Boolean.FALSE);
+            result.put(x.releaseResult, Boolean.FALSE);
         }
-        result.put("releaseAmount", context.get(x.releaseAmount));
-        result.put("releaseRefNum", out.get(PcChargeApi.TROUTD) != null ? out.get(PcChargeApi.TROUTD) : "");
-        result.put("releaseCode", out.get(PcChargeApi.AUTH_CODE));
-        result.put("releaseFlag", out.get(PcChargeApi.REFERENCE));
-        result.put("releaseMessage", out.get(PcChargeApi.RESULT));
+        result.put(x.releaseAmount, context.get(x.releaseAmount));
+        result.put(x.releaseRefNum, out.get(PcChargeApi.TROUTD) != null ? out.get(PcChargeApi.TROUTD) : x.emptyString);
+        result.put(x.releaseCode, out.get(PcChargeApi.AUTH_CODE));
+        result.put(x.releaseFlag, out.get(PcChargeApi.REFERENCE));
+        result.put(x.releaseMessage, out.get(PcChargeApi.RESULT));
 
         return result;
     }
@@ -257,7 +257,7 @@ public class PcChargeServices {
 
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPaymentTransactionAuthorizationNotFoundCannotRefund", locale));
+                    x.AccountingPaymentTransactionAuthorizationNotFoundCannotRefund, locale));
         }
 
         // setup the PCCharge Interface
@@ -265,11 +265,11 @@ public class PcChargeServices {
         PcChargeApi api = getApi(props);
         if (api == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPcChargeErrorGettingPaymentGatewayConfig", locale));
+                    x.AccountingPcChargeErrorGettingPaymentGatewayConfig, locale));
         }
 
         api.set(PcChargeApi.TROUTD, authTransaction.getString(x.referenceNum));
-        api.set(PcChargeApi.COMMAND, "2");
+        api.set(PcChargeApi.COMMAND, x._2);
 
         // send the transaction
         PcChargeApi out = null;
@@ -282,16 +282,16 @@ public class PcChargeServices {
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         String resultCode = out.get(PcChargeApi.RESULT);
-        if ("CAPTURED".equals(resultCode)) {
-            result.put("refundResult", Boolean.TRUE);
+        if (x.CAPTURED.equals(resultCode)) {
+            result.put(x.refundResult, Boolean.TRUE);
         } else {
-            result.put("refundResult", Boolean.FALSE);
+            result.put(x.refundResult, Boolean.FALSE);
         }
-        result.put("refundAmount", context.get(x.releaseAmount));
-        result.put("refundRefNum", out.get(PcChargeApi.TROUTD) != null ? out.get(PcChargeApi.TROUTD) : "");
-        result.put("refundCode", out.get(PcChargeApi.AUTH_CODE));
-        result.put("refundFlag", out.get(PcChargeApi.REFERENCE));
-        result.put("refundMessage", out.get(PcChargeApi.RESULT));
+        result.put(x.refundAmount, context.get(x.releaseAmount));
+        result.put(x.refundRefNum, out.get(PcChargeApi.TROUTD) != null ? out.get(PcChargeApi.TROUTD) : x.emptyString);
+        result.put(x.refundCode, out.get(PcChargeApi.AUTH_CODE));
+        result.put(x.refundFlag, out.get(PcChargeApi.REFERENCE));
+        result.put(x.refundMessage, out.get(PcChargeApi.RESULT));
 
         return result;
     }
@@ -300,7 +300,7 @@ public class PcChargeServices {
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         GenericValue creditCard = (GenericValue) context.get(x.creditCard);
         if (creditCard != null) {
-            List<String> expDateList = StringUtil.split(creditCard.getString(x.expireDate), "/");
+            List<String> expDateList = StringUtil.split(creditCard.getString(x.expireDate), x.str_42099b4a);
             String month = expDateList.get(0);
             String year = expDateList.get(1);
             String y2d = year.substring(2);
@@ -313,22 +313,22 @@ public class PcChargeServices {
             String sufix = creditCard.getString(x.suffixOnCard);
             StringBuilder name = new StringBuilder();
             if (UtilValidate.isNotEmpty(title)) {
-                name.append(title).append(" ");
+                name.append(title).append(x.str_b858cb28);
             }
             if (UtilValidate.isNotEmpty(fname)) {
-                name.append(fname).append(" ");
+                name.append(fname).append(x.str_b858cb28);
             }
             if (UtilValidate.isNotEmpty(mname)) {
-                name.append(mname).append(" ");
+                name.append(mname).append(x.str_b858cb28);
             }
             if (UtilValidate.isNotEmpty(lname)) {
-                name.append(lname).append(" ");
+                name.append(lname).append(x.str_b858cb28);
             }
             if (UtilValidate.isNotEmpty(sufix)) {
                 name.append(sufix);
             }
             String nameOnCard = name.toString().trim();
-            String acctNumber = "F" + creditCard.getString(x.cardNumber);
+            String acctNumber = x.F + creditCard.getString(x.cardNumber);
             String cvNum = (String) context.get(x.cardSecurityCode);
 
             api.set(PcChargeApi.ACCT_NUM, acctNumber);
@@ -350,19 +350,19 @@ public class PcChargeServices {
                 }
             }
         } else {
-            throw new GeneralException("No CreditCard object found");
+            throw new GeneralException(x.No_CreditCard_object_found);
         }
     }
 
     private static PcChargeApi getApi(Properties props) {
         if (props == null) {
-            Debug.logError("Cannot load API w/ null properties", MODULE);
+            Debug.logError(x.Cannot_load_API_w_null_properties, MODULE);
             return null;
         }
-        String host = props.getProperty("host");
+        String host = props.getProperty(x.host);
         int port = 0;
         try {
-            port = Integer.parseInt(props.getProperty("port"));
+            port = Integer.parseInt(props.getProperty(x.port));
         } catch (RuntimeException e) {
             Debug.logError(e, MODULE);
         }
@@ -373,48 +373,48 @@ public class PcChargeServices {
             api = new PcChargeApi();
         }
 
-        api.set(PcChargeApi.PROCESSOR_ID, props.getProperty("processorID"));
-        api.set(PcChargeApi.MERCH_NUM, props.getProperty("merchantID"));
-        api.set(PcChargeApi.USER_ID, props.getProperty("userID"));
+        api.set(PcChargeApi.PROCESSOR_ID, props.getProperty(x.processorID));
+        api.set(PcChargeApi.MERCH_NUM, props.getProperty(x.merchantID));
+        api.set(PcChargeApi.USER_ID, props.getProperty(x.userID));
         return api;
     }
 
     private static Properties buildPccProperties(PcChargeServicesContext context, Delegator delegator) {
         String configString = (String) context.get(x.paymentConfig);
         if (configString == null) {
-            configString = "payment.properties";
+            configString = x.payment_properties;
         }
 
-        String processorId = EntityUtilProperties.getPropertyValue(configString, "payment.pccharge.processorID", delegator);
-        String merchantId = EntityUtilProperties.getPropertyValue(configString, "payment.pccharge.merchantID", delegator);
-        String userId = EntityUtilProperties.getPropertyValue(configString, "payment.pccharge.userID", delegator);
-        String host = EntityUtilProperties.getPropertyValue(configString, "payment.pccharge.host", delegator);
-        String port = EntityUtilProperties.getPropertyValue(configString, "payment.pccharge.port", delegator);
-        String autoBill = EntityUtilProperties.getPropertyValue(configString, "payment.pccharge.autoBill", "true", delegator);
+        String processorId = EntityUtilProperties.getPropertyValue(configString, x.payment_pccharge_processorID, delegator);
+        String merchantId = EntityUtilProperties.getPropertyValue(configString, x.payment_pccharge_merchantID, delegator);
+        String userId = EntityUtilProperties.getPropertyValue(configString, x.payment_pccharge_userID, delegator);
+        String host = EntityUtilProperties.getPropertyValue(configString, x.payment_pccharge_host, delegator);
+        String port = EntityUtilProperties.getPropertyValue(configString, x.payment_pccharge_port, delegator);
+        String autoBill = EntityUtilProperties.getPropertyValue(configString, x.payment_pccharge_autoBill, x._true, delegator);
 
         // some property checking
         if (UtilValidate.isEmpty(processorId)) {
-            Debug.logWarning("The processorID property in [" + configString + "] is not configured", MODULE);
+            Debug.logWarning(x.The_processorID_property_in + configString + x.is_not_configured_1531478c, MODULE);
             return null;
         }
         if (UtilValidate.isEmpty(merchantId)) {
-            Debug.logWarning("The merchantID property in [" + configString + "] is not configured", MODULE);
+            Debug.logWarning(x.The_merchantID_property_in + configString + x.is_not_configured_1531478c, MODULE);
             return null;
         }
         if (UtilValidate.isEmpty(userId)) {
-            Debug.logWarning("The userID property in [" + configString + "] is not configured", MODULE);
+            Debug.logWarning(x.The_userID_property_in + configString + x.is_not_configured_1531478c, MODULE);
             return null;
         }
 
         // create some properties for CS Client
         Properties props = new Properties();
-        props.put("processorID", processorId);
-        props.put("merchantID", merchantId);
-        props.put("userID", userId);
-        props.put("host", host);
-        props.put("port", port);
-        props.put("autoBill", autoBill);
-        Debug.logInfo("Returning properties - " + props, MODULE);
+        props.put(x.processorID, processorId);
+        props.put(x.merchantID, merchantId);
+        props.put(x.userID, userId);
+        props.put(x.host, host);
+        props.put(x.port, port);
+        props.put(x.autoBill, autoBill);
+        Debug.logInfo(x.Returning_properties + props, MODULE);
 
         return props;
     }

@@ -38,7 +38,7 @@ import org.apache.ofbiz.model.PackingServicesContext;
 public class PackingServices {
 
     private static final String MODULE = PackingServices.class.getName();
-    private static final String RESOURCE = "ProductUiLabels";
+    private static final String RESOURCE = x.ProductUiLabels;
 
     public static Map<String, Object> addPackLine(DispatchContext dctx, PackingServicesContext context) {
         PackingSession session = (PackingSession) context.get(x.packingSession);
@@ -61,12 +61,12 @@ public class PackingServices {
             quantity = BigDecimal.ONE;
         }
 
-        Debug.logInfo("OrderId [" + orderId + "] ship group [" + shipGroupSeqId + "] Pack input [" + productId + "] @ ["
-                + quantity + "] packageSeq [" + packageSeq + "] weight [" + weight + "]", MODULE);
+        Debug.logInfo(x.OrderId_8fce4311 + orderId + x.ship_group + shipGroupSeqId + x.Pack_input + productId + x.str_bf2a0367
+                + quantity + x.packageSeq_f510c2a9 + packageSeq + x.weight_855d7da0 + weight + x.str_4ff447b8, MODULE);
 
         if (weight == null) {
-            Debug.logWarning("OrderId [" + orderId + "] ship group [" + shipGroupSeqId + "] product [" + productId
-                    + "] being packed without a weight, assuming 0", MODULE);
+            Debug.logWarning(x.OrderId_8fce4311 + orderId + x.ship_group + shipGroupSeqId + x.product_53809e6e + productId
+                    + x.being_packed_without_a_weight_assuming_0, MODULE);
             weight = BigDecimal.ZERO;
         }
 
@@ -137,8 +137,8 @@ public class PackingServices {
                 String qtyStr = qtyInfo.get(rowKey);
                 String wgtStr = wgtInfo.get(rowKey);
 
-                Debug.logInfo("Item: " + orderItemSeqId + " / Product: " + prdStr + " / Quantity: " + qtyStr + " /  Package: "
-                        + pkgStr + " / Weight: " + wgtStr, MODULE);
+                Debug.logInfo(x.Item_d878f95a + orderItemSeqId + x.Product_e60814cf + prdStr + x.Quantity + qtyStr + x.Package
+                        + pkgStr + x.Weight + wgtStr, MODULE);
 
                 // array place holders
                 String[] quantities;
@@ -148,7 +148,7 @@ public class PackingServices {
                 // process the package array
                 if (pkgStr.indexOf(',') != -1) {
                     // this is a multi-box update
-                    packages = pkgStr.split(",");
+                    packages = pkgStr.split(x.str_5c10b5b2);
                 } else {
                     packages = new String[] {pkgStr };
                 }
@@ -156,25 +156,25 @@ public class PackingServices {
                 // check to make sure there is at least one package
                 if (packages.length == 0) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                            "ProductPackBulkNoPackagesDefined", locale));
+                            x.ProductPackBulkNoPackagesDefined, locale));
                 }
 
                 // process the quantity array
                 if (qtyStr == null) {
                     quantities = new String[packages.length];
                     for (int p = 0; p < packages.length; p++) {
-                        quantities[p] = qtyInfo.get(rowKey + ":" + packages[p]);
+                        quantities[p] = qtyInfo.get(rowKey + x.str_05a79f06 + packages[p]);
                     }
                     if (quantities.length != packages.length) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                                "ProductPackBulkPackagesAndQuantitiesDoNotMatch", locale));
+                                x.ProductPackBulkPackagesAndQuantitiesDoNotMatch, locale));
                     }
                 } else {
                     quantities = new String[] {qtyStr };
                 }
 
                 // process the weight array
-                if (UtilValidate.isEmpty(wgtStr)) wgtStr = "0";
+                if (UtilValidate.isEmpty(wgtStr)) wgtStr = x._0;
                 weights = new String[] {wgtStr };
 
                 for (int p = 0; p < packages.length; p++) {
@@ -220,7 +220,7 @@ public class PackingServices {
         PackingSession session = (PackingSession) context.get(x.packingSession);
         int nextSeq = session.nextPackageSeq();
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("nextPackageSeq", nextSeq);
+        result.put(x.nextPackageSeq, nextSeq);
         return result;
     }
 
@@ -228,7 +228,7 @@ public class PackingServices {
         PackingSession session = (PackingSession) context.get(x.packingSession);
         int nextSeq = session.clearLastPackage();
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("nextPackageSeq", nextSeq);
+        result.put(x.nextPackageSeq, nextSeq);
         return result;
     }
 
@@ -250,7 +250,7 @@ public class PackingServices {
             session.clearLine(line);
         } else {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "ProductPackLineNotFound", locale));
+                    x.ProductPackLineNotFound, locale));
         }
 
         return ServiceUtil.returnSuccess();
@@ -280,7 +280,7 @@ public class PackingServices {
         session.setWeightUomId(weightUomId);
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("additionalShippingCharge", estimatedShipCost);
+        result.put(x.additionalShippingCharge, estimatedShipCost);
         return result;
     }
 
@@ -316,15 +316,15 @@ public class PackingServices {
         }
 
         Map<String, Object> resp;
-        if ("EMPTY".equals(shipmentId)) {
+        if (x.EMPTY.equals(shipmentId)) {
             resp = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "ProductPackCompleteNoItems", locale));
+                    x.ProductPackCompleteNoItems, locale));
         } else {
             resp = ServiceUtil.returnSuccess(UtilProperties.getMessage(RESOURCE,
-                    "ProductPackComplete", UtilMisc.toMap("shipmentId", shipmentId), locale));
+                    x.ProductPackComplete, UtilMisc.toMap(x.shipmentId, shipmentId), locale));
         }
 
-        resp.put("shipmentId", shipmentId);
+        resp.put(x.shipmentId, shipmentId);
         return resp;
     }
 

@@ -59,8 +59,8 @@ import org.apache.ofbiz.entity.model.ModelEntity;
 import org.apache.ofbiz.entity.model.ModelField;
 import org.apache.ofbiz.entity.model.ModelReader;
 import org.apache.ofbiz.entity.model.ModelViewEntity;
+import org.apache.ofbiz.entity.util.EntityFindOptions;
 import org.apache.ofbiz.entity.util.EntityListIterator;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
 import org.apache.ofbiz.service.DispatchContext;
@@ -78,24 +78,24 @@ import org.apache.ofbiz.model.FindServicesContext;
 public class FindServices {
 
     private static final String MODULE = FindServices.class.getName();
-    private static final String RESOURCE = "CommonUiLabels";
+    private static final String RESOURCE = x.CommonUiLabels;
     public static final Map<String, EntityComparisonOperator<?, ?>> ENTITY_OPERATORS;
-    public static final List<String> PERFORMFIND_SEARCH_SUFFIXES = List.of("_ic", "_op", "_grp", "_value");
+    public static final List<String> PERFORMFIND_SEARCH_SUFFIXES = List.of(x.ic, x.op, x.grp, x.value_0fab5fa9);
 
     static {
         ENTITY_OPERATORS = new LinkedHashMap<>();
-        ENTITY_OPERATORS.put("between", EntityOperator.BETWEEN);
-        ENTITY_OPERATORS.put("equals", EntityOperator.EQUALS);
-        ENTITY_OPERATORS.put("greaterThan", EntityOperator.GREATER_THAN);
-        ENTITY_OPERATORS.put("greaterThanEqualTo", EntityOperator.GREATER_THAN_EQUAL_TO);
-        ENTITY_OPERATORS.put("in", EntityOperator.IN);
-        ENTITY_OPERATORS.put("not-in", EntityOperator.NOT_IN);
-        ENTITY_OPERATORS.put("lessThan", EntityOperator.LESS_THAN);
-        ENTITY_OPERATORS.put("lessThanEqualTo", EntityOperator.LESS_THAN_EQUAL_TO);
-        ENTITY_OPERATORS.put("like", EntityOperator.LIKE);
-        ENTITY_OPERATORS.put("notLike", EntityOperator.NOT_LIKE);
-        ENTITY_OPERATORS.put("not", EntityOperator.NOT);
-        ENTITY_OPERATORS.put("notEqual", EntityOperator.NOT_EQUAL);
+        ENTITY_OPERATORS.put(x.between, EntityOperator.BETWEEN);
+        ENTITY_OPERATORS.put(x.equals, EntityOperator.EQUALS);
+        ENTITY_OPERATORS.put(x.greaterThan, EntityOperator.GREATER_THAN);
+        ENTITY_OPERATORS.put(x.greaterThanEqualTo, EntityOperator.GREATER_THAN_EQUAL_TO);
+        ENTITY_OPERATORS.put(x._in, EntityOperator.IN);
+        ENTITY_OPERATORS.put(x.not_in, EntityOperator.NOT_IN);
+        ENTITY_OPERATORS.put(x.lessThan, EntityOperator.LESS_THAN);
+        ENTITY_OPERATORS.put(x.lessThanEqualTo, EntityOperator.LESS_THAN_EQUAL_TO);
+        ENTITY_OPERATORS.put(x.like, EntityOperator.LIKE);
+        ENTITY_OPERATORS.put(x.notLike, EntityOperator.NOT_LIKE);
+        ENTITY_OPERATORS.put(x._not, EntityOperator.NOT);
+        ENTITY_OPERATORS.put(x.notEqual, EntityOperator.NOT_EQUAL);
     }
 
     public FindServices() { }
@@ -159,8 +159,8 @@ public class FindServices {
             // If no field op is present, it will assume "equals".
             if (iPos < 0) {
                 fieldNameRoot = fieldNameRaw;
-                fieldPair = "fld0";
-                fieldMode = "value";
+                fieldPair = x.fld0;
+                fieldMode = x.value;
             } else { // Must have at least "fld0/1" or "equals, greaterThan, etc."
                 // Some bogus fields will slip in, like "ENTITY_NAME", but they will be ignored
 
@@ -168,15 +168,15 @@ public class FindServices {
                 String suffix = fieldNameRaw.substring(iPos + 1);
                 iPos2 = suffix.indexOf('_');
                 if (iPos2 < 0) {
-                    if (suffix.startsWith("fld")) {
+                    if (suffix.startsWith(x.fld)) {
                         // If only one token and it starts with "fld"
                         //  assume it is a value field, not an op
                         fieldPair = suffix;
-                        fieldMode = "value";
+                        fieldMode = x.value;
                     } else {
                         // if it does not start with fld,
                         // assume it is an op or the 'ignore case' (ic) field
-                        fieldPair = "fld0";
+                        fieldPair = x.fld0;
                         fieldMode = suffix;
                     }
                 } else {
@@ -184,7 +184,7 @@ public class FindServices {
                     String tkn1 = suffix.substring(iPos2 + 1);
                     // If suffix has two parts, let them be in any order
                     // One will be "fld0/1" and the other will be the op (eg. equals, greaterThan_
-                    if (tkn0.startsWith("fld")) {
+                    if (tkn0.startsWith(x.fld)) {
                         fieldPair = tkn0;
                         fieldMode = tkn1;
                     } else {
@@ -238,8 +238,8 @@ public class FindServices {
          * "OR_AND" behaviour is grouping by an {@link EntityOperator.OR} then all added to final
          * condition grouped by an {@link EntityOperator.AND}
          */
-        EntityJoinOperator operatorInsideGroup = "OR_AND".equals(groupConditionOperator) ? EntityOperator.OR : EntityOperator.AND;
-        EntityJoinOperator operatorBetweenGroups = "OR_AND".equals(groupConditionOperator) ? EntityOperator.AND : EntityOperator.OR;
+        EntityJoinOperator operatorInsideGroup = x.OR_AND.equals(groupConditionOperator) ? EntityOperator.OR : EntityOperator.AND;
+        EntityJoinOperator operatorBetweenGroups = x.OR_AND.equals(groupConditionOperator) ? EntityOperator.AND : EntityOperator.OR;
         Map<String, List<EntityCondition>> savedGroups = new LinkedHashMap<>();
         for (ModelField modelField : fieldList) {
             fieldMap.put(modelField.getName(), modelField);
@@ -252,12 +252,12 @@ public class FindServices {
             }
             keys.clear();
             String fieldName = extractFieldNameIfSuffix(parameterName, PERFORMFIND_SEARCH_SUFFIXES);
-            String currentGroup = (String) getValueFromParametersWithSuffix(fieldName, parameters, "_grp", keys);
-            boolean ignoreCase = "Y".equals(getValueFromParametersWithSuffix(fieldName, parameters, "_ic", keys));
-            String operation = (String) getValueFromParametersWithSuffix(fieldName, parameters, "_op", keys);
-            Object fieldValue = getValueFromParametersWithSuffix(fieldName, parameters, "_value", keys);
+            String currentGroup = (String) getValueFromParametersWithSuffix(fieldName, parameters, x.grp, keys);
+            boolean ignoreCase = x.Y.equals(getValueFromParametersWithSuffix(fieldName, parameters, x.ic, keys));
+            String operation = (String) getValueFromParametersWithSuffix(fieldName, parameters, x.op, keys);
+            Object fieldValue = getValueFromParametersWithSuffix(fieldName, parameters, x.value_0fab5fa9, keys);
 
-            if (fieldName.endsWith("_fld0") || fieldName.endsWith("_fld1")) {
+            if (fieldName.endsWith(x.fld0_f0a27274) || fieldName.endsWith(x.fld1)) {
                 if (parameters.containsKey(fieldName)) {
                     keys.add(fieldName);
                 }
@@ -274,7 +274,7 @@ public class FindServices {
             if (fieldValue == null) {
                 fieldValue = parameters.get(fieldName);
             }
-            if (ObjectType.isEmpty(fieldValue) && !"empty".equals(operation)) {
+            if (ObjectType.isEmpty(fieldValue) && !x.empty.equals(operation)) {
                 continue;
             }
 
@@ -332,32 +332,32 @@ public class FindServices {
         TimeZone timeZone = (TimeZone) context.get(x.timeZone);
         EntityComparisonOperator<?, ?> fieldOp = null;
         if (operation != null) {
-            if ("contains".equals(operation)) {
+            if (x.contains.equals(operation)) {
                 fieldOp = EntityOperator.LIKE;
-                fieldValue = "%" + fieldValue + "%";
-            } else if ("not-contains".equals(operation) || "notContains".equals(operation)) {
+                fieldValue = x.str_4345cb1f + fieldValue + x.str_4345cb1f;
+            } else if (x.not_contains.equals(operation) || x.notContains.equals(operation)) {
                 fieldOp = EntityOperator.NOT_LIKE;
-                fieldValue = "%" + fieldValue + "%";
-            } else if ("empty".equals(operation)) {
+                fieldValue = x.str_4345cb1f + fieldValue + x.str_4345cb1f;
+            } else if (x.empty.equals(operation)) {
                 return EntityCondition.makeCondition(fieldName, EntityOperator.EQUALS, null);
-            } else if ("like".equals(operation)) {
+            } else if (x.like.equals(operation)) {
                 fieldOp = EntityOperator.LIKE;
-                fieldValue = fieldValue + "%";
-            } else if ("not-like".equals(operation) || "notLike".equals(operation)) {
+                fieldValue = fieldValue + x.str_4345cb1f;
+            } else if (x.not_like.equals(operation) || x.notLike.equals(operation)) {
                 fieldOp = EntityOperator.NOT_LIKE;
-                fieldValue = fieldValue + "%";
-            } else if ("opLessThan".equals(operation)) {
+                fieldValue = fieldValue + x.str_4345cb1f;
+            } else if (x.opLessThan.equals(operation)) {
                 fieldOp = EntityOperator.LESS_THAN;
-            } else if ("upToDay".equals(operation)) {
+            } else if (x.upToDay.equals(operation)) {
                 fieldOp = EntityOperator.LESS_THAN;
-            } else if ("upThruDay".equals(operation)) {
+            } else if (x.upThruDay.equals(operation)) {
                 fieldOp = EntityOperator.LESS_THAN_EQUAL_TO;
-            } else if ("greaterThanFromDayStart".equals(operation)) {
+            } else if (x.greaterThanFromDayStart.equals(operation)) {
                 String timeStampString = (String) fieldValue;
                 Object startValue = modelField.getModelEntity().convertFieldValue(modelField, dayStart(timeStampString, 0,
                         timeZone, locale), delegator, context);
                 return EntityCondition.makeCondition(fieldName, EntityOperator.GREATER_THAN_EQUAL_TO, startValue);
-            } else if ("sameDay".equals(operation)) {
+            } else if (x.sameDay.equals(operation)) {
                 String timeStampString = (String) fieldValue;
                 Object startValue = modelField.getModelEntity().convertFieldValue(modelField, dayStart(timeStampString, 0,
                         timeZone, locale), delegator, context);
@@ -421,26 +421,26 @@ public class FindServices {
             if (subMap == null) {
                 continue;
             }
-            subMap2 = subMap.get("fld0");
-            fieldValue = subMap2.get("value");
-            opString = (String) subMap2.get("op");
+            subMap2 = subMap.get(x.fld0);
+            fieldValue = subMap2.get(x.value);
+            opString = (String) subMap2.get(x.op_824f601c);
             // null fieldValue is OK if operator is "empty"
-            if (fieldValue == null && !"empty".equals(opString)) {
+            if (fieldValue == null && !x.empty.equals(opString)) {
                 continue;
             }
-            ignoreCase = "Y".equals(subMap2.get("ic"));
+            ignoreCase = x.Y.equals(subMap2.get(x.ic_8c3c21f4));
             cond = createSingleCondition(modelField, opString, fieldValue, ignoreCase, delegator, context);
             tmpList.add(cond);
-            subMap2 = subMap.get("fld1");
+            subMap2 = subMap.get(x.fld1_92f6323b);
             if (subMap2 == null) {
                 continue;
             }
-            fieldValue = subMap2.get("value");
-            opString = (String) subMap2.get("op");
-            if (fieldValue == null && !"empty".equals(opString)) {
+            fieldValue = subMap2.get(x.value);
+            opString = (String) subMap2.get(x.op_824f601c);
+            if (fieldValue == null && !x.empty.equals(opString)) {
                 continue;
             }
-            ignoreCase = "Y".equals(subMap2.get("ic"));
+            ignoreCase = x.Y.equals(subMap2.get(x.ic_8c3c21f4));
             cond = createSingleCondition(modelField, opString, fieldValue, ignoreCase, delegator, context);
             tmpList.add(cond);
             // add to queryStringMap
@@ -481,16 +481,16 @@ public class FindServices {
         int start = viewIndex * viewSize;
         List<GenericValue> list = null;
         Integer listSize = 0;
-        try (EntityListIterator it = (EntityListIterator) result.get("listIt")) {
+        try (EntityListIterator it = (EntityListIterator) result.get(x.listIt)) {
             list = it.getPartialList(start + 1, viewSize); // list starts at '1'
             listSize = it.getResultsSizeAfterPartialList();
         } catch (ClassCastException | NullPointerException | GenericEntityException e) {
-            Debug.logInfo("Problem getting partial list" + e, MODULE);
+            Debug.logInfo(x.Problem_getting_partial_list + e, MODULE);
         }
 
-        result.put("listSize", listSize);
-        result.put("list", list);
-        result.remove("listIt");
+        result.put(x.listSize, listSize);
+        result.put(x.list_38b62be4, list);
+        result.remove(x.listIt);
         return result;
     }
 
@@ -513,27 +513,27 @@ public class FindServices {
         Delegator delegator = dctx.getDelegator();
         if (UtilValidate.isEmpty(noConditionFind)) {
             // try finding in inputFields Map
-            noConditionFind = (String) inputFields.get("noConditionFind");
+            noConditionFind = (String) inputFields.get(x.noConditionFind);
         }
         if (UtilValidate.isEmpty(noConditionFind)) {
             // Use configured default
-            noConditionFind = EntityUtilProperties.getPropertyValue("widget", "widget.defaultNoConditionFind", delegator);
+            noConditionFind = EntityUtilProperties.getPropertyValue(x.widget, x.widget_defaultNoConditionFind, delegator);
         }
         String filterByDate = (String) context.get(x.filterByDate);
         if (UtilValidate.isEmpty(filterByDate)) {
             // try finding in inputFields Map
-            filterByDate = (String) inputFields.get("filterByDate");
+            filterByDate = (String) inputFields.get(x.filterByDate);
         }
         Timestamp filterByDateValue = (Timestamp) context.get(x.filterByDateValue);
         String fromDateName = (String) context.get(x.fromDateName);
         if (UtilValidate.isEmpty(fromDateName)) {
             // try finding in inputFields Map
-            fromDateName = (String) inputFields.get("fromDateName");
+            fromDateName = (String) inputFields.get(x.fromDateName);
         }
         String thruDateName = (String) context.get(x.thruDateName);
         if (UtilValidate.isEmpty(thruDateName)) {
             // try finding in inputFields Map
-            thruDateName = (String) inputFields.get("thruDateName");
+            thruDateName = (String) inputFields.get(x.thruDateName);
         }
 
         Integer viewSize = (Integer) context.get(x.viewSize);
@@ -547,43 +547,43 @@ public class FindServices {
 
         Map<String, Object> prepareResult = null;
         try {
-            prepareResult = dispatcher.runSync("prepareFind", UtilMisc.toMap("entityName", entityName, "orderBy", orderBy,
-                                               "dynamicViewEntity", dynamicViewEntity, "groupConditionOperator", groupConditionOperator,
-                                               "inputFields", inputFields, "filterByDate", filterByDate, "noConditionFind", noConditionFind,
-                                               "filterByDateValue", filterByDateValue, "userLogin", userLogin, "fromDateName", fromDateName,
-                    "thruDateName", thruDateName,
-                                               "locale", context.get(x.locale), "timeZone", context.get(x.timeZone)));
+            prepareResult = dispatcher.runSync(x.prepareFind, UtilMisc.toMap(x.entityName, entityName, x.orderBy, orderBy,
+                                               x.dynamicViewEntity, dynamicViewEntity, x.groupConditionOperator, groupConditionOperator,
+                                               x.inputFields, inputFields, x.filterByDate, filterByDate, x.noConditionFind, noConditionFind,
+                                               x.filterByDateValue, filterByDateValue, x.userLogin, userLogin, x.fromDateName, fromDateName,
+                    x.thruDateName, thruDateName,
+                                               x.locale, context.get(x.locale), x.timeZone, context.get(x.timeZone)));
         } catch (GenericServiceException gse) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonFindErrorPreparingConditions",
-                    UtilMisc.toMap("errorString", gse.getMessage()), locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonFindErrorPreparingConditions,
+                    UtilMisc.toMap(x.errorString, gse.getMessage()), locale));
         }
-        EntityConditionList<EntityCondition> exprList = UtilGenerics.cast(prepareResult.get("entityConditionList"));
-        List<String> orderByList = checkCollection(prepareResult.get("orderByList"), String.class);
+        EntityConditionList<EntityCondition> exprList = UtilGenerics.cast(prepareResult.get(x.entityConditionList));
+        List<String> orderByList = checkCollection(prepareResult.get(x.orderByList), String.class);
 
         Map<String, Object> executeResult = null;
         try {
-            executeResult = dispatcher.runSync("executeFind", UtilMisc.toMap("entityName", entityName, "orderByList", orderByList,
-                                                                             "dynamicViewEntity", dynamicViewEntity,
-                                                                             "fieldList", fieldList, "entityConditionList", exprList,
-                                                                             "noConditionFind", noConditionFind, "distinct", distinct,
-                                                                             "locale", context.get(x.locale), "timeZone", context.get(x.timeZone),
-                                                                             "maxRows", maxRows));
+            executeResult = dispatcher.runSync(x.executeFind, UtilMisc.toMap(x.entityName, entityName, x.orderByList, orderByList,
+                                                                             x.dynamicViewEntity, dynamicViewEntity,
+                                                                             x.fieldList, fieldList, x.entityConditionList, exprList,
+                                                                             x.noConditionFind, noConditionFind, x.distinct, distinct,
+                                                                             x.locale, context.get(x.locale), x.timeZone, context.get(x.timeZone),
+                                                                             x.maxRows, maxRows));
         } catch (GenericServiceException gse) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonFindErrorRetrieveIterator",
-                    UtilMisc.toMap("errorString", gse.getMessage()), locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonFindErrorRetrieveIterator,
+                    UtilMisc.toMap(x.errorString, gse.getMessage()), locale));
         }
 
-        if (executeResult.get("listIt") == null) {
+        if (executeResult.get(x.listIt) == null) {
             if (Debug.verboseOn()) {
-                Debug.logVerbose("No list iterator found for query string + [" + prepareResult.get("queryString") + "]", MODULE);
+                Debug.logVerbose(x.No_list_iterator_found_for_query_string + prepareResult.get(x.queryString) + x.str_4ff447b8, MODULE);
             }
         }
 
         Map<String, Object> results = ServiceUtil.returnSuccess();
-        results.put("listIt", executeResult.get("listIt"));
-        results.put("listSize", executeResult.get("listSize"));
-        results.put("queryString", prepareResult.get("queryString"));
-        results.put("queryStringMap", prepareResult.get("queryStringMap"));
+        results.put(x.listIt, executeResult.get(x.listIt));
+        results.put(x.listSize, executeResult.get(x.listSize));
+        results.put(x.queryString, prepareResult.get(x.queryString));
+        results.put(x.queryStringMap, prepareResult.get(x.queryStringMap));
         return results;
     }
 
@@ -602,16 +602,16 @@ public class FindServices {
         String noConditionFind = (String) context.get(x.noConditionFind);
         if (UtilValidate.isEmpty(noConditionFind)) {
             // try finding in inputFields Map
-            noConditionFind = (String) inputFields.get("noConditionFind");
+            noConditionFind = (String) inputFields.get(x.noConditionFind);
         }
         if (UtilValidate.isEmpty(noConditionFind)) {
             // Use configured default
-            noConditionFind = EntityUtilProperties.getPropertyValue("widget", "widget.defaultNoConditionFind", delegator);
+            noConditionFind = EntityUtilProperties.getPropertyValue(x.widget, x.widget_defaultNoConditionFind, delegator);
         }
         String filterByDate = (String) context.get(x.filterByDate);
         if (UtilValidate.isEmpty(filterByDate)) {
             // try finding in inputFields Map
-            filterByDate = (String) inputFields.get("filterByDate");
+            filterByDate = (String) inputFields.get(x.filterByDate);
         }
         Timestamp filterByDateValue = (Timestamp) context.get(x.filterByDateValue);
         String fromDateName = (String) context.get(x.fromDateName);
@@ -635,24 +635,24 @@ public class FindServices {
          * the user has specified a noConditionFind.  Otherwise, specifying filterByDate will become
          * its own condition.
          */
-        if (!tmpList.isEmpty() || "Y".equals(noConditionFind)) {
-            if ("Y".equals(filterByDate)) {
-                queryStringMap.put("filterByDate", filterByDate);
+        if (!tmpList.isEmpty() || x.Y.equals(noConditionFind)) {
+            if (x.Y.equals(filterByDate)) {
+                queryStringMap.put(x.filterByDate, filterByDate);
                 if (UtilValidate.isEmpty(fromDateName)) {
-                    fromDateName = "fromDate";
+                    fromDateName = x.fromDate;
                 } else {
-                    queryStringMap.put("fromDateName", fromDateName);
+                    queryStringMap.put(x.fromDateName, fromDateName);
                 }
                 if (UtilValidate.isEmpty(thruDateName)) {
-                    thruDateName = "thruDate";
+                    thruDateName = x.thruDate;
                 } else {
-                    queryStringMap.put("thruDateName", thruDateName);
+                    queryStringMap.put(x.thruDateName, thruDateName);
                 }
                 if (UtilValidate.isEmpty(filterByDateValue)) {
                     EntityCondition filterByDateCondition = EntityUtil.getFilterByDateExpr(fromDateName, thruDateName);
                     tmpList.add(filterByDateCondition);
                 } else {
-                    queryStringMap.put("filterByDateValue", filterByDateValue);
+                    queryStringMap.put(x.filterByDateValue, filterByDateValue);
                     EntityCondition filterByDateCondition = EntityUtil.getFilterByDateExpr(filterByDateValue, fromDateName, thruDateName);
                     tmpList.add(filterByDateCondition);
                 }
@@ -666,16 +666,16 @@ public class FindServices {
 
         List<String> orderByList = null;
         if (UtilValidate.isNotEmpty(orderBy)) {
-            orderByList = StringUtil.split(orderBy, "|");
+            orderByList = StringUtil.split(orderBy, x.str_3eb41622);
         }
 
         Map<String, Object> results = ServiceUtil.returnSuccess();
-        queryStringMap.put("noConditionFind", noConditionFind);
+        queryStringMap.put(x.noConditionFind, noConditionFind);
         String queryString = UtilHttp.urlEncodeArgs(queryStringMap);
-        results.put("queryString", queryString);
-        results.put("queryStringMap", queryStringMap);
-        results.put("orderByList", orderByList);
-        results.put("entityConditionList", exprList);
+        results.put(x.queryString, queryString);
+        results.put(x.queryStringMap, queryStringMap);
+        results.put(x.orderByList, orderByList);
+        results.put(x.entityConditionList, exprList);
         return results;
     }
 
@@ -688,8 +688,8 @@ public class FindServices {
         DynamicViewEntity dynamicViewEntity = (DynamicViewEntity) context.get(x.dynamicViewEntity);
         EntityConditionList<EntityCondition> entityConditionList = UtilGenerics.cast(context.get(x.entityConditionList));
         List<String> orderByList = checkCollection(context.get(x.orderByList), String.class);
-        boolean noConditionFind = "Y".equals(context.get(x.noConditionFind));
-        boolean distinct = "Y".equals(context.get(x.distinct));
+        boolean noConditionFind = x.Y.equals(context.get(x.noConditionFind));
+        boolean distinct = x.Y.equals(context.get(x.distinct));
         List<String> fieldList = UtilGenerics.cast(context.get(x.fieldList));
         Locale locale = (Locale) context.get(x.locale);
         Set<String> fieldSet = null;
@@ -704,30 +704,26 @@ public class FindServices {
         int listSize = 0;
         try {
             if (noConditionFind || (entityConditionList != null && entityConditionList.getConditionListSize() > 0)) {
-                EntityQuery query = EntityQuery.use(delegator);
+                EntityFindOptions findOptions = new EntityFindOptions(true, EntityFindOptions.TYPE_SCROLL_INSENSITIVE,
+                        EntityFindOptions.CONCUR_READ_ONLY, distinct);
+                findOptions.setMaxRows(maxRows);
+
                 if (dynamicViewEntity != null) {
-                    query.from(dynamicViewEntity);
+                    listIt = delegator.findListIteratorByCondition(dynamicViewEntity, entityConditionList, null, fieldSet, orderByList, findOptions);
                 } else {
-                    query.from(entityName);
+                    listIt = delegator.find(entityName, entityConditionList, null, fieldSet, orderByList, findOptions);
                 }
-                listIt = query.select(fieldSet)
-                        .where(entityConditionList)
-                        .orderBy(orderByList)
-                        .cursorScrollInsensitive()
-                        .maxRows(maxRows)
-                        .distinct(distinct)
-                        .queryIterator();
                 listSize = listIt.getResultsSizeAfterPartialList();
             }
         } catch (GenericEntityException e) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonFindErrorRunning",
-                    UtilMisc.toMap("entityName", (dynamicViewEntity != null ? dynamicViewEntity.getEntityName() : entityName),
-                                   "errorString", e.getMessage()), locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonFindErrorRunning,
+                    UtilMisc.toMap(x.entityName, (dynamicViewEntity != null ? dynamicViewEntity.getEntityName() : entityName),
+                                   x.errorString, e.getMessage()), locale));
         }
 
         Map<String, Object> results = ServiceUtil.returnSuccess();
-        results.put("listIt", listIt);
-        results.put("listSize", listSize);
+        results.put(x.listIt, listIt);
+        results.put(x.listSize, listSize);
         return results;
     }
 
@@ -738,7 +734,7 @@ public class FindServices {
         try {
             ts = Timestamp.valueOf(timeStampString);
         } catch (IllegalArgumentException e) {
-            timeStampString += " 00:00:00.000";
+            timeStampString += x._00_00_00_000_3d6041cd;
             try {
                 ts = Timestamp.valueOf(timeStampString);
             } catch (IllegalArgumentException e2) {
@@ -823,22 +819,22 @@ public class FindServices {
 
         List<GenericValue> list = null;
         GenericValue item = null;
-        try (EntityListIterator it = (EntityListIterator) result.get("listIt")) {
+        try (EntityListIterator it = (EntityListIterator) result.get(x.listIt)) {
             list = it.getPartialList(1, 1); // list starts at '1'
             if (UtilValidate.isNotEmpty(list)) {
                 item = list.get(0);
             }
         } catch (ClassCastException | NullPointerException | GenericEntityException e) {
-            Debug.logInfo("Problem getting list Item" + e, MODULE);
+            Debug.logInfo(x.Problem_getting_list_Item + e, MODULE);
         }
 
         if (UtilValidate.isNotEmpty(item)) {
-            result.put("item", item);
+            result.put(x.item_3a7d9767, item);
         }
-        result.remove("listIt");
+        result.remove(x.listIt);
 
-        if (result.containsKey("listSize")) {
-            result.remove("listSize");
+        if (result.containsKey(x.listSize)) {
+            result.remove(x.listSize);
         }
         return result;
     }

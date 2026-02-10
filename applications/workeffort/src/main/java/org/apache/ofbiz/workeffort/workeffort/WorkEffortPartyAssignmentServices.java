@@ -24,13 +24,15 @@ import java.util.Map;
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.entity.Delegator;
-import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.WorkEffortDao;
+import org.apache.ofbiz.persistence.entity.WorkEffortEntity;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
+import com.landawn.abacus.util.Beans;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -48,21 +50,25 @@ public class WorkEffortPartyAssignmentServices {
         GenericValue workEffort = null;
 
         try {
-            workEffort = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", wepa.get(x.workEffortId)).queryOne();
-        } catch (GenericEntityException e) {
+            WorkEffortDao workEffortDao = DaoRegistry.getDao(delegator, x.WorkEffort, WorkEffortDao.class);
+            WorkEffortEntity workEffortEntity = workEffortDao.get((String) wepa.get(x.workEffortId)).orElse(null);
+            if (workEffortEntity != null) {
+                workEffort = delegator.makeValue(x.WorkEffort, Beans.beanToMap(workEffortEntity));
+            }
+        } catch (Exception e) {
             Debug.logWarning(e, MODULE);
         }
-        if (workEffort != null && "ACTIVITY".equals(workEffort.getString(x.workEffortTypeId))) {
+        if (workEffort != null && x.ACTIVITY.equals(workEffort.getString(x.workEffortTypeId))) {
             // TODO: restrict status transitions
 
             String statusId = (String) wepa.get(x.statusId);
-            ServiceContext context = new ServiceContext(UtilMisc.toMap("workEffortId", wepa.get(x.workEffortId), "partyId",
-                    wepa.get(x.partyId), "roleTypeId", wepa.get(x.roleTypeId), "fromDate", wepa.get(x.fromDate), "userLogin", userLogin));
+            ServiceContext context = new ServiceContext(UtilMisc.toMap(x.workEffortId, wepa.get(x.workEffortId), x.partyId,
+                    wepa.get(x.partyId), x.roleTypeId, wepa.get(x.roleTypeId), x.fromDate, wepa.get(x.fromDate), x.userLogin, userLogin));
 
-            if ("CAL_ACCEPTED".equals(statusId)) {
+            if (x.CAL_ACCEPTED.equals(statusId)) {
                 // accept the activity assignment
                 try {
-                    Map<String, Object> results = dispatcher.runSync("wfAcceptAssignment", context);
+                    Map<String, Object> results = dispatcher.runSync(x.wfAcceptAssignment, context);
                     if (ServiceUtil.isError(results)) {
                         Debug.logWarning((String) results.get(ModelService.ERROR_MESSAGE), MODULE);
                     }
@@ -72,10 +78,10 @@ public class WorkEffortPartyAssignmentServices {
                 } catch (GenericServiceException e) {
                     Debug.logWarning(e, MODULE);
                 }
-            } else if ("CAL_COMPLETED".equals(statusId)) {
+            } else if (x.CAL_COMPLETED.equals(statusId)) {
                 // complete the activity assignment
                 try {
-                    Map<String, Object> results = dispatcher.runSync("wfCompleteAssignment", context);
+                    Map<String, Object> results = dispatcher.runSync(x.wfCompleteAssignment, context);
                     if (ServiceUtil.isError(results)) {
                         Debug.logWarning((String) results.get(ModelService.ERROR_MESSAGE), MODULE);
                     }
@@ -85,10 +91,10 @@ public class WorkEffortPartyAssignmentServices {
                 } catch (GenericServiceException e) {
                     Debug.logWarning(e, MODULE);
                 }
-            } else if ("CAL_DECLINED".equals(statusId)) {
+            } else if (x.CAL_DECLINED.equals(statusId)) {
                 // decline the activity assignment
                 try {
-                    Map<String, Object> results = dispatcher.runSync("wfDeclineAssignment", context);
+                    Map<String, Object> results = dispatcher.runSync(x.wfDeclineAssignment, context);
 
                     if (results != null && results.get(ModelService.ERROR_MESSAGE) != null) {
                         Debug.logWarning((String) results.get(ModelService.ERROR_MESSAGE), MODULE);
@@ -100,3 +106,4 @@ public class WorkEffortPartyAssignmentServices {
         }
     }
 }
+

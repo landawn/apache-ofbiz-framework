@@ -53,9 +53,11 @@ import org.apache.ofbiz.entity.model.ModelEntity;
 import org.apache.ofbiz.entity.model.ModelField;
 import org.apache.ofbiz.entity.transaction.GenericTransactionException;
 import org.apache.ofbiz.entity.transaction.TransactionUtil;
+import org.apache.ofbiz.entity.util.EntityFindOptions;
 import org.apache.ofbiz.entity.util.EntityListIterator;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.UserLoginDao;
 import org.apache.ofbiz.security.Security;
 import org.apache.ofbiz.security.SecurityUtil;
 import org.apache.ofbiz.service.DispatchContext;
@@ -76,7 +78,7 @@ import org.apache.ofbiz.model.LoginServicesContext;
 public class LoginServices {
 
     private static final String MODULE = LoginServices.class.getName();
-    private static final String RESOURCE = "SecurityextUiLabels";
+    private static final String RESOURCE = x.SecurityextUiLabels;
 
     /**
      * Login service to authenticate username and password
@@ -99,10 +101,10 @@ public class LoginServices {
 
         // Authenticate to LDAP if configured to do so
         // TODO: this should be moved to using the NEW Authenticator API
-        if ("true".equals(EntityUtilProperties.getPropertyValue("security", "security.ldap.enable", delegator))) {
+        if (x._true.equals(EntityUtilProperties.getPropertyValue(x.security, x.security_ldap_enable, delegator))) {
             if (!LdapAuthenticationServices.userLogin(ctx, new LdapAuthenticationServicesContext(context))) {
-                String errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.ldap_authentication_failed", locale);
-                if ("true".equals(EntityUtilProperties.getPropertyValue("security", "security.ldap.fail.login", delegator))) {
+                String errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_ldap_authentication_failed, locale);
+                if (x._true.equals(EntityUtilProperties.getPropertyValue(x.security, x.security_ldap_fail_login, delegator))) {
                     return ServiceUtil.returnError(errMsg);
                 }
                 Debug.logInfo(errMsg, MODULE);
@@ -110,7 +112,7 @@ public class LoginServices {
         }
 
         Map<String, Object> result = new LinkedHashMap<>();
-        boolean useEncryption = "true".equals(EntityUtilProperties.getPropertyValue("security", "password.encrypt", delegator));
+        boolean useEncryption = x._true.equals(EntityUtilProperties.getPropertyValue(x.security, x.password_encrypt, delegator));
 
         // if isServiceAuth is not specified, default to not a service auth
         boolean isServiceAuth = context.get(x.isServiceAuth) != null && (Boolean) context.get(x.isServiceAuth);
@@ -132,15 +134,15 @@ public class LoginServices {
         String visitId = (String) context.get(x.visitId);
 
         if (UtilValidate.isEmpty(username)) {
-            userErrMsgs.add(UtilProperties.getMessage(RESOURCE, "loginservices.username_missing", locale));
+            userErrMsgs.add(UtilProperties.getMessage(RESOURCE, x.loginservices_username_missing, locale));
         } else if (UtilValidate.isEmpty(password) && UtilValidate.isEmpty(jwtToken)) {
-            userErrMsgs.add(UtilProperties.getMessage(RESOURCE, "loginservices.password_missing", locale));
+            userErrMsgs.add(UtilProperties.getMessage(RESOURCE, x.loginservices_password_missing, locale));
         } else {
 
-            if ("true".equalsIgnoreCase(EntityUtilProperties.getPropertyValue("security", "username.lowercase", delegator))) {
+            if (x._true.equalsIgnoreCase(EntityUtilProperties.getPropertyValue(x.security, x.username_lowercase, delegator))) {
                 username = username.toLowerCase(Locale.getDefault());
             }
-            if ("true".equalsIgnoreCase(EntityUtilProperties.getPropertyValue("security", "password.lowercase", delegator))) {
+            if (x._true.equalsIgnoreCase(EntityUtilProperties.getPropertyValue(x.security, x.password_lowercase, delegator))) {
                 password = password.toLowerCase(Locale.getDefault());
             }
 
@@ -157,9 +159,10 @@ public class LoginServices {
 
                 try {
                     // only get userLogin from cache for service calls; for web and other manual logins there is less time sensitivity
-                    userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", username).cache(isServiceAuth).queryOne();
+                    UserLoginDao userLoginDao = DaoRegistry.getDao(delegator, x.UserLogin, UserLoginDao.class);
+                    userLogin = userLoginDao.findOne(delegator, x.UserLogin, UtilMisc.toMap(x.userLoginId, username), isServiceAuth);
                 } catch (GenericEntityException e) {
-                    Debug.logWarning(e, "", MODULE);
+                    Debug.logWarning(e, x.emptyString, MODULE);
                 }
 
                 // see if any external auth modules want to sync the user info
@@ -172,21 +175,22 @@ public class LoginServices {
 
                     // check the user login object again
                     try {
-                        userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", username).cache(isServiceAuth).queryOne();
+                        UserLoginDao userLoginDao = DaoRegistry.getDao(delegator, x.UserLogin, UserLoginDao.class);
+                        userLogin = userLoginDao.findOne(delegator, x.UserLogin, UtilMisc.toMap(x.userLoginId, username), isServiceAuth);
                     } catch (GenericEntityException e) {
-                        Debug.logWarning(e, "", MODULE);
+                        Debug.logWarning(e, x.emptyString, MODULE);
                     }
                 }
 
                 if (userLogin != null) {
-                    String ldmStr = EntityUtilProperties.getPropertyValue("security", "login.disable.minutes", delegator);
+                    String ldmStr = EntityUtilProperties.getPropertyValue(x.security, x.login_disable_minutes, delegator);
                     long loginDisableMinutes;
 
                     try {
                         loginDisableMinutes = Long.parseLong(ldmStr);
                     } catch (Exception e) {
                         loginDisableMinutes = 30;
-                        Debug.logWarning("Could not parse login.disable.minutes from security.properties, using default of 30", MODULE);
+                        Debug.logWarning(x.Could_not_parse_login_disable_minutes_from_security_properties_using_default_of_30, MODULE);
                     }
 
                     Timestamp disabledDateTime = userLogin.getTimestamp(x.disabledDateTime);
@@ -201,18 +205,18 @@ public class LoginServices {
                     userLogin = GenericValue.create(userLogin);
 
                     // get the is system flag -- system accounts can only be used for service authentication
-                    boolean isSystem = (isServiceAuth && userLogin.get(x.isSystem) != null) ? "Y".equalsIgnoreCase(userLogin.getString(x.isSystem))
+                    boolean isSystem = (isServiceAuth && userLogin.get(x.isSystem) != null) ? x.Y.equalsIgnoreCase(userLogin.getString(x.isSystem))
                                                                                             : false;
 
                     // grab the hasLoggedOut flag
                     Boolean hasLoggedOut = userLogin.getBoolean(x.hasLoggedOut);
 
-                    if ((UtilValidate.isEmpty(userLogin.getString(x.enabled)) || "Y".equals(userLogin.getString(x.enabled))
+                    if ((UtilValidate.isEmpty(userLogin.getString(x.enabled)) || x.Y.equals(userLogin.getString(x.enabled))
                             || (reEnableTime != null && reEnableTime.before(UtilDateTime.nowTimestamp())) || (isSystem))
                             && UtilValidate.isEmpty(userLogin.getString(x.disabledBy))) {
                         String successfulLogin;
                         if (!isSystem) {
-                            userLogin.set(x.enabled, "Y");
+                            userLogin.set(x.enabled, x.Y);
                             userLogin.set(x.disabledBy, null);
                         }
                         // attempt to authenticate with Authenticator class(es)
@@ -228,7 +232,7 @@ public class LoginServices {
                         }
 
                         // check whether to sign in with Tomcat SSO
-                        boolean useTomcatSSO = EntityUtilProperties.propertyValueEquals("security", "security.login.tomcat.sso", "true");
+                        boolean useTomcatSSO = EntityUtilProperties.propertyValueEquals(x.security, x.security_login_tomcat_sso, x._true);
                         HttpServletRequest request = (jakarta.servlet.http.HttpServletRequest) context.get(x.request);
                         // when request is not supplied, we will treat that SSO is not required as
                         // in the usage of userLogin service in ICalWorker.java
@@ -243,11 +247,11 @@ public class LoginServices {
                         if ((!authFatalError && externalAuth) || (useTomcatSSO && tomcatSSOLogin(request, username, password))
                                 || (jwtToken != null && jwtTokenValid)
                                 || (password != null && checkPassword(userLogin.getString(x.currentPassword), useEncryption, password))) {
-                            Debug.logVerbose("[LoginServices.userLogin] : Password Matched or Token Validated", MODULE);
+                            Debug.logVerbose(x.LoginServices_userLogin_Password_Matched_or_Token_Validated, MODULE);
 
                             // update the hasLoggedOut flag
                             if (hasLoggedOut == null || hasLoggedOut) {
-                                userLogin.set(x.hasLoggedOut, "N");
+                                userLogin.set(x.hasLoggedOut, x.N);
                             }
 
                             // reset failed login count if necessary
@@ -259,7 +263,7 @@ public class LoginServices {
                                 doStore = false;
                             }
 
-                            successfulLogin = "Y";
+                            successfulLogin = x.Y;
 
                             if (!isServiceAuth) {
                                 // get the UserLoginSession if this is not a service auth
@@ -267,27 +271,27 @@ public class LoginServices {
 
                                 // return the UserLoginSession Map
                                 if (userLoginSessionMap != null) {
-                                    result.put("userLoginSession", userLoginSessionMap);
+                                    result.put(x.userLoginSession, userLoginSessionMap);
                                 }
                             }
 
-                            result.put("userLogin", userLogin);
+                            result.put(x.userLogin, userLogin);
                             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
                         } else {
                             // password is incorrect, but this may be the result of a stale cache entry,
                             // so lets clear the cache and try again if this is the first pass
                             // but only if authFatalError is not true; this would mean the single authenticator failed
                             if (!authFatalError && isServiceAuth && passNumber <= 1) {
-                                delegator.clearCacheLine("UserLogin", UtilMisc.toMap("userLoginId", username));
+                                delegator.clearCacheLine(x.UserLogin, UtilMisc.toMap(x.userLoginId, username));
                                 repeat = true;
                                 continue;
                             }
-                            Debug.logInfo("[LoginServices.userLogin] : Password Incorrect", MODULE);
+                            Debug.logInfo(x.LoginServices_userLogin_Password_Incorrect, MODULE);
                             // password invalid...
                             if (password != null) {
-                                userErrMsgs.add(UtilProperties.getMessage(RESOURCE, "loginservices.password_incorrect", locale));
+                                userErrMsgs.add(UtilProperties.getMessage(RESOURCE, x.loginservices_password_incorrect, locale));
                             } else if (jwtToken != null) {
-                                userErrMsgs.add(UtilProperties.getMessage(RESOURCE, "loginservices.token_incorrect", locale));
+                                userErrMsgs.add(UtilProperties.getMessage(RESOURCE, x.loginservices_token_incorrect, locale));
                             }
                             // increment failed login count
                             Long currentFailedLogins = userLogin.getLong(x.successiveFailedLogins);
@@ -300,21 +304,21 @@ public class LoginServices {
                             userLogin.set(x.successiveFailedLogins, currentFailedLogins);
 
                             // if failed logins over amount in properties file, disable account
-                            String mflStr = EntityUtilProperties.getPropertyValue("security", "max.failed.logins", delegator);
+                            String mflStr = EntityUtilProperties.getPropertyValue(x.security, x.max_failed_logins, delegator);
                             long maxFailedLogins = 3;
                             try {
                                 maxFailedLogins = Long.parseLong(mflStr);
                             } catch (Exception e) {
                                 maxFailedLogins = 3;
-                                Debug.logWarning("Could not parse max.failed.logins from security.properties, using default of 3", MODULE);
+                                Debug.logWarning(x.Could_not_parse_max_failed_logins_from_security_properties_using_default_of_3, MODULE);
                             }
 
                             if (maxFailedLogins > 0 && currentFailedLogins >= maxFailedLogins) {
-                                userLogin.set(x.enabled, "N");
+                                userLogin.set(x.enabled, x.N);
                                 userLogin.set(x.disabledDateTime, UtilDateTime.nowTimestamp());
                             }
 
-                            successfulLogin = "N";
+                            successfulLogin = x.N;
                         }
 
                         // this section is being done in its own transaction rather than in the
@@ -327,7 +331,7 @@ public class LoginServices {
                             try {
                                 parentTx = TransactionUtil.suspend();
                             } catch (GenericTransactionException e) {
-                                Debug.logError(e, "Could not suspend transaction: " + e.getMessage(), MODULE);
+                                Debug.logError(e, x.Could_not_suspend_transaction + e.getMessage(), MODULE);
                             }
 
                             try {
@@ -337,45 +341,45 @@ public class LoginServices {
                                     userLogin.store();
                                 }
 
-                                if ("true".equals(EntityUtilProperties.getPropertyValue("security", "store.login.history", delegator))) {
+                                if (x._true.equals(EntityUtilProperties.getPropertyValue(x.security, x.store_login_history, delegator))) {
                                     boolean createHistory = true;
 
                                     // only save info on service auth if option set to true to do so
-                                    if (isServiceAuth && !"true".equals(
-                                            EntityUtilProperties.getPropertyValue("security", "store.login.history.on.service.auth", delegator))) {
+                                    if (isServiceAuth && !x._true.equals(
+                                            EntityUtilProperties.getPropertyValue(x.security, x.store_login_history_on_service_auth, delegator))) {
                                         createHistory = false;
                                     }
 
                                     if (createHistory) {
-                                        Map<String, Object> ulhCreateMap = UtilMisc.toMap("userLoginId", username, "visitId", visitId, "fromDate",
-                                                UtilDateTime.nowTimestamp(), "successfulLogin", successfulLogin);
+                                        Map<String, Object> ulhCreateMap = UtilMisc.toMap(x.userLoginId, username, x.visitId, visitId, x.fromDate,
+                                                UtilDateTime.nowTimestamp(), x.successfulLogin, successfulLogin);
 
                                         ModelEntity modelUserLogin = userLogin.getModelEntity();
-                                        if (modelUserLogin.isField("partyId")) {
-                                            ulhCreateMap.put("partyId", userLogin.get(x.partyId));
+                                        if (modelUserLogin.isField(x.partyId)) {
+                                            ulhCreateMap.put(x.partyId, userLogin.get(x.partyId));
                                         }
 
                                         // ONLY save the password if it was incorrect
                                         // we will check in the hash size isn't too huge for the store other wise store a fix string
-                                        if ("N".equals(successfulLogin) && !"false".equals(EntityUtilProperties.getPropertyValue("security",
-                                                "store.login.history.incorrect.password", delegator))) {
-                                            ulhCreateMap.put("passwordUsed", isGivenPasswordCanBeStored(delegator, password)
-                                                    ? " TOO LONG FOR STORAGE "
+                                        if (x.N.equals(successfulLogin) && !x._false.equals(EntityUtilProperties.getPropertyValue(x.security,
+                                                x.store_login_history_incorrect_password, delegator))) {
+                                            ulhCreateMap.put(x.passwordUsed, isGivenPasswordCanBeStored(delegator, password)
+                                                    ? x.TOO_LONG_FOR_STORAGE
                                                     : password);
                                         }
 
-                                        delegator.create("UserLoginHistory", ulhCreateMap);
+                                        delegator.create(x.UserLoginHistory, ulhCreateMap);
                                     }
                                 }
                             } catch (GenericEntityException e) {
-                                String geeErrMsg = "Error saving UserLoginHistory";
+                                String geeErrMsg = x.Error_saving_UserLoginHistory;
                                 if (doStore) {
-                                    geeErrMsg += " and updating login status to reset hasLoggedOut, unsuccessful login count, etc.";
+                                    geeErrMsg += x.and_updating_login_status_to_reset_hasLoggedOut_unsuccessful_login_count_etc;
                                 }
                                 try {
                                     TransactionUtil.rollback(beganTransaction, geeErrMsg, e);
                                 } catch (GenericTransactionException e2) {
-                                    Debug.logError(e2, "Could not rollback nested transaction: " + e2.getMessage(), MODULE);
+                                    Debug.logError(e2, x.Could_not_rollback_nested_transaction + e2.getMessage(), MODULE);
                                 }
 
                                 // if doStore is true then this error should not be ignored and we shouldn't consider it a successful login if this
@@ -387,7 +391,7 @@ public class LoginServices {
                                 try {
                                     TransactionUtil.commit(beganTransaction);
                                 } catch (GenericTransactionException e) {
-                                    Debug.logError(e, "Could not commit nested transaction: " + e.getMessage(), MODULE);
+                                    Debug.logError(e, x.Could_not_commit_nested_transaction + e.getMessage(), MODULE);
                                 }
                             }
                         } finally {
@@ -395,9 +399,9 @@ public class LoginServices {
                             if (parentTx != null) {
                                 try {
                                     TransactionUtil.resume(parentTx);
-                                    Debug.logVerbose("Resumed the parent transaction.", MODULE);
+                                    Debug.logVerbose(x.Resumed_the_parent_transaction, MODULE);
                                 } catch (GenericTransactionException e) {
-                                    Debug.logError(e, "Could not resume parent nested transaction: " + e.getMessage(), MODULE);
+                                    Debug.logError(e, x.Could_not_resume_parent_nested_transaction + e.getMessage(), MODULE);
                                 }
                             }
                         }
@@ -405,28 +409,28 @@ public class LoginServices {
                         // account is disabled, but this may be the result of a stale cache entry,
                         // so lets clear the cache and try again if this is the first pass
                         if (isServiceAuth && passNumber <= 1) {
-                            delegator.clearCacheLine("UserLogin", UtilMisc.toMap("userLoginId", username));
+                            delegator.clearCacheLine(x.UserLogin, UtilMisc.toMap(x.userLoginId, username));
                             repeat = true;
                             continue;
                         }
-                        Map<String, Object> messageMap = UtilMisc.<String, Object>toMap("username", username);
-                        userErrMsgs.add(UtilProperties.getMessage(RESOURCE, "loginservices.account_for_user_login_id_disabled", messageMap, locale));
+                        Map<String, Object> messageMap = UtilMisc.<String, Object>toMap(x.username, username);
+                        userErrMsgs.add(UtilProperties.getMessage(RESOURCE, x.loginservices_account_for_user_login_id_disabled, messageMap, locale));
                         StringBuilder tmpErrMsg = new StringBuilder();
                         if (disabledDateTime != null) {
-                            messageMap = UtilMisc.<String, Object>toMap("disabledDateTime", disabledDateTime);
-                            tmpErrMsg.append(" ");
-                            tmpErrMsg.append(UtilProperties.getMessage(RESOURCE, "loginservices.since_datetime", messageMap, locale));
+                            messageMap = UtilMisc.<String, Object>toMap(x.disabledDateTime, disabledDateTime);
+                            tmpErrMsg.append(x.str_b858cb28);
+                            tmpErrMsg.append(UtilProperties.getMessage(RESOURCE, x.loginservices_since_datetime, messageMap, locale));
                         } else {
-                            tmpErrMsg.append(".");
+                            tmpErrMsg.append(x.str_3a52ce78);
                         }
 
                         if (loginDisableMinutes > 0 && reEnableTime != null) {
-                            messageMap = UtilMisc.<String, Object>toMap("reEnableTime", reEnableTime);
-                            tmpErrMsg.append(" ");
-                            tmpErrMsg.append(UtilProperties.getMessage(RESOURCE, "loginservices.will_be_reenabled", messageMap, locale));
+                            messageMap = UtilMisc.<String, Object>toMap(x.reEnableTime, reEnableTime);
+                            tmpErrMsg.append(x.str_b858cb28);
+                            tmpErrMsg.append(UtilProperties.getMessage(RESOURCE, x.loginservices_will_be_reenabled, messageMap, locale));
                         } else {
-                            tmpErrMsg.append(" ");
-                            tmpErrMsg.append(UtilProperties.getMessage(RESOURCE, "loginservices.not_scheduled_to_be_reenabled", locale));
+                            tmpErrMsg.append(x.str_b858cb28);
+                            tmpErrMsg.append(UtilProperties.getMessage(RESOURCE, x.loginservices_not_scheduled_to_be_reenabled, locale));
                         }
                         userErrMsgs.add(tmpErrMsg.toString());
                     }
@@ -437,23 +441,23 @@ public class LoginServices {
                         externalAuth = AuthHelper.authenticate(username, password, isServiceAuth);
                     } catch (AuthenticatorException e) {
                         debugErrMsgs.add(e.getMessage());
-                        Debug.logError(e, "External Authenticator had fatal exception : " + e.getMessage(), MODULE);
+                        Debug.logError(e, x.External_Authenticator_had_fatal_exception + e.getMessage(), MODULE);
                     }
                     if (externalAuth) {
                         // external auth passed - create a placeholder object for session
-                        userLogin = delegator.makeValue("UserLogin");
+                        userLogin = delegator.makeValue(x.UserLogin);
                         userLogin.set(x.userLoginId, username);
-                        userLogin.set(x.enabled, "Y");
-                        userLogin.set(x.hasLoggedOut, "N");
-                        result.put("userLogin", userLogin);
+                        userLogin.set(x.enabled, x.Y);
+                        userLogin.set(x.hasLoggedOut, x.N);
+                        result.put(x.userLogin, userLogin);
                         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
                         // TODO: more than this is needed to support 100% external authentication
                         // TODO: party + security information is needed; Userlogin will need to be stored
                     } else {
                         // userLogin record not found, user does not exist
-                        String errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.user_not_found", locale);
+                        String errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_user_not_found, locale);
                         userErrMsgs.add(errMsg);
-                        Debug.logInfo("[LoginServices.userLogin] Invalid User : '" + username + "'; " + errMsg, MODULE);
+                        Debug.logInfo(x.LoginServices_userLogin_Invalid_User + username + x.str_fa497ce8 + errMsg, MODULE);
                     }
                 }
             }
@@ -467,14 +471,14 @@ public class LoginServices {
         // if a technical error occurred then log all error message
         List<String> messages = new ArrayList<>();
         if (!debugErrMsgs.isEmpty()) {
-            messages.add(String.join(" / ", debugErrMsgs));
+            messages.add(String.join(x.str_0d0c4ddd, debugErrMsgs));
         }
         if (!userErrMsgs.isEmpty()) {
-            messages.add(String.join(" / ", userErrMsgs));
+            messages.add(String.join(x.str_0d0c4ddd, userErrMsgs));
         }
         String allErrMsg = null;
         if (!messages.isEmpty()) {
-            allErrMsg = String.join(" / ", messages);
+            allErrMsg = String.join(x.str_0d0c4ddd, messages);
         }
         if (allErrMsg != null) {
             result.put(ModelService.ERROR_MESSAGE, allErrMsg);
@@ -491,8 +495,8 @@ public class LoginServices {
      */
     private static boolean isGivenPasswordCanBeStored(Delegator delegator, String password)
             throws GenericEntityException {
-        ModelEntity modelEntityUserLoginHistory = delegator.getModelEntity("UserLoginHistory");
-        ModelField passwordUsedField = modelEntityUserLoginHistory.getField("passwordUsed");
+        ModelEntity modelEntityUserLoginHistory = delegator.getModelEntity(x.UserLoginHistory);
+        ModelField passwordUsedField = modelEntityUserLoginHistory.getField(x.passwordUsed);
         int maxPasswordSize = delegator.getEntityFieldType(
                 modelEntityUserLoginHistory,
                 passwordUsedField.getType()).stringLength();
@@ -501,7 +505,7 @@ public class LoginServices {
         // if the field is encrypted, we check the size of the hashed result
         ModelField.EncryptMethod encryptMethod = passwordUsedField.getEncryptMethod();
         if (encryptMethod.isEncrypted()) {
-            passwordUsedCurrentSize = delegator.encryptFieldValue("UserLoginHistory", encryptMethod, password).toString().length();
+            passwordUsedCurrentSize = delegator.encryptFieldValue(x.UserLoginHistory, encryptMethod, password).toString().length();
         }
         return passwordUsedCurrentSize > maxPasswordSize;
     }
@@ -520,13 +524,14 @@ public class LoginServices {
         // get the visitId for the history entity
         String visitId = (String) context.get(x.visitId);
 
-        if ("true".equalsIgnoreCase(EntityUtilProperties.getPropertyValue("security", "username.lowercase", delegator))) {
+        if (x._true.equalsIgnoreCase(EntityUtilProperties.getPropertyValue(x.security, x.username_lowercase, delegator))) {
             userLoginIdToImpersonate = userLoginIdToImpersonate.toLowerCase();
         }
 
         GenericValue userLogin;
         try {
-            userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", userLoginIdToImpersonate).queryOne();
+            UserLoginDao userLoginDao = DaoRegistry.getDao(delegator, x.UserLogin, UserLoginDao.class);
+            userLogin = userLoginDao.findOne(delegator, x.UserLogin, UtilMisc.toMap(x.userLoginId, userLoginIdToImpersonate), false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -541,13 +546,13 @@ public class LoginServices {
         // return the UserLoginSession Map
         Map<String, Object> userLoginSessionMap = LoginWorker.getUserLoginSession(userLogin);
         if (userLoginSessionMap != null) {
-            result.put("userLoginSession", userLoginSessionMap);
+            result.put(x.userLoginSession, userLoginSessionMap);
         }
 
         // grab the hasLoggedOut flag
-        boolean hasLoggedOut = "Y".equalsIgnoreCase(userLogin.getString(x.hasLoggedOut));
+        boolean hasLoggedOut = x.Y.equalsIgnoreCase(userLogin.getString(x.hasLoggedOut));
         if (hasLoggedOut || UtilValidate.isEmpty(userLogin.getString(x.hasLoggedOut))) {
-            userLogin.set(x.hasLoggedOut, "N");
+            userLogin.set(x.hasLoggedOut, x.N);
             try {
                 userLogin.store();
             } catch (GenericEntityException e) {
@@ -557,23 +562,23 @@ public class LoginServices {
         }
 
         // Log impersonation in UserLoginHistory
-        Map<String, Object> historyCreateMap = UtilMisc.toMap("userLoginId", userLoginIdToImpersonate);
-        historyCreateMap.put("visitId", visitId);
-        historyCreateMap.put("fromDate", UtilDateTime.nowTimestamp());
-        historyCreateMap.put("successfulLogin", "Y");
-        historyCreateMap.put("partyId", userLogin.get(x.partyId));
-        historyCreateMap.put("originUserLoginId", originUserLogin.get(x.userLoginId));
+        Map<String, Object> historyCreateMap = UtilMisc.toMap(x.userLoginId, userLoginIdToImpersonate);
+        historyCreateMap.put(x.visitId, visitId);
+        historyCreateMap.put(x.fromDate, UtilDateTime.nowTimestamp());
+        historyCreateMap.put(x.successfulLogin, x.Y);
+        historyCreateMap.put(x.partyId, userLogin.get(x.partyId));
+        historyCreateMap.put(x.originUserLoginId, originUserLogin.get(x.userLoginId));
         // End impersonation in one hour max
-        historyCreateMap.put("thruDate", UtilDateTime.adjustTimestamp(UtilDateTime.nowTimestamp(), Calendar.HOUR, 1));
+        historyCreateMap.put(x.thruDate, UtilDateTime.adjustTimestamp(UtilDateTime.nowTimestamp(), Calendar.HOUR, 1));
         try {
-            delegator.create("UserLoginHistory", historyCreateMap);
+            delegator.create(x.UserLoginHistory, historyCreateMap);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
 
-        result.put("userLogin", userLogin);
-        result.put("originUserLogin", originUserLogin);
+        result.put(x.userLogin, userLogin);
+        result.put(x.originUserLogin, originUserLogin);
         return result;
     }
 
@@ -589,34 +594,34 @@ public class LoginServices {
     private static String checkImpersonationControls(Delegator delegator, GenericValue userLogin, GenericValue userLoginToImpersonate,
             Locale locale) {
         if (userLoginToImpersonate == null) {
-            return UtilProperties.getMessage(RESOURCE, "loginservices.username_missing", locale);
+            return UtilProperties.getMessage(RESOURCE, x.loginservices_username_missing, locale);
         }
         String userLoginId = userLogin.getString(x.userLoginId);
         String userLoginIdToImpersonate = userLoginToImpersonate.getString(x.userLoginId);
 
-        if (UtilProperties.getPropertyAsBoolean("security", "security.disable.impersonation", true)) {
-            return UtilProperties.getMessage(RESOURCE, "loginevents.impersonation_disabled", locale);
+        if (UtilProperties.getPropertyAsBoolean(x.security, x.security_disable_impersonation, true)) {
+            return UtilProperties.getMessage(RESOURCE, x.loginevents_impersonation_disabled, locale);
         }
 
         if (!LoginWorker.isUserLoginActive(userLoginToImpersonate)) {
-            Map<String, Object> messageMap = UtilMisc.toMap("username", userLoginIdToImpersonate);
-            return UtilProperties.getMessage(RESOURCE, "loginservices.account_for_user_login_id_disabled", messageMap, locale);
+            Map<String, Object> messageMap = UtilMisc.toMap(x.username, userLoginIdToImpersonate);
+            return UtilProperties.getMessage(RESOURCE, x.loginservices_account_for_user_login_id_disabled, messageMap, locale);
         }
 
         if (SecurityUtil.hasUserLoginAdminPermission(delegator, userLoginIdToImpersonate)) {
-            return UtilProperties.getMessage(RESOURCE, "loginevents.impersonate_notAdmin", locale);
+            return UtilProperties.getMessage(RESOURCE, x.loginevents_impersonate_notAdmin, locale);
         }
 
         if (userLoginIdToImpersonate.equals(userLoginId)) {
-            return UtilProperties.getMessage(RESOURCE, "loginevents.impersonate_yourself", locale);
+            return UtilProperties.getMessage(RESOURCE, x.loginevents_impersonate_yourself, locale);
         }
 
         // Cannot impersonate more privileged user
         List<String> missingNeededPermissions = SecurityUtil.hasUserLoginMorePermissionThan(delegator, userLoginId, userLoginIdToImpersonate);
         if (UtilValidate.isNotEmpty(missingNeededPermissions)) {
-            String missingPermissionListString = missingNeededPermissions.stream().collect(Collectors.joining(", "));
-            return UtilProperties.getMessage(RESOURCE, "loginevents.impersonate_notEnoughPermission",
-                    UtilMisc.toMap("missingPermissions", missingPermissionListString), locale);
+            String missingPermissionListString = missingNeededPermissions.stream().collect(Collectors.joining(x.str_d3bc9a37));
+            return UtilProperties.getMessage(RESOURCE, x.loginevents_impersonate_notEnoughPermission,
+                    UtilMisc.toMap(x.missingPermissions, missingPermissionListString), locale);
         }
 
         return null;
@@ -628,7 +633,7 @@ public class LoginServices {
         String userLoginId = userLogin.getString(x.userLoginId);
         String currentPassword = userLogin.getString(x.currentPassword);
         try {
-            passwordChangeHistoryLimit = EntityUtilProperties.getPropertyAsInteger("security", "password.change.history.limit", 0);
+            passwordChangeHistoryLimit = EntityUtilProperties.getPropertyAsInteger(x.security, x.password_change_history_limit, 0);
         } catch (NumberFormatException nfe) {
             // No valid value is found so don't bother to save any password history
             passwordChangeHistoryLimit = 0;
@@ -637,11 +642,14 @@ public class LoginServices {
             // Not saving password history, so return from here.
             return;
         }
-        EntityQuery eq = EntityQuery.use(delegator).from("UserLoginPasswordHistory").where("userLoginId", userLoginId).orderBy("-fromDate")
-                .cursorScrollInsensitive();
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
 
-        try (EntityListIterator eli = eq.queryIterator()) {
+        UserLoginDao userLoginPasswordHistoryDao = DaoRegistry.getDao(delegator, x.UserLoginPasswordHistory, UserLoginDao.class);
+        EntityCondition condition = EntityCondition.makeCondition(UtilMisc.toMap(x.userLoginId, userLoginId));
+        EntityFindOptions findOptions = new EntityFindOptions(true, EntityFindOptions.TYPE_SCROLL_INSENSITIVE,
+                EntityFindOptions.CONCUR_READ_ONLY, true);
+        try (EntityListIterator eli = userLoginPasswordHistoryDao.findIteratorByCondition(delegator, x.UserLoginPasswordHistory, condition,
+                null, UtilMisc.toList(x.fromDate_f5440273), findOptions)) {
             GenericValue pwdHist;
             pwdHist = eli.next();
             if (pwdHist != null) {
@@ -660,8 +668,8 @@ public class LoginServices {
         }
 
         // save this password in history
-        GenericValue userLoginPwdHistToCreate = delegator.makeValue("UserLoginPasswordHistory",
-                UtilMisc.toMap("userLoginId", userLoginId, "fromDate", nowTimestamp));
+        GenericValue userLoginPwdHistToCreate = delegator.makeValue(x.UserLoginPasswordHistory,
+                UtilMisc.toMap(x.userLoginId, userLoginId, x.fromDate, nowTimestamp));
         userLoginPwdHistToCreate.set(x.currentPassword, currentPassword);
         userLoginPwdHistToCreate.create();
     }
@@ -682,7 +690,7 @@ public class LoginServices {
         List<String> errorMessageList = new LinkedList<>();
         Locale locale = (Locale) context.get(x.locale);
 
-        boolean useEncryption = "true".equals(EntityUtilProperties.getPropertyValue("security", "password.encrypt", delegator));
+        boolean useEncryption = x._true.equals(EntityUtilProperties.getPropertyValue(x.security, x.password_encrypt, delegator));
 
         String userLoginId = (String) context.get(x.userLoginId);
         String partyId = (String) context.get(x.partyId);
@@ -700,31 +708,32 @@ public class LoginServices {
             GenericValue party = null;
 
             try {
-                party = EntityQuery.use(delegator).from("Party").where("partyId", partyId).queryOne();
+                UserLoginDao partyDao = DaoRegistry.getDao(delegator, x.Party, UserLoginDao.class);
+                party = partyDao.findOne(delegator, x.Party, UtilMisc.toMap(x.partyId, partyId), false);
             } catch (GenericEntityException e) {
-                Debug.logWarning(e, "", MODULE);
+                Debug.logWarning(e, x.emptyString, MODULE);
             }
 
             if (party != null) {
                 if (loggedInUserLogin != null) {
                     // <b>security check</b>: userLogin partyId must equal partyId, or must have PARTYMGR_CREATE permission
                     if (!partyId.equals(loggedInUserLogin.getString(x.partyId))) {
-                        if (!security.hasEntityPermission("PARTYMGR", "_CREATE", loggedInUserLogin)) {
+                        if (!security.hasEntityPermission(x.PARTYMGR, x.CREATE, loggedInUserLogin)) {
 
-                            errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.party_with_specified_party_ID_exists_not_have_permission",
+                            errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_party_with_specified_party_ID_exists_not_have_permission,
                                     locale);
                             errorMessageList.add(errMsg);
                         }
                     }
                 } else {
-                    errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.must_be_logged_in_and_permission_create_login_party_ID_exists",
+                    errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_must_be_logged_in_and_permission_create_login_party_ID_exists,
                             locale);
                     errorMessageList.add(errMsg);
                 }
             }
         }
 
-        GenericValue userLoginToCreate = delegator.makeValue("UserLogin", UtilMisc.toMap("userLoginId", userLoginId));
+        GenericValue userLoginToCreate = delegator.makeValue(x.UserLogin, UtilMisc.toMap(x.userLoginId, userLoginId));
         checkNewPassword(userLoginToCreate, null, currentPassword, currentPasswordVerify, passwordHint, errorMessageList, true, locale);
         userLoginToCreate.set(x.externalAuthId, externalAuthId);
         userLoginToCreate.set(x.passwordHint, passwordHint);
@@ -735,21 +744,22 @@ public class LoginServices {
             userLoginToCreate.set(x.partyId, partyId);
         } catch (Exception e) {
             // Will get thrown in framework-only installation
-            Debug.logInfo(e, "Exception thrown while setting UserLogin partyId field: ", MODULE);
+            Debug.logInfo(e, x.Exception_thrown_while_setting_UserLogin_partyId_field, MODULE);
         }
 
         try {
-            EntityCondition condition = EntityCondition.makeCondition(EntityFunction.upperField("userLoginId"), EntityOperator.EQUALS,
+            EntityCondition condition = EntityCondition.makeCondition(EntityFunction.upperField(x.userLoginId), EntityOperator.EQUALS,
                     EntityFunction.upper(userLoginId));
-            if (UtilValidate.isNotEmpty(EntityQuery.use(delegator).from("UserLogin").where(condition).queryList())) {
-                Map<String, String> messageMap = UtilMisc.toMap("userLoginId", userLoginId);
-                errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_create_login_user_with_ID_exists", messageMap, locale);
+            UserLoginDao userLoginDao = DaoRegistry.getDao(delegator, x.UserLogin, UserLoginDao.class);
+            if (UtilValidate.isNotEmpty(userLoginDao.findByCondition(delegator, x.UserLogin, condition, null, null, null, false))) {
+                Map<String, String> messageMap = UtilMisc.toMap(x.userLoginId, userLoginId);
+                errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_create_login_user_with_ID_exists, messageMap, locale);
                 errorMessageList.add(errMsg);
             }
         } catch (GenericEntityException e) {
-            Debug.logWarning(e, "", MODULE);
-            Map<String, String> messageMap = UtilMisc.toMap("errorMessage", e.getMessage());
-            errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_create_login_user_read_failure", messageMap, locale);
+            Debug.logWarning(e, x.emptyString, MODULE);
+            Map<String, String> messageMap = UtilMisc.toMap(x.errorMessage, e.getMessage());
+            errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_create_login_user_read_failure, messageMap, locale);
             errorMessageList.add(errMsg);
         }
 
@@ -761,9 +771,9 @@ public class LoginServices {
             userLoginToCreate.create();
             createUserLoginPasswordHistory(userLoginToCreate);
         } catch (GenericEntityException e) {
-            Debug.logWarning(e, "", MODULE);
-            Map<String, String> messageMap = UtilMisc.toMap("errorMessage", e.getMessage());
-            errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_create_login_user_write_failure", messageMap, locale);
+            Debug.logWarning(e, x.emptyString, MODULE);
+            Map<String, String> messageMap = UtilMisc.toMap(x.errorMessage, e.getMessage());
+            errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_create_login_user_write_failure, messageMap, locale);
             return ServiceUtil.returnError(errMsg);
         }
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
@@ -784,14 +794,14 @@ public class LoginServices {
         GenericValue loggedInUserLogin = (GenericValue) context.get(x.userLogin);
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result = ServiceUtil
-                .returnSuccess(UtilProperties.getMessage(RESOURCE, "loginevents.password_was_changed_with_success", locale));
+                .returnSuccess(UtilProperties.getMessage(RESOURCE, x.loginevents_password_was_changed_with_success, locale));
 
         // load the external auth modules -- note: this will only run once and cache the objects
         if (!AuthHelper.authenticatorsLoaded()) {
             AuthHelper.loadAuthenticators(ctx.getDispatcher());
         }
 
-        boolean useEncryption = "true".equals(EntityUtilProperties.getPropertyValue("security", "password.encrypt", delegator));
+        boolean useEncryption = x._true.equals(EntityUtilProperties.getPropertyValue(x.security, x.password_encrypt, delegator));
         boolean adminUser = false;
 
         String userLoginId = (String) context.get(x.userLoginId);
@@ -804,19 +814,20 @@ public class LoginServices {
         GenericValue userLoginToUpdate;
 
         try {
-            userLoginToUpdate = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", userLoginId).queryOne();
+            UserLoginDao userLoginDao = DaoRegistry.getDao(delegator, x.UserLogin, UserLoginDao.class);
+            userLoginToUpdate = userLoginDao.findOne(delegator, x.UserLogin, UtilMisc.toMap(x.userLoginId, userLoginId), false);
         } catch (GenericEntityException e) {
-            Map<String, String> messageMap = UtilMisc.toMap("errorMessage", e.getMessage());
-            errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_change_password_read_failure", messageMap, locale);
+            Map<String, String> messageMap = UtilMisc.toMap(x.errorMessage, e.getMessage());
+            errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_change_password_read_failure, messageMap, locale);
             return ServiceUtil.returnError(errMsg);
         }
 
         // <b>security check</b>: userLogin userLoginId must equal userLoginId, or must have PARTYMGR_UPDATE permission
         // NOTE: must check permission first so that admin users can set own password without specifying old password
         // TODO: change this security group because we can't use permission groups defined in the applications from the framework.
-        if (!security.hasEntityPermission("PARTYMGR", "_UPDATE", loggedInUserLogin)) {
+        if (!security.hasEntityPermission(x.PARTYMGR, x.UPDATE_f97c688e, loggedInUserLogin)) {
             if (!userLoginId.equals(loggedInUserLogin.getString(x.userLoginId))) {
-                errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.not_have_permission_update_password_for_user_login", locale);
+                errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_not_have_permission_update_password_for_user_login, locale);
                 return ServiceUtil.returnError(errMsg);
             }
             if (UtilValidate.isNotEmpty(context.get(x.login_token))) {
@@ -847,21 +858,21 @@ public class LoginServices {
                     AuthHelper.updatePassword(userLoginId, currentPassword, newPassword);
                 } catch (AuthenticatorException e) {
                     Debug.logError(e, e.getMessage(), MODULE);
-                    Map<String, String> messageMap = UtilMisc.toMap("userLoginId", userLoginId);
-                    errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_change_password_userlogin_with_id_not_exist", messageMap,
+                    Map<String, String> messageMap = UtilMisc.toMap(x.userLoginId, userLoginId);
+                    errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_change_password_userlogin_with_id_not_exist, messageMap,
                             locale);
                     return ServiceUtil.returnError(errMsg);
                 }
                 // result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
-                result.put("updatedUserLogin", null);
+                result.put(x.updatedUserLogin, null);
                 return result;
             }
-            Map<String, String> messageMap = UtilMisc.toMap("userLoginId", userLoginId);
-            errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_change_password_userlogin_with_id_not_exist", messageMap, locale);
+            Map<String, String> messageMap = UtilMisc.toMap(x.userLoginId, userLoginId);
+            errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_change_password_userlogin_with_id_not_exist, messageMap, locale);
             return ServiceUtil.returnError(errMsg);
         }
 
-        if ("true".equals(EntityUtilProperties.getPropertyValue("security", "password.lowercase", delegator))) {
+        if (x._true.equals(EntityUtilProperties.getPropertyValue(x.security, x.password_lowercase, delegator))) {
             currentPassword = currentPassword.toLowerCase(Locale.getDefault());
             newPassword = newPassword.toLowerCase(Locale.getDefault());
             newPasswordVerify = newPasswordVerify.toLowerCase(Locale.getDefault());
@@ -883,8 +894,8 @@ public class LoginServices {
                 AuthHelper.updatePassword(externalAuthId, currentPassword, newPassword);
             } catch (AuthenticatorException e) {
                 Debug.logError(e, e.getMessage(), MODULE);
-                Map<String, String> messageMap = UtilMisc.toMap("errorMessage", e.getMessage());
-                errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_change_password_write_failure", messageMap, locale);
+                Map<String, String> messageMap = UtilMisc.toMap(x.errorMessage, e.getMessage());
+                errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_change_password_write_failure, messageMap, locale);
                 return ServiceUtil.returnError(errMsg);
             }
         } else {
@@ -892,19 +903,19 @@ public class LoginServices {
             userLoginToUpdate.set(x.passwordHint, passwordHint, false);
             // optional parameter in service definition "requirePasswordChange" to update a password to a new generated value that has to be changed
             // by the user
-            userLoginToUpdate.set(x.requirePasswordChange, ("Y".equals(context.get(x.requirePasswordChange)) ? "Y" : "N"));
+            userLoginToUpdate.set(x.requirePasswordChange, (x.Y.equals(context.get(x.requirePasswordChange)) ? x.Y : x.N));
 
             try {
                 userLoginToUpdate.store();
                 createUserLoginPasswordHistory(userLoginToUpdate);
             } catch (GenericEntityException e) {
-                Map<String, String> messageMap = UtilMisc.toMap("errorMessage", e.getMessage());
-                errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_change_password_write_failure", messageMap, locale);
+                Map<String, String> messageMap = UtilMisc.toMap(x.errorMessage, e.getMessage());
+                errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_change_password_write_failure, messageMap, locale);
                 return ServiceUtil.returnError(errMsg);
             }
         }
 
-        result.put("updatedUserLogin", userLoginToUpdate);
+        result.put(x.updatedUserLogin, userLoginToUpdate);
         return result;
     }
 
@@ -926,7 +937,7 @@ public class LoginServices {
         String userLoginId = (String) context.get(x.userLoginId);
         String errMsg = null;
 
-        if ((userLoginId != null) && ("true".equals(EntityUtilProperties.getPropertyValue("security", "username.lowercase", delegator)))) {
+        if ((userLoginId != null) && (x._true.equals(EntityUtilProperties.getPropertyValue(x.security, x.username_lowercase, delegator)))) {
             userLoginId = userLoginId.toLowerCase(Locale.getDefault());
         }
 
@@ -940,11 +951,11 @@ public class LoginServices {
             if (!loggedInUserLogin.isEmpty()) {
                 // security check: userLogin partyId must equal partyId, or must have PARTYMGR_CREATE permission
                 if (!partyId.equals(loggedInUserLogin.getString(x.partyId))) {
-                    errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.party_with_party_id_exists_not_permission_create_user_login", locale);
+                    errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_party_with_party_id_exists_not_permission_create_user_login, locale);
                     errorMessageList.add(errMsg);
                 }
             } else {
-                errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.must_logged_in_have_permission_create_user_login_exists", locale);
+                errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_must_logged_in_have_permission_create_user_login_exists, locale);
                 errorMessageList.add(errMsg);
             }
         }
@@ -954,30 +965,31 @@ public class LoginServices {
 
         // check to see if there's a matching login and use it if it's for the same party
         try {
-            newUserLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", userLoginId).queryOne();
+            UserLoginDao userLoginDao = DaoRegistry.getDao(delegator, x.UserLogin, UserLoginDao.class);
+            newUserLogin = userLoginDao.findOne(delegator, x.UserLogin, UtilMisc.toMap(x.userLoginId, userLoginId), false);
         } catch (GenericEntityException e) {
-            Debug.logWarning(e, "", MODULE);
-            Map<String, String> messageMap = UtilMisc.toMap("errorMessage", e.getMessage());
-            errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_create_login_user_read_failure", messageMap, locale);
+            Debug.logWarning(e, x.emptyString, MODULE);
+            Map<String, String> messageMap = UtilMisc.toMap(x.errorMessage, e.getMessage());
+            errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_create_login_user_read_failure, messageMap, locale);
             errorMessageList.add(errMsg);
         }
 
         if (newUserLogin != null) {
             if (!newUserLogin.get(x.partyId).equals(partyId)) {
-                Map<String, String> messageMap = UtilMisc.toMap("userLoginId", userLoginId);
-                errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_create_login_user_with_ID_exists", messageMap, locale);
+                Map<String, String> messageMap = UtilMisc.toMap(x.userLoginId, userLoginId);
+                errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_create_login_user_with_ID_exists, messageMap, locale);
                 errorMessageList.add(errMsg);
             } else {
                 doCreate = false;
             }
         } else {
-            newUserLogin = delegator.makeValue("UserLogin", UtilMisc.toMap("userLoginId", userLoginId));
+            newUserLogin = delegator.makeValue(x.UserLogin, UtilMisc.toMap(x.userLoginId, userLoginId));
         }
 
         newUserLogin.set(x.passwordHint, passwordHint);
         newUserLogin.set(x.partyId, partyId);
         newUserLogin.set(x.currentPassword, password);
-        newUserLogin.set(x.enabled, "Y");
+        newUserLogin.set(x.enabled, x.Y);
         newUserLogin.set(x.disabledDateTime, null);
 
         if (!errorMessageList.isEmpty()) {
@@ -991,27 +1003,27 @@ public class LoginServices {
                 newUserLogin.store();
             }
         } catch (GenericEntityException e) {
-            Debug.logWarning(e, "", MODULE);
-            Map<String, String> messageMap = UtilMisc.toMap("errorMessage", e.getMessage());
-            errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_create_login_user_write_failure", messageMap, locale);
+            Debug.logWarning(e, x.emptyString, MODULE);
+            Map<String, String> messageMap = UtilMisc.toMap(x.errorMessage, e.getMessage());
+            errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_create_login_user_write_failure, messageMap, locale);
             return ServiceUtil.returnError(errMsg);
         }
 
         // Deactivate 'old' UserLogin and do not set disabledDateTime here, otherwise the 'old' UserLogin would be reenabled by next login
-        loggedInUserLogin.set(x.enabled, "N");
+        loggedInUserLogin.set(x.enabled, x.N);
         loggedInUserLogin.set(x.disabledDateTime, null);
 
         try {
             loggedInUserLogin.store();
         } catch (GenericEntityException e) {
-            Debug.logWarning(e, "", MODULE);
-            Map<String, String> messageMap = UtilMisc.toMap("errorMessage", e.getMessage());
-            errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_disable_old_login_user_write_failure", messageMap, locale);
+            Debug.logWarning(e, x.emptyString, MODULE);
+            Map<String, String> messageMap = UtilMisc.toMap(x.errorMessage, e.getMessage());
+            errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_disable_old_login_user_write_failure, messageMap, locale);
             return ServiceUtil.returnError(errMsg);
         }
 
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
-        result.put("newUserLogin", newUserLogin);
+        result.put(x.newUserLogin, newUserLogin);
         return result;
     }
 
@@ -1038,64 +1050,65 @@ public class LoginServices {
         }
 
         // <b>security check</b>: must have PARTYMGR_UPDATE permission
-        if (!security.hasEntityPermission("PARTYMGR", "_UPDATE", loggedInUserLogin)
-                && !security.hasEntityPermission("SECURITY", "_UPDATE", loggedInUserLogin)) {
-            errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.not_permission_update_security_info_for_user_login", locale);
+        if (!security.hasEntityPermission(x.PARTYMGR, x.UPDATE_f97c688e, loggedInUserLogin)
+                && !security.hasEntityPermission(x.SECURITY, x.UPDATE_f97c688e, loggedInUserLogin)) {
+            errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_not_permission_update_security_info_for_user_login, locale);
             return ServiceUtil.returnError(errMsg);
         }
 
         GenericValue userLoginToUpdate = null;
 
         try {
-            userLoginToUpdate = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", userLoginId).queryOne();
+            UserLoginDao userLoginDao = DaoRegistry.getDao(delegator, x.UserLogin, UserLoginDao.class);
+            userLoginToUpdate = userLoginDao.findOne(delegator, x.UserLogin, UtilMisc.toMap(x.userLoginId, userLoginId), false);
         } catch (GenericEntityException e) {
-            Map<String, String> messageMap = UtilMisc.toMap("errorMessage", e.getMessage());
-            errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_change_password_read_failure", messageMap, locale);
+            Map<String, String> messageMap = UtilMisc.toMap(x.errorMessage, e.getMessage());
+            errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_change_password_read_failure, messageMap, locale);
             return ServiceUtil.returnError(errMsg);
         }
 
         if (userLoginToUpdate == null) {
-            Map<String, String> messageMap = UtilMisc.toMap("userLoginId", userLoginId);
-            errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_change_password_userlogin_with_id_not_exist", messageMap, locale);
+            Map<String, String> messageMap = UtilMisc.toMap(x.userLoginId, userLoginId);
+            errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_change_password_userlogin_with_id_not_exist, messageMap, locale);
             return ServiceUtil.returnError(errMsg);
         }
 
-        boolean wasEnabled = !"N".equals(userLoginToUpdate.get(x.enabled));
+        boolean wasEnabled = !x.N.equals(userLoginToUpdate.get(x.enabled));
 
-        if (context.containsKey("enabled")) {
+        if (context.containsKey(x.enabled)) {
             userLoginToUpdate.set(x.enabled, context.get(x.enabled), true);
         }
-        if (context.containsKey("disabledDateTime")) {
+        if (context.containsKey(x.disabledDateTime)) {
             userLoginToUpdate.set(x.disabledDateTime, context.get(x.disabledDateTime), true);
         }
-        if (context.containsKey("successiveFailedLogins")) {
+        if (context.containsKey(x.successiveFailedLogins)) {
             userLoginToUpdate.set(x.successiveFailedLogins, context.get(x.successiveFailedLogins), true);
         }
-        if (context.containsKey("externalAuthId")) {
+        if (context.containsKey(x.externalAuthId)) {
             userLoginToUpdate.set(x.externalAuthId, context.get(x.externalAuthId), true);
         }
-        if (context.containsKey("userLdapDn")) {
+        if (context.containsKey(x.userLdapDn)) {
             userLoginToUpdate.set(x.userLdapDn, context.get(x.userLdapDn), true);
         }
-        if (context.containsKey("requirePasswordChange")) {
+        if (context.containsKey(x.requirePasswordChange)) {
             userLoginToUpdate.set(x.requirePasswordChange, context.get(x.requirePasswordChange), true);
         }
 
         // if was disabled and we are enabling it, clear disabledDateTime
-        if (!wasEnabled && "Y".equals(context.get(x.enabled))) {
+        if (!wasEnabled && x.Y.equals(context.get(x.enabled))) {
             userLoginToUpdate.set(x.disabledDateTime, null);
             userLoginToUpdate.set(x.disabledBy, null);
         }
 
-        if ("N".equals(context.get(x.enabled))) {
+        if (x.N.equals(context.get(x.enabled))) {
             userLoginToUpdate.set(x.disabledBy, loggedInUserLogin.getString(x.userLoginId));
         }
 
         try {
             userLoginToUpdate.store();
         } catch (GenericEntityException e) {
-            Map<String, String> messageMap = UtilMisc.toMap("errorMessage", e.getMessage());
-            errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.could_not_change_password_write_failure", messageMap, locale);
+            Map<String, String> messageMap = UtilMisc.toMap(x.errorMessage, e.getMessage());
+            errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_could_not_change_password_write_failure, messageMap, locale);
             return ServiceUtil.returnError(errMsg);
         }
 
@@ -1106,7 +1119,7 @@ public class LoginServices {
     public static void checkNewPassword(GenericValue userLogin, String currentPassword, String newPassword, String newPasswordVerify,
             String passwordHint, List<String> errorMessageList, boolean ignoreCurrentPassword, Locale locale) {
         Delegator delegator = userLogin.getDelegator();
-        boolean useEncryption = "true".equals(EntityUtilProperties.getPropertyValue("security", "password.encrypt", delegator));
+        boolean useEncryption = x._true.equals(EntityUtilProperties.getPropertyValue(x.security, x.password_encrypt, delegator));
 
         String errMsg = null;
 
@@ -1115,102 +1128,103 @@ public class LoginServices {
             // if the password.accept.encrypted.and.plain property in security is set to true allow plain or encrypted passwords
             boolean passwordMatches = checkPassword(userLogin.getString(x.currentPassword), useEncryption, currentPassword);
             if ((currentPassword == null) || (!passwordMatches)) {
-                errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.old_password_not_correct_reenter", locale);
+                errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_old_password_not_correct_reenter, locale);
                 errorMessageList.add(errMsg);
             }
             if (checkPassword(userLogin.getString(x.currentPassword), useEncryption, newPassword)) {
-                errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.new_password_is_equal_to_old_password", locale);
+                errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_new_password_is_equal_to_old_password, locale);
                 errorMessageList.add(errMsg);
             }
 
         }
 
         if (UtilValidate.isEmpty(newPassword) || UtilValidate.isEmpty(newPasswordVerify)) {
-            errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.password_or_verify_missing", locale);
+            errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_password_or_verify_missing, locale);
             errorMessageList.add(errMsg);
         } else if (!newPassword.equals(newPasswordVerify)) {
-            errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.password_did_not_match_verify_password", locale);
+            errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_password_did_not_match_verify_password, locale);
             errorMessageList.add(errMsg);
         }
 
         int passwordChangeHistoryLimit = 0;
         try {
-            passwordChangeHistoryLimit = EntityUtilProperties.getPropertyAsInteger("security", "password.change.history.limit", 0);
+            passwordChangeHistoryLimit = EntityUtilProperties.getPropertyAsInteger(x.security, x.password_change_history_limit, 0);
         } catch (NumberFormatException nfe) {
             // No valid value is found so don't bother to save any password history
             passwordChangeHistoryLimit = 0;
         }
-        Debug.logInfo(" password.change.history.limit is set to " + passwordChangeHistoryLimit, MODULE);
+        Debug.logInfo(x.password_change_history_limit_is_set_to + passwordChangeHistoryLimit, MODULE);
         if (passwordChangeHistoryLimit > 0) {
-            Debug.logInfo(" checkNewPassword Checking if user is tyring to use old password " + passwordChangeHistoryLimit, MODULE);
+            Debug.logInfo(x.checkNewPassword_Checking_if_user_is_tyring_to_use_old_password + passwordChangeHistoryLimit, MODULE);
             try {
-                List<GenericValue> pwdHistList = EntityQuery.use(delegator).from("UserLoginPasswordHistory")
-                        .where("userLoginId", userLogin.getString(x.userLoginId)).orderBy("-fromDate").queryList();
+                UserLoginDao userLoginPasswordHistoryDao = DaoRegistry.getDao(delegator, x.UserLoginPasswordHistory, UserLoginDao.class);
+                List<GenericValue> pwdHistList = userLoginPasswordHistoryDao.findByAnd(delegator, x.UserLoginPasswordHistory,
+                        UtilMisc.toMap(x.userLoginId, userLogin.getString(x.userLoginId)), UtilMisc.toList(x.fromDate_f5440273), false);
                 for (GenericValue pwdHistValue : pwdHistList) {
                     if (checkPassword(pwdHistValue.getString(x.currentPassword), useEncryption, newPassword)) {
-                        Map<String, Integer> messageMap = UtilMisc.toMap("passwordChangeHistoryLimit", passwordChangeHistoryLimit);
-                        errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.password_must_be_different_from_last_passwords", messageMap,
+                        Map<String, Integer> messageMap = UtilMisc.toMap(x.passwordChangeHistoryLimit, passwordChangeHistoryLimit);
+                        errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_password_must_be_different_from_last_passwords, messageMap,
                                 locale);
                         errorMessageList.add(errMsg);
                         break;
                     }
                 }
             } catch (GenericEntityException e) {
-                Debug.logWarning(e, "", MODULE);
-                Map<String, String> messageMap = UtilMisc.toMap("errorMessage", e.getMessage());
-                errMsg = UtilProperties.getMessage(RESOURCE, "loginevents.error_accessing_password_change_history", messageMap, locale);
+                Debug.logWarning(e, x.emptyString, MODULE);
+                Map<String, String> messageMap = UtilMisc.toMap(x.errorMessage, e.getMessage());
+                errMsg = UtilProperties.getMessage(RESOURCE, x.loginevents_error_accessing_password_change_history, messageMap, locale);
             }
         }
         int minPasswordLength = 0;
 
         try {
-            minPasswordLength = EntityUtilProperties.getPropertyAsInteger("security", "password.length.min", 0);
+            minPasswordLength = EntityUtilProperties.getPropertyAsInteger(x.security, x.password_length_min, 0);
         } catch (NumberFormatException nfe) {
             minPasswordLength = 0;
         }
 
         if (newPassword != null) {
             // Matching password with pattern
-            String passwordPattern = EntityUtilProperties.getPropertyValue("security", "security.login.password.pattern", "^.*(?=.{5,}).*$",
+            String passwordPattern = EntityUtilProperties.getPropertyValue(x.security, x.security_login_password_pattern, x._5_fb93d267,
                     delegator);
-            boolean usePasswordPattern = UtilProperties.getPropertyAsBoolean("security", "security.login.password.pattern.enable", true);
+            boolean usePasswordPattern = UtilProperties.getPropertyAsBoolean(x.security, x.security_login_password_pattern_enable, true);
             if (usePasswordPattern) {
                 Pattern pattern = Pattern.compile(passwordPattern);
                 Matcher matcher = pattern.matcher(newPassword);
                 boolean matched = matcher.matches();
                 if (!matched) {
                     // This is a mix to handle the OOTB pattern which is only a fixed length
-                    Map<String, String> messageMap = UtilMisc.toMap("minPasswordLength", Integer.toString(minPasswordLength));
-                    String passwordPatternMessage = EntityUtilProperties.getPropertyValue("security", "security.login.password.pattern.description",
-                            "loginservices.password_must_be_least_characters_long", delegator);
+                    Map<String, String> messageMap = UtilMisc.toMap(x.minPasswordLength, Integer.toString(minPasswordLength));
+                    String passwordPatternMessage = EntityUtilProperties.getPropertyValue(x.security, x.security_login_password_pattern_description,
+                            x.loginservices_password_must_be_least_characters_long, delegator);
                     errMsg = UtilProperties.getMessage(RESOURCE, passwordPatternMessage, messageMap, locale);
                     errorMessageList.add(errMsg);
                 }
             } else {
                 if (!(newPassword.length() >= minPasswordLength)) {
-                    Map<String, String> messageMap = UtilMisc.toMap("minPasswordLength", Integer.toString(minPasswordLength));
-                    errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.password_must_be_least_characters_long", messageMap, locale);
+                    Map<String, String> messageMap = UtilMisc.toMap(x.minPasswordLength, Integer.toString(minPasswordLength));
+                    errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_password_must_be_least_characters_long, messageMap, locale);
                     errorMessageList.add(errMsg);
                 }
             }
             if (newPassword.equalsIgnoreCase(userLogin.getString(x.userLoginId))) {
-                errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.password_may_not_equal_username", locale);
+                errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_password_may_not_equal_username, locale);
                 errorMessageList.add(errMsg);
             }
             if (UtilValidate.isNotEmpty(passwordHint)
                     && (passwordHint.toUpperCase(Locale.getDefault()).indexOf(newPassword.toUpperCase(Locale.getDefault())) >= 0)) {
-                errMsg = UtilProperties.getMessage(RESOURCE, "loginservices.password_hint_may_not_contain_password", locale);
+                errMsg = UtilProperties.getMessage(RESOURCE, x.loginservices_password_hint_may_not_contain_password, locale);
                 errorMessageList.add(errMsg);
             }
         }
     }
 
     public static String getHashType() {
-        String hashType = UtilProperties.getPropertyValue("security", "password.encrypt.hash.type");
+        String hashType = UtilProperties.getPropertyValue(x.security, x.password_encrypt_hash_type);
 
         if (UtilValidate.isEmpty(hashType)) {
-            Debug.logWarning("Password encrypt hash type is not specified in security.properties, use SHA", MODULE);
-            hashType = "SHA";
+            Debug.logWarning(x.Password_encrypt_hash_type_is_not_specified_in_security_properties_use_SHA, MODULE);
+            hashType = x.SHA;
         }
 
         return hashType;
@@ -1225,7 +1239,7 @@ public class LoginServices {
                 passwordMatches = oldPassword.equals(currentPassword);
             }
         }
-        if (!passwordMatches && "true".equals(UtilProperties.getPropertyValue("security", "password.accept.encrypted.and.plain"))) {
+        if (!passwordMatches && x._true.equals(UtilProperties.getPropertyValue(x.security, x.password_accept_encrypted_and_plain))) {
             passwordMatches = currentPassword.equals(oldPassword);
         }
         return passwordMatches;
@@ -1236,8 +1250,8 @@ public class LoginServices {
             request.login(userName, currentPassword);
         } catch (ServletException e) {
 
-            StringManager sm = StringManager.getManager("org.apache.catalina.connector");
-            if (sm.getString("coyoteRequest.alreadyAuthenticated").equals(e.getMessage())) {
+            StringManager sm = StringManager.getManager(x.org_apache_catalina_connector);
+            if (sm.getString(x.coyoteRequest_alreadyAuthenticated).equals(e.getMessage())) {
                 return true;
             } else {
                 Debug.logError(e, MODULE);

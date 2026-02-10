@@ -36,8 +36,9 @@ import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityOperator;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.UserLoginDao;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
@@ -56,9 +57,9 @@ import org.apache.ofbiz.model.SubscriptionServicesContext;
 public class SubscriptionServices {
 
     private static final String MODULE = SubscriptionServices.class.getName();
-    private static final String RESOURCE = "ProductUiLabels";
-    private static final String RES_ERROR = "ProductErrorUiLabels";
-    private static final String RES_ORDER_ERROR = "OrderErrorUiLabels";
+    private static final String RESOURCE = x.ProductUiLabels;
+    private static final String RES_ERROR = x.ProductErrorUiLabels;
+    private static final String RES_ORDER_ERROR = x.OrderErrorUiLabels;
 
     public static Map<String, Object> processExtendSubscription(DispatchContext dctx, SubscriptionServicesContext context) {
         Delegator delegator = dctx.getDelegator();
@@ -74,19 +75,20 @@ public class SubscriptionServices {
         String useTimeUomId = (String) context.get(x.useTimeUomId);
         String alwaysCreateNewRecordStr = (String) context.get(x.alwaysCreateNewRecord);
         Locale locale = (Locale) context.get(x.locale);
-        boolean alwaysCreateNewRecord = !"N".equals(alwaysCreateNewRecordStr);
+        boolean alwaysCreateNewRecord = !x.N.equals(alwaysCreateNewRecordStr);
 
         GenericValue lastSubscription = null;
         try {
-            Map<String, String> subscriptionFindMap = UtilMisc.toMap("partyId", partyId, "subscriptionResourceId", subscriptionResourceId);
+            UserLoginDao subscriptionDao = DaoRegistry.getDao(delegator, x.Subscription, UserLoginDao.class);
+            Map<String, String> subscriptionFindMap = UtilMisc.toMap(x.partyId, partyId, x.subscriptionResourceId, subscriptionResourceId);
             // if this subscription is attached to something the customer owns, filter by that too
             if (UtilValidate.isNotEmpty(inventoryItemId)) {
-                subscriptionFindMap.put("inventoryItemId", inventoryItemId);
+                subscriptionFindMap.put(x.inventoryItemId, inventoryItemId);
             }
-            List<GenericValue> subscriptionList = EntityQuery.use(delegator).from("Subscription").where(subscriptionFindMap).queryList();
+            List<GenericValue> subscriptionList = subscriptionDao.findByAnd(delegator, x.Subscription, subscriptionFindMap, null, false);
             // DEJ20070718 DON'T filter by date, we want to consider all subscriptions: List listFiltered
             // = EntityUtil.filterByDate(subscriptionList, true);
-            List<GenericValue> listOrdered = EntityUtil.orderBy(subscriptionList, UtilMisc.toList("-fromDate"));
+            List<GenericValue> listOrdered = EntityUtil.orderBy(subscriptionList, UtilMisc.toList(x.fromDate_f5440273));
             if (!listOrdered.isEmpty()) {
                 lastSubscription = listOrdered.get(0);
             }
@@ -96,7 +98,7 @@ public class SubscriptionServices {
 
         GenericValue newSubscription = null;
         if (lastSubscription == null || alwaysCreateNewRecord) {
-            newSubscription = delegator.makeValue("Subscription");
+            newSubscription = delegator.makeValue(x.Subscription);
             newSubscription.set(x.subscriptionResourceId, subscriptionResourceId);
             newSubscription.set(x.partyId, partyId);
             newSubscription.set(x.roleTypeId, roleTypeId);
@@ -134,7 +136,7 @@ public class SubscriptionServices {
         if (times != null) {
             calendar.add(times[0], (useTime * times[1]));
         } else {
-            Debug.logWarning("Don't know anything about useTimeUomId [" + useTimeUomId + "], defaulting to month", MODULE);
+            Debug.logWarning(x.Don_t_know_anything_about_useTimeUomId + useTimeUomId + x.defaulting_to_month, MODULE);
             calendar.add(Calendar.MONTH, useTime);
         }
 
@@ -144,44 +146,46 @@ public class SubscriptionServices {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         try {
             if (lastSubscription != null && !alwaysCreateNewRecord) {
-                Map<String, Object> updateSubscriptionMap = dctx.getModelService("updateSubscription")
+                Map<String, Object> updateSubscriptionMap = dctx.getModelService(x.updateSubscription)
                         .makeValid(newSubscription, ModelService.IN_PARAM);
-                updateSubscriptionMap.put("userLogin", EntityQuery.use(delegator).from("UserLogin").where("userLoginId", "system").queryOne());
+                UserLoginDao userLoginDao = DaoRegistry.getDao(delegator, x.UserLogin, UserLoginDao.class);
+                updateSubscriptionMap.put(x.userLogin, userLoginDao.findOne(delegator, x.UserLogin, UtilMisc.toMap(x.userLoginId, x.system), false));
 
-                Map<String, Object> updateSubscriptionResult = dispatcher.runSync("updateSubscription", updateSubscriptionMap);
-                result.put("subscriptionId", updateSubscriptionMap.get("subscriptionId"));
+                Map<String, Object> updateSubscriptionResult = dispatcher.runSync(x.updateSubscription, updateSubscriptionMap);
+                result.put(x.subscriptionId, updateSubscriptionMap.get(x.subscriptionId));
                 if (ServiceUtil.isError(updateSubscriptionResult)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                            "ProductSubscriptionUpdateError",
-                            UtilMisc.toMap("subscriptionId", updateSubscriptionMap.get("subscriptionId")), locale),
+                            x.ProductSubscriptionUpdateError,
+                            UtilMisc.toMap(x.subscriptionId, updateSubscriptionMap.get(x.subscriptionId)), locale),
                             null, null, updateSubscriptionResult);
                 }
             } else {
                 Map<String, Object> ensurePartyRoleMap = new HashMap<>();
                 if (UtilValidate.isNotEmpty(roleTypeId)) {
-                    ensurePartyRoleMap.put("partyId", partyId);
-                    ensurePartyRoleMap.put("roleTypeId", roleTypeId);
-                    ensurePartyRoleMap.put("userLogin", userLogin);
-                    Map<String, Object> createPartyRoleResult = dispatcher.runSync("ensurePartyRole", ensurePartyRoleMap);
+                    ensurePartyRoleMap.put(x.partyId, partyId);
+                    ensurePartyRoleMap.put(x.roleTypeId, roleTypeId);
+                    ensurePartyRoleMap.put(x.userLogin, userLogin);
+                    Map<String, Object> createPartyRoleResult = dispatcher.runSync(x.ensurePartyRole, ensurePartyRoleMap);
                     if (ServiceUtil.isError(createPartyRoleResult)) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                                "ProductSubscriptionPartyRoleCreationError",
-                                UtilMisc.toMap("subscriptionResourceId", subscriptionResourceId), locale),
+                                x.ProductSubscriptionPartyRoleCreationError,
+                                UtilMisc.toMap(x.subscriptionResourceId, subscriptionResourceId), locale),
                                 null, null, createPartyRoleResult);
                     }
                 }
-                Map<String, Object> createSubscriptionMap = dctx.getModelService("createSubscription")
+                Map<String, Object> createSubscriptionMap = dctx.getModelService(x.createSubscription)
                         .makeValid(newSubscription, ModelService.IN_PARAM);
-                createSubscriptionMap.put("userLogin", EntityQuery.use(delegator).from("UserLogin").where("userLoginId", "system").queryOne());
+                UserLoginDao userLoginDao = DaoRegistry.getDao(delegator, x.UserLogin, UserLoginDao.class);
+                createSubscriptionMap.put(x.userLogin, userLoginDao.findOne(delegator, x.UserLogin, UtilMisc.toMap(x.userLoginId, x.system), false));
 
-                Map<String, Object> createSubscriptionResult = dispatcher.runSync("createSubscription", createSubscriptionMap);
+                Map<String, Object> createSubscriptionResult = dispatcher.runSync(x.createSubscription, createSubscriptionMap);
                 if (ServiceUtil.isError(createSubscriptionResult)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                            "ProductSubscriptionCreateError",
-                            UtilMisc.toMap("subscriptionResourceId", subscriptionResourceId), locale),
+                            x.ProductSubscriptionCreateError,
+                            UtilMisc.toMap(x.subscriptionResourceId, subscriptionResourceId), locale),
                             null, null, createSubscriptionResult);
                 }
-                result.put("subscriptionId", createSubscriptionResult.get("subscriptionId"));
+                result.put(x.subscriptionId, createSubscriptionResult.get(x.subscriptionId));
             }
         } catch (GenericEntityException | GenericServiceException e) {
             return ServiceUtil.returnError(e.toString());
@@ -205,17 +209,19 @@ public class SubscriptionServices {
             orderCreatedDate = UtilDateTime.nowTimestamp();
         }
         try {
-            List<GenericValue> productSubscriptionResourceList = EntityQuery.use(delegator).from("ProductSubscriptionResource")
-                    .where("productId", productId)
-                    .cache(true)
-                    .filterByDate(orderCreatedDate, "fromDate", "thruDate", "purchaseFromDate", "purchaseThruDate")
-                    .queryList();
+            UserLoginDao productSubscriptionResourceDao = DaoRegistry.getDao(delegator, x.ProductSubscriptionResource, UserLoginDao.class);
+            List<GenericValue> productSubscriptionResourceList = productSubscriptionResourceDao.findByAnd(delegator, x.ProductSubscriptionResource,
+                    UtilMisc.toMap(x.productId, productId), null, true);
+            productSubscriptionResourceList = EntityUtil.filterByDate(productSubscriptionResourceList, orderCreatedDate, x.fromDate, x.thruDate,
+                    true);
+            productSubscriptionResourceList = EntityUtil.filterByDate(productSubscriptionResourceList, orderCreatedDate, x.purchaseFromDate,
+                    x.purchaseThruDate, true);
 
             if (productSubscriptionResourceList.isEmpty()) {
-                Debug.logError("No ProductSubscriptionResource found for productId: " + productId, MODULE);
+                Debug.logError(x.No_ProductSubscriptionResource_found_for_productId + productId, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                        "ProductSubscriptionResourceNotFound",
-                        UtilMisc.toMap("productId", productId), locale));
+                        x.ProductSubscriptionResourceNotFound,
+                        UtilMisc.toMap(x.productId, productId), locale));
             }
 
             for (GenericValue productSubscriptionResource: productSubscriptionResourceList) {
@@ -225,22 +231,22 @@ public class SubscriptionServices {
                     newUseTime = useTime.intValue() * qty;
                 }
                 Map<String, Object> subContext = UtilMisc.makeMapWritable(context);
-                subContext.put("useTime", newUseTime);
-                subContext.put("useTimeUomId", productSubscriptionResource.get(x.useTimeUomId));
-                subContext.put("useRoleTypeId", productSubscriptionResource.get(x.useRoleTypeId));
-                subContext.put("subscriptionResourceId", productSubscriptionResource.get(x.subscriptionResourceId));
-                subContext.put("automaticExtend", productSubscriptionResource.get(x.automaticExtend));
-                subContext.put("canclAutmExtTime", productSubscriptionResource.get(x.canclAutmExtTime));
-                subContext.put("canclAutmExtTimeUomId", productSubscriptionResource.get(x.canclAutmExtTimeUomId));
-                subContext.put("gracePeriodOnExpiry", productSubscriptionResource.get(x.gracePeriodOnExpiry));
-                subContext.put("gracePeriodOnExpiryUomId", productSubscriptionResource.get(x.gracePeriodOnExpiryUomId));
+                subContext.put(x.useTime, newUseTime);
+                subContext.put(x.useTimeUomId, productSubscriptionResource.get(x.useTimeUomId));
+                subContext.put(x.useRoleTypeId, productSubscriptionResource.get(x.useRoleTypeId));
+                subContext.put(x.subscriptionResourceId, productSubscriptionResource.get(x.subscriptionResourceId));
+                subContext.put(x.automaticExtend, productSubscriptionResource.get(x.automaticExtend));
+                subContext.put(x.canclAutmExtTime, productSubscriptionResource.get(x.canclAutmExtTime));
+                subContext.put(x.canclAutmExtTimeUomId, productSubscriptionResource.get(x.canclAutmExtTimeUomId));
+                subContext.put(x.gracePeriodOnExpiry, productSubscriptionResource.get(x.gracePeriodOnExpiry));
+                subContext.put(x.gracePeriodOnExpiryUomId, productSubscriptionResource.get(x.gracePeriodOnExpiryUomId));
 
-                Map<String, Object> ctx = dctx.getModelService("processExtendSubscription").makeValid(subContext, ModelService.IN_PARAM);
-                Map<String, Object> processExtendSubscriptionResult = dispatcher.runSync("processExtendSubscription", ctx);
+                Map<String, Object> ctx = dctx.getModelService(x.processExtendSubscription).makeValid(subContext, ModelService.IN_PARAM);
+                Map<String, Object> processExtendSubscriptionResult = dispatcher.runSync(x.processExtendSubscription, ctx);
                 if (ServiceUtil.isError(processExtendSubscriptionResult)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                            "ProductSubscriptionByProductError",
-                            UtilMisc.toMap("productId", productId), locale),
+                            x.ProductSubscriptionByProductError,
+                            UtilMisc.toMap(x.productId, productId), locale),
                             null, null, processExtendSubscriptionResult);
                 }
             }
@@ -260,29 +266,31 @@ public class SubscriptionServices {
         String orderId = (String) context.get(x.orderId);
         Locale locale = (Locale) context.get(x.locale);
 
-        Debug.logInfo("In processExtendSubscriptionByOrder service with orderId: " + orderId, MODULE);
+        Debug.logInfo(x.In_processExtendSubscriptionByOrder_service_with_orderId + orderId, MODULE);
 
         GenericValue orderHeader = null;
         try {
-            List<GenericValue> orderRoleList = EntityQuery.use(delegator).from("OrderRole").where("orderId", orderId,
-                    "roleTypeId", "END_USER_CUSTOMER").queryList();
+            UserLoginDao orderRoleDao = DaoRegistry.getDao(delegator, x.OrderRole, UserLoginDao.class);
+            List<GenericValue> orderRoleList = orderRoleDao.findByAnd(delegator, x.OrderRole,
+                    UtilMisc.toMap(x.orderId, orderId, x.roleTypeId, x.END_USER_CUSTOMER), null, false);
             if (!orderRoleList.isEmpty()) {
                 GenericValue orderRole = orderRoleList.get(0);
                 String partyId = (String) orderRole.get(x.partyId);
-                subContext.put("partyId", partyId);
+                subContext.put(x.partyId, partyId);
             } else {
                 return ServiceUtil.returnFailure(UtilProperties.getMessage(RES_ORDER_ERROR,
-                        "OrderErrorCannotGetOrderRoleEntity",
-                        UtilMisc.toMap("itemMsgInfo", orderId), locale));
+                        x.OrderErrorCannotGetOrderRoleEntity,
+                        UtilMisc.toMap(x.itemMsgInfo, orderId), locale));
             }
-            orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
+            UserLoginDao orderHeaderDao = DaoRegistry.getDao(delegator, x.OrderHeader, UserLoginDao.class);
+            orderHeader = orderHeaderDao.findOne(delegator, x.OrderHeader, UtilMisc.toMap(x.orderId, orderId), false);
             if (orderHeader == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER_ERROR,
-                        "OrderErrorNoValidOrderHeaderFoundForOrderId",
-                        UtilMisc.toMap("orderId", orderId), locale));
+                        x.OrderErrorNoValidOrderHeaderFoundForOrderId,
+                        UtilMisc.toMap(x.orderId, orderId), locale));
             }
             Timestamp orderCreatedDate = (Timestamp) orderHeader.get(x.orderDate);
-            subContext.put("orderCreatedDate", orderCreatedDate);
+            subContext.put(x.orderCreatedDate, orderCreatedDate);
             List<GenericValue> orderItemList = orderHeader.getRelated(x.OrderItem, null, null, false);
             for (GenericValue orderItem: orderItemList) {
                 BigDecimal qty = orderItem.getBigDecimal(x.quantity);
@@ -290,22 +298,24 @@ public class SubscriptionServices {
                 if (UtilValidate.isEmpty(productId)) {
                     continue;
                 }
-                List<GenericValue> productSubscriptionResourceListFiltered = EntityQuery.use(delegator).from("ProductSubscriptionResource")
-                        .where("productId", productId).cache(true).filterByDate().queryList();
+                UserLoginDao productSubscriptionResourceDao = DaoRegistry.getDao(delegator, x.ProductSubscriptionResource, UserLoginDao.class);
+                List<GenericValue> productSubscriptionResourceListFiltered = productSubscriptionResourceDao.findByAnd(delegator,
+                        x.ProductSubscriptionResource, UtilMisc.toMap(x.productId, productId), null, true);
+                productSubscriptionResourceListFiltered = EntityUtil.filterByDate(productSubscriptionResourceListFiltered, true);
                 if (!productSubscriptionResourceListFiltered.isEmpty()) {
-                    subContext.put("subscriptionTypeId", "PRODUCT_SUBSCR");
-                    subContext.put("productId", productId);
-                    subContext.put("orderId", orderId);
-                    subContext.put("orderItemSeqId", orderItem.get(x.orderItemSeqId));
-                    subContext.put("inventoryItemId", orderItem.get(x.fromInventoryItemId));
-                    subContext.put("quantity", qty.intValue());
-                    Map<String, Object> ctx = dctx.getModelService("processExtendSubscriptionByProduct").makeValid(subContext,
+                    subContext.put(x.subscriptionTypeId, x.PRODUCT_SUBSCR);
+                    subContext.put(x.productId, productId);
+                    subContext.put(x.orderId, orderId);
+                    subContext.put(x.orderItemSeqId, orderItem.get(x.orderItemSeqId));
+                    subContext.put(x.inventoryItemId, orderItem.get(x.fromInventoryItemId));
+                    subContext.put(x.quantity, qty.intValue());
+                    Map<String, Object> ctx = dctx.getModelService(x.processExtendSubscriptionByProduct).makeValid(subContext,
                             ModelService.IN_PARAM);
-                    Map<String, Object> thisResult = dispatcher.runSync("processExtendSubscriptionByProduct", ctx);
+                    Map<String, Object> thisResult = dispatcher.runSync(x.processExtendSubscriptionByProduct, ctx);
                     if (ServiceUtil.isError(thisResult)) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                                "ProductSubscriptionByOrderError",
-                                UtilMisc.toMap("orderId", orderId), locale), null, null, thisResult);
+                                x.ProductSubscriptionByOrderError,
+                                UtilMisc.toMap(x.orderId, orderId), locale), null, null, thisResult);
                     }
                 }
             }
@@ -330,11 +340,12 @@ public class SubscriptionServices {
         Timestamp expirationCompletedDate = null;
 
         try {
-            EntityCondition cond1 = EntityCondition.makeCondition("automaticExtend", EntityOperator.EQUALS, "N");
-            EntityCondition cond2 = EntityCondition.makeCondition("automaticExtend", EntityOperator.EQUALS, null);
+            EntityCondition cond1 = EntityCondition.makeCondition(x.automaticExtend, EntityOperator.EQUALS, x.N);
+            EntityCondition cond2 = EntityCondition.makeCondition(x.automaticExtend, EntityOperator.EQUALS, null);
             EntityCondition cond = EntityCondition.makeCondition(UtilMisc.toList(cond1, cond2), EntityOperator.OR);
             List<GenericValue> subscriptionList = null;
-            subscriptionList = EntityQuery.use(delegator).from("Subscription").where(cond).queryList();
+            UserLoginDao subscriptionDao = DaoRegistry.getDao(delegator, x.Subscription, UserLoginDao.class);
+            subscriptionList = subscriptionDao.findByCondition(delegator, x.Subscription, cond, null, null, null, false);
 
             if (subscriptionList != null) {
                 for (GenericValue subscription : subscriptionList) {
@@ -347,8 +358,9 @@ public class SubscriptionServices {
                         int field = Calendar.MONTH;
                         String subscriptionResourceId = subscription.getString(x.subscriptionResourceId);
                         GenericValue subscriptionResource = null;
-                        subscriptionResource = EntityQuery.use(delegator).from("SubscriptionResource").where("subscriptionResourceId",
-                                subscriptionResourceId).queryOne();
+                        UserLoginDao subscriptionResourceDao = DaoRegistry.getDao(delegator, x.SubscriptionResource, UserLoginDao.class);
+                        subscriptionResource = subscriptionResourceDao.findOne(delegator, x.SubscriptionResource,
+                                UtilMisc.toMap(x.subscriptionResourceId, subscriptionResourceId), false);
                         subscriptionId = subscription.getString(x.subscriptionId);
                         gracePeriodOnExpiry = subscription.getString(x.gracePeriodOnExpiry);
                         gracePeriodOnExpiryUomId = subscription.getString(x.gracePeriodOnExpiryUomId);
@@ -356,51 +368,51 @@ public class SubscriptionServices {
                         endDateSubscription.setTime(subscription.getTimestamp(x.thruDate));
 
                         if (gracePeriodOnExpiry != null && gracePeriodOnExpiryUomId != null) {
-                            if ("TF_day".equals(gracePeriodOnExpiryUomId)) {
+                            if (x.TF_day.equals(gracePeriodOnExpiryUomId)) {
                                 field = Calendar.DAY_OF_YEAR;
-                            } else if ("TF_wk".equals(gracePeriodOnExpiryUomId)) {
+                            } else if (x.TF_wk.equals(gracePeriodOnExpiryUomId)) {
                                 field = Calendar.WEEK_OF_YEAR;
-                            } else if ("TF_mon".equals(gracePeriodOnExpiryUomId)) {
+                            } else if (x.TF_mon.equals(gracePeriodOnExpiryUomId)) {
                                 field = Calendar.MONTH;
-                            } else if ("TF_yr".equals(gracePeriodOnExpiryUomId)) {
+                            } else if (x.TF_yr.equals(gracePeriodOnExpiryUomId)) {
                                 field = Calendar.YEAR;
                             } else {
-                                Debug.logWarning("Don't know anything about gracePeriodOnExpiryUomId [" + gracePeriodOnExpiryUomId
-                                        + "], defaulting to month", MODULE);
+                                Debug.logWarning(x.Don_t_know_anything_about_gracePeriodOnExpiryUomId + gracePeriodOnExpiryUomId
+                                        + x.defaulting_to_month, MODULE);
                             }
                             endDateSubscription.add(field, Integer.parseInt(gracePeriodOnExpiry));
                         }
                         if ((currentDate.after(endDateSubscription) || currentDate.equals(endDateSubscription)) && serviceNameOnExpiry != null) {
                             if (userLogin != null) {
-                                expiryMap.put("userLogin", userLogin);
+                                expiryMap.put(x.userLogin, userLogin);
                             }
                             if (subscriptionId != null) {
-                                expiryMap.put("subscriptionId", subscriptionId);
+                                expiryMap.put(x.subscriptionId, subscriptionId);
                             }
                             result = dispatcher.runSync(serviceNameOnExpiry, expiryMap);
                             if (ServiceUtil.isSuccess(result)) {
                                 subscription.set(x.expirationCompletedDate, UtilDateTime.nowTimestamp());
                                 delegator.store(subscription);
-                                Debug.logInfo("Subscription expired successfully for subscription ID:" + subscriptionId, MODULE);
+                                Debug.logInfo(x.Subscription_expired_successfully_for_subscription_ID + subscriptionId, MODULE);
                             } else if (ServiceUtil.isError(result)) {
                                 result = null;
-                                Debug.logError("Error expiring subscription while processing with subscriptionId: " + subscriptionId, MODULE);
+                                Debug.logError(x.Error_expiring_subscription_while_processing_with_subscriptionId + subscriptionId, MODULE);
                             }
 
                             if (result != null && subscriptionId != null) {
-                                Debug.logInfo("Service mentioned in serviceNameOnExpiry called with result: "
-                                        + ServiceUtil.makeSuccessMessage(result, "", "", "", ""), MODULE);
+                                Debug.logInfo(x.Service_mentioned_in_serviceNameOnExpiry_called_with_result
+                                        + ServiceUtil.makeSuccessMessage(result, x.emptyString, x.emptyString, x.emptyString, x.emptyString), MODULE);
                             } else if (result == null && subscriptionId != null) {
-                                Debug.logError("Subscription couldn't be expired for subscriptionId: " + subscriptionId, MODULE);
-                                return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "ProductSubscriptionCouldntBeExpired",
-                                        UtilMisc.toMap("subscriptionId", subscriptionId), locale));
+                                Debug.logError(x.Subscription_couldn_t_be_expired_for_subscriptionId + subscriptionId, MODULE);
+                                return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.ProductSubscriptionCouldntBeExpired,
+                                        UtilMisc.toMap(x.subscriptionId, subscriptionId), locale));
                             }
                         }
                     }
                 }
             }
         } catch (GenericServiceException e) {
-            Debug.logError("Error while calling service specified in serviceNameOnExpiry", MODULE);
+            Debug.logError(x.Error_while_calling_service_specified_in_serviceNameOnExpiry, MODULE);
             return ServiceUtil.returnError(e.toString());
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -414,7 +426,7 @@ public class SubscriptionServices {
         String subscriptionId = (String) context.get(x.subscriptionId);
         Map<String, Object> result = new HashMap<>();
         if (subscriptionId != null) {
-            return ServiceUtil.returnSuccess(UtilProperties.getMessage(RESOURCE, "ProductRunSubscriptionExpiredServiceCalledSuccessfully", locale));
+            return ServiceUtil.returnSuccess(UtilProperties.getMessage(RESOURCE, x.ProductRunSubscriptionExpiredServiceCalledSuccessfully, locale));
         }
         return result;
     }

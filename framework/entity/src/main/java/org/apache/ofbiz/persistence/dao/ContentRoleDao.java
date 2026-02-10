@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.ContentRoleEntity;
 
-public interface ContentRoleDao extends CrudDao<ContentRoleEntity, ContentRoleEntity, SQLBuilder.PSC, ContentRoleDao> {
+public interface ContentRoleDao extends CrudDao<ContentRoleEntity, ContentRoleEntity, SQLBuilder.PSC, ContentRoleDao>, DelegatorQueryDao {
 }

@@ -63,16 +63,16 @@ public class OrderTestServices {
         int numberOfOrdersInt = numberOfOrders;
         for (int i = 1; i <= numberOfOrdersInt; i++) {
             try {
-                ModelService modelService = dctx.getModelService("createTestSalesOrderSingle");
-                Map<String, Object> outputMap = dispatcher.runSync("createTestSalesOrderSingle",
+                ModelService modelService = dctx.getModelService(x.createTestSalesOrderSingle);
+                Map<String, Object> outputMap = dispatcher.runSync(x.createTestSalesOrderSingle,
                         modelService.makeValid(context, ModelService.IN_PARAM));
                 if (ServiceUtil.isError(outputMap)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(outputMap));
                 }
-                String orderId = (String) outputMap.get("orderId");
-                Debug.logInfo("Test sales order with id [" + orderId + "] has been processed.", MODULE);
+                String orderId = (String) outputMap.get(x.orderId);
+                Debug.logInfo(x.Test_sales_order_with_id + orderId + x.has_been_processed, MODULE);
             } catch (GenericServiceException e) {
-                String errMsg = "Error calling createTestSalesOrderSingle: " + e.toString();
+                String errMsg = x.Error_calling_createTestSalesOrderSingle + e.toString();
                 Debug.logError(e, errMsg, MODULE);
             }
         }
@@ -92,7 +92,7 @@ public class OrderTestServices {
         Integer numberOfProductsPerOrder = (Integer) context.get(x.numberOfProductsPerOrder);
         String salesChannel = (String) context.get(x.salesChannel);
         if (UtilValidate.isEmpty(salesChannel)) {
-            salesChannel = "WEB_SALES_CHANNEL";
+            salesChannel = x.WEB_SALES_CHANNEL;
         }
 
         List<String> productsList = new LinkedList<>();
@@ -101,12 +101,12 @@ public class OrderTestServices {
                 productsList.add(productId);
                 numberOfProductsPerOrder = 1;
             } else {
-                Map<String, Object> result = dispatcher.runSync("getProductCategoryMembers", UtilMisc.toMap("categoryId", productCategoryId));
+                Map<String, Object> result = dispatcher.runSync(x.getProductCategoryMembers, UtilMisc.toMap(x.categoryId, productCategoryId));
                 if (ServiceUtil.isError(result)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
                 }
-                if (result.get("categoryMembers") != null) {
-                    List<GenericValue> productCategoryMembers = UtilGenerics.cast(result.get("categoryMembers"));
+                if (result.get(x.categoryMembers) != null) {
+                    List<GenericValue> productCategoryMembers = UtilGenerics.cast(result.get(x.categoryMembers));
                     if (productCategoryMembers != null) {
                         for (GenericValue prodCatMemb : productCategoryMembers) {
                             if (prodCatMemb != null) {
@@ -120,13 +120,13 @@ public class OrderTestServices {
             return ServiceUtil.returnError(gse.getMessage());
         }
         if (productsList.isEmpty()) {
-            return ServiceUtil.returnError(UtilProperties.getMessage("OrderUiLabels",
-                    "OrderCreateTestSalesOrderSingleError",
-                    UtilMisc.toMap("productCategoryId", productCategoryId), locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(x.OrderUiLabels,
+                    x.OrderCreateTestSalesOrderSingleError,
+                    UtilMisc.toMap(x.productCategoryId, productCategoryId), locale));
         }
 
         ShoppingCart cart = new ShoppingCart(delegator, productStoreId, locale, currencyUomId);
-        cart.setOrderType("SALES_ORDER");
+        cart.setOrderType(x.SALES_ORDER);
         cart.setChannelType(salesChannel);
         cart.setProductStoreId(productStoreId);
 
@@ -137,7 +137,7 @@ public class OrderTestServices {
         try {
             cart.setUserLogin(userLogin, dispatcher);
         } catch (Exception exc) {
-            Debug.logWarning("Error setting userLogin in the cart: " + exc.getMessage(), MODULE);
+            Debug.logWarning(x.Error_setting_userLogin_in_the_cart + exc.getMessage(), MODULE);
         }
         int numberOfProductsPerOrderInt = numberOfProductsPerOrder;
         for (int j = 1; j <= numberOfProductsPerOrderInt; j++) {
@@ -148,32 +148,32 @@ public class OrderTestServices {
                                        null, null, null, null,
                                        null /*catalogId*/, null, null/*itemType*/, null/*itemGroupNumber*/, null, dispatcher);
             } catch (CartItemModifyException | ItemNotFoundException exc) {
-                Debug.logWarning("Error adding product with id " + productsList.get(k) + " to the cart: " + exc.getMessage(), MODULE);
+                Debug.logWarning(x.Error_adding_product_with_id + productsList.get(k) + x.to_the_cart + exc.getMessage(), MODULE);
             }
         }
         cart.setDefaultCheckoutOptions(dispatcher);
         CheckOutHelper checkout = new CheckOutHelper(dispatcher, delegator, cart);
         Map<String, Object> orderCreateResult = checkout.createOrder(userLogin);
-        String orderId = (String) orderCreateResult.get("orderId");
+        String orderId = (String) orderCreateResult.get(x.orderId);
 
         Map<String, Object> resultMap = ServiceUtil.returnSuccess();
         // approve the order
         if (UtilValidate.isNotEmpty(orderId)) {
-            Debug.logInfo("Created test order with id: " + orderId, MODULE);
+            Debug.logInfo(x.Created_test_order_with_id + orderId, MODULE);
             boolean approved = OrderChangeHelper.approveOrder(dispatcher, userLogin, orderId);
-            Debug.logInfo("Test order with id: " + orderId + " has been approved: " + approved, MODULE);
-            resultMap.put("orderId", orderId);
+            Debug.logInfo(x.Test_order_with_id + orderId + x.has_been_approved + approved, MODULE);
+            resultMap.put(x.orderId, orderId);
         }
         Boolean shipOrder = (Boolean) context.get(x.shipOrder);
         if (shipOrder && UtilValidate.isNotEmpty(orderId)) {
             try {
-                Map<String, Object> result = dispatcher.runSync("quickShipEntireOrder", UtilMisc.toMap("orderId", orderId, "userLogin", userLogin));
+                Map<String, Object> result = dispatcher.runSync(x.quickShipEntireOrder, UtilMisc.toMap(x.orderId, orderId, x.userLogin, userLogin));
                 if (ServiceUtil.isError(result)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
                 }
-                Debug.logInfo("Test sales order with id [" + orderId + "] has been shipped", MODULE);
+                Debug.logInfo(x.Test_sales_order_with_id + orderId + x.has_been_shipped, MODULE);
             } catch (GenericServiceException gse) {
-                Debug.logWarning("Unable to quick ship test sales order with id [" + orderId + "] with error: " + gse.getMessage(), MODULE);
+                Debug.logWarning(x.Unable_to_quick_ship_test_sales_order_with_id + orderId + x.with_error + gse.getMessage(), MODULE);
             }
         }
 

@@ -26,13 +26,15 @@ import java.util.Map;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilProperties;
 import org.apache.ofbiz.entity.Delegator;
-import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.manufacturing.jobshopmgt.ProductionRun;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.WorkEffortDao;
+import org.apache.ofbiz.persistence.entity.WorkEffortEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
+import com.landawn.abacus.util.Beans;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -45,7 +47,7 @@ import org.apache.ofbiz.model.RoutingServicesContext;
 public class RoutingServices {
 
     private static final String MODULE = RoutingServices.class.getName();
-    private static final String RESOURCE = "ManufacturingUiLabels";
+    private static final String RESOURCE = x.ManufacturingUiLabels;
 
     /**
      * Computes the estimated time needed to perform the task.
@@ -72,21 +74,26 @@ public class RoutingServices {
 
         GenericValue task = null;
         try {
-            task = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", taskId).queryOne();
-        } catch (GenericEntityException gee) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ManufacturingRoutingErrorFindingTask",
-                    UtilMisc.toMap("taskId", taskId), locale));
+            WorkEffortDao workEffortDao = DaoRegistry.getDao(delegator, x.WorkEffort, WorkEffortDao.class);
+            WorkEffortEntity taskEntity = workEffortDao.get(taskId).orElse(null);
+            if (taskEntity != null) {
+                task = delegator.makeValue(x.WorkEffort, Beans.beanToMap(taskEntity));
+            }
+        } catch (Exception gee) {
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ManufacturingRoutingErrorFindingTask,
+                    UtilMisc.toMap(x.taskId, taskId), locale));
         }
         // FIXME: the ProductionRun.getEstimatedTaskTime(...) method will be removed and
         // its logic will be implemented inside this method.
         long estimatedTaskTime = ProductionRun.getEstimatedTaskTime(task, quantity, productId, routingId, dispatcher);
-        result.put("estimatedTaskTime", estimatedTaskTime);
+        result.put(x.estimatedTaskTime, estimatedTaskTime);
         if (task != null && task.get(x.estimatedSetupMillis) != null) {
-            result.put("setupTime", task.getBigDecimal(x.estimatedSetupMillis));
+            result.put(x.setupTime, task.getBigDecimal(x.estimatedSetupMillis));
         }
         if (task != null && task.get(x.estimatedMilliSeconds) != null) {
-            result.put("taskUnitTime", task.getBigDecimal(x.estimatedMilliSeconds));
+            result.put(x.taskUnitTime, task.getBigDecimal(x.estimatedMilliSeconds));
         }
         return result;
     }
 }
+

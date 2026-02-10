@@ -93,7 +93,7 @@ public class VerifyPickServices {
         try {
             shipmentId = pickSession.complete(orderId, locale);
             Map<String, Object> shipment = new HashMap<>();
-            shipment.put("shipmentId", shipmentId);
+            shipment.put(x.shipmentId, shipmentId);
             pickSession.clearAllRows();
             return shipment;
         } catch (GeneralException ex) {

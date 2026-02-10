@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.ContentAssocEntity;
 
-public interface ContentAssocDao extends CrudDao<ContentAssocEntity, ContentAssocEntity, SQLBuilder.PSC, ContentAssocDao> {
+public interface ContentAssocDao extends CrudDao<ContentAssocEntity, ContentAssocEntity, SQLBuilder.PSC, ContentAssocDao>, DelegatorQueryDao {
 }

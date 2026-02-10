@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.CostComponentEntity;
 
-public interface CostComponentDao extends CrudDao<CostComponentEntity, String, SQLBuilder.PSC, CostComponentDao> {
+public interface CostComponentDao extends CrudDao<CostComponentEntity, String, SQLBuilder.PSC, CostComponentDao> , DelegatorQueryDao{
 }

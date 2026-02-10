@@ -29,6 +29,7 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ModelService;
 
 import com.ibm.icu.math.BigDecimal;
+import org.apache.ofbiz.persistence.entity.x;
 
 /**
  * TaxwareServices
@@ -39,15 +40,15 @@ public class TaxwareServices {
 
     public static Map calcTax(DispatchContext dctx, Map context) {
         Map result = new HashMap();
-        List items = (List) context.get("itemProductList");
-        List amnts = (List) context.get("itemAmountList");
-        List ishpn = (List) context.get("itemShippingList");
-        BigDecimal shipping = (BigDecimal) context.get("orderShippingAmount");
-        GenericValue address = (GenericValue) context.get("shippingAddress");
+        List items = (List) context.get(x.itemProductList);
+        List amnts = (List) context.get(x.itemAmountList);
+        List ishpn = (List) context.get(x.itemShippingList);
+        BigDecimal shipping = (BigDecimal) context.get(x.orderShippingAmount);
+        GenericValue address = (GenericValue) context.get(x.shippingAddress);
 
         if (items.size() != amnts.size()) {
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
-            result.put(ModelService.ERROR_MESSAGE, "ERROR: Items, Amount, or ItemShipping lists are not valid size.");
+            result.put(ModelService.ERROR_MESSAGE, x.ERROR_Items_Amount_or_ItemShipping_lists_are_not_valid_size);
             return result;
         }
 
@@ -68,17 +69,17 @@ public class TaxwareServices {
 
             if (resp == 0) {
                 result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
-                result.put(ModelService.ERROR_MESSAGE, "ERROR: No records processed.");
+                result.put(ModelService.ERROR_MESSAGE, x.ERROR_No_records_processed);
                 return result;
             }
 
-            result.put("orderAdjustments", utl.getOrderAdjustments());
-            result.put("itemAdjustments", utl.getItemAdjustments());
+            result.put(x.orderAdjustments, utl.getOrderAdjustments());
+            result.put(x.itemAdjustments, utl.getItemAdjustments());
 
         } catch (TaxwareException e) {
             Debug.logError(e, MODULE);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
-            result.put(ModelService.ERROR_MESSAGE, "ERROR: Taxware problem (" + e.getMessage() + ").");
+            result.put(ModelService.ERROR_MESSAGE, x.ERROR_Taxware_problem + e.getMessage() + x.str_d4191940);
         }
 
         return result;

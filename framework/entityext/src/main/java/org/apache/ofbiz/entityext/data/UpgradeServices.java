@@ -52,7 +52,7 @@ import org.apache.ofbiz.model.UpgradeServicesContext;
 
 public class UpgradeServices {
     private static final String MODULE = UpgradeServices.class.getName();
-    private static final String RESOURCE = "EntityExtUiLabels";
+    private static final String RESOURCE = x.EntityExtUiLabels;
 
 
     /**
@@ -79,16 +79,16 @@ public class UpgradeServices {
 
         // check permission
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
-        if (!security.hasPermission("ENTITY_MAINT", userLogin)) {
-            Debug.logError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale), MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale));
+        if (!security.hasPermission(x.ENTITY_MAINT, userLogin)) {
+            Debug.logError(UtilProperties.getMessage(RESOURCE, x.EntityExtServicePermissionNotGranted, locale), MODULE);
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtServicePermissionNotGranted, locale));
         }
 
         String groupName = (String) context.get(x.groupName);
 
         Map<String, ModelEntity> modelEntities;
         try (PrintWriter dataWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(new File(System.getProperty("ofbiz.home") + "/runtime/tempfiles/" + groupName + ".sql")), "UTF-8")))) {
+                    new FileOutputStream(new File(System.getProperty(x.ofbiz_home) + x.runtime_tempfiles + groupName + x.sql)), x.UTF_8)))) {
             modelEntities = delegator.getModelEntityMapByGroup(groupName);
 
             /* TODO:
@@ -96,25 +96,25 @@ public class UpgradeServices {
             2) compare it to date-time and only generate the alter statement if they differs;
             */
 
-            dataWriter.println("SET FOREIGN_KEY_CHECKS=0;");
+            dataWriter.println(x.SET_FOREIGN_KEY_CHECKS_0);
             for (ModelEntity modelEntity: modelEntities.values()) {
                 List<ModelField> fields = modelEntity.getFieldsUnmodifiable();
                 for (ModelField field: fields) {
                     if (modelEntity.getPlainTableName() != null) {
-                        if ("date-time".equals(field.getType())) {
-                            dataWriter.println("ALTER TABLE " + modelEntity.getPlainTableName() + " MODIFY " + field.getColName() + " DATETIME(3);");
+                        if (x.date_time.equals(field.getType())) {
+                            dataWriter.println(x.ALTER_TABLE + modelEntity.getPlainTableName() + x.MODIFY + field.getColName() + x.DATETIME_3);
                         }
-                        if ("time".equals(field.getType())) {
-                            dataWriter.println("ALTER TABLE " + modelEntity.getPlainTableName() + " MODIFY " + field.getColName() + " TIME(3);");
+                        if (x.time.equals(field.getType())) {
+                            dataWriter.println(x.ALTER_TABLE + modelEntity.getPlainTableName() + x.MODIFY + field.getColName() + x.TIME_3);
                         }
                     }
                 }
             }
-            dataWriter.println("SET FOREIGN_KEY_CHECKS=1;");
+            dataWriter.println(x.SET_FOREIGN_KEY_CHECKS_1);
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Error getting list of entities in group: " + e.toString(), MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtErrorGettingListOfEntityInGroup",
-                    UtilMisc.toMap("errorString", e.toString()), locale));
+            Debug.logError(e, x.Error_getting_list_of_entities_in_group + e.toString(), MODULE);
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtErrorGettingListOfEntityInGroup,
+                    UtilMisc.toMap(x.errorString, e.toString()), locale));
         } catch (FileNotFoundException | UnsupportedEncodingException e) {
             Debug.logError(e, e.getMessage(), MODULE);
             return ServiceUtil.returnError(e.getMessage());

@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.WebSiteRoleEntity;
 
-public interface WebSiteRoleDao extends CrudDao<WebSiteRoleEntity, WebSiteRoleEntity, SQLBuilder.PSC, WebSiteRoleDao> {
+public interface WebSiteRoleDao extends CrudDao<WebSiteRoleEntity, WebSiteRoleEntity, SQLBuilder.PSC, WebSiteRoleDao>, DelegatorQueryDao {
 }

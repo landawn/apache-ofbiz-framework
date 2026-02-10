@@ -30,10 +30,17 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.PaymentGatewayResponseDao;
+import org.apache.ofbiz.persistence.dao.PaymentGatewaySecurePayDao;
+import org.apache.ofbiz.persistence.entity.PaymentGatewayResponseEntity;
+import org.apache.ofbiz.persistence.entity.PaymentGatewaySecurePayEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
+
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.util.Beans;
 
 import securepay.jxa.api.Payment;
 import securepay.jxa.api.Txn;
@@ -45,7 +52,7 @@ import org.apache.ofbiz.model.SecurePayPaymentServicesContext;
 public class SecurePayPaymentServices {
 
     private static final String MODULE = SecurePayPaymentServices.class.getName();
-    private static final String RESOURCE = "AccountingUiLabels";
+    private static final String RESOURCE = x.AccountingUiLabels;
 
     public static Map<String, Object> doAuth(DispatchContext dctx, SecurePayPaymentServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
@@ -56,26 +63,26 @@ public class SecurePayPaymentServices {
         Properties props = buildScProperties(context, delegator);
         if (props == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingSecurityPayNotProperlyConfigurated", locale));
+                    x.AccountingSecurityPayNotProperlyConfigurated, locale));
         }
 
-        String merchantId = props.getProperty("merchantID");
-        String serverURL = props.getProperty("serverurl");
-        String processtimeout = props.getProperty("processtimeout");
-        String pwd = props.getProperty("pwd");
-        String enableamountround = props.getProperty("enableamountround");
+        String merchantId = props.getProperty(x.merchantID);
+        String serverURL = props.getProperty(x.serverurl);
+        String processtimeout = props.getProperty(x.processtimeout);
+        String pwd = props.getProperty(x.pwd);
+        String enableamountround = props.getProperty(x.enableamountround);
         String currency = (String) context.get(x.currency);
         BigDecimal multiplyAmount = new BigDecimal(100);
         BigDecimal newAmount = null;
         int amont;
 
-        if ("Y".equals(enableamountround)) {
-            newAmount = new BigDecimal(processAmount.setScale(0, RoundingMode.HALF_UP)+".00");
+        if (x.Y.equals(enableamountround)) {
+            newAmount = new BigDecimal(processAmount.setScale(0, RoundingMode.HALF_UP)+x._00);
         } else {
             newAmount = processAmount;
         }
 
-        if ("JPY".equals(currency)) {
+        if (x.JPY.equals(currency)) {
             amont = newAmount.intValue();
         } else {
             amont = newAmount.multiply(multiplyAmount).intValue();
@@ -95,7 +102,7 @@ public class SecurePayPaymentServices {
         if (UtilValidate.isNotEmpty(currency)) {
             txn.setCurrencyCode(currency);
         } else {
-            txn.setCurrencyCode("AUD");
+            txn.setCurrencyCode(x.AUD);
         }
 
         txn.setCardNumber((String) creditCard.get(x.cardNumber));
@@ -109,22 +116,22 @@ public class SecurePayPaymentServices {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         if (UtilValidate.isEmpty(processed)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingSecurityPayPaymentWasNotSent", locale));
+                    x.AccountingSecurityPayPaymentWasNotSent, locale));
         } else {
             if (payment.getCount() == 1) {
                 Txn resp = payment.getTxn(0);
                 boolean approved = resp.getApproved();
                 if (approved == false) {
-                    result.put("authResult", Boolean.FALSE);
-                    result.put("authRefNum", "N/A");
-                    result.put("processAmount", BigDecimal.ZERO);
+                    result.put(x.authResult, Boolean.FALSE);
+                    result.put(x.authRefNum, x.N_A);
+                    result.put(x.processAmount, BigDecimal.ZERO);
                 } else {
-                    result.put("authRefNum", resp.getTxnId());
-                    result.put("authResult", Boolean.TRUE);
-                    result.put("processAmount", processAmount);
+                    result.put(x.authRefNum, resp.getTxnId());
+                    result.put(x.authResult, Boolean.TRUE);
+                    result.put(x.processAmount, processAmount);
                 }
-                result.put("authCode", resp.getResponseCode());
-                result.put("authMessage", resp.getResponseText());
+                result.put(x.authCode, resp.getResponseCode());
+                result.put(x.authMessage, resp.getResponseText());
             }
         }
         return result;
@@ -144,33 +151,33 @@ public class SecurePayPaymentServices {
         }
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPaymentTransactionAuthorizationNotFoundCannotCapture", locale));
+                    x.AccountingPaymentTransactionAuthorizationNotFoundCannotCapture, locale));
         }
 
         Properties props = buildScProperties(context, delegator);
         if (props == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingSecurityPayNotProperlyConfigurated", locale));
+                    x.AccountingSecurityPayNotProperlyConfigurated, locale));
         }
 
-        String merchantId = props.getProperty("merchantID");
-        String serverURL = props.getProperty("serverurl");
-        String processtimeout = props.getProperty("processtimeout");
-        String pwd = props.getProperty("pwd");
-        String enableamountround = props.getProperty("enableamountround");
+        String merchantId = props.getProperty(x.merchantID);
+        String serverURL = props.getProperty(x.serverurl);
+        String processtimeout = props.getProperty(x.processtimeout);
+        String pwd = props.getProperty(x.pwd);
+        String enableamountround = props.getProperty(x.enableamountround);
         String currency = authTransaction.getString(x.currencyUomId);
         BigDecimal captureAmount = (BigDecimal) context.get(x.captureAmount);
         BigDecimal multiplyAmount = new BigDecimal(100);
         BigDecimal newAmount = null;
         int amont;
 
-        if ("Y".equals(enableamountround)) {
-            newAmount = new BigDecimal(captureAmount.setScale(0, RoundingMode.HALF_UP)+".00");
+        if (x.Y.equals(enableamountround)) {
+            newAmount = new BigDecimal(captureAmount.setScale(0, RoundingMode.HALF_UP)+x._00);
         } else {
             newAmount = captureAmount;
         }
 
-        if ("JPY".equals(currency)) {
+        if (x.JPY.equals(currency)) {
             amont = newAmount.intValue();
         } else {
             amont = newAmount.multiply(multiplyAmount).intValue();
@@ -191,23 +198,23 @@ public class SecurePayPaymentServices {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         if (UtilValidate.isEmpty(processed)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingSecurityPayPaymentWasNotSent", locale));
+                    x.AccountingSecurityPayPaymentWasNotSent, locale));
         } else {
             if (payment.getCount() == 1) {
                 Txn resp = payment.getTxn(0);
                 boolean approved = resp.getApproved();
                 if (approved == false) {
-                    result.put("captureResult", false);
-                    result.put("captureRefNum", authTransaction.getString(x.referenceNum));
-                    result.put("captureAmount", BigDecimal.ZERO);
+                    result.put(x.captureResult, false);
+                    result.put(x.captureRefNum, authTransaction.getString(x.referenceNum));
+                    result.put(x.captureAmount, BigDecimal.ZERO);
                 } else {
-                    result.put("captureResult", true);
-                    result.put("captureAmount", captureAmount);
-                    result.put("captureRefNum", resp.getTxnId());
+                    result.put(x.captureResult, true);
+                    result.put(x.captureAmount, captureAmount);
+                    result.put(x.captureRefNum, resp.getTxnId());
                 }
-                result.put("captureFlag", "C");
-                result.put("captureCode", resp.getResponseCode());
-                result.put("captureMessage", resp.getResponseText());
+                result.put(x.captureFlag, x.C);
+                result.put(x.captureCode, resp.getResponseCode());
+                result.put(x.captureMessage, resp.getResponseText());
             }
         }
         return result;
@@ -223,33 +230,33 @@ public class SecurePayPaymentServices {
         }
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPaymentTransactionAuthorizationNotFoundCannotRelease", locale));
+                    x.AccountingPaymentTransactionAuthorizationNotFoundCannotRelease, locale));
         }
 
         Properties props = buildScProperties(context, delegator);
         if (props == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingSecurityPayNotProperlyConfigurated", locale));
+                    x.AccountingSecurityPayNotProperlyConfigurated, locale));
         }
 
-        String merchantId = props.getProperty("merchantID");
-        String serverURL = props.getProperty("serverurl");
-        String processtimeout = props.getProperty("processtimeout");
-        String pwd = props.getProperty("pwd");
-        String enableamountround = props.getProperty("enableamountround");
+        String merchantId = props.getProperty(x.merchantID);
+        String serverURL = props.getProperty(x.serverurl);
+        String processtimeout = props.getProperty(x.processtimeout);
+        String pwd = props.getProperty(x.pwd);
+        String enableamountround = props.getProperty(x.enableamountround);
         String currency = authTransaction.getString(x.currencyUomId);
         BigDecimal releaseAmount = (BigDecimal) context.get(x.releaseAmount);
         BigDecimal multiplyAmount = new BigDecimal(100);
         BigDecimal newAmount = null;
         int amont;
 
-        if ("Y".equals(enableamountround)) {
-            newAmount = new BigDecimal(releaseAmount.setScale(0, RoundingMode.HALF_UP)+".00");
+        if (x.Y.equals(enableamountround)) {
+            newAmount = new BigDecimal(releaseAmount.setScale(0, RoundingMode.HALF_UP)+x._00);
         } else {
             newAmount = releaseAmount;
         }
 
-        if ("JPY".equals(currency)) {
+        if (x.JPY.equals(currency)) {
             amont = newAmount.intValue();
         } else {
             amont = newAmount.multiply(multiplyAmount).intValue();
@@ -270,23 +277,23 @@ public class SecurePayPaymentServices {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         if (UtilValidate.isEmpty(processed)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingSecurityPayPaymentWasNotSent", locale));
+                    x.AccountingSecurityPayPaymentWasNotSent, locale));
         } else {
             if (payment.getCount() == 1) {
                 Txn resp = payment.getTxn(0);
                 boolean approved = resp.getApproved();
                 if (approved == false) {
-                    result.put("releaseResult", false);
-                    result.put("releaseRefNum", authTransaction.getString(x.referenceNum));
-                    result.put("releaseAmount", BigDecimal.ZERO);
+                    result.put(x.releaseResult, false);
+                    result.put(x.releaseRefNum, authTransaction.getString(x.referenceNum));
+                    result.put(x.releaseAmount, BigDecimal.ZERO);
                 } else {
-                    result.put("releaseResult", true);
-                    result.put("releaseAmount", releaseAmount);
-                    result.put("releaseRefNum", resp.getTxnId());
+                    result.put(x.releaseResult, true);
+                    result.put(x.releaseAmount, releaseAmount);
+                    result.put(x.releaseRefNum, resp.getTxnId());
                 }
-                result.put("releaseFlag", "U");
-                result.put("releaseCode", resp.getResponseCode());
-                result.put("releaseMessage", resp.getResponseText());
+                result.put(x.releaseFlag, x.U);
+                result.put(x.releaseCode, resp.getResponseCode());
+                result.put(x.releaseMessage, resp.getResponseText());
             }
         }
         return result;
@@ -299,44 +306,44 @@ public class SecurePayPaymentServices {
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPaymentTransactionAuthorizationNotFoundCannotRefund", locale));
+                    x.AccountingPaymentTransactionAuthorizationNotFoundCannotRefund, locale));
         }
 
         String referenceNum = null;
         try {
-            GenericValue paymentGatewayResponse = EntityQuery.use(delegator).from("PaymentGatewayResponse")
-                    .where("orderPaymentPreferenceId", authTransaction.get(x.orderPaymentPreferenceId),
-                            "paymentServiceTypeEnumId", "PRDS_PAY_CAPTURE")
-                    .queryFirst();
-            referenceNum = paymentGatewayResponse != null ? paymentGatewayResponse.get(x.referenceNum) : authTransaction.getString(x.referenceNum);
-        } catch (GenericEntityException e) {
+            PaymentGatewayResponseDao paymentGatewayResponseDao = DaoRegistry.getDao(delegator, x.PaymentGatewayResponse, PaymentGatewayResponseDao.class);
+            PaymentGatewayResponseEntity paymentGatewayResponse = paymentGatewayResponseDao.list(Filters.and(
+                    Filters.eq(x.orderPaymentPreferenceId, authTransaction.get(x.orderPaymentPreferenceId)),
+                    Filters.eq(x.paymentServiceTypeEnumId, x.PRDS_PAY_CAPTURE))).stream().findFirst().orElse(null);
+            referenceNum = paymentGatewayResponse != null ? paymentGatewayResponse.getReferenceNum() : authTransaction.getString(x.referenceNum);
+        } catch (Exception e) {
             Debug.logError(e, MODULE);
         }
 
         Properties props = buildScProperties(context, delegator);
         if (props == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingSecurityPayNotProperlyConfigurated", locale));
+                    x.AccountingSecurityPayNotProperlyConfigurated, locale));
         }
 
-        String merchantId = props.getProperty("merchantID");
-        String serverURL = props.getProperty("serverurl");
-        String processtimeout = props.getProperty("processtimeout");
-        String pwd = props.getProperty("pwd");
-        String enableamountround = props.getProperty("enableamountround");
+        String merchantId = props.getProperty(x.merchantID);
+        String serverURL = props.getProperty(x.serverurl);
+        String processtimeout = props.getProperty(x.processtimeout);
+        String pwd = props.getProperty(x.pwd);
+        String enableamountround = props.getProperty(x.enableamountround);
         String currency = authTransaction.getString(x.currencyUomId);
         BigDecimal refundAmount = (BigDecimal) context.get(x.refundAmount);
         BigDecimal multiplyAmount = new BigDecimal(100);
         BigDecimal newAmount = null;
 
-        if ("Y".equals(enableamountround)) {
-            newAmount = new BigDecimal(refundAmount.setScale(0, RoundingMode.HALF_UP)+".00");
+        if (x.Y.equals(enableamountround)) {
+            newAmount = new BigDecimal(refundAmount.setScale(0, RoundingMode.HALF_UP)+x._00);
         } else {
             newAmount = refundAmount;
         }
 
         int amont;
-        if ("JPY".equals(currency)) {
+        if (x.JPY.equals(currency)) {
             amont = newAmount.intValue();
         } else {
             amont = newAmount.multiply(multiplyAmount).intValue();
@@ -357,23 +364,23 @@ public class SecurePayPaymentServices {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         if (UtilValidate.isEmpty(processed)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingSecurityPayPaymentWasNotSent", locale));
+                    x.AccountingSecurityPayPaymentWasNotSent, locale));
         } else {
             if (payment.getCount() == 1) {
                 Txn resp = payment.getTxn(0);
                 boolean approved = resp.getApproved();
                 if (approved == false) {
-                    result.put("refundResult", false);
-                    result.put("refundRefNum", authTransaction.getString(x.referenceNum));
-                    result.put("refundAmount", BigDecimal.ZERO);
+                    result.put(x.refundResult, false);
+                    result.put(x.refundRefNum, authTransaction.getString(x.referenceNum));
+                    result.put(x.refundAmount, BigDecimal.ZERO);
                 } else {
-                    result.put("refundResult", true);
-                    result.put("refundAmount", refundAmount);
-                    result.put("refundRefNum", resp.getTxnId());
+                    result.put(x.refundResult, true);
+                    result.put(x.refundAmount, refundAmount);
+                    result.put(x.refundRefNum, resp.getTxnId());
                 }
-                result.put("refundCode", resp.getResponseCode());
-                result.put("refundMessage", resp.getResponseText());
-                result.put("refundFlag", "R");
+                result.put(x.refundCode, resp.getResponseCode());
+                result.put(x.refundMessage, resp.getResponseText());
+                result.put(x.refundFlag, x.R);
             }
         }
         return result;
@@ -386,14 +393,14 @@ public class SecurePayPaymentServices {
         Properties props = buildScProperties(context, delegator);
         if (props == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingSecurityPayNotProperlyConfigurated", locale));
+                    x.AccountingSecurityPayNotProperlyConfigurated, locale));
         }
 
-        String merchantId = props.getProperty("merchantID");
-        String serverURL = props.getProperty("serverurl");
-        String processtimeout = props.getProperty("processtimeout");
-        String pwd = props.getProperty("pwd");
-        String enableamountround = props.getProperty("enableamountround");
+        String merchantId = props.getProperty(x.merchantID);
+        String serverURL = props.getProperty(x.serverurl);
+        String processtimeout = props.getProperty(x.processtimeout);
+        String pwd = props.getProperty(x.pwd);
+        String enableamountround = props.getProperty(x.enableamountround);
         String referenceCode = (String) context.get(x.referenceCode);
         String currency = (String) context.get(x.currency);
         String cardSecurityCode = (String) context.get(x.cardSecurityCode);
@@ -402,13 +409,13 @@ public class SecurePayPaymentServices {
         BigDecimal newAmount = null;
         int amont;
 
-        if ("Y".equals(enableamountround)) {
-            newAmount = new BigDecimal(creditAmount.setScale(0, RoundingMode.HALF_UP)+".00");
+        if (x.Y.equals(enableamountround)) {
+            newAmount = new BigDecimal(creditAmount.setScale(0, RoundingMode.HALF_UP)+x._00);
         } else {
             newAmount = creditAmount;
         }
 
-        if ("JPY".equals(currency)) {
+        if (x.JPY.equals(currency)) {
             amont = newAmount.intValue();
         } else {
             amont = newAmount.multiply(multiplyAmount).intValue();
@@ -436,22 +443,22 @@ public class SecurePayPaymentServices {
         Map<String, Object> result = ServiceUtil.returnSuccess();
         if (UtilValidate.isEmpty(processed)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingSecurityPayPaymentWasNotSent", locale));
+                    x.AccountingSecurityPayPaymentWasNotSent, locale));
         } else {
             if (payment.getCount() == 1) {
                 Txn resp = payment.getTxn(0);
                 boolean approved = resp.getApproved();
                 if (approved == false) {
-                    result.put("creditResult", false);
-                    result.put("creditRefNum", "N/A");
-                    result.put("creditAmount", BigDecimal.ZERO);
+                    result.put(x.creditResult, false);
+                    result.put(x.creditRefNum, x.N_A);
+                    result.put(x.creditAmount, BigDecimal.ZERO);
                 } else {
-                    result.put("creditResult", true);
-                    result.put("creditAmount", creditAmount);
-                    result.put("creditRefNum", resp.getTxnId());
+                    result.put(x.creditResult, true);
+                    result.put(x.creditAmount, creditAmount);
+                    result.put(x.creditRefNum, resp.getTxnId());
                 }
-                result.put("creditCode", resp.getResponseCode());
-                result.put("creditMessage", resp.getResponseText());
+                result.put(x.creditCode, resp.getResponseCode());
+                result.put(x.creditMessage, resp.getResponseText());
             }
         }
         return result;
@@ -461,36 +468,37 @@ public class SecurePayPaymentServices {
         String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
         String configString = (String) context.get(x.paymentConfig);
         if (configString == null) {
-            configString = "payment.properties";
+            configString = x.payment_properties;
         }
 
-        String merchantId = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "merchantId", configString, "payment.securepay.merchantID", null);
-        String pwd = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "pwd", configString, "payment.securepay.pwd", null);
-        String serverURL = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "serverURL", configString, "payment.securepay.serverurl", null);
-        String processTimeout = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "processTimeout", configString, "payment.securepay.processtimeout", null);
-        String enableAmountRound = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "enableAmountRound", configString, "payment.securepay.enableamountround", null);
+        String merchantId = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.merchantId, configString, x.payment_securepay_merchantID, null);
+        String pwd = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.pwd, configString, x.payment_securepay_pwd, null);
+        String serverURL = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.serverURL, configString, x.payment_securepay_serverurl, null);
+        String processTimeout = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.processTimeout, configString, x.payment_securepay_processtimeout, null);
+        String enableAmountRound = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.enableAmountRound, configString, x.payment_securepay_enableamountround, null);
 
         Properties props = new Properties();
-        props.put("merchantID", merchantId);
-        props.put("pwd", pwd);
-        props.put("serverurl", serverURL);
-        props.put("processtimeout", processTimeout);
-        props.put("enableamountround", enableAmountRound);
+        props.put(x.merchantID, merchantId);
+        props.put(x.pwd, pwd);
+        props.put(x.serverurl, serverURL);
+        props.put(x.processtimeout, processTimeout);
+        props.put(x.enableamountround, enableAmountRound);
         return props;
     }
 
     private static String getPaymentGatewayConfigValue(Delegator delegator, String paymentGatewayConfigId, String paymentGatewayConfigParameterName, String resource, String parameterName) {
-        String returnValue = "";
+        String returnValue = x.emptyString;
         if (UtilValidate.isNotEmpty(paymentGatewayConfigId)) {
             try {
-                GenericValue securePay = EntityQuery.use(delegator).from("PaymentGatewaySecurePay").where("paymentGatewayConfigId", paymentGatewayConfigId).queryOne();
-                if (UtilValidate.isNotEmpty(securePay)) {
-                    Object securePayField = securePay.get(paymentGatewayConfigParameterName);
+                PaymentGatewaySecurePayDao paymentGatewaySecurePayDao = DaoRegistry.getDao(delegator, x.PaymentGatewaySecurePay, PaymentGatewaySecurePayDao.class);
+                PaymentGatewaySecurePayEntity securePay = paymentGatewaySecurePayDao.get(paymentGatewayConfigId).orElse(null);
+                if (securePay != null) {
+                    Object securePayField = Beans.beanToMap(securePay).get(paymentGatewayConfigParameterName);
                     if (securePayField != null) {
                         returnValue = securePayField.toString().trim();
                     }
                 }
-            } catch (GenericEntityException e) {
+            } catch (Exception e) {
                 Debug.logError(e, MODULE);
             }
         } else {

@@ -83,14 +83,14 @@ public class CertificateServices {
 
         // set the issuer provision
         Map<String, String> x500Map = KeyStoreUtil.getCertX500Map(cert);
-        if (importIssuer != null && "Y".equalsIgnoreCase(importIssuer)) {
-            GenericValue provision = delegator.makeValue("X509IssuerProvision");
-            provision.set(x.commonName, x500Map.get("CN"));
-            provision.set(x.organizationalUnit, x500Map.get("OU"));
-            provision.set(x.organizationName, x500Map.get("O"));
-            provision.set(x.cityLocality, x500Map.get("L"));
-            provision.set(x.stateProvince, x500Map.get("ST"));
-            provision.set(x.country, x500Map.get("C"));
+        if (importIssuer != null && x.Y.equalsIgnoreCase(importIssuer)) {
+            GenericValue provision = delegator.makeValue(x.X509IssuerProvision);
+            provision.set(x.commonName, x500Map.get(x.CN));
+            provision.set(x.organizationalUnit, x500Map.get(x.OU));
+            provision.set(x.organizationName, x500Map.get(x.O));
+            provision.set(x.cityLocality, x500Map.get(x.L));
+            provision.set(x.stateProvince, x500Map.get(x.ST));
+            provision.set(x.country, x500Map.get(x.C));
             provision.set(x.serialNumber, cert.getSerialNumber().toString(16));
 
             try {

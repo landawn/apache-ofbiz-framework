@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.OrderItemBillingEntity;
 
-public interface OrderItemBillingDao extends CrudDao<OrderItemBillingEntity, OrderItemBillingEntity, SQLBuilder.PSC, OrderItemBillingDao> {
+public interface OrderItemBillingDao extends CrudDao<OrderItemBillingEntity, OrderItemBillingEntity, SQLBuilder.PSC, OrderItemBillingDao>, DelegatorQueryDao {
 }

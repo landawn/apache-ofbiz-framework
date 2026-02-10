@@ -49,8 +49,17 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityOperator;
 import org.apache.ofbiz.entity.model.ModelUtil;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
+import org.apache.ofbiz.persistence.dao.ContentAssocDao;
+import org.apache.ofbiz.persistence.dao.ContentDao;
+import org.apache.ofbiz.persistence.dao.ContentRoleDao;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.DataResourceDao;
+import org.apache.ofbiz.persistence.dao.OrderHeaderDao;
+import org.apache.ofbiz.persistence.dao.OrderRoleDao;
+import org.apache.ofbiz.persistence.dao.ProductContentDao;
+import org.apache.ofbiz.persistence.dao.RoleTypeDao;
+import org.apache.ofbiz.persistence.dao.UserLoginDao;
 import org.apache.ofbiz.security.SecuredUpload;
 import org.apache.ofbiz.security.Security;
 import org.apache.ofbiz.service.DispatchContext;
@@ -72,7 +81,7 @@ import org.apache.ofbiz.model.ContentManagementServicesContext;
 public class ContentManagementServices {
 
     private static final String MODULE = ContentManagementServices.class.getName();
-    private static final String RESOURCE = "ContentUiLabels";
+    private static final String RESOURCE = x.ContentUiLabels;
 
     /**
      * getSubContent
@@ -89,7 +98,7 @@ public class ContentManagementServices {
         List<String> assocTypes = UtilGenerics.cast(context.get(x.assocTypes));
         String assocTypesString = (String) context.get(x.assocTypesString);
         if (UtilValidate.isNotEmpty(assocTypesString)) {
-            List<String> lst = StringUtil.split(assocTypesString, "|");
+            List<String> lst = StringUtil.split(assocTypesString, x.str_3eb41622);
             if (assocTypes == null) {
                 assocTypes = new LinkedList<>();
             }
@@ -107,8 +116,8 @@ public class ContentManagementServices {
         }
 
         Map<String, Object> results = ServiceUtil.returnSuccess();
-        results.put("view", view);
-        results.put("content", content);
+        results.put(x.view, view);
+        results.put(x.content, content);
         return results;
     }
 
@@ -128,7 +137,7 @@ public class ContentManagementServices {
         }
 
         Map<String, Object> results = ServiceUtil.returnSuccess();
-        results.put("view", view);
+        results.put(x.view, view);
         return results;
     }
 
@@ -157,12 +166,12 @@ public class ContentManagementServices {
         if (UtilValidate.isNotEmpty(textData)) {
             try {
                 if (!SecuredUpload.isValidText(textData, Collections.emptyList())) {
-                    Debug.logError("================== Not saved for security reason ==================", MODULE);
-                    return ServiceUtil.returnError("================== Not saved for security reason ==================");
+                    Debug.logError(x.Not_saved_for_security_reason, MODULE);
+                    return ServiceUtil.returnError(x.Not_saved_for_security_reason);
                 }
             } catch (IOException e) {
-                Debug.logError("================== Not saved for security reason ==================", MODULE);
-                return ServiceUtil.returnError("================== Not saved for security reason ==================");
+                Debug.logError(x.Not_saved_for_security_reason, MODULE);
+                return ServiceUtil.returnError(x.Not_saved_for_security_reason);
             }
         }
 
@@ -175,10 +184,10 @@ public class ContentManagementServices {
         // If "deactivateExisting" is set, other Contents that are tied to the same
         // contentIdTo will be deactivated (thruDate set to now)
         String deactivateString = (String) context.get(x.deactivateExisting);
-        boolean deactivateExisting = "true".equalsIgnoreCase(deactivateString);
+        boolean deactivateExisting = x._true.equalsIgnoreCase(deactivateString);
 
         if (Debug.infoOn()) {
-            Debug.logInfo("in persist... mapKey(0):" + mapKey, MODULE);
+            Debug.logInfo(x.in_persist_mapKey_0 + mapKey, MODULE);
         }
 
         // ContentPurposes can get passed in as a delimited string or a list. Combine.
@@ -188,18 +197,18 @@ public class ContentManagementServices {
         }
         String contentPurposeString = (String) context.get(x.contentPurposeString);
         if (UtilValidate.isNotEmpty(contentPurposeString)) {
-            List<String> tmpPurposes = StringUtil.split(contentPurposeString, "|");
+            List<String> tmpPurposes = StringUtil.split(contentPurposeString, x.str_3eb41622);
             contentPurposeList.addAll(tmpPurposes);
         }
         context.put(x.contentPurposeList, contentPurposeList);
         context.put(x.contentPurposeString, null);
 
         if (Debug.infoOn()) {
-            Debug.logInfo("in persist... contentPurposeList(0):" + contentPurposeList, MODULE);
-            Debug.logInfo("in persist... textData(0):" + textData, MODULE);
+            Debug.logInfo(x.in_persist_contentPurposeList_0 + contentPurposeList, MODULE);
+            Debug.logInfo(x.in_persist_textData_0 + textData, MODULE);
         }
 
-        GenericValue content = delegator.makeValue("Content");
+        GenericValue content = delegator.makeValue(x.Content);
 
         content.setPKFields(context);
         content.setNonPKFields(context);
@@ -209,54 +218,54 @@ public class ContentManagementServices {
         String origDataResourceId = (String) content.get(x.dataResourceId);
 
         if (Debug.infoOn()) {
-            Debug.logInfo("in persist... contentId(0):" + contentId, MODULE);
+            Debug.logInfo(x.in_persist_contentId_0 + contentId, MODULE);
         }
 
-        GenericValue dataResource = delegator.makeValue("DataResource");
+        GenericValue dataResource = delegator.makeValue(x.DataResource);
         dataResource.setPKFields(context);
         dataResource.setNonPKFields(context);
-        dataResource.setAllFields(context, false, "dr", null);
+        dataResource.setAllFields(context, false, x.dr, null);
         String isPublic = (String) context.get(x.isPublic);
         if (UtilValidate.isEmpty(isPublic)) {
-            dataResource.set(x.isPublic, "N");
+            dataResource.set(x.isPublic, x.N);
         }
         context.putAll(dataResource);
         String dataResourceId = (String) dataResource.get(x.dataResourceId);
         String dataResourceTypeId = (String) dataResource.get(x.dataResourceTypeId);
         if (Debug.infoOn()) {
-            Debug.logInfo("in persist... dataResourceId(0):" + dataResourceId, MODULE);
+            Debug.logInfo(x.in_persist_dataResourceId_0 + dataResourceId, MODULE);
         }
 
-        GenericValue contentAssoc = delegator.makeValue("ContentAssoc");
+        GenericValue contentAssoc = delegator.makeValue(x.ContentAssoc);
         String contentAssocTypeId = (String) context.get(x.contentAssocTypeId);
         if (UtilValidate.isNotEmpty(contentAssocTypeId)) {
             context.put(x.caContentAssocTypeId, contentAssocTypeId);
         }
         contentAssocTypeId = (String) context.get(x.caContentAssocTypeId);
-        contentAssoc.setAllFields(context, false, "ca", null);
-        contentAssoc.put("contentId", context.get(x.caContentId));
+        contentAssoc.setAllFields(context, false, x.ca, null);
+        contentAssoc.put(x.contentId, context.get(x.caContentId));
         context.putAll(contentAssoc);
 
-        GenericValue electronicText = delegator.makeValue("ElectronicText");
+        GenericValue electronicText = delegator.makeValue(x.ElectronicText);
         electronicText.setPKFields(context);
         electronicText.setNonPKFields(context);
 
         // save expected primary keys on result now in case there is no operation that uses them
         Map<String, Object> results = ServiceUtil.returnSuccess();
-        results.put("contentId", content.get(x.contentId));
-        results.put("dataResourceId", dataResource.get(x.dataResourceId));
-        results.put("drDataResourceId", dataResource.get(x.dataResourceId));
-        results.put("drDataResourceId", dataResource.get(x.dataResourceId));
-        results.put("caContentIdTo", contentAssoc.get(x.contentIdTo));
-        results.put("caContentId", contentAssoc.get(x.contentId));
-        results.put("caFromDate", contentAssoc.get(x.fromDate));
-        results.put("caContentAssocTypeId", contentAssoc.get(x.contentAssocTypeId));
+        results.put(x.contentId, content.get(x.contentId));
+        results.put(x.dataResourceId, dataResource.get(x.dataResourceId));
+        results.put(x.drDataResourceId, dataResource.get(x.dataResourceId));
+        results.put(x.drDataResourceId, dataResource.get(x.dataResourceId));
+        results.put(x.caContentIdTo, contentAssoc.get(x.contentIdTo));
+        results.put(x.caContentId, contentAssoc.get(x.contentId));
+        results.put(x.caFromDate, contentAssoc.get(x.fromDate));
+        results.put(x.caContentAssocTypeId, contentAssoc.get(x.contentAssocTypeId));
 
         // get user info for multiple use
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         boolean dataResourceExists = true;
         if (Debug.infoOn()) {
-            Debug.logInfo("in persist... dataResourceTypeId(0):" + dataResourceTypeId, MODULE);
+            Debug.logInfo(x.in_persist_dataResourceTypeId_0 + dataResourceTypeId, MODULE);
         }
         if (UtilValidate.isNotEmpty(dataResourceTypeId)) {
             Map<String, Object> dataResourceResult;
@@ -270,11 +279,11 @@ public class ContentManagementServices {
             if (UtilValidate.isNotEmpty(errorMsg)) {
                 return ServiceUtil.returnError(errorMsg);
             }
-            dataResourceId = (String) dataResourceResult.get("dataResourceId");
-            results.put("dataResourceId", dataResourceId);
-            results.put("drDataResourceId", dataResourceId);
+            dataResourceId = (String) dataResourceResult.get(x.dataResourceId);
+            results.put(x.dataResourceId, dataResourceId);
+            results.put(x.drDataResourceId, dataResourceId);
             context.put(x.dataResourceId, dataResourceId);
-            content.put("dataResourceId", dataResourceId);
+            content.put(x.dataResourceId, dataResourceId);
             context.put(x.drDataResourceId, dataResourceId);
         }
         // Do update and create permission checks on Content if warranted.
@@ -282,15 +291,16 @@ public class ContentManagementServices {
         context.put(x.skipPermissionCheck, null); // Force check here
         boolean contentExists = true;
         if (Debug.infoOn()) {
-            Debug.logInfo("in persist... contentTypeId:" + contentTypeId + " dataResourceTypeId:" + dataResourceTypeId + " contentId:"
-                    + contentId + " dataResourceId:" + dataResourceId, MODULE);
+            Debug.logInfo(x.in_persist_contentTypeId + contentTypeId + x.dataResourceTypeId_f33c1c11 + dataResourceTypeId + x.contentId_978fae1c
+                    + contentId + x.dataResourceId_17f3f291 + dataResourceId, MODULE);
         }
         if (UtilValidate.isNotEmpty(contentTypeId)) {
             if (UtilValidate.isEmpty(contentId)) {
                 contentExists = false;
             } else {
                 try {
-                    GenericValue val = EntityQuery.use(delegator).from("Content").where("contentId", contentId).queryOne();
+                    GenericValue val = DaoRegistry.getDao(delegator, x.Content, ContentDao.class).findOneByWhere(delegator, x.Content,
+                            UtilMisc.toMap(x.contentId, contentId), null, null, false);
                     if (val == null) {
                         dataResourceExists = false;
                     }
@@ -301,33 +311,33 @@ public class ContentManagementServices {
             context.putAll(content);
             if (contentExists) {
                 Map<String, Object> contentContext = new HashMap<>();
-                ModelService contentModel = dispatcher.getDispatchContext().getModelService("updateContent");
+                ModelService contentModel = dispatcher.getDispatchContext().getModelService(x.updateContent);
                 contentContext.putAll(contentModel.makeValid(content, ModelService.IN_PARAM));
-                contentContext.put("userLogin", userLogin);
-                contentContext.put("displayFailCond", bDisplayFailCond);
-                contentContext.put("skipPermissionCheck", context.get(x.skipPermissionCheck));
-                Debug.logInfo("In persistContentAndAssoc calling updateContent with content: " + contentContext, MODULE);
-                Map<String, Object> thisResult = dispatcher.runSync("updateContent", contentContext);
+                contentContext.put(x.userLogin, userLogin);
+                contentContext.put(x.displayFailCond, bDisplayFailCond);
+                contentContext.put(x.skipPermissionCheck, context.get(x.skipPermissionCheck));
+                Debug.logInfo(x.In_persistContentAndAssoc_calling_updateContent_with_content + contentContext, MODULE);
+                Map<String, Object> thisResult = dispatcher.runSync(x.updateContent, contentContext);
                 if (ServiceUtil.isError(thisResult) || ServiceUtil.isFailure(thisResult)) {
-                    return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentContentUpdatingError", UtilMisc.toMap("serviceName",
-                            "persistContentAndAssoc"), locale), null, null, thisResult);
+                    return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentContentUpdatingError, UtilMisc.toMap(x.serviceName,
+                            x.persistContentAndAssoc), locale), null, null, thisResult);
                 }
             } else {
                 Map<String, Object> contentContext = new HashMap<>();
-                ModelService contentModel = dispatcher.getDispatchContext().getModelService("createContent");
+                ModelService contentModel = dispatcher.getDispatchContext().getModelService(x.createContent);
                 contentContext.putAll(contentModel.makeValid(content, ModelService.IN_PARAM));
-                contentContext.put("userLogin", userLogin);
-                contentContext.put("displayFailCond", bDisplayFailCond);
-                contentContext.put("skipPermissionCheck", context.get(x.skipPermissionCheck));
-                Debug.logInfo("In persistContentAndAssoc calling createContent with content: " + contentContext, MODULE);
-                Map<String, Object> thisResult = dispatcher.runSync("createContent", contentContext);
+                contentContext.put(x.userLogin, userLogin);
+                contentContext.put(x.displayFailCond, bDisplayFailCond);
+                contentContext.put(x.skipPermissionCheck, context.get(x.skipPermissionCheck));
+                Debug.logInfo(x.In_persistContentAndAssoc_calling_createContent_with_content + contentContext, MODULE);
+                Map<String, Object> thisResult = dispatcher.runSync(x.createContent, contentContext);
                 if (ServiceUtil.isError(thisResult) || ServiceUtil.isFailure(thisResult)) {
-                    return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentContentCreatingError", UtilMisc.toMap("serviceName",
-                            "persistContentAndAssoc"), locale), null, null, thisResult);
+                    return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentContentCreatingError, UtilMisc.toMap(x.serviceName,
+                            x.persistContentAndAssoc), locale), null, null, thisResult);
                 }
-                contentId = (String) thisResult.get("contentId");
+                contentId = (String) thisResult.get(x.contentId);
             }
-            results.put("contentId", contentId);
+            results.put(x.contentId, contentId);
             context.put(x.contentId, contentId);
             context.put(x.caContentIdTo, contentId);
 
@@ -336,8 +346,8 @@ public class ContentManagementServices {
                 try {
                     Set<String> contentPurposeSet = new LinkedHashSet<>(contentPurposeList);
                     for (String contentPurposeTypeId : contentPurposeSet) {
-                        GenericValue contentPurpose = delegator.makeValue("ContentPurpose", UtilMisc.toMap("contentId", contentId,
-                                "contentPurposeTypeId", contentPurposeTypeId));
+                        GenericValue contentPurpose = delegator.makeValue(x.ContentPurpose, UtilMisc.toMap(x.contentId, contentId,
+                                x.contentPurposeTypeId, contentPurposeTypeId));
                         contentPurpose.create();
                     }
                 } catch (GenericEntityException e) {
@@ -349,13 +359,13 @@ public class ContentManagementServices {
             // If dataResource was not previously existing, then update the associated content with its id
             if (UtilValidate.isNotEmpty(dataResourceId) && !dataResourceExists) {
                 Map<String, Object> map = new HashMap<>();
-                map.put("userLogin", userLogin);
-                map.put("dataResourceId", dataResourceId);
-                map.put("contentId", contentId);
+                map.put(x.userLogin, userLogin);
+                map.put(x.dataResourceId, dataResourceId);
+                map.put(x.contentId, contentId);
                 if (Debug.infoOn()) {
-                    Debug.logInfo("in persist... context:" + context, MODULE);
+                    Debug.logInfo(x.in_persist_context + context, MODULE);
                 }
-                Map<String, Object> r = dispatcher.runSync("updateContent", map);
+                Map<String, Object> r = dispatcher.runSync(x.updateContent, map);
                 boolean isError = ModelService.RESPOND_ERROR.equals(r.get(ModelService.RESPONSE_MESSAGE));
                 if (isError) {
                     return ServiceUtil.returnError((String) r.get(ModelService.ERROR_MESSAGE));
@@ -365,51 +375,52 @@ public class ContentManagementServices {
 
         // Put contentId
         if (UtilValidate.isNotEmpty(contentId)) {
-            contentAssoc.put("contentIdTo", contentId);
+            contentAssoc.put(x.contentIdTo, contentId);
         }
         // If parentContentIdTo or parentContentIdFrom exists, create association with newly created content
         if (Debug.infoOn()) {
-            Debug.logInfo("CREATING contentASSOC contentAssocTypeId:" + contentAssocTypeId, MODULE);
+            Debug.logInfo(x.CREATING_contentASSOC_contentAssocTypeId + contentAssocTypeId, MODULE);
         }
         // create content assoc if the key values are present....
         if (Debug.infoOn()) {
-            Debug.logInfo("contentAssoc: " + contentAssoc.toString(), MODULE);
+            Debug.logInfo(x.contentAssoc + contentAssoc.toString(), MODULE);
         }
         if (UtilValidate.isNotEmpty(contentAssocTypeId) && contentAssoc.get(x.contentId) != null && contentAssoc.get(x.contentIdTo) != null) {
             if (Debug.infoOn()) {
-                Debug.logInfo("in persistContentAndAssoc, deactivateExisting:" + deactivateExisting, MODULE);
+                Debug.logInfo(x.in_persistContentAndAssoc_deactivateExisting + deactivateExisting, MODULE);
             }
             Map<String, Object> contentAssocContext = new HashMap<>();
-            contentAssocContext.put("userLogin", userLogin);
-            contentAssocContext.put("displayFailCond", bDisplayFailCond);
-            contentAssocContext.put("skipPermissionCheck", context.get(x.skipPermissionCheck));
+            contentAssocContext.put(x.userLogin, userLogin);
+            contentAssocContext.put(x.displayFailCond, bDisplayFailCond);
+            contentAssocContext.put(x.skipPermissionCheck, context.get(x.skipPermissionCheck));
             Map<String, Object> thisResult = null;
             try {
-                GenericValue contentAssocExisting = EntityQuery.use(delegator).from("ContentAssoc").where(contentAssoc.getPrimaryKey()).queryOne();
+                GenericValue contentAssocExisting = DaoRegistry.getDao(delegator, x.ContentAssoc, ContentAssocDao.class).findOneByWhere(
+                        delegator, x.ContentAssoc, contentAssoc.getPrimaryKey(), null, null, false);
                 if (contentAssocExisting == null) {
-                    ModelService contentAssocModel = dispatcher.getDispatchContext().getModelService("createContentAssoc");
+                    ModelService contentAssocModel = dispatcher.getDispatchContext().getModelService(x.createContentAssoc);
                     Map<String, Object> ctx = contentAssocModel.makeValid(contentAssoc, ModelService.IN_PARAM);
                     contentAssocContext.putAll(ctx);
-                    thisResult = dispatcher.runSync("createContentAssoc", contentAssocContext);
+                    thisResult = dispatcher.runSync(x.createContentAssoc, contentAssocContext);
                     if (ServiceUtil.isError(thisResult) || ServiceUtil.isFailure(thisResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
                     }
 
-                    results.put("caContentIdTo", thisResult.get("contentIdTo"));
-                    results.put("caContentId", thisResult.get("contentIdFrom"));
-                    results.put("caContentAssocTypeId", thisResult.get("contentAssocTypeId"));
-                    results.put("caFromDate", thisResult.get("fromDate"));
-                    results.put("caSequenceNum", thisResult.get("sequenceNum"));
+                    results.put(x.caContentIdTo, thisResult.get(x.contentIdTo));
+                    results.put(x.caContentId, thisResult.get(x.contentIdFrom));
+                    results.put(x.caContentAssocTypeId, thisResult.get(x.contentAssocTypeId));
+                    results.put(x.caFromDate, thisResult.get(x.fromDate));
+                    results.put(x.caSequenceNum, thisResult.get(x.sequenceNum));
                 } else {
                     if (deactivateExisting) {
-                        contentAssocExisting.put("thruDate", UtilDateTime.nowTimestamp());
+                        contentAssocExisting.put(x.thruDate, UtilDateTime.nowTimestamp());
                     } else if (UtilValidate.isNotEmpty(context.get(x.thruDate))) {
-                        contentAssocExisting.put("thruDate", context.get(x.thruDate));
+                        contentAssocExisting.put(x.thruDate, context.get(x.thruDate));
                     }
-                    ModelService contentAssocModel = dispatcher.getDispatchContext().getModelService("updateContentAssoc");
+                    ModelService contentAssocModel = dispatcher.getDispatchContext().getModelService(x.updateContentAssoc);
                     Map<String, Object> ctx = contentAssocModel.makeValid(contentAssocExisting, ModelService.IN_PARAM);
                     contentAssocContext.putAll(ctx);
-                    thisResult = dispatcher.runSync("updateContentAssoc", contentAssocContext);
+                    thisResult = dispatcher.runSync(x.updateContentAssoc, contentAssocContext);
                     if (ServiceUtil.isError(thisResult) || ServiceUtil.isFailure(thisResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
                     }
@@ -422,11 +433,11 @@ public class ContentManagementServices {
                 return ServiceUtil.returnError(errMsg);
             }
         }
-        context.remove("skipPermissionCheck");
+        context.remove(x.skipPermissionCheck);
         context.put(x.contentId, origContentId);
         context.put(x.dataResourceId, origDataResourceId);
-        context.remove("dataResource");
-        Debug.logInfo("results:" + results, MODULE);
+        context.remove(x.dataResource);
+        Debug.logInfo(x.results + results, MODULE);
         return results;
     }
 
@@ -447,50 +458,51 @@ public class ContentManagementServices {
 
         List<GenericValue> siteRoles = null;
         try {
-            siteRoles = EntityQuery.use(delegator).from("RoleType").where("parentTypeId", "BLOG").cache().queryList();
+            siteRoles = DaoRegistry.getDao(delegator, x.RoleType, RoleTypeDao.class).findListByWhere(delegator, x.RoleType,
+                    UtilMisc.toMap(x.parentTypeId, x.BLOG), null, null, true);
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(e.toString());
         }
 
         for (GenericValue roleType : siteRoles) {
             Map<String, Object> serviceContext = new HashMap<>();
-            serviceContext.put("partyId", partyId);
-            serviceContext.put("contentId", siteContentId);
-            serviceContext.put("userLogin", userLogin);
-            Debug.logInfo("updateSiteRoles, serviceContext(0):" + serviceContext, MODULE);
+            serviceContext.put(x.partyId, partyId);
+            serviceContext.put(x.contentId, siteContentId);
+            serviceContext.put(x.userLogin, userLogin);
+            Debug.logInfo(x.updateSiteRoles_serviceContext_0 + serviceContext, MODULE);
             String siteRole = (String) roleType.get(x.roleTypeId); // BLOG_EDITOR, BLOG_ADMIN, etc.
             String cappedSiteRole = ModelUtil.dbNameToVarName(siteRole);
             if (Debug.infoOn()) {
-                Debug.logInfo("updateSiteRoles, cappediteRole(1):" + cappedSiteRole, MODULE);
+                Debug.logInfo(x.updateSiteRoles_cappediteRole_1 + cappedSiteRole, MODULE);
             }
             String siteRoleVal = (String) context.get(cappedSiteRole);
             if (Debug.infoOn()) {
-                Debug.logInfo("updateSiteRoles, siteRoleVal(1):" + siteRoleVal, MODULE);
-                Debug.logInfo("updateSiteRoles, context(1):" + context, MODULE);
+                Debug.logInfo(x.updateSiteRoles_siteRoleVal_1 + siteRoleVal, MODULE);
+                Debug.logInfo(x.updateSiteRoles_context_1 + context, MODULE);
             }
-            Object fromDate = context.get(cappedSiteRole + "FromDate");
+            Object fromDate = context.get(cappedSiteRole + x.FromDate);
             if (Debug.infoOn()) {
-                Debug.logInfo("updateSiteRoles, fromDate(1):" + fromDate, MODULE);
+                Debug.logInfo(x.updateSiteRoles_fromDate_1 + fromDate, MODULE);
             }
-            serviceContext.put("roleTypeId", siteRole);
-            if (siteRoleVal != null && "Y".equalsIgnoreCase(siteRoleVal)) {
+            serviceContext.put(x.roleTypeId, siteRole);
+            if (siteRoleVal != null && x.Y.equalsIgnoreCase(siteRoleVal)) {
                 // for now, will assume that any error is due to duplicates - ignore
                 if (fromDate == null) {
                     try {
                         Map<String, Object> newContext = new HashMap<>();
-                        newContext.put("contentId", serviceContext.get("contentId"));
-                        newContext.put("partyId", serviceContext.get("partyId"));
-                        newContext.put("roleTypeId", serviceContext.get("roleTypeId"));
-                        newContext.put("userLogin", userLogin);
-                        Map<String, Object> permResults = dispatcher.runSync("deactivateAllContentRoles", newContext);
+                        newContext.put(x.contentId, serviceContext.get(x.contentId));
+                        newContext.put(x.partyId, serviceContext.get(x.partyId));
+                        newContext.put(x.roleTypeId, serviceContext.get(x.roleTypeId));
+                        newContext.put(x.userLogin, userLogin);
+                        Map<String, Object> permResults = dispatcher.runSync(x.deactivateAllContentRoles, newContext);
                         if (ServiceUtil.isError(permResults)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(permResults));
                         }
-                        serviceContext.put("fromDate", UtilDateTime.nowTimestamp());
+                        serviceContext.put(x.fromDate, UtilDateTime.nowTimestamp());
                         if (Debug.infoOn()) {
-                            Debug.logInfo("updateSiteRoles, serviceContext(1):" + serviceContext, MODULE);
+                            Debug.logInfo(x.updateSiteRoles_serviceContext_1 + serviceContext, MODULE);
                         }
-                        permResults = dispatcher.runSync("createContentRole", serviceContext);
+                        permResults = dispatcher.runSync(x.createContentRole, serviceContext);
                         if (ServiceUtil.isError(permResults)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(permResults));
                         }
@@ -503,13 +515,13 @@ public class ContentManagementServices {
                 if (fromDate != null) {
                     // for now, will assume that any error is due to non-existence - ignore
                     try {
-                        Debug.logInfo("updateSiteRoles, serviceContext(2):" + serviceContext, MODULE);
+                        Debug.logInfo(x.updateSiteRoles_serviceContext_2 + serviceContext, MODULE);
                         Map<String, Object> newContext = new HashMap<>();
-                        newContext.put("contentId", serviceContext.get("contentId"));
-                        newContext.put("partyId", serviceContext.get("partyId"));
-                        newContext.put("roleTypeId", serviceContext.get("roleTypeId"));
-                        newContext.put("userLogin", userLogin);
-                        Map<String, Object> permResults = dispatcher.runSync("deactivateAllContentRoles", newContext);
+                        newContext.put(x.contentId, serviceContext.get(x.contentId));
+                        newContext.put(x.partyId, serviceContext.get(x.partyId));
+                        newContext.put(x.roleTypeId, serviceContext.get(x.roleTypeId));
+                        newContext.put(x.userLogin, userLogin);
+                        Map<String, Object> permResults = dispatcher.runSync(x.deactivateAllContentRoles, newContext);
                         if (ServiceUtil.isError(permResults)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(permResults));
                         }
@@ -528,17 +540,17 @@ public class ContentManagementServices {
         Locale locale = (Locale) context.get(x.locale);
         Map<String, Object> result;
         try {
-            ModelService checkPermModel = dispatcher.getDispatchContext().getModelService("checkContentPermission");
+            ModelService checkPermModel = dispatcher.getDispatchContext().getModelService(x.checkContentPermission);
             Map<String, Object> ctx = checkPermModel.makeValid(context, ModelService.IN_PARAM);
-            Map<String, Object> thisResult = dispatcher.runSync("checkContentPermission", ctx);
+            Map<String, Object> thisResult = dispatcher.runSync(x.checkContentPermission, ctx);
             if (ServiceUtil.isError(thisResult)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
             }
-            String permissionStatus = (String) thisResult.get("permissionStatus");
-            if (UtilValidate.isNotEmpty(permissionStatus) && "granted".equalsIgnoreCase(permissionStatus)) {
+            String permissionStatus = (String) thisResult.get(x.permissionStatus);
+            if (UtilValidate.isNotEmpty(permissionStatus) && x.granted.equalsIgnoreCase(permissionStatus)) {
                 result = persistDataResourceAndDataMethod(dctx, context);
             } else {
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentContentNoAccessToUploadImage", locale));
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentContentNoAccessToUploadImage, locale));
             }
         } catch (GenericEntityException | GenericServiceException e) {
             Debug.logError(e, e.toString(), MODULE);
@@ -564,13 +576,13 @@ public class ContentManagementServices {
 
         Map<String, Object> result = new HashMap<>();
         Map<String, Object> newDrContext = new HashMap<>();
-        GenericValue dataResource = delegator.makeValue("DataResource");
+        GenericValue dataResource = delegator.makeValue(x.DataResource);
         dataResource.setPKFields(context);
         dataResource.setNonPKFields(context);
-        dataResource.setAllFields(context, false, "dr", null);
+        dataResource.setAllFields(context, false, x.dr, null);
         context.putAll(dataResource);
 
-        GenericValue electronicText = delegator.makeValue("ElectronicText");
+        GenericValue electronicText = delegator.makeValue(x.ElectronicText);
         electronicText.setPKFields(context);
         electronicText.setNonPKFields(context);
         String textData = (String) electronicText.get(x.textData);
@@ -579,15 +591,16 @@ public class ContentManagementServices {
         String dataResourceId = (String) dataResource.get(x.dataResourceId);
         String dataResourceTypeId = (String) dataResource.get(x.dataResourceTypeId);
         if (Debug.infoOn()) {
-            Debug.logInfo("in persist... dataResourceId(0):" + dataResourceId, MODULE);
+            Debug.logInfo(x.in_persist_dataResourceId_0 + dataResourceId, MODULE);
         }
-        context.put(x.skipPermissionCheck, "granted"); // TODO: a temp hack because I don't want to bother with DataResource permissions at this time.
+        context.put(x.skipPermissionCheck, x.granted); // TODO: a temp hack because I don't want to bother with DataResource permissions at this time.
         boolean dataResourceExists = true;
         if (UtilValidate.isEmpty(dataResourceId)) {
             dataResourceExists = false;
         } else {
             try {
-                GenericValue val = EntityQuery.use(delegator).from("DataResource").where("dataResourceId", dataResourceId).queryOne();
+                GenericValue val = DaoRegistry.getDao(delegator, x.DataResource, DataResourceDao.class).findOneByWhere(delegator,
+                        x.DataResource, UtilMisc.toMap(x.dataResourceId, dataResourceId), null, null, false);
                 if (val == null) {
                     dataResourceExists = false;
                 }
@@ -596,124 +609,124 @@ public class ContentManagementServices {
             }
         }
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
-        ModelService dataResourceModel = dispatcher.getDispatchContext().getModelService("updateDataResource");
+        ModelService dataResourceModel = dispatcher.getDispatchContext().getModelService(x.updateDataResource);
         Map<String, Object> ctx = dataResourceModel.makeValid(dataResource, ModelService.IN_PARAM);
         newDrContext.putAll(ctx);
-        newDrContext.put("userLogin", userLogin);
-        newDrContext.put("skipPermissionCheck", context.get(x.skipPermissionCheck));
+        newDrContext.put(x.userLogin, userLogin);
+        newDrContext.put(x.skipPermissionCheck, context.get(x.skipPermissionCheck));
         ByteBuffer imageDataBytes = (ByteBuffer) context.get(x.imageData);
-        String mimeTypeId = (String) newDrContext.get("mimeTypeId");
-        if (imageDataBytes != null && (mimeTypeId == null || (mimeTypeId.indexOf("image") >= 0) || (mimeTypeId.indexOf("application") >= 0))) {
+        String mimeTypeId = (String) newDrContext.get(x.mimeTypeId);
+        if (imageDataBytes != null && (mimeTypeId == null || (mimeTypeId.indexOf(x.image) >= 0) || (mimeTypeId.indexOf(x.application) >= 0))) {
             mimeTypeId = (String) context.get(x._imageData_contentType);
-            if ("IMAGE_OBJECT".equals(dataResourceTypeId)) {
+            if (x.IMAGE_OBJECT.equals(dataResourceTypeId)) {
                 String fileName = (String) context.get(x._imageData_fileName);
-                newDrContext.put("objectInfo", fileName);
+                newDrContext.put(x.objectInfo, fileName);
             }
-            newDrContext.put("mimeTypeId", mimeTypeId);
+            newDrContext.put(x.mimeTypeId, mimeTypeId);
         }
 
         if (!dataResourceExists) { // Create
-            Map<String, Object> thisResult = dispatcher.runSync("createDataResource", newDrContext);
+            Map<String, Object> thisResult = dispatcher.runSync(x.createDataResource, newDrContext);
             if (ServiceUtil.isError(thisResult)) {
                 throw (new GenericServiceException(ServiceUtil.getErrorMessage(thisResult)));
             }
-            dataResourceId = (String) thisResult.get("dataResourceId");
+            dataResourceId = (String) thisResult.get(x.dataResourceId);
             if (Debug.infoOn()) {
-                Debug.logInfo("in persist... dataResourceId(0):" + dataResourceId, MODULE);
+                Debug.logInfo(x.in_persist_dataResourceId_0 + dataResourceId, MODULE);
             }
-            dataResource = (GenericValue) thisResult.get("dataResource");
+            dataResource = (GenericValue) thisResult.get(x.dataResource);
             Map<String, Object> fileContext = new HashMap<>();
-            fileContext.put("userLogin", userLogin);
-            if ("IMAGE_OBJECT".equals(dataResourceTypeId)) {
+            fileContext.put(x.userLogin, userLogin);
+            if (x.IMAGE_OBJECT.equals(dataResourceTypeId)) {
                 if (imageDataBytes != null) {
-                    fileContext.put("dataResourceId", dataResourceId);
-                    fileContext.put("imageData", imageDataBytes);
-                    thisResult = dispatcher.runSync("createImage", fileContext);
+                    fileContext.put(x.dataResourceId, dataResourceId);
+                    fileContext.put(x.imageData, imageDataBytes);
+                    thisResult = dispatcher.runSync(x.createImage, fileContext);
                     if (ServiceUtil.isError(thisResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
                     }
                 }
                 // We don't want SHORT_TEXT and SURVEY to be caught by the last else if, hence the 2 empty else if
-            } else if ("SHORT_TEXT".equals(dataResourceTypeId)) {
+            } else if (x.SHORT_TEXT.equals(dataResourceTypeId)) {
                 // To avoid checkstyle issue, placing log statement.
-                Debug.logInfo("dataResourceTypeId: " + dataResourceId + " found.", MODULE);
-            } else if (dataResourceTypeId.startsWith("SURVEY")) {
+                Debug.logInfo(x.dataResourceTypeId_372f41d5 + dataResourceId + x.found, MODULE);
+            } else if (dataResourceTypeId.startsWith(x.SURVEY)) {
                 // To avoid checkstyle issue, placing log statement.
-                Debug.logInfo("dataResourceTypeId: " + dataResourceId + " found.", MODULE);
-            } else if (dataResourceTypeId.indexOf("_FILE") >= 0) {
+                Debug.logInfo(x.dataResourceTypeId_372f41d5 + dataResourceId + x.found, MODULE);
+            } else if (dataResourceTypeId.indexOf(x.FILE) >= 0) {
                 Map<String, Object> uploadImage = new HashMap<>();
-                uploadImage.put("userLogin", userLogin);
-                uploadImage.put("dataResourceId", dataResourceId);
-                uploadImage.put("dataResourceTypeId", dataResourceTypeId);
-                uploadImage.put("rootDir", context.get(x.objectInfo));
-                uploadImage.put("uploadedFile", imageDataBytes);
-                uploadImage.put("_uploadedFile_fileName", context.get(x._imageData_fileName));
-                uploadImage.put("_uploadedFile_contentType", context.get(x._imageData_contentType));
-                thisResult = dispatcher.runSync("attachUploadToDataResource", uploadImage);
+                uploadImage.put(x.userLogin, userLogin);
+                uploadImage.put(x.dataResourceId, dataResourceId);
+                uploadImage.put(x.dataResourceTypeId, dataResourceTypeId);
+                uploadImage.put(x.rootDir, context.get(x.objectInfo));
+                uploadImage.put(x.uploadedFile, imageDataBytes);
+                uploadImage.put(x._uploadedFile_fileName, context.get(x._imageData_fileName));
+                uploadImage.put(x._uploadedFile_contentType, context.get(x._imageData_contentType));
+                thisResult = dispatcher.runSync(x.attachUploadToDataResource, uploadImage);
                 if (ServiceUtil.isError(thisResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
                 }
             } else {
                 // assume ELECTRONIC_TEXT
                 if (UtilValidate.isNotEmpty(textData)) {
-                    fileContext.put("dataResourceId", dataResourceId);
-                    fileContext.put("textData", textData);
-                    thisResult = dispatcher.runSync("createElectronicText", fileContext);
+                    fileContext.put(x.dataResourceId, dataResourceId);
+                    fileContext.put(x.textData, textData);
+                    thisResult = dispatcher.runSync(x.createElectronicText, fileContext);
                     if (ServiceUtil.isError(thisResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
                     }
                 }
             }
         } else { // Update
-            Map<String, Object> thisResult = dispatcher.runSync("updateDataResource", newDrContext);
+            Map<String, Object> thisResult = dispatcher.runSync(x.updateDataResource, newDrContext);
             if (ServiceUtil.isError(thisResult)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
             }
             Map<String, Object> fileContext = new HashMap<>();
-            fileContext.put("userLogin", userLogin);
+            fileContext.put(x.userLogin, userLogin);
             String forceElectronicText = (String) context.get(x.forceElectronicText);
-            if ("IMAGE_OBJECT".equals(dataResourceTypeId)) {
-                if (imageDataBytes != null || "true".equalsIgnoreCase(forceElectronicText)) {
-                    fileContext.put("dataResourceId", dataResourceId);
-                    fileContext.put("imageData", imageDataBytes);
-                    thisResult = dispatcher.runSync("updateImage", fileContext);
+            if (x.IMAGE_OBJECT.equals(dataResourceTypeId)) {
+                if (imageDataBytes != null || x._true.equalsIgnoreCase(forceElectronicText)) {
+                    fileContext.put(x.dataResourceId, dataResourceId);
+                    fileContext.put(x.imageData, imageDataBytes);
+                    thisResult = dispatcher.runSync(x.updateImage, fileContext);
                     if (ServiceUtil.isError(thisResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
                     }
                 }
                 // We don't want SHORT_TEXT and SURVEY to be caught by the last else if, hence the 2 empty else if
-            } else if ("SHORT_TEXT".equals(dataResourceTypeId)) {
+            } else if (x.SHORT_TEXT.equals(dataResourceTypeId)) {
                 // To avoid checkstyle issue, placing log statement.
-                Debug.logInfo("dataResourceTypeId: " + dataResourceId + " found.", MODULE);
-            } else if (dataResourceTypeId.startsWith("SURVEY")) {
+                Debug.logInfo(x.dataResourceTypeId_372f41d5 + dataResourceId + x.found, MODULE);
+            } else if (dataResourceTypeId.startsWith(x.SURVEY)) {
                 // To avoid checkstyle issue, placing log statement.
-                Debug.logInfo("dataResourceTypeId: " + dataResourceId + " found.", MODULE);
-            } else if (dataResourceTypeId.indexOf("_FILE") >= 0) {
+                Debug.logInfo(x.dataResourceTypeId_372f41d5 + dataResourceId + x.found, MODULE);
+            } else if (dataResourceTypeId.indexOf(x.FILE) >= 0) {
                 Map<String, Object> uploadImage = new HashMap<>();
-                uploadImage.put("userLogin", userLogin);
-                uploadImage.put("dataResourceId", dataResourceId);
-                uploadImage.put("dataResourceTypeId", dataResourceTypeId);
-                uploadImage.put("rootDir", context.get(x.objectInfo));
-                uploadImage.put("uploadedFile", imageDataBytes);
-                uploadImage.put("_uploadedFile_fileName", context.get(x._imageData_fileName));
-                uploadImage.put("_uploadedFile_contentType", context.get(x._imageData_contentType));
-                thisResult = dispatcher.runSync("attachUploadToDataResource", uploadImage);
+                uploadImage.put(x.userLogin, userLogin);
+                uploadImage.put(x.dataResourceId, dataResourceId);
+                uploadImage.put(x.dataResourceTypeId, dataResourceTypeId);
+                uploadImage.put(x.rootDir, context.get(x.objectInfo));
+                uploadImage.put(x.uploadedFile, imageDataBytes);
+                uploadImage.put(x._uploadedFile_fileName, context.get(x._imageData_fileName));
+                uploadImage.put(x._uploadedFile_contentType, context.get(x._imageData_contentType));
+                thisResult = dispatcher.runSync(x.attachUploadToDataResource, uploadImage);
                 if (ServiceUtil.isError(thisResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
                 }
             } else {
-                if (UtilValidate.isNotEmpty(textData) || "true".equalsIgnoreCase(forceElectronicText)) {
-                    fileContext.put("dataResourceId", dataResourceId);
-                    fileContext.put("textData", textData);
-                    thisResult = dispatcher.runSync("updateElectronicText", fileContext);
+                if (UtilValidate.isNotEmpty(textData) || x._true.equalsIgnoreCase(forceElectronicText)) {
+                    fileContext.put(x.dataResourceId, dataResourceId);
+                    fileContext.put(x.textData, textData);
+                    thisResult = dispatcher.runSync(x.updateElectronicText, fileContext);
                     if (ServiceUtil.isError(thisResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
                     }
                 }
             }
         }
-        result.put("dataResourceId", dataResourceId);
-        result.put("drDataResourceId", dataResourceId);
+        result.put(x.dataResourceId, dataResourceId);
+        result.put(x.drDataResourceId, dataResourceId);
         context.put(x.dataResourceId, dataResourceId);
         return result;
     }
@@ -721,11 +734,12 @@ public class ContentManagementServices {
     public static void addRoleToUser(Delegator delegator, LocalDispatcher dispatcher, Map<String, Object> serviceContext)
             throws GenericServiceException, GenericEntityException {
         Map<String, Object> result = new HashMap<>();
-        List<GenericValue> userLoginList = EntityQuery.use(delegator).from("UserLogin").where("partyId", serviceContext.get("partyId")).queryList();
+        List<GenericValue> userLoginList = DaoRegistry.getDao(delegator, x.UserLogin, UserLoginDao.class).findListByWhere(delegator,
+                x.UserLogin, UtilMisc.toMap(x.partyId, serviceContext.get(x.partyId)), null, null, false);
         for (GenericValue partyUserLogin : userLoginList) {
             String partyUserLoginId = partyUserLogin.getString(x.userLoginId);
-            serviceContext.put("contentId", partyUserLoginId); // author contentId
-            result = dispatcher.runSync("createContentRole", serviceContext);
+            serviceContext.put(x.contentId, partyUserLoginId); // author contentId
+            result = dispatcher.runSync(x.createContentRole, serviceContext);
             if (ServiceUtil.isError(result)) {
                 Debug.logError(ServiceUtil.getErrorMessage(result), MODULE);
             }
@@ -745,12 +759,13 @@ public class ContentManagementServices {
         // service is used for updating department roles, too.
         String siteContentId = (String) context.get(x.contentId);
         String partyId = (String) context.get(x.partyId);
-        serviceContext.put("partyId", partyId);
-        serviceContext.put("contentId", siteContentId);
+        serviceContext.put(x.partyId, partyId);
+        serviceContext.put(x.contentId, siteContentId);
 
         List<GenericValue> siteRoles = null;
         try {
-            siteRoles = EntityQuery.use(delegator).from("RoleType").where("parentTypeId", "BLOG").cache().queryList();
+            siteRoles = DaoRegistry.getDao(delegator, x.RoleType, RoleTypeDao.class).findListByWhere(delegator, x.RoleType,
+                    UtilMisc.toMap(x.parentTypeId, x.BLOG), null, null, true);
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(e.toString());
         }
@@ -759,18 +774,18 @@ public class ContentManagementServices {
             String cappedSiteRole = ModelUtil.dbNameToVarName(siteRole);
 
             String siteRoleVal = (String) context.get(cappedSiteRole);
-            Object fromDate = context.get(cappedSiteRole + "FromDate");
-            serviceContext.put("roleTypeId", siteRole);
-            if (siteRoleVal != null && "Y".equalsIgnoreCase(siteRoleVal)) {
+            Object fromDate = context.get(cappedSiteRole + x.FromDate);
+            serviceContext.put(x.roleTypeId, siteRole);
+            if (siteRoleVal != null && x.Y.equalsIgnoreCase(siteRoleVal)) {
                 // for now, will assume that any error is due to duplicates - ignore
                 if (fromDate == null) {
                     try {
-                        serviceContext.put("fromDate", UtilDateTime.nowTimestamp());
+                        serviceContext.put(x.fromDate, UtilDateTime.nowTimestamp());
                         if (Debug.infoOn()) {
-                            Debug.logInfo("updateSiteRoles, serviceContext(1):" + serviceContext, MODULE);
+                            Debug.logInfo(x.updateSiteRoles_serviceContext_1 + serviceContext, MODULE);
                         }
                         addRoleToUser(delegator, dispatcher, serviceContext);
-                        thisResult = dispatcher.runSync("createContentRole", serviceContext);
+                        thisResult = dispatcher.runSync(x.createContentRole, serviceContext);
                         if (ServiceUtil.isError(thisResult)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
                         }
@@ -783,12 +798,12 @@ public class ContentManagementServices {
                     // for now, will assume that any error is due to non-existence - ignore
                     // return ServiceUtil.returnError(e.toString());
                     try {
-                        Debug.logInfo("updateSiteRoles, serviceContext(2):" + serviceContext, MODULE);
+                        Debug.logInfo(x.updateSiteRoles_serviceContext_2 + serviceContext, MODULE);
                         Map<String, Object> newContext = new HashMap<>();
-                        newContext.put("contentId", serviceContext.get("contentId"));
-                        newContext.put("partyId", serviceContext.get("partyId"));
-                        newContext.put("roleTypeId", serviceContext.get("roleTypeId"));
-                        thisResult = dispatcher.runSync("deactivateAllContentRoles", newContext);
+                        newContext.put(x.contentId, serviceContext.get(x.contentId));
+                        newContext.put(x.partyId, serviceContext.get(x.partyId));
+                        newContext.put(x.roleTypeId, serviceContext.get(x.roleTypeId));
+                        thisResult = dispatcher.runSync(x.deactivateAllContentRoles, newContext);
                         if (ServiceUtil.isError(thisResult)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
                         }
@@ -820,31 +835,32 @@ public class ContentManagementServices {
             }
             pkFields.put(fieldName, fieldValue);
         }
-        boolean doLink = "Y".equalsIgnoreCase(action);
+        boolean doLink = x.Y.equalsIgnoreCase(action);
         if (Debug.infoOn()) {
-            Debug.logInfo("in updateOrRemove, context:" + context, MODULE);
+            Debug.logInfo(x.in_updateOrRemove_context + context, MODULE);
         }
         try {
             GenericValue entityValuePK = delegator.makeValue(entityName, pkFields);
             if (Debug.infoOn()) {
-                Debug.logInfo("in updateOrRemove, entityValuePK:" + entityValuePK, MODULE);
+                Debug.logInfo(x.in_updateOrRemove_entityValuePK + entityValuePK, MODULE);
             }
-            GenericValue entityValueExisting = EntityQuery.use(delegator).from(entityName).where(entityValuePK).cache().queryOne();
+            GenericValue entityValueExisting = DaoRegistry.getDao(delegator, entityName, UserLoginDao.class).findOneByWhere(delegator,
+                    entityName, entityValuePK, null, null, true);
             if (Debug.infoOn()) {
-                Debug.logInfo("in updateOrRemove, entityValueExisting:" + entityValueExisting, MODULE);
+                Debug.logInfo(x.in_updateOrRemove_entityValueExisting + entityValueExisting, MODULE);
             }
             if (entityValueExisting == null) {
                 if (doLink) {
                     entityValuePK.create();
                     if (Debug.infoOn()) {
-                        Debug.logInfo("in updateOrRemove, entityValuePK: CREATED", MODULE);
+                        Debug.logInfo(x.in_updateOrRemove_entityValuePK_CREATED, MODULE);
                     }
                 }
             } else {
                 if (!doLink) {
                     entityValueExisting.remove();
                     if (Debug.infoOn()) {
-                        Debug.logInfo("in updateOrRemove, entityValueExisting: REMOVED", MODULE);
+                        Debug.logInfo(x.in_updateOrRemove_entityValueExisting_REMOVED, MODULE);
                     }
                 }
             }
@@ -881,30 +897,29 @@ public class ContentManagementServices {
             typeList.add(contentAssocTypeId);
         }
         if (UtilValidate.isEmpty(typeList)) {
-            typeList = UtilMisc.toList("PUBLISH_LINK", "SUB_CONTENT");
+            typeList = UtilMisc.toList(x.PUBLISH_LINK, x.SUB_CONTENT);
         }
 
         // Resolve all content assoc to resequence from the content
         try {
-            List<GenericValue> contentAssocs = EntityQuery.use(delegator).from("ContentAssoc")
-                    .where(List.of(
-                            EntityCondition.makeCondition("contentId", contentId),
-                            EntityCondition.makeCondition("contentAssocTypeId", EntityOperator.IN, typeList)))
-                    .orderBy("sequenceNum", "fromDate", "createdDate")
-                    .filterByDate()
-                    .queryList();
+            List<GenericValue> contentAssocs = DaoRegistry.getDao(delegator, x.ContentAssoc, ContentAssocDao.class).findListByWhere(
+                    delegator, x.ContentAssoc,
+                    EntityCondition.makeCondition(List.of(
+                            EntityCondition.makeCondition(x.contentId, contentId),
+                            EntityCondition.makeCondition(x.contentAssocTypeId, EntityOperator.IN, typeList))),
+                    null, UtilMisc.toList(x.sequenceNum, x.fromDate, x.createdDate), false, true);
             String contentIdTo = (String) context.get(x.contentIdTo);
             String dir = (String) context.get(x.dir);
             int seqNum = seqStep;
             boolean switchSequence = UtilValidate.isNotEmpty(contentIdTo) && UtilValidate.isNotEmpty(dir);
-            boolean switchModeUp = switchSequence && dir.startsWith("up");
+            boolean switchModeUp = switchSequence && dir.startsWith(x.up);
             int changePosition = -1;
 
             // update the sequence for all element and check if we need switch two element
             for (int i = 0; i < contentAssocs.size(); i++) {
                 boolean stopLimit = ((i <= 0 && switchModeUp) || (i + 1 >= contentAssocs.size() && !switchModeUp));
                 GenericValue contentAssoc = contentAssocs.get(i);
-                contentAssoc.put("sequenceNum", (long) seqNum);
+                contentAssoc.put(x.sequenceNum, (long) seqNum);
                 seqNum += seqStep;
                 if (switchSequence
                         && contentIdTo.equals(contentAssoc.getString(x.contentIdTo))
@@ -918,8 +933,8 @@ public class ContentManagementServices {
                 GenericValue currentContent = contentAssocs.get(changePosition);
                 GenericValue destinationContent = contentAssocs.get(changePosition + (switchModeUp ? -1 : +1));
                 long switchSeqNum = currentContent.getLong(x.sequenceNum);
-                currentContent.put("sequenceNum", destinationContent.getLong(x.sequenceNum));
-                destinationContent.put("sequenceNum", switchSeqNum);
+                currentContent.put(x.sequenceNum, destinationContent.getLong(x.sequenceNum));
+                destinationContent.put(x.sequenceNum, switchSeqNum);
             }
             delegator.storeAll(contentAssocs);
         } catch (GenericEntityException e) {
@@ -939,10 +954,11 @@ public class ContentManagementServices {
         String userLoginId = userLogin.getString(x.userLoginId);
         Locale locale = (Locale) context.get(x.locale);
         try {
-            GenericValue content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).queryOne();
+            GenericValue content = DaoRegistry.getDao(delegator, x.Content, ContentDao.class).findOneByWhere(delegator, x.Content,
+                    UtilMisc.toMap(x.contentId, contentId), null, null, false);
             if (content == null) {
-                Debug.logError("content was null", MODULE);
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentNoContentFound", UtilMisc.toMap("contentId", ""), locale));
+                Debug.logError(x.content_was_null, MODULE);
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentNoContentFound, UtilMisc.toMap(x.contentId, x.emptyString), locale));
             }
             String dataResourceId = content.getString(x.dataResourceId);
 
@@ -961,14 +977,14 @@ public class ContentManagementServices {
                 content.set(x.createdByUserLogin, userLoginId);
 
                 contentClone.set(x.contentId, null);
-                ModelService modelService = dctx.getModelService("persistContentAndAssoc");
+                ModelService modelService = dctx.getModelService(x.persistContentAndAssoc);
                 Map<String, Object> serviceIn = modelService.makeValid(contentClone, ModelService.IN_PARAM);
-                serviceIn.put("userLogin", userLogin);
-                serviceIn.put("contentIdTo", contentId);
-                serviceIn.put("contentAssocTypeId", "SUB_CONTENT");
-                serviceIn.put("sequenceNum", 50L);
+                serviceIn.put(x.userLogin, userLogin);
+                serviceIn.put(x.contentIdTo, contentId);
+                serviceIn.put(x.contentAssocTypeId, x.SUB_CONTENT);
+                serviceIn.put(x.sequenceNum, 50L);
                 try {
-                    thisResult = dispatcher.runSync("persistContentAndAssoc", serviceIn);
+                    thisResult = dispatcher.runSync(x.persistContentAndAssoc, serviceIn);
                     if (ServiceUtil.isError(thisResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
                     }
@@ -976,7 +992,7 @@ public class ContentManagementServices {
                     return ServiceUtil.returnError(e.toString());
                 }
 
-                List<String> typeList = UtilMisc.toList("SUB_CONTENT");
+                List<String> typeList = UtilMisc.toList(x.SUB_CONTENT);
                 ContentManagementWorker.updateStatsTopDown(delegator, contentId, typeList);
             }
 
@@ -992,12 +1008,12 @@ public class ContentManagementServices {
         Delegator delegator = dctx.getDelegator();
         List<String> typeList = UtilGenerics.cast(context.get(x.typeList));
         if (typeList == null) {
-            typeList = UtilMisc.toList("PUBLISH_LINK", "SUB_CONTENT");
+            typeList = UtilMisc.toList(x.PUBLISH_LINK, x.SUB_CONTENT);
         }
         String startContentId = (String) context.get(x.contentId);
         try {
             int leafCount = ContentManagementWorker.updateStatsTopDown(delegator, startContentId, typeList);
-            result.put("leafCount", leafCount);
+            result.put(x.leafCount, leafCount);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.toString());
@@ -1025,22 +1041,23 @@ public class ContentManagementServices {
         String pageMode = (String) context.get(x.pageMode);
         String contentId = (String) context.get(x.contentId);
         visitedSet.add(contentId);
-        String contentTypeId = "PAGE_NODE";
-        if (pageMode != null && pageMode.toLowerCase(Locale.getDefault()).indexOf("outline") >= 0) {
-            contentTypeId = "OUTLINE_NODE";
+        String contentTypeId = x.PAGE_NODE;
+        if (pageMode != null && pageMode.toLowerCase(Locale.getDefault()).indexOf(x.outline) >= 0) {
+            contentTypeId = x.OUTLINE_NODE;
         }
         GenericValue thisContent = null;
         try {
-            thisContent = EntityQuery.use(delegator).from("Content").where("contentId", contentId).queryOne();
+            thisContent = DaoRegistry.getDao(delegator, x.Content, ContentDao.class).findOneByWhere(delegator, x.Content,
+                    UtilMisc.toMap(x.contentId, contentId), null, null, false);
             if (thisContent == null) {
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentNoContentFound", UtilMisc.toMap("contentId", contentId),
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentNoContentFound, UtilMisc.toMap(x.contentId, contentId),
                         locale));
             }
             thisContent.set(x.contentTypeId, contentTypeId);
             thisContent.store();
-            List<GenericValue> kids = ContentWorker.getAssociatedContent(thisContent, "from", UtilMisc.toList("SUB_CONTENT"), null, null, null);
+            List<GenericValue> kids = ContentWorker.getAssociatedContent(thisContent, x._from, UtilMisc.toList(x.SUB_CONTENT), null, null, null);
             for (GenericValue kidContent : kids) {
-                if ("OUTLINE_NODE".equals(contentTypeId)) {
+                if (x.OUTLINE_NODE.equals(contentTypeId)) {
                     updateOutlineNodeChildren(kidContent, false, context);
                 } else {
                     updatePageNodeChildren(kidContent, context);
@@ -1067,27 +1084,28 @@ public class ContentManagementServices {
         }
         String contentId = (String) context.get(x.contentId);
         String pageMode = (String) context.get(x.pageMode);
-        String contentTypeId = "OUTLINE_NODE";
-        if (pageMode != null && pageMode.toLowerCase(Locale.getDefault()).indexOf("page") >= 0) {
-            contentTypeId = "PAGE_NODE";
+        String contentTypeId = x.OUTLINE_NODE;
+        if (pageMode != null && pageMode.toLowerCase(Locale.getDefault()).indexOf(x.page) >= 0) {
+            contentTypeId = x.PAGE_NODE;
         }
         GenericValue thisContent = null;
         try {
-            thisContent = EntityQuery.use(delegator).from("Content").where("contentId", contentId).queryOne();
+            thisContent = DaoRegistry.getDao(delegator, x.Content, ContentDao.class).findOneByWhere(delegator, x.Content,
+                    UtilMisc.toMap(x.contentId, contentId), null, null, false);
             if (thisContent == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                        "ContentNoContentFound", UtilMisc.toMap("contentId", contentId), locale));
+                        x.ContentNoContentFound, UtilMisc.toMap(x.contentId, contentId), locale));
             }
-            thisContent.set(x.contentTypeId, "OUTLINE_NODE");
+            thisContent.set(x.contentTypeId, x.OUTLINE_NODE);
             thisContent.store();
-            List<GenericValue> kids = ContentWorker.getAssociatedContent(thisContent, "from", UtilMisc.toList("SUB_CONTENT"), null, null, null);
+            List<GenericValue> kids = ContentWorker.getAssociatedContent(thisContent, x._from, UtilMisc.toList(x.SUB_CONTENT), null, null, null);
             for (GenericValue kidContent : kids) {
-                if ("OUTLINE_NODE".equals(contentTypeId)) {
+                if (x.OUTLINE_NODE.equals(contentTypeId)) {
                     updateOutlineNodeChildren(kidContent, true, context);
                 } else {
-                    kidContent.put("contentTypeId", "PAGE_NODE");
+                    kidContent.put(x.contentTypeId, x.PAGE_NODE);
                     kidContent.store();
-                    List<GenericValue> kids2 = ContentWorker.getAssociatedContent(kidContent, "from", UtilMisc.toList("SUB_CONTENT"), null, null,
+                    List<GenericValue> kids2 = ContentWorker.getAssociatedContent(kidContent, x._from, UtilMisc.toList(x.SUB_CONTENT), null, null,
                             null);
                     for (GenericValue kidContent2 : kids2) {
                         updatePageNodeChildren(kidContent2, context);
@@ -1104,13 +1122,13 @@ public class ContentManagementServices {
     public static Map<String, Object> clearContentAssocViewCache(DispatchContext dctx, ContentManagementServicesContext context)
             throws GenericServiceException {
         Map<String, Object> results = new HashMap<>();
-        UtilCache<?, ?> utilCache = UtilCache.findCache("entitycache.entity-list.default.ContentAssocViewFrom");
+        UtilCache<?, ?> utilCache = UtilCache.findCache(x.entitycache_entity_list_default_ContentAssocViewFrom);
 
         if (utilCache != null) {
             utilCache.clear();
         }
 
-        utilCache = UtilCache.findCache("entitycache.entity-list.default.ContentAssocViewTo");
+        utilCache = UtilCache.findCache(x.entitycache_entity_list_default_ContentAssocViewTo);
         if (utilCache != null) {
             utilCache.clear();
         }
@@ -1122,12 +1140,12 @@ public class ContentManagementServices {
             throws GenericServiceException {
         Map<String, Object> results = new HashMap<>();
 
-        UtilCache<?, ?> utilCache = UtilCache.findCache("entitycache.entity-list.default.ContentAssocViewDataResourceFrom");
+        UtilCache<?, ?> utilCache = UtilCache.findCache(x.entitycache_entity_list_default_ContentAssocViewDataResourceFrom);
         if (utilCache != null) {
             utilCache.clear();
         }
 
-        utilCache = UtilCache.findCache("entitycache.entity-list.default.ContentAssocViewDataResourceTo");
+        utilCache = UtilCache.findCache(x.entitycache_entity_list_default_ContentAssocViewDataResourceTo);
         if (utilCache != null) {
             utilCache.clear();
         }
@@ -1143,16 +1161,16 @@ public class ContentManagementServices {
             context.put(x.visitedSet, visitedSet);
         } else {
             if (visitedSet.contains(contentId)) {
-                Debug.logWarning("visitedSet already contains:" + contentId, MODULE);
+                Debug.logWarning(x.visitedSet_already_contains + contentId, MODULE);
                 return;
             } else {
                 visitedSet.add(contentId);
             }
         }
-        String newContentTypeId = "SUBPAGE_NODE";
-        content.put("contentTypeId", newContentTypeId);
+        String newContentTypeId = x.SUBPAGE_NODE;
+        content.put(x.contentTypeId, newContentTypeId);
         content.store();
-        List<GenericValue> kids = ContentWorker.getAssociatedContent(content, "from", UtilMisc.toList("SUB_CONTENT"), null, null, null);
+        List<GenericValue> kids = ContentWorker.getAssociatedContent(content, x._from, UtilMisc.toList(x.SUB_CONTENT), null, null, null);
         for (GenericValue kidContent : kids) {
             updatePageNodeChildren(kidContent, context);
         }
@@ -1167,7 +1185,7 @@ public class ContentManagementServices {
             context.put(x.visitedSet, visitedSet);
         } else {
             if (visitedSet.contains(contentId)) {
-                Debug.logWarning("visitedSet already contains:" + contentId, MODULE);
+                Debug.logWarning(x.visitedSet_already_contains + contentId, MODULE);
                 return;
             } else {
                 visitedSet.add(contentId);
@@ -1178,22 +1196,22 @@ public class ContentManagementServices {
         String dataResourceId = content.getString(x.dataResourceId);
         Long branchCount = (Long) content.get(x.childBranchCount);
         if (forceOutline) {
-            newContentTypeId = "OUTLINE_NODE";
-        } else if (contentTypeId == null || "DOCUMENT".equals(contentTypeId)) {
+            newContentTypeId = x.OUTLINE_NODE;
+        } else if (contentTypeId == null || x.DOCUMENT.equals(contentTypeId)) {
             if (UtilValidate.isEmpty(dataResourceId) || (branchCount != null && branchCount.intValue() > 0)) {
-                newContentTypeId = "OUTLINE_NODE";
+                newContentTypeId = x.OUTLINE_NODE;
             } else {
-                newContentTypeId = "PAGE_NODE";
+                newContentTypeId = x.PAGE_NODE;
             }
-        } else if ("SUBPAGE_NODE".equals(contentTypeId)) {
-            newContentTypeId = "PAGE_NODE";
+        } else if (x.SUBPAGE_NODE.equals(contentTypeId)) {
+            newContentTypeId = x.PAGE_NODE;
         }
 
-        content.put("contentTypeId", newContentTypeId);
+        content.put(x.contentTypeId, newContentTypeId);
         content.store();
 
-        if (contentTypeId == null || "DOCUMENT".equals(contentTypeId) || "OUTLINE_NODE".equals(contentTypeId)) {
-            List<GenericValue> kids = ContentWorker.getAssociatedContent(content, "from", UtilMisc.toList("SUB_CONTENT"), null, null, null);
+        if (contentTypeId == null || x.DOCUMENT.equals(contentTypeId) || x.OUTLINE_NODE.equals(contentTypeId)) {
+            List<GenericValue> kids = ContentWorker.getAssociatedContent(content, x._from, UtilMisc.toList(x.SUB_CONTENT), null, null, null);
             for (GenericValue kidContent : kids) {
                 updateOutlineNodeChildren(kidContent, forceOutline, context);
             }
@@ -1205,13 +1223,11 @@ public class ContentManagementServices {
         Delegator delegator = dctx.getDelegator();
         String contentIdTo = (String) context.get(x.contentId);
         try {
-            List<GenericValue> lst = EntityQuery.use(delegator).from("ContentAssocDataResourceViewFrom")
-                    .where("caContentIdTo", contentIdTo,
-                            "caContentAssocTypeId", "SUB_CONTENT",
-                            "caThruDate", null)
-                    .orderBy("caSequenceNum", "caFromDate", "createdDate")
-                    .queryList();
-            results.put("_LIST_", lst);
+            List<GenericValue> lst = DaoRegistry.getDao(delegator, x.ContentAssocDataResourceViewFrom, UserLoginDao.class).findListByWhere(
+                    delegator, x.ContentAssocDataResourceViewFrom,
+                    UtilMisc.toMap(x.caContentIdTo, contentIdTo, x.caContentAssocTypeId, x.SUB_CONTENT, x.caThruDate, null),
+                    null, UtilMisc.toList(x.caSequenceNum, x.caFromDate, x.createdDate), false);
+            results.put(x.LIST, lst);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.toString());
@@ -1232,7 +1248,7 @@ public class ContentManagementServices {
             }
             dataResource.store();
         } catch (GenericEntityException e) {
-            retVal = "Unable to update the DataResource record";
+            retVal = x.Unable_to_update_the_DataResource_record;
         }
         return retVal;
     }
@@ -1243,7 +1259,7 @@ public class ContentManagementServices {
         Locale locale = (Locale) context.get(x.locale);
         GenericValue content = (GenericValue) context.get(x.content);
         if (content == null) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentNoContentFound", UtilMisc.toMap("contentId", ""), locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentNoContentFound, UtilMisc.toMap(x.contentId, x.emptyString), locale));
         }
         Long leafCount = (Long) content.get(x.childLeafCount);
         if (leafCount == null) {
@@ -1266,9 +1282,10 @@ public class ContentManagementServices {
         String contentAssocTypeId = (String) context.get(x.contentAssocTypeId);
 
         try {
-            GenericValue content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).cache().queryOne();
+            GenericValue content = DaoRegistry.getDao(delegator, x.Content, ContentDao.class).findOneByWhere(delegator, x.Content,
+                    UtilMisc.toMap(x.contentId, contentId), null, null, true);
             if (content == null) {
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentNoContentFound", UtilMisc.toMap("contentId", contentId),
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentNoContentFound, UtilMisc.toMap(x.contentId, contentId),
                         locale));
             }
             Long leafCount = (Long) content.get(x.childLeafCount);
@@ -1295,9 +1312,10 @@ public class ContentManagementServices {
         String contentAssocTypeId = (String) context.get(x.contentAssocTypeId);
 
         try {
-            GenericValue content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).cache().queryOne();
+            GenericValue content = DaoRegistry.getDao(delegator, x.Content, ContentDao.class).findOneByWhere(delegator, x.Content,
+                    UtilMisc.toMap(x.contentId, contentId), null, null, true);
             if (content == null) {
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentNoContentFound", UtilMisc.toMap("contentId", contentId),
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentNoContentFound, UtilMisc.toMap(x.contentId, contentId),
                         locale));
             }
             Long leafCount = (Long) content.get(x.childLeafCount);
@@ -1326,7 +1344,7 @@ public class ContentManagementServices {
         if (UtilValidate.isNotEmpty(contentAssocTypeId)) {
             typeList.add(contentAssocTypeId);
         } else {
-            typeList = UtilMisc.toList("PUBLISH_LINK", "SUB_CONTENT");
+            typeList = UtilMisc.toList(x.PUBLISH_LINK, x.SUB_CONTENT);
         }
 
         try {
@@ -1353,11 +1371,10 @@ public class ContentManagementServices {
         boolean hasExistingContentRole = false;
         GenericValue contentRole = null;
         try {
-            contentRole = EntityQuery.use(delegator).from("ContentRole")
-                    .where("partyId", partyId, "contentId", webPubPt, "roleTypeId", roleTypeId)
-                    .orderBy("fromDate DESC")
-                    .cache().filterByDate()
-                    .queryFirst();
+            List<GenericValue> contentRoles = DaoRegistry.getDao(delegator, x.ContentRole, ContentRoleDao.class).findListByWhere(
+                    delegator, x.ContentRole, UtilMisc.toMap(x.partyId, partyId, x.contentId, webPubPt, x.roleTypeId, roleTypeId),
+                    null, UtilMisc.toList(x.fromDate_DESC), true);
+            contentRole = EntityUtil.getFirst(EntityUtil.filterByDate(contentRoles));
             if (contentRole != null) {
                 hasExistingContentRole = true;
             }
@@ -1366,7 +1383,7 @@ public class ContentManagementServices {
         }
 
         if (contentRole == null) {
-            contentRole = delegator.makeValue("ContentRole");
+            contentRole = delegator.makeValue(x.ContentRole);
             contentRole.set(x.contentId, webPubPt);
             contentRole.set(x.partyId, partyId);
             contentRole.set(x.roleTypeId, roleTypeId);
@@ -1388,16 +1405,16 @@ public class ContentManagementServices {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(thruDate);
         int field = Calendar.MONTH;
-        if ("TF_day".equals(useTimeUomId)) {
+        if (x.TF_day.equals(useTimeUomId)) {
             field = Calendar.DAY_OF_YEAR;
-        } else if ("TF_wk".equals(useTimeUomId)) {
+        } else if (x.TF_wk.equals(useTimeUomId)) {
             field = Calendar.WEEK_OF_YEAR;
-        } else if ("TF_mon".equals(useTimeUomId)) {
+        } else if (x.TF_mon.equals(useTimeUomId)) {
             field = Calendar.MONTH;
-        } else if ("TF_yr".equals(useTimeUomId)) {
+        } else if (x.TF_yr.equals(useTimeUomId)) {
             field = Calendar.YEAR;
         } else {
-            Debug.logWarning("Don't know anything about useTimeUomId [" + useTimeUomId + "], defaulting to month", MODULE);
+            Debug.logWarning(x.Don_t_know_anything_about_useTimeUomId + useTimeUomId + x.defaulting_to_month, MODULE);
         }
         calendar.add(field, useTime);
         thruDate = new Timestamp(calendar.getTimeInMillis());
@@ -1407,10 +1424,10 @@ public class ContentManagementServices {
                 contentRole.store();
             } else {
                 Map<String, Object> map = new HashMap<>();
-                map.put("partyId", partyId);
-                map.put("roleTypeId", roleTypeId);
-                map.put("userLogin", userLogin);
-                thisResult = dispatcher.runSync("ensurePartyRole", map);
+                map.put(x.partyId, partyId);
+                map.put(x.roleTypeId, roleTypeId);
+                map.put(x.userLogin, userLogin);
+                thisResult = dispatcher.runSync(x.ensurePartyRole, map);
                 if (ServiceUtil.isError(thisResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(thisResult));
                 }
@@ -1437,12 +1454,13 @@ public class ContentManagementServices {
 
         GenericValue productContent = null;
         try {
-            List<GenericValue> lst = EntityQuery.use(delegator).from("ProductContent")
-                    .where("productId", productId, "productContentTypeId", "ONLINE_ACCESS")
-                    .orderBy("purchaseFromDate", "purchaseThruDate")
-                    .filterByDate("purchaseFromDate", "purchaseThruDate")
-                    .cache().queryList();
-            List<GenericValue> listThrusOnly = EntityUtil.filterOutByCondition(lst, EntityCondition.makeCondition("purchaseThruDate",
+            List<GenericValue> productContentList = DaoRegistry.getDao(delegator, x.ProductContent, ProductContentDao.class)
+                    .findListByWhere(delegator, x.ProductContent,
+                            UtilMisc.toMap(x.productId, productId, x.productContentTypeId, x.ONLINE_ACCESS),
+                            null, UtilMisc.toList(x.purchaseFromDate, x.purchaseThruDate), true);
+            List<GenericValue> lst = EntityUtil.filterByDate(productContentList, UtilDateTime.nowTimestamp(), x.purchaseFromDate,
+                    x.purchaseThruDate, true);
+            List<GenericValue> listThrusOnly = EntityUtil.filterOutByCondition(lst, EntityCondition.makeCondition(x.purchaseThruDate,
                     EntityOperator.EQUALS, null));
             if (!listThrusOnly.isEmpty()) {
                 productContent = listThrusOnly.get(0);
@@ -1454,7 +1472,7 @@ public class ContentManagementServices {
             return ServiceUtil.returnError(e.toString());
         }
         if (productContent == null) {
-            String msg = UtilProperties.getMessage(RESOURCE, "ContentNoProductContentFound", UtilMisc.toMap("productId", productId), locale);
+            String msg = UtilProperties.getMessage(RESOURCE, x.ContentNoProductContentFound, UtilMisc.toMap(x.productId, productId), locale);
             Debug.logError(msg, MODULE);
             return ServiceUtil.returnError(msg);
         }
@@ -1467,9 +1485,9 @@ public class ContentManagementServices {
         context.put(x.useTimeUomId, productContent.get(x.useTimeUomId));
         context.put(x.useRoleTypeId, productContent.get(x.useRoleTypeId));
         context.put(x.contentId, productContent.get(x.contentId));
-        ModelService subscriptionModel = dispatcher.getDispatchContext().getModelService("updateContentSubscription");
+        ModelService subscriptionModel = dispatcher.getDispatchContext().getModelService(x.updateContentSubscription);
         Map<String, Object> ctx = subscriptionModel.makeValid(context, ModelService.IN_PARAM);
-        result = dispatcher.runSync("updateContentSubscription", ctx);
+        result = dispatcher.runSync(x.updateContentSubscription, ctx);
         if (ServiceUtil.isError(result)) {
             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
         }
@@ -1485,41 +1503,43 @@ public class ContentManagementServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         String orderId = (String) context.get(x.orderId);
 
-        Debug.logInfo("In updateContentSubscriptionByOrder service with orderId: " + orderId, MODULE);
+        Debug.logInfo(x.In_updateContentSubscriptionByOrder_service_with_orderId + orderId, MODULE);
 
         GenericValue orderHeader = null;
         try {
-            GenericValue orderRole = EntityQuery.use(delegator).from("OrderRole")
-                    .where("orderId", orderId, "roleTypeId", "END_USER_CUSTOMER")
-                    .queryFirst();
+            GenericValue orderRole = DaoRegistry.getDao(delegator, x.OrderRole, OrderRoleDao.class).findFirstByWhere(delegator,
+                    x.OrderRole, UtilMisc.toMap(x.orderId, orderId, x.roleTypeId, x.END_USER_CUSTOMER), null, null, false);
             if (orderRole != null) {
                 String partyId = (String) orderRole.get(x.partyId);
                 context.put(x.partyId, partyId);
             } else {
-                String msg = "No OrderRole found for orderId:" + orderId;
+                String msg = x.No_OrderRole_found_for_orderId + orderId;
                 return ServiceUtil.returnFailure(msg);
 
             }
-            orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
+            orderHeader = DaoRegistry.getDao(delegator, x.OrderHeader, OrderHeaderDao.class).findOneByWhere(delegator, x.OrderHeader,
+                    UtilMisc.toMap(x.orderId, orderId), null, null, false);
             if (orderHeader == null) {
-                String msg = UtilProperties.getMessage(RESOURCE, "ContentNoOrderHeaderFound", UtilMisc.toMap("orderId", orderId), locale);
+                String msg = UtilProperties.getMessage(RESOURCE, x.ContentNoOrderHeaderFound, UtilMisc.toMap(x.orderId, orderId), locale);
                 return ServiceUtil.returnError(msg);
             }
             Timestamp orderCreatedDate = (Timestamp) orderHeader.get(x.orderDate);
             context.put(x.orderCreatedDate, orderCreatedDate);
             List<GenericValue> orderItemList = orderHeader.getRelated(x.OrderItem, null, null, false);
-            ModelService subscriptionModel = dispatcher.getDispatchContext().getModelService("updateContentSubscriptionByProduct");
+            ModelService subscriptionModel = dispatcher.getDispatchContext().getModelService(x.updateContentSubscriptionByProduct);
             for (GenericValue orderItem : orderItemList) {
                 BigDecimal qty = orderItem.getBigDecimal(x.quantity);
                 String productId = (String) orderItem.get(x.productId);
-                long productContentCount = EntityQuery.use(delegator).from("ProductContent")
-                        .where("productId", productId, "productContentTypeId", "ONLINE_ACCESS")
-                        .filterByDate().queryCount();
+                long productContentCount = DaoRegistry.getDao(delegator, x.ProductContent, ProductContentDao.class).countByCondition(
+                        delegator, x.ProductContent, EntityCondition.makeCondition(UtilMisc.toList(
+                                EntityCondition.makeCondition(x.productId, productId),
+                                EntityCondition.makeCondition(x.productContentTypeId, x.ONLINE_ACCESS),
+                                EntityUtil.getFilterByDateExpr()), EntityOperator.AND), null, null);
                 if (productContentCount > 0) {
                     context.put(x.productId, productId);
                     context.put(x.quantity, qty.intValue());
                     Map<String, Object> ctx = subscriptionModel.makeValid(context, ModelService.IN_PARAM);
-                    result = dispatcher.runSync("updateContentSubscriptionByProduct", ctx);
+                    result = dispatcher.runSync(x.updateContentSubscriptionByProduct, ctx);
                     if (ServiceUtil.isError(result)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
                     }
@@ -1539,25 +1559,26 @@ public class ContentManagementServices {
         Security security = dctx.getSecurity();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Locale locale = (Locale) context.get(x.locale);
-        if (!security.hasEntityPermission("CONTENTMGR", "_ADMIN", userLogin)) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentPermissionNotGranted", locale));
+        if (!security.hasEntityPermission(x.CONTENTMGR, x.ADMIN, userLogin)) {
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentPermissionNotGranted, locale));
         }
         String contentId = (String) context.get(x.contentId);
         String serviceName = (String) context.get(x.serviceName);
         String contentAssocTypeId = (String) context.get(x.contentAssocTypeId);
         List<String> contentAssocTypeIdList = new LinkedList<>();
         if (UtilValidate.isNotEmpty(contentAssocTypeId)) {
-            contentAssocTypeIdList = StringUtil.split(contentAssocTypeId, "|");
+            contentAssocTypeIdList = StringUtil.split(contentAssocTypeId, x.str_3eb41622);
         }
         if (contentAssocTypeIdList.isEmpty()) {
-            contentAssocTypeIdList.add("SUB_CONTENT");
+            contentAssocTypeIdList.add(x.SUB_CONTENT);
         }
         ContentManagementServicesContext ctx = new ContentManagementServicesContext();
-        ctx.put("userLogin", userLogin);
-        ctx.put("contentAssocTypeIdList", contentAssocTypeIdList);
+        ctx.put(x.userLogin, userLogin);
+        ctx.put(x.contentAssocTypeIdList, contentAssocTypeIdList);
         try {
 
-            GenericValue content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).queryOne();
+            GenericValue content = DaoRegistry.getDao(delegator, x.Content, ContentDao.class).findOneByWhere(delegator, x.Content,
+                    UtilMisc.toMap(x.contentId, contentId), null, null, false);
             result = followNodeChildrenMethod(content, dispatcher, serviceName, ctx);
         } catch (GenericEntityException e) {
             Debug.logError(e.toString(), MODULE);
@@ -1578,20 +1599,20 @@ public class ContentManagementServices {
             context.put(x.visitedSet, visitedSet);
         } else {
             if (visitedSet.contains(contentId)) {
-                Debug.logWarning("visitedSet already contains:" + contentId, MODULE);
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentVisitedSet", locale) + contentId);
+                Debug.logWarning(x.visitedSet_already_contains + contentId, MODULE);
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentVisitedSet, locale) + contentId);
             } else {
                 visitedSet.add(contentId);
             }
         }
 
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
-        result = dispatcher.runSync(serviceName, UtilMisc.toMap("content", content, "userLogin", userLogin));
+        result = dispatcher.runSync(serviceName, UtilMisc.toMap(x.content, content, x.userLogin, userLogin));
         if (ServiceUtil.isError(result)) {
             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
         }
 
-        List<GenericValue> kids = ContentWorker.getAssociatedContent(content, "from", contentAssocTypeIdList, null, null, null);
+        List<GenericValue> kids = ContentWorker.getAssociatedContent(content, x._from, contentAssocTypeIdList, null, null, null);
         for (GenericValue kidContent : kids) {
             followNodeChildrenMethod(kidContent, dispatcher, serviceName, context);
         }
@@ -1610,11 +1631,11 @@ public class ContentManagementServices {
                     // Check if a webshell is not uploaded
                     // This should now be useless after the add of SecuredUpload::isValidFile in GroovyBaseScript for createAnonFile service.
                     // But I prefer to keep it anyway, it's hard to test all cases, better safe than sorry
-                    if (!org.apache.ofbiz.security.SecuredUpload.isValidFile(objectInfo, "All", delegator)) {
-                        errorMessage = UtilProperties.getMessage("SecurityUiLabels", "SupportedFileFormatsIncludingSvg", locale);
+                    if (!org.apache.ofbiz.security.SecuredUpload.isValidFile(objectInfo, x.All, delegator)) {
+                        errorMessage = UtilProperties.getMessage(x.SecurityUiLabels, x.SupportedFileFormatsIncludingSvg, locale);
                     }
                 } catch (ImageReadException | IOException e) {
-                    errorMessage = UtilProperties.getMessage(RESOURCE, "ContentUnableToOpenFileForWriting", UtilMisc.toMap("fileName",
+                    errorMessage = UtilProperties.getMessage(RESOURCE, x.ContentUnableToOpenFileForWriting, UtilMisc.toMap(x.fileName,
                             objectInfo), locale);
                 }
             }

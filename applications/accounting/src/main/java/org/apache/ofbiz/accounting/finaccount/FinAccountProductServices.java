@@ -20,6 +20,7 @@
 package org.apache.ofbiz.accounting.finaccount;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -34,15 +35,24 @@ import org.apache.ofbiz.base.util.string.FlexibleStringExpander;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
 import org.apache.ofbiz.order.finaccount.FinAccountHelper;
 import org.apache.ofbiz.order.order.OrderReadHelper;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.FinAccountTypeDao;
+import org.apache.ofbiz.persistence.dao.ProductFeatureApplDao;
+import org.apache.ofbiz.persistence.dao.ProductFeatureDao;
+import org.apache.ofbiz.persistence.entity.FinAccountTypeEntity;
+import org.apache.ofbiz.persistence.entity.ProductFeatureApplEntity;
+import org.apache.ofbiz.persistence.entity.ProductFeatureEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
+
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.util.Beans;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -55,8 +65,8 @@ import org.apache.ofbiz.model.FinAccountProductServicesContext;
 public class FinAccountProductServices {
 
     private static final String MODULE = FinAccountProductServices.class.getName();
-    private static final String RES_ORDER_ERROR = "OrderErrorUiLabels";
-    private static final String RES_ERROR = "AccountingErrorUiLabels";
+    private static final String RES_ORDER_ERROR = x.OrderErrorUiLabels;
+    private static final String RES_ERROR = x.AccountingErrorUiLabels;
 
     public static Map<String, Object> createPartyFinAccountFromPurchase(DispatchContext dctx, FinAccountProductServicesContext context) {
         // this service should always be called via FULFILLMENT_EXTASYNC
@@ -75,27 +85,43 @@ public class FinAccountProductServices {
         try {
             orderHeader = orderItem.getRelatedOne(x.OrderHeader, false);
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Unable to get OrderHeader from OrderItem", MODULE);
+            Debug.logError(e, x.Unable_to_get_OrderHeader_from_OrderItem, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ORDER_ERROR,
-                    "OrderCannotGetOrderHeader", UtilMisc.toMap("orderId", orderId), locale));
+                    x.OrderCannotGetOrderHeader, UtilMisc.toMap(x.orderId, orderId), locale));
         }
 
         String productId = orderItem.getString(x.productId);
         GenericValue featureAndAppl;
         try {
-            List<GenericValue> featureAndAppls = EntityQuery.use(delegator).from("ProductFeatureAndAppl")
-                    .where("productId", productId, "productFeatureTypeId", "TYPE", "productFeatureApplTypeId", "STANDARD_FEATURE")
-                    .queryList();
-            featureAndAppls = EntityUtil.filterByDate(featureAndAppls);
-            featureAndAppl = EntityUtil.getFirst(featureAndAppls);
-        } catch (GenericEntityException e) {
+            ProductFeatureApplDao productFeatureApplDao = DaoRegistry.getDao(delegator, x.ProductFeatureAppl, ProductFeatureApplDao.class);
+            ProductFeatureDao productFeatureDao = DaoRegistry.getDao(delegator, x.ProductFeature, ProductFeatureDao.class);
+
+            List<ProductFeatureApplEntity> productFeatureApplEntities = productFeatureApplDao.list(Filters.and(
+                    Filters.eq(x.productId, productId),
+                    Filters.eq(x.productFeatureApplTypeId, x.STANDARD_FEATURE)));
+
+            List<GenericValue> productFeatureAppls = new ArrayList<>(productFeatureApplEntities.size());
+            for (ProductFeatureApplEntity productFeatureApplEntity : productFeatureApplEntities) {
+                productFeatureAppls.add(delegator.makeValue(x.ProductFeatureAppl, Beans.beanToMap(productFeatureApplEntity)));
+            }
+            productFeatureAppls = EntityUtil.filterByDate(productFeatureAppls);
+
+            featureAndAppl = null;
+            for (GenericValue productFeatureAppl : productFeatureAppls) {
+                ProductFeatureEntity productFeatureEntity = productFeatureDao.get(productFeatureAppl.getString(x.productFeatureId)).orElse(null);
+                if (productFeatureEntity != null && x.TYPE.equals(productFeatureEntity.getProductFeatureTypeId())) {
+                    featureAndAppl = delegator.makeValue(x.ProductFeatureAndAppl, Beans.beanToMap(productFeatureEntity));
+                    break;
+                }
+            }
+        } catch (Exception e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
 
         // financial account data; pulled from the TYPE feature of the product
-        String finAccountTypeId = "BALANCE_ACCOUNT"; // default
-        String finAccountName = "Customer Financial Account";
+        String finAccountTypeId = x.BALANCE_ACCOUNT; // default
+        String finAccountName = x.Customer_Financial_Account;
         if (featureAndAppl != null) {
             if (UtilValidate.isNotEmpty(featureAndAppl.getString(x.idCode))) {
                 finAccountTypeId = featureAndAppl.getString(x.idCode);
@@ -108,8 +134,10 @@ public class FinAccountProductServices {
         // locate the financial account type
         GenericValue finAccountType;
         try {
-            finAccountType = EntityQuery.use(delegator).from("FinAccountType").where("finAccountTypeId", finAccountTypeId).queryOne();
-        } catch (GenericEntityException e) {
+            FinAccountTypeDao finAccountTypeDao = DaoRegistry.getDao(delegator, x.FinAccountType, FinAccountTypeDao.class);
+            FinAccountTypeEntity finAccountTypeEntity = finAccountTypeDao.get(finAccountTypeId).orElse(null);
+            finAccountType = finAccountTypeEntity == null ? null : delegator.makeValue(x.FinAccountType, Beans.beanToMap(finAccountTypeEntity));
+        } catch (Exception e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
@@ -123,7 +151,7 @@ public class FinAccountProductServices {
 
         // make sure we have a currency
         if (currency == null) {
-            currency = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
+            currency = EntityUtilProperties.getPropertyValue(x.general, x.currency_uom_id_default, x.USD, delegator);
         }
 
         // get the product store
@@ -132,10 +160,10 @@ public class FinAccountProductServices {
             productStoreId = orh.getProductStoreId();
         }
         if (productStoreId == null) {
-            Debug.logFatal("Unable to create financial accout; no productStoreId on OrderHeader : " + orderId, MODULE);
+            Debug.logFatal(x.Unable_to_create_financial_accout_no_productStoreId_on_OrderHeader + orderId, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountCannotCreate",
-                    UtilMisc.toMap("orderId", orderId), locale));
+                    x.AccountingFinAccountCannotCreate,
+                    UtilMisc.toMap(x.orderId, orderId), locale));
         }
 
         // party ID (owner)
@@ -152,7 +180,7 @@ public class FinAccountProductServices {
             for (GenericValue pref : payPrefs) {
                 // needs to be a CC or EFT account
                 String type = pref.getString(x.paymentMethodTypeId);
-                if ("CREDIT_CARD".equals(type) || "EFT_ACCOUNT".equals(type)) {
+                if (x.CREDIT_CARD.equals(type) || x.EFT_ACCOUNT.equals(type)) {
                     paymentMethodId = pref.getString(x.paymentMethodId);
                 }
             }
@@ -170,9 +198,9 @@ public class FinAccountProductServices {
             }
             if (party != null) {
                 String partyTypeId = party.getString(x.partyTypeId);
-                if ("PARTY_GROUP".equals(partyTypeId)) {
+                if (x.PARTY_GROUP.equals(partyTypeId)) {
                     partyGroup = billToParty;
-                } else if ("PERSON".equals(partyTypeId)) {
+                } else if (x.PERSON.equals(partyTypeId)) {
                     person = billToParty;
                 }
             }
@@ -180,11 +208,11 @@ public class FinAccountProductServices {
 
         // create the context for FSE
         Map<String, Object> expContext = new HashMap<>();
-        expContext.put("orderHeader", orderHeader);
-        expContext.put("orderItem", orderItem);
-        expContext.put("party", party);
-        expContext.put("person", person);
-        expContext.put("partyGroup", partyGroup);
+        expContext.put(x.orderHeader, orderHeader);
+        expContext.put(x.orderItem, orderItem);
+        expContext.put(x.party, party);
+        expContext.put(x.person, person);
+        expContext.put(x.partyGroup, partyGroup);
 
         // expand the name field to dynamically add information
         FlexibleStringExpander exp = FlexibleStringExpander.getInstance(finAccountName);
@@ -199,23 +227,23 @@ public class FinAccountProductServices {
         Map<String, Object> createCtx = new HashMap<>();
         String finAccountId;
 
-        createCtx.put("finAccountTypeId", finAccountTypeId);
-        createCtx.put("finAccountName", finAccountName);
-        createCtx.put("productStoreId", productStoreId);
-        createCtx.put("ownerPartyId", partyId);
-        createCtx.put("currencyUomId", currency);
-        createCtx.put("statusId", "FNACT_ACTIVE");
-        createCtx.put("userLogin", userLogin);
+        createCtx.put(x.finAccountTypeId, finAccountTypeId);
+        createCtx.put(x.finAccountName, finAccountName);
+        createCtx.put(x.productStoreId, productStoreId);
+        createCtx.put(x.ownerPartyId, partyId);
+        createCtx.put(x.currencyUomId, currency);
+        createCtx.put(x.statusId, x.FNACT_ACTIVE);
+        createCtx.put(x.userLogin, userLogin);
 
         // if we auto-replenish this type; set the level to the initial deposit
-        if (replenishEnumId != null && "FARP_AUTOMATIC".equals(replenishEnumId)) {
-            createCtx.put("replenishLevel", deposit);
-            createCtx.put("replenishPaymentId", paymentMethodId);
+        if (replenishEnumId != null && x.FARP_AUTOMATIC.equals(replenishEnumId)) {
+            createCtx.put(x.replenishLevel, deposit);
+            createCtx.put(x.replenishPaymentId, paymentMethodId);
         }
 
         Map<String, Object> createResp;
         try {
-            createResp = dispatcher.runSync("createFinAccountForStore", createCtx);
+            createResp = dispatcher.runSync(x.createFinAccountForStore, createCtx);
         } catch (GenericServiceException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -225,18 +253,18 @@ public class FinAccountProductServices {
             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(createResp));
         }
 
-        finAccountId = (String) createResp.get("finAccountId");
+        finAccountId = (String) createResp.get(x.finAccountId);
 
         // create the owner role
         Map<String, Object> roleCtx = new HashMap<>();
-        roleCtx.put("partyId", partyId);
-        roleCtx.put("roleTypeId", "OWNER");
-        roleCtx.put("finAccountId", finAccountId);
-        roleCtx.put("userLogin", userLogin);
-        roleCtx.put("fromDate", UtilDateTime.nowTimestamp());
+        roleCtx.put(x.partyId, partyId);
+        roleCtx.put(x.roleTypeId, x.OWNER);
+        roleCtx.put(x.finAccountId, finAccountId);
+        roleCtx.put(x.userLogin, userLogin);
+        roleCtx.put(x.fromDate, UtilDateTime.nowTimestamp());
         Map<String, Object> roleResp;
         try {
-            roleResp = dispatcher.runSync("createFinAccountRole", roleCtx);
+            roleResp = dispatcher.runSync(x.createFinAccountRole, roleCtx);
         } catch (GenericServiceException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -248,19 +276,19 @@ public class FinAccountProductServices {
 
         // create the initial deposit
         Map<String, Object> depositCtx = new HashMap<>();
-        depositCtx.put("finAccountId", finAccountId);
-        depositCtx.put("productStoreId", productStoreId);
-        depositCtx.put("currency", currency);
-        depositCtx.put("partyId", partyId);
-        depositCtx.put("orderId", orderId);
-        depositCtx.put("orderItemSeqId", orderItemSeqId);
-        depositCtx.put("amount", deposit);
-        depositCtx.put("reasonEnumId", "FATR_IDEPOSIT");
-        depositCtx.put("userLogin", userLogin);
+        depositCtx.put(x.finAccountId, finAccountId);
+        depositCtx.put(x.productStoreId, productStoreId);
+        depositCtx.put(x.currency, currency);
+        depositCtx.put(x.partyId, partyId);
+        depositCtx.put(x.orderId, orderId);
+        depositCtx.put(x.orderItemSeqId, orderItemSeqId);
+        depositCtx.put(x.amount, deposit);
+        depositCtx.put(x.reasonEnumId, x.FATR_IDEPOSIT);
+        depositCtx.put(x.userLogin, userLogin);
 
         Map<String, Object> depositResp;
         try {
-            depositResp = dispatcher.runSync("finAccountDeposit", depositCtx);
+            depositResp = dispatcher.runSync(x.finAccountDeposit, depositCtx);
         } catch (GenericServiceException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -271,7 +299,7 @@ public class FinAccountProductServices {
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("finAccountId", finAccountId);
+        result.put(x.finAccountId, finAccountId);
         return result;
     }
 }

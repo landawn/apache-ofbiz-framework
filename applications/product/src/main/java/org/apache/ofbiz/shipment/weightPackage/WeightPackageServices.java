@@ -19,6 +19,7 @@
 package org.apache.ofbiz.shipment.weightPackage;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -29,10 +30,13 @@ import org.apache.ofbiz.base.util.UtilProperties;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.OrderItemDao;
+import org.apache.ofbiz.persistence.entity.OrderItemEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
+import com.landawn.abacus.query.Filters;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -56,35 +60,35 @@ public class WeightPackageServices {
         if (UtilValidate.isNotEmpty(packageLength) || UtilValidate.isNotEmpty(packageWidth) || UtilValidate.isNotEmpty(packageHeight)) {
             // Check if user entered any dimensions
             if (UtilValidate.isNotEmpty(shipmentBoxTypeId)) { // check also if user entered shipment box type
-                return ServiceUtil.returnError(UtilProperties.getMessage("ProductErrorUiLabels",
-                        "ProductErrorEnteredBothDimensionAndPackageInputBoxField", locale));
+                return ServiceUtil.returnError(UtilProperties.getMessage(x.ProductErrorUiLabels,
+                        x.ProductErrorEnteredBothDimensionAndPackageInputBoxField, locale));
             } else if (!(UtilValidate.isNotEmpty(packageLength) && UtilValidate.isNotEmpty(packageWidth)
                     && UtilValidate.isNotEmpty(packageHeight))) {
                 // check if user does not enter all the dimensions
-                return ServiceUtil.returnError(UtilProperties.getMessage("ProductErrorUiLabels",
-                        "ProductErrorNotEnteredAllFieldsInDimension", locale));
+                return ServiceUtil.returnError(UtilProperties.getMessage(x.ProductErrorUiLabels,
+                        x.ProductErrorNotEnteredAllFieldsInDimension, locale));
             }
         }
         // Check package weight, it must be greater than ZERO
         if (UtilValidate.isEmpty(packageWeight) || packageWeight.compareTo(BigDecimal.ZERO) <= 0) {
-            return ServiceUtil.returnError(UtilProperties.getMessage("ProductErrorUiLabels", "ProductErrorPackageWeightCannotBeNullOrZero", locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(x.ProductErrorUiLabels, x.ProductErrorPackageWeightCannotBeNullOrZero, locale));
         }
         try {
             // Checked no of packages, it should not be greater than ordered quantity
-            List<GenericValue> orderItems = EntityQuery.use(delegator).from("OrderItem").where("orderId", orderId,
-                    "statusId", "ITEM_APPROVED").queryList();
+            OrderItemDao orderItemDao = DaoRegistry.getDao(delegator, x.OrderItem, OrderItemDao.class);
+            List<OrderItemEntity> orderItems = orderItemDao.list(Filters.and(Filters.eq(x.orderId, orderId), Filters.eq(x.statusId, x.ITEM_APPROVED)));
             BigDecimal orderedItemQty = BigDecimal.ZERO;
-            for (GenericValue orderItem : orderItems) {
-                orderedItemQty = orderedItemQty.add(orderItem.getBigDecimal(x.quantity));
+            for (OrderItemEntity orderItem : orderItems) {
+                orderedItemQty = orderedItemQty.add(orderItem.getQuantity());
             }
             int packageQuantity = weightPackageSession.getPackedLines(orderId).size();
             if ((orderedItemQty.intValue() - packageQuantity) > 0) {
                 weightPackageSession.createWeightPackageLine(orderId, packageWeight, packageLength, packageWidth, packageHeight, shipmentBoxTypeId);
             } else {
-                return ServiceUtil.returnError(UtilProperties.getMessage("ProductErrorUiLabels",
-                        "ProductErrorNumberOfPackageCannotBeGreaterThanTheNumberOfOrderedQuantity", locale));
+                return ServiceUtil.returnError(UtilProperties.getMessage(x.ProductErrorUiLabels,
+                        x.ProductErrorNumberOfPackageCannotBeGreaterThanTheNumberOfOrderedQuantity, locale));
             }
-        } catch (GeneralException e) {
+        } catch (GeneralException | SQLException e) {
             return ServiceUtil.returnError(e.getMessage());
         }
         return ServiceUtil.returnSuccess();
@@ -106,20 +110,20 @@ public class WeightPackageServices {
             // Check if user entered any dimensions
             if (UtilValidate.isNotEmpty(shipmentBoxTypeId)) { // check also if user entered shipment box type
                 weightPackageSession.setDimensionAndShipmentBoxType(weightPackageSeqId);
-                return ServiceUtil.returnError(UtilProperties.getMessage("ProductErrorUiLabels",
-                        "ProductErrorEnteredBothDimensionAndPackageInputBoxField", locale));
+                return ServiceUtil.returnError(UtilProperties.getMessage(x.ProductErrorUiLabels,
+                        x.ProductErrorEnteredBothDimensionAndPackageInputBoxField, locale));
             } else if (!(UtilValidate.isNotEmpty(packageLength) && UtilValidate.isNotEmpty(packageWidth)
                     && UtilValidate.isNotEmpty(packageHeight))) { // check if user does not enter all the dimensions
                 weightPackageSession.setDimensionAndShipmentBoxType(weightPackageSeqId);
-                return ServiceUtil.returnError(UtilProperties.getMessage("ProductErrorUiLabels",
-                        "ProductErrorNotEnteredAllFieldsInDimension", locale));
+                return ServiceUtil.returnError(UtilProperties.getMessage(x.ProductErrorUiLabels,
+                        x.ProductErrorNotEnteredAllFieldsInDimension, locale));
             }
         }
 
         // Check package weight, it must be greater than ZERO
         if (UtilValidate.isEmpty(packageWeight) || packageWeight.compareTo(BigDecimal.ZERO) <= 0) {
-            return ServiceUtil.returnError(UtilProperties.getMessage("ProductErrorUiLabels",
-                    "ProductErrorPackageWeightCannotBeNullOrZero", locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(x.ProductErrorUiLabels,
+                    x.ProductErrorPackageWeightCannotBeNullOrZero, locale));
         }
 
         weightPackageSession.setPackageWeight(packageWeight, weightPackageSeqId);
@@ -165,15 +169,15 @@ public class WeightPackageServices {
 
         Map<String, Object> response = new HashMap<>();
         try {
-            String getActualShippingQuoteFromUps = EntityUtilProperties.getPropertyValue("shipment", "shipment.ups.shipping", "N", delegator);
+            String getActualShippingQuoteFromUps = EntityUtilProperties.getPropertyValue(x.shipment, x.shipment_ups_shipping, x.N, delegator);
             String result = weightPackageSession.complete(orderId, locale, getActualShippingQuoteFromUps);
-            if ("showWarningForm".equals(result)) {
-                response.put("showWarningForm", true);
-            } else if ("success".equals(result)) {
-                response.put("shipmentId", shipmentId);
+            if (x.showWarningForm.equals(result)) {
+                response.put(x.showWarningForm, true);
+            } else if (x.success.equals(result)) {
+                response.put(x.shipmentId, shipmentId);
             } else {
-                response = ServiceUtil.returnError(UtilProperties.getMessage("ProductErrorUiLabels",
-                        "ProductErrorNoItemsCurrentlySetToBeShippedCannotComplete", locale));
+                response = ServiceUtil.returnError(UtilProperties.getMessage(x.ProductErrorUiLabels,
+                        x.ProductErrorNoItemsCurrentlySetToBeShippedCannotComplete, locale));
             }
         } catch (GeneralException e) {
             return ServiceUtil.returnError(e.getMessage(), e.getMessageList());
@@ -191,12 +195,12 @@ public class WeightPackageServices {
 
         Map<String, Object> response = new HashMap<>();
         try {
-            String getActualShippingQuoteFromUps = EntityUtilProperties.getPropertyValue("shipment", "shipment.ups.shipping", "N", delegator);
+            String getActualShippingQuoteFromUps = EntityUtilProperties.getPropertyValue(x.shipment, x.shipment_ups_shipping, x.N, delegator);
             if (weightPackageSession.completeShipment(orderId, getActualShippingQuoteFromUps)) {
-                response.put("shipmentId", shipmentId);
+                response.put(x.shipmentId, shipmentId);
             } else {
-                response = ServiceUtil.returnError(UtilProperties.getMessage("ProductErrorUiLabels",
-                        "ProductErrorNoItemsCurrentlySetToBeShippedCannotComplete", locale));
+                response = ServiceUtil.returnError(UtilProperties.getMessage(x.ProductErrorUiLabels,
+                        x.ProductErrorNoItemsCurrentlySetToBeShippedCannotComplete, locale));
             }
         } catch (GeneralException e) {
             return ServiceUtil.returnError(e.getMessage(), e.getMessageList());
@@ -211,14 +215,15 @@ public class WeightPackageServices {
 
         String orderId = (String) context.get(x.orderId);
 
-        String getActualShippingQuoteFromUps = EntityUtilProperties.getPropertyValue("shipment", "shipment.ups.shipping", "N", delegator);
+        String getActualShippingQuoteFromUps = EntityUtilProperties.getPropertyValue(x.shipment, x.shipment_ups_shipping, x.N, delegator);
         try {
             weightPackageSession.savePackagesInfo(orderId, getActualShippingQuoteFromUps);
         } catch (GeneralException e) {
             return ServiceUtil.returnError(e.getMessage());
         }
 
-        return ServiceUtil.returnSuccess(UtilProperties.getMessage("ProductUiLabels", "FacilityThereIsProblemOccurredInPaymentCapture", locale));
+        return ServiceUtil.returnSuccess(UtilProperties.getMessage(x.ProductUiLabels, x.FacilityThereIsProblemOccurredInPaymentCapture, locale));
     }
 
 }
+

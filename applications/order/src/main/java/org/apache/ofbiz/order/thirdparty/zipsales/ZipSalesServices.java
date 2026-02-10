@@ -43,12 +43,18 @@ import org.apache.ofbiz.datafile.RecordIterator;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.ZipSalesRuleLookupDao;
+import org.apache.ofbiz.persistence.dao.ZipSalesTaxLookupDao;
+import org.apache.ofbiz.persistence.entity.ZipSalesRuleLookupEntity;
+import org.apache.ofbiz.persistence.entity.ZipSalesTaxLookupEntity;
 import org.apache.ofbiz.security.Security;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.util.Beans;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -60,13 +66,13 @@ import org.apache.ofbiz.model.ZipSalesServicesContext;
 public class ZipSalesServices {
 
     private static final String MODULE = ZipSalesServices.class.getName();
-    private static final String RES_ERROR = "OrderErrorUiLabels";
-    private static final String DATA_FILE = "org/apache/ofbiz/order/thirdparty/zipsales/ZipSalesTaxTables.xml";
-    private static final String FLAT_TABLE = "FlatTaxTable";
-    private static final String RULE_TABLE = "FreightRuleTable";
+    private static final String RES_ERROR = x.OrderErrorUiLabels;
+    private static final String DATA_FILE = x.org_apache_ofbiz_order_thirdparty_zipsales_ZipSalesTaxTables_xml;
+    private static final String FLAT_TABLE = x.FlatTaxTable;
+    private static final String RULE_TABLE = x.FreightRuleTable;
 
     // date formatting
-    private static final String DATE_PATTERN = "yyyyMMdd";
+    private static final String DATE_PATTERN = x.yyyyMMdd;
 
     // import table service
     public static Map<String, Object> importFlatTable(DispatchContext dctx, ZipSalesServicesContext context) {
@@ -78,12 +84,12 @@ public class ZipSalesServices {
         Locale locale = (Locale) context.get(x.locale);
 
         // do security check
-        if (!security.hasPermission("SERVICE_INVOKE_ANY", userLogin)) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderYouDoNotHavePermissionToLoadTaxTables", locale));
+        if (!security.hasPermission(x.SERVICE_INVOKE_ANY, userLogin)) {
+            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderYouDoNotHavePermissionToLoadTaxTables, locale));
         }
 
         // get a now stamp (we'll use 2000-01-01)
-        Timestamp now = parseDate("20000101", null);
+        Timestamp now = parseDate(x._20000101, null);
 
         // load the data file
         DataFile tdf = null;
@@ -91,14 +97,14 @@ public class ZipSalesServices {
             tdf = DataFile.makeDataFile(UtilURL.fromResource(DATA_FILE), FLAT_TABLE);
         } catch (DataFileException e) {
             Debug.logError(e, MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderUnableToReadZipSalesDataFile", locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderUnableToReadZipSalesDataFile, locale));
         }
 
         // locate the file to be imported
         URL tUrl = UtilURL.fromResource(taxFileLocation);
         if (tUrl == null) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderUnableToLocateTaxFileAtLocation", UtilMisc.toMap(
-                    "taxFileLocation", taxFileLocation), locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderUnableToLocateTaxFileAtLocation, UtilMisc.toMap(
+                    x.taxFileLocation, taxFileLocation), locale));
         }
 
         RecordIterator tri = null;
@@ -106,7 +112,7 @@ public class ZipSalesServices {
             tri = tdf.makeRecordIterator(tUrl);
         } catch (DataFileException e) {
             Debug.logError(e, MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderProblemGettingTheRecordIterator", locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderProblemGettingTheRecordIterator, locale));
         }
         if (tri != null) {
             while (tri.hasNext()) {
@@ -116,43 +122,43 @@ public class ZipSalesServices {
                 } catch (DataFileException e) {
                     Debug.logError(e, MODULE);
                 }
-                GenericValue newValue = delegator.makeValue("ZipSalesTaxLookup");
+                GenericValue newValue = delegator.makeValue(x.ZipSalesTaxLookup);
                 // PK fields
-                newValue.set(x.zipCode, entry.getString("zipCode").trim());
-                newValue.set(x.stateCode, entry.get("stateCode") != null ? entry.getString("stateCode").trim() : "_NA_");
-                newValue.set(x.city, entry.get("city") != null ? entry.getString("city").trim() : "_NA_");
-                newValue.set(x.county, entry.get("county") != null ? entry.getString("county").trim() : "_NA_");
-                newValue.set(x.fromDate, parseDate(entry.getString("effectiveDate"), now));
+                newValue.set(x.zipCode, entry.getString(x.zipCode).trim());
+                newValue.set(x.stateCode, entry.get(x.stateCode) != null ? entry.getString(x.stateCode).trim() : x.NA);
+                newValue.set(x.city, entry.get(x.city) != null ? entry.getString(x.city).trim() : x.NA);
+                newValue.set(x.county, entry.get(x.county) != null ? entry.getString(x.county).trim() : x.NA);
+                newValue.set(x.fromDate, parseDate(entry.getString(x.effectiveDate), now));
 
                 // non-PK fields
-                newValue.set(x.countyFips, entry.get("countyFips"));
-                newValue.set(x.countyDefault, entry.get("countyDefault"));
-                newValue.set(x.generalDefault, entry.get("generalDefault"));
-                newValue.set(x.insideCity, entry.get("insideCity"));
-                newValue.set(x.geoCode, entry.get("geoCode"));
-                newValue.set(x.stateSalesTax, entry.get("stateSalesTax"));
-                newValue.set(x.citySalesTax, entry.get("citySalesTax"));
-                newValue.set(x.cityLocalSalesTax, entry.get("cityLocalSalesTax"));
-                newValue.set(x.countySalesTax, entry.get("countySalesTax"));
-                newValue.set(x.countyLocalSalesTax, entry.get("countyLocalSalesTax"));
-                newValue.set(x.comboSalesTax, entry.get("comboSalesTax"));
-                newValue.set(x.stateUseTax, entry.get("stateUseTax"));
-                newValue.set(x.cityUseTax, entry.get("cityUseTax"));
-                newValue.set(x.cityLocalUseTax, entry.get("cityLocalUseTax"));
-                newValue.set(x.countyUseTax, entry.get("countyUseTax"));
-                newValue.set(x.countyLocalUseTax, entry.get("countyLocalUseTax"));
-                newValue.set(x.comboUseTax, entry.get("comboUseTax"));
+                newValue.set(x.countyFips, entry.get(x.countyFips));
+                newValue.set(x.countyDefault, entry.get(x.countyDefault));
+                newValue.set(x.generalDefault, entry.get(x.generalDefault));
+                newValue.set(x.insideCity, entry.get(x.insideCity));
+                newValue.set(x.geoCode, entry.get(x.geoCode));
+                newValue.set(x.stateSalesTax, entry.get(x.stateSalesTax));
+                newValue.set(x.citySalesTax, entry.get(x.citySalesTax));
+                newValue.set(x.cityLocalSalesTax, entry.get(x.cityLocalSalesTax));
+                newValue.set(x.countySalesTax, entry.get(x.countySalesTax));
+                newValue.set(x.countyLocalSalesTax, entry.get(x.countyLocalSalesTax));
+                newValue.set(x.comboSalesTax, entry.get(x.comboSalesTax));
+                newValue.set(x.stateUseTax, entry.get(x.stateUseTax));
+                newValue.set(x.cityUseTax, entry.get(x.cityUseTax));
+                newValue.set(x.cityLocalUseTax, entry.get(x.cityLocalUseTax));
+                newValue.set(x.countyUseTax, entry.get(x.countyUseTax));
+                newValue.set(x.countyLocalUseTax, entry.get(x.countyLocalUseTax));
+                newValue.set(x.comboUseTax, entry.get(x.comboUseTax));
 
                 try {
                     delegator.createOrStore(newValue);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
-                    return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderErrorWritingRecordsToTheDatabase", locale));
+                    return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderErrorWritingRecordsToTheDatabase, locale));
                 }
 
                 // console log
-                Debug.logInfo(newValue.get(x.zipCode) + "/" + newValue.get(x.stateCode) + "/" + newValue.get(x.city) + "/"
-                        + newValue.get(x.county) + "/" + newValue.get(x.fromDate), MODULE);
+                Debug.logInfo(newValue.get(x.zipCode) + x.str_42099b4a + newValue.get(x.stateCode) + x.str_42099b4a + newValue.get(x.city) + x.str_42099b4a
+                        + newValue.get(x.county) + x.str_42099b4a + newValue.get(x.fromDate), MODULE);
             }
         }
 
@@ -162,14 +168,14 @@ public class ZipSalesServices {
             rdf = DataFile.makeDataFile(UtilURL.fromResource(DATA_FILE), RULE_TABLE);
         } catch (DataFileException e) {
             Debug.logError(e, MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderUnableToReadZipSalesDataFile", locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderUnableToReadZipSalesDataFile, locale));
         }
 
         // locate the file to be imported
         URL rUrl = UtilURL.fromResource(ruleFileLocation);
         if (rUrl == null) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderUnableToLocateRuleFileFromLocation", UtilMisc.toMap(
-                    "ruleFileLocation", ruleFileLocation), locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderUnableToLocateRuleFileFromLocation, UtilMisc.toMap(
+                    x.ruleFileLocation, ruleFileLocation), locale));
         }
 
         RecordIterator rri = null;
@@ -177,7 +183,7 @@ public class ZipSalesServices {
             rri = rdf.makeRecordIterator(rUrl);
         } catch (DataFileException e) {
             Debug.logError(e, MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderProblemGettingTheRecordIterator", locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderProblemGettingTheRecordIterator, locale));
         }
         if (rri != null) {
             while (rri.hasNext()) {
@@ -187,29 +193,29 @@ public class ZipSalesServices {
                 } catch (DataFileException e) {
                     Debug.logError(e, MODULE);
                 }
-                if (UtilValidate.isNotEmpty(entry.getString("stateCode"))) {
-                    GenericValue newValue = delegator.makeValue("ZipSalesRuleLookup");
+                if (UtilValidate.isNotEmpty(entry.getString(x.stateCode))) {
+                    GenericValue newValue = delegator.makeValue(x.ZipSalesRuleLookup);
                     // PK fields
-                    newValue.set(x.stateCode, entry.get("stateCode") != null ? entry.getString("stateCode").trim() : "_NA_");
-                    newValue.set(x.city, entry.get("city") != null ? entry.getString("city").trim() : "_NA_");
-                    newValue.set(x.county, entry.get("county") != null ? entry.getString("county").trim() : "_NA_");
-                    newValue.set(x.fromDate, parseDate(entry.getString("effectiveDate"), now));
+                    newValue.set(x.stateCode, entry.get(x.stateCode) != null ? entry.getString(x.stateCode).trim() : x.NA);
+                    newValue.set(x.city, entry.get(x.city) != null ? entry.getString(x.city).trim() : x.NA);
+                    newValue.set(x.county, entry.get(x.county) != null ? entry.getString(x.county).trim() : x.NA);
+                    newValue.set(x.fromDate, parseDate(entry.getString(x.effectiveDate), now));
 
                     // non-PK fields
-                    newValue.set(x.idCode, entry.get("idCode") != null ? entry.getString("idCode").trim() : null);
-                    newValue.set(x.taxable, entry.get("taxable") != null ? entry.getString("taxable").trim() : null);
-                    newValue.set(x.shipCond, entry.get("shipCond") != null ? entry.getString("shipCond").trim() : null);
+                    newValue.set(x.idCode, entry.get(x.idCode) != null ? entry.getString(x.idCode).trim() : null);
+                    newValue.set(x.taxable, entry.get(x.taxable) != null ? entry.getString(x.taxable).trim() : null);
+                    newValue.set(x.shipCond, entry.get(x.shipCond) != null ? entry.getString(x.shipCond).trim() : null);
 
                     try {
                         // using storeAll as an easy way to create/update
                         delegator.storeAll(UtilMisc.toList(newValue));
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
-                        return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderErrorWritingRecordsToTheDatabase", locale));
+                        return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderErrorWritingRecordsToTheDatabase, locale));
                     }
 
                     // console log
-                    Debug.logInfo(newValue.get(x.stateCode) + "/" + newValue.get(x.city) + "/" + newValue.get(x.county) + "/" + newValue.get(
+                    Debug.logInfo(newValue.get(x.stateCode) + x.str_42099b4a + newValue.get(x.city) + x.str_42099b4a + newValue.get(x.county) + x.str_42099b4a + newValue.get(
                             x.fromDate), MODULE);
                 }
             }
@@ -237,13 +243,13 @@ public class ZipSalesServices {
         List<List<GenericValue>> itemAdjustments = new LinkedList<>();
 
         // check for a valid state/province geo
-        String validStates = EntityUtilProperties.getPropertyValue("zipsales", "zipsales.valid.states", delegator);
+        String validStates = EntityUtilProperties.getPropertyValue(x.zipsales, x.zipsales_valid_states, delegator);
         if (UtilValidate.isNotEmpty(validStates)) {
-            List<String> stateSplit = StringUtil.split(validStates, "|");
+            List<String> stateSplit = StringUtil.split(validStates, x.str_3eb41622);
             if (!stateSplit.contains(stateProvince)) {
                 Map<String, Object> result = ServiceUtil.returnSuccess();
-                result.put("orderAdjustments", orderAdjustments);
-                result.put("itemAdjustments", itemAdjustments);
+                result.put(x.orderAdjustments, orderAdjustments);
+                result.put(x.itemAdjustments, itemAdjustments);
                 return result;
             }
         }
@@ -265,8 +271,8 @@ public class ZipSalesServices {
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("orderAdjustments", orderAdjustments);
-        result.put("itemAdjustments", itemAdjustments);
+        result.put(x.orderAdjustments, orderAdjustments);
+        result.put(x.itemAdjustments, itemAdjustments);
         return result;
     }
 
@@ -275,16 +281,24 @@ public class ZipSalesServices {
         List<GenericValue> adjustments = new LinkedList<>();
 
         // check the item for tax status
-        if (item != null && item.get(x.taxable) != null && "N".equals(item.getString(x.taxable))) {
+        if (item != null && item.get(x.taxable) != null && x.N.equals(item.getString(x.taxable))) {
             // item not taxable
             return adjustments;
         }
 
         // lookup the records
-        List<GenericValue> zipLookup =
-                EntityQuery.use(delegator).from("ZipSalesTaxLookup").where("zipCode", zipCode).orderBy("-fromDate").queryList();
+        List<GenericValue> zipLookup = new LinkedList<>();
+        try {
+            ZipSalesTaxLookupDao zipSalesTaxLookupDao = DaoRegistry.getDao(delegator, x.ZipSalesTaxLookup, ZipSalesTaxLookupDao.class);
+            for (ZipSalesTaxLookupEntity zipSalesTaxLookupEntity : zipSalesTaxLookupDao.list(Filters.eq(x.zipCode, zipCode))) {
+                zipLookup.add(delegator.makeValue(x.ZipSalesTaxLookup, Beans.beanToMap(zipSalesTaxLookupEntity)));
+            }
+            zipLookup = EntityUtil.orderBy(zipLookup, UtilMisc.toList(x.fromDate_f5440273));
+        } catch (Exception e) {
+            throw new GeneralException(e);
+        }
         if (UtilValidate.isEmpty(zipLookup)) {
-            throw new GeneralException("The zip code entered is not valid.");
+            throw new GeneralException(x.The_zip_code_entered_is_not_valid);
         }
 
         // the filtered list
@@ -294,11 +308,11 @@ public class ZipSalesServices {
         // only do filtering if there are more then one zip code found
         if (zipLookup != null && zipLookup.size() > 1) {
             // first filter by city
-            List<GenericValue> cityLookup = EntityUtil.filterByAnd(zipLookup, UtilMisc.toMap("city", city.toUpperCase()));
+            List<GenericValue> cityLookup = EntityUtil.filterByAnd(zipLookup, UtilMisc.toMap(x.city, city.toUpperCase()));
             if (UtilValidate.isNotEmpty(cityLookup)) {
                 if (cityLookup.size() > 1) {
                     // filter by county
-                    List<GenericValue> countyLookup = EntityUtil.filterByAnd(taxLookup, UtilMisc.toMap("countyDefault", "Y"));
+                    List<GenericValue> countyLookup = EntityUtil.filterByAnd(taxLookup, UtilMisc.toMap(x.countyDefault, x.Y));
                     if (UtilValidate.isNotEmpty(countyLookup)) {
                         // use the county default
                         taxLookup = countyLookup;
@@ -312,7 +326,7 @@ public class ZipSalesServices {
                 }
             } else {
                 // no city found; lookup default city
-                List<GenericValue> defaultLookup = EntityUtil.filterByAnd(zipLookup, UtilMisc.toMap("generalDefault", "Y"));
+                List<GenericValue> defaultLookup = EntityUtil.filterByAnd(zipLookup, UtilMisc.toMap(x.generalDefault, x.Y));
                 if (UtilValidate.isNotEmpty(defaultLookup)) {
                     // use the default city lookup
                     taxLookup = defaultLookup;
@@ -333,18 +347,18 @@ public class ZipSalesServices {
         }
 
         if (taxEntry == null) {
-            Debug.logWarning("No tax entry found for : " + zipCode + " / " + city + " - " + itemAmount, MODULE);
+            Debug.logWarning(x.No_tax_entry_found_for + zipCode + x.str_0d0c4ddd + city + x.str_fc02e199 + itemAmount, MODULE);
             return adjustments;
         }
 
-        String fieldName = "comboSalesTax";
+        String fieldName = x.comboSalesTax;
         if (isUseTax) {
-            fieldName = "comboUseTax";
+            fieldName = x.comboUseTax;
         }
 
         BigDecimal comboTaxRate = taxEntry.getBigDecimal(fieldName);
         if (comboTaxRate == null) {
-            Debug.logWarning("No Combo Tax Rate In Field " + fieldName + " @ " + zipCode + " / " + city + " - " + itemAmount, MODULE);
+            Debug.logWarning(x.No_Combo_Tax_Rate_In_Field + fieldName + x.str_8dc29a72 + zipCode + x.str_0d0c4ddd + city + x.str_fc02e199 + itemAmount, MODULE);
             return adjustments;
         }
 
@@ -357,14 +371,19 @@ public class ZipSalesServices {
         // look up the rules
         List<GenericValue> ruleLookup = null;
         try {
-            ruleLookup = EntityQuery.use(delegator).from("ZipSalesRuleLookup").where("stateCode", stateCode).orderBy("-fromDate").queryList();
-        } catch (GenericEntityException e) {
+            ruleLookup = new LinkedList<>();
+            ZipSalesRuleLookupDao zipSalesRuleLookupDao = DaoRegistry.getDao(delegator, x.ZipSalesRuleLookup, ZipSalesRuleLookupDao.class);
+            for (ZipSalesRuleLookupEntity zipSalesRuleLookupEntity : zipSalesRuleLookupDao.list(Filters.eq(x.stateCode, stateCode))) {
+                ruleLookup.add(delegator.makeValue(x.ZipSalesRuleLookup, Beans.beanToMap(zipSalesRuleLookupEntity)));
+            }
+            ruleLookup = EntityUtil.orderBy(ruleLookup, UtilMisc.toList(x.fromDate_f5440273));
+        } catch (Exception e) {
             Debug.logError(e, MODULE);
         }
 
         // filter out city
         if (ruleLookup != null && ruleLookup.size() > 1) {
-            ruleLookup = EntityUtil.filterByAnd(ruleLookup, UtilMisc.toMap("city", city.toUpperCase()));
+            ruleLookup = EntityUtil.filterByAnd(ruleLookup, UtilMisc.toMap(x.city, city.toUpperCase()));
         }
 
         // no county captured; so filter by date
@@ -381,7 +400,7 @@ public class ZipSalesServices {
                 String idCode = rule.getString(x.idCode);
                 String taxable = rule.getString(x.taxable);
                 String condition = rule.getString(x.shipCond);
-                if ("T".equals(taxable)) {
+                if (x.T.equals(taxable)) {
                     // this record is taxable
                     continue;
                 } else {
@@ -481,15 +500,15 @@ public class ZipSalesServices {
             //Debug.logInfo("Taxing shipping", MODULE);
             taxableAmount = taxableAmount.add(shippingAmount);
         } else {
-            Debug.logInfo("Shipping is not taxable", MODULE);
+            Debug.logInfo(x.Shipping_is_not_taxable, MODULE);
         }
 
         // calc tax amount
         BigDecimal taxRate = comboTaxRate;
         BigDecimal taxCalc = taxableAmount.multiply(taxRate);
 
-        adjustments.add(delegator.makeValue("OrderAdjustment", UtilMisc.toMap("amount", taxCalc, "orderAdjustmentTypeId", "SALES_TAX", "comments",
-                taxRate, "description", "Sales Tax (" + stateCode + ")")));
+        adjustments.add(delegator.makeValue(x.OrderAdjustment, UtilMisc.toMap(x.amount, taxCalc, x.orderAdjustmentTypeId, x.SALES_TAX, x.comments,
+                taxRate, x.description, x.Sales_Tax + stateCode + x.str_e7064f0b)));
 
         return adjustments;
     }

@@ -105,7 +105,7 @@ import org.apache.ofbiz.model.NotificationServicesContext;
 public class NotificationServices {
 
     private static final String MODULE = NotificationServices.class.getName();
-    private static final String RESOURCE = "CommonUiLabels";
+    private static final String RESOURCE = x.CommonUiLabels;
 
     /**
      * This will use the {@link #prepareNotification(DispatchContext, Map) prepareNotification(DispatchContext, Map)}
@@ -138,10 +138,10 @@ public class NotificationServices {
 
                 // ensure the body was generated successfully
                 if (bodyResult.get(ModelService.RESPONSE_MESSAGE).equals(ModelService.RESPOND_SUCCESS)) {
-                    body = (String) bodyResult.get("body");
+                    body = (String) bodyResult.get(x.body);
                 } else {
                     // otherwise just report the error
-                    Debug.logError("prepareNotification failed: " + bodyResult.get(ModelService.ERROR_MESSAGE), MODULE);
+                    Debug.logError(x.prepareNotification_failed + bodyResult.get(ModelService.ERROR_MESSAGE), MODULE);
                 }
             }
 
@@ -149,25 +149,25 @@ public class NotificationServices {
             if (body != null) {
                 // retain only the required attributes for the sendMail service
                 Map<String, Object> emailContext = new LinkedHashMap<>();
-                emailContext.put("sendTo", context.get(x.sendTo));
-                emailContext.put("body", body);
-                emailContext.put("sendCc", context.get(x.sendCc));
-                emailContext.put("sendBcc", context.get(x.sendBcc));
-                emailContext.put("sendFrom", context.get(x.sendFrom));
-                emailContext.put("subject", context.get(x.subject));
-                emailContext.put("sendVia", context.get(x.sendVia));
-                emailContext.put("sendType", context.get(x.sendType));
-                emailContext.put("contentType", context.get(x.contentType));
+                emailContext.put(x.sendTo, context.get(x.sendTo));
+                emailContext.put(x.body, body);
+                emailContext.put(x.sendCc, context.get(x.sendCc));
+                emailContext.put(x.sendBcc, context.get(x.sendBcc));
+                emailContext.put(x.sendFrom, context.get(x.sendFrom));
+                emailContext.put(x.subject, context.get(x.subject));
+                emailContext.put(x.sendVia, context.get(x.sendVia));
+                emailContext.put(x.sendType, context.get(x.sendType));
+                emailContext.put(x.contentType, context.get(x.contentType));
 
                 // pass on to the sendMail service
-                result = dispatcher.runSync("sendMail", emailContext);
+                result = dispatcher.runSync(x.sendMail, emailContext);
             } else {
-                Debug.logError("Invalid email body; null is not allowed", MODULE);
-                result = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonNotifyEmailInvalidBody", locale));
+                Debug.logError(x.Invalid_email_body_null_is_not_allowed, MODULE);
+                result = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonNotifyEmailInvalidBody, locale));
             }
         } catch (GenericServiceException serviceException) {
-            Debug.logError(serviceException, "Error sending email", MODULE);
-            result = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonNotifyEmailDeliveryError", locale));
+            Debug.logError(serviceException, x.Error_sending_email, MODULE);
+            result = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonNotifyEmailDeliveryError, locale));
         }
 
         return result;
@@ -197,8 +197,8 @@ public class NotificationServices {
         if (templateData == null) {
             templateData = new LinkedHashMap<>();
         }
-        templateData.put("delegator", delegator);
-        templateData.put("dispatcher", ctx.getDispatcher());
+        templateData.put(x.delegator, delegator);
+        templateData.put(x.dispatcher, ctx.getDispatcher());
 
         try {
             // ensure the baseURl is defined
@@ -208,8 +208,8 @@ public class NotificationServices {
             URL templateUrl = FlexibleLocation.resolveLocation(templateName);
 
             if (templateUrl == null) {
-                Debug.logError("Problem getting the template URL: " + templateName + " not found", MODULE);
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonNotifyEmailProblemFindingTemplate", locale));
+                Debug.logError(x.Problem_getting_the_template_URL + templateName + x.not_found_889b5f77, MODULE);
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonNotifyEmailProblemFindingTemplate, locale));
             }
 
             // process the template with the given data and write
@@ -221,14 +221,14 @@ public class NotificationServices {
             String notificationBody = writer.toString();
 
             // generate the successful response
-            result = ServiceUtil.returnSuccess(UtilProperties.getMessage(RESOURCE, "CommonNotifyEmailMessageBodyGeneratedSuccessfully", locale));
-            result.put("body", notificationBody);
+            result = ServiceUtil.returnSuccess(UtilProperties.getMessage(RESOURCE, x.CommonNotifyEmailMessageBodyGeneratedSuccessfully, locale));
+            result.put(x.body, notificationBody);
         } catch (IOException ie) {
-            Debug.logError(ie, "Problems reading template", MODULE);
-            result = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonNotifyEmailProblemReadingTemplate", locale));
+            Debug.logError(ie, x.Problems_reading_template, MODULE);
+            result = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonNotifyEmailProblemReadingTemplate, locale));
         } catch (TemplateException te) {
-            Debug.logError(te, "Problems processing template", MODULE);
-            result = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonNotifyEmailProblemProcessingTemplate", locale));
+            Debug.logError(te, x.Problems_processing_template, MODULE);
+            result = ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonNotifyEmailProblemProcessingTemplate, locale));
         }
 
         return result;
@@ -256,7 +256,7 @@ public class NotificationServices {
      */
     public static void setBaseUrl(Delegator delegator, String webSiteId, Map<String, Object> templateData) {
         // If the baseUrl was not specified we can do a best effort instead
-        if (!templateData.containsKey("baseUrl")) {
+        if (!templateData.containsKey(x.baseUrl)) {
             try {
                 WebappInfo webAppInfo = null;
                 if (webSiteId != null) {
@@ -264,13 +264,13 @@ public class NotificationServices {
                 }
                 OfbizUrlBuilder builder = OfbizUrlBuilder.from(webAppInfo, delegator);
                 StringBuilder newURL = new StringBuilder();
-                builder.buildHostPart(newURL, "", false);
+                builder.buildHostPart(newURL, x.emptyString, false);
                 templateData.put(x.baseUrl, newURL.toString());
                 newURL = new StringBuilder();
-                builder.buildHostPart(newURL, "", true);
+                builder.buildHostPart(newURL, x.emptyString, true);
                 templateData.put(x.baseSecureUrl, newURL.toString());
             } catch (Exception e) {
-                Debug.logWarning(e, "Exception thrown while adding baseUrl to context: ", MODULE);
+                Debug.logWarning(e, x.Exception_thrown_while_adding_baseUrl_to_context, MODULE);
             }
         }
     }

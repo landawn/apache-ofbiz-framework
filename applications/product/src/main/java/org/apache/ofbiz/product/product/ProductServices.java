@@ -54,18 +54,30 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityJoinOperator;
 import org.apache.ofbiz.entity.condition.EntityOperator;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
 import org.apache.ofbiz.product.catalog.CatalogWorker;
 import org.apache.ofbiz.product.category.CategoryWorker;
 import org.apache.ofbiz.product.image.ScaleImage;
+import org.apache.ofbiz.persistence.dao.ContentDao;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.FileExtensionDao;
+import org.apache.ofbiz.persistence.dao.GoodIdentificationDao;
+import org.apache.ofbiz.persistence.dao.InventoryItemDao;
+import org.apache.ofbiz.persistence.dao.ProductAssocDao;
+import org.apache.ofbiz.persistence.dao.ProductContentTypeDao;
+import org.apache.ofbiz.persistence.dao.ProductDao;
+import org.apache.ofbiz.persistence.dao.ProductFeatureApplDao;
+import org.apache.ofbiz.persistence.dao.ProductFeatureDao;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.jdom2.JDOMException;
+
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.util.Beans;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -77,15 +89,15 @@ import org.apache.ofbiz.model.ProductServicesContext;
 public class ProductServices {
 
     private static final String MODULE = ProductServices.class.getName();
-    private static final String RESOURCE = "ProductUiLabels";
-    private static final String RES_ERROR = "ProductErrorUiLabels";
+    private static final String RESOURCE = x.ProductUiLabels;
+    private static final String RES_ERROR = x.ProductErrorUiLabels;
 
     /**
      * Creates a Collection of product entities which are variant products from the specified product ID.
      */
     public static Map<String, Object> prodFindAllVariants(DispatchContext dctx, ProductServicesContext context) {
         ProductServicesContext subContext = new ProductServicesContext(UtilMisc.makeMapWritable(context));
-        subContext.put("type", "PRODUCT_VARIANT");
+        subContext.put(x.type, x.PRODUCT_VARIANT);
         return prodFindAssociatedByType(dctx, subContext);
     }
 
@@ -94,19 +106,20 @@ public class ProductServices {
      */
     public static Map<String, Object> prodFindSelectedVariant(DispatchContext dctx, ProductServicesContext context) {
         Delegator delegator = dctx.getDelegator();
+        ProductDao productDao = DaoRegistry.getDao(delegator, x.Product, ProductDao.class);
         Locale locale = (Locale) context.get(x.locale);
         Map<String, String> selectedFeatures = UtilGenerics.cast(context.get(x.selectedFeatures));
         List<GenericValue> products = new LinkedList<>();
         // All the variants for this products are retrieved
         Map<String, Object> resVariants = prodFindAllVariants(dctx, context);
-        List<GenericValue> variants = UtilGenerics.cast(resVariants.get("assocProducts"));
+        List<GenericValue> variants = UtilGenerics.cast(resVariants.get(x.assocProducts));
         for (GenericValue oneVariant: variants) {
             // For every variant, all the standard features are retrieved
             ProductServicesContext feaContext = new ProductServicesContext();
-            feaContext.put("productId", oneVariant.getString(x.productIdTo));
-            feaContext.put("type", "STANDARD_FEATURE");
+            feaContext.put(x.productId, oneVariant.getString(x.productIdTo));
+            feaContext.put(x.type, x.STANDARD_FEATURE);
             Map<String, Object> resFeatures = prodGetFeatures(dctx, feaContext);
-            List<GenericValue> features = UtilGenerics.cast(resFeatures.get("productFeatures"));
+            List<GenericValue> features = UtilGenerics.cast(resFeatures.get(x.productFeatures));
             boolean variantFound = true;
             // The variant is discarded if at least one of its standard features
             // has the same type of one of the selected features but a different feature id.
@@ -126,10 +139,11 @@ public class ProductServices {
             }
             if (variantFound) {
                 try {
-                    products.add(EntityQuery.use(delegator).from("Product").where("productId", oneVariant.getString(x.productIdTo)).queryOne());
+                    products.add(productDao.findOneByWhere(delegator, x.Product, UtilMisc.toMap(x.productId,
+                            oneVariant.getString(x.productIdTo)), null, null, false));
                 } catch (GenericEntityException e) {
-                    Map<String, String> messageMap = UtilMisc.toMap("errProductFeatures", e.toString());
-                    String errMsg = UtilProperties.getMessage(RES_ERROR, "productservices.problem_reading_product_features_errors",
+                    Map<String, String> messageMap = UtilMisc.toMap(x.errProductFeatures, e.toString());
+                    String errMsg = UtilProperties.getMessage(RES_ERROR, x.productservices_problem_reading_product_features_errors,
                             messageMap, locale);
                     Debug.logError(e, errMsg, MODULE);
                     return ServiceUtil.returnError(errMsg);
@@ -138,7 +152,7 @@ public class ProductServices {
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("products", products);
+        result.put(x.products, products);
         return result;
     }
 
@@ -147,36 +161,37 @@ public class ProductServices {
      */
     public static Map<String, Object> prodFindFeatureTypes(DispatchContext dctx, ProductServicesContext context) {
         Delegator delegator = dctx.getDelegator();
+        ProductFeatureApplDao productFeatureApplDao = DaoRegistry.getDao(delegator, x.ProductFeatureAppl, ProductFeatureApplDao.class);
         String productId = (String) context.get(x.productId);
         String productFeatureApplTypeId = (String) context.get(x.productFeatureApplTypeId);
         if (UtilValidate.isEmpty(productFeatureApplTypeId)) {
-            productFeatureApplTypeId = "SELECTABLE_FEATURE";
+            productFeatureApplTypeId = x.SELECTABLE_FEATURE;
         }
         Locale locale = (Locale) context.get(x.locale);
         String errMsg = null;
         Set<String> featureSet = new LinkedHashSet<>();
 
         try {
-            List<GenericValue> features = EntityQuery.use(delegator).from("ProductFeatureAndAppl")
-                    .where("productId", productId, "productFeatureApplTypeId", productFeatureApplTypeId).orderBy("sequenceNum",
-                            "productFeatureTypeId").cache(true).filterByDate().queryList();
+            List<GenericValue> features = productFeatureApplDao.findListByWhere(delegator, x.ProductFeatureAndAppl,
+                    UtilMisc.toMap(x.productId, productId, x.productFeatureApplTypeId, productFeatureApplTypeId), null,
+                    UtilMisc.toList(x.sequenceNum, x.productFeatureTypeId), true, true);
             for (GenericValue v: features) {
                 featureSet.add(v.getString(x.productFeatureTypeId));
             }
         } catch (GenericEntityException e) {
-            Map<String, String> messageMap = UtilMisc.toMap("errProductFeatures", e.toString());
-            errMsg = UtilProperties.getMessage(RES_ERROR, "productservices.problem_reading_product_features_errors", messageMap, locale);
+            Map<String, String> messageMap = UtilMisc.toMap(x.errProductFeatures, e.toString());
+            errMsg = UtilProperties.getMessage(RES_ERROR, x.productservices_problem_reading_product_features_errors, messageMap, locale);
             Debug.logError(e, errMsg, MODULE);
             return ServiceUtil.returnError(errMsg);
         }
 
         if (featureSet.isEmpty()) {
-            errMsg = UtilProperties.getMessage(RES_ERROR, "productservices.problem_reading_product_features", locale);
+            errMsg = UtilProperties.getMessage(RES_ERROR, x.productservices_problem_reading_product_features, locale);
             // ToDo DO 2004-02-23 Where should the errMsg go?
-            Debug.logWarning(errMsg + " for product " + productId, MODULE);
+            Debug.logWarning(errMsg + x.for_product_7d3f59a7 + productId, MODULE);
         }
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("featureSet", featureSet);
+        result.put(x.featureSet, featureSet);
         return result;
     }
 
@@ -188,16 +203,18 @@ public class ProductServices {
         Locale locale = (Locale) context.get(x.locale);
 
         Delegator delegator = dctx.getDelegator();
+        ProductDao productDao = DaoRegistry.getDao(delegator, x.Product, ProductDao.class);
+        ProductFeatureApplDao productFeatureApplDao = DaoRegistry.getDao(delegator, x.ProductFeatureAppl, ProductFeatureApplDao.class);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Map<String, Object> result = new HashMap<>();
         List<String> featureOrder = UtilMisc.makeListWritable(UtilGenerics.cast(context.get(x.featureOrder)));
 
         if (UtilValidate.isEmpty(featureOrder)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "ProductFeatureTreeCannotFindFeaturesList", locale));
+                    x.ProductFeatureTreeCannotFindFeaturesList, locale));
         }
 
-        List<GenericValue> variants = UtilGenerics.cast(prodFindAllVariants(dctx, context).get("assocProducts"));
+        List<GenericValue> variants = UtilGenerics.cast(prodFindAllVariants(dctx, context).get(x.assocProducts));
         List<String> virtualVariant = new LinkedList<>();
 
         if (UtilValidate.isEmpty(variants)) {
@@ -213,15 +230,15 @@ public class ProductServices {
             GenericValue productTo = null;
 
             try {
-                productTo = EntityQuery.use(delegator).from("Product").where("productId", productIdTo).cache().queryOne();
+                productTo = productDao.findOneByWhere(delegator, x.Product, UtilMisc.toMap(x.productId, productIdTo), null, null, true);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
-                Map<String, String> messageMap = UtilMisc.toMap("productIdTo", productIdTo, "errMessage", e.toString());
+                Map<String, String> messageMap = UtilMisc.toMap(x.productIdTo, productIdTo, x.errMessage, e.toString());
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "productservices.error_finding_associated_variant_with_ID_error", messageMap, locale));
+                        x.productservices_error_finding_associated_variant_with_ID_error, messageMap, locale));
             }
             if (productTo == null) {
-                Debug.logWarning("Could not find associated variant with ID " + productIdTo + ", not showing in list", MODULE);
+                Debug.logWarning(x.Could_not_find_associated_variant_with_ID + productIdTo + x.not_showing_in_list, MODULE);
                 continue;
             }
 
@@ -230,9 +247,9 @@ public class ProductServices {
             // check to see if introductionDate hasn't passed yet
             if (productTo.get(x.introductionDate) != null && nowTimestamp.before(productTo.getTimestamp(x.introductionDate))) {
                 if (Debug.verboseOn()) {
-                    String excMsg = "Tried to view the Product " + productTo.getString(x.productName)
-                            + " (productId: " + productTo.getString(x.productId)
-                            + ") as a variant. This product has not yet been made available for sale, so not adding for view.";
+                    String excMsg = x.Tried_to_view_the_Product + productTo.getString(x.productName)
+                            + x.productId_95683b06 + productTo.getString(x.productId)
+                            + x.as_a_variant_This_product_has_not_yet_been_made_available_for_sale_so_not_adding_for_view;
 
                     Debug.logVerbose(excMsg, MODULE);
                 }
@@ -242,9 +259,9 @@ public class ProductServices {
             // check to see if salesDiscontinuationDate has passed
             if (productTo.get(x.salesDiscontinuationDate) != null && nowTimestamp.after(productTo.getTimestamp(x.salesDiscontinuationDate))) {
                 if (Debug.verboseOn()) {
-                    String excMsg = "Tried to view the Product " + productTo.getString(x.productName)
-                            + " (productId: " + productTo.getString(x.productId)
-                            + ") as a variant. This product is no longer available for sale, so not adding for view.";
+                    String excMsg = x.Tried_to_view_the_Product + productTo.getString(x.productName)
+                            + x.productId_95683b06 + productTo.getString(x.productId)
+                            + x.as_a_variant_This_product_is_no_longer_available_for_sale_so_not_adding_for_view;
 
                     Debug.logVerbose(excMsg, MODULE);
                 }
@@ -255,14 +272,14 @@ public class ProductServices {
             Boolean checkInventory = (Boolean) context.get(x.checkInventory);
             try {
                 if (checkInventory) {
-                    Map<String, Object> invReqResult = dispatcher.runSync("isStoreInventoryAvailableOrNotRequired",
-                            UtilMisc.<String, Object>toMap("productStoreId", productStoreId, "productId", productIdTo, "quantity", BigDecimal.ONE));
+                    Map<String, Object> invReqResult = dispatcher.runSync(x.isStoreInventoryAvailableOrNotRequired,
+                            UtilMisc.<String, Object>toMap(x.productStoreId, productStoreId, x.productId, productIdTo, x.quantity, BigDecimal.ONE));
                     if (ServiceUtil.isError(invReqResult)) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                                "ProductFeatureTreeCannotCallIsStoreInventoryRequired", locale), null, null, invReqResult);
-                    } else if ("Y".equals(invReqResult.get("availableOrNotRequired"))) {
+                                x.ProductFeatureTreeCannotCallIsStoreInventoryRequired, locale), null, null, invReqResult);
+                    } else if (x.Y.equals(invReqResult.get(x.availableOrNotRequired))) {
                         items.add(productIdTo);
-                        if (productTo.getString(x.isVirtual) != null && "Y".equals(productTo.getString(x.isVirtual))) {
+                        if (productTo.getString(x.isVirtual) != null && x.Y.equals(productTo.getString(x.isVirtual))) {
                             virtualVariant.add(productIdTo);
                         }
                     } else {
@@ -270,14 +287,14 @@ public class ProductServices {
                     }
                 } else {
                     items.add(productIdTo);
-                    if (productTo.getString(x.isVirtual) != null && "Y".equals(productTo.getString(x.isVirtual))) {
+                    if (productTo.getString(x.isVirtual) != null && x.Y.equals(productTo.getString(x.isVirtual))) {
                         virtualVariant.add(productIdTo);
                     }
                 }
             } catch (GenericServiceException e) {
-                Debug.logError(e, "Error calling the isStoreInventoryRequired when building the variant product tree: " + e.toString(), MODULE);
+                Debug.logError(e, x.Error_calling_the_isStoreInventoryRequired_when_building_the_variant_product_tree + e.toString(), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                        "ProductFeatureTreeCannotCallIsStoreInventoryRequired", locale));
+                        x.ProductFeatureTreeCannotCallIsStoreInventoryRequired, locale));
             }
         }
 
@@ -286,12 +303,13 @@ public class ProductServices {
         // Make the selectable feature list
         List<GenericValue> selectableFeatures = null;
         try {
-            selectableFeatures = EntityQuery.use(delegator).from("ProductFeatureAndAppl").where("productId", productId, "productFeatureApplTypeId",
-                    "SELECTABLE_FEATURE").orderBy("sequenceNum").cache(true).filterByDate().queryList();
+            selectableFeatures = productFeatureApplDao.findListByWhere(delegator, x.ProductFeatureAndAppl,
+                    UtilMisc.toMap(x.productId, productId, x.productFeatureApplTypeId, x.SELECTABLE_FEATURE), null,
+                    UtilMisc.toList(x.sequenceNum), true, true);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "productservices.empty_list_of_selectable_features_found", locale));
+                    x.productservices_empty_list_of_selectable_features_found, locale));
         }
         Map<String, List<String>> features = new HashMap<>();
         for (GenericValue v: selectableFeatures) {
@@ -319,10 +337,10 @@ public class ProductServices {
         if (UtilValidate.isEmpty(tree)) {
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
             result.put(ModelService.ERROR_MESSAGE, UtilProperties.getMessage(RES_ERROR,
-                    "productservices.feature_grouping_came_back_empty", locale));
+                    x.productservices_feature_grouping_came_back_empty, locale));
         } else {
-            result.put("variantTree", tree);
-            result.put("virtualVariant", virtualVariant);
+            result.put(x.variantTree, tree);
+            result.put(x.virtualVariant, virtualVariant);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         }
 
@@ -334,9 +352,9 @@ public class ProductServices {
         }
 
         if (!outOfStockItems.isEmpty()) {
-            result.put("unavailableVariants", outOfStockItems);
+            result.put(x.unavailableVariants, outOfStockItems);
         }
-        result.put("variantSample", sample);
+        result.put(x.variantSample, sample);
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
 
         return result;
@@ -349,6 +367,7 @@ public class ProductServices {
         // String type          -- Type of feature (STANDARD_FEATURE, SELECTABLE_FEATURE)
         // String distinct      -- Distinct feature (SIZE, COLOR)
         Delegator delegator = dctx.getDelegator();
+        ProductFeatureApplDao productFeatureApplDao = DaoRegistry.getDao(delegator, x.ProductFeatureAppl, ProductFeatureApplDao.class);
         Map<String, Object> result = new HashMap<>();
         String productId = (String) context.get(x.productId);
         String distinct = (String) context.get(x.distinct);
@@ -358,22 +377,22 @@ public class ProductServices {
         List<GenericValue> features = null;
 
         try {
-            Map<String, String> fields = UtilMisc.toMap("productId", productId);
+            Map<String, String> fields = UtilMisc.toMap(x.productId, productId);
 
             if (distinct != null) {
-                fields.put("productFeatureTypeId", distinct);
+                fields.put(x.productFeatureTypeId, distinct);
             }
             if (type != null) {
-                fields.put("productFeatureApplTypeId", type);
+                fields.put(x.productFeatureApplTypeId, type);
             }
-            features = EntityQuery.use(delegator).from("ProductFeatureAndAppl").where(fields).orderBy("sequenceNum", "productFeatureTypeId")
-                    .cache(true).queryList();
-            result.put("productFeatures", features);
+            features = productFeatureApplDao.findListByWhere(delegator, x.ProductFeatureAndAppl, fields, null,
+                    UtilMisc.toList(x.sequenceNum, x.productFeatureTypeId), true);
+            result.put(x.productFeatures, features);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         } catch (GenericEntityException e) {
-            Map<String, String> messageMap = UtilMisc.toMap("errMessage", e.toString());
+            Map<String, String> messageMap = UtilMisc.toMap(x.errMessage, e.toString());
             errMsg = UtilProperties.getMessage(RES_ERROR,
-                    "productservices.problem_reading_product_feature_entity", messageMap, locale);
+                    x.productservices_problem_reading_product_feature_entity, messageMap, locale);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
             result.put(ModelService.ERROR_MESSAGE, errMsg);
         }
@@ -385,6 +404,7 @@ public class ProductServices {
      */
     public static Map<String, Object> prodFindProduct(DispatchContext dctx, ProductServicesContext context) {
         Delegator delegator = dctx.getDelegator();
+        ProductDao productDao = DaoRegistry.getDao(delegator, x.Product, ProductDao.class);
         Map<String, Object> result = new HashMap<>();
         String productId = (String) context.get(x.productId);
         Locale locale = (Locale) context.get(x.locale);
@@ -392,18 +412,18 @@ public class ProductServices {
 
         if (UtilValidate.isEmpty(productId)) {
             errMsg = UtilProperties.getMessage(RES_ERROR,
-                    "productservices.invalid_productId_passed", locale);
+                    x.productservices_invalid_productId_passed, locale);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
             result.put(ModelService.ERROR_MESSAGE, errMsg);
             return result;
         }
 
         try {
-            GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache().queryOne();
+            GenericValue product = productDao.findOneByWhere(delegator, x.Product, UtilMisc.toMap(x.productId, productId), null, null, true);
             GenericValue mainProduct = product;
 
-            if (product.get(x.isVariant) != null && "Y".equalsIgnoreCase(product.getString(x.isVariant))) {
-                List<GenericValue> c = product.getRelated(x.AssocProductAssoc, UtilMisc.toMap("productAssocTypeId", "PRODUCT_VARIANT"),
+            if (product.get(x.isVariant) != null && x.Y.equalsIgnoreCase(product.getString(x.isVariant))) {
+                List<GenericValue> c = product.getRelated(x.AssocProductAssoc, UtilMisc.toMap(x.productAssocTypeId, x.PRODUCT_VARIANT),
                         null, true);
                 c = EntityUtil.filterByDate(c);
                 if (!c.isEmpty()) {
@@ -411,12 +431,12 @@ public class ProductServices {
                     mainProduct = asV.getRelatedOne(x.MainProduct, true);
                 }
             }
-            result.put("product", mainProduct);
+            result.put(x.product, mainProduct);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         } catch (GenericEntityException e) {
-            Map<String, String> messageMap = UtilMisc.toMap("errMessage", e.getMessage());
+            Map<String, String> messageMap = UtilMisc.toMap(x.errMessage, e.getMessage());
             errMsg = UtilProperties.getMessage(RES_ERROR,
-                    "productservices.problems_reading_product_entity", messageMap, locale);
+                    x.productservices_problems_reading_product_entity, messageMap, locale);
             Debug.logError(e, errMsg, MODULE);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
             result.put(ModelService.ERROR_MESSAGE, errMsg);
@@ -431,6 +451,8 @@ public class ProductServices {
     public static Map<String, Object> prodFindAssociatedByType(DispatchContext dctx, ProductServicesContext context) {
         // String type -- Type of association (ie PRODUCT_UPGRADE, PRODUCT_COMPLEMENT, PRODUCT_VARIANT)
         Delegator delegator = dctx.getDelegator();
+        ProductDao productDao = DaoRegistry.getDao(delegator, x.Product, ProductDao.class);
+        ProductAssocDao productAssocDao = DaoRegistry.getDao(delegator, x.ProductAssoc, ProductAssocDao.class);
         Map<String, Object> result = new HashMap<>();
         String productId = (String) context.get(x.productId);
         String productIdTo = (String) context.get(x.productIdTo);
@@ -448,7 +470,7 @@ public class ProductServices {
 
         if (productId == null && productIdTo == null) {
             errMsg = UtilProperties.getMessage(RES_ERROR,
-                    "productservices.both_productId_and_productIdTo_cannot_be_null", locale);
+                    x.productservices_both_productId_and_productIdTo_cannot_be_null, locale);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
             result.put(ModelService.ERROR_MESSAGE, errMsg);
             return result;
@@ -456,7 +478,7 @@ public class ProductServices {
 
         if (productId != null && productIdTo != null) {
             errMsg = UtilProperties.getMessage(RES_ERROR,
-                    "productservices.both_productId_and_productIdTo_cannot_be_defined", locale);
+                    x.productservices_both_productId_and_productIdTo_cannot_be_defined, locale);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
             result.put(ModelService.ERROR_MESSAGE, errMsg);
             return result;
@@ -466,11 +488,11 @@ public class ProductServices {
         GenericValue product = null;
 
         try {
-            product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache().queryOne();
+            product = productDao.findOneByWhere(delegator, x.Product, UtilMisc.toMap(x.productId, productId), null, null, true);
         } catch (GenericEntityException e) {
-            Map<String, String> messageMap = UtilMisc.toMap("errMessage", e.getMessage());
+            Map<String, String> messageMap = UtilMisc.toMap(x.errMessage, e.getMessage());
             errMsg = UtilProperties.getMessage(RES_ERROR,
-                    "productservices.problems_reading_product_entity", messageMap, locale);
+                    x.productservices_problems_reading_product_entity, messageMap, locale);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
             result.put(ModelService.ERROR_MESSAGE, errMsg);
             return result;
@@ -478,7 +500,7 @@ public class ProductServices {
 
         if (product == null) {
             errMsg = UtilProperties.getMessage(RES_ERROR,
-                    "productservices.problems_getting_product_entity", locale);
+                    x.productservices_problems_getting_product_entity, locale);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
             result.put(ModelService.ERROR_MESSAGE, errMsg);
             return result;
@@ -489,23 +511,24 @@ public class ProductServices {
 
             List<String> orderBy = new LinkedList<>();
             if (sortDescending) {
-                orderBy.add("sequenceNum DESC");
+                orderBy.add(x.sequenceNum_DESC);
             } else {
-                orderBy.add("sequenceNum");
+                orderBy.add(x.sequenceNum);
             }
 
             if (bidirectional) {
                 EntityCondition cond = EntityCondition.makeCondition(
                         UtilMisc.toList(
-                                EntityCondition.makeCondition("productId", productId),
-                                EntityCondition.makeCondition("productIdTo", productId)), EntityJoinOperator.OR);
-                productAssocs = EntityQuery.use(delegator).from("ProductAssoc").where(EntityCondition.makeCondition(cond,
-                        EntityCondition.makeCondition("productAssocTypeId", type))).orderBy(orderBy).cache(true).queryList();
+                                EntityCondition.makeCondition(x.productId, productId),
+                                EntityCondition.makeCondition(x.productIdTo, productId)), EntityJoinOperator.OR);
+                productAssocs = productAssocDao.findListByWhere(delegator, x.ProductAssoc,
+                        EntityCondition.makeCondition(cond, EntityCondition.makeCondition(x.productAssocTypeId, type)),
+                        null, orderBy, true);
             } else {
                 if (productIdTo == null) {
-                    productAssocs = product.getRelated(x.MainProductAssoc, UtilMisc.toMap("productAssocTypeId", type), orderBy, true);
+                    productAssocs = product.getRelated(x.MainProductAssoc, UtilMisc.toMap(x.productAssocTypeId, type), orderBy, true);
                 } else {
-                    productAssocs = product.getRelated(x.AssocProductAssoc, UtilMisc.toMap("productAssocTypeId", type), orderBy, true);
+                    productAssocs = product.getRelated(x.AssocProductAssoc, UtilMisc.toMap(x.productAssocTypeId, type), orderBy, true);
                 }
             }
             // filter the list by date
@@ -516,20 +539,20 @@ public class ProductServices {
                 if (viewProductCategoryId != null) {
                     if (productIdTo == null) {
                         productAssocs = CategoryWorker.filterProductsInCategory(delegator, productAssocs, viewProductCategoryId,
-                                "productIdTo");
+                                x.productIdTo);
                     } else {
-                        productAssocs = CategoryWorker.filterProductsInCategory(delegator, productAssocs, viewProductCategoryId, "productId");
+                        productAssocs = CategoryWorker.filterProductsInCategory(delegator, productAssocs, viewProductCategoryId, x.productId);
                     }
                 }
             }
 
 
-            result.put("assocProducts", productAssocs);
+            result.put(x.assocProducts, productAssocs);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         } catch (GenericEntityException e) {
-            Map<String, String> messageMap = UtilMisc.toMap("errMessage", e.getMessage());
+            Map<String, String> messageMap = UtilMisc.toMap(x.errMessage, e.getMessage());
             errMsg = UtilProperties.getMessage(RES_ERROR,
-                    "productservices.problems_product_association_relation_error", messageMap, locale);
+                    x.productservices_problems_product_association_relation_error, messageMap, locale);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
             result.put(ModelService.ERROR_MESSAGE, errMsg);
             return result;
@@ -542,19 +565,20 @@ public class ProductServices {
     private static Map<String, Object> makeGroup(Delegator delegator, Map<String, List<String>> featureList, List<String> items,
                                                  List<String> order, int index)
         throws IllegalArgumentException, IllegalStateException {
+        ProductFeatureApplDao productFeatureApplDao = DaoRegistry.getDao(delegator, x.ProductFeatureAppl, ProductFeatureApplDao.class);
         Map<String, List<String>> tempGroup = new HashMap<>();
         Map<String, Object> group = new LinkedHashMap<>();
         String orderKey = order.get(index);
 
         if (featureList == null) {
-            throw new IllegalArgumentException("Cannot build feature tree: featureList is null");
+            throw new IllegalArgumentException(x.Cannot_build_feature_tree_featureList_is_null);
         }
 
         if (index < 0) {
-            throw new IllegalArgumentException("Invalid index '" + index + "' min index '0'");
+            throw new IllegalArgumentException(x.Invalid_index + index + x.min_index_0);
         }
         if (index + 1 > order.size()) {
-            throw new IllegalArgumentException("Invalid index '" + index + "' max index '" + (order.size() - 1) + "'");
+            throw new IllegalArgumentException(x.Invalid_index + index + x.max_index + (order.size() - 1) + x.str_bb589d06);
         }
 
         // loop through items and make the lists
@@ -564,23 +588,21 @@ public class ProductServices {
             // -------------------------------
 
             if (Debug.verboseOn()) {
-                Debug.logVerbose("ThisItem: " + thisItem, MODULE);
+                Debug.logVerbose(x.ThisItem + thisItem, MODULE);
             }
             List<GenericValue> features = null;
 
             try {
                 // get the features and filter out expired dates
-                features = EntityQuery.use(delegator).from("ProductFeatureAndAppl")
-                        .where("productId", thisItem, "productFeatureTypeId", orderKey, "productFeatureApplTypeId", "STANDARD_FEATURE")
-                        .orderBy("sequenceNum")
-                        .cache(true)
-                        .filterByDate()
-                        .queryList();
+                features = productFeatureApplDao.findListByWhere(delegator, x.ProductFeatureAndAppl,
+                        UtilMisc.toMap(x.productId, thisItem, x.productFeatureTypeId, orderKey,
+                                x.productFeatureApplTypeId, x.STANDARD_FEATURE),
+                        null, UtilMisc.toList(x.sequenceNum), true, true);
             } catch (GenericEntityException e) {
-                throw new IllegalStateException("Problem reading relation: " + e.getMessage());
+                throw new IllegalStateException(x.Problem_reading_relation + e.getMessage());
             }
             if (Debug.verboseOn()) {
-                Debug.logVerbose("Features: " + features, MODULE);
+                Debug.logVerbose(x.Features + features, MODULE);
             }
 
             // -------------------------------
@@ -601,14 +623,14 @@ public class ProductServices {
             }
         }
         if (Debug.verboseOn()) {
-            Debug.logVerbose("TempGroup: " + tempGroup, MODULE);
+            Debug.logVerbose(x.TempGroup + tempGroup, MODULE);
         }
 
         // Loop through the feature list and order the keys in the tempGroup
         List<String> orderFeatureList = featureList.get(orderKey);
 
         if (orderFeatureList == null) {
-            throw new IllegalArgumentException("Cannot build feature tree: orderFeatureList is null for orderKey=" + orderKey);
+            throw new IllegalArgumentException(x.Cannot_build_feature_tree_orderFeatureList_is_null_for_orderKey + orderKey);
         }
 
         for (String featureStr: orderFeatureList) {
@@ -618,7 +640,7 @@ public class ProductServices {
         }
 
         if (Debug.verboseOn()) {
-            Debug.logVerbose("Group: " + group, MODULE);
+            Debug.logVerbose(x.Group + group, MODULE);
         }
 
         // no groups; no tree
@@ -646,6 +668,8 @@ public class ProductServices {
     // builds a variant sample (a single sku for a featureType)
     private static Map<String, GenericValue> makeVariantSample(Delegator delegator, Map<String, List<String>> featureList,
                                                                List<String> items, String feature) {
+        ProductFeatureApplDao productFeatureApplDao = DaoRegistry.getDao(delegator, x.ProductFeatureAppl, ProductFeatureApplDao.class);
+        ProductDao productDao = DaoRegistry.getDao(delegator, x.Product, ProductDao.class);
         Map<String, GenericValue> tempSample = new HashMap<>();
         Map<String, GenericValue> sample = new LinkedHashMap<>();
         for (String productId: items) {
@@ -653,22 +677,21 @@ public class ProductServices {
 
             try {
                 // get the features and filter out expired dates
-                features = EntityQuery.use(delegator).from("ProductFeatureAndAppl")
-                               .where("productId", productId, "productFeatureTypeId", feature, "productFeatureApplTypeId", "STANDARD_FEATURE")
-                               .orderBy("sequenceNum", "description")
-                               .cache(true)
-                               .filterByDate()
-                               .queryList();
+                features = productFeatureApplDao.findListByWhere(delegator, x.ProductFeatureAndAppl,
+                        UtilMisc.toMap(x.productId, productId, x.productFeatureTypeId, feature,
+                                x.productFeatureApplTypeId, x.STANDARD_FEATURE),
+                        null, UtilMisc.toList(x.sequenceNum, x.description), true, true);
             } catch (GenericEntityException e) {
-                throw new IllegalStateException("Problem reading relation: " + e.getMessage());
+                throw new IllegalStateException(x.Problem_reading_relation + e.getMessage());
             }
             for (GenericValue featureAppl: features) {
                 try {
-                    GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache(true).queryOne();
+                    GenericValue product = productDao.findOneByWhere(delegator, x.Product, UtilMisc.toMap(x.productId, productId),
+                            null, null, true);
 
                     tempSample.put(featureAppl.getString(x.description), product);
                 } catch (GenericEntityException e) {
-                    throw new RuntimeException("Cannot get product entity: " + e.getMessage());
+                    throw new RuntimeException(x.Cannot_get_product_entity + e.getMessage());
                 }
             }
         }
@@ -686,6 +709,8 @@ public class ProductServices {
 
     public static Map<String, Object> quickAddVariant(DispatchContext dctx, ProductServicesContext context) {
         Delegator delegator = dctx.getDelegator();
+        ProductDao productDao = DaoRegistry.getDao(delegator, x.Product, ProductDao.class);
+        ProductFeatureDao productFeatureDao = DaoRegistry.getDao(delegator, x.ProductFeature, ProductFeatureDao.class);
         Map<String, Object> result = new HashMap<>();
         Locale locale = (Locale) context.get(x.locale);
         String errMsg = null;
@@ -696,31 +721,32 @@ public class ProductServices {
 
         try {
             // read the product, duplicate it with the given id
-            GenericValue product = EntityQuery.use(delegator).from("Product").where("productId", productId).queryOne();
+            GenericValue product = productDao.findOneByWhere(delegator, x.Product, UtilMisc.toMap(x.productId, productId), null, null, false);
             if (product == null) {
-                Map<String, String> messageMap = UtilMisc.toMap("productId", productId);
+                Map<String, String> messageMap = UtilMisc.toMap(x.productId, productId);
                 errMsg = UtilProperties.getMessage(RES_ERROR,
-                        "productservices.product_not_found_with_ID", messageMap, locale);
+                        x.productservices_product_not_found_with_ID, messageMap, locale);
                 result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
                 result.put(ModelService.ERROR_MESSAGE, errMsg);
                 return result;
             }
             // check if product exists
-            GenericValue variantProduct = EntityQuery.use(delegator).from("Product").where("productId", variantProductId).queryOne();
+            GenericValue variantProduct = productDao.findOneByWhere(delegator, x.Product, UtilMisc.toMap(x.productId, variantProductId),
+                    null, null, false);
             boolean variantProductExists = (variantProduct != null);
             if (variantProduct == null) {
                 //if product does not exist
                 variantProduct = GenericValue.create(product);
                 variantProduct.set(x.productId, variantProductId);
-                variantProduct.set(x.isVirtual, "N");
-                variantProduct.set(x.isVariant, "Y");
+                variantProduct.set(x.isVirtual, x.N);
+                variantProduct.set(x.isVariant, x.Y);
                 variantProduct.set(x.primaryProductCategoryId, null);
                 //create new
                 variantProduct.create();
             } else {
                 //if product does exist
-                variantProduct.set(x.isVirtual, "N");
-                variantProduct.set(x.isVariant, "Y");
+                variantProduct.set(x.isVirtual, x.N);
+                variantProduct.set(x.isVariant, x.Y);
                 variantProduct.set(x.primaryProductCategoryId, null);
                 //update entry
                 variantProduct.store();
@@ -728,32 +754,32 @@ public class ProductServices {
             if (variantProductExists) {
                 // Since the variant product is already a variant, first of all we remove the old features
                 // and the associations of type PRODUCT_VARIANT: a given product can be a variant of only one product.
-                delegator.removeByAnd("ProductAssoc", UtilMisc.toMap("productIdTo", variantProductId,
-                                                                     "productAssocTypeId", "PRODUCT_VARIANT"));
-                delegator.removeByAnd("ProductFeatureAppl", UtilMisc.toMap("productId", variantProductId,
-                                                                           "productFeatureApplTypeId", "STANDARD_FEATURE"));
+                delegator.removeByAnd(x.ProductAssoc, UtilMisc.toMap(x.productIdTo, variantProductId,
+                                                                     x.productAssocTypeId, x.PRODUCT_VARIANT));
+                delegator.removeByAnd(x.ProductFeatureAppl, UtilMisc.toMap(x.productId, variantProductId,
+                                                                           x.productFeatureApplTypeId, x.STANDARD_FEATURE));
             }
             // add an association from productId to variantProductId of the PRODUCT_VARIANT
-            Map<String, Object> productAssocMap = UtilMisc.toMap("productId", productId, "productIdTo", variantProductId,
-                                                 "productAssocTypeId", "PRODUCT_VARIANT",
-                                                 "fromDate", UtilDateTime.nowTimestamp());
+            Map<String, Object> productAssocMap = UtilMisc.toMap(x.productId, productId, x.productIdTo, variantProductId,
+                                                 x.productAssocTypeId, x.PRODUCT_VARIANT,
+                                                 x.fromDate, UtilDateTime.nowTimestamp());
             if (prodAssocSeqNum != null) {
-                productAssocMap.put("sequenceNum", prodAssocSeqNum);
+                productAssocMap.put(x.sequenceNum, prodAssocSeqNum);
             }
-            GenericValue productAssoc = delegator.makeValue("ProductAssoc", productAssocMap);
+            GenericValue productAssoc = delegator.makeValue(x.ProductAssoc, productAssocMap);
             productAssoc.create();
 
             // add the selected standard features to the new product given the productFeatureIds
-            java.util.StringTokenizer st = new java.util.StringTokenizer(productFeatureIds, "|");
+            java.util.StringTokenizer st = new java.util.StringTokenizer(productFeatureIds, x.str_3eb41622);
             while (st.hasMoreTokens()) {
                 String productFeatureId = st.nextToken();
 
-                GenericValue productFeature = EntityQuery.use(delegator).from("ProductFeature")
-                        .where("productFeatureId", productFeatureId).queryOne();
+                GenericValue productFeature = productFeatureDao.findOneByWhere(delegator, x.ProductFeature,
+                        UtilMisc.toMap(x.productFeatureId, productFeatureId), null, null, false);
 
-                GenericValue productFeatureAppl = delegator.makeValue("ProductFeatureAppl",
-                        UtilMisc.toMap("productId", variantProductId, "productFeatureId", productFeatureId,
-                        "productFeatureApplTypeId", "STANDARD_FEATURE", "fromDate", UtilDateTime.nowTimestamp()));
+                GenericValue productFeatureAppl = delegator.makeValue(x.ProductFeatureAppl,
+                        UtilMisc.toMap(x.productId, variantProductId, x.productFeatureId, productFeatureId,
+                        x.productFeatureApplTypeId, x.STANDARD_FEATURE, x.fromDate, UtilDateTime.nowTimestamp()));
 
                 // set the default seq num if it's there...
                 if (productFeature != null) {
@@ -764,15 +790,15 @@ public class ProductServices {
             }
 
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Entity error creating quick add variant data", MODULE);
-            Map<String, String> messageMap = UtilMisc.toMap("errMessage", e.toString());
+            Debug.logError(e, x.Entity_error_creating_quick_add_variant_data, MODULE);
+            Map<String, String> messageMap = UtilMisc.toMap(x.errMessage, e.toString());
             errMsg = UtilProperties.getMessage(RES_ERROR,
-                    "productservices.entity_error_quick_add_variant_data", messageMap, locale);
+                    x.productservices_entity_error_quick_add_variant_data, messageMap, locale);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_ERROR);
             result.put(ModelService.ERROR_MESSAGE, errMsg);
             return result;
         }
-        result.put("productVariantId", variantProductId);
+        result.put(x.productVariantId, variantProductId);
         return result;
     }
 
@@ -782,6 +808,8 @@ public class ProductServices {
      */
     public static Map<String, Object> quickCreateVirtualWithVariants(DispatchContext dctx, ProductServicesContext context) {
         Delegator delegator = dctx.getDelegator();
+        ProductDao productDao = DaoRegistry.getDao(delegator, x.Product, ProductDao.class);
+        GoodIdentificationDao goodIdentificationDao = DaoRegistry.getDao(delegator, x.GoodIdentification, GoodIdentificationDao.class);
         Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
 
         // get the various IN attributes
@@ -798,32 +826,32 @@ public class ProductServices {
             String productId = (String) context.get(x.productId);
 
             if (UtilValidate.isEmpty(productId)) {
-                productId = delegator.getNextSeqId("Product");
+                productId = delegator.getNextSeqId(x.Product);
                 // Create new virtual product...
-                GenericValue product = delegator.makeValue("Product");
+                GenericValue product = delegator.makeValue(x.Product);
                 product.set(x.productId, productId);
                 // set: isVirtual=Y, isVariant=N, productTypeId=FINISHED_GOOD, introductionDate=now
-                product.set(x.isVirtual, "Y");
-                product.set(x.isVariant, "N");
-                product.set(x.productTypeId, "FINISHED_GOOD");
+                product.set(x.isVirtual, x.Y);
+                product.set(x.isVariant, x.N);
+                product.set(x.productTypeId, x.FINISHED_GOOD);
                 product.set(x.introductionDate, nowTimestamp);
                 // set all to Y: returnable, taxable, chargeShipping, autoCreateKeywords, includeInPromotions
-                product.set(x.returnable, "Y");
-                product.set(x.taxable, "Y");
-                product.set(x.chargeShipping, "Y");
-                product.set(x.autoCreateKeywords, "Y");
-                product.set(x.includeInPromotions, "Y");
+                product.set(x.returnable, x.Y);
+                product.set(x.taxable, x.Y);
+                product.set(x.chargeShipping, x.Y);
+                product.set(x.autoCreateKeywords, x.Y);
+                product.set(x.includeInPromotions, x.Y);
                 // in it goes!
                 product.create();
             }
-            successResult.put("productId", productId);
+            successResult.put(x.productId, productId);
 
             // separate variantProductIdsBag into a Set of variantProductIds
             //note: can be comma, tab, or white-space delimited
             Set<String> prelimVariantProductIds = new HashSet<>();
-            List<String> splitIds = Arrays.asList(variantProductIdsBag.split("[,\\p{Space}]"));
-            Debug.logInfo("Variants: bag=" + variantProductIdsBag, MODULE);
-            Debug.logInfo("Variants: split=" + splitIds, MODULE);
+            List<String> splitIds = Arrays.asList(variantProductIdsBag.split(x.p_Space));
+            Debug.logInfo(x.Variants_bag + variantProductIdsBag, MODULE);
+            Debug.logInfo(x.Variants_split + splitIds, MODULE);
             prelimVariantProductIds.addAll(splitIds);
             //note: should support both direct productIds and GoodIdentification entries (what to do if more than one GoodID? Add all?
 
@@ -834,23 +862,24 @@ public class ProductServices {
                     continue;
                 }
                 // is a Product.productId?
-                GenericValue variantProduct = EntityQuery.use(delegator).from("Product").where("productId", variantProductId).queryOne();
+                GenericValue variantProduct = productDao.findOneByWhere(delegator, x.Product,
+                        UtilMisc.toMap(x.productId, variantProductId), null, null, false);
                 if (variantProduct != null) {
                     variantProductsById.put(variantProductId, variantProduct);
                 } else {
                     // is a GoodIdentification.idValue?
-                    List<GenericValue> goodIdentificationList = EntityQuery.use(delegator).from("GoodIdentification")
-                            .where("idValue", variantProductId).queryList();
+                    List<GenericValue> goodIdentificationList = goodIdentificationDao.findListByWhere(delegator, x.GoodIdentification,
+                            UtilMisc.toMap(x.idValue, variantProductId), null, null, false);
                     if (UtilValidate.isEmpty(goodIdentificationList)) {
                         // whoops, nothing found... return error
                         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                                "ProductVirtualVariantCreation", UtilMisc.toMap("variantProductId", variantProductId), locale));
+                                x.ProductVirtualVariantCreation, UtilMisc.toMap(x.variantProductId, variantProductId), locale));
                     }
 
                     if (goodIdentificationList.size() > 1) {
                         // what to do here? for now just log a warning and add all of them as variants; they can always be dissociated later
-                        Debug.logWarning("Warning creating a virtual with variants: the ID [" + variantProductId
-                                + "] was not a productId and resulted in [" + goodIdentificationList.size() + "] GoodIdentification records: "
+                        Debug.logWarning(x.Warning_creating_a_virtual_with_variants_the_ID + variantProductId
+                                + x.was_not_a_productId_and_resulted_in + goodIdentificationList.size() + x.GoodIdentification_records
                                 + goodIdentificationList, MODULE);
                     }
 
@@ -875,9 +904,9 @@ public class ProductServices {
             for (String featureProductId: featureProductIds) {
                 for (String productFeatureId: productFeatureIds) {
                     if (UtilValidate.isNotEmpty(productFeatureId)) {
-                        GenericValue productFeatureAppl = delegator.makeValue("ProductFeatureAppl",
-                                UtilMisc.toMap("productId", featureProductId, "productFeatureId", productFeatureId,
-                                        "productFeatureApplTypeId", "STANDARD_FEATURE", "fromDate", nowTimestamp));
+                        GenericValue productFeatureAppl = delegator.makeValue(x.ProductFeatureAppl,
+                                UtilMisc.toMap(x.productId, featureProductId, x.productFeatureId, productFeatureId,
+                                        x.productFeatureApplTypeId, x.STANDARD_FEATURE, x.fromDate, nowTimestamp));
                         productFeatureAppl.create();
                     }
                 }
@@ -885,20 +914,20 @@ public class ProductServices {
 
             for (GenericValue variantProduct: variantProductsById.values()) {
                 // for each variant product set: isVirtual=N, isVariant=Y, introductionDate=now
-                variantProduct.set(x.isVirtual, "N");
-                variantProduct.set(x.isVariant, "Y");
+                variantProduct.set(x.isVirtual, x.N);
+                variantProduct.set(x.isVariant, x.Y);
                 variantProduct.set(x.introductionDate, nowTimestamp);
                 variantProduct.store();
 
                 // for each variant product create associate with the new virtual as a PRODUCT_VARIANT
-                GenericValue productAssoc = delegator.makeValue("ProductAssoc",
-                        UtilMisc.toMap("productId", productId, "productIdTo", variantProduct.get(x.productId),
-                                "productAssocTypeId", "PRODUCT_VARIANT", "fromDate", nowTimestamp));
+                GenericValue productAssoc = delegator.makeValue(x.ProductAssoc,
+                        UtilMisc.toMap(x.productId, productId, x.productIdTo, variantProduct.get(x.productId),
+                                x.productAssocTypeId, x.PRODUCT_VARIANT, x.fromDate, nowTimestamp));
                 productAssoc.create();
             }
         } catch (GenericEntityException e) {
-            String errMsg = UtilProperties.getMessage(RES_ERROR, "ProductErrorCreatingNewVirtualProductFromVariantProducts",
-                    UtilMisc.toMap("errorString", e.toString()), locale);
+            String errMsg = UtilProperties.getMessage(RES_ERROR, x.ProductErrorCreatingNewVirtualProductFromVariantProducts,
+                    UtilMisc.toMap(x.errorString, e.toString()), locale);
             Debug.logError(e, errMsg, MODULE);
             return ServiceUtil.returnError(errMsg);
         }
@@ -907,14 +936,17 @@ public class ProductServices {
 
     public static Map<String, Object> updateProductIfAvailableFromShipment(DispatchContext dctx, ProductServicesContext context) {
         Delegator delegator = dctx.getDelegator();
-        if ("Y".equals(EntityUtilProperties.getPropertyValue("catalog", "reactivate.product.from.receipt", "N", delegator))) {
+        InventoryItemDao inventoryItemDao = DaoRegistry.getDao(delegator, x.InventoryItem, InventoryItemDao.class);
+        ProductDao productDao = DaoRegistry.getDao(delegator, x.Product, ProductDao.class);
+        if (x.Y.equals(EntityUtilProperties.getPropertyValue(x.catalog, x.reactivate_product_from_receipt, x.N, delegator))) {
             LocalDispatcher dispatcher = dctx.getDispatcher();
             GenericValue userLogin = (GenericValue) context.get(x.userLogin);
             String inventoryItemId = (String) context.get(x.inventoryItemId);
 
             GenericValue inventoryItem = null;
             try {
-                inventoryItem = EntityQuery.use(delegator).from("InventoryItem").where("inventoryItemId", inventoryItemId).cache().queryOne();
+                inventoryItem = inventoryItemDao.findOneByWhere(delegator, x.InventoryItem,
+                        UtilMisc.toMap(x.inventoryItemId, inventoryItemId), null, null, true);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
@@ -924,7 +956,7 @@ public class ProductServices {
                 String productId = inventoryItem.getString(x.productId);
                 GenericValue product = null;
                 try {
-                    product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache().queryOne();
+                    product = productDao.findOneByWhere(delegator, x.Product, UtilMisc.toMap(x.productId, productId), null, null, true);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(e.getMessage());
@@ -935,8 +967,8 @@ public class ProductServices {
                     if (salesDiscontinuationDate != null && salesDiscontinuationDate.before(UtilDateTime.nowTimestamp())) {
                         Map<String, Object> invRes = null;
                         try {
-                            invRes = dispatcher.runSync("getProductInventoryAvailable",
-                                    UtilMisc.<String, Object>toMap("productId", productId, "userLogin", userLogin));
+                            invRes = dispatcher.runSync(x.getProductInventoryAvailable,
+                                    UtilMisc.<String, Object>toMap(x.productId, productId, x.userLogin, userLogin));
                             if (ServiceUtil.isError(invRes)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(invRes));
                             }
@@ -945,12 +977,12 @@ public class ProductServices {
                             return ServiceUtil.returnError(e.getMessage());
                         }
 
-                        BigDecimal availableToPromiseTotal = (BigDecimal) invRes.get("availableToPromiseTotal");
+                        BigDecimal availableToPromiseTotal = (BigDecimal) invRes.get(x.availableToPromiseTotal);
                         if (availableToPromiseTotal != null && availableToPromiseTotal.compareTo(BigDecimal.ZERO) > 0) {
                             // refresh the product so we can update it
                             GenericValue productToUpdate = null;
                             try {
-                                productToUpdate = EntityQuery.use(delegator).from("Product").where(product.getPrimaryKey()).queryOne();
+                                productToUpdate = productDao.findOneByWhere(delegator, x.Product, product.getPrimaryKey(), null, null, false);
                             } catch (GenericEntityException e) {
                                 Debug.logError(e, MODULE);
                                 return ServiceUtil.returnError(e.getMessage());
@@ -978,6 +1010,8 @@ public class ProductServices {
 
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
+        FileExtensionDao fileExtensionDao = DaoRegistry.getDao(delegator, x.FileExtension, FileExtensionDao.class);
+        ProductContentTypeDao productContentTypeDao = DaoRegistry.getDao(delegator, x.ProductContentType, ProductContentTypeDao.class);
         String productId = (String) context.get(x.productId);
         String productContentTypeId = (String) context.get(x.productContentTypeId);
         ByteBuffer imageData = (ByteBuffer) context.get(x.uploadedFile);
@@ -986,27 +1020,27 @@ public class ProductServices {
         if (UtilValidate.isNotEmpty(context.get(x._uploadedFile_fileName))) {
             Map<String, Object> imageContext = new HashMap<>();
             imageContext.putAll(context);
-            imageContext.put("delegator", delegator);
-            imageContext.put("tenantId", delegator.getDelegatorTenantId());
-            String imageFilenameFormat = EntityUtilProperties.getPropertyValue("catalog", "image.filename.additionalviewsize.format", delegator);
+            imageContext.put(x.delegator, delegator);
+            imageContext.put(x.tenantId, delegator.getDelegatorTenantId());
+            String imageFilenameFormat = EntityUtilProperties.getPropertyValue(x.catalog, x.image_filename_additionalviewsize_format, delegator);
 
-            String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                    "image.server.path", delegator), imageContext);
-            String imageUrlPrefix = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                    "image.url.prefix", delegator), imageContext);
-            imageServerPath = imageServerPath.endsWith("/") ? imageServerPath.substring(0, imageServerPath.length() - 1) : imageServerPath;
-            imageUrlPrefix = imageUrlPrefix.endsWith("/") ? imageUrlPrefix.substring(0, imageUrlPrefix.length() - 1) : imageUrlPrefix;
+            String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                    x.image_server_path, delegator), imageContext);
+            String imageUrlPrefix = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                    x.image_url_prefix, delegator), imageContext);
+            imageServerPath = imageServerPath.endsWith(x.str_42099b4a) ? imageServerPath.substring(0, imageServerPath.length() - 1) : imageServerPath;
+            imageUrlPrefix = imageUrlPrefix.endsWith(x.str_42099b4a) ? imageUrlPrefix.substring(0, imageUrlPrefix.length() - 1) : imageUrlPrefix;
             FlexibleStringExpander filenameExpander = FlexibleStringExpander.getInstance(imageFilenameFormat);
             String viewNumber = String.valueOf(productContentTypeId.charAt(productContentTypeId.length() - 1));
-            String viewType = "additional" + viewNumber;
+            String viewType = x.additional + viewNumber;
             String id = productId;
-            if (imageFilenameFormat.endsWith("${id}")) {
-                id = productId + "_View_" + viewNumber;
-                viewType = "additional";
+            if (imageFilenameFormat.endsWith(x.id_e72c5d97)) {
+                id = productId + x.View + viewNumber;
+                viewType = x.additional;
             }
-            String fileLocation = filenameExpander.expandString(UtilMisc.toMap("location", "products", "id", id,
-                    "viewtype", viewType, "sizetype", "original"));
-            String filePathPrefix = "";
+            String fileLocation = filenameExpander.expandString(UtilMisc.toMap(x.location, x.products, x.id, id,
+                    x.viewtype, viewType, x.sizetype, x.original));
+            String filePathPrefix = x.emptyString;
             String filenameToUse = fileLocation;
             if (fileLocation.lastIndexOf('/') != -1) {
                 filePathPrefix = fileLocation.substring(0, fileLocation.lastIndexOf('/') + 1); // adding 1 to include the trailing slash
@@ -1015,30 +1049,30 @@ public class ProductServices {
 
             List<GenericValue> fileExtension;
             try {
-                fileExtension = EntityQuery.use(delegator)
-                        .from("FileExtension")
-                        .where("mimeTypeId", context.get(x._uploadedFile_contentType))
-                        .queryList();
-            } catch (GenericEntityException e) {
+                fileExtension = new LinkedList<>();
+                for (Object fileExtensionEntity : fileExtensionDao.list(Filters.eq(x.mimeTypeId, context.get(x._uploadedFile_contentType)))) {
+                    fileExtension.add(delegator.makeValue(x.FileExtension, Beans.beanToMap(fileExtensionEntity)));
+                }
+            } catch (Exception e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
             }
 
             GenericValue extension = EntityUtil.getFirst(fileExtension);
             if (extension != null) {
-                filenameToUse += "." + extension.getString(x.fileExtensionId);
+                filenameToUse += x.str_3a52ce78 + extension.getString(x.fileExtensionId);
             }
 
             /* Write the new image file */
-            String targetDirectory = imageServerPath + "/" + filePathPrefix;
+            String targetDirectory = imageServerPath + x.str_42099b4a + filePathPrefix;
             try {
                 File targetDir = new File(targetDirectory);
                 // Create the new directory
                 if (!targetDir.exists()) {
                     boolean created = targetDir.mkdirs();
                     if (!created) {
-                        String errMsg = UtilProperties.getMessage(RESOURCE, "ScaleImage.unable_to_create_target_directory", locale)
-                                + " - " + targetDirectory;
+                        String errMsg = UtilProperties.getMessage(RESOURCE, x.ScaleImage_unable_to_create_target_directory, locale)
+                                + x.str_fc02e199 + targetDirectory;
                         Debug.logFatal(errMsg, MODULE);
                         return ServiceUtil.returnError(errMsg);
                     }
@@ -1050,7 +1084,7 @@ public class ProductServices {
                         for (File file : files) {
                             if (file.isFile()) {
                                 if (!file.delete()) {
-                                    Debug.logError("File : " + file.getName() + ", couldn't be deleted", MODULE);
+                                    Debug.logError(x.File_0a7b891f + file.getName() + x.couldn_t_be_deleted, MODULE);
                                 }
                             }
 
@@ -1063,9 +1097,9 @@ public class ProductServices {
                     try {
                         File[] files = targetDir.listFiles();
                         for (File file : files) {
-                            if (file.isFile() && file.getName().startsWith(productId + "_View_" + viewNumber)) {
+                            if (file.isFile() && file.getName().startsWith(productId + x.View + viewNumber)) {
                                 if (!file.delete()) {
-                                    Debug.logError("File : " + file.getName() + ", couldn't be deleted", MODULE);
+                                    Debug.logError(x.File_0a7b891f + file.getName() + x.couldn_t_be_deleted, MODULE);
                                 }
                             }
                         }
@@ -1078,29 +1112,29 @@ public class ProductServices {
             }
             // Write
             try {
-                String fileToCheck = imageServerPath + "/" + fileLocation + "." + extension.getString(x.fileExtensionId);
+                String fileToCheck = imageServerPath + x.str_42099b4a + fileLocation + x.str_3a52ce78 + extension.getString(x.fileExtensionId);
                 File file = new File(fileToCheck);
                 try {
                     Path tempFile = Files.createTempFile(null, null);
                     Files.write(tempFile, imageData.array(), StandardOpenOption.APPEND);
                     // Check if a webshell is not uploaded
-                    if (!org.apache.ofbiz.security.SecuredUpload.isValidFile(tempFile.toString(), "Image", delegator)) {
-                        String errorMessage = UtilProperties.getMessage("SecurityUiLabels", "SupportedImageFormats", locale);
+                    if (!org.apache.ofbiz.security.SecuredUpload.isValidFile(tempFile.toString(), x.Image, delegator)) {
+                        String errorMessage = UtilProperties.getMessage(x.SecurityUiLabels, x.SupportedImageFormats, locale);
                         return ServiceUtil.returnError(errorMessage);
                     }
                     File tempFileToDelete = new File(tempFile.toString());
                     tempFileToDelete.deleteOnExit();
-                    RandomAccessFile out = new RandomAccessFile(fileToCheck, "rw");
+                    RandomAccessFile out = new RandomAccessFile(fileToCheck, x.rw);
                     out.write(imageData.array());
                     out.close();
                 } catch (FileNotFoundException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                            "ProductImageViewUnableWriteFile", UtilMisc.toMap("fileName", file.getAbsolutePath()), locale));
+                            x.ProductImageViewUnableWriteFile, UtilMisc.toMap(x.fileName, file.getAbsolutePath()), locale));
                 } catch (IOException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                            "ProductImageViewUnableWriteBinaryData", UtilMisc.toMap("fileName", file.getAbsolutePath()), locale));
+                            x.ProductImageViewUnableWriteBinaryData, UtilMisc.toMap(x.fileName, file.getAbsolutePath()), locale));
                 }
             } catch (NullPointerException e) {
                 Debug.logError(e, MODULE);
@@ -1109,18 +1143,18 @@ public class ProductServices {
             /* scale Image in different sizes */
             Map<String, Object> resultResize = new HashMap<>();
             try {
-                resultResize.putAll(ScaleImage.scaleImageInAllSize(imageContext, filenameToUse, "additional", viewNumber));
+                resultResize.putAll(ScaleImage.scaleImageInAllSize(imageContext, filenameToUse, x.additional, viewNumber));
             } catch (IOException e) {
-                Debug.logError(e, "Scale additional image in all different sizes is impossible : " + e.toString(), MODULE);
+                Debug.logError(e, x.Scale_additional_image_in_all_different_sizes_is_impossible + e.toString(), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                        "ProductImageViewScaleImpossible", UtilMisc.toMap("errorString", e.toString()), locale));
+                        x.ProductImageViewScaleImpossible, UtilMisc.toMap(x.errorString, e.toString()), locale));
             } catch (JDOMException e) {
-                Debug.logError(e, "Errors occur in parsing ImageProperties.xml : " + e.toString(), MODULE);
+                Debug.logError(e, x.Errors_occur_in_parsing_ImageProperties_xml + e.toString(), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                        "ProductImageViewParsingError", UtilMisc.toMap("errorString", e.toString()), locale));
+                        x.ProductImageViewParsingError, UtilMisc.toMap(x.errorString, e.toString()), locale));
             }
 
-            String imageUrl = imageUrlPrefix + "/" + fileLocation + "." + extension.getString(x.fileExtensionId);
+            String imageUrl = imageUrlPrefix + x.str_42099b4a + fileLocation + x.str_3a52ce78 + extension.getString(x.fileExtensionId);
             /* store the imageUrl version of the image, for backwards compatibility with code that does not use scaled versions */
             Map<String, Object> result = addImageResource(dispatcher, delegator, context, imageUrl, productContentTypeId);
 
@@ -1130,27 +1164,23 @@ public class ProductServices {
 
             /* now store the image versions created by ScaleImage.scaleImageInAllSize */
             /* have to shrink length of productContentTypeId, as otherwise value is too long for database field */
-            Map<String, String> imageUrlMap = UtilGenerics.cast(resultResize.get("imageUrlMap"));
+            Map<String, String> imageUrlMap = UtilGenerics.cast(resultResize.get(x.imageUrlMap));
             for (String sizeType : ScaleImage.SIZE_TYPE_LIST) {
                 imageUrl = imageUrlMap.get(sizeType);
                 if (UtilValidate.isNotEmpty(imageUrl)) {
+                    String xtraProductContentTypeId = x.XTRA_IMG + viewNumber + x.str_53a0acfa + sizeType.toUpperCase(Locale.getDefault());
+                    boolean hasContentType = false;
                     try {
-                        GenericValue productContentType = EntityQuery.use(delegator)
-                                .from("ProductContentType")
-                                .where("productContentTypeId", "XTRA_IMG_" + viewNumber + "_" + sizeType.toUpperCase(Locale.getDefault()))
-                                .cache()
-                                .queryOne();
-                        if (UtilValidate.isNotEmpty(productContentType)) {
-                            result = addImageResource(dispatcher, delegator, context, imageUrl, "XTRA_IMG_"
-                                    + viewNumber + "_" + sizeType.toUpperCase(Locale.getDefault()));
-                            if (ServiceUtil.isError(result)) {
-                                Debug.logError(ServiceUtil.getErrorMessage(result), MODULE);
-                                return result;
-                            }
-                        }
-                    } catch (GenericEntityException e) {
+                        hasContentType = productContentTypeDao.get(xtraProductContentTypeId).isPresent();
+                    } catch (java.sql.SQLException e) {
                         Debug.logError(e, MODULE);
-                        return ServiceUtil.returnError(e.getMessage());
+                    }
+                    if (hasContentType) {
+                        result = addImageResource(dispatcher, delegator, context, imageUrl, xtraProductContentTypeId);
+                        if (ServiceUtil.isError(result)) {
+                            Debug.logError(ServiceUtil.getErrorMessage(result), MODULE);
+                            return result;
+                        }
                     }
                 }
             }
@@ -1160,6 +1190,7 @@ public class ProductServices {
 
     private static Map<String, Object> addImageResource(LocalDispatcher dispatcher, Delegator delegator, ProductServicesContext context,
             String imageUrl, String productContentTypeId) {
+        ContentDao contentDao = DaoRegistry.getDao(delegator, x.Content, ContentDao.class);
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         String productId = (String) context.get(x.productId);
 
@@ -1167,21 +1198,21 @@ public class ProductServices {
             String contentId = (String) context.get(x.contentId);
 
             Map<String, Object> dataResourceCtx = new HashMap<>();
-            dataResourceCtx.put("objectInfo", imageUrl);
-            dataResourceCtx.put("dataResourceName", context.get(x._uploadedFile_fileName));
-            dataResourceCtx.put("userLogin", userLogin);
+            dataResourceCtx.put(x.objectInfo, imageUrl);
+            dataResourceCtx.put(x.dataResourceName, context.get(x._uploadedFile_fileName));
+            dataResourceCtx.put(x.userLogin, userLogin);
 
             Map<String, Object> productContentCtx = new HashMap<>();
-            productContentCtx.put("productId", productId);
-            productContentCtx.put("productContentTypeId", productContentTypeId);
-            productContentCtx.put("fromDate", context.get(x.fromDate));
-            productContentCtx.put("thruDate", context.get(x.thruDate));
-            productContentCtx.put("userLogin", userLogin);
+            productContentCtx.put(x.productId, productId);
+            productContentCtx.put(x.productContentTypeId, productContentTypeId);
+            productContentCtx.put(x.fromDate, context.get(x.fromDate));
+            productContentCtx.put(x.thruDate, context.get(x.thruDate));
+            productContentCtx.put(x.userLogin, userLogin);
 
             if (UtilValidate.isNotEmpty(contentId)) {
                 GenericValue content = null;
                 try {
-                    content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).queryOne();
+                    content = contentDao.findOneByWhere(delegator, x.Content, UtilMisc.toMap(x.contentId, contentId), null, null, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(e.getMessage());
@@ -1197,9 +1228,9 @@ public class ProductServices {
                     }
 
                     if (dataResource != null) {
-                        dataResourceCtx.put("dataResourceId", dataResource.getString(x.dataResourceId));
+                        dataResourceCtx.put(x.dataResourceId, dataResource.getString(x.dataResourceId));
                         try {
-                            Map<String, Object> serviceResult = dispatcher.runSync("updateDataResource", dataResourceCtx);
+                            Map<String, Object> serviceResult = dispatcher.runSync(x.updateDataResource, dataResourceCtx);
                             if (ServiceUtil.isError(serviceResult)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                             }
@@ -1208,11 +1239,11 @@ public class ProductServices {
                             return ServiceUtil.returnError(e.getMessage());
                         }
                     } else {
-                        dataResourceCtx.put("dataResourceTypeId", "SHORT_TEXT");
-                        dataResourceCtx.put("mimeTypeId", "text/html");
+                        dataResourceCtx.put(x.dataResourceTypeId, x.SHORT_TEXT);
+                        dataResourceCtx.put(x.mimeTypeId, x.text_html);
                         Map<String, Object> dataResourceResult;
                         try {
-                            dataResourceResult = dispatcher.runSync("createDataResource", dataResourceCtx);
+                            dataResourceResult = dispatcher.runSync(x.createDataResource, dataResourceCtx);
                             if (ServiceUtil.isError(dataResourceResult)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(dataResourceResult));
                             }
@@ -1222,11 +1253,11 @@ public class ProductServices {
                         }
 
                         Map<String, Object> contentCtx = new HashMap<>();
-                        contentCtx.put("contentId", contentId);
-                        contentCtx.put("dataResourceId", dataResourceResult.get("dataResourceId"));
-                        contentCtx.put("userLogin", userLogin);
+                        contentCtx.put(x.contentId, contentId);
+                        contentCtx.put(x.dataResourceId, dataResourceResult.get(x.dataResourceId));
+                        contentCtx.put(x.userLogin, userLogin);
                         try {
-                            Map<String, Object> serviceResult = dispatcher.runSync("updateContent", contentCtx);
+                            Map<String, Object> serviceResult = dispatcher.runSync(x.updateContent, contentCtx);
                             if (ServiceUtil.isError(serviceResult)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                             }
@@ -1236,9 +1267,9 @@ public class ProductServices {
                         }
                     }
 
-                    productContentCtx.put("contentId", contentId);
+                    productContentCtx.put(x.contentId, contentId);
                     try {
-                        Map<String, Object> serviceResult = dispatcher.runSync("updateProductContent", productContentCtx);
+                        Map<String, Object> serviceResult = dispatcher.runSync(x.updateProductContent, productContentCtx);
                         if (ServiceUtil.isError(serviceResult)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                         }
@@ -1248,11 +1279,11 @@ public class ProductServices {
                     }
                 }
             } else {
-                dataResourceCtx.put("dataResourceTypeId", "SHORT_TEXT");
-                dataResourceCtx.put("mimeTypeId", "text/html");
+                dataResourceCtx.put(x.dataResourceTypeId, x.SHORT_TEXT);
+                dataResourceCtx.put(x.mimeTypeId, x.text_html);
                 Map<String, Object> dataResourceResult;
                 try {
-                    dataResourceResult = dispatcher.runSync("createDataResource", dataResourceCtx);
+                    dataResourceResult = dispatcher.runSync(x.createDataResource, dataResourceCtx);
                     if (ServiceUtil.isError(dataResourceResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(dataResourceResult));
                     }
@@ -1262,12 +1293,12 @@ public class ProductServices {
                 }
 
                 Map<String, Object> contentCtx = new HashMap<>();
-                contentCtx.put("contentTypeId", "DOCUMENT");
-                contentCtx.put("dataResourceId", dataResourceResult.get("dataResourceId"));
-                contentCtx.put("userLogin", userLogin);
+                contentCtx.put(x.contentTypeId, x.DOCUMENT);
+                contentCtx.put(x.dataResourceId, dataResourceResult.get(x.dataResourceId));
+                contentCtx.put(x.userLogin, userLogin);
                 Map<String, Object> contentResult;
                 try {
-                    contentResult = dispatcher.runSync("createContent", contentCtx);
+                    contentResult = dispatcher.runSync(x.createContent, contentCtx);
                     if (ServiceUtil.isError(contentResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(contentResult));
                     }
@@ -1276,9 +1307,9 @@ public class ProductServices {
                     return ServiceUtil.returnError(e.getMessage());
                 }
 
-                productContentCtx.put("contentId", contentResult.get("contentId"));
+                productContentCtx.put(x.contentId, contentResult.get(x.contentId));
                 try {
-                    Map<String, Object> serviceResult = dispatcher.runSync("createProductContent", productContentCtx);
+                    Map<String, Object> serviceResult = dispatcher.runSync(x.createProductContent, productContentCtx);
                     if (ServiceUtil.isError(serviceResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                     }
@@ -1304,8 +1335,8 @@ public class ProductServices {
         String searchProductFirstContext = (String) context.get(x.searchProductFirst);
         String searchAllIdContext = (String) context.get(x.searchAllId);
 
-        boolean searchProductFirst = !UtilValidate.isNotEmpty(searchProductFirstContext) || !"N".equals(searchProductFirstContext);
-        boolean searchAllId = UtilValidate.isNotEmpty(searchAllIdContext) && "Y".equals(searchAllIdContext);
+        boolean searchProductFirst = !UtilValidate.isNotEmpty(searchProductFirstContext) || !x.N.equals(searchProductFirstContext);
+        boolean searchAllId = UtilValidate.isNotEmpty(searchAllIdContext) && x.Y.equals(searchAllIdContext);
 
         GenericValue product = null;
         List<GenericValue> productsFound = null;
@@ -1324,8 +1355,8 @@ public class ProductServices {
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("product", product);
-        result.put("productsList", productsFound);
+        result.put(x.product, product);
+        result.put(x.productsList, productsFound);
 
         return result;
     }
@@ -1334,6 +1365,8 @@ public class ProductServices {
             ProductServicesContext context) {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
+        FileExtensionDao fileExtensionDao = DaoRegistry.getDao(delegator, x.FileExtension, FileExtensionDao.class);
+        ContentDao contentDao = DaoRegistry.getDao(delegator, x.Content, ContentDao.class);
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         String productPromoId = (String) context.get(x.productPromoId);
         String productPromoContentTypeId = (String) context.get(x.productPromoContentTypeId);
@@ -1344,19 +1377,19 @@ public class ProductServices {
         if (UtilValidate.isNotEmpty(context.get(x._uploadedFile_fileName))) {
             Map<String, Object> imageContext = new HashMap<>();
             imageContext.putAll(context);
-            imageContext.put("tenantId", delegator.getDelegatorTenantId());
-            String imageFilenameFormat = EntityUtilProperties.getPropertyValue("catalog", "image.filename.format", delegator);
+            imageContext.put(x.tenantId, delegator.getDelegatorTenantId());
+            String imageFilenameFormat = EntityUtilProperties.getPropertyValue(x.catalog, x.image_filename_format, delegator);
 
-            String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                    "image.server.path", delegator), imageContext);
-            String imageUrlPrefix = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                    "image.url.prefix", delegator), imageContext);
-            imageServerPath = imageServerPath.endsWith("/") ? imageServerPath.substring(0, imageServerPath.length() - 1) : imageServerPath;
-            imageUrlPrefix = imageUrlPrefix.endsWith("/") ? imageUrlPrefix.substring(0, imageUrlPrefix.length() - 1) : imageUrlPrefix;
+            String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                    x.image_server_path, delegator), imageContext);
+            String imageUrlPrefix = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                    x.image_url_prefix, delegator), imageContext);
+            imageServerPath = imageServerPath.endsWith(x.str_42099b4a) ? imageServerPath.substring(0, imageServerPath.length() - 1) : imageServerPath;
+            imageUrlPrefix = imageUrlPrefix.endsWith(x.str_42099b4a) ? imageUrlPrefix.substring(0, imageUrlPrefix.length() - 1) : imageUrlPrefix;
             FlexibleStringExpander filenameExpander = FlexibleStringExpander.getInstance(imageFilenameFormat);
-            String id = productPromoId + "_Image_" + productPromoContentTypeId.charAt(productPromoContentTypeId.length() - 1);
-            String fileLocation = filenameExpander.expandString(UtilMisc.toMap("location", "products", "type", "promo", "id", id));
-            String filePathPrefix = "";
+            String id = productPromoId + x.Image_446708dc + productPromoContentTypeId.charAt(productPromoContentTypeId.length() - 1);
+            String fileLocation = filenameExpander.expandString(UtilMisc.toMap(x.location, x.products, x.type, x.promo, x.id, id));
+            String filePathPrefix = x.emptyString;
             String filenameToUse = fileLocation;
             if (fileLocation.lastIndexOf('/') != -1) {
                 filePathPrefix = fileLocation.substring(0, fileLocation.lastIndexOf('/') + 1); // adding 1 to include the trailing slash
@@ -1365,72 +1398,72 @@ public class ProductServices {
 
             List<GenericValue> fileExtension;
             try {
-                fileExtension = EntityQuery.use(delegator)
-                        .from("FileExtension")
-                        .where("mimeTypeId", EntityOperator.EQUALS, context.get(x._uploadedFile_contentType))
-                        .queryList();
-            } catch (GenericEntityException e) {
+                fileExtension = new LinkedList<>();
+                for (Object fileExtensionEntity : fileExtensionDao.list(Filters.eq(x.mimeTypeId, context.get(x._uploadedFile_contentType)))) {
+                    fileExtension.add(delegator.makeValue(x.FileExtension, Beans.beanToMap(fileExtensionEntity)));
+                }
+            } catch (Exception e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
             }
 
             GenericValue extension = EntityUtil.getFirst(fileExtension);
             if (extension != null) {
-                filenameToUse += "." + extension.getString(x.fileExtensionId);
+                filenameToUse += x.str_3a52ce78 + extension.getString(x.fileExtensionId);
             }
 
-            File makeResourceDirectory = new File(imageServerPath + "/" + filePathPrefix);
+            File makeResourceDirectory = new File(imageServerPath + x.str_42099b4a + filePathPrefix);
             if (!makeResourceDirectory.exists()) {
                 if (!makeResourceDirectory.mkdirs()) {
-                    Debug.logError("Directory :" + makeResourceDirectory.getPath() + ", couldn't be created", MODULE);
+                    Debug.logError(x.Directory + makeResourceDirectory.getPath() + x.couldn_t_be_created, MODULE);
                 }
             }
 
-            String fileToCheck = imageServerPath + "/" + filePathPrefix + filenameToUse;
+            String fileToCheck = imageServerPath + x.str_42099b4a + filePathPrefix + filenameToUse;
             File file = new File(fileToCheck);
 
             try {
                 Path tempFile = Files.createTempFile(null, null);
                 Files.write(tempFile, imageData.array(), StandardOpenOption.APPEND);
                 // Check if a webshell is not uploaded
-                if (!org.apache.ofbiz.security.SecuredUpload.isValidFile(tempFile.toString(), "Image", delegator)) {
-                    String errorMessage = UtilProperties.getMessage("SecurityUiLabels", "SupportedImageFormats", locale);
+                if (!org.apache.ofbiz.security.SecuredUpload.isValidFile(tempFile.toString(), x.Image, delegator)) {
+                    String errorMessage = UtilProperties.getMessage(x.SecurityUiLabels, x.SupportedImageFormats, locale);
                     return ServiceUtil.returnError(errorMessage);
                 }
                 File tempFileToDelete = new File(tempFile.toString());
                 tempFileToDelete.deleteOnExit();
-                RandomAccessFile out = new RandomAccessFile(file, "rw");
+                RandomAccessFile out = new RandomAccessFile(file, x.rw);
                 out.write(imageData.array());
                 out.close();
             } catch (FileNotFoundException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                        "ProductImageViewUnableWriteFile", UtilMisc.toMap("fileName", file.getAbsolutePath()), locale));
+                        x.ProductImageViewUnableWriteFile, UtilMisc.toMap(x.fileName, file.getAbsolutePath()), locale));
             } catch (IOException | ImageReadException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                        "ProductImageViewUnableWriteBinaryData", UtilMisc.toMap("fileName", file.getAbsolutePath()), locale));
+                        x.ProductImageViewUnableWriteBinaryData, UtilMisc.toMap(x.fileName, file.getAbsolutePath()), locale));
             }
 
-            String imageUrl = imageUrlPrefix + "/" + filePathPrefix + filenameToUse;
+            String imageUrl = imageUrlPrefix + x.str_42099b4a + filePathPrefix + filenameToUse;
 
             if (UtilValidate.isNotEmpty(imageUrl) && !imageUrl.isEmpty()) {
                 Map<String, Object> dataResourceCtx = new HashMap<>();
-                dataResourceCtx.put("objectInfo", imageUrl);
-                dataResourceCtx.put("dataResourceName", context.get(x._uploadedFile_fileName));
-                dataResourceCtx.put("userLogin", userLogin);
+                dataResourceCtx.put(x.objectInfo, imageUrl);
+                dataResourceCtx.put(x.dataResourceName, context.get(x._uploadedFile_fileName));
+                dataResourceCtx.put(x.userLogin, userLogin);
 
                 Map<String, Object> productPromoContentCtx = new HashMap<>();
-                productPromoContentCtx.put("productPromoId", productPromoId);
-                productPromoContentCtx.put("productPromoContentTypeId", productPromoContentTypeId);
-                productPromoContentCtx.put("fromDate", context.get(x.fromDate));
-                productPromoContentCtx.put("thruDate", context.get(x.thruDate));
-                productPromoContentCtx.put("userLogin", userLogin);
+                productPromoContentCtx.put(x.productPromoId, productPromoId);
+                productPromoContentCtx.put(x.productPromoContentTypeId, productPromoContentTypeId);
+                productPromoContentCtx.put(x.fromDate, context.get(x.fromDate));
+                productPromoContentCtx.put(x.thruDate, context.get(x.thruDate));
+                productPromoContentCtx.put(x.userLogin, userLogin);
 
                 if (UtilValidate.isNotEmpty(contentId)) {
                     GenericValue content = null;
                     try {
-                        content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).queryOne();
+                        content = contentDao.findOneByWhere(delegator, x.Content, UtilMisc.toMap(x.contentId, contentId), null, null, false);
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
                         return ServiceUtil.returnError(e.getMessage());
@@ -1446,9 +1479,9 @@ public class ProductServices {
                         }
 
                         if (dataResource != null) {
-                            dataResourceCtx.put("dataResourceId", dataResource.getString(x.dataResourceId));
+                            dataResourceCtx.put(x.dataResourceId, dataResource.getString(x.dataResourceId));
                             try {
-                                Map<String, Object> serviceResult = dispatcher.runSync("updateDataResource", dataResourceCtx);
+                                Map<String, Object> serviceResult = dispatcher.runSync(x.updateDataResource, dataResourceCtx);
                                 if (ServiceUtil.isError(serviceResult)) {
                                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                                 }
@@ -1457,11 +1490,11 @@ public class ProductServices {
                                 return ServiceUtil.returnError(e.getMessage());
                             }
                         } else {
-                            dataResourceCtx.put("dataResourceTypeId", "SHORT_TEXT");
-                            dataResourceCtx.put("mimeTypeId", "text/html");
+                            dataResourceCtx.put(x.dataResourceTypeId, x.SHORT_TEXT);
+                            dataResourceCtx.put(x.mimeTypeId, x.text_html);
                             Map<String, Object> dataResourceResult;
                             try {
-                                dataResourceResult = dispatcher.runSync("createDataResource", dataResourceCtx);
+                                dataResourceResult = dispatcher.runSync(x.createDataResource, dataResourceCtx);
                                 if (ServiceUtil.isError(dataResourceResult)) {
                                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(dataResourceResult));
                                 }
@@ -1471,11 +1504,11 @@ public class ProductServices {
                             }
 
                             Map<String, Object> contentCtx = new HashMap<>();
-                            contentCtx.put("contentId", contentId);
-                            contentCtx.put("dataResourceId", dataResourceResult.get("dataResourceId"));
-                            contentCtx.put("userLogin", userLogin);
+                            contentCtx.put(x.contentId, contentId);
+                            contentCtx.put(x.dataResourceId, dataResourceResult.get(x.dataResourceId));
+                            contentCtx.put(x.userLogin, userLogin);
                             try {
-                                Map<String, Object> serviceResult = dispatcher.runSync("updateContent", contentCtx);
+                                Map<String, Object> serviceResult = dispatcher.runSync(x.updateContent, contentCtx);
                                 if (ServiceUtil.isError(serviceResult)) {
                                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                                 }
@@ -1485,9 +1518,9 @@ public class ProductServices {
                             }
                         }
 
-                        productPromoContentCtx.put("contentId", contentId);
+                        productPromoContentCtx.put(x.contentId, contentId);
                         try {
-                            Map<String, Object> serviceResult = dispatcher.runSync("updateProductPromoContent", productPromoContentCtx);
+                            Map<String, Object> serviceResult = dispatcher.runSync(x.updateProductPromoContent, productPromoContentCtx);
                             if (ServiceUtil.isError(serviceResult)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                             }
@@ -1497,11 +1530,11 @@ public class ProductServices {
                         }
                     }
                 } else {
-                    dataResourceCtx.put("dataResourceTypeId", "SHORT_TEXT");
-                    dataResourceCtx.put("mimeTypeId", "text/html");
+                    dataResourceCtx.put(x.dataResourceTypeId, x.SHORT_TEXT);
+                    dataResourceCtx.put(x.mimeTypeId, x.text_html);
                     Map<String, Object> dataResourceResult;
                     try {
-                        dataResourceResult = dispatcher.runSync("createDataResource", dataResourceCtx);
+                        dataResourceResult = dispatcher.runSync(x.createDataResource, dataResourceCtx);
                         if (ServiceUtil.isError(dataResourceResult)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(dataResourceResult));
                         }
@@ -1511,12 +1544,12 @@ public class ProductServices {
                     }
 
                     Map<String, Object> contentCtx = new HashMap<>();
-                    contentCtx.put("contentTypeId", "DOCUMENT");
-                    contentCtx.put("dataResourceId", dataResourceResult.get("dataResourceId"));
-                    contentCtx.put("userLogin", userLogin);
+                    contentCtx.put(x.contentTypeId, x.DOCUMENT);
+                    contentCtx.put(x.dataResourceId, dataResourceResult.get(x.dataResourceId));
+                    contentCtx.put(x.userLogin, userLogin);
                     Map<String, Object> contentResult;
                     try {
-                        contentResult = dispatcher.runSync("createContent", contentCtx);
+                        contentResult = dispatcher.runSync(x.createContent, contentCtx);
                         if (ServiceUtil.isError(contentResult)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(contentResult));
                         }
@@ -1525,9 +1558,9 @@ public class ProductServices {
                         return ServiceUtil.returnError(e.getMessage());
                     }
 
-                    productPromoContentCtx.put("contentId", contentResult.get("contentId"));
+                    productPromoContentCtx.put(x.contentId, contentResult.get(x.contentId));
                     try {
-                        Map<String, Object> serviceResult = dispatcher.runSync("createProductPromoContent", productPromoContentCtx);
+                        Map<String, Object> serviceResult = dispatcher.runSync(x.createProductPromoContent, productPromoContentCtx);
                         if (ServiceUtil.isError(serviceResult)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                         }
@@ -1539,14 +1572,14 @@ public class ProductServices {
             }
         } else {
             Map<String, Object> productPromoContentCtx = new HashMap<>();
-            productPromoContentCtx.put("productPromoId", productPromoId);
-            productPromoContentCtx.put("productPromoContentTypeId", productPromoContentTypeId);
-            productPromoContentCtx.put("contentId", contentId);
-            productPromoContentCtx.put("fromDate", context.get(x.fromDate));
-            productPromoContentCtx.put("thruDate", context.get(x.thruDate));
-            productPromoContentCtx.put("userLogin", userLogin);
+            productPromoContentCtx.put(x.productPromoId, productPromoId);
+            productPromoContentCtx.put(x.productPromoContentTypeId, productPromoContentTypeId);
+            productPromoContentCtx.put(x.contentId, contentId);
+            productPromoContentCtx.put(x.fromDate, context.get(x.fromDate));
+            productPromoContentCtx.put(x.thruDate, context.get(x.thruDate));
+            productPromoContentCtx.put(x.userLogin, userLogin);
             try {
-                Map<String, Object> serviceResult = dispatcher.runSync("updateProductPromoContent", productPromoContentCtx);
+                Map<String, Object> serviceResult = dispatcher.runSync(x.updateProductPromoContent, productPromoContentCtx);
                 if (ServiceUtil.isError(serviceResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                 }

@@ -49,10 +49,27 @@ import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityConditionList;
 import org.apache.ofbiz.entity.condition.EntityExpr;
 import org.apache.ofbiz.entity.condition.EntityOperator;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
 import org.apache.ofbiz.order.thirdparty.paypal.ExpressCheckoutEvents;
+import org.apache.ofbiz.persistence.dao.BillingAccountDao;
+import org.apache.ofbiz.persistence.dao.BillingAccountRoleDao;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.FinAccountRoleDao;
+import org.apache.ofbiz.persistence.dao.ItemIssuanceDao;
+import org.apache.ofbiz.persistence.dao.OrderAdjustmentDao;
+import org.apache.ofbiz.persistence.dao.OrderHeaderDao;
+import org.apache.ofbiz.persistence.dao.OrderItemAssocDao;
+import org.apache.ofbiz.persistence.dao.OrderItemShipGrpInvResDao;
+import org.apache.ofbiz.persistence.dao.OrderPaymentPreferenceDao;
+import org.apache.ofbiz.persistence.dao.PaymentMethodTypeDao;
+import org.apache.ofbiz.persistence.dao.ProductStoreEmailSettingDao;
+import org.apache.ofbiz.persistence.dao.ReturnAdjustmentDao;
+import org.apache.ofbiz.persistence.dao.ReturnHeaderDao;
+import org.apache.ofbiz.persistence.dao.ReturnItemDao;
+import org.apache.ofbiz.persistence.dao.ReturnItemResponseDao;
+import org.apache.ofbiz.persistence.dao.ReturnItemTypeMapDao;
+import org.apache.ofbiz.persistence.dao.SubscriptionDao;
 import org.apache.ofbiz.product.product.ProductContentWrapper;
 import org.apache.ofbiz.product.product.ProductWorker;
 import org.apache.ofbiz.service.DispatchContext;
@@ -73,13 +90,13 @@ import org.apache.ofbiz.model.OrderReturnServicesContext;
 public class OrderReturnServices {
 
     private static final String MODULE = OrderReturnServices.class.getName();
-    private static final String RESOURCE = "OrderUiLabels";
-    private static final String RES_ERROR = "OrderErrorUiLabels";
-    private static final String RES_PRODUCT = "ProductUiLabels";
+    private static final String RESOURCE = x.OrderUiLabels;
+    private static final String RES_ERROR = x.OrderErrorUiLabels;
+    private static final String RES_PRODUCT = x.ProductUiLabels;
 
     //  set some BigDecimal properties
-    private static final int DECIMALS = UtilNumber.getBigDecimalScale("invoice.decimals");
-    private static final RoundingMode ROUNDING = UtilNumber.getRoundingMode("invoice.rounding");
+    private static final int DECIMALS = UtilNumber.getBigDecimalScale(x.invoice_decimals);
+    private static final RoundingMode ROUNDING = UtilNumber.getRoundingMode(x.invoice_rounding);
     private static final BigDecimal ZERO = BigDecimal.ZERO.setScale(DECIMALS, ROUNDING);
 
     // locate the return item's initial inventory item cost
@@ -89,7 +106,7 @@ public class OrderReturnServices {
         String returnItemSeqId = (String) context.get(x.returnItemSeqId);
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("initialItemCost", getReturnItemInitialCost(delegator, returnId, returnItemSeqId));
+        result.put(x.initialItemCost, getReturnItemInitialCost(delegator, returnId, returnItemSeqId));
         return result;
     }
 
@@ -120,18 +137,18 @@ public class OrderReturnServices {
 
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("availableReturnTotal", available);
-        result.put("orderTotal", orderTotal);
-        result.put("returnTotal", returnTotal);
+        result.put(x.availableReturnTotal, available);
+        result.put(x.orderTotal, orderTotal);
+        result.put(x.returnTotal, returnTotal);
         return result;
     }
 
     // worker method which can be used in screen iterations
     public static BigDecimal getReturnItemInitialCost(Delegator delegator, String returnId, String returnItemSeqId) {
         if (delegator == null || returnId == null || returnItemSeqId == null) {
-            throw new IllegalArgumentException("Method parameters cannot contain nulls");
+            throw new IllegalArgumentException(x.Method_parameters_cannot_contain_nulls);
         }
-        Debug.logInfo("Finding the initial item cost for return item : " + returnId + " / " + returnItemSeqId, MODULE);
+        Debug.logInfo(x.Finding_the_initial_item_cost_for_return_item + returnId + x.str_0d0c4ddd + returnItemSeqId, MODULE);
 
         // the cost holder
         BigDecimal itemCost = BigDecimal.ZERO;
@@ -139,29 +156,34 @@ public class OrderReturnServices {
         // get the return item information
         GenericValue returnItem = null;
         try {
-            returnItem = EntityQuery.use(delegator).from("ReturnItem").where("returnId", returnId, "returnItemSeqId", returnItemSeqId).queryOne();
+            ReturnItemDao returnItemDao = DaoRegistry.getDao(delegator, x.ReturnItem, ReturnItemDao.class);
+            returnItem = returnItemDao.findOne(delegator, x.ReturnItem,
+                    UtilMisc.toMap(x.returnId, returnId, x.returnItemSeqId, returnItemSeqId), false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             throw new GeneralRuntimeException(e.getMessage());
         }
-        Debug.logInfo("Return item value object - " + returnItem, MODULE);
+        Debug.logInfo(x.Return_item_value_object + returnItem, MODULE);
 
         // check for an orderItem association
         if (returnItem != null) {
             String orderId = returnItem.getString(x.orderId);
             String orderItemSeqId = returnItem.getString(x.orderItemSeqId);
             if (orderItemSeqId != null && orderId != null) {
-                Debug.logInfo("Found order item reference", MODULE);
+                Debug.logInfo(x.Found_order_item_reference, MODULE);
                 // locate the item issuance(s) for this order item
                 GenericValue issue = null;
                 try {
-                    issue = EntityQuery.use(delegator).from("ItemIssuance").where("orderId", orderId, "orderItemSeqId", orderItemSeqId).queryFirst();
+                    ItemIssuanceDao itemIssuanceDao = DaoRegistry.getDao(delegator, x.ItemIssuance, ItemIssuanceDao.class);
+                    issue = itemIssuanceDao.findFirstByCondition(delegator, x.ItemIssuance,
+                            EntityCondition.makeCondition(UtilMisc.toMap(x.orderId, orderId, x.orderItemSeqId, orderItemSeqId)),
+                            null, null, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                     throw new GeneralRuntimeException(e.getMessage());
                 }
                 if (issue != null) {
-                    Debug.logInfo("Found item issuance reference", MODULE);
+                    Debug.logInfo(x.Found_item_issuance_reference, MODULE);
                     // just use the first one for now; maybe later we can find a better way to determine which was the
                     // actual item being returned; maybe by serial number
                     GenericValue inventoryItem = null;
@@ -172,18 +194,18 @@ public class OrderReturnServices {
                         throw new GeneralRuntimeException(e.getMessage());
                     }
                     if (inventoryItem != null) {
-                        Debug.logInfo("Located inventory item - " + inventoryItem.getString(x.inventoryItemId), MODULE);
+                        Debug.logInfo(x.Located_inventory_item + inventoryItem.getString(x.inventoryItemId), MODULE);
                         if (inventoryItem.get(x.unitCost) != null) {
                             itemCost = inventoryItem.getBigDecimal(x.unitCost);
                         } else {
-                            Debug.logInfo("Found item cost; but cost was null. Returning default amount (0.00)", MODULE);
+                            Debug.logInfo(x.Found_item_cost_but_cost_was_null_Returning_default_amount_0_00, MODULE);
                         }
                     }
                 }
             }
         }
 
-        Debug.logInfo("Initial item cost - " + itemCost, MODULE);
+        Debug.logInfo(x.Initial_item_cost + itemCost, MODULE);
         return itemCost;
     }
 
@@ -198,11 +220,12 @@ public class OrderReturnServices {
         // get the return header
         GenericValue returnHeader = null;
         try {
-            returnHeader = EntityQuery.use(delegator).from("ReturnHeader").where("returnId", returnId).queryOne();
+            ReturnHeaderDao returnHeaderDao = DaoRegistry.getDao(delegator, x.ReturnHeader, ReturnHeaderDao.class);
+            returnHeader = returnHeaderDao.findOne(delegator, x.ReturnHeader, UtilMisc.toMap(x.returnId, returnId), false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "OrderErrorUnableToGetReturnHeaderForID", UtilMisc.toMap("returnId", returnId), locale));
+                    x.OrderErrorUnableToGetReturnHeaderForID, UtilMisc.toMap(x.returnId, returnId), locale));
         }
 
         // get the return items
@@ -210,15 +233,13 @@ public class OrderReturnServices {
         List<GenericValue> returnAdjustments;
         try {
             returnItems = returnHeader.getRelated(x.ReturnItem, null, null, false);
-            returnAdjustments = EntityQuery.use(delegator).from("ReturnAdjustment")
-                    .where("returnId", returnId, "returnItemSeqId", "_NA_")
-                    .orderBy("returnAdjustmentTypeId")
-                    .cache(true)
-                    .queryList();
+            ReturnAdjustmentDao returnAdjustmentDao = DaoRegistry.getDao(delegator, x.ReturnAdjustment, ReturnAdjustmentDao.class);
+            returnAdjustments = returnAdjustmentDao.findByAnd(delegator, x.ReturnAdjustment,
+                    UtilMisc.toMap(x.returnId, returnId, x.returnItemSeqId, x.NA), UtilMisc.toList(x.returnAdjustmentTypeId), true);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "OrderErrorUnableToGetReturnItemRecordsFromReturnHeader", locale));
+                    x.OrderErrorUnableToGetReturnItemRecordsFromReturnHeader, locale));
         }
 
         // get the order header -- the first item will determine which product store to use from the order
@@ -232,7 +253,7 @@ public class OrderReturnServices {
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "OrderErrorUnableToGetOrderHeaderFromReturnItem", locale));
+                        x.OrderErrorUnableToGetOrderHeaderFromReturnItem, locale));
             }
 
             if (orderHeader != null && UtilValidate.isNotEmpty(orderHeader.getString(x.productStoreId))) {
@@ -248,68 +269,70 @@ public class OrderReturnServices {
 
             GenericValue productStoreEmail = null;
             try {
-                productStoreEmail = EntityQuery.use(delegator).from("ProductStoreEmailSetting").where("productStoreId", productStoreId,
-                        "emailType", emailType).queryOne();
+                ProductStoreEmailSettingDao productStoreEmailSettingDao = DaoRegistry.getDao(delegator, x.ProductStoreEmailSetting,
+                        ProductStoreEmailSettingDao.class);
+                productStoreEmail = productStoreEmailSettingDao.findOne(delegator, x.ProductStoreEmailSetting,
+                        UtilMisc.toMap(x.productStoreId, productStoreId, x.emailType, emailType), false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
 
             if (productStoreEmail != null && emailAddress != null) {
-                sendMap.put("bodyScreenUri", productStoreEmail.getString(x.bodyScreenLocation));
+                sendMap.put(x.bodyScreenUri, productStoreEmail.getString(x.bodyScreenLocation));
                 String xslfoAttachScreenLocation = productStoreEmail.getString(x.xslfoAttachScreenLocation);
-                sendMap.put("xslfoAttachScreenLocation", xslfoAttachScreenLocation);
+                sendMap.put(x.xslfoAttachScreenLocation, xslfoAttachScreenLocation);
 
-                Map<String, Object> bodyParameters = UtilMisc.<String, Object>toMap("returnHeader", returnHeader, "returnItems", returnItems,
-                        "returnAdjustments", returnAdjustments, "locale", locale, "userLogin", userLogin);
-                sendMap.put("bodyParameters", bodyParameters);
+                Map<String, Object> bodyParameters = UtilMisc.<String, Object>toMap(x.returnHeader, returnHeader, x.returnItems, returnItems,
+                        x.returnAdjustments, returnAdjustments, x.locale, locale, x.userLogin, userLogin);
+                sendMap.put(x.bodyParameters, bodyParameters);
 
-                sendMap.put("subject", productStoreEmail.getString(x.subject));
-                sendMap.put("contentType", productStoreEmail.get(x.contentType));
-                sendMap.put("sendFrom", productStoreEmail.get(x.fromAddress));
-                sendMap.put("sendCc", productStoreEmail.get(x.ccAddress));
-                sendMap.put("sendBcc", productStoreEmail.get(x.bccAddress));
-                sendMap.put("sendTo", emailAddress);
-                sendMap.put("partyId", returnHeader.getString(x.fromPartyId));
-                sendMap.put("returnId", returnId);
+                sendMap.put(x.subject, productStoreEmail.getString(x.subject));
+                sendMap.put(x.contentType, productStoreEmail.get(x.contentType));
+                sendMap.put(x.sendFrom, productStoreEmail.get(x.fromAddress));
+                sendMap.put(x.sendCc, productStoreEmail.get(x.ccAddress));
+                sendMap.put(x.sendBcc, productStoreEmail.get(x.bccAddress));
+                sendMap.put(x.sendTo, emailAddress);
+                sendMap.put(x.partyId, returnHeader.getString(x.fromPartyId));
+                sendMap.put(x.returnId, returnId);
 
-                sendMap.put("userLogin", userLogin);
+                sendMap.put(x.userLogin, userLogin);
 
                 Map<String, Object> sendResp = null;
                 try {
-                    sendResp = dispatcher.runSync("sendMailFromScreen", sendMap);
+                    sendResp = dispatcher.runSync(x.sendMailFromScreen, sendMap);
                     if (ServiceUtil.isError(sendResp)) {
-                        sendResp.put("emailType", emailType);
+                        sendResp.put(x.emailType, emailType);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                "OrderProblemSendingEmail", locale), null, null, sendResp);
+                                x.OrderProblemSendingEmail, locale), null, null, sendResp);
                     }
                 } catch (GenericServiceException e) {
-                    Debug.logError(e, "Problem sending mail", MODULE);
+                    Debug.logError(e, x.Problem_sending_mail, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "OrderProblemSendingEmail", locale));
+                            x.OrderProblemSendingEmail, locale));
                 }
                 return ServiceUtil.returnSuccess();
             }
         }
 
         return ServiceUtil.returnFailure(UtilProperties.getMessage(RES_PRODUCT,
-                "ProductProductStoreEmailSettingsNotValid",
-                UtilMisc.toMap("productStoreId", productStoreId,
-                        "emailType", emailType), locale));
+                x.ProductProductStoreEmailSettingsNotValid,
+                UtilMisc.toMap(x.productStoreId, productStoreId,
+                        x.emailType, emailType), locale));
     }
 
     // return request notification
     public static Map<String, Object> sendReturnAcceptNotification(DispatchContext dctx, OrderReturnServicesContext context) {
-        return sendReturnNotificationScreen(dctx, context, "PRDS_RTN_ACCEPT");
+        return sendReturnNotificationScreen(dctx, context, x.PRDS_RTN_ACCEPT);
     }
 
     // return complete notification
     public static Map<String, Object> sendReturnCompleteNotification(DispatchContext dctx, OrderReturnServicesContext context) {
-        return sendReturnNotificationScreen(dctx, context, "PRDS_RTN_COMPLETE");
+        return sendReturnNotificationScreen(dctx, context, x.PRDS_RTN_COMPLETE);
     }
 
     // return cancel notification
     public static Map<String, Object> sendReturnCancelNotification(DispatchContext dctx, OrderReturnServicesContext context) {
-        return sendReturnNotificationScreen(dctx, context, "PRDS_RTN_CANCEL");
+        return sendReturnNotificationScreen(dctx, context, x.PRDS_RTN_CANCEL);
     }
 
     // cancel replacement order if return not received within 30 days and send notification
@@ -319,22 +342,22 @@ public class OrderReturnServices {
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         List<GenericValue> returnHeaders = null;
         try {
-            returnHeaders = EntityQuery.use(delegator).from("ReturnHeader")
-                    .where("statusId", "RETURN_ACCEPTED", "returnHeaderTypeId", "CUSTOMER_RETURN")
-                    .orderBy("entryDate")
-                    .queryList();
+            ReturnHeaderDao returnHeaderDao = DaoRegistry.getDao(delegator, x.ReturnHeader, ReturnHeaderDao.class);
+            returnHeaders = returnHeaderDao.findByAnd(delegator, x.ReturnHeader,
+                    UtilMisc.toMap(x.statusId, x.RETURN_ACCEPTED, x.returnHeaderTypeId, x.CUSTOMER_RETURN), UtilMisc.toList(x.entryDate),
+                    false);
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Problem getting Return headers", MODULE);
+            Debug.logError(e, x.Problem_getting_Return_headers, MODULE);
         }
         for (GenericValue returnHeader : returnHeaders) {
             String returnId = returnHeader.getString(x.returnId);
             Timestamp entryDate = returnHeader.getTimestamp(x.entryDate);
-            String daysTillCancelStr = EntityUtilProperties.getPropertyValue("order", "daysTillCancelReplacementOrder", "30", delegator);
+            String daysTillCancelStr = EntityUtilProperties.getPropertyValue(x.order, x.daysTillCancelReplacementOrder, x._30, delegator);
             int daysTillCancel = 0;
             try {
                 daysTillCancel = Integer.parseInt(daysTillCancelStr);
             } catch (NumberFormatException e) {
-                Debug.logError(e, "Unable to get daysTillCancel", MODULE);
+                Debug.logError(e, x.Unable_to_get_daysTillCancel, MODULE);
             }
             if (daysTillCancel > 0) {
                 Calendar cal = Calendar.getInstance();
@@ -344,25 +367,26 @@ public class OrderReturnServices {
                 Date nowDate = new Date();
                 if (cancelDate.equals(nowDate) || nowDate.after(cancelDate)) {
                     try {
-                        List<GenericValue> returnItems = EntityQuery.use(delegator).from("ReturnItem")
-                                .where("returnId", returnId, "returnTypeId", "RTN_WAIT_REPLACE_RES")
-                                .orderBy("createdStamp")
-                                .queryList();
+                        ReturnItemDao returnItemDao = DaoRegistry.getDao(delegator, x.ReturnItem, ReturnItemDao.class);
+                        List<GenericValue> returnItems = returnItemDao.findByAnd(delegator, x.ReturnItem,
+                                UtilMisc.toMap(x.returnId, returnId, x.returnTypeId, x.RTN_WAIT_REPLACE_RES),
+                                UtilMisc.toList(x.createdStamp), false);
                         for (GenericValue returnItem : returnItems) {
                             GenericValue returnItemResponse = returnItem.getRelatedOne(x.ReturnItemResponse, false);
                             if (returnItemResponse != null) {
                                 String replacementOrderId = returnItemResponse.getString(x.replacementOrderId);
-                                Map<String, Object> svcCtx = UtilMisc.<String, Object>toMap("orderId", replacementOrderId, "userLogin", userLogin);
-                                GenericValue orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId",
-                                        replacementOrderId).queryOne();
-                                if ("ORDER_HOLD".equals(orderHeader.getString(x.statusId))) {
+                                Map<String, Object> svcCtx = UtilMisc.<String, Object>toMap(x.orderId, replacementOrderId, x.userLogin, userLogin);
+                                OrderHeaderDao orderHeaderDao = DaoRegistry.getDao(delegator, x.OrderHeader, OrderHeaderDao.class);
+                                GenericValue orderHeader = orderHeaderDao.findOne(delegator, x.OrderHeader,
+                                        UtilMisc.toMap(x.orderId, replacementOrderId), false);
+                                if (x.ORDER_HOLD.equals(orderHeader.getString(x.statusId))) {
                                     try {
-                                        Map<String, Object> result = dispatcher.runSync("cancelOrderItem", svcCtx);
+                                        Map<String, Object> result = dispatcher.runSync(x.cancelOrderItem, svcCtx);
                                         if (ServiceUtil.isError(result)) {
                                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
                                         }
                                     } catch (GenericServiceException e) {
-                                        Debug.logError(e, "Problem calling service cancelOrderItem: " + svcCtx, MODULE);
+                                        Debug.logError(e, x.Problem_calling_service_cancelOrderItem + svcCtx, MODULE);
                                     }
                                 }
                             }
@@ -385,7 +409,7 @@ public class OrderReturnServices {
             try {
                 product = orderItem.getRelatedOne(x.Product, false);
             } catch (GenericEntityException e) {
-                Debug.logError(e, "ERROR: Unable to get Product from OrderItem", MODULE);
+                Debug.logError(e, x.ERROR_Unable_to_get_Product_from_OrderItem, MODULE);
             }
         }
 
@@ -394,7 +418,7 @@ public class OrderReturnServices {
 
         // first check returnable flag
         if (product != null && product.get(x.returnable) != null
-                && "N".equalsIgnoreCase(product.getString(x.returnable))) {
+                && x.N.equalsIgnoreCase(product.getString(x.returnable))) {
             // the product is not returnable at all
             returnable = false;
         }
@@ -414,14 +438,14 @@ public class OrderReturnServices {
 
         // get the returnable quantity
         BigDecimal returnableQuantity = BigDecimal.ZERO;
-        if (returnable && ("ITEM_APPROVED".equals(itemStatus) || "ITEM_COMPLETED".equals(itemStatus))) {
+        if (returnable && (x.ITEM_APPROVED.equals(itemStatus) || x.ITEM_COMPLETED.equals(itemStatus))) {
             List<GenericValue> returnedItems = null;
             try {
                 returnedItems = orderItem.getRelated(x.ReturnItem, null, null, false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "OrderErrorUnableToGetReturnItemInformation", locale));
+                        x.OrderErrorUnableToGetReturnItemInformation, locale));
             }
             if (UtilValidate.isEmpty(returnedItems)) {
                 returnableQuantity = orderQty;
@@ -434,10 +458,10 @@ public class OrderReturnServices {
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                "OrderErrorUnableToGetReturnHeaderFromItem", locale));
+                                x.OrderErrorUnableToGetReturnHeaderFromItem, locale));
                     }
                     String returnStatus = returnHeader.getString(x.statusId);
-                    if (!"RETURN_CANCELLED".equals(returnStatus)) {
+                    if (!x.RETURN_CANCELLED.equals(returnStatus)) {
                         if (UtilValidate.isNotEmpty(returnItem.getBigDecimal(x.returnQuantity))) {
                             returnedQty = returnedQty.add(returnItem.getBigDecimal(x.returnQuantity));
                         }
@@ -452,8 +476,8 @@ public class OrderReturnServices {
         // get the returnable price now equals to orderItem.unitPrice, since adjustments are booked separately
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("returnableQuantity", returnableQuantity);
-        result.put("returnablePrice", orderItem.getBigDecimal(x.unitPrice));
+        result.put(x.returnableQuantity, returnableQuantity);
+        result.put(x.returnablePrice, orderItem.getBigDecimal(x.unitPrice));
         return result;
     }
 
@@ -466,28 +490,32 @@ public class OrderReturnServices {
 
         GenericValue orderHeader = null;
         try {
-            orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
+            OrderHeaderDao orderHeaderDao = DaoRegistry.getDao(delegator, x.OrderHeader, OrderHeaderDao.class);
+            orderHeader = orderHeaderDao.findOne(delegator, x.OrderHeader, UtilMisc.toMap(x.orderId, orderId), false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "OrderErrorUnableToGetReturnItemInformation", locale));
+                    x.OrderErrorUnableToGetReturnItemInformation, locale));
         }
 
         Map<GenericValue, Map<String, Object>> returnable = new LinkedHashMap<>();
         if (orderHeader != null) {
             // OrderItems which have been issued may be returned.
             EntityConditionList<EntityExpr> whereConditions = EntityCondition.makeCondition(UtilMisc.toList(
-                    EntityCondition.makeCondition("orderId", EntityOperator.EQUALS, orderHeader.getString(x.orderId)),
-                    EntityCondition.makeCondition("orderItemStatusId", EntityOperator.IN, UtilMisc.toList("ITEM_APPROVED", "ITEM_COMPLETED"))),
+                    EntityCondition.makeCondition(x.orderId, EntityOperator.EQUALS, orderHeader.getString(x.orderId)),
+                    EntityCondition.makeCondition(x.orderItemStatusId, EntityOperator.IN, UtilMisc.toList(x.ITEM_APPROVED, x.ITEM_COMPLETED))),
                     EntityOperator.AND);
             List<GenericValue> orderItemQuantitiesIssued = null;
             try {
-                orderItemQuantitiesIssued = EntityQuery.use(delegator).select("orderId", "orderItemSeqId", "quantityIssued")
-                        .from("OrderItemQuantityReportGroupByItem").where(whereConditions).orderBy("orderItemSeqId").queryList();
+                OrderItemShipGrpInvResDao orderItemShipGrpInvResDao = DaoRegistry.getDao(delegator, x.OrderItemQuantityReportGroupByItem,
+                        OrderItemShipGrpInvResDao.class);
+                orderItemQuantitiesIssued = orderItemShipGrpInvResDao.findByCondition(delegator, x.OrderItemQuantityReportGroupByItem,
+                        whereConditions, UtilMisc.toList(x.orderId, x.orderItemSeqId, x.quantityIssued), UtilMisc.toList(x.orderItemSeqId), null,
+                        false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "OrderErrorUnableToGetReturnHeaderFromItem", locale));
+                        x.OrderErrorUnableToGetReturnHeaderFromItem, locale));
             }
 
             if (orderItemQuantitiesIssued != null) {
@@ -498,11 +526,11 @@ public class OrderReturnServices {
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                "OrderErrorUnableToGetOrderItemInformation", locale));
+                                x.OrderErrorUnableToGetOrderItemInformation, locale));
                     }
                     // items not issued/shipped are considered as returnable only if they are
                     // not physical items
-                    if ("SALES_ORDER".equals(orderHeader.getString(x.orderTypeId))) {
+                    if (x.SALES_ORDER.equals(orderHeader.getString(x.orderTypeId))) {
                         BigDecimal quantityIssued = orderItemQuantityIssued.getBigDecimal(x.quantityIssued);
                         if (UtilValidate.isEmpty(quantityIssued) || quantityIssued.compareTo(BigDecimal.ZERO) == 0) {
                             try {
@@ -511,34 +539,34 @@ public class OrderReturnServices {
                                     continue;
                                 }
                             } catch (GenericEntityException e) {
-                                Debug.logError(e, "Problems looking up returnable product type information", MODULE);
+                                Debug.logError(e, x.Problems_looking_up_returnable_product_type_information, MODULE);
                                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                        "OrderErrorUnableToGetTheItemReturnableProduct", locale));
+                                        x.OrderErrorUnableToGetTheItemReturnableProduct, locale));
                             }
                         }
                     }
                     Map<String, Object> serviceResult = null;
                     try {
-                        serviceResult = dispatcher.runSync("getReturnableQuantity", UtilMisc.toMap("orderItem", item));
+                        serviceResult = dispatcher.runSync(x.getReturnableQuantity, UtilMisc.toMap(x.orderItem, item));
                         if (ServiceUtil.isError(serviceResult)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                         }
                     } catch (GenericServiceException e) {
                         Debug.logError(e, MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                "OrderErrorUnableToGetTheItemReturnableQuantity", locale));
+                                x.OrderErrorUnableToGetTheItemReturnableQuantity, locale));
                     }
                     // Don't add the OrderItem to the map of returnable OrderItems if there isn't any returnable quantity.
-                    if (((BigDecimal) serviceResult.get("returnableQuantity")).compareTo(BigDecimal.ZERO) == 0) {
+                    if (((BigDecimal) serviceResult.get(x.returnableQuantity)).compareTo(BigDecimal.ZERO) == 0) {
                         continue;
                     }
                     Map<String, Object> returnInfo = new HashMap<>();
                     // first the return info (quantity/price)
-                    returnInfo.put("returnableQuantity", serviceResult.get("returnableQuantity"));
-                    returnInfo.put("returnablePrice", serviceResult.get("returnablePrice"));
+                    returnInfo.put(x.returnableQuantity, serviceResult.get(x.returnableQuantity));
+                    returnInfo.put(x.returnablePrice, serviceResult.get(x.returnablePrice));
 
                     // now the product type information
-                    String itemTypeKey = "FINISHED_GOOD"; // default item type (same as invoice)
+                    String itemTypeKey = x.FINISHED_GOOD; // default item type (same as invoice)
                     GenericValue product = null;
                     if (item.get(x.productId) != null) {
                         try {
@@ -546,7 +574,7 @@ public class OrderReturnServices {
                         } catch (GenericEntityException e) {
                             Debug.logError(e, MODULE);
                             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                    "OrderErrorUnableToGetOrderItemInformation", locale));
+                                    x.OrderErrorUnableToGetOrderItemInformation, locale));
                         }
                     }
                     if (product != null) {
@@ -554,7 +582,7 @@ public class OrderReturnServices {
                     } else if (item.getString(x.orderItemTypeId) != null) {
                         itemTypeKey = item.getString(x.orderItemTypeId);
                     }
-                    returnInfo.put("itemTypeKey", itemTypeKey);
+                    returnInfo.put(x.itemTypeKey, itemTypeKey);
 
                     returnable.put(item, returnInfo);
 
@@ -565,30 +593,30 @@ public class OrderReturnServices {
                     } catch (GenericEntityException e) {
                         Debug.logError(e, MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                "OrderErrorUnableToGetOrderAdjustmentsFromItem", locale));
+                                x.OrderErrorUnableToGetOrderAdjustmentsFromItem, locale));
                     }
                     if (UtilValidate.isNotEmpty(itemAdjustments)) {
                         for (GenericValue itemAdjustment : itemAdjustments) {
                             returnInfo = new HashMap<>();
-                            returnInfo.put("returnableQuantity", BigDecimal.ONE);
+                            returnInfo.put(x.returnableQuantity, BigDecimal.ONE);
                             // TODO: the returnablePrice should be set to the amount minus the already returned amount
-                            returnInfo.put("returnablePrice", itemAdjustment.get(x.amount));
-                            returnInfo.put("itemTypeKey", itemTypeKey);
+                            returnInfo.put(x.returnablePrice, itemAdjustment.get(x.amount));
+                            returnInfo.put(x.itemTypeKey, itemTypeKey);
                             returnable.put(itemAdjustment, returnInfo);
                         }
                     }
                 }
             } else {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "OrderErrorNoOrderItemsFound", locale));
+                        x.OrderErrorNoOrderItemsFound, locale));
             }
         } else {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "OrderErrorUnableToFindOrderHeader", locale));
+                    x.OrderErrorUnableToFindOrderHeader, locale));
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("returnableItems", returnable);
+        result.put(x.returnableItems, returnable);
         return result;
     }
 
@@ -604,21 +632,22 @@ public class OrderReturnServices {
         GenericValue returnHeader = null;
         List<GenericValue> returnItems = null;
         try {
-            returnHeader = EntityQuery.use(delegator).from("ReturnHeader").where("returnId", returnId).queryOne();
+            ReturnHeaderDao returnHeaderDao = DaoRegistry.getDao(delegator, x.ReturnHeader, ReturnHeaderDao.class);
+            returnHeader = returnHeaderDao.findOne(delegator, x.ReturnHeader, UtilMisc.toMap(x.returnId, returnId), false);
             if (returnHeader != null) {
                 returnItems = returnHeader.getRelated(x.ReturnItem, null, null, false);
             }
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Problems looking up return information", MODULE);
+            Debug.logError(e, x.Problems_looking_up_return_information, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "OrderErrorGettingReturnHeaderItemInformation", locale));
+                    x.OrderErrorGettingReturnHeaderItemInformation, locale));
         }
 
         // if already completed just return
         String currentStatus = null;
         if (returnHeader != null && returnHeader.get(x.statusId) != null) {
             currentStatus = returnHeader.getString(x.statusId);
-            if ("RETURN_COMPLETED".equals(currentStatus) || "RETURN_CANCELLED".equals(currentStatus)) {
+            if (x.RETURN_COMPLETED.equals(currentStatus) || x.RETURN_CANCELLED.equals(currentStatus)) {
                 return ServiceUtil.returnSuccess();
             }
         }
@@ -629,21 +658,21 @@ public class OrderReturnServices {
                 String itemStatus = item != null ? item.getString(x.statusId) : null;
                 if (itemStatus != null) {
                     // both completed and cancelled items qualify for completed status change
-                    if ("RETURN_COMPLETED".equals(itemStatus) || "RETURN_CANCELLED".equals(itemStatus)) {
+                    if (x.RETURN_COMPLETED.equals(itemStatus) || x.RETURN_CANCELLED.equals(itemStatus)) {
                         completedItems.add(item);
                     } else {
                         // Non-physical items don't need an inventory receive and so are
                         // considered completed after the return is accepted
-                        if ("RETURN_ACCEPTED".equals(returnHeader.getString(x.statusId))) {
+                        if (x.RETURN_ACCEPTED.equals(returnHeader.getString(x.statusId))) {
                             try {
                                 GenericValue itemProduct = item.getRelatedOne(x.Product, false);
                                 if (!ProductWorker.isPhysical(itemProduct)) {
                                     completedItems.add(item);
                                 }
                             } catch (GenericEntityException e) {
-                                Debug.logError(e, "Problems looking up returned product type information", MODULE);
+                                Debug.logError(e, x.Problems_looking_up_returned_product_type_information, MODULE);
                                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                        "OrderErrorGettingReturnHeaderItemInformation", locale));
+                                        x.OrderErrorGettingReturnHeaderItemInformation, locale));
                             }
                         }
                     }
@@ -656,33 +685,33 @@ public class OrderReturnServices {
                 // updateReturnHeader service; this will trigger all the appropriate ecas
                 // including this service again, so that the return is moved
                 // to the final status
-                if (currentStatus != null && "RETURN_ACCEPTED".equals(currentStatus)) {
+                if (currentStatus != null && x.RETURN_ACCEPTED.equals(currentStatus)) {
                     try {
-                        serviceResult = dispatcher.runSync("updateReturnHeader", UtilMisc.<String, Object>toMap("returnId", returnId,
-                                "statusId", "RETURN_RECEIVED",
-                                "userLogin", userLogin));
+                        serviceResult = dispatcher.runSync(x.updateReturnHeader, UtilMisc.<String, Object>toMap(x.returnId, returnId,
+                                x.statusId, x.RETURN_RECEIVED,
+                                x.userLogin, userLogin));
                         if (ServiceUtil.isError(serviceResult)) {
                             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                    "OrderErrorUnableToCreateReturnStatusHistory", locale));
+                                    x.OrderErrorUnableToCreateReturnStatusHistory, locale));
                         }
                     } catch (GenericServiceException e) {
                         Debug.logError(e, MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                "OrderErrorUnableToCreateReturnStatusHistory", locale));
+                                x.OrderErrorUnableToCreateReturnStatusHistory, locale));
                     }
-                } else if (currentStatus != null && "RETURN_RECEIVED".equals(currentStatus)) {
+                } else if (currentStatus != null && x.RETURN_RECEIVED.equals(currentStatus)) {
                     try {
-                        serviceResult = dispatcher.runSync("updateReturnHeader", UtilMisc.<String, Object>toMap("returnId", returnId,
-                                "statusId", "RETURN_COMPLETED",
-                                "userLogin", userLogin));
+                        serviceResult = dispatcher.runSync(x.updateReturnHeader, UtilMisc.<String, Object>toMap(x.returnId, returnId,
+                                x.statusId, x.RETURN_COMPLETED,
+                                x.userLogin, userLogin));
                         if (ServiceUtil.isError(serviceResult)) {
                             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                    "OrderErrorUnableToCreateReturnStatusHistory", locale));
+                                    x.OrderErrorUnableToCreateReturnStatusHistory, locale));
                         }
                     } catch (GenericServiceException e) {
                         Debug.logError(e, MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                "OrderErrorUnableToCreateReturnStatusHistory", locale));
+                                x.OrderErrorUnableToCreateReturnStatusHistory, locale));
                     }
                 }
             }
@@ -691,7 +720,7 @@ public class OrderReturnServices {
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         if (returnHeader != null) {
-            result.put("statusId", returnHeader.get(x.statusId));
+            result.put(x.statusId, returnHeader.get(x.statusId));
         }
         return result;
     }
@@ -707,17 +736,18 @@ public class OrderReturnServices {
         GenericValue returnHeader = null;
         List<GenericValue> returnItems = null;
         try {
-            returnHeader = EntityQuery.use(delegator).from("ReturnHeader").where("returnId", returnId).queryOne();
+            ReturnHeaderDao returnHeaderDao = DaoRegistry.getDao(delegator, x.ReturnHeader, ReturnHeaderDao.class);
+            returnHeader = returnHeaderDao.findOne(delegator, x.ReturnHeader, UtilMisc.toMap(x.returnId, returnId), false);
             if (returnHeader != null) {
-                returnItems = returnHeader.getRelated(x.ReturnItem, UtilMisc.toMap("returnTypeId", "RTN_CREDIT"), null, false);
+                returnItems = returnHeader.getRelated(x.ReturnItem, UtilMisc.toMap(x.returnTypeId, x.RTN_CREDIT), null, false);
             }
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Problems looking up return information", MODULE);
+            Debug.logError(e, x.Problems_looking_up_return_information, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "OrderErrorGettingReturnHeaderItemInformation", locale));
+                    x.OrderErrorGettingReturnHeaderItemInformation, locale));
         }
 
-        BigDecimal adjustments = getReturnAdjustmentTotal(delegator, UtilMisc.toMap("returnId", returnId, "returnTypeId", "RTN_CREDIT"));
+        BigDecimal adjustments = getReturnAdjustmentTotal(delegator, UtilMisc.toMap(x.returnId, returnId, x.returnTypeId, x.RTN_CREDIT));
 
         if (returnHeader != null && (UtilValidate.isNotEmpty(returnItems) || adjustments.compareTo(ZERO) > 0)) {
             String finAccountId = returnHeader.getString(x.finAccountId);
@@ -728,11 +758,11 @@ public class OrderReturnServices {
             // make sure total refunds on a return don't exceed amount of returned orders
             Map<String, Object> serviceResult = null;
             try {
-                serviceResult = dispatcher.runSync("checkPaymentAmountForRefund", UtilMisc.toMap("returnId", returnId));
+                serviceResult = dispatcher.runSync(x.checkPaymentAmountForRefund, UtilMisc.toMap(x.returnId, returnId));
             } catch (GenericServiceException e) {
-                Debug.logError(e, "Problem running the checkPaymentAmountForRefund service", MODULE);
+                Debug.logError(e, x.Problem_running_the_checkPaymentAmountForRefund_service, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "OrderProblemsWithCheckPaymentAmountForRefund", locale));
+                        x.OrderProblemsWithCheckPaymentAmountForRefund, locale));
             }
             if (ServiceUtil.isError(serviceResult)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
@@ -760,16 +790,16 @@ public class OrderReturnServices {
             // if both billingAccountId and finAccountId are supplied, look for productStore.storeCreditAccountEnumId preference
             if (finAccountId != null && billingAccountId != null && productStore != null
                     && productStore.getString(x.storeCreditAccountEnumId) != null) {
-                Debug.logWarning("You have entered both financial account and billing account for store credit. Based on the configuration on"
-                        + "product store, only one of them will be selected.", MODULE);
-                if ("BILLING_ACCOUNT".equals(productStore.getString(x.storeCreditAccountEnumId))) {
+                Debug.logWarning(x.You_have_entered_both_financial_account_and_billing_account_for_store_credit_Based_on_the_configuration_on
+                        + x.product_store_only_one_of_them_will_be_selected, MODULE);
+                if (x.BILLING_ACCOUNT.equals(productStore.getString(x.storeCreditAccountEnumId))) {
                     finAccountId = null;
-                    Debug.logWarning("Default setting on product store is billing account. Store credit will goes to billing account ["
-                            + billingAccountId + "]", MODULE);
+                    Debug.logWarning(x.Default_setting_on_product_store_is_billing_account_Store_credit_will_goes_to_billing_account
+                            + billingAccountId + x.str_4ff447b8, MODULE);
                 } else {
                     billingAccountId = null;
-                    Debug.logWarning("Default setting on product store is financial account. Store credit will goes to financial account ["
-                            + finAccountId + "]", MODULE);
+                    Debug.logWarning(x.Default_setting_on_product_store_is_financial_account_Store_credit_will_goes_to_financial_account
+                            + finAccountId + x.str_4ff447b8, MODULE);
                 }
             }
 
@@ -777,22 +807,23 @@ public class OrderReturnServices {
                 // First find a Billing Account with negative balance, and if found store credit to that
                 List<GenericValue> billingAccounts;
                 try {
-                    billingAccounts = EntityQuery.use(delegator).from("BillingAccountRoleAndAddress")
-                            .where("partyId", fromPartyId, "roleTypeId", "BILL_TO_CUSTOMER")
-                            .filterByDate()
-                            .orderBy("-fromDate")
-                            .queryList();
+                    BillingAccountRoleDao billingAccountRoleDao = DaoRegistry.getDao(delegator, x.BillingAccountRoleAndAddress,
+                            BillingAccountRoleDao.class);
+                    billingAccounts = billingAccountRoleDao.findByAnd(delegator, x.BillingAccountRoleAndAddress,
+                            UtilMisc.toMap(x.partyId, fromPartyId, x.roleTypeId, x.BILL_TO_CUSTOMER), UtilMisc.toList(x.fromDate_f5440273), false);
+                    billingAccounts = EntityUtil.filterByDate(billingAccounts);
                 } catch (GenericEntityException e) {
                     return ServiceUtil.returnError(e.getMessage());
                 }
                 if (UtilValidate.isNotEmpty(billingAccounts)) {
                     ListIterator<GenericValue> billingAccountItr = billingAccounts.listIterator();
                     while (billingAccountItr.hasNext() && billingAccountId == null) {
-                        String thisBillingAccountId = billingAccountItr.next().getString("billingAccountId");
+                        String thisBillingAccountId = billingAccountItr.next().getString(x.billingAccountId);
                         BigDecimal billingAccountBalance = ZERO;
                         try {
-                            GenericValue billingAccount = EntityQuery.use(delegator).from("BillingAccount").where("billingAccountId",
-                                    thisBillingAccountId).queryOne();
+                            BillingAccountDao billingAccountDao = DaoRegistry.getDao(delegator, x.BillingAccount, BillingAccountDao.class);
+                            GenericValue billingAccount = billingAccountDao.findOne(delegator, x.BillingAccount,
+                                    UtilMisc.toMap(x.billingAccountId, thisBillingAccountId), false);
                             billingAccountBalance = OrderReadHelper.getBillingAccountBalance(billingAccount);
                         } catch (GenericEntityException e) {
                             return ServiceUtil.returnError(e.getMessage());
@@ -806,35 +837,36 @@ public class OrderReturnServices {
                 // if no billing account with negative balance is found, look for productStore.storeCreditAccountEnumId settings
                 if (billingAccountId == null) {
                     if (productStore != null && productStore.getString(x.storeCreditAccountEnumId) != null
-                            && "BILLING_ACCOUNT".equals(productStore.getString(x.storeCreditAccountEnumId))) {
+                            && x.BILLING_ACCOUNT.equals(productStore.getString(x.storeCreditAccountEnumId))) {
                         if (UtilValidate.isNotEmpty(billingAccounts)) {
-                            billingAccountId = EntityUtil.getFirst(billingAccounts).getString("billingAccountId");
+                            billingAccountId = EntityUtil.getFirst(billingAccounts).getString(x.billingAccountId);
                         } else {
                             // create new BillingAccount w/ 0 balance
                             Map<String, Object> results = createBillingAccountFromReturn(returnHeader, returnItems, dctx, context);
                             if (ServiceUtil.isError(results)) {
-                                Debug.logError("Error creating BillingAccount: " + results.get(ModelService.ERROR_MESSAGE), MODULE);
+                                Debug.logError(x.Error_creating_BillingAccount + results.get(ModelService.ERROR_MESSAGE), MODULE);
                                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                        "OrderErrorWithCreateBillingAccount", locale) + results.get(ModelService.ERROR_MESSAGE));
+                                        x.OrderErrorWithCreateBillingAccount, locale) + results.get(ModelService.ERROR_MESSAGE));
                             }
-                            billingAccountId = (String) results.get("billingAccountId");
+                            billingAccountId = (String) results.get(x.billingAccountId);
 
                             // double check; make sure we have a billingAccount
                             if (billingAccountId == null) {
-                                Debug.logError("No available billing account, none was created", MODULE);
+                                Debug.logError(x.No_available_billing_account_none_was_created, MODULE);
                                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                        "OrderNoAvailableBillingAccount", locale));
+                                        x.OrderNoAvailableBillingAccount, locale));
                             }
                         }
                     } else {
                         GenericValue finAccount = null;
                         try {
-                            finAccount = EntityQuery.use(delegator).from("FinAccountAndRole")
-                                    .where("partyId", fromPartyId, "finAccountTypeId", "STORE_CREDIT_ACCT", "roleTypeId", "OWNER", "statusId",
-                                            "FNACT_ACTIVE", "currencyUomId", returnHeader.getString(x.currencyUomId))
-                                    .filterByDate()
-                                    .orderBy("-fromDate")
-                                    .queryFirst();
+                            FinAccountRoleDao finAccountRoleDao = DaoRegistry.getDao(delegator, x.FinAccountAndRole, FinAccountRoleDao.class);
+                            List<GenericValue> finAccounts = finAccountRoleDao.findByAnd(delegator, x.FinAccountAndRole,
+                                    UtilMisc.toMap(x.partyId, fromPartyId, x.finAccountTypeId, x.STORE_CREDIT_ACCT, x.roleTypeId, x.OWNER,
+                                            x.statusId, x.FNACT_ACTIVE, x.currencyUomId, returnHeader.getString(x.currencyUomId)),
+                                    UtilMisc.toList(x.fromDate_f5440273), false);
+                            finAccounts = EntityUtil.filterByDate(finAccounts);
+                            finAccount = EntityUtil.getFirst(finAccounts);
                         } catch (GenericEntityException e) {
                             return ServiceUtil.returnError(e.getMessage());
                         }
@@ -844,40 +876,40 @@ public class OrderReturnServices {
 
                         if (finAccountId == null) {
                             Map<String, Object> createAccountCtx = new HashMap<>();
-                            createAccountCtx.put("ownerPartyId", fromPartyId);
-                            createAccountCtx.put("finAccountTypeId", "STORE_CREDIT_ACCT");
-                            createAccountCtx.put("productStoreId", productStore.getString(x.productStoreId));
-                            createAccountCtx.put("currencyUomId", returnHeader.getString(x.currencyUomId));
-                            createAccountCtx.put("finAccountName", "Store Credit Account for party [" + fromPartyId + "]");
-                            createAccountCtx.put("userLogin", userLogin);
+                            createAccountCtx.put(x.ownerPartyId, fromPartyId);
+                            createAccountCtx.put(x.finAccountTypeId, x.STORE_CREDIT_ACCT);
+                            createAccountCtx.put(x.productStoreId, productStore.getString(x.productStoreId));
+                            createAccountCtx.put(x.currencyUomId, returnHeader.getString(x.currencyUomId));
+                            createAccountCtx.put(x.finAccountName, x.Store_Credit_Account_for_party + fromPartyId + x.str_4ff447b8);
+                            createAccountCtx.put(x.userLogin, userLogin);
                             Map<String, Object> createAccountResult = null;
                             try {
-                                createAccountResult = dispatcher.runSync("createFinAccountForStore", createAccountCtx);
+                                createAccountResult = dispatcher.runSync(x.createFinAccountForStore, createAccountCtx);
                             } catch (GenericServiceException e) {
-                                Debug.logError(e, "Problems running the createFinAccountForStore service", MODULE);
+                                Debug.logError(e, x.Problems_running_the_createFinAccountForStore_service, MODULE);
                                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                        "OrderProblemsCreatingFinAccountForStore", locale));
+                                        x.OrderProblemsCreatingFinAccountForStore, locale));
                             }
                             if (ServiceUtil.isError(createAccountResult)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(createAccountResult));
                             }
-                            finAccountId = (String) createAccountResult.get("finAccountId");
+                            finAccountId = (String) createAccountResult.get(x.finAccountId);
 
                             // double check; make sure we have a FinAccount
                             if (finAccountId == null) {
-                                Debug.logError("No available fin account, none was created", MODULE);
+                                Debug.logError(x.No_available_fin_account_none_was_created, MODULE);
                                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                        "OrderNoAvailableFinAccount", locale));
+                                        x.OrderNoAvailableFinAccount, locale));
                             }
 
                             Map<String, Object> finAccountRoleResult = null;
                             try {
-                                finAccountRoleResult = dispatcher.runSync("createFinAccountRole", UtilMisc.toMap("finAccountId",
-                                        finAccountId, "partyId", fromPartyId, "roleTypeId", "OWNER", "userLogin", userLogin));
+                                finAccountRoleResult = dispatcher.runSync(x.createFinAccountRole, UtilMisc.toMap(x.finAccountId,
+                                        finAccountId, x.partyId, fromPartyId, x.roleTypeId, x.OWNER, x.userLogin, userLogin));
                             } catch (GenericServiceException e) {
-                                Debug.logError(e, "Problem running the createFinAccountRole service", MODULE);
+                                Debug.logError(e, x.Problem_running_the_createFinAccountRole_service, MODULE);
                                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                        "OrderProblemCreatingFinAccountRoleRecord", locale));
+                                        x.OrderProblemCreatingFinAccountRoleRecord, locale));
                             }
                             if (ServiceUtil.isError(finAccountRoleResult)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(finAccountRoleResult));
@@ -912,117 +944,117 @@ public class OrderReturnServices {
             if (finAccountId != null) {
                 Map<String, Object> finAccountTransResult = null;
                 try {
-                    finAccountTransResult = dispatcher.runSync("createFinAccountTrans", UtilMisc.toMap("finAccountId", finAccountId,
-                            "finAccountTransTypeId", "DEPOSIT", "partyId", toPartyId, "amount", creditTotal, "reasonEnumId", "FATR_REFUND",
-                            "userLogin", userLogin));
+                    finAccountTransResult = dispatcher.runSync(x.createFinAccountTrans, UtilMisc.toMap(x.finAccountId, finAccountId,
+                            x.finAccountTransTypeId, x.DEPOSIT, x.partyId, toPartyId, x.amount, creditTotal, x.reasonEnumId, x.FATR_REFUND,
+                            x.userLogin, userLogin));
                 } catch (GenericServiceException e) {
-                    Debug.logError(e, "Problem creating FinAccountTrans record", MODULE);
+                    Debug.logError(e, x.Problem_creating_FinAccountTrans_record, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "OrderProblemCreatingFinAccountTransRecord", locale));
+                            x.OrderProblemCreatingFinAccountTransRecord, locale));
                 }
                 if (ServiceUtil.isError(finAccountTransResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(finAccountTransResult));
                 }
-                finAccountTransId = (String) finAccountTransResult.get("finAccountTransId");
+                finAccountTransId = (String) finAccountTransResult.get(x.finAccountTransId);
             }
 
             // create a Payment record for this credit; will look just like a normal payment
             // However, since this payment is not a DISBURSEMENT or RECEIPT but really a matter of internal record
             // it is of type "Other (Non-posting)"
-            String paymentId = delegator.getNextSeqId("Payment");
-            GenericValue payment = delegator.makeValue("Payment", UtilMisc.toMap("paymentId", paymentId));
-            payment.set(x.paymentTypeId, "CUSTOMER_REFUND");
+            String paymentId = delegator.getNextSeqId(x.Payment);
+            GenericValue payment = delegator.makeValue(x.Payment, UtilMisc.toMap(x.paymentId, paymentId));
+            payment.set(x.paymentTypeId, x.CUSTOMER_REFUND);
             payment.set(x.partyIdFrom, toPartyId);  // if you receive a return FROM someone, then you'd have to give a return TO that person
             payment.set(x.partyIdTo, fromPartyId);
             payment.set(x.effectiveDate, now);
             payment.set(x.amount, creditTotal);
-            payment.set(x.comments, "Return Credit");
-            payment.set(x.statusId, "PMNT_CONFIRMED");  // set the status to confirmed so nothing else can happen to the payment
+            payment.set(x.comments, x.Return_Credit);
+            payment.set(x.statusId, x.PMNT_CONFIRMED);  // set the status to confirmed so nothing else can happen to the payment
             if (billingAccountId != null) {
-                payment.set(x.paymentMethodTypeId, "EXT_BILLACT");
+                payment.set(x.paymentMethodTypeId, x.EXT_BILLACT);
             } else {
-                payment.set(x.paymentMethodTypeId, "FIN_ACCOUNT");
+                payment.set(x.paymentMethodTypeId, x.FIN_ACCOUNT);
             }
             try {
                 delegator.create(payment);
             } catch (GenericEntityException e) {
-                Debug.logError(e, "Problem creating Payment record", MODULE);
+                Debug.logError(e, x.Problem_creating_Payment_record, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "OrderProblemCreatingPaymentRecord", locale));
+                        x.OrderProblemCreatingPaymentRecord, locale));
             }
 
             // create a return item response
-            Map<String, Object> itemResponse = UtilMisc.<String, Object>toMap("paymentId", paymentId);
-            itemResponse.put("responseAmount", creditTotal);
-            itemResponse.put("responseDate", now);
-            itemResponse.put("userLogin", userLogin);
+            Map<String, Object> itemResponse = UtilMisc.<String, Object>toMap(x.paymentId, paymentId);
+            itemResponse.put(x.responseAmount, creditTotal);
+            itemResponse.put(x.responseDate, now);
+            itemResponse.put(x.userLogin, userLogin);
             if (billingAccountId != null) {
-                itemResponse.put("billingAccountId", billingAccountId);
+                itemResponse.put(x.billingAccountId, billingAccountId);
             } else {
-                itemResponse.put("finAccountTransId", finAccountTransId);
+                itemResponse.put(x.finAccountTransId, finAccountTransId);
             }
             Map<String, Object> serviceResults = null;
             try {
-                serviceResults = dispatcher.runSync("createReturnItemResponse", itemResponse);
+                serviceResults = dispatcher.runSync(x.createReturnItemResponse, itemResponse);
                 if (ServiceUtil.isError(serviceResults)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "OrderProblemCreatingReturnItemResponseRecord", locale), null, null, serviceResults);
+                            x.OrderProblemCreatingReturnItemResponseRecord, locale), null, null, serviceResults);
                 }
             } catch (GenericServiceException e) {
-                Debug.logError(e, "Problem creating ReturnItemResponse record", MODULE);
+                Debug.logError(e, x.Problem_creating_ReturnItemResponse_record, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "OrderProblemCreatingReturnItemResponseRecord", locale));
+                        x.OrderProblemCreatingReturnItemResponseRecord, locale));
             }
 
             // the resulting response ID will be associated with the return items
-            String itemResponseId = (String) serviceResults.get("returnItemResponseId");
+            String itemResponseId = (String) serviceResults.get(x.returnItemResponseId);
 
             // loop through the items again to update them and store a status change history
             for (GenericValue item : returnItems) {
-                Map<String, Object> returnItemMap = UtilMisc.<String, Object>toMap("returnItemResponseId", itemResponseId, "returnId",
-                        item.get(x.returnId), "returnItemSeqId", item.get(x.returnItemSeqId), "statusId", "RETURN_COMPLETED", "userLogin",
+                Map<String, Object> returnItemMap = UtilMisc.<String, Object>toMap(x.returnItemResponseId, itemResponseId, x.returnId,
+                        item.get(x.returnId), x.returnItemSeqId, item.get(x.returnItemSeqId), x.statusId, x.RETURN_COMPLETED, x.userLogin,
                         userLogin);
                 // store the item changes (attached responseId)
                 try {
-                    serviceResults = dispatcher.runSync("updateReturnItem", returnItemMap);
+                    serviceResults = dispatcher.runSync(x.updateReturnItem, returnItemMap);
                     if (ServiceUtil.isError(serviceResults)) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                "OrderProblemStoringReturnItemUpdates", locale), null, null, serviceResults);
+                                x.OrderProblemStoringReturnItemUpdates, locale), null, null, serviceResults);
                     }
                 } catch (GenericServiceException e) {
-                    Debug.logError(e, "Problem storing ReturnItem updates", MODULE);
+                    Debug.logError(e, x.Problem_storing_ReturnItem_updates, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "OrderProblemStoringReturnItemUpdates", locale));
+                            x.OrderProblemStoringReturnItemUpdates, locale));
                 }
             }
 
             if (billingAccountId != null) {
                 // create the PaymentApplication for the billing account
-                String paId = delegator.getNextSeqId("PaymentApplication");
-                GenericValue pa = delegator.makeValue("PaymentApplication", UtilMisc.toMap("paymentApplicationId", paId));
+                String paId = delegator.getNextSeqId(x.PaymentApplication);
+                GenericValue pa = delegator.makeValue(x.PaymentApplication, UtilMisc.toMap(x.paymentApplicationId, paId));
                 pa.set(x.paymentId, paymentId);
                 pa.set(x.billingAccountId, billingAccountId);
                 pa.set(x.amountApplied, creditTotal);
                 try {
                     delegator.create(pa);
                 } catch (GenericEntityException e) {
-                    Debug.logError(e, "Problem creating PaymentApplication record for billing account", MODULE);
+                    Debug.logError(e, x.Problem_creating_PaymentApplication_record_for_billing_account, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "OrderProblemCreatingPaymentApplicationRecord", locale));
+                            x.OrderProblemCreatingPaymentApplicationRecord, locale));
                 }
 
                 // create the payment applications for the return invoice in case of billing account
                 try {
-                    serviceResults = dispatcher.runSync("createPaymentApplicationsFromReturnItemResponse",
-                            UtilMisc.<String, Object>toMap("returnItemResponseId", itemResponseId, "userLogin", userLogin));
+                    serviceResults = dispatcher.runSync(x.createPaymentApplicationsFromReturnItemResponse,
+                            UtilMisc.<String, Object>toMap(x.returnItemResponseId, itemResponseId, x.userLogin, userLogin));
                     if (ServiceUtil.isError(serviceResults)) {
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                "OrderProblemCreatingPaymentApplicationRecord", locale), null, null, serviceResults);
+                                x.OrderProblemCreatingPaymentApplicationRecord, locale), null, null, serviceResults);
                     }
                 } catch (GenericServiceException e) {
-                    Debug.logError(e, "Problem creating PaymentApplication records for return invoice", MODULE);
+                    Debug.logError(e, x.Problem_creating_PaymentApplication_records_for_return_invoice, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "OrderProblemCreatingPaymentApplicationRecord", locale));
+                            x.OrderProblemCreatingPaymentApplicationRecord, locale));
                 }
             }
         }
@@ -1053,8 +1085,8 @@ public class OrderReturnServices {
 
         try {
             // get the related product stores via the orders related to this return
-            List<GenericValue> orders = EntityUtil.getRelated("OrderHeader", null, returnItems, false);
-            List<GenericValue> productStores = EntityUtil.getRelated("ProductStore", null, orders, false);
+            List<GenericValue> orders = EntityUtil.getRelated(x.OrderHeader, null, returnItems, false);
+            List<GenericValue> productStores = EntityUtil.getRelated(x.ProductStore, null, orders, false);
 
             // find the minimum storeCreditValidDays of all the ProductStores associated with all the Orders on the Return, skipping null ones
             Long storeCreditValidDays = null;
@@ -1079,35 +1111,35 @@ public class OrderReturnServices {
             }
 
             // create the billing account
-            Map<String, Object> input = UtilMisc.<String, Object>toMap("accountLimit", BigDecimal.ZERO, "description", "Credit Account for Return #"
-                    + returnHeader.get(x.returnId), "userLogin", userLogin);
-            input.put("accountCurrencyUomId", returnHeader.get(x.currencyUomId));
-            input.put("thruDate", thruDate);
-            Map<String, Object> results = dispatcher.runSync("createBillingAccount", input);
+            Map<String, Object> input = UtilMisc.<String, Object>toMap(x.accountLimit, BigDecimal.ZERO, x.description, x.Credit_Account_for_Return
+                    + returnHeader.get(x.returnId), x.userLogin, userLogin);
+            input.put(x.accountCurrencyUomId, returnHeader.get(x.currencyUomId));
+            input.put(x.thruDate, thruDate);
+            Map<String, Object> results = dispatcher.runSync(x.createBillingAccount, input);
             if (ServiceUtil.isError(results)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(results));
             }
-            String billingAccountId = (String) results.get("billingAccountId");
+            String billingAccountId = (String) results.get(x.billingAccountId);
 
             // set the role on the account
-            input = UtilMisc.toMap("billingAccountId", billingAccountId, "partyId", returnHeader.get(x.fromPartyId), "roleTypeId",
-                    "BILL_TO_CUSTOMER", "userLogin", userLogin);
-            Map<String, Object> roleResults = dispatcher.runSync("createBillingAccountRole", input);
+            input = UtilMisc.toMap(x.billingAccountId, billingAccountId, x.partyId, returnHeader.get(x.fromPartyId), x.roleTypeId,
+                    x.BILL_TO_CUSTOMER, x.userLogin, userLogin);
+            Map<String, Object> roleResults = dispatcher.runSync(x.createBillingAccountRole, input);
             if (ServiceUtil.isError(roleResults)) {
-                Debug.logError("Error with createBillingAccountRole: " + roleResults.get(ModelService.ERROR_MESSAGE), MODULE);
+                Debug.logError(x.Error_with_createBillingAccountRole + roleResults.get(ModelService.ERROR_MESSAGE), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "OrderErrorWithCreateBillingAccountRole", locale) + roleResults.get(ModelService.ERROR_MESSAGE));
+                        x.OrderErrorWithCreateBillingAccountRole, locale) + roleResults.get(ModelService.ERROR_MESSAGE));
             }
 
             return results;
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Entity error when creating BillingAccount: " + e.getMessage(), MODULE);
+            Debug.logError(e, x.Entity_error_when_creating_BillingAccount + e.getMessage(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "OrderProblemsCreatingBillingAccount", locale));
+                    x.OrderProblemsCreatingBillingAccount, locale));
         } catch (GenericServiceException e) {
-            Debug.logError(e, "Service error when creating BillingAccount: " + e.getMessage(), MODULE);
+            Debug.logError(e, x.Service_error_when_creating_BillingAccount + e.getMessage(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "OrderProblemsCreatingBillingAccount", locale));
+                    x.OrderProblemsCreatingBillingAccount, locale));
         }
     }
 
@@ -1122,12 +1154,13 @@ public class OrderReturnServices {
         GenericValue orderHeader = null;
         List<GenericValue> orderPayPrefs;
         try {
-            orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
-            orderPayPrefs = orderHeader.getRelated(x.OrderPaymentPreference, null, UtilMisc.toList("-maxAmount"), false);
+            OrderHeaderDao orderHeaderDao = DaoRegistry.getDao(delegator, x.OrderHeader, OrderHeaderDao.class);
+            orderHeader = orderHeaderDao.findOne(delegator, x.OrderHeader, UtilMisc.toMap(x.orderId, orderId), false);
+            orderPayPrefs = orderHeader.getRelated(x.OrderPaymentPreference, null, UtilMisc.toList(x.maxAmount_7b034ae5), false);
         } catch (GenericEntityException e) {
-            Debug.logError("Problem looking up order information for orderId #" + orderId, MODULE);
+            Debug.logError(x.Problem_looking_up_order_information_for_orderId + orderId, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "OrderCannotGetOrderHeader", locale));
+                    x.OrderCannotGetOrderHeader, locale));
         }
 
         // Check for replacement order
@@ -1136,7 +1169,7 @@ public class OrderReturnServices {
             try {
                 returnItemResponses = orderHeader.getRelated(x.ReplacementReturnItemResponse, null, null, false);
             } catch (GenericEntityException e) {
-                Debug.logError("Problem getting ReturnItemResponses", MODULE);
+                Debug.logError(x.Problem_getting_ReturnItemResponses, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
             }
 
@@ -1147,20 +1180,20 @@ public class OrderReturnServices {
                     returnItem = EntityUtil.getFirst(returnItemResponse.getRelated(x.ReturnItem, null, null, false));
                     returnHeader = returnItem.getRelatedOne(x.ReturnHeader, false);
                 } catch (GenericEntityException e) {
-                    Debug.logError("Problem getting ReturnItem", MODULE);
+                    Debug.logError(x.Problem_getting_ReturnItem, MODULE);
                     return ServiceUtil.returnError(e.getMessage());
                 }
 
-                if ("RETURN_RECEIVED".equals(returnHeader.getString(x.statusId))) {
+                if (x.RETURN_RECEIVED.equals(returnHeader.getString(x.statusId))) {
                     String returnId = returnItem.getString(x.returnId);
                     String returnTypeId = returnItem.getString(x.returnTypeId);
                     try {
-                        serviceResult = dispatcher.runSync("processRefundReturn", UtilMisc.toMap("returnId", returnId, "returnTypeId",
-                                returnTypeId, "userLogin", userLogin));
+                        serviceResult = dispatcher.runSync(x.processRefundReturn, UtilMisc.toMap(x.returnId, returnId, x.returnTypeId,
+                                returnTypeId, x.userLogin, userLogin));
                     } catch (GenericServiceException e) {
-                        Debug.logError(e, "Problem running the processRefundReturn service", MODULE);
+                        Debug.logError(e, x.Problem_running_the_processRefundReturn_service, MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                "OrderProblemsWithTheRefundSeeLogs", locale));
+                                x.OrderProblemsWithTheRefundSeeLogs, locale));
                     }
                     if (ServiceUtil.isError(serviceResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
@@ -1183,17 +1216,18 @@ public class OrderReturnServices {
         GenericValue returnHeader = null;
         List<GenericValue> returnItems = null;
         try {
-            returnHeader = EntityQuery.use(delegator).from("ReturnHeader").where("returnId", returnId).queryOne();
+            ReturnHeaderDao returnHeaderDao = DaoRegistry.getDao(delegator, x.ReturnHeader, ReturnHeaderDao.class);
+            returnHeader = returnHeaderDao.findOne(delegator, x.ReturnHeader, UtilMisc.toMap(x.returnId, returnId), false);
             if (returnHeader != null) {
-                returnItems = returnHeader.getRelated(x.ReturnItem, UtilMisc.toMap("returnTypeId", returnTypeId), null, false);
+                returnItems = returnHeader.getRelated(x.ReturnItem, UtilMisc.toMap(x.returnTypeId, returnTypeId), null, false);
             }
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Problems looking up return information", MODULE);
+            Debug.logError(e, x.Problems_looking_up_return_information, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "OrderErrorGettingReturnHeaderItemInformation", locale));
+                    x.OrderErrorGettingReturnHeaderItemInformation, locale));
         }
 
-        BigDecimal adjustments = getReturnAdjustmentTotal(delegator, UtilMisc.toMap("returnId", returnId, "returnTypeId", returnTypeId));
+        BigDecimal adjustments = getReturnAdjustmentTotal(delegator, UtilMisc.toMap(x.returnId, returnId, x.returnTypeId, returnTypeId));
 
         if (returnHeader != null && (UtilValidate.isNotEmpty(returnItems) || adjustments.compareTo(ZERO) > 0)) {
             Map<String, List<GenericValue>> itemsByOrder = new HashMap<>();
@@ -1202,11 +1236,11 @@ public class OrderReturnServices {
             // make sure total refunds on a return don't exceed amount of returned orders
             Map<String, Object> serviceResult = null;
             try {
-                serviceResult = dispatcher.runSync("checkPaymentAmountForRefund", UtilMisc.toMap("returnId", returnId));
+                serviceResult = dispatcher.runSync(x.checkPaymentAmountForRefund, UtilMisc.toMap(x.returnId, returnId));
             } catch (GenericServiceException e) {
-                Debug.logError(e, "Problem running the checkPaymentAmountForRefund service", MODULE);
+                Debug.logError(e, x.Problem_running_the_checkPaymentAmountForRefund_service, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "OrderProblemsWithCheckPaymentAmountForRefund", locale));
+                        x.OrderProblemsWithCheckPaymentAmountForRefund, locale));
             }
             if (ServiceUtil.isError(serviceResult)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
@@ -1224,29 +1258,31 @@ public class OrderReturnServices {
                 GenericValue orderHeader = null;
                 List<GenericValue> orderPayPrefs = null;
                 try {
-                    orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
+                    OrderHeaderDao orderHeaderDao = DaoRegistry.getDao(delegator, x.OrderHeader, OrderHeaderDao.class);
+                    orderHeader = orderHeaderDao.findOne(delegator, x.OrderHeader, UtilMisc.toMap(x.orderId, orderId), false);
                     // sort these desending by maxAmount
-                    orderPayPrefs = orderHeader.getRelated(x.OrderPaymentPreference, null, UtilMisc.toList("-maxAmount"), false);
+                    orderPayPrefs = orderHeader.getRelated(x.OrderPaymentPreference, null, UtilMisc.toList(x.maxAmount_7b034ae5), false);
 
-                    List<EntityExpr> exprs = UtilMisc.toList(EntityCondition.makeCondition("statusId", EntityOperator.EQUALS, "PAYMENT_SETTLED"),
-                            EntityCondition.makeCondition("statusId", EntityOperator.EQUALS, "PAYMENT_RECEIVED"));
+                    List<EntityExpr> exprs = UtilMisc.toList(EntityCondition.makeCondition(x.statusId, EntityOperator.EQUALS, x.PAYMENT_SETTLED),
+                            EntityCondition.makeCondition(x.statusId, EntityOperator.EQUALS, x.PAYMENT_RECEIVED));
                     orderPayPrefs = EntityUtil.filterByOr(orderPayPrefs, exprs);
 
                     // Check for replacement order
                     if (UtilValidate.isEmpty(orderPayPrefs)) {
-                        GenericValue orderItemAssoc = EntityQuery.use(delegator).from("OrderItemAssoc")
-                                .where("toOrderId", orderId, "orderItemAssocTypeId", "REPLACEMENT")
-                                .queryFirst();
+                        OrderItemAssocDao orderItemAssocDao = DaoRegistry.getDao(delegator, x.OrderItemAssoc, OrderItemAssocDao.class);
+                        GenericValue orderItemAssoc = orderItemAssocDao.findFirstByCondition(delegator, x.OrderItemAssoc,
+                                EntityCondition.makeCondition(UtilMisc.toMap(x.toOrderId, orderId, x.orderItemAssocTypeId, x.REPLACEMENT)),
+                                null, null, false);
                         if (orderItemAssoc != null) {
                             String originalOrderId = orderItemAssoc.getString(x.orderId);
-                            orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", originalOrderId).queryOne();
-                            orderPayPrefs = orderHeader.getRelated(x.OrderPaymentPreference, null, UtilMisc.toList("-maxAmount"), false);
+                            orderHeader = orderHeaderDao.findOne(delegator, x.OrderHeader, UtilMisc.toMap(x.orderId, originalOrderId), false);
+                            orderPayPrefs = orderHeader.getRelated(x.OrderPaymentPreference, null, UtilMisc.toList(x.maxAmount_7b034ae5), false);
                             orderPayPrefs = EntityUtil.filterByOr(orderPayPrefs, exprs);
                             orderId = originalOrderId;
                         }
                     }
                 } catch (GenericEntityException e) {
-                    Debug.logError(e, "Cannot get Order details for #" + orderId, MODULE);
+                    Debug.logError(e, x.Cannot_get_Order_details_for + orderId, MODULE);
                     continue;
                 }
                 OrderReadHelper orderReadHelper = new OrderReadHelper(delegator, orderId);
@@ -1254,28 +1290,28 @@ public class OrderReturnServices {
                 // Determine the fall-through refund paymentMethodId from the PartyAcctgPreference of the owner of the productStore for the order
                 GenericValue productStore = orderReadHelper.getProductStore();
                 if (UtilValidate.isEmpty(productStore) || UtilValidate.isEmpty(productStore.get(x.payToPartyId))) {
-                    Debug.logError("No payToPartyId found for orderId " + orderId, MODULE);
+                    Debug.logError(x.No_payToPartyId_found_for_orderId + orderId, MODULE);
                 } else {
                     GenericValue orgAcctgPref = null;
                     Map<String, Object> acctgPreferencesResult = null;
                     try {
-                        acctgPreferencesResult = dispatcher.runSync("getPartyAccountingPreferences", UtilMisc.toMap("organizationPartyId",
-                                productStore.get(x.payToPartyId), "userLogin", userLogin));
+                        acctgPreferencesResult = dispatcher.runSync(x.getPartyAccountingPreferences, UtilMisc.toMap(x.organizationPartyId,
+                                productStore.get(x.payToPartyId), x.userLogin, userLogin));
                         if (ServiceUtil.isError(acctgPreferencesResult)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(acctgPreferencesResult));
                         }
                     } catch (GenericServiceException e) {
-                        Debug.logError(e, "Error retrieving PartyAcctgPreference for partyId " + productStore.get(x.payToPartyId), MODULE);
+                        Debug.logError(e, x.Error_retrieving_PartyAcctgPreference_for_partyId + productStore.get(x.payToPartyId), MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                "OrderProblemsWithGetPartyAcctgPreferences", locale));
+                                x.OrderProblemsWithGetPartyAcctgPreferences, locale));
                     }
-                    orgAcctgPref = (GenericValue) acctgPreferencesResult.get("partyAccountingPreference");
+                    orgAcctgPref = (GenericValue) acctgPreferencesResult.get(x.partyAccountingPreference);
 
                     if (orgAcctgPref != null) {
                         try {
                             orgAcctgPref.getRelatedOne(x.PaymentMethod, false);
                         } catch (GenericEntityException e) {
-                            Debug.logError("Error retrieving related refundPaymentMethod from PartyAcctgPreference for partyId "
+                            Debug.logError(x.Error_retrieving_related_refundPaymentMethod_from_PartyAcctgPreference_for_partyId
                                     + productStore.get(x.payToPartyId), MODULE);
                         }
                     }
@@ -1293,7 +1329,7 @@ public class OrderReturnServices {
                 // getOrderPaymentPreferenceTotalByType has been called because getReceivedPaymentTotalsByPaymentMethod does not
                 // return payments captured from Billing Account.This is because when payment is captured from Billing Account
                 // then no entry is maintained in Payment entity.
-                BigDecimal receivedPaymentTotalsByBillingAccount = orderReadHelper.getOrderPaymentPreferenceTotalByType("EXT_BILLACT");
+                BigDecimal receivedPaymentTotalsByBillingAccount = orderReadHelper.getOrderPaymentPreferenceTotalByType(x.EXT_BILLACT);
 
                 /*
                  * Go through the OrderPaymentPreferences and determine how much remains to be refunded for each.
@@ -1326,8 +1362,8 @@ public class OrderReturnServices {
                     // add the refundable amount and orderPaymentPreference to the paymentMethodTypeId map
                     if (orderPayPrefAvailableTotal.compareTo(ZERO) > 0) {
                         Map<String, Object> orderPayPrefDetails = new HashMap<>();
-                        orderPayPrefDetails.put("orderPaymentPreference", orderPayPref);
-                        orderPayPrefDetails.put("availableTotal", orderPayPrefAvailableTotal);
+                        orderPayPrefDetails.put(x.orderPaymentPreference, orderPayPref);
+                        orderPayPrefDetails.put(x.availableTotal, orderPayPrefAvailableTotal);
                         if (prefSplitMap.containsKey(paymentMethodTypeId)) {
                             List<Map<String, Object>> paymentMethodTypeIds = prefSplitMap.get(paymentMethodTypeId);
                             paymentMethodTypeIds.add(orderPayPrefDetails);
@@ -1341,37 +1377,38 @@ public class OrderReturnServices {
                 BigDecimal amountLeftToRefund = orderTotal.setScale(DECIMALS, ROUNDING);
 
                 // This can be extended to support additional electronic types
-                List<String> electronicTypes = UtilMisc.<String>toList("CREDIT_CARD", "EFT_ACCOUNT", "FIN_ACCOUNT", "GIFT_CARD");
+                List<String> electronicTypes = UtilMisc.<String>toList(x.CREDIT_CARD, x.EFT_ACCOUNT, x.FIN_ACCOUNT, x.GIFT_CARD);
 
                 // Figure out if EXT_PAYPAL should be considered as an electronic type
                 if (productStore != null) {
                     ExpressCheckoutEvents.CheckoutType payPalType = ExpressCheckoutEvents.determineCheckoutType(delegator,
                             productStore.getString(x.productStoreId));
                     if (!payPalType.equals(ExpressCheckoutEvents.CheckoutType.NONE)) {
-                        electronicTypes.add("EXT_PAYPAL");
+                        electronicTypes.add(x.EXT_PAYPAL);
                     }
                 }
                 // This defines the ordered part of the sequence of refund processing
                 List<String> orderedRefundPaymentMethodTypes = new LinkedList<>();
-                orderedRefundPaymentMethodTypes.add("EXT_BILLACT");
-                orderedRefundPaymentMethodTypes.add("FIN_ACCOUNT");
-                orderedRefundPaymentMethodTypes.add("GIFT_CARD");
-                orderedRefundPaymentMethodTypes.add("CREDIT_CARD");
-                orderedRefundPaymentMethodTypes.add("EFT_ACCOUNT");
+                orderedRefundPaymentMethodTypes.add(x.EXT_BILLACT);
+                orderedRefundPaymentMethodTypes.add(x.FIN_ACCOUNT);
+                orderedRefundPaymentMethodTypes.add(x.GIFT_CARD);
+                orderedRefundPaymentMethodTypes.add(x.CREDIT_CARD);
+                orderedRefundPaymentMethodTypes.add(x.EFT_ACCOUNT);
 
                 // Add all the other paymentMethodTypes, in no particular order
                 List<GenericValue> otherPaymentMethodTypes;
                 try {
-                    otherPaymentMethodTypes = EntityQuery.use(delegator).from("PaymentMethodType")
-                            .where(EntityCondition.makeCondition("paymentMethodTypeId", EntityOperator.NOT_IN, orderedRefundPaymentMethodTypes))
-                            .cache(true).queryList();
+                    PaymentMethodTypeDao paymentMethodTypeDao = DaoRegistry.getDao(delegator, x.PaymentMethodType, PaymentMethodTypeDao.class);
+                    otherPaymentMethodTypes = paymentMethodTypeDao.findByCondition(delegator, x.PaymentMethodType,
+                            EntityCondition.makeCondition(x.paymentMethodTypeId, EntityOperator.NOT_IN, orderedRefundPaymentMethodTypes), null,
+                            null, null, true);
                 } catch (GenericEntityException e) {
-                    Debug.logError(e, "Cannot get PaymentMethodTypes", MODULE);
+                    Debug.logError(e, x.Cannot_get_PaymentMethodTypes, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                            "OrderOrderPaymentPreferencesCannotGetPaymentMethodTypes",
-                            UtilMisc.toMap("errorString", e.toString()), locale));
+                            x.OrderOrderPaymentPreferencesCannotGetPaymentMethodTypes,
+                            UtilMisc.toMap(x.errorString, e.toString()), locale));
                 }
-                List<String> fieldList = EntityUtil.getFieldListFromEntityList(otherPaymentMethodTypes, "paymentMethodTypeId", true);
+                List<String> fieldList = EntityUtil.getFieldListFromEntityList(otherPaymentMethodTypes, x.paymentMethodTypeId, true);
                 orderedRefundPaymentMethodTypes.addAll(fieldList);
 
                 // Iterate through the specified sequence of paymentMethodTypes, refunding to the correct OrderPaymentPreferences
@@ -1386,8 +1423,8 @@ public class OrderReturnServices {
                         Iterator<Map<String, Object>> pmtppit = paymentMethodDetails.iterator();
                         while (pmtppit.hasNext() && amountLeftToRefund.compareTo(ZERO) == 1) {
                             Map<String, Object> orderPaymentPrefDetails = pmtppit.next();
-                            GenericValue orderPaymentPreference = (GenericValue) orderPaymentPrefDetails.get("orderPaymentPreference");
-                            BigDecimal orderPaymentPreferenceAvailable = (BigDecimal) orderPaymentPrefDetails.get("availableTotal");
+                            GenericValue orderPaymentPreference = (GenericValue) orderPaymentPrefDetails.get(x.orderPaymentPreference);
+                            BigDecimal orderPaymentPreferenceAvailable = (BigDecimal) orderPaymentPrefDetails.get(x.availableTotal);
                             GenericValue refundOrderPaymentPreference = null;
 
                             // Refund up to the maxAmount for the paymentPref, or whatever is left to refund if that's less than the maxAmount
@@ -1396,77 +1433,79 @@ public class OrderReturnServices {
                             BigDecimal amountRefunded = amountToRefund;
 
                             String paymentId = null;
-                            String returnItemStatusId = "RETURN_COMPLETED";  // generally, the return item will be considered complete after this
+                            String returnItemStatusId = x.RETURN_COMPLETED;  // generally, the return item will be considered complete after this
                             // Call the refund service to refund the payment
                             if (electronicTypes.contains(paymentMethodTypeId)) {
                                 try {
-                                    Map<String, Object> serviceContext = UtilMisc.toMap("orderId", orderId, "userLogin", context.get(x.userLogin));
-                                    serviceContext.put("paymentMethodId", orderPaymentPreference.getString(x.paymentMethodId));
-                                    serviceContext.put("paymentMethodTypeId", orderPaymentPreference.getString(x.paymentMethodTypeId));
-                                    serviceContext.put("statusId", orderPaymentPreference.getString(x.statusId));
-                                    serviceContext.put("maxAmount", amountToRefund.setScale(DECIMALS, ROUNDING));
+                                    Map<String, Object> serviceContext = UtilMisc.toMap(x.orderId, orderId, x.userLogin, context.get(x.userLogin));
+                                    serviceContext.put(x.paymentMethodId, orderPaymentPreference.getString(x.paymentMethodId));
+                                    serviceContext.put(x.paymentMethodTypeId, orderPaymentPreference.getString(x.paymentMethodTypeId));
+                                    serviceContext.put(x.statusId, orderPaymentPreference.getString(x.statusId));
+                                    serviceContext.put(x.maxAmount, amountToRefund.setScale(DECIMALS, ROUNDING));
                                     String orderPaymentPreferenceNewId = null;
-                                    Map<String, Object> result = dispatcher.runSync("createOrderPaymentPreference", serviceContext);
+                                    Map<String, Object> result = dispatcher.runSync(x.createOrderPaymentPreference, serviceContext);
                                     if (ServiceUtil.isError(result)) {
                                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
                                     }
-                                    orderPaymentPreferenceNewId = (String) result.get("orderPaymentPreferenceId");
+                                    orderPaymentPreferenceNewId = (String) result.get(x.orderPaymentPreferenceId);
                                     try {
-                                        refundOrderPaymentPreference = EntityQuery.use(delegator).from("OrderPaymentPreference")
-                                                .where("orderPaymentPreferenceId", orderPaymentPreferenceNewId).queryOne();
+                                        OrderPaymentPreferenceDao orderPaymentPreferenceDao = DaoRegistry.getDao(delegator, x.OrderPaymentPreference,
+                                                OrderPaymentPreferenceDao.class);
+                                        refundOrderPaymentPreference = orderPaymentPreferenceDao.findOne(delegator, x.OrderPaymentPreference,
+                                                UtilMisc.toMap(x.orderPaymentPreferenceId, orderPaymentPreferenceNewId), false);
                                     } catch (GenericEntityException e) {
-                                        return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderProblemsWithTheRefundSeeLogs",
+                                        return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderProblemsWithTheRefundSeeLogs,
                                                 locale));
                                     }
-                                    serviceResult = dispatcher.runSync("refundPayment", UtilMisc.<String, Object>toMap("orderPaymentPreference",
-                                            refundOrderPaymentPreference, "refundAmount", amountToRefund.setScale(DECIMALS, ROUNDING), "userLogin",
+                                    serviceResult = dispatcher.runSync(x.refundPayment, UtilMisc.<String, Object>toMap(x.orderPaymentPreference,
+                                            refundOrderPaymentPreference, x.refundAmount, amountToRefund.setScale(DECIMALS, ROUNDING), x.userLogin,
                                             userLogin));
                                     if (ServiceUtil.isError(serviceResult) || ServiceUtil.isFailure(serviceResult)) {
-                                        Debug.logError("Error in refund payment: " + ServiceUtil.getErrorMessage(serviceResult), MODULE);
+                                        Debug.logError(x.Error_in_refund_payment + ServiceUtil.getErrorMessage(serviceResult), MODULE);
                                         continue;
                                     }
                                     // for electronic types such as CREDIT_CARD and EFT_ACCOUNT, use refundPayment service
-                                    paymentId = (String) serviceResult.get("paymentId");
-                                    amountRefunded = (BigDecimal) serviceResult.get("refundAmount");
+                                    paymentId = (String) serviceResult.get(x.paymentId);
+                                    amountRefunded = (BigDecimal) serviceResult.get(x.refundAmount);
                                 } catch (GenericServiceException e) {
-                                    return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderProblemsWithTheRefundSeeLogs", locale));
+                                    return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderProblemsWithTheRefundSeeLogs, locale));
                                 }
-                            } else if ("EXT_BILLACT".equals(paymentMethodTypeId)) {
+                            } else if (x.EXT_BILLACT.equals(paymentMethodTypeId)) {
                                 try {
                                     // for Billing Account refunds
-                                    serviceResult = dispatcher.runSync("refundBillingAccountPayment",
-                                            UtilMisc.<String, Object>toMap("orderPaymentPreference", orderPaymentPreference, "refundAmount",
-                                                    amountToRefund.setScale(DECIMALS, ROUNDING), "userLogin", userLogin));
+                                    serviceResult = dispatcher.runSync(x.refundBillingAccountPayment,
+                                            UtilMisc.<String, Object>toMap(x.orderPaymentPreference, orderPaymentPreference, x.refundAmount,
+                                                    amountToRefund.setScale(DECIMALS, ROUNDING), x.userLogin, userLogin));
                                     if (ServiceUtil.isError(serviceResult) || ServiceUtil.isFailure(serviceResult)) {
-                                        Debug.logError("Error in refund payment: " + ServiceUtil.getErrorMessage(serviceResult), MODULE);
+                                        Debug.logError(x.Error_in_refund_payment + ServiceUtil.getErrorMessage(serviceResult), MODULE);
                                         continue;
                                     }
-                                    paymentId = (String) serviceResult.get("paymentId");
+                                    paymentId = (String) serviceResult.get(x.paymentId);
                                 } catch (GenericServiceException e) {
-                                    Debug.logError(e, "Problem running the refundPayment service", MODULE);
+                                    Debug.logError(e, x.Problem_running_the_refundPayment_service, MODULE);
                                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                            "OrderProblemsWithTheRefundSeeLogs", locale));
+                                            x.OrderProblemsWithTheRefundSeeLogs, locale));
                                 }
                             } else {
                                 // handle manual refunds
                                 try {
-                                    Map<String, Object> input = UtilMisc.<String, Object>toMap("userLogin", userLogin, "amount", amountLeftToRefund,
-                                            "statusId", "PMNT_NOT_PAID");
-                                    input.put("partyIdTo", returnHeader.get(x.fromPartyId));
-                                    input.put("partyIdFrom", returnHeader.get(x.toPartyId));
-                                    input.put("paymentTypeId", "CUSTOMER_REFUND");
-                                    input.put("paymentMethodId", orderPaymentPreference.get(x.paymentMethodId));
-                                    input.put("paymentMethodTypeId", orderPaymentPreference.get(x.paymentMethodTypeId));
-                                    input.put("paymentPreferenceId", orderPaymentPreference.get(x.orderPaymentPreferenceId));
+                                    Map<String, Object> input = UtilMisc.<String, Object>toMap(x.userLogin, userLogin, x.amount, amountLeftToRefund,
+                                            x.statusId, x.PMNT_NOT_PAID);
+                                    input.put(x.partyIdTo, returnHeader.get(x.fromPartyId));
+                                    input.put(x.partyIdFrom, returnHeader.get(x.toPartyId));
+                                    input.put(x.paymentTypeId, x.CUSTOMER_REFUND);
+                                    input.put(x.paymentMethodId, orderPaymentPreference.get(x.paymentMethodId));
+                                    input.put(x.paymentMethodTypeId, orderPaymentPreference.get(x.paymentMethodTypeId));
+                                    input.put(x.paymentPreferenceId, orderPaymentPreference.get(x.orderPaymentPreferenceId));
 
-                                    serviceResult = dispatcher.runSync("createPayment", input);
+                                    serviceResult = dispatcher.runSync(x.createPayment, input);
 
                                     if (ServiceUtil.isError(serviceResult) || ServiceUtil.isFailure(serviceResult)) {
-                                        Debug.logError("Error in refund payment: " + ServiceUtil.getErrorMessage(serviceResult), MODULE);
+                                        Debug.logError(x.Error_in_refund_payment + ServiceUtil.getErrorMessage(serviceResult), MODULE);
                                         continue;
                                     }
-                                    paymentId = (String) serviceResult.get("paymentId");
-                                    returnItemStatusId = "RETURN_MAN_REFUND";    // however, in this case we should flag it as a manual refund
+                                    paymentId = (String) serviceResult.get(x.paymentId);
+                                    returnItemStatusId = x.RETURN_MAN_REFUND;    // however, in this case we should flag it as a manual refund
                                 } catch (GenericServiceException e) {
                                     return ServiceUtil.returnError(e.getMessage());
                                 }
@@ -1475,62 +1514,62 @@ public class OrderReturnServices {
                             // Fill out the data for the new ReturnItemResponse
                             Map<String, Object> response = new HashMap<>();
                             if (refundOrderPaymentPreference != null) {
-                                response.put("orderPaymentPreferenceId", refundOrderPaymentPreference.getString(x.orderPaymentPreferenceId));
+                                response.put(x.orderPaymentPreferenceId, refundOrderPaymentPreference.getString(x.orderPaymentPreferenceId));
                             } else {
-                                response.put("orderPaymentPreferenceId", orderPaymentPreference.getString(x.orderPaymentPreferenceId));
+                                response.put(x.orderPaymentPreferenceId, orderPaymentPreference.getString(x.orderPaymentPreferenceId));
                             }
-                            response.put("responseAmount", amountRefunded.setScale(DECIMALS, ROUNDING));
-                            response.put("responseDate", now);
-                            response.put("userLogin", userLogin);
-                            response.put("paymentId", paymentId);
-                            if ("EXT_BILLACT".equals(paymentMethodTypeId)) {
-                                response.put("billingAccountId", orderReadHelper.getBillingAccount().getString("billingAccountId"));
+                            response.put(x.responseAmount, amountRefunded.setScale(DECIMALS, ROUNDING));
+                            response.put(x.responseDate, now);
+                            response.put(x.userLogin, userLogin);
+                            response.put(x.paymentId, paymentId);
+                            if (x.EXT_BILLACT.equals(paymentMethodTypeId)) {
+                                response.put(x.billingAccountId, orderReadHelper.getBillingAccount().getString(x.billingAccountId));
                             }
                             Map<String, Object> serviceResults = null;
                             try {
-                                serviceResults = dispatcher.runSync("createReturnItemResponse", response);
+                                serviceResults = dispatcher.runSync(x.createReturnItemResponse, response);
                                 if (ServiceUtil.isError(serviceResults)) {
                                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                            "OrderProblemsCreatingReturnItemResponseEntity", locale), null, null, serviceResults);
+                                            x.OrderProblemsCreatingReturnItemResponseEntity, locale), null, null, serviceResults);
                                 }
                             } catch (GenericServiceException e) {
-                                Debug.logError(e, "Problems creating new ReturnItemResponse entity", MODULE);
+                                Debug.logError(e, x.Problems_creating_new_ReturnItemResponse_entity, MODULE);
                                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                        "OrderProblemsCreatingReturnItemResponseEntity", locale));
+                                        x.OrderProblemsCreatingReturnItemResponseEntity, locale));
                             }
-                            String responseId = (String) serviceResults.get("returnItemResponseId");
+                            String responseId = (String) serviceResults.get(x.returnItemResponseId);
 
                             // Set the response on each item
                             for (GenericValue item : items) {
-                                Map<String, Object> returnItemMap = UtilMisc.<String, Object>toMap("returnItemResponseId", responseId, "returnId",
+                                Map<String, Object> returnItemMap = UtilMisc.<String, Object>toMap(x.returnItemResponseId, responseId, x.returnId,
                                         item.get(x.returnId),
-                                        "returnItemSeqId", item.get(x.returnItemSeqId), "statusId", returnItemStatusId, "userLogin", userLogin);
+                                        x.returnItemSeqId, item.get(x.returnItemSeqId), x.statusId, returnItemStatusId, x.userLogin, userLogin);
                                 try {
-                                    serviceResults = dispatcher.runSync("updateReturnItem", returnItemMap);
+                                    serviceResults = dispatcher.runSync(x.updateReturnItem, returnItemMap);
                                     if (ServiceUtil.isError(serviceResults)) {
                                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                                "OrderProblemUpdatingReturnItemReturnItemResponseId", locale), null, null, serviceResults);
+                                                x.OrderProblemUpdatingReturnItemReturnItemResponseId, locale), null, null, serviceResults);
                                     }
                                 } catch (GenericServiceException e) {
-                                    Debug.logError("Problem updating the ReturnItem entity", MODULE);
+                                    Debug.logError(x.Problem_updating_the_ReturnItem_entity, MODULE);
                                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                            "OrderProblemUpdatingReturnItemReturnItemResponseId", locale));
+                                            x.OrderProblemUpdatingReturnItemReturnItemResponseId, locale));
                                 }
 
                             }
 
                             // Create the payment applications for the return invoice
                             try {
-                                serviceResults = dispatcher.runSync("createPaymentApplicationsFromReturnItemResponse",
-                                        UtilMisc.<String, Object>toMap("returnItemResponseId", responseId, "userLogin", userLogin));
+                                serviceResults = dispatcher.runSync(x.createPaymentApplicationsFromReturnItemResponse,
+                                        UtilMisc.<String, Object>toMap(x.returnItemResponseId, responseId, x.userLogin, userLogin));
                                 if (ServiceUtil.isError(serviceResults)) {
                                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                            "OrderProblemUpdatingReturnItemReturnItemResponseId", locale), null, null, serviceResults);
+                                            x.OrderProblemUpdatingReturnItemReturnItemResponseId, locale), null, null, serviceResults);
                                 }
                             } catch (GenericServiceException e) {
-                                Debug.logError(e, "Problem creating PaymentApplication records for return invoice", MODULE);
+                                Debug.logError(e, x.Problem_creating_PaymentApplication_records_for_return_invoice, MODULE);
                                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                        "OrderProblemUpdatingReturnItemReturnItemResponseId", locale));
+                                        x.OrderProblemUpdatingReturnItemReturnItemResponseId, locale));
                             }
 
                             // Update the amount necessary to refund
@@ -1556,24 +1595,24 @@ public class OrderReturnServices {
         try {
             orderHeader = paymentPref.getRelatedOne(x.OrderHeader, false);
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Cannot get OrderHeader from OrderPaymentPreference", MODULE);
+            Debug.logError(e, x.Cannot_get_OrderHeader_from_OrderPaymentPreference, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "OrderOrderPaymentCannotBeCreatedWithRelatedOrderHeader", locale) + e.toString());
+                    x.OrderOrderPaymentCannotBeCreatedWithRelatedOrderHeader, locale) + e.toString());
         }
 
         OrderReadHelper orh = new OrderReadHelper(orderHeader);
 
-        String payFromPartyId = orh.getBillFromParty().getString("partyId");
-        String payToPartyId = orh.getBillToParty().getString("partyId");
+        String payFromPartyId = orh.getBillFromParty().getString(x.partyId);
+        String payToPartyId = orh.getBillToParty().getString(x.partyId);
 
         // Create the PaymentGatewayResponse record
-        String responseId = delegator.getNextSeqId("PaymentGatewayResponse");
-        GenericValue response = delegator.makeValue("PaymentGatewayResponse");
+        String responseId = delegator.getNextSeqId(x.PaymentGatewayResponse);
+        GenericValue response = delegator.makeValue(x.PaymentGatewayResponse);
         response.set(x.paymentGatewayResponseId, responseId);
-        response.set(x.paymentServiceTypeEnumId, "PRDS_PAY_REFUND");
+        response.set(x.paymentServiceTypeEnumId, x.PRDS_PAY_REFUND);
         response.set(x.orderPaymentPreferenceId, paymentPref.get(x.orderPaymentPreferenceId));
         response.set(x.paymentMethodTypeId, paymentPref.get(x.paymentMethodTypeId));
-        response.set(x.transCodeEnumId, "PGT_REFUND");
+        response.set(x.transCodeEnumId, x.PGT_REFUND);
         response.set(x.amount, refundAmount);
         response.set(x.transactionDate, UtilDateTime.nowTimestamp());
         response.set(x.currencyUomId, orh.getCurrency());
@@ -1582,63 +1621,63 @@ public class OrderReturnServices {
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "OrderOrderPaymentGatewayResponseCannotBeCreated", locale));
+                    x.OrderOrderPaymentGatewayResponseCannotBeCreated, locale));
         }
 
         // Create the Payment record (parties reversed)
-        Map<String, Object> paymentCtx = UtilMisc.<String, Object>toMap("paymentTypeId", "CUSTOMER_REFUND");
-        paymentCtx.put("paymentMethodTypeId", paymentPref.get(x.paymentMethodTypeId));
-        paymentCtx.put("paymentGatewayResponseId", responseId);
-        paymentCtx.put("partyIdTo", payToPartyId);
-        paymentCtx.put("partyIdFrom", payFromPartyId);
-        paymentCtx.put("statusId", "PMNT_CONFIRMED");
-        paymentCtx.put("paymentPreferenceId", paymentPref.get(x.orderPaymentPreferenceId));
-        paymentCtx.put("currencyUomId", orh.getCurrency());
-        paymentCtx.put("amount", refundAmount);
-        paymentCtx.put("userLogin", userLogin);
-        paymentCtx.put("comments", "Refund");
+        Map<String, Object> paymentCtx = UtilMisc.<String, Object>toMap(x.paymentTypeId, x.CUSTOMER_REFUND);
+        paymentCtx.put(x.paymentMethodTypeId, paymentPref.get(x.paymentMethodTypeId));
+        paymentCtx.put(x.paymentGatewayResponseId, responseId);
+        paymentCtx.put(x.partyIdTo, payToPartyId);
+        paymentCtx.put(x.partyIdFrom, payFromPartyId);
+        paymentCtx.put(x.statusId, x.PMNT_CONFIRMED);
+        paymentCtx.put(x.paymentPreferenceId, paymentPref.get(x.orderPaymentPreferenceId));
+        paymentCtx.put(x.currencyUomId, orh.getCurrency());
+        paymentCtx.put(x.amount, refundAmount);
+        paymentCtx.put(x.userLogin, userLogin);
+        paymentCtx.put(x.comments, x.Refund);
 
         String paymentId = null;
         try {
-            Map<String, Object> paymentCreationResult = dispatcher.runSync("createPayment", paymentCtx);
+            Map<String, Object> paymentCreationResult = dispatcher.runSync(x.createPayment, paymentCtx);
             if (ServiceUtil.isError(paymentCreationResult)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(paymentCreationResult));
             }
-            paymentId = (String) paymentCreationResult.get("paymentId");
+            paymentId = (String) paymentCreationResult.get(x.paymentId);
         } catch (GenericServiceException e) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "OrderOrderPaymentFailed",
-                    UtilMisc.toMap("errorString", e.getMessage()), locale));
+                    x.OrderOrderPaymentFailed,
+                    UtilMisc.toMap(x.errorString, e.getMessage()), locale));
         }
 
         if (paymentId == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "OrderOrderPaymentFailed", UtilMisc.toMap("errorString", ""), locale));
+                    x.OrderOrderPaymentFailed, UtilMisc.toMap(x.errorString, x.emptyString), locale));
         }
 
         // if the original order was paid with a billing account, then go find the billing account from the order and associate this
         // refund with that billing account
         // thus returning value to the billing account
-        if ("EXT_BILLACT".equals(paymentPref.getString(x.paymentMethodTypeId))) {
+        if (x.EXT_BILLACT.equals(paymentPref.getString(x.paymentMethodTypeId))) {
             GenericValue billingAccount = orh.getBillingAccount();
             if (UtilValidate.isNotEmpty(billingAccount.getString(x.billingAccountId))) {
                 try {
-                    Map<String, Object> paymentApplResult = dispatcher.runSync("createPaymentApplication",
-                            UtilMisc.<String, Object>toMap("paymentId", paymentId, "billingAccountId", billingAccount.getString(x.billingAccountId),
-                            "amountApplied", refundAmount, "userLogin", userLogin));
+                    Map<String, Object> paymentApplResult = dispatcher.runSync(x.createPaymentApplication,
+                            UtilMisc.<String, Object>toMap(x.paymentId, paymentId, x.billingAccountId, billingAccount.getString(x.billingAccountId),
+                            x.amountApplied, refundAmount, x.userLogin, userLogin));
                     if (ServiceUtil.isError(paymentApplResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(paymentApplResult));
                     }
                 } catch (GenericServiceException e) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                            "OrderOrderPaymentApplicationFailed",
-                            UtilMisc.toMap("errorString", e.getMessage()), locale));
+                            x.OrderOrderPaymentApplicationFailed,
+                            UtilMisc.toMap(x.errorString, e.getMessage()), locale));
                 }
             }
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("paymentId", paymentId);
+        result.put(x.paymentId, paymentId);
         return result;
     }
 
@@ -1651,12 +1690,14 @@ public class OrderReturnServices {
         // the strategy for this service is to get a list of return invoices via the return items -> return item billing relationships
         // then split up the responseAmount among the invoices evenly
         String responseId = (String) context.get(x.returnItemResponseId);
-        String errorMsg = "Failed to create payment applications for return item response [" + responseId + "]. ";
+        String errorMsg = x.Failed_to_create_payment_applications_for_return_item_response + responseId + x.str_aa6bf6f2;
         try {
-            GenericValue response = EntityQuery.use(delegator).from("ReturnItemResponse").where("returnItemResponseId", responseId).queryOne();
+            ReturnItemResponseDao returnItemResponseDao = DaoRegistry.getDao(delegator, x.ReturnItemResponse, ReturnItemResponseDao.class);
+            GenericValue response = returnItemResponseDao.findOne(delegator, x.ReturnItemResponse,
+                    UtilMisc.toMap(x.returnItemResponseId, responseId), false);
             if (response == null) {
-                return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderReturnItemResponseNotFound",
-                        UtilMisc.toMap("errorMsg", errorMsg, "responseId", responseId), locale));
+                return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderReturnItemResponseNotFound,
+                        UtilMisc.toMap(x.errorMsg, errorMsg, x.responseId, responseId), locale));
             }
             BigDecimal responseAmount = response.getBigDecimal(x.responseAmount).setScale(DECIMALS, ROUNDING);
             String paymentId = response.getString(x.paymentId);
@@ -1700,21 +1741,21 @@ public class OrderReturnServices {
 
                 if (paymentId != null) {
                     // create a payment application for the invoice
-                    Map<String, Object> input = UtilMisc.<String, Object>toMap("paymentId", paymentId, "invoiceId", invoice.getString(x.invoiceId));
-                    input.put("amountApplied", amountApplied);
-                    input.put("userLogin", userLogin);
+                    Map<String, Object> input = UtilMisc.<String, Object>toMap(x.paymentId, paymentId, x.invoiceId, invoice.getString(x.invoiceId));
+                    input.put(x.amountApplied, amountApplied);
+                    input.put(x.userLogin, userLogin);
                     if (response.get(x.billingAccountId) != null) {
                         GenericValue billingAccount = response.getRelatedOne(x.BillingAccount, false);
                         if (billingAccount != null) {
-                            input.put("billingAccountId", response.get(x.billingAccountId));
+                            input.put(x.billingAccountId, response.get(x.billingAccountId));
                         }
                     }
-                    Map<String, Object> serviceResults = dispatcher.runSync("createPaymentApplication", input);
+                    Map<String, Object> serviceResults = dispatcher.runSync(x.createPaymentApplication, input);
                     if (ServiceUtil.isError(serviceResults)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResults));
                     }
                     if (Debug.verboseOn()) {
-                        Debug.logInfo("Created PaymentApplication for response with amountApplied " + amountApplied.toString(), MODULE);
+                        Debug.logInfo(x.Created_PaymentApplication_for_response_with_amountApplied + amountApplied.toString(), MODULE);
                     }
                 }
             }
@@ -1738,14 +1779,15 @@ public class OrderReturnServices {
         GenericValue returnHeader = null;
         List<GenericValue> returnItems = null;
         try {
-            returnHeader = EntityQuery.use(delegator).from("ReturnHeader").where("returnId", returnId).queryOne();
+            ReturnHeaderDao returnHeaderDao = DaoRegistry.getDao(delegator, x.ReturnHeader, ReturnHeaderDao.class);
+            returnHeader = returnHeaderDao.findOne(delegator, x.ReturnHeader, UtilMisc.toMap(x.returnId, returnId), false);
             if (returnHeader != null) {
-                returnItems = returnHeader.getRelated(x.ReturnItem, UtilMisc.toMap("returnTypeId", returnTypeId), null, false);
+                returnItems = returnHeader.getRelated(x.ReturnItem, UtilMisc.toMap(x.returnTypeId, returnTypeId), null, false);
             }
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Problems looking up return information", MODULE);
+            Debug.logError(e, x.Problems_looking_up_return_information, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "OrderErrorGettingReturnHeaderItemInformation", locale));
+                    x.OrderErrorGettingReturnHeaderItemInformation, locale));
         }
         List<String> createdOrderIds = new LinkedList<>();
         if (returnHeader != null && UtilValidate.isNotEmpty(returnItems)) {
@@ -1762,38 +1804,39 @@ public class OrderReturnServices {
                 // get order header & payment prefs
                 GenericValue orderHeader = null;
                 try {
-                    orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
+                    OrderHeaderDao orderHeaderDao = DaoRegistry.getDao(delegator, x.OrderHeader, OrderHeaderDao.class);
+                    orderHeader = orderHeaderDao.findOne(delegator, x.OrderHeader, UtilMisc.toMap(x.orderId, orderId), false);
                 } catch (GenericEntityException e) {
-                    Debug.logError(e, "Cannot get Order details for #" + orderId, MODULE);
+                    Debug.logError(e, x.Cannot_get_Order_details_for + orderId, MODULE);
                     continue;
                 }
 
                 OrderReadHelper orh = new OrderReadHelper(orderHeader);
 
                 // create the replacement order
-                Map<String, Object> orderMap = UtilMisc.<String, Object>toMap("userLogin", userLogin);
+                Map<String, Object> orderMap = UtilMisc.<String, Object>toMap(x.userLogin, userLogin);
 
                 String placingPartyId = null;
                 GenericValue placingParty = null;
-                if ("CUSTOMER_RETURN".equals(returnHeaderTypeId)) {
+                if (x.CUSTOMER_RETURN.equals(returnHeaderTypeId)) {
                     placingParty = orh.getPlacingParty();
                     if (placingParty != null) {
                         placingPartyId = placingParty.getString(x.partyId);
                     }
-                    orderMap.put("orderTypeId", "SALES_ORDER");
+                    orderMap.put(x.orderTypeId, x.SALES_ORDER);
                 } else {
                     placingParty = orh.getSupplierAgent();
                     if (placingParty != null) {
                         placingPartyId = placingParty.getString(x.partyId);
                     }
-                    orderMap.put("orderTypeId", "PURCHASE_ORDER");
+                    orderMap.put(x.orderTypeId, x.PURCHASE_ORDER);
                 }
-                orderMap.put("partyId", placingPartyId);
-                orderMap.put("productStoreId", orderHeader.get(x.productStoreId));
-                orderMap.put("webSiteId", orderHeader.get(x.webSiteId));
-                orderMap.put("visitId", orderHeader.get(x.visitId));
-                orderMap.put("currencyUom", orderHeader.get(x.currencyUom));
-                orderMap.put("grandTotal", BigDecimal.ZERO);
+                orderMap.put(x.partyId, placingPartyId);
+                orderMap.put(x.productStoreId, orderHeader.get(x.productStoreId));
+                orderMap.put(x.webSiteId, orderHeader.get(x.webSiteId));
+                orderMap.put(x.visitId, orderHeader.get(x.visitId));
+                orderMap.put(x.currencyUom, orderHeader.get(x.currencyUom));
+                orderMap.put(x.grandTotal, BigDecimal.ZERO);
 
                 // make the contact mechs
                 List<GenericValue> contactMechs = new LinkedList<>();
@@ -1807,7 +1850,7 @@ public class OrderReturnServices {
                     for (GenericValue v : orderCm) {
                         contactMechs.add(GenericValue.create(v));
                     }
-                    orderMap.put("orderContactMechs", contactMechs);
+                    orderMap.put(x.orderContactMechs, contactMechs);
                 }
 
                 // make the order items
@@ -1837,12 +1880,12 @@ public class OrderReturnServices {
                             // Check if the product being returned has a Refurbished Equivalent and if so
                             // (and there is inventory for the assoc product) use that product instead
                             GenericValue refurbItem = null;
-                            if ("CUSTOMER_RETURN".equals(returnHeaderTypeId)) {
+                            if (x.CUSTOMER_RETURN.equals(returnHeaderTypeId)) {
                                 try {
                                     if (product != null) {
                                         GenericValue refurbItemAssoc = EntityUtil.getFirst(EntityUtil.filterByDate(
-                                                product.getRelated(x.MainProductAssoc, UtilMisc.toMap("productAssocTypeId", "PRODUCT_REFURB"),
-                                                        UtilMisc.toList("sequenceNum"), false)));
+                                                product.getRelated(x.MainProductAssoc, UtilMisc.toMap(x.productAssocTypeId, x.PRODUCT_REFURB),
+                                                        UtilMisc.toList(x.sequenceNum), false)));
                                         if (refurbItemAssoc != null) {
                                             refurbItem = refurbItemAssoc.getRelatedOne(x.AssocProduct, false);
                                         }
@@ -1853,17 +1896,17 @@ public class OrderReturnServices {
                                 if (refurbItem != null) {
                                     boolean inventoryAvailable = false;
                                     try {
-                                        Map<String, Object> invReqResult = dispatcher.runSync("isStoreInventoryAvailable",
-                                                UtilMisc.toMap("productStoreId", orderHeader.get(x.productStoreId),
-                                                "productId", refurbItem.getString(x.productId),
-                                                "product", refurbItem, "quantity", quantity));
+                                        Map<String, Object> invReqResult = dispatcher.runSync(x.isStoreInventoryAvailable,
+                                                UtilMisc.toMap(x.productStoreId, orderHeader.get(x.productStoreId),
+                                                x.productId, refurbItem.getString(x.productId),
+                                                x.product, refurbItem, x.quantity, quantity));
                                         if (ServiceUtil.isError(invReqResult)) {
-                                            Debug.logError("Error calling isStoreInventoryAvailable service, result is: " + invReqResult, MODULE);
+                                            Debug.logError(x.Error_calling_isStoreInventoryAvailable_service_result_is + invReqResult, MODULE);
                                         } else {
-                                            inventoryAvailable = "Y".equals(invReqResult.get("available"));
+                                            inventoryAvailable = x.Y.equals(invReqResult.get(x.available_7b231a50));
                                         }
                                     } catch (GenericServiceException e) {
-                                        Debug.logError(e, "Fatal error calling inventory checking services: " + e.toString(), MODULE);
+                                        Debug.logError(e, x.Fatal_error_calling_inventory_checking_services + e.toString(), MODULE);
                                     }
                                     if (!inventoryAvailable) {
                                         // If the Refurbished Equivalent is not available,
@@ -1872,15 +1915,15 @@ public class OrderReturnServices {
                                     }
                                 }
 
-                                GenericValue newItem = delegator.makeValue("OrderItem", UtilMisc.toMap("orderItemSeqId",
+                                GenericValue newItem = delegator.makeValue(x.OrderItem, UtilMisc.toMap(x.orderItemSeqId,
                                         UtilFormatOut.formatPaddedNumber(itemCount++, 5)));
                                 if (UtilValidate.isEmpty(refurbItem)) {
                                     newItem.set(x.productId, orderItem.get(x.productId));
                                     newItem.set(x.itemDescription, orderItem.get(x.itemDescription));
                                 } else {
                                     newItem.set(x.productId, refurbItem.get(x.productId));
-                                    newItem.set(x.itemDescription, ProductContentWrapper.getProductContentAsText(refurbItem, "PRODUCT_NAME", locale,
-                                            dispatcher, "html"));
+                                    newItem.set(x.itemDescription, ProductContentWrapper.getProductContentAsText(refurbItem, x.PRODUCT_NAME, locale,
+                                            dispatcher, x.html));
                                 }
                                 newItem.set(x.orderItemTypeId, orderItem.get(x.orderItemTypeId));
                                 newItem.set(x.productFeatureId, orderItem.get(x.productFeatureId));
@@ -1891,7 +1934,7 @@ public class OrderReturnServices {
                                 newItem.set(x.unitListPrice, orderItem.get(x.unitListPrice));
                                 newItem.set(x.comments, orderItem.get(x.comments));
                                 newItem.set(x.correspondingPoId, orderItem.get(x.correspondingPoId));
-                                newItem.set(x.statusId, "ITEM_CREATED");
+                                newItem.set(x.statusId, x.ITEM_CREATED);
                                 orderItems.add(newItem);
 
                                 // Set the order item ship group information
@@ -1910,31 +1953,31 @@ public class OrderReturnServices {
                                             orderItemShipGroupInfo.add(newOrderItemShipGroup);
                                             orderItemShipGroupIds.add(orderItemShipGroupAssoc.getString(x.shipGroupSeqId));
                                         }
-                                        GenericValue newOrderItemShipGroupAssoc = delegator.makeValue("OrderItemShipGroupAssoc",
-                                                UtilMisc.toMap("orderItemSeqId", newItem.getString(x.orderItemSeqId), "shipGroupSeqId",
-                                                        orderItemShipGroupAssoc.getString(x.shipGroupSeqId), "quantity", quantity));
+                                        GenericValue newOrderItemShipGroupAssoc = delegator.makeValue(x.OrderItemShipGroupAssoc,
+                                                UtilMisc.toMap(x.orderItemSeqId, newItem.getString(x.orderItemSeqId), x.shipGroupSeqId,
+                                                        orderItemShipGroupAssoc.getString(x.shipGroupSeqId), x.quantity, quantity));
                                         orderItemShipGroupInfo.add(newOrderItemShipGroupAssoc);
                                     }
                                 } catch (GenericEntityException e) {
-                                    String errMsg = "Problem calling the approveRequirement service";
+                                    String errMsg = x.Problem_calling_the_approveRequirement_service;
                                     Debug.logError(e, errMsg, MODULE);
                                     return ServiceUtil.returnError(errMsg);
                                 }
                                 // Create an association between the replacement order item and the order item of the original order
-                                GenericValue newOrderItemAssoc = delegator.makeValue("OrderItemAssoc", UtilMisc.toMap("orderId",
+                                GenericValue newOrderItemAssoc = delegator.makeValue(x.OrderItemAssoc, UtilMisc.toMap(x.orderId,
                                         orderHeader.getString(x.orderId),
-                                        "orderItemSeqId", orderItem.getString(x.orderItemSeqId), "shipGroupSeqId", "_NA_",
-                                        "toOrderItemSeqId", newItem.getString(x.orderItemSeqId), "toShipGroupSeqId", "_NA_", "orderItemAssocTypeId",
-                                        "REPLACEMENT"));
+                                        x.orderItemSeqId, orderItem.getString(x.orderItemSeqId), x.shipGroupSeqId, x.NA,
+                                        x.toOrderItemSeqId, newItem.getString(x.orderItemSeqId), x.toShipGroupSeqId, x.NA, x.orderItemAssocTypeId,
+                                        x.REPLACEMENT));
                                 orderItemAssocs.add(newOrderItemAssoc);
 
                                 // For repair replacement orders, add to the order also the repair items
-                                if ("RTN_REPAIR_REPLACE".equals(returnTypeId)) {
+                                if (x.RTN_REPAIR_REPLACE.equals(returnTypeId)) {
                                     List<GenericValue> repairItems = null;
                                     try {
                                         if (product != null) {
                                             repairItems = EntityUtil.filterByDate(product.getRelated(x.MainProductAssoc,
-                                                    UtilMisc.toMap("productAssocTypeId", "PRODUCT_REPAIR_SRV"), UtilMisc.toList("sequenceNum"),
+                                                    UtilMisc.toMap(x.productAssocTypeId, x.PRODUCT_REPAIR_SRV), UtilMisc.toList(x.sequenceNum),
                                                     false));
                                         }
                                     } catch (GenericEntityException e) {
@@ -1956,25 +1999,25 @@ public class OrderReturnServices {
                                                     repairUnitQuantity = BigDecimal.ONE;
                                                 }
                                                 BigDecimal repairQuantity = quantity.multiply(repairUnitQuantity);
-                                                newItem = delegator.makeValue("OrderItem", UtilMisc.toMap("orderItemSeqId",
+                                                newItem = delegator.makeValue(x.OrderItem, UtilMisc.toMap(x.orderItemSeqId,
                                                         UtilFormatOut.formatPaddedNumber(itemCount++, 5)));
 
                                                 // price
                                                 Map<String, Object> priceContext = new HashMap<>();
-                                                priceContext.put("currencyUomId", orderHeader.get(x.currencyUom));
+                                                priceContext.put(x.currencyUomId, orderHeader.get(x.currencyUom));
                                                 if (placingPartyId != null) {
-                                                    priceContext.put("partyId", placingPartyId);
+                                                    priceContext.put(x.partyId, placingPartyId);
                                                 }
-                                                priceContext.put("quantity", repairUnitQuantity);
-                                                priceContext.put("product", repairItemProduct);
-                                                priceContext.put("webSiteId", orderHeader.get(x.webSiteId));
-                                                priceContext.put("productStoreId", orderHeader.get(x.productStoreId));
+                                                priceContext.put(x.quantity, repairUnitQuantity);
+                                                priceContext.put(x.product, repairItemProduct);
+                                                priceContext.put(x.webSiteId, orderHeader.get(x.webSiteId));
+                                                priceContext.put(x.productStoreId, orderHeader.get(x.productStoreId));
                                                 // TODO: prodCatalogId, agreementId
-                                                priceContext.put("productPricePurposeId", "PURCHASE");
-                                                priceContext.put("checkIncludeVat", "Y");
+                                                priceContext.put(x.productPricePurposeId, x.PURCHASE);
+                                                priceContext.put(x.checkIncludeVat, x.Y);
                                                 Map<String, Object> priceResult = null;
                                                 try {
-                                                    priceResult = dispatcher.runSync("calculateProductPrice", priceContext);
+                                                    priceResult = dispatcher.runSync(x.calculateProductPrice, priceContext);
                                                 } catch (GenericServiceException gse) {
                                                     Debug.logError(gse, MODULE);
                                                     continue;
@@ -1983,20 +2026,20 @@ public class OrderReturnServices {
                                                     Debug.logError(ServiceUtil.getErrorMessage(priceResult), MODULE);
                                                     continue;
                                                 }
-                                                Boolean validPriceFound = (Boolean) priceResult.get("validPriceFound");
+                                                Boolean validPriceFound = (Boolean) priceResult.get(x.validPriceFound);
                                                 if (Boolean.FALSE.equals(validPriceFound)) {
-                                                    Debug.logError("Could not find a valid price for the product with ID ["
-                                                            + repairItemProduct.get(x.productId) + "].", MODULE);
+                                                    Debug.logError(x.Could_not_find_a_valid_price_for_the_product_with_ID
+                                                            + repairItemProduct.get(x.productId) + x.str_76d00394, MODULE);
                                                     continue;
                                                 }
 
-                                                if (priceResult.get("listPrice") != null) {
-                                                    newItem.set(x.unitListPrice, priceResult.get("listPrice"));
+                                                if (priceResult.get(x.listPrice) != null) {
+                                                    newItem.set(x.unitListPrice, priceResult.get(x.listPrice));
                                                 }
 
                                                 BigDecimal repairUnitPrice = null;
-                                                if (priceResult.get("basePrice") != null) {
-                                                    repairUnitPrice = (BigDecimal) priceResult.get("basePrice");
+                                                if (priceResult.get(x.basePrice) != null) {
+                                                    repairUnitPrice = (BigDecimal) priceResult.get(x.basePrice);
                                                 } else {
                                                     repairUnitPrice = BigDecimal.ZERO;
                                                 }
@@ -2006,22 +2049,22 @@ public class OrderReturnServices {
                                                 // TODO: orderItemTypeId, prodCatalogId, productCategoryId
                                                 newItem.set(x.quantity, repairQuantity);
                                                 newItem.set(x.itemDescription, ProductContentWrapper.getProductContentAsText(repairItemProduct,
-                                                        "PRODUCT_NAME", locale, dispatcher, "html"));
-                                                newItem.set(x.statusId, "ITEM_CREATED");
+                                                        x.PRODUCT_NAME, locale, dispatcher, x.html));
+                                                newItem.set(x.statusId, x.ITEM_CREATED);
                                                 orderItems.add(newItem);
                                                 additionalItemTotal = additionalItemTotal.add(repairQuantity.multiply(repairUnitPrice));
                                                 if (orderItemShipGroupAssoc != null) {
-                                                    GenericValue newOrderItemShipGroupAssoc = delegator.makeValue("OrderItemShipGroupAssoc",
-                                                            UtilMisc.toMap("orderItemSeqId", newItem.getString(x.orderItemSeqId), "shipGroupSeqId",
-                                                                    orderItemShipGroupAssoc.getString(x.shipGroupSeqId), "quantity", repairQuantity));
+                                                    GenericValue newOrderItemShipGroupAssoc = delegator.makeValue(x.OrderItemShipGroupAssoc,
+                                                            UtilMisc.toMap(x.orderItemSeqId, newItem.getString(x.orderItemSeqId), x.shipGroupSeqId,
+                                                                    orderItemShipGroupAssoc.getString(x.shipGroupSeqId), x.quantity, repairQuantity));
                                                     orderItemShipGroupInfo.add(newOrderItemShipGroupAssoc);
                                                 }
                                                 // Create an association between the repair order item and the order item of the original order
-                                                newOrderItemAssoc = delegator.makeValue("OrderItemAssoc", UtilMisc.toMap("orderId",
+                                                newOrderItemAssoc = delegator.makeValue(x.OrderItemAssoc, UtilMisc.toMap(x.orderId,
                                                         orderHeader.getString(x.orderId),
-                                                        "orderItemSeqId", orderItem.getString(x.orderItemSeqId), "shipGroupSeqId", "_NA_",
-                                                        "toOrderItemSeqId", newItem.getString(x.orderItemSeqId), "toShipGroupSeqId", "_NA_",
-                                                        "orderItemAssocTypeId", "REPLACEMENT"));
+                                                        x.orderItemSeqId, orderItem.getString(x.orderItemSeqId), x.shipGroupSeqId, x.NA,
+                                                        x.toOrderItemSeqId, newItem.getString(x.orderItemSeqId), x.toShipGroupSeqId, x.NA,
+                                                        x.orderItemAssocTypeId, x.REPLACEMENT));
                                                 orderItemAssocs.add(newOrderItemAssoc);
                                             }
                                         }
@@ -2030,30 +2073,30 @@ public class OrderReturnServices {
                             }
                         }
                     }
-                    orderMap.put("orderItems", orderItems);
+                    orderMap.put(x.orderItems, orderItems);
                     if (!orderItemShipGroupInfo.isEmpty()) {
-                        orderMap.put("orderItemShipGroupInfo", orderItemShipGroupInfo);
+                        orderMap.put(x.orderItemShipGroupInfo, orderItemShipGroupInfo);
                     }
                     if (!orderItemAssocs.isEmpty()) {
-                        orderMap.put("orderItemAssociations", orderItemAssocs);
+                        orderMap.put(x.orderItemAssociations, orderItemAssocs);
                     }
                 } else {
-                    Debug.logError("No return items found??", MODULE);
+                    Debug.logError(x.No_return_items_found, MODULE);
                     continue;
                 }
 
                 // create the replacement adjustment
-                GenericValue adj = delegator.makeValue("OrderAdjustment");
-                adj.set(x.orderAdjustmentTypeId, "REPLACE_ADJUSTMENT");
+                GenericValue adj = delegator.makeValue(x.OrderAdjustment);
+                adj.set(x.orderAdjustmentTypeId, x.REPLACE_ADJUSTMENT);
                 adj.set(x.amount, orderPriceTotal.negate());
-                adj.set(x.comments, "Replacement Item Return #" + returnId);
+                adj.set(x.comments, x.Replacement_Item_Return + returnId);
                 adj.set(x.createdDate, nowTimestamp);
                 adj.set(x.createdByUserLogin, userLogin.getString(x.userLoginId));
-                orderMap.put("orderAdjustments", UtilMisc.toList(adj));
+                orderMap.put(x.orderAdjustments, UtilMisc.toList(adj));
 
                 // Payment preference
                 if ((additionalItemTotal.compareTo(BigDecimal.ZERO) > 0)
-                        || ("RTN_CSREPLACE".equals(returnTypeId) && orderPriceTotal.compareTo(ZERO) > 0)) {
+                        || (x.RTN_CSREPLACE.equals(returnTypeId) && orderPriceTotal.compareTo(ZERO) > 0)) {
                     GenericValue paymentMethod = null;
                     try {
                         paymentMethod = returnHeader.getRelatedOne(x.PaymentMethod, false);
@@ -2063,33 +2106,33 @@ public class OrderReturnServices {
                     if (paymentMethod != null) {
                         String paymentMethodId = paymentMethod.getString(x.paymentMethodId);
                         String paymentMethodTypeId = paymentMethod.getString(x.paymentMethodTypeId);
-                        GenericValue opp = delegator.makeValue("OrderPaymentPreference");
+                        GenericValue opp = delegator.makeValue(x.OrderPaymentPreference);
                         opp.set(x.paymentMethodTypeId, paymentMethodTypeId);
                         opp.set(x.paymentMethodId, paymentMethodId);
                         // TODO: manualRefNum, manualAuthCode, securityCode, presentFlag, overflowFlag
-                        if (paymentMethodId != null || "FIN_ACCOUNT".equals(paymentMethodTypeId)) {
-                            opp.set(x.statusId, "PAYMENT_NOT_AUTH");
+                        if (paymentMethodId != null || x.FIN_ACCOUNT.equals(paymentMethodTypeId)) {
+                            opp.set(x.statusId, x.PAYMENT_NOT_AUTH);
                         } else if (paymentMethodTypeId != null) {
                             // external payment method types require notification when received
                             // internal payment method types are assumed to be in-hand
-                            if (paymentMethodTypeId.startsWith("EXT_")) {
-                                opp.set(x.statusId, "PAYMENT_NOT_RECEIVED");
+                            if (paymentMethodTypeId.startsWith(x.EXT)) {
+                                opp.set(x.statusId, x.PAYMENT_NOT_RECEIVED);
                             } else {
-                                opp.set(x.statusId, "PAYMENT_RECEIVED");
+                                opp.set(x.statusId, x.PAYMENT_RECEIVED);
                             }
                         }
-                        if ("RTN_CSREPLACE".equals(returnTypeId)) {
+                        if (x.RTN_CSREPLACE.equals(returnTypeId)) {
                             opp.set(x.maxAmount, orderPriceTotal);
                         }
-                        orderMap.put("orderPaymentInfo", UtilMisc.toList(opp));
+                        orderMap.put(x.orderPaymentInfo, UtilMisc.toList(opp));
                     }
                 }
 
                 // we'll assume new order is under same terms as original.  note orderTerms is a required parameter of storeOrder
                 try {
-                    orderMap.put("orderTerms", orderHeader.getRelated(x.OrderTerm, null, null, false));
+                    orderMap.put(x.orderTerms, orderHeader.getRelated(x.OrderTerm, null, null, false));
                 } catch (GenericEntityException e) {
-                    Debug.logError(e, "Cannot create replacement order because order terms for original order are not available", MODULE);
+                    Debug.logError(e, x.Cannot_create_replacement_order_because_order_terms_for_original_order_are_not_available, MODULE);
                 }
                 // we'll assume the new order has the same order roles of the original one
                 try {
@@ -2106,97 +2149,97 @@ public class OrderReturnServices {
                         }
                     }
                     if (!orderRolesMap.isEmpty()) {
-                        orderMap.put("orderAdditionalPartyRoleMap", orderRolesMap);
+                        orderMap.put(x.orderAdditionalPartyRoleMap, orderRolesMap);
                     }
                 } catch (GenericEntityException e) {
-                    Debug.logError(e, "Cannot create replacement order because order roles for original order are not available", MODULE);
+                    Debug.logError(e, x.Cannot_create_replacement_order_because_order_roles_for_original_order_are_not_available, MODULE);
                 }
 
                 // create the order
                 String createdOrderId = null;
                 Map<String, Object> orderResult = null;
                 try {
-                    orderResult = dispatcher.runSync("storeOrder", orderMap);
+                    orderResult = dispatcher.runSync(x.storeOrder, orderMap);
                     if (ServiceUtil.isError(orderResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(orderResult));
                     }
                 } catch (GenericServiceException e) {
-                    Debug.logInfo(e, "Problem creating the order!", MODULE);
+                    Debug.logInfo(e, x.Problem_creating_the_order, MODULE);
                 }
                 if (orderResult != null) {
-                    createdOrderId = (String) orderResult.get("orderId");
+                    createdOrderId = (String) orderResult.get(x.orderId);
                     createdOrderIds.add(createdOrderId);
                 }
 
                 // since there is no payments required; order is ready for processing/shipment
                 if (createdOrderId != null) {
-                    if ("RETURN_ACCEPTED".equals(returnHeader.get(x.statusId)) && "RTN_WAIT_REPLACE_RES".equals(returnTypeId)) {
+                    if (x.RETURN_ACCEPTED.equals(returnHeader.get(x.statusId)) && x.RTN_WAIT_REPLACE_RES.equals(returnTypeId)) {
                         Map<String, Object> serviceResult = null;
                         try {
-                            serviceResult = dispatcher.runSync("changeOrderStatus", UtilMisc.toMap("orderId", createdOrderId, "statusId",
-                                    "ORDER_HOLD", "userLogin", userLogin));
+                            serviceResult = dispatcher.runSync(x.changeOrderStatus, UtilMisc.toMap(x.orderId, createdOrderId, x.statusId,
+                                    x.ORDER_HOLD, x.userLogin, userLogin));
                             if (ServiceUtil.isError(serviceResult)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                             }
                         } catch (GenericServiceException e) {
-                            Debug.logError(e, "Service invocation error, status changes were not updated for order #" + createdOrderId, MODULE);
+                            Debug.logError(e, x.Service_invocation_error_status_changes_were_not_updated_for_order + createdOrderId, MODULE);
                             return ServiceUtil.returnError(e.getMessage());
                         }
                         if (ServiceUtil.isError(serviceResult)) {
                             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                         }
                     } else {
-                        if ("CUSTOMER_RETURN".equals(returnHeaderTypeId)) {
+                        if (x.CUSTOMER_RETURN.equals(returnHeaderTypeId)) {
                             OrderChangeHelper.approveOrder(dispatcher, userLogin, createdOrderId);
                         } else {
                             try {
-                                OrderChangeHelper.orderStatusChanges(dispatcher, userLogin, createdOrderId, "ORDER_APPROVED", null,
-                                        "ITEM_APPROVED", null);
+                                OrderChangeHelper.orderStatusChanges(dispatcher, userLogin, createdOrderId, x.ORDER_APPROVED, null,
+                                        x.ITEM_APPROVED, null);
                             } catch (GenericServiceException e) {
-                                Debug.logError(e, "Service invocation error, status changes were not updated for order #" + createdOrderId, MODULE);
+                                Debug.logError(e, x.Service_invocation_error_status_changes_were_not_updated_for_order + createdOrderId, MODULE);
                                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                        "OrderErrorCannotStoreStatusChanges", locale) + createdOrderId);
+                                        x.OrderErrorCannotStoreStatusChanges, locale) + createdOrderId);
                             }
                         }
                     }
 
                     // create a ReturnItemResponse and attach to each ReturnItem
                     Map<String, Object> itemResponse = new HashMap<>();
-                    itemResponse.put("replacementOrderId", createdOrderId);
-                    itemResponse.put("responseAmount", orderPriceTotal);
-                    itemResponse.put("responseDate", nowTimestamp);
-                    itemResponse.put("userLogin", userLogin);
+                    itemResponse.put(x.replacementOrderId, createdOrderId);
+                    itemResponse.put(x.responseAmount, orderPriceTotal);
+                    itemResponse.put(x.responseDate, nowTimestamp);
+                    itemResponse.put(x.userLogin, userLogin);
                     String returnItemResponseId = null;
                     try {
-                        Map<String, Object> createReturnItemResponseResult = dispatcher.runSync("createReturnItemResponse", itemResponse);
+                        Map<String, Object> createReturnItemResponseResult = dispatcher.runSync(x.createReturnItemResponse, itemResponse);
                         if (ServiceUtil.isError(createReturnItemResponseResult)) {
                             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                    "OrderProblemCreatingReturnItemResponseRecord", locale),
+                                    x.OrderProblemCreatingReturnItemResponseRecord, locale),
                                     null, null, createReturnItemResponseResult);
                         }
-                        returnItemResponseId = (String) createReturnItemResponseResult.get("returnItemResponseId");
+                        returnItemResponseId = (String) createReturnItemResponseResult.get(x.returnItemResponseId);
                     } catch (GenericServiceException e) {
-                        Debug.logError(e, "Problem creating ReturnItemResponse record", MODULE);
+                        Debug.logError(e, x.Problem_creating_ReturnItemResponse_record, MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                "OrderProblemCreatingReturnItemResponseRecord", locale));
+                                x.OrderProblemCreatingReturnItemResponseRecord, locale));
                     }
 
                     for (GenericValue returnItem : returnItemList) {
                         Map<String, Object> updateReturnItemCtx = new HashMap<>();
-                        updateReturnItemCtx.put("returnId", returnId);
-                        updateReturnItemCtx.put("returnItemSeqId", returnItem.get(x.returnItemSeqId));
-                        updateReturnItemCtx.put("returnItemResponseId", returnItemResponseId);
-                        updateReturnItemCtx.put("userLogin", userLogin);
+                        updateReturnItemCtx.put(x.returnId, returnId);
+                        updateReturnItemCtx.put(x.returnItemSeqId, returnItem.get(x.returnItemSeqId));
+                        updateReturnItemCtx.put(x.returnItemResponseId, returnItemResponseId);
+                        updateReturnItemCtx.put(x.userLogin, userLogin);
                         try {
-                            Map<String, Object> updateReturnItemResult = dispatcher.runSync("updateReturnItem", updateReturnItemCtx);
+                            Map<String, Object> updateReturnItemResult = dispatcher.runSync(x.updateReturnItem, updateReturnItemCtx);
                             if (ServiceUtil.isError(updateReturnItemResult)) {
                                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                        "OrderProblemStoringReturnItemUpdates", locale), null, null, updateReturnItemResult);
+                                        x.OrderProblemStoringReturnItemUpdates, locale), null, null, updateReturnItemResult);
                             }
                         } catch (GenericServiceException e) {
-                            Debug.logError(e, "Could not update ReturnItem record", MODULE);
+                            Debug.logError(e, x.Could_not_update_ReturnItem_record, MODULE);
                             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                                    "OrderProblemStoringReturnItemUpdates", locale));
+                                    x.OrderProblemStoringReturnItemUpdates, locale));
                         }
                     }
                 }
@@ -2206,16 +2249,16 @@ public class OrderReturnServices {
         // create a return message AND create ReturnItemResponse record(s)
         StringBuilder successMessage = new StringBuilder();
         if (!createdOrderIds.isEmpty()) {
-            successMessage.append("The following new orders have been created : ");
+            successMessage.append(x.The_following_new_orders_have_been_created);
             Iterator<String> i = createdOrderIds.iterator();
             while (i.hasNext()) {
                 successMessage.append(i.next());
                 if (i.hasNext()) {
-                    successMessage.append(", ");
+                    successMessage.append(x.str_d3bc9a37);
                 }
             }
         } else {
-            successMessage.append("No orders were created.");
+            successMessage.append(x.No_orders_were_created);
         }
 
         return ServiceUtil.returnSuccess(successMessage.toString());
@@ -2229,9 +2272,10 @@ public class OrderReturnServices {
         GenericValue returnHeader;
         List<GenericValue> returnItems = null;
         try {
-            returnHeader = EntityQuery.use(delegator).from("ReturnHeader").where("returnId", returnId).queryOne();
+            ReturnHeaderDao returnHeaderDao = DaoRegistry.getDao(delegator, x.ReturnHeader, ReturnHeaderDao.class);
+            returnHeader = returnHeaderDao.findOne(delegator, x.ReturnHeader, UtilMisc.toMap(x.returnId, returnId), false);
             if (returnHeader != null) {
-                returnItems = returnHeader.getRelated(x.ReturnItem, UtilMisc.toMap("returnTypeId", "RTN_REFUND"), null, false);
+                returnItems = returnHeader.getRelated(x.ReturnItem, UtilMisc.toMap(x.returnTypeId, x.RTN_REFUND), null, false);
             }
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -2246,8 +2290,9 @@ public class OrderReturnServices {
                 // lookup subscriptions
                 List<GenericValue> subscriptions;
                 try {
-                    subscriptions = EntityQuery.use(delegator).from("Subscription").where("orderId", orderId, "orderItemSeqId", orderItemSeqId)
-                            .queryList();
+                    SubscriptionDao subscriptionDao = DaoRegistry.getDao(delegator, x.Subscription, SubscriptionDao.class);
+                    subscriptions = subscriptionDao.findByAnd(delegator, x.Subscription,
+                            UtilMisc.toMap(x.orderId, orderId, x.orderItemSeqId, orderItemSeqId), null, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(e.getMessage());
@@ -2318,7 +2363,7 @@ public class OrderReturnServices {
                         }
                         BigDecimal thisTotal = amount.multiply(quantity);
                         BigDecimal existingTotal = totalForOrder;
-                        Map<String, Object> condition = UtilMisc.toMap("returnId", returnItem.get(x.returnId), "returnItemSeqId",
+                        Map<String, Object> condition = UtilMisc.toMap(x.returnId, returnItem.get(x.returnId), x.returnItemSeqId,
                                 returnItem.get(x.returnItemSeqId));
                         BigDecimal newTotal = existingTotal.add(thisTotal).add(getReturnAdjustmentTotal(delegator, condition));
                         totalByOrder.put(orderId, newTotal);
@@ -2331,9 +2376,9 @@ public class OrderReturnServices {
         if ((totalByOrder != null) && (totalByOrder.entrySet() != null)) {
             for (Entry<String, BigDecimal> orderId : totalByOrder.entrySet()) {
                 // find returnAdjustment for returnHeader
-                Map<String, Object> condition = UtilMisc.<String, Object>toMap("returnId", returnId,
-                        "returnItemSeqId", org.apache.ofbiz.common.DataModelConstants.SEQ_ID_NA,
-                        "returnTypeId", returnTypeId);
+                Map<String, Object> condition = UtilMisc.<String, Object>toMap(x.returnId, returnId,
+                        x.returnItemSeqId, org.apache.ofbiz.common.DataModelConstants.SEQ_ID_NA,
+                        x.returnTypeId, returnTypeId);
                 BigDecimal existingTotal = (totalByOrder.get(orderId.getKey()).add(getReturnAdjustmentTotal(delegator, condition)));
                 totalByOrder.put(orderId.getKey(), existingTotal);
             }
@@ -2348,12 +2393,13 @@ public class OrderReturnServices {
         List<GenericValue> returnItems = null;
         Map<String, Object> returnAmountByOrder = new HashMap<>();
         try {
-            returnItems = EntityQuery.use(delegator).from("ReturnItem").where("returnId", returnId).queryList();
+            ReturnItemDao returnItemDao = DaoRegistry.getDao(delegator, x.ReturnItem, ReturnItemDao.class);
+            returnItems = returnItemDao.findByAnd(delegator, x.ReturnItem, UtilMisc.toMap(x.returnId, returnId), null, false);
 
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Problems looking up return information", MODULE);
+            Debug.logError(e, x.Problems_looking_up_return_information, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "OrderErrorGettingReturnHeaderItemInformation", locale));
+                    x.OrderErrorGettingReturnHeaderItemInformation, locale));
         }
         if ((returnItems != null) && (!returnItems.isEmpty())) {
             List<String> paymentList = new LinkedList<>();
@@ -2371,13 +2417,13 @@ public class OrderReturnServices {
                         }
                     }
                 } catch (GenericEntityException e) {
-                    Debug.logError(e, "Problems looking up return item related information", MODULE);
+                    Debug.logError(e, x.Problems_looking_up_return_item_related_information, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "OrderErrorGettingReturnHeaderItemInformation", locale));
+                            x.OrderErrorGettingReturnHeaderItemInformation, locale));
                 }
             }
         }
-        return UtilMisc.<String, Object>toMap("orderReturnAmountMap", returnAmountByOrder);
+        return UtilMisc.<String, Object>toMap(x.orderReturnAmountMap, returnAmountByOrder);
     }
 
     public static Map<String, Object> checkPaymentAmountForRefund(DispatchContext dctx, OrderReturnServicesContext context) {
@@ -2388,35 +2434,35 @@ public class OrderReturnServices {
         Map<String, BigDecimal> returnAmountByOrder = null;
         Map<String, Object> serviceResult = null;
         try {
-            serviceResult = dispatcher.runSync("getReturnAmountByOrder", org.apache.ofbiz.base.util.UtilMisc.toMap("returnId", returnId));
+            serviceResult = dispatcher.runSync(x.getReturnAmountByOrder, org.apache.ofbiz.base.util.UtilMisc.toMap(x.returnId, returnId));
             if (ServiceUtil.isError(serviceResult)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
             }
         } catch (GenericServiceException e) {
-            Debug.logError(e, "Problem running the getReturnAmountByOrder service", MODULE);
+            Debug.logError(e, x.Problem_running_the_getReturnAmountByOrder_service, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "OrderProblemsWithGetReturnAmountByOrder", locale));
+                    x.OrderProblemsWithGetReturnAmountByOrder, locale));
         }
-        returnAmountByOrder = UtilGenerics.cast(serviceResult.get("orderReturnAmountMap"));
+        returnAmountByOrder = UtilGenerics.cast(serviceResult.get(x.orderReturnAmountMap));
 
         if ((returnAmountByOrder != null) && (returnAmountByOrder.entrySet() != null)) {
             for (Entry<String, BigDecimal> orderId : returnAmountByOrder.entrySet()) {
                 BigDecimal returnAmount = returnAmountByOrder.get(orderId.getKey());
                 if (returnAmount == null) {
-                    return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderNoReturnAmountFound",
-                            UtilMisc.toMap("orderId", orderId), locale));
+                    return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderNoReturnAmountFound,
+                            UtilMisc.toMap(x.orderId, orderId), locale));
                 }
-                if (returnAmount.abs().compareTo(new BigDecimal("0.000001")) < 0) {
-                    Debug.logError("Order [" + orderId + "] refund amount[ " + returnAmount + "] less than zero", MODULE);
+                if (returnAmount.abs().compareTo(new BigDecimal(x._0_000001)) < 0) {
+                    Debug.logError(x.Order_486a9084 + orderId + x.refund_amount + returnAmount + x.less_than_zero, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "OrderReturnTotalCannotLessThanZero", locale));
+                            x.OrderReturnTotalCannotLessThanZero, locale));
                 }
                 OrderReadHelper helper = new OrderReadHelper(delegator, orderId.getKey());
                 BigDecimal grandTotal = helper.getOrderGrandTotal();
-                if (returnAmount.subtract(grandTotal).compareTo(new BigDecimal("0.01")) > 0) {
-                    Debug.logError("Order [" + orderId + "] refund amount[ " + returnAmount + "] exceeds order total [" + grandTotal + "]", MODULE);
+                if (returnAmount.subtract(grandTotal).compareTo(new BigDecimal(x._0_01)) > 0) {
+                    Debug.logError(x.Order_486a9084 + orderId + x.refund_amount + returnAmount + x.exceeds_order_total + grandTotal + x.str_4ff447b8, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "OrderRefundAmountExceedsOrderTotal", locale));
+                            x.OrderRefundAmountExceedsOrderTotal, locale));
                 }
             }
         }
@@ -2443,37 +2489,43 @@ public class OrderReturnServices {
         // if orderAdjustment is not empty, then copy most return adjustment information from orderAdjustment's
         if (orderAdjustmentId != null) {
             try {
-                orderAdjustment = EntityQuery.use(delegator).from("OrderAdjustment").where("orderAdjustmentId", orderAdjustmentId).queryOne();
+                OrderAdjustmentDao orderAdjustmentDao = DaoRegistry.getDao(delegator, x.OrderAdjustment, OrderAdjustmentDao.class);
+                orderAdjustment = orderAdjustmentDao.findOne(delegator, x.OrderAdjustment,
+                        UtilMisc.toMap(x.orderAdjustmentId, orderAdjustmentId), false);
                 if (orderAdjustment == null) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                            "OrderCreateReturnAdjustmentNotFoundOrderAdjustment",
-                            UtilMisc.toMap("orderAdjustmentId", orderAdjustmentId), locale));
+                            x.OrderCreateReturnAdjustmentNotFoundOrderAdjustment,
+                            UtilMisc.toMap(x.orderAdjustmentId, orderAdjustmentId), locale));
                 }
                 // get returnHeaderTypeId from ReturnHeader and then use it to figure out return item type mapping
-                returnHeader = EntityQuery.use(delegator).from("ReturnHeader").where("returnId", returnId).queryOne();
+                ReturnHeaderDao returnHeaderDao = DaoRegistry.getDao(delegator, x.ReturnHeader, ReturnHeaderDao.class);
+                returnHeader = returnHeaderDao.findOne(delegator, x.ReturnHeader, UtilMisc.toMap(x.returnId, returnId), false);
                 String returnHeaderTypeId = ((returnHeader != null) && (returnHeader.getString(x.returnHeaderTypeId) != null))
-                        ? returnHeader.getString(x.returnHeaderTypeId) : "CUSTOMER_RETURN";
-                returnItemTypeMap = EntityQuery.use(delegator).from("ReturnItemTypeMap").where("returnHeaderTypeId", returnHeaderTypeId,
-                        "returnItemMapKey", orderAdjustment.get(x.orderAdjustmentTypeId)).queryOne();
+                        ? returnHeader.getString(x.returnHeaderTypeId) : x.CUSTOMER_RETURN;
+                ReturnItemTypeMapDao returnItemTypeMapDao = DaoRegistry.getDao(delegator, x.ReturnItemTypeMap, ReturnItemTypeMapDao.class);
+                returnItemTypeMap = returnItemTypeMapDao.findOne(delegator, x.ReturnItemTypeMap,
+                        UtilMisc.toMap(x.returnHeaderTypeId, returnHeaderTypeId, x.returnItemMapKey, orderAdjustment.get(x.orderAdjustmentTypeId)),
+                        false);
                 returnAdjustmentType = returnItemTypeMap.getRelatedOne(x.ReturnAdjustmentType, false);
                 if (returnAdjustmentType != null && UtilValidate.isEmpty(description)) {
                     description = returnAdjustmentType.getString(x.description);
                 }
-                if ((returnItemSeqId != null) && !("_NA_".equals(returnItemSeqId))) {
-                    returnItem = EntityQuery.use(delegator).from("ReturnItem").where("returnId", returnId, "returnItemSeqId", returnItemSeqId)
-                            .queryOne();
-                    Debug.logInfo("returnId:" + returnId + ", returnItemSeqId:" + returnItemSeqId, MODULE);
+                if ((returnItemSeqId != null) && !(x.NA.equals(returnItemSeqId))) {
+                    ReturnItemDao returnItemDao = DaoRegistry.getDao(delegator, x.ReturnItem, ReturnItemDao.class);
+                    returnItem = returnItemDao.findOne(delegator, x.ReturnItem,
+                            UtilMisc.toMap(x.returnId, returnId, x.returnItemSeqId, returnItemSeqId), false);
+                    Debug.logInfo(x.returnId_da51b28b + returnId + x.returnItemSeqId_196de87b + returnItemSeqId, MODULE);
                     orderItem = returnItem.getRelatedOne(x.OrderItem, false);
                 } else {
                     // we don't have the returnItemSeqId but before we consider this
                     // an header adjustment we try to get a return item in this return
                     // associated to the same order item to which the adjustments refers (if any)
                     if (UtilValidate.isNotEmpty(orderAdjustment.getString(x.orderItemSeqId))
-                            && !"_NA_".equals(orderAdjustment.getString(x.orderItemSeqId))) {
-                        returnItem = EntityQuery.use(delegator).from("ReturnItem")
-                                .where("returnId", returnId, "orderId", orderAdjustment.getString(x.orderId), "orderItemSeqId",
-                                        orderAdjustment.getString(x.orderItemSeqId))
-                                .queryFirst();
+                            && !x.NA.equals(orderAdjustment.getString(x.orderItemSeqId))) {
+                        ReturnItemDao returnItemDao = DaoRegistry.getDao(delegator, x.ReturnItem, ReturnItemDao.class);
+                        returnItem = returnItemDao.findFirstByCondition(delegator, x.ReturnItem, EntityCondition.makeCondition(
+                                UtilMisc.toMap(x.returnId, returnId, x.orderId, orderAdjustment.getString(x.orderId), x.orderItemSeqId,
+                                        orderAdjustment.getString(x.orderItemSeqId))), null, null, false);
                         if (returnItem != null) {
                             orderItem = returnItem.getRelatedOne(x.OrderItem, false);
                         }
@@ -2493,17 +2545,17 @@ public class OrderReturnServices {
         // if still empty, use default RET_MAN_ADJ
         if (returnAdjustmentTypeId == null) {
             String mappingTypeId = returnItemTypeMap != null ? returnItemTypeMap.get(x.returnItemTypeId).toString() : null;
-            returnAdjustmentTypeId = mappingTypeId != null ? mappingTypeId : "RET_MAN_ADJ";
+            returnAdjustmentTypeId = mappingTypeId != null ? mappingTypeId : x.RET_MAN_ADJ;
         }
         // calculate the returnAdjustment amount
         if (returnItem != null) {  // returnAdjustment for returnItem
             if (needRecalculate(returnAdjustmentTypeId)) {
-                Debug.logInfo("returnPrice:" + returnItem.getBigDecimal(x.returnPrice) + ", returnQuantity:"
-                        + returnItem.getBigDecimal(x.returnQuantity) + ", sourcePercentage:" + orderAdjustment.getBigDecimal(x.sourcePercentage),
+                Debug.logInfo(x.returnPrice_03c73434 + returnItem.getBigDecimal(x.returnPrice) + x.returnQuantity_b5687dd9
+                        + returnItem.getBigDecimal(x.returnQuantity) + x.sourcePercentage_b50c195c + orderAdjustment.getBigDecimal(x.sourcePercentage),
                         MODULE);
                 BigDecimal returnTotal = returnItem.getBigDecimal(x.returnPrice).multiply(returnItem.getBigDecimal(x.returnQuantity));
                 BigDecimal orderTotal = orderItem.getBigDecimal(x.quantity).multiply(orderItem.getBigDecimal(x.unitPrice));
-                amount = getAdjustmentAmount("RET_SALES_TAX_ADJ".equals(returnAdjustmentTypeId), returnTotal, orderTotal,
+                amount = getAdjustmentAmount(x.RET_SALES_TAX_ADJ.equals(returnAdjustmentTypeId), returnTotal, orderTotal,
                         orderAdjustment.getBigDecimal(x.amount));
             } else {
                 amount = (BigDecimal) context.get(x.amount);
@@ -2513,9 +2565,9 @@ public class OrderReturnServices {
         }
 
         // store the return adjustment
-        String seqId = delegator.getNextSeqId("ReturnAdjustment");
-        GenericValue newReturnAdjustment = delegator.makeValue("ReturnAdjustment",
-                UtilMisc.toMap("returnAdjustmentId", seqId));
+        String seqId = delegator.getNextSeqId(x.ReturnAdjustment);
+        GenericValue newReturnAdjustment = delegator.makeValue(x.ReturnAdjustment,
+                UtilMisc.toMap(x.returnAdjustmentId, seqId));
 
         try {
             newReturnAdjustment.setNonPKFields(context);
@@ -2525,17 +2577,17 @@ public class OrderReturnServices {
             newReturnAdjustment.set(x.amount, amount == null ? BigDecimal.ZERO : amount);
             newReturnAdjustment.set(x.returnAdjustmentTypeId, returnAdjustmentTypeId);
             newReturnAdjustment.set(x.description, description);
-            newReturnAdjustment.set(x.returnItemSeqId, UtilValidate.isEmpty(returnItemSeqId) ? "_NA_" : returnItemSeqId);
+            newReturnAdjustment.set(x.returnItemSeqId, UtilValidate.isEmpty(returnItemSeqId) ? x.NA : returnItemSeqId);
 
             delegator.create(newReturnAdjustment);
             Map<String, Object> result = ServiceUtil.returnSuccess(UtilProperties.getMessage(RESOURCE,
-                    "OrderCreateReturnAdjustment", UtilMisc.toMap("seqId", seqId), locale));
-            result.put("returnAdjustmentId", seqId);
+                    x.OrderCreateReturnAdjustment, UtilMisc.toMap(x.seqId, seqId), locale));
+            result.put(x.returnAdjustmentId, seqId);
             return result;
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Failed to store returnAdjustment", MODULE);
+            Debug.logError(e, x.Failed_to_store_returnAdjustment, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "OrderCreateReturnAdjustmentFailed", locale));
+                    x.OrderCreateReturnAdjustmentFailed, locale));
         }
     }
 
@@ -2549,11 +2601,14 @@ public class OrderReturnServices {
 
 
         try {
-            returnAdjustment = EntityQuery.use(delegator).from("ReturnAdjustment").where("returnAdjustmentId", context.get(x.returnAdjustmentId))
-                    .queryOne();
+            ReturnAdjustmentDao returnAdjustmentDao = DaoRegistry.getDao(delegator, x.ReturnAdjustment, ReturnAdjustmentDao.class);
+            returnAdjustment = returnAdjustmentDao.findOne(delegator, x.ReturnAdjustment,
+                    UtilMisc.toMap(x.returnAdjustmentId, context.get(x.returnAdjustmentId)), false);
             if (returnAdjustment != null) {
-                returnItem = EntityQuery.use(delegator).from("ReturnItem").where("returnId", returnAdjustment.get(x.returnId), "returnItemSeqId",
-                        returnAdjustment.get(x.returnItemSeqId)).queryOne();
+                ReturnItemDao returnItemDao = DaoRegistry.getDao(delegator, x.ReturnItem, ReturnItemDao.class);
+                returnItem = returnItemDao.findOne(delegator, x.ReturnItem,
+                        UtilMisc.toMap(x.returnId, returnAdjustment.get(x.returnId), x.returnItemSeqId, returnAdjustment.get(x.returnItemSeqId)),
+                        false);
                 returnAdjustmentTypeId = returnAdjustment.getString(x.returnAdjustmentTypeId);
             }
 
@@ -2567,7 +2622,7 @@ public class OrderReturnServices {
                 if (needRecalculate(returnAdjustmentTypeId)) {
                     BigDecimal returnTotal = returnItem.getBigDecimal(x.returnPrice).multiply(returnItem.getBigDecimal(x.returnQuantity));
                     BigDecimal originalReturnTotal = originalReturnPrice.multiply(originalReturnQuantity);
-                    amount = getAdjustmentAmount("RET_SALES_TAX_ADJ".equals(returnAdjustmentTypeId), returnTotal, originalReturnTotal,
+                    amount = getAdjustmentAmount(x.RET_SALES_TAX_ADJ.equals(returnAdjustmentTypeId), returnTotal, originalReturnTotal,
                             returnAdjustment.getBigDecimal(x.amount));
                 } else {
                     amount = (BigDecimal) context.get(x.amount);
@@ -2581,37 +2636,37 @@ public class OrderReturnServices {
                 returnAdjustment.setNonPKFields(context);
                 returnAdjustment.set(x.amount, amount);
                 delegator.store(returnAdjustment);
-                Debug.logInfo("Update ReturnAdjustment with Id:" + context.get(x.returnAdjustmentId) + " to amount " + amount + " successfully.",
+                Debug.logInfo(x.Update_ReturnAdjustment_with_Id + context.get(x.returnAdjustmentId) + x.to_amount + amount + x.successfully,
                         MODULE);
                 result = ServiceUtil.returnSuccess(UtilProperties.getMessage(RESOURCE,
-                        "OrderUpdateReturnAdjustment",
-                        UtilMisc.toMap("returnAdjustmentId", context.get(x.returnAdjustmentId), "amount", amount), locale));
+                        x.OrderUpdateReturnAdjustment,
+                        UtilMisc.toMap(x.returnAdjustmentId, context.get(x.returnAdjustmentId), x.amount, amount), locale));
             } else {
                 result = ServiceUtil.returnSuccess();
             }
             return result;
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Failed to store returnAdjustment", MODULE);
+            Debug.logError(e, x.Failed_to_store_returnAdjustment, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "OrderCreateReturnAdjustmentFailed", locale));
+                    x.OrderCreateReturnAdjustmentFailed, locale));
         }
     }
 
     //  used as a dispatch service, invoke different service based on the parameters passed in
     public static Map<String, Object> createReturnItemOrAdjustment(DispatchContext dctx, OrderReturnServicesContext context) {
-        Debug.logInfo("createReturnItemOrAdjustment's context:" + context, MODULE);
+        Debug.logInfo(x.createReturnItemOrAdjustment_s_context + context, MODULE);
         String orderItemSeqId = (String) context.get(x.orderItemSeqId);
-        Debug.logInfo("orderItemSeqId:" + orderItemSeqId + "#", MODULE);
+        Debug.logInfo(x.orderItemSeqId_730db3eb + orderItemSeqId + x.str_d08f88df, MODULE);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         //if the request is to create returnItem, orderItemSeqId should not be empty
-        String serviceName = UtilValidate.isNotEmpty(orderItemSeqId) ? "createReturnItem" : "createReturnAdjustment";
-        Debug.logInfo("serviceName:" + serviceName, MODULE);
+        String serviceName = UtilValidate.isNotEmpty(orderItemSeqId) ? x.createReturnItem : x.createReturnAdjustment;
+        Debug.logInfo(x.serviceName_b0aed370 + serviceName, MODULE);
         try {
             Map<String, Object> inMap = dctx.makeValidContext(serviceName, ModelService.IN_PARAM, context);
-            if ("createReturnItem".equals(serviceName)) {
+            if (x.createReturnItem.equals(serviceName)) {
                 // we don't want to automatically include the adjustments
                 // when the return item is created because they are selectable by the user
-                inMap.put("includeAdjustments", "N");
+                inMap.put(x.includeAdjustments, x.N);
             }
             Map<String, Object> serviceResult = dispatcher.runSync(serviceName, inMap);
             if (ServiceUtil.isError(serviceResult)) {
@@ -2626,13 +2681,13 @@ public class OrderReturnServices {
 
     //  used as a dispatch service, invoke different service based on the parameters passed in
     public static Map<String, Object> updateReturnItemOrAdjustment(DispatchContext dctx, OrderReturnServicesContext context) {
-        Debug.logInfo("updateReturnItemOrAdjustment's context:" + context, MODULE);
+        Debug.logInfo(x.updateReturnItemOrAdjustment_s_context + context, MODULE);
         String returnAdjustmentId = (String) context.get(x.returnAdjustmentId);
-        Debug.logInfo("returnAdjustmentId:" + returnAdjustmentId + "#", MODULE);
+        Debug.logInfo(x.returnAdjustmentId_3474551c + returnAdjustmentId + x.str_d08f88df, MODULE);
         LocalDispatcher dispatcher = dctx.getDispatcher();
         //if the request is to create returnItem, orderItemSeqId should not be empty
-        String serviceName = UtilValidate.isEmpty(returnAdjustmentId) ? "updateReturnItem" : "updateReturnAdjustment";
-        Debug.logInfo("serviceName:" + serviceName, MODULE);
+        String serviceName = UtilValidate.isEmpty(returnAdjustmentId) ? x.updateReturnItem : x.updateReturnAdjustment;
+        Debug.logInfo(x.serviceName_b0aed370 + serviceName, MODULE);
         try {
             Map<String, Object> serviceResult = dispatcher.runSync(serviceName, dctx.makeValidContext(serviceName, ModelService.IN_PARAM, context));
             if (ServiceUtil.isError(serviceResult)) {
@@ -2651,8 +2706,8 @@ public class OrderReturnServices {
      * @return returns if the returnn adjustment need to be recalculated
      */
     public static boolean needRecalculate(String returnAdjustmentTypeId) {
-        return "RET_PROMOTION_ADJ".equals(returnAdjustmentTypeId)
-                || "RET_DISCOUNT_ADJ".equals(returnAdjustmentTypeId) || "RET_SALES_TAX_ADJ".equals(returnAdjustmentTypeId);
+        return x.RET_PROMOTION_ADJ.equals(returnAdjustmentTypeId)
+                || x.RET_DISCOUNT_ADJ.equals(returnAdjustmentTypeId) || x.RET_SALES_TAX_ADJ.equals(returnAdjustmentTypeId);
     }
 
     /**
@@ -2666,7 +2721,9 @@ public class OrderReturnServices {
         List<GenericValue> adjustments;
         try {
             // TODO: find on a view-entity with a sum is probably more efficient
-            adjustments = EntityQuery.use(delegator).from("ReturnAdjustment").where(condition).queryList();
+            ReturnAdjustmentDao returnAdjustmentDao = DaoRegistry.getDao(delegator, x.ReturnAdjustment, ReturnAdjustmentDao.class);
+            adjustments = returnAdjustmentDao.findByCondition(delegator, x.ReturnAdjustment, EntityCondition.makeCondition(condition), null, null,
+                    null, false);
             if (adjustments != null) {
                 for (GenericValue returnAdjustment : adjustments) {
                     if ((returnAdjustment != null) && (returnAdjustment.get(x.amount) != null)) {
@@ -2704,10 +2761,10 @@ public class OrderReturnServices {
      * @return new returnAdjustment amount
      */
     public static BigDecimal getAdjustmentAmount(boolean isSalesTax, BigDecimal returnTotal, BigDecimal originalTotal, BigDecimal amount) {
-        String settingPrefix = isSalesTax ? "salestax" : "order";
-        String decimalsPrefix = isSalesTax ? ".calc" : "";
-        int decimals = UtilNumber.getBigDecimalScale(settingPrefix + decimalsPrefix + ".decimals");
-        RoundingMode rounding = UtilNumber.getRoundingMode(settingPrefix + ".rounding");
+        String settingPrefix = isSalesTax ? x.salestax : x.order;
+        String decimalsPrefix = isSalesTax ? x.calc : x.emptyString;
+        int decimals = UtilNumber.getBigDecimalScale(settingPrefix + decimalsPrefix + x.decimals);
+        RoundingMode rounding = UtilNumber.getRoundingMode(settingPrefix + x.rounding_357a8387);
         returnTotal = returnTotal.setScale(decimals, rounding);
         originalTotal = originalTotal.setScale(decimals, rounding);
         BigDecimal newAmount = null;

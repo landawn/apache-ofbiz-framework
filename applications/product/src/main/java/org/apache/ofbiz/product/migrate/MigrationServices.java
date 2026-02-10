@@ -25,12 +25,15 @@ import java.util.Map;
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
-import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityListIterator;
-import org.apache.ofbiz.entity.util.EntityQuery;
+import org.apache.ofbiz.persistence.dao.ContactMechDao;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.ProductPromoCodeEmailDao;
+import org.apache.ofbiz.persistence.entity.ContactMechEntity;
+import org.apache.ofbiz.persistence.entity.ProductPromoCodeEmailEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
+import com.landawn.abacus.query.Filters;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -42,55 +45,49 @@ public class MigrationServices {
     public static Map<String, Object> migrateProductPromoCodeEmail(DispatchContext dctx, MigrationServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         List<Object> errors = new LinkedList<>();
-        EntityQuery eq = EntityQuery.use(delegator).from("OldProductPromoCodeEmail");
+        ProductPromoCodeEmailDao productPromoCodeEmailDao = DaoRegistry.getDao(delegator, x.OldProductPromoCodeEmail, ProductPromoCodeEmailDao.class);
+        ContactMechDao contactMechDao = DaoRegistry.getDao(delegator, x.ContactMech, ContactMechDao.class);
 
-        try (EntityListIterator eli = eq.queryIterator()) {
-            GenericValue productPromoCodeEmail = null;
-            while ((productPromoCodeEmail = eli.next()) != null) {
+        try {
+            for (ProductPromoCodeEmailEntity productPromoCodeEmail : productPromoCodeEmailDao.list(Filters.alwaysTrue())) {
                 String contactMechId;
 
-                String emailAddress = productPromoCodeEmail.getString(x.emailAddress);
+                String emailAddress = productPromoCodeEmail.getEmailAddress();
                 if (!UtilValidate.isEmail(emailAddress)) {
-                    Debug.logError(emailAddress + ": is not a valid email address", MODULE);
-                    errors.add(emailAddress + ": is not a valid email address ");
+                    Debug.logError(emailAddress + x.is_not_a_valid_email_address, MODULE);
+                    errors.add(emailAddress + x.is_not_a_valid_email_address_e6982769);
                     continue;
                 }
 
-                long contactMechs = EntityQuery.use(delegator)
-                        .from("ContactMech")
-                        .where("infoString", emailAddress)
-                        .queryCount();
+                long contactMechs = contactMechDao.count(Filters.eq(x.infoString, emailAddress));
                 if (contactMechs > 1) {
-                    errors.add(emailAddress + ": Too many contactMechIds found ");
+                    errors.add(emailAddress + x.Too_many_contactMechIds_found);
                     continue;
                 }
 
-                GenericValue contactMech = EntityQuery.use(delegator)
-                        .from("ContactMech")
-                        .where("infoString", emailAddress)
-                        .queryOne();
-                if (contactMech == null) {
+                ContactMechEntity contactMechEntity = contactMechDao.list(Filters.eq(x.infoString, emailAddress)).stream().findFirst().orElse(null);
+                if (contactMechEntity == null) {
                     //If no contactMech found create new
-                    GenericValue newContactMech = delegator.makeValue("ContactMech");
-                    contactMechId = delegator.getNextSeqId("ContactMech");
+                    GenericValue newContactMech = delegator.makeValue(x.ContactMech);
+                    contactMechId = delegator.getNextSeqId(x.ContactMech);
                     newContactMech.set(x.contactMechId, contactMechId);
-                    newContactMech.set(x.contactMechTypeId, "EMAIL_ADDRESS");
+                    newContactMech.set(x.contactMechTypeId, x.EMAIL_ADDRESS);
                     newContactMech.set(x.infoString, emailAddress);
                     delegator.create(newContactMech);
                 } else {
-                    contactMechId = contactMech.getString(x.contactMechId);
+                    contactMechId = contactMechEntity.getContactMechId();
                 }
 
-                GenericValue prodPromoCodeContMech = delegator.makeValue("ProdPromoCodeContactMech");
-                prodPromoCodeContMech.set(x.productPromoCodeId, productPromoCodeEmail.getString(x.productPromoCodeId));
+                GenericValue prodPromoCodeContMech = delegator.makeValue(x.ProdPromoCodeContactMech);
+                prodPromoCodeContMech.set(x.productPromoCodeId, productPromoCodeEmail.getProductPromoCodeId());
                 prodPromoCodeContMech.set(x.contactMechId, contactMechId);
                 //createOrStore to avoid duplicate data for same email.
                 delegator.createOrStore(prodPromoCodeContMech);
             }
 
-        } catch (GenericEntityException e) {
+        } catch (Exception e) {
             Debug.logError(e, MODULE);
         }
-        return ServiceUtil.returnSuccess("Data has been migrated with following errors: " + errors);
+        return ServiceUtil.returnSuccess(x.Data_has_been_migrated_with_following_errors + errors);
     }
 }

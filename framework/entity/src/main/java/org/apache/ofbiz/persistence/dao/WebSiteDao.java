@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.WebSiteEntity;
 
-public interface WebSiteDao extends CrudDao<WebSiteEntity, String, SQLBuilder.PSC, WebSiteDao> {
+public interface WebSiteDao extends CrudDao<WebSiteEntity, String, SQLBuilder.PSC, WebSiteDao>, DelegatorQueryDao {
 }

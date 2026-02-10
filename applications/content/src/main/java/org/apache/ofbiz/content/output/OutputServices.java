@@ -75,6 +75,7 @@ import org.apache.ofbiz.widget.renderer.macro.MacroScreenRenderer;
 import org.xml.sax.SAXException;
 
 import freemarker.template.TemplateException;
+import org.apache.ofbiz.persistence.entity.x;
 
 
 /**
@@ -85,25 +86,25 @@ public class OutputServices {
     private static final String MODULE = OutputServices.class.getName();
 
     protected static final FoFormRenderer FO_FORM_RENDERED = new FoFormRenderer();
-    private static final String RESOURCE = "ContentUiLabels";
+    private static final String RESOURCE = x.ContentUiLabels;
 
     public static Map<String, Object> sendPrintFromScreen(DispatchContext dctx, Map<String, ? extends Object> serviceContext) {
-        Locale locale = (Locale) serviceContext.get("locale");
-        VisualTheme visualTheme = (VisualTheme) serviceContext.get("visualTheme");
+        Locale locale = (Locale) serviceContext.get(x.locale);
+        VisualTheme visualTheme = (VisualTheme) serviceContext.get(x.visualTheme);
         if (visualTheme == null) {
             visualTheme = ThemeFactory.resolveVisualTheme(null);
         }
-        String screenLocation = (String) serviceContext.remove("screenLocation");
-        Map<String, Object> screenContext = UtilGenerics.cast(serviceContext.remove("screenContext"));
-        String contentType = (String) serviceContext.remove("contentType");
-        String printerContentType = (String) serviceContext.remove("printerContentType");
+        String screenLocation = (String) serviceContext.remove(x.screenLocation);
+        Map<String, Object> screenContext = UtilGenerics.cast(serviceContext.remove(x.screenContext));
+        String contentType = (String) serviceContext.remove(x.contentType);
+        String printerContentType = (String) serviceContext.remove(x.printerContentType);
 
         if (UtilValidate.isEmpty(screenContext)) {
             screenContext = new HashMap<>();
         }
-        screenContext.put("locale", locale);
+        screenContext.put(x.locale, locale);
         if (UtilValidate.isEmpty(contentType)) {
-            contentType = "application/postscript";
+            contentType = x.application_postscript;
         }
         if (UtilValidate.isEmpty(printerContentType)) {
             printerContentType = contentType;
@@ -112,17 +113,17 @@ public class OutputServices {
         try {
 
             MapStack<String> screenContextTmp = MapStack.create();
-            screenContextTmp.put("locale", locale);
+            screenContextTmp.put(x.locale, locale);
 
             Writer writer = new StringWriter();
             // substitute the freemarker variables...
-            ScreenStringRenderer foScreenStringRenderer = new MacroScreenRenderer(visualTheme.getModelTheme().getType("screenfop"),
-                            visualTheme.getModelTheme().getScreenRendererLocation("screenfop"));
+            ScreenStringRenderer foScreenStringRenderer = new MacroScreenRenderer(visualTheme.getModelTheme().getType(x.screenfop),
+                            visualTheme.getModelTheme().getScreenRendererLocation(x.screenfop));
 
             ScreenRenderer screensAtt = new ScreenRenderer(writer, screenContextTmp, foScreenStringRenderer);
             screensAtt.populateContextForService(dctx, screenContext);
             screenContextTmp.putAll(screenContext);
-            screensAtt.getContext().put("formStringRenderer", FO_FORM_RENDERED);
+            screensAtt.getContext().put(x.formStringRenderer, FO_FORM_RENDERED);
             screensAtt.render(screenLocation);
 
             // create the input stream for the generation
@@ -142,10 +143,10 @@ public class OutputServices {
             InputStream bais = new ByteArrayInputStream(baos.toByteArray());
 
             DocAttributeSet docAttributeSet = new HashDocAttributeSet();
-            List<Object> docAttributes = UtilGenerics.cast(serviceContext.remove("docAttributes"));
+            List<Object> docAttributes = UtilGenerics.cast(serviceContext.remove(x.docAttributes));
             if (UtilValidate.isNotEmpty(docAttributes)) {
                 for (Object da : docAttributes) {
-                    Debug.logInfo("Adding DocAttribute: " + da, MODULE);
+                    Debug.logInfo(x.Adding_DocAttribute + da, MODULE);
                     docAttributeSet.add((DocAttribute) da);
                 }
             }
@@ -155,7 +156,7 @@ public class OutputServices {
             PrintService printer = null;
 
             // lookup the print service for the supplied printer name
-            String printerName = (String) serviceContext.remove("printerName");
+            String printerName = (String) serviceContext.remove(x.printerName);
             if (UtilValidate.isNotEmpty(printerName)) {
 
                 PrintServiceAttributeSet printServiceAttributes = new HashPrintServiceAttributeSet();
@@ -164,15 +165,15 @@ public class OutputServices {
                 PrintService[] printServices = PrintServiceLookup.lookupPrintServices(null, printServiceAttributes);
                 if (printServices.length > 0) {
                     printer = printServices[0];
-                    Debug.logInfo("Using printer: " + printer.getName(), MODULE);
+                    Debug.logInfo(x.Using_printer + printer.getName(), MODULE);
                     if (!printer.isDocFlavorSupported(psInFormat)) {
-                        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentPrinterNotSupportDocFlavorFormat",
-                                UtilMisc.toMap("psInFormat", psInFormat, "printerName", printer.getName()), locale));
+                        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentPrinterNotSupportDocFlavorFormat,
+                                UtilMisc.toMap(x.psInFormat, psInFormat, x.printerName, printer.getName()), locale));
                     }
                 }
                 if (printer == null) {
-                    return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentPrinterNotFound",
-                            UtilMisc.toMap("printerName", printerName), locale));
+                    return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentPrinterNotFound,
+                            UtilMisc.toMap(x.printerName, printerName), locale));
                 }
 
             } else {
@@ -180,66 +181,66 @@ public class OutputServices {
                 // if no printer name was supplied, try to get the default printer
                 printer = PrintServiceLookup.lookupDefaultPrintService();
                 if (printer != null) {
-                    Debug.logInfo("No printer name supplied, using default printer: " + printer.getName(), MODULE);
+                    Debug.logInfo(x.No_printer_name_supplied_using_default_printer + printer.getName(), MODULE);
                 }
             }
 
             if (printer == null) {
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentPrinterNotAvailable", locale));
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentPrinterNotAvailable, locale));
             }
 
             PrintRequestAttributeSet praset = new HashPrintRequestAttributeSet();
-            List<Object> printRequestAttributes = UtilGenerics.cast(serviceContext.remove("printRequestAttributes"));
+            List<Object> printRequestAttributes = UtilGenerics.cast(serviceContext.remove(x.printRequestAttributes));
             if (UtilValidate.isNotEmpty(printRequestAttributes)) {
                 for (Object pra : printRequestAttributes) {
-                    Debug.logInfo("Adding PrintRequestAttribute: " + pra, MODULE);
+                    Debug.logInfo(x.Adding_PrintRequestAttribute + pra, MODULE);
                     praset.add((PrintRequestAttribute) pra);
                 }
             }
             DocPrintJob job = printer.createPrintJob();
             job.print(myDoc, praset);
         } catch (PrintException | IOException | TemplateException | GeneralException | SAXException | ParserConfigurationException e) {
-            Debug.logError(e, "Error rendering [" + contentType + "]: " + e.toString(), MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentRenderingError",
-                    UtilMisc.toMap("contentType", contentType, "errorString", e.toString()), locale));
+            Debug.logError(e, x.Error_rendering + contentType + x.str_89222ecc + e.toString(), MODULE);
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentRenderingError,
+                    UtilMisc.toMap(x.contentType, contentType, x.errorString, e.toString()), locale));
         }
 
         return ServiceUtil.returnSuccess();
     }
 
     public static Map<String, Object> createFileFromScreen(DispatchContext dctx, Map<String, ? extends Object> serviceContext) {
-        Locale locale = (Locale) serviceContext.get("locale");
+        Locale locale = (Locale) serviceContext.get(x.locale);
         Delegator delegator = dctx.getDelegator();
-        VisualTheme visualTheme = (VisualTheme) serviceContext.get("visualTheme");
+        VisualTheme visualTheme = (VisualTheme) serviceContext.get(x.visualTheme);
         if (visualTheme == null) {
             visualTheme = ThemeFactory.resolveVisualTheme(null);
         }
-        String screenLocation = (String) serviceContext.remove("screenLocation");
-        Map<String, Object> screenContext = UtilGenerics.cast(serviceContext.remove("screenContext"));
-        String contentType = (String) serviceContext.remove("contentType");
-        String filePath = (String) serviceContext.remove("filePath");
-        String fileName = (String) serviceContext.remove("fileName");
+        String screenLocation = (String) serviceContext.remove(x.screenLocation);
+        Map<String, Object> screenContext = UtilGenerics.cast(serviceContext.remove(x.screenContext));
+        String contentType = (String) serviceContext.remove(x.contentType);
+        String filePath = (String) serviceContext.remove(x.filePath);
+        String fileName = (String) serviceContext.remove(x.fileName);
 
         if (UtilValidate.isEmpty(screenContext)) {
             screenContext = new HashMap<>();
         }
-        screenContext.put("locale", locale);
+        screenContext.put(x.locale, locale);
         if (UtilValidate.isEmpty(contentType)) {
-            contentType = "application/pdf";
+            contentType = x.application_pdf;
         }
 
         try {
             MapStack<String> screenContextTmp = MapStack.create();
-            screenContextTmp.put("locale", locale);
+            screenContextTmp.put(x.locale, locale);
 
             Writer writer = new StringWriter();
             // substitute the freemarker variables...
-            ScreenStringRenderer foScreenStringRenderer = new MacroScreenRenderer(visualTheme.getModelTheme().getType("screenfop"),
-                    visualTheme.getModelTheme().getScreenRendererLocation("screenfop"));
+            ScreenStringRenderer foScreenStringRenderer = new MacroScreenRenderer(visualTheme.getModelTheme().getType(x.screenfop),
+                    visualTheme.getModelTheme().getScreenRendererLocation(x.screenfop));
             ScreenRenderer screensAtt = new ScreenRenderer(writer, screenContextTmp, foScreenStringRenderer);
             screensAtt.populateContextForService(dctx, screenContext);
             screenContextTmp.putAll(screenContext);
-            screensAtt.getContext().put("formStringRenderer", FO_FORM_RENDERED);
+            screensAtt.getContext().put(x.formStringRenderer, FO_FORM_RENDERED);
             screensAtt.render(screenLocation);
 
             // create the input stream for the generation
@@ -255,15 +256,15 @@ public class OutputServices {
             baos.close();
 
             fileName += UtilDateTime.nowAsString();
-            if ("application/pdf".equals(contentType)) {
-                fileName += ".pdf";
-            } else if ("application/postscript".equals(contentType)) {
-                fileName += ".ps";
-            } else if ("text/plain".equals(contentType)) {
-                fileName += ".txt";
+            if (x.application_pdf.equals(contentType)) {
+                fileName += x.pdf;
+            } else if (x.application_postscript.equals(contentType)) {
+                fileName += x.ps;
+            } else if (x.text_plain.equals(contentType)) {
+                fileName += x.txt;
             }
             if (UtilValidate.isEmpty(filePath)) {
-                filePath = EntityUtilProperties.getPropertyValue("content", "content.output.path", "/output", delegator);
+                filePath = EntityUtilProperties.getPropertyValue(x.content, x.content_output_path, x.output_e7e30ea7, delegator);
             }
             File file = new File(filePath, fileName);
 
@@ -272,9 +273,9 @@ public class OutputServices {
             fos.close();
 
         } catch (IOException | TemplateException | GeneralException | SAXException | ParserConfigurationException e) {
-            Debug.logError(e, "Error rendering [" + contentType + "]: " + e.toString(), MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentRenderingError",
-                    UtilMisc.toMap("contentType", contentType, "errorString", e.toString()), locale));
+            Debug.logError(e, x.Error_rendering + contentType + x.str_89222ecc + e.toString(), MODULE);
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentRenderingError,
+                    UtilMisc.toMap(x.contentType, contentType, x.errorString, e.toString()), locale));
         }
 
         return ServiceUtil.returnSuccess();

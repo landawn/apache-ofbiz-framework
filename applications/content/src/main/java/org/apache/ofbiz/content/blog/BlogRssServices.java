@@ -20,6 +20,7 @@
 package org.apache.ofbiz.content.blog;
 
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,13 +33,18 @@ import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilProperties;
 import org.apache.ofbiz.content.content.ContentWorker;
 import org.apache.ofbiz.entity.Delegator;
-import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
+import org.apache.ofbiz.persistence.dao.ContentAssocDao;
+import org.apache.ofbiz.persistence.dao.ContentDao;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.entity.ContentAssocEntity;
+import org.apache.ofbiz.persistence.entity.ContentEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.util.Beans;
 import com.rometools.rome.feed.synd.SyndContent;
 import com.rometools.rome.feed.synd.SyndContentImpl;
 import com.rometools.rome.feed.synd.SyndEntry;
@@ -56,9 +62,9 @@ import org.apache.ofbiz.model.BlogRssServicesContext;
 public class BlogRssServices {
 
     private static final String MODULE = BlogRssServices.class.getName();
-    private static final String RESOURCE = "ContentUiLabels";
-    public static final String MIME_TYPE_ID = "text/html";
-    public static final String MAP_KEY = "SUMMARY";
+    private static final String RESOURCE = x.ContentUiLabels;
+    public static final String MIME_TYPE_ID = x.text_html;
+    public static final String MAP_KEY = x.SUMMARY;
 
     public static Map<String, Object> generateBlogRssFeed(DispatchContext dctx, BlogRssServicesContext context) {
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
@@ -69,7 +75,7 @@ public class BlogRssServices {
 
         // create the main link
         String mainLink = (String) context.get(x.mainLink);
-        mainLink = mainLink + "?blogContentId=" + contentId;
+        mainLink = mainLink + x.blogContentId_01fdada5 + contentId;
 
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
@@ -77,15 +83,19 @@ public class BlogRssServices {
         // get the main blog content
         GenericValue content = null;
         try {
-            content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).queryOne();
-        } catch (GenericEntityException e) {
+            ContentDao contentDao = DaoRegistry.getDao(delegator, x.Content, ContentDao.class);
+            ContentEntity contentEntity = contentDao.get(contentId).orElse(null);
+            if (contentEntity != null) {
+                content = delegator.makeValue(x.Content, Beans.beanToMap(contentEntity));
+            }
+        } catch (Exception e) {
             Debug.logError(e, MODULE);
         }
 
         if (content == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "ContentCannotGenerateBlogRssFeed",
-                    UtilMisc.toMap("contentId", contentId), locale));
+                    x.ContentCannotGenerateBlogRssFeed,
+                    UtilMisc.toMap(x.contentId, contentId), locale));
         }
 
         // create the feed
@@ -98,7 +108,7 @@ public class BlogRssServices {
         feed.setEntries(generateEntryList(dispatcher, delegator, contentId, entryLink, locale, userLogin));
 
         Map<String, Object> resp = ServiceUtil.returnSuccess();
-        resp.put("wireFeed", feed.createWireFeed());
+        resp.put(x.wireFeed, feed.createWireFeed());
         return resp;
     }
 
@@ -108,12 +118,29 @@ public class BlogRssServices {
 
         List<GenericValue> contentRecs = null;
         try {
-            contentRecs = EntityQuery.use(delegator).from("ContentAssocViewTo")
-                    .where("contentIdStart", contentId,
-                           "caContentAssocTypeId", "PUBLISH_LINK",
-                           "statusId", "CTNT_PUBLISHED")
-                    .orderBy("-caFromDate").queryList();
-        } catch (GenericEntityException e) {
+            ContentAssocDao contentAssocDao = DaoRegistry.getDao(delegator, x.ContentAssoc, ContentAssocDao.class);
+            ContentDao contentDao = DaoRegistry.getDao(delegator, x.Content, ContentDao.class);
+            List<ContentAssocEntity> contentAssocEntities = contentAssocDao.list(Filters.and(
+                    Filters.eq(x.contentId, contentId),
+                    Filters.eq(x.contentAssocTypeId, x.PUBLISH_LINK)));
+            contentAssocEntities.sort(Comparator.comparing(ContentAssocEntity::getFromDate, Comparator.nullsLast(Comparator.reverseOrder())));
+
+            contentRecs = new LinkedList<>();
+            for (ContentAssocEntity contentAssocEntity : contentAssocEntities) {
+                ContentEntity contentEntity = contentDao.get(contentAssocEntity.getContentIdTo()).orElse(null);
+                if (contentEntity == null || !x.CTNT_PUBLISHED.equals(contentEntity.getStatusId())) {
+                    continue;
+                }
+
+                Map<String, Object> contentAssocViewToFields = new HashMap<>(Beans.beanToMap(contentEntity));
+                contentAssocViewToFields.put(x.contentIdStart, contentAssocEntity.getContentId());
+                contentAssocViewToFields.put(x.contentIdTo, contentAssocEntity.getContentIdTo());
+                contentAssocViewToFields.put(x.caContentAssocTypeId, contentAssocEntity.getContentAssocTypeId());
+                contentAssocViewToFields.put(x.caFromDate, contentAssocEntity.getFromDate());
+
+                contentRecs.add(delegator.makeValue(x.ContentAssocViewTo, contentAssocViewToFields));
+            }
+        } catch (Exception e) {
             Debug.logError(e, MODULE);
         }
 
@@ -127,9 +154,9 @@ public class BlogRssServices {
                     Debug.logError(e, MODULE);
                 }
                 if (sub != null) {
-                    String thisLink = entryLink + "?articleContentId=" + v.getString(x.contentId) + "&blogContentId=" + contentId;
+                    String thisLink = entryLink + x.articleContentId + v.getString(x.contentId) + x.blogContentId_03c87393 + contentId;
                     SyndContent desc = new SyndContentImpl();
-                    desc.setType("text/plain");
+                    desc.setType(x.text_plain);
                     desc.setValue(sub);
 
                     SyndEntry entry = new SyndEntryImpl();

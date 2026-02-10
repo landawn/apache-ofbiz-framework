@@ -20,14 +20,25 @@ package org.apache.ofbiz.product.price;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeSet;
+
+import com.landawn.abacus.jdbc.dao.Dao;
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.query.SortDirection;
+import com.landawn.abacus.query.condition.Condition;
+import com.landawn.abacus.query.condition.Criteria;
 
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilDateTime;
@@ -40,10 +51,9 @@ import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.condition.EntityCondition;
-import org.apache.ofbiz.entity.condition.EntityOperator;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
 import org.apache.ofbiz.product.product.ProductWorker;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
@@ -60,13 +70,13 @@ import org.apache.ofbiz.persistence.entity.x;
 public class PriceServices {
 
     private static final String MODULE = PriceServices.class.getName();
-    private static final String RESOURCE = "ProductUiLabels";
+    private static final String RESOURCE = x.ProductUiLabels;
     private static final BigDecimal ONE_BASE = BigDecimal.ONE;
-    private static final BigDecimal PERCENT_SCALE = new BigDecimal("100.000");
+    private static final BigDecimal PERCENT_SCALE = new BigDecimal(x._100_000);
 
-    private static final int TAX_SCALE = UtilNumber.getBigDecimalScale("salestax.calc.decimals");
-    private static final int TAX_FINAL_SCALE = UtilNumber.getBigDecimalScale("salestax.final.decimals");
-    private static final RoundingMode TAX_ROUNDING = UtilNumber.getRoundingMode("salestax.rounding");
+    private static final int TAX_SCALE = UtilNumber.getBigDecimalScale(x.salestax_calc_decimals);
+    private static final int TAX_FINAL_SCALE = UtilNumber.getBigDecimalScale(x.salestax_final_decimals);
+    private static final RoundingMode TAX_ROUNDING = UtilNumber.getRoundingMode(x.salestax_rounding);
 
     /**
      * <p>Calculates the price of a product from pricing rules given the following input, and of course access to the database:</p>
@@ -102,8 +112,8 @@ public class PriceServices {
         Map<String, Object> customAttributes = context.getCustomAttributes();
 
         String findAllQuantityPricesStr = context.getFindAllQuantityPrices();
-        boolean findAllQuantityPrices = "Y".equals(findAllQuantityPricesStr);
-        boolean optimizeForLargeRuleSet = "Y".equals(context.getOptimizeForLargeRuleSet());
+        boolean findAllQuantityPrices = x.Y.equals(findAllQuantityPricesStr);
+        boolean optimizeForLargeRuleSet = x.Y.equals(context.getOptimizeForLargeRuleSet());
 
         String agreementId = context.getAgreementId();
 
@@ -114,11 +124,11 @@ public class PriceServices {
         GenericValue productStore = null;
         try {
             // we have a productStoreId, if the corresponding ProductStore.primaryStoreGroupId is not empty, use that
-            productStore = EntityQuery.use(delegator).from("ProductStore").where("productStoreId", productStoreId).cache().queryOne();
+            productStore = DaoQuery.use(delegator).from(x.ProductStore).where(x.productStoreId, productStoreId).cache().queryOne();
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Error getting product store info from the database while calculating price" + e.toString(), MODULE);
+            Debug.logError(e, x.Error_getting_product_store_info_from_the_database_while_calculating_price + e.toString(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "ProductPriceCannotRetrieveProductStore", UtilMisc.toMap("errorString", e.toString()), locale));
+                    x.ProductPriceCannotRetrieveProductStore, UtilMisc.toMap(x.errorString, e.toString()), locale));
         }
         if (UtilValidate.isEmpty(productStoreGroupId)) {
             if (productStore != null) {
@@ -127,8 +137,8 @@ public class PriceServices {
                         productStoreGroupId = productStore.getString(x.primaryStoreGroupId);
                     } else {
                         // no ProductStore.primaryStoreGroupId, try ProductStoreGroupMember
-                        List<GenericValue> productStoreGroupMemberList = EntityQuery.use(delegator).from("ProductStoreGroupMember")
-                                .where("productStoreId", productStoreId).orderBy("sequenceNum", "-fromDate").cache(true).queryList();
+                        List<GenericValue> productStoreGroupMemberList = DaoQuery.use(delegator).from(x.ProductStoreGroupMember)
+                                .where(x.productStoreId, productStoreId).orderBy(x.sequenceNum, x.fromDate_f5440273).cache(true).queryList();
                         productStoreGroupMemberList = EntityUtil.filterByDate(productStoreGroupMemberList, true);
                         if (!productStoreGroupMemberList.isEmpty()) {
                             GenericValue productStoreGroupMember = EntityUtil.getFirst(productStoreGroupMemberList);
@@ -136,15 +146,15 @@ public class PriceServices {
                         }
                     }
                 } catch (GenericEntityException e) {
-                    Debug.logError(e, "Error getting product store info from the database while calculating price" + e.toString(), MODULE);
+                    Debug.logError(e, x.Error_getting_product_store_info_from_the_database_while_calculating_price + e.toString(), MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                            "ProductPriceCannotRetrieveProductStore", UtilMisc.toMap("errorString", e.toString()), locale));
+                            x.ProductPriceCannotRetrieveProductStore, UtilMisc.toMap(x.errorString, e.toString()), locale));
                 }
             }
 
             // still empty, default to _NA_
             if (UtilValidate.isEmpty(productStoreGroupId)) {
-                productStoreGroupId = "_NA_";
+                productStoreGroupId = x.NA;
             }
         }
 
@@ -155,14 +165,14 @@ public class PriceServices {
             if (productStore != null && UtilValidate.isNotEmpty(productStore.getString(x.defaultCurrencyUomId))) {
                 currencyDefaultUomId = productStore.getString(x.defaultCurrencyUomId);
             } else {
-                currencyDefaultUomId = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
+                currencyDefaultUomId = EntityUtilProperties.getPropertyValue(x.general, x.currency_uom_id_default, x.USD, delegator);
             }
         }
 
         // productPricePurposeId is null assume "PURCHASE", which is equivalent to what prices were before the purpose concept
         String productPricePurposeId = context.getProductPricePurposeId();
         if (UtilValidate.isEmpty(productPricePurposeId)) {
-            productPricePurposeId = "PURCHASE";
+            productPricePurposeId = x.PURCHASE;
         }
 
         // termUomId, for things like recurring prices specifies the term (time/frequency measure for example) of the recurrence
@@ -171,22 +181,22 @@ public class PriceServices {
 
         // if this product is variant, find the virtual product and apply checks to it as well
         String virtualProductId = null;
-        if ("Y".equals(product.getIsVariant())) {
+        if (x.Y.equals(product.getIsVariant())) {
             if (productGenericValue == null) {
                 try {
-                    productGenericValue = EntityQuery.use(delegator).from("Product")
-                            .where("productId", productId).cache().queryOne();
+                    productGenericValue = DaoQuery.use(delegator).from(x.Product)
+                            .where(x.productId, productId).cache().queryOne();
                 } catch (GenericEntityException e) {
-                    Debug.logError(e, "Error getting product from the database while calculating price" + e.toString(), MODULE);
+                    Debug.logError(e, x.Error_getting_product_from_the_database_while_calculating_price + e.toString(), MODULE);
                     return ServiceUtil.returnError(e.getMessage());
                 }
             }
             try {
                 virtualProductId = ProductWorker.getVariantVirtualId(productGenericValue);
             } catch (GenericEntityException e) {
-                Debug.logError(e, "Error getting virtual product id from the database while calculating price" + e.toString(), MODULE);
+                Debug.logError(e, x.Error_getting_virtual_product_id_from_the_database_while_calculating_price + e.toString(), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                        "ProductPriceCannotRetrieveVirtualProductId", UtilMisc.toMap("errorString", e.toString()), locale));
+                        x.ProductPriceCannotRetrieveVirtualProductId, UtilMisc.toMap(x.errorString, e.toString()), locale));
             }
         }
 
@@ -194,10 +204,10 @@ public class PriceServices {
         List<GenericValue> virtualProductPrices = null;
         if (virtualProductId != null) {
             try {
-                virtualProductPrices = EntityQuery.use(delegator).from("ProductPrice").where("productId", virtualProductId, "currencyUomId",
-                        currencyDefaultUomId, "productStoreGroupId", productStoreGroupId).orderBy("-fromDate").cache(true).queryList();
+                virtualProductPrices = DaoQuery.use(delegator).from(x.ProductPrice).where(x.productId, virtualProductId, x.currencyUomId,
+                        currencyDefaultUomId, x.productStoreGroupId, productStoreGroupId).orderBy(x.fromDate_f5440273).cache(true).queryList();
             } catch (GenericEntityException e) {
-                Debug.logError(e, "An error occurred while getting the product prices", MODULE);
+                Debug.logError(e, x.An_error_occurred_while_getting_the_product_prices, MODULE);
             }
             virtualProductPrices = EntityUtil.filterByDate(virtualProductPrices, true);
         }
@@ -220,86 +230,90 @@ public class PriceServices {
 
         BigDecimal amount = context.getAmount();
 
-        List<EntityCondition> productPriceEcList = new LinkedList<>();
-        productPriceEcList.add(EntityCondition.makeCondition("productId", EntityOperator.EQUALS, productId));
-        // this funny statement is for backward compatibility purposes; the productPricePurposeId is a new pk field on the ProductPrice entity and
-        // in order databases may not be populated, until the pk is updated and such; this will ease the transition somewhat
-        if ("PURCHASE".equals(productPricePurposeId)) {
-            productPriceEcList.add(EntityCondition.makeCondition(
-                    EntityCondition.makeCondition("productPricePurposeId", EntityOperator.EQUALS, productPricePurposeId),
-                    EntityOperator.OR,
-                    EntityCondition.makeCondition("productPricePurposeId", EntityOperator.EQUALS, null)));
-        } else {
-            productPriceEcList.add(EntityCondition.makeCondition("productPricePurposeId", EntityOperator.EQUALS, productPricePurposeId));
-        }
-        productPriceEcList.add(EntityCondition.makeCondition("currencyUomId", EntityOperator.EQUALS, currencyDefaultUomId));
-        productPriceEcList.add(EntityCondition.makeCondition("productStoreGroupId", EntityOperator.EQUALS, productStoreGroupId));
+        Map<String, Object> productPriceWhere = new HashMap<>();
+        productPriceWhere.put(x.productId, productId);
+        productPriceWhere.put(x.currencyUomId, currencyDefaultUomId);
+        productPriceWhere.put(x.productStoreGroupId, productStoreGroupId);
         if (UtilValidate.isNotEmpty(termUomId)) {
-            productPriceEcList.add(EntityCondition.makeCondition("termUomId", EntityOperator.EQUALS, termUomId));
+            productPriceWhere.put(x.termUomId, termUomId);
         }
-        EntityCondition productPriceEc = EntityCondition.makeCondition(productPriceEcList, EntityOperator.AND);
 
         // for prices, get all ProductPrice entities for this productId and currencyUomId
         List<GenericValue> productPrices = null;
         try {
-            productPrices = EntityQuery.use(delegator).from("ProductPrice").where(productPriceEc).orderBy("-fromDate").cache(true).queryList();
+            productPrices = DaoQuery.use(delegator).from(x.ProductPrice).where(productPriceWhere).orderBy(x.fromDate_f5440273).cache(true).queryList();
         } catch (GenericEntityException e) {
-            Debug.logError(e, "An error occurred while getting the product prices", MODULE);
+            Debug.logError(e, x.An_error_occurred_while_getting_the_product_prices, MODULE);
         }
         productPrices = EntityUtil.filterByDate(productPrices, true);
+        // Backward compatibility: keep rows with null purpose for PURCHASE prices.
+        if (UtilValidate.isNotEmpty(productPrices)) {
+            if (x.PURCHASE.equals(productPricePurposeId)) {
+                List<GenericValue> priceListForPurpose = new LinkedList<>();
+                for (GenericValue productPrice : productPrices) {
+                    String purpose = productPrice.getString(x.productPricePurposeId);
+                    if (purpose == null || productPricePurposeId.equals(purpose)) {
+                        priceListForPurpose.add(productPrice);
+                    }
+                }
+                productPrices = priceListForPurpose;
+            } else {
+                productPrices = EntityUtil.filterByAnd(productPrices, UtilMisc.toMap(x.productPricePurposeId, productPricePurposeId));
+            }
+        }
 
         // ===== get the prices we need: list, default, average cost, promo, min, max =====
         // if any of these prices is missing and this product is a variant, default to the corresponding price on the virtual product
-        GenericValue listPriceValue = getPriceValueForType("LIST_PRICE", productPrices, virtualProductPrices);
-        GenericValue defaultPriceValue = getPriceValueForType("DEFAULT_PRICE", productPrices, virtualProductPrices);
+        GenericValue listPriceValue = getPriceValueForType(x.LIST_PRICE, productPrices, virtualProductPrices);
+        GenericValue defaultPriceValue = getPriceValueForType(x.DEFAULT_PRICE, productPrices, virtualProductPrices);
 
         // If there is an agreement between the company and the client, and there is
         // a price for the product in it, it will override the default price of the
         // ProductPrice entity.
         if (UtilValidate.isNotEmpty(agreementId)) {
             try {
-                GenericValue agreementPriceValue = EntityQuery.use(delegator).from("AgreementItemAndProductAppl").where("agreementId", agreementId,
-                        "productId", productId, "currencyUomId", currencyDefaultUomId).queryFirst();
+                GenericValue agreementPriceValue = DaoQuery.use(delegator).from(x.AgreementItemAndProductAppl).where(x.agreementId, agreementId,
+                        x.productId, productId, x.currencyUomId, currencyDefaultUomId).queryFirst();
                 if (agreementPriceValue != null && agreementPriceValue.get(x.price) != null) {
                     defaultPriceValue = agreementPriceValue;
                 }
             } catch (GenericEntityException e) {
-                Debug.logError(e, "Error getting agreement info from the database while calculating price" + e.toString(), MODULE);
+                Debug.logError(e, x.Error_getting_agreement_info_from_the_database_while_calculating_price + e.toString(), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                        "ProductPriceCannotRetrieveAgreementInfo", UtilMisc.toMap("errorString", e.toString()), locale));
+                        x.ProductPriceCannotRetrieveAgreementInfo, UtilMisc.toMap(x.errorString, e.toString()), locale));
             }
         }
 
-        GenericValue competitivePriceValue = getPriceValueForType("COMPETITIVE_PRICE", productPrices, virtualProductPrices);
-        GenericValue averageCostValue = getPriceValueForType("AVERAGE_COST", productPrices, virtualProductPrices);
-        GenericValue promoPriceValue = getPriceValueForType("PROMO_PRICE", productPrices, virtualProductPrices);
-        GenericValue minimumPriceValue = getPriceValueForType("MINIMUM_PRICE", productPrices, virtualProductPrices);
-        GenericValue maximumPriceValue = getPriceValueForType("MAXIMUM_PRICE", productPrices, virtualProductPrices);
-        GenericValue wholesalePriceValue = getPriceValueForType("WHOLESALE_PRICE", productPrices, virtualProductPrices);
-        GenericValue specialPromoPriceValue = getPriceValueForType("SPECIAL_PROMO_PRICE", productPrices, virtualProductPrices);
+        GenericValue competitivePriceValue = getPriceValueForType(x.COMPETITIVE_PRICE, productPrices, virtualProductPrices);
+        GenericValue averageCostValue = getPriceValueForType(x.AVERAGE_COST, productPrices, virtualProductPrices);
+        GenericValue promoPriceValue = getPriceValueForType(x.PROMO_PRICE, productPrices, virtualProductPrices);
+        GenericValue minimumPriceValue = getPriceValueForType(x.MINIMUM_PRICE, productPrices, virtualProductPrices);
+        GenericValue maximumPriceValue = getPriceValueForType(x.MAXIMUM_PRICE, productPrices, virtualProductPrices);
+        GenericValue wholesalePriceValue = getPriceValueForType(x.WHOLESALE_PRICE, productPrices, virtualProductPrices);
+        GenericValue specialPromoPriceValue = getPriceValueForType(x.SPECIAL_PROMO_PRICE, productPrices, virtualProductPrices);
 
         // now if this is a virtual product check each price type, if doesn't exist get from variant with lowest DEFAULT_PRICE
-        if ("Y".equals(product.getIsVirtual())) {
+        if (x.Y.equals(product.getIsVirtual())) {
             // only do this if there is no default price, consider the others optional for performance reasons
             if (defaultPriceValue == null) {
                 //use the cache to find the variant with the lowest default price
                 try {
-                    List<GenericValue> variantAssocList = EntityQuery.use(delegator).from("ProductAssoc").where("productId", productId,
-                            "productAssocTypeId", "PRODUCT_VARIANT").orderBy("-fromDate").cache(true).filterByDate().queryList();
+                    List<GenericValue> variantAssocList = DaoQuery.use(delegator).from(x.ProductAssoc).where(x.productId, productId,
+                            x.productAssocTypeId, x.PRODUCT_VARIANT).orderBy(x.fromDate_f5440273).cache(true).filterByDate().queryList();
                     BigDecimal minDefaultPrice = null;
                     List<GenericValue> variantProductPrices = null;
                     for (GenericValue variantAssoc: variantAssocList) {
                         String curVariantProductId = variantAssoc.getString(x.productIdTo);
-                        List<GenericValue> curVariantPriceList = EntityQuery.use(delegator).from("ProductPrice")
-                                .where("productId", curVariantProductId).orderBy("-fromDate").cache(true).filterByDate(nowTimestamp).queryList();
-                        List<GenericValue> tempDefaultPriceList = EntityUtil.filterByAnd(curVariantPriceList, UtilMisc.toMap("productPriceTypeId",
-                                "DEFAULT_PRICE"));
+                        List<GenericValue> curVariantPriceList = DaoQuery.use(delegator).from(x.ProductPrice)
+                                .where(x.productId, curVariantProductId).orderBy(x.fromDate_f5440273).cache(true).filterByDate(nowTimestamp).queryList();
+                        List<GenericValue> tempDefaultPriceList = EntityUtil.filterByAnd(curVariantPriceList, UtilMisc.toMap(x.productPriceTypeId,
+                                x.DEFAULT_PRICE));
                         GenericValue curDefaultPriceValue = EntityUtil.getFirst(tempDefaultPriceList);
                         if (curDefaultPriceValue != null) {
                             BigDecimal curDefaultPrice = curDefaultPriceValue.getBigDecimal(x.price);
                             if (minDefaultPrice == null || curDefaultPrice.compareTo(minDefaultPrice) < 0) {
                                 // check to see if the product is discontinued for sale before considering it the lowest price
-                                GenericValue curVariantProduct = EntityQuery.use(delegator).from("Product").where("productId", curVariantProductId)
+                                GenericValue curVariantProduct = DaoQuery.use(delegator).from(x.Product).where(x.productId, curVariantProductId)
                                         .cache().queryOne();
                                 if (curVariantProduct != null) {
                                     Timestamp salesDiscontinuationDate = curVariantProduct.getTimestamp(x.salesDiscontinuationDate);
@@ -315,33 +329,33 @@ public class PriceServices {
                     if (variantProductPrices != null) {
                         // we have some other options, give 'em a go...
                         if (listPriceValue == null) {
-                            listPriceValue = getPriceValueForType("LIST_PRICE", variantProductPrices, null);
+                            listPriceValue = getPriceValueForType(x.LIST_PRICE, variantProductPrices, null);
                         }
                         if (competitivePriceValue == null) {
-                            competitivePriceValue = getPriceValueForType("COMPETITIVE_PRICE", variantProductPrices, null);
+                            competitivePriceValue = getPriceValueForType(x.COMPETITIVE_PRICE, variantProductPrices, null);
                         }
                         if (averageCostValue == null) {
-                            averageCostValue = getPriceValueForType("AVERAGE_COST", variantProductPrices, null);
+                            averageCostValue = getPriceValueForType(x.AVERAGE_COST, variantProductPrices, null);
                         }
                         if (promoPriceValue == null) {
-                            promoPriceValue = getPriceValueForType("PROMO_PRICE", variantProductPrices, null);
+                            promoPriceValue = getPriceValueForType(x.PROMO_PRICE, variantProductPrices, null);
                         }
                         if (minimumPriceValue == null) {
-                            minimumPriceValue = getPriceValueForType("MINIMUM_PRICE", variantProductPrices, null);
+                            minimumPriceValue = getPriceValueForType(x.MINIMUM_PRICE, variantProductPrices, null);
                         }
                         if (maximumPriceValue == null) {
-                            maximumPriceValue = getPriceValueForType("MAXIMUM_PRICE", variantProductPrices, null);
+                            maximumPriceValue = getPriceValueForType(x.MAXIMUM_PRICE, variantProductPrices, null);
                         }
                         if (wholesalePriceValue == null) {
-                            wholesalePriceValue = getPriceValueForType("WHOLESALE_PRICE", variantProductPrices, null);
+                            wholesalePriceValue = getPriceValueForType(x.WHOLESALE_PRICE, variantProductPrices, null);
                         }
                         if (specialPromoPriceValue == null) {
-                            specialPromoPriceValue = getPriceValueForType("SPECIAL_PROMO_PRICE", variantProductPrices, null);
+                            specialPromoPriceValue = getPriceValueForType(x.SPECIAL_PROMO_PRICE, variantProductPrices, null);
                         }
-                        defaultPriceValue = getPriceValueForType("DEFAULT_PRICE", variantProductPrices, null);
+                        defaultPriceValue = getPriceValueForType(x.DEFAULT_PRICE, variantProductPrices, null);
                     }
                 } catch (GenericEntityException e) {
-                    Debug.logError(e, "An error occurred while getting the product prices", MODULE);
+                    Debug.logError(e, x.An_error_occurred_while_getting_the_product_prices, MODULE);
                 }
             }
         }
@@ -363,53 +377,53 @@ public class PriceServices {
         List<GenericValue> orderItemPriceInfos = new LinkedList<>();
         if (defaultPriceValue != null) {
             // If a price calc formula (service) is specified, then use it to get the unit price
-            if ("ProductPrice".equals(defaultPriceValue.getEntityName()) && UtilValidate.isNotEmpty(defaultPriceValue
+            if (x.ProductPrice.equals(defaultPriceValue.getEntityName()) && UtilValidate.isNotEmpty(defaultPriceValue
                     .getString(x.customPriceCalcService))) {
                 GenericValue customMethod = null;
                 try {
                     customMethod = defaultPriceValue.getRelatedOne(x.CustomMethod, false);
                 } catch (GenericEntityException gee) {
-                    Debug.logError(gee, "An error occurred while getting the customPriceCalcService", MODULE);
+                    Debug.logError(gee, x.An_error_occurred_while_getting_the_customPriceCalcService, MODULE);
                 }
                 if (customMethod != null && UtilValidate.isNotEmpty(customMethod.getString(x.customMethodName))) {
                     if (productGenericValue == null) {
                         try {
-                            productGenericValue = EntityQuery.use(delegator).from("Product")
-                                    .where("productId", productId).cache().queryOne();
+                            productGenericValue = DaoQuery.use(delegator).from(x.Product)
+                                    .where(x.productId, productId).cache().queryOne();
                         } catch (GenericEntityException gee) {
-                            Debug.logError(gee, "An error occurred while getting product for customPriceCalcService", MODULE);
+                            Debug.logError(gee, x.An_error_occurred_while_getting_product_for_customPriceCalcService, MODULE);
                         }
                     }
                     if (userLoginGenericValue == null && context.getUserLogin() != null
                             && UtilValidate.isNotEmpty(context.getUserLogin().getUserLoginId())) {
                         try {
-                            userLoginGenericValue = EntityQuery.use(delegator).from("UserLogin")
-                                    .where("userLoginId", context.getUserLogin().getUserLoginId()).cache().queryOne();
+                            userLoginGenericValue = DaoQuery.use(delegator).from(x.UserLogin)
+                                    .where(x.userLoginId, context.getUserLogin().getUserLoginId()).cache().queryOne();
                         } catch (GenericEntityException gee) {
-                            Debug.logError(gee, "An error occurred while getting userLogin for customPriceCalcService", MODULE);
+                            Debug.logError(gee, x.An_error_occurred_while_getting_userLogin_for_customPriceCalcService, MODULE);
                         }
                     }
 
-                    Map<String, Object> inMap = UtilMisc.toMap("userLogin", userLoginGenericValue, "product", productGenericValue);
-                    inMap.put("initialPrice", defaultPriceValue.getBigDecimal(x.price));
-                    inMap.put("currencyUomId", currencyDefaultUomId);
-                    inMap.put("quantity", quantity);
-                    inMap.put("amount", amount);
+                    Map<String, Object> inMap = UtilMisc.toMap(x.userLogin, userLoginGenericValue, x.product, productGenericValue);
+                    inMap.put(x.initialPrice, defaultPriceValue.getBigDecimal(x.price));
+                    inMap.put(x.currencyUomId, currencyDefaultUomId);
+                    inMap.put(x.quantity, quantity);
+                    inMap.put(x.amount, amount);
                     if (UtilValidate.isNotEmpty(surveyResponseId)) {
-                        inMap.put("surveyResponseId", surveyResponseId);
+                        inMap.put(x.surveyResponseId, surveyResponseId);
                     }
                     if (UtilValidate.isNotEmpty(customAttributes)) {
-                        inMap.put("customAttributes", customAttributes);
+                        inMap.put(x.customAttributes, customAttributes);
                     }
-                    inMap.put("productStoreGroupId", productStoreGroupId);
-                    inMap.put("partyId", partyId);
+                    inMap.put(x.productStoreGroupId, productStoreGroupId);
+                    inMap.put(x.partyId, partyId);
                     try {
                         Map<String, Object> outMap = dispatcher.runSync(customMethod.getString(x.customMethodName), inMap);
                         if (ServiceUtil.isSuccess(outMap)) {
-                            BigDecimal calculatedDefaultPrice = (BigDecimal) outMap.get("price");
-                            BigDecimal calculatedListPrice = (BigDecimal) outMap.get("listPrice");
-                            BigDecimal calculatedDiscountRate = (BigDecimal) outMap.get("discountRate");
-                            orderItemPriceInfos = UtilGenerics.cast(outMap.get("orderItemPriceInfos"));
+                            BigDecimal calculatedDefaultPrice = (BigDecimal) outMap.get(x.price);
+                            BigDecimal calculatedListPrice = (BigDecimal) outMap.get(x.listPrice);
+                            BigDecimal calculatedDiscountRate = (BigDecimal) outMap.get(x.discountRate);
+                            orderItemPriceInfos = UtilGenerics.cast(outMap.get(x.orderItemPriceInfos));
                             if (UtilValidate.isNotEmpty(calculatedDefaultPrice)) {
                                 defaultPrice = calculatedDefaultPrice;
                                 listPrice = calculatedListPrice;
@@ -418,8 +432,8 @@ public class PriceServices {
                             }
                         }
                     } catch (GenericServiceException gse) {
-                        Debug.logError(gse, "An error occurred while running the customPriceCalcService ["
-                                + customMethod.getString(x.customMethodName) + "]", MODULE);
+                        Debug.logError(gse, x.An_error_occurred_while_running_the_customPriceCalcService
+                                + customMethod.getString(x.customMethodName) + x.str_4ff447b8, MODULE);
                     }
                 }
             }
@@ -452,18 +466,18 @@ public class PriceServices {
                 validPriceFound = true;
             }
 
-            result.put("listPrice", listPrice);
-            result.put("discountRate", discountRate);
-            result.put("basePrice", defaultPrice);
-            result.put("price", defaultPrice);
-            result.put("defaultPrice", defaultPrice);
-            result.put("competitivePrice", competitivePriceValue != null ? competitivePriceValue.getBigDecimal(x.price) : null);
-            result.put("averageCost", averageCostValue != null ? averageCostValue.getBigDecimal(x.price) : null);
-            result.put("promoPrice", promoPriceValue != null ? promoPriceValue.getBigDecimal(x.price) : null);
-            result.put("specialPromoPrice", specialPromoPriceValue != null ? specialPromoPriceValue.getBigDecimal(x.price) : null);
-            result.put("validPriceFound", validPriceFound);
-            result.put("isSale", Boolean.FALSE);
-            result.put("orderItemPriceInfos", orderItemPriceInfos);
+            result.put(x.listPrice, listPrice);
+            result.put(x.discountRate, discountRate);
+            result.put(x.basePrice, defaultPrice);
+            result.put(x.price, defaultPrice);
+            result.put(x.defaultPrice, defaultPrice);
+            result.put(x.competitivePrice, competitivePriceValue != null ? competitivePriceValue.getBigDecimal(x.price) : null);
+            result.put(x.averageCost, averageCostValue != null ? averageCostValue.getBigDecimal(x.price) : null);
+            result.put(x.promoPrice, promoPriceValue != null ? promoPriceValue.getBigDecimal(x.price) : null);
+            result.put(x.specialPromoPrice, specialPromoPriceValue != null ? specialPromoPriceValue.getBigDecimal(x.price) : null);
+            result.put(x.validPriceFound, validPriceFound);
+            result.put(x.isSale, Boolean.FALSE);
+            result.put(x.orderItemPriceInfos, orderItemPriceInfos);
 
             Map<String, Object> errorResult = addGeneralResults(result, competitivePriceValue, specialPromoPriceValue, productStore,
                     checkIncludeVat, currencyDefaultUomId, productId, quantity, partyId, dispatcher, locale);
@@ -481,14 +495,14 @@ public class PriceServices {
                     quantityProductPriceRules = new LinkedList<>();
                     nonQuantityProductPriceRules = new LinkedList<>();
                     for (GenericValue productPriceRule: allProductPriceRules) {
-                        List<GenericValue> productPriceCondList = EntityQuery.use(delegator).from("ProductPriceCond").where("productPriceRuleId",
+                        List<GenericValue> productPriceCondList = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.productPriceRuleId,
                                 productPriceRule.get(x.productPriceRuleId)).cache(true).queryList();
 
                         boolean foundQuantityInputParam = false;
                         // only consider a rule if all conditions except the quantity condition are true
                         boolean allExceptQuantTrue = true;
                         for (GenericValue productPriceCond: productPriceCondList) {
-                            if ("PRIP_QUANTITY".equals(productPriceCond.getString(x.inputParamEnumId))) {
+                            if (x.PRIP_QUANTITY.equals(productPriceCond.getString(x.inputParamEnumId))) {
                                 foundQuantityInputParam = true;
                             } else {
                                 if (!checkPriceCondition(productPriceCond, productId, virtualProductId, prodCatalogId, productStoreGroupId,
@@ -526,11 +540,11 @@ public class PriceServices {
                         if (quantErrorResult != null) return quantErrorResult;
 
                         // also add the quantityProductPriceRule to the Map so it can be used for quantity break information
-                        quantCalcResults.put("quantityProductPriceRule", quantityProductPriceRule);
+                        quantCalcResults.put(x.quantityProductPriceRule, quantityProductPriceRule);
 
                         allQuantityPrices.add(quantCalcResults);
                     }
-                    result.put("allQuantityPrices", allQuantityPrices);
+                    result.put(x.allQuantityPrices, allQuantityPrices);
 
                     // use a quantity 1 to get the main price, then fill in the quantity break prices
                     Map<String, Object> calcResults = calcPriceResultFromRules(allProductPriceRules, listPrice, defaultPrice, promoPrice,
@@ -541,11 +555,11 @@ public class PriceServices {
                     // The orderItemPriceInfos out parameter requires a special treatment:
                     // the list of OrderItemPriceInfos generated by the price rule is appended to
                     // the existing orderItemPriceInfos list and the aggregated list is returned.
-                    List<GenericValue> orderItemPriceInfosFromRule = UtilGenerics.cast(calcResults.get("orderItemPriceInfos"));
+                    List<GenericValue> orderItemPriceInfosFromRule = UtilGenerics.cast(calcResults.get(x.orderItemPriceInfos));
                     if (UtilValidate.isNotEmpty(orderItemPriceInfosFromRule)) {
                         orderItemPriceInfos.addAll(orderItemPriceInfosFromRule);
                     }
-                    result.put("orderItemPriceInfos", orderItemPriceInfos);
+                    result.put(x.orderItemPriceInfos, orderItemPriceInfos);
 
                     Map<String, Object> errorResult = addGeneralResults(result, competitivePriceValue, specialPromoPriceValue, productStore,
                             checkIncludeVat, currencyDefaultUomId, productId, quantity, partyId, dispatcher, locale);
@@ -559,25 +573,25 @@ public class PriceServices {
                     // The orderItemPriceInfos out parameter requires a special treatment:
                     // the list of OrderItemPriceInfos generated by the price rule is appended to
                     // the existing orderItemPriceInfos list and the aggregated list is returned.
-                    List<GenericValue> orderItemPriceInfosFromRule = UtilGenerics.cast(calcResults.get("orderItemPriceInfos"));
+                    List<GenericValue> orderItemPriceInfosFromRule = UtilGenerics.cast(calcResults.get(x.orderItemPriceInfos));
                     if (UtilValidate.isNotEmpty(orderItemPriceInfosFromRule)) {
                         orderItemPriceInfos.addAll(orderItemPriceInfosFromRule);
                     }
-                    result.put("orderItemPriceInfos", orderItemPriceInfos);
+                    result.put(x.orderItemPriceInfos, orderItemPriceInfos);
 
                     Map<String, Object> errorResult = addGeneralResults(result, competitivePriceValue, specialPromoPriceValue, productStore,
                             checkIncludeVat, currencyDefaultUomId, productId, quantity, partyId, dispatcher, locale);
                     if (errorResult != null) return errorResult;
                 }
             } catch (GenericEntityException e) {
-                Debug.logError(e, "Error getting rules from the database while calculating price", MODULE);
+                Debug.logError(e, x.Error_getting_rules_from_the_database_while_calculating_price, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                        "ProductPriceCannotRetrievePriceRules", UtilMisc.toMap("errorString", e.toString()), locale));
+                        x.ProductPriceCannotRetrievePriceRules, UtilMisc.toMap(x.errorString, e.toString()), locale));
             }
         }
 
         // Convert the value to the price currency, if required
-        if ("true".equals(EntityUtilProperties.getPropertyValue("catalog", "convertProductPriceCurrency", delegator))) {
+        if (x._true.equals(EntityUtilProperties.getPropertyValue(x.catalog, x.convertProductPriceCurrency, delegator))) {
             if (UtilValidate.isNotEmpty(currencyDefaultUomId) && UtilValidate.isNotEmpty(currencyUomIdTo)
                     && !currencyDefaultUomId.equals(currencyUomIdTo)) {
                 if (UtilValidate.isNotEmpty(result)) {
@@ -585,14 +599,14 @@ public class PriceServices {
                     for (Map.Entry<String, Object> entry : result.entrySet()) {
                         BigDecimal tempPrice;
                         switch (entry.getKey()) {
-                        case "basePrice":
-                        case "price":
-                        case "defaultPrice":
-                        case "competitivePrice":
-                        case "averageCost":
-                        case "promoPrice":
-                        case "specialPromoPrice":
-                        case "listPrice":
+                        case x.basePrice:
+                        case x.price:
+                        case x.defaultPrice:
+                        case x.competitivePrice:
+                        case x.averageCost:
+                        case x.promoPrice:
+                        case x.specialPromoPrice:
+                        case x.listPrice:
                             tempPrice = (BigDecimal) entry.getValue();
                             break;
                         default:
@@ -602,22 +616,22 @@ public class PriceServices {
                         if (tempPrice != null && tempPrice != BigDecimal.ZERO) {
                             Map<String, Object> priceResults = new HashMap<>();
                             try {
-                                priceResults = dispatcher.runSync("convertUom", UtilMisc.<String, Object>toMap("uomId", currencyDefaultUomId,
-                                        "uomIdTo", currencyUomIdTo,
-                                        "originalValue", tempPrice, "defaultDecimalScale", 2L, "defaultRoundingMode", "HalfUp"));
-                                if (ServiceUtil.isError(priceResults) || (priceResults.get("convertedValue") == null)) {
-                                    Debug.logWarning("Unable to convert " + entry.getKey() + " for product  " + productId, MODULE);
+                                priceResults = dispatcher.runSync(x.convertUom, UtilMisc.<String, Object>toMap(x.uomId, currencyDefaultUomId,
+                                        x.uomIdTo, currencyUomIdTo,
+                                        x.originalValue, tempPrice, x.defaultDecimalScale, 2L, x.defaultRoundingMode, x.HalfUp));
+                                if (ServiceUtil.isError(priceResults) || (priceResults.get(x.convertedValue) == null)) {
+                                    Debug.logWarning(x.Unable_to_convert + entry.getKey() + x.for_product + productId, MODULE);
                                 }
                             } catch (GenericServiceException e) {
                                 Debug.logError(e, MODULE);
                             }
-                            convertPriceMap.put(entry.getKey(), priceResults.get("convertedValue"));
+                            convertPriceMap.put(entry.getKey(), priceResults.get(x.convertedValue));
                         } else {
                             convertPriceMap.put(entry.getKey(), entry.getValue());
                         }
                     }
                     if (UtilValidate.isNotEmpty(convertPriceMap)) {
-                        convertPriceMap.put("currencyUsed", currencyUomIdTo);
+                        convertPriceMap.put(x.currencyUsed, currencyUomIdTo);
                         result = convertPriceMap;
                     }
                 }
@@ -628,12 +642,12 @@ public class PriceServices {
 
     private static GenericValue getPriceValueForType(String productPriceTypeId, List<GenericValue> productPriceList,
                                                      List<GenericValue> secondaryPriceList) {
-        List<GenericValue> filteredPrices = EntityUtil.filterByAnd(productPriceList, UtilMisc.toMap("productPriceTypeId", productPriceTypeId));
+        List<GenericValue> filteredPrices = EntityUtil.filterByAnd(productPriceList, UtilMisc.toMap(x.productPriceTypeId, productPriceTypeId));
         GenericValue priceValue = EntityUtil.getFirst(filteredPrices);
         if (filteredPrices != null && filteredPrices.size() > 1) {
             if (Debug.infoOn()) {
-                Debug.logInfo("There is more than one " + productPriceTypeId + " with the currencyUomId " + priceValue.getString(x.currencyUomId)
-                        + " and productId " + priceValue.getString(x.productId) + ", using the latest found with price: "
+                Debug.logInfo(x.There_is_more_than_one + productPriceTypeId + x.with_the_currencyUomId + priceValue.getString(x.currencyUomId)
+                        + x.and_productId + priceValue.getString(x.productId) + x.using_the_latest_found_with_price
                         + priceValue.getBigDecimal(x.price), MODULE);
             }
         }
@@ -647,54 +661,54 @@ public class PriceServices {
                                                         GenericValue specialPromoPriceValue, GenericValue productStore, String checkIncludeVat,
                                                         String currencyUomId, String productId,
                                                         BigDecimal quantity, String partyId, LocalDispatcher dispatcher, Locale locale) {
-        result.put("competitivePrice", competitivePriceValue != null ? competitivePriceValue.getBigDecimal(x.price) : null);
-        result.put("specialPromoPrice", specialPromoPriceValue != null ? specialPromoPriceValue.getBigDecimal(x.price) : null);
-        result.put("currencyUsed", currencyUomId);
+        result.put(x.competitivePrice, competitivePriceValue != null ? competitivePriceValue.getBigDecimal(x.price) : null);
+        result.put(x.specialPromoPrice, specialPromoPriceValue != null ? specialPromoPriceValue.getBigDecimal(x.price) : null);
+        result.put(x.currencyUsed, currencyUomId);
 
         // okay, now we have the calculated price, see if we should add in tax and if so do it
-        if ("Y".equals(checkIncludeVat) && productStore != null && "Y".equals(productStore.getString(x.showPricesWithVatTax))) {
-            Map<String, Object> calcTaxForDisplayContext = UtilMisc.toMap("productStoreId", productStore.get(x.productStoreId),
-                    "productId", productId, "quantity", quantity,
-                    "basePrice", (BigDecimal) result.get("price"));
+        if (x.Y.equals(checkIncludeVat) && productStore != null && x.Y.equals(productStore.getString(x.showPricesWithVatTax))) {
+            Map<String, Object> calcTaxForDisplayContext = UtilMisc.toMap(x.productStoreId, productStore.get(x.productStoreId),
+                    x.productId, productId, x.quantity, quantity,
+                    x.basePrice, (BigDecimal) result.get(x.price));
             if (UtilValidate.isNotEmpty(partyId)) {
-                calcTaxForDisplayContext.put("billToPartyId", partyId);
+                calcTaxForDisplayContext.put(x.billToPartyId, partyId);
             }
 
             try {
-                Map<String, Object> calcTaxForDisplayResult = dispatcher.runSync("calcTaxForDisplay", calcTaxForDisplayContext);
+                Map<String, Object> calcTaxForDisplayResult = dispatcher.runSync(x.calcTaxForDisplay, calcTaxForDisplayContext);
                 if (ServiceUtil.isError(calcTaxForDisplayResult)) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                            "ProductPriceCannotCalculateVatTax", locale), null, null, calcTaxForDisplayResult);
+                            x.ProductPriceCannotCalculateVatTax, locale), null, null, calcTaxForDisplayResult);
                 }
                 // taxTotal, taxPercentage, priceWithTax
-                result.put("price", calcTaxForDisplayResult.get("priceWithTax"));
+                result.put(x.price, calcTaxForDisplayResult.get(x.priceWithTax));
 
                 // based on the taxPercentage calculate the other amounts, including: listPrice, defaultPrice, averageCost,
                 // promoPrice, competitivePrice
-                BigDecimal taxPercentage = (BigDecimal) calcTaxForDisplayResult.get("taxPercentage");
+                BigDecimal taxPercentage = (BigDecimal) calcTaxForDisplayResult.get(x.taxPercentage);
                 BigDecimal taxMultiplier = ONE_BASE.add(taxPercentage.divide(PERCENT_SCALE, TAX_SCALE, TAX_ROUNDING));
-                if (result.get("listPrice") != null) {
-                    result.put("listPrice", ((BigDecimal) result.get("listPrice")).multiply(taxMultiplier).setScale(TAX_FINAL_SCALE, TAX_ROUNDING));
+                if (result.get(x.listPrice) != null) {
+                    result.put(x.listPrice, ((BigDecimal) result.get(x.listPrice)).multiply(taxMultiplier).setScale(TAX_FINAL_SCALE, TAX_ROUNDING));
                 }
-                if (result.get("defaultPrice") != null) {
-                    result.put("defaultPrice", ((BigDecimal) result.get("defaultPrice")).multiply(taxMultiplier)
+                if (result.get(x.defaultPrice) != null) {
+                    result.put(x.defaultPrice, ((BigDecimal) result.get(x.defaultPrice)).multiply(taxMultiplier)
                             .setScale(TAX_FINAL_SCALE, TAX_ROUNDING));
                 }
-                if (result.get("averageCost") != null) {
-                    result.put("averageCost", ((BigDecimal) result.get("averageCost")).multiply(taxMultiplier)
+                if (result.get(x.averageCost) != null) {
+                    result.put(x.averageCost, ((BigDecimal) result.get(x.averageCost)).multiply(taxMultiplier)
                             .setScale(TAX_FINAL_SCALE, TAX_ROUNDING));
                 }
-                if (result.get("promoPrice") != null) {
-                    result.put("promoPrice", ((BigDecimal) result.get("promoPrice")).multiply(taxMultiplier).setScale(TAX_FINAL_SCALE, TAX_ROUNDING));
+                if (result.get(x.promoPrice) != null) {
+                    result.put(x.promoPrice, ((BigDecimal) result.get(x.promoPrice)).multiply(taxMultiplier).setScale(TAX_FINAL_SCALE, TAX_ROUNDING));
                 }
-                if (result.get("competitivePrice") != null) {
-                    result.put("competitivePrice", ((BigDecimal) result.get("competitivePrice")).multiply(taxMultiplier)
+                if (result.get(x.competitivePrice) != null) {
+                    result.put(x.competitivePrice, ((BigDecimal) result.get(x.competitivePrice)).multiply(taxMultiplier)
                             .setScale(TAX_FINAL_SCALE, TAX_ROUNDING));
                 }
             } catch (GenericServiceException e) {
-                Debug.logError(e, "Error calculating VAT tax (with calcTaxForDisplay service): " + e.toString(), MODULE);
+                Debug.logError(e, x.Error_calculating_VAT_tax_with_calcTaxForDisplay_service + e.toString(), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                        "ProductPriceCannotCalculateVatTax", locale));
+                        x.ProductPriceCannotCalculateVatTax, locale));
             }
         }
 
@@ -720,8 +734,8 @@ public class PriceServices {
             // for we will always include any rules that go by category, shouldn't be too many to iterate through each time and will save on cache
             // entries note that we always want to put the category, quantity, etc ones that find all rules with these conditions in separate cache
             // lists so that they can be easily cleared
-            Collection<GenericValue> productCategoryIdConds = EntityQuery.use(delegator).from("ProductPriceCond").where("inputParamEnumId",
-                    "PRIP_PROD_CAT_ID").cache(true).queryList();
+            Collection<GenericValue> productCategoryIdConds = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.inputParamEnumId,
+                    x.PRIP_PROD_CAT_ID).cache(true).queryList();
             if (UtilValidate.isNotEmpty(productCategoryIdConds)) {
                 for (GenericValue productCategoryIdCond: productCategoryIdConds) {
                     productPriceRuleIds.add(productCategoryIdCond.getString(x.productPriceRuleId));
@@ -729,8 +743,8 @@ public class PriceServices {
             }
 
             // by productFeatureId
-            Collection<GenericValue> productFeatureIdConds = EntityQuery.use(delegator).from("ProductPriceCond").where("inputParamEnumId",
-                    "PRIP_PROD_FEAT_ID").cache(true).queryList();
+            Collection<GenericValue> productFeatureIdConds = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.inputParamEnumId,
+                    x.PRIP_PROD_FEAT_ID).cache(true).queryList();
             if (UtilValidate.isNotEmpty(productFeatureIdConds)) {
                 for (GenericValue productFeatureIdCond: productFeatureIdConds) {
                     productPriceRuleIds.add(productFeatureIdCond.getString(x.productPriceRuleId));
@@ -740,8 +754,8 @@ public class PriceServices {
             // by quantity -- should we really do this one, ie is it necessary?
             // we could say that all rules with quantity on them must have one of these other values
             // but, no we'll do it the other way, any that have a quantity will always get compared
-            Collection<GenericValue> quantityConds = EntityQuery.use(delegator).from("ProductPriceCond").where("inputParamEnumId",
-                    "PRIP_QUANTITY").cache(true).queryList();
+            Collection<GenericValue> quantityConds = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.inputParamEnumId,
+                    x.PRIP_QUANTITY).cache(true).queryList();
             if (UtilValidate.isNotEmpty(quantityConds)) {
                 for (GenericValue quantityCond: quantityConds) {
                     productPriceRuleIds.add(quantityCond.getString(x.productPriceRuleId));
@@ -749,8 +763,8 @@ public class PriceServices {
             }
 
             // by roleTypeId
-            Collection<GenericValue> roleTypeIdConds = EntityQuery.use(delegator).from("ProductPriceCond").where("inputParamEnumId",
-                    "PRIP_ROLE_TYPE").cache(true).queryList();
+            Collection<GenericValue> roleTypeIdConds = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.inputParamEnumId,
+                    x.PRIP_ROLE_TYPE).cache(true).queryList();
             if (UtilValidate.isNotEmpty(roleTypeIdConds)) {
                 for (GenericValue roleTypeIdCond: roleTypeIdConds) {
                     productPriceRuleIds.add(roleTypeIdCond.getString(x.productPriceRuleId));
@@ -758,8 +772,8 @@ public class PriceServices {
             }
 
             // by partyClassificationGroupId
-            Collection<GenericValue> partyClassificationGroupIdConds = EntityQuery.use(delegator).from("ProductPriceCond").where("inputParamEnumId",
-                    "PRIP_PARTY_CLASS").cache(true).queryList();
+            Collection<GenericValue> partyClassificationGroupIdConds = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.inputParamEnumId,
+                    x.PRIP_PARTY_CLASS).cache(true).queryList();
             if (UtilValidate.isNotEmpty(partyClassificationGroupIdConds)) {
                 for (GenericValue partyClassificationGroupIdCond: partyClassificationGroupIdConds) {
                     productPriceRuleIds.add(partyClassificationGroupIdCond.getString(x.productPriceRuleId));
@@ -770,8 +784,8 @@ public class PriceServices {
             // later: (by partyClassificationTypeId)
 
             // by listPrice
-            Collection<GenericValue> listPriceConds = EntityQuery.use(delegator).from("ProductPriceCond").where("inputParamEnumId",
-                    "PRIP_LIST_PRICE").cache(true).queryList();
+            Collection<GenericValue> listPriceConds = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.inputParamEnumId,
+                    x.PRIP_LIST_PRICE).cache(true).queryList();
             if (UtilValidate.isNotEmpty(listPriceConds)) {
                 for (GenericValue listPriceCond: listPriceConds) {
                     productPriceRuleIds.add(listPriceCond.getString(x.productPriceRuleId));
@@ -781,8 +795,8 @@ public class PriceServices {
             // ------- These are all of them that DO depend on the current inputs -------
 
             // by productId
-            Collection<GenericValue> productIdConds = EntityQuery.use(delegator).from("ProductPriceCond").where("inputParamEnumId",
-                    "PRIP_PRODUCT_ID", "condValue", productId).cache(true).queryList();
+            Collection<GenericValue> productIdConds = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.inputParamEnumId,
+                    x.PRIP_PRODUCT_ID, x.condValue, productId).cache(true).queryList();
             if (UtilValidate.isNotEmpty(productIdConds)) {
                 for (GenericValue productIdCond: productIdConds) {
                     productPriceRuleIds.add(productIdCond.getString(x.productPriceRuleId));
@@ -791,8 +805,8 @@ public class PriceServices {
 
             // by virtualProductId, if not null
             if (virtualProductId != null) {
-                Collection<GenericValue> virtualProductIdConds = EntityQuery.use(delegator).from("ProductPriceCond").where("inputParamEnumId",
-                        "PRIP_PRODUCT_ID", "condValue", virtualProductId).cache(true).queryList();
+                Collection<GenericValue> virtualProductIdConds = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.inputParamEnumId,
+                        x.PRIP_PRODUCT_ID, x.condValue, virtualProductId).cache(true).queryList();
                 if (UtilValidate.isNotEmpty(virtualProductIdConds)) {
                     for (GenericValue virtualProductIdCond: virtualProductIdConds) {
                         productPriceRuleIds.add(virtualProductIdCond.getString(x.productPriceRuleId));
@@ -802,8 +816,8 @@ public class PriceServices {
 
             // by prodCatalogId - which is optional in certain cases
             if (UtilValidate.isNotEmpty(prodCatalogId)) {
-                Collection<GenericValue> prodCatalogIdConds = EntityQuery.use(delegator).from("ProductPriceCond").where("inputParamEnumId",
-                        "PRIP_PROD_CLG_ID", "condValue", prodCatalogId).cache(true).queryList();
+                Collection<GenericValue> prodCatalogIdConds = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.inputParamEnumId,
+                        x.PRIP_PROD_CLG_ID, x.condValue, prodCatalogId).cache(true).queryList();
                 if (UtilValidate.isNotEmpty(prodCatalogIdConds)) {
                     for (GenericValue prodCatalogIdCond: prodCatalogIdConds) {
                         productPriceRuleIds.add(prodCatalogIdCond.getString(x.productPriceRuleId));
@@ -813,8 +827,8 @@ public class PriceServices {
 
             // by productStoreGroupId
             if (UtilValidate.isNotEmpty(productStoreGroupId)) {
-                Collection<GenericValue> storeGroupConds = EntityQuery.use(delegator).from("ProductPriceCond").where("inputParamEnumId",
-                        "PRIP_PROD_SGRP_ID", "condValue", productStoreGroupId).cache(true).queryList();
+                Collection<GenericValue> storeGroupConds = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.inputParamEnumId,
+                        x.PRIP_PROD_SGRP_ID, x.condValue, productStoreGroupId).cache(true).queryList();
                 if (UtilValidate.isNotEmpty(storeGroupConds)) {
                     for (GenericValue storeGroupCond: storeGroupConds) {
                         productPriceRuleIds.add(storeGroupCond.getString(x.productPriceRuleId));
@@ -824,8 +838,8 @@ public class PriceServices {
 
             // by webSiteId
             if (UtilValidate.isNotEmpty(webSiteId)) {
-                Collection<GenericValue> webSiteIdConds = EntityQuery.use(delegator).from("ProductPriceCond").where("inputParamEnumId",
-                        "PRIP_WEBSITE_ID", "condValue", webSiteId).cache(true).queryList();
+                Collection<GenericValue> webSiteIdConds = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.inputParamEnumId,
+                        x.PRIP_WEBSITE_ID, x.condValue, webSiteId).cache(true).queryList();
                 if (UtilValidate.isNotEmpty(webSiteIdConds)) {
                     for (GenericValue webSiteIdCond: webSiteIdConds) {
                         productPriceRuleIds.add(webSiteIdCond.getString(x.productPriceRuleId));
@@ -835,8 +849,8 @@ public class PriceServices {
 
             // by partyId
             if (UtilValidate.isNotEmpty(partyId)) {
-                Collection<GenericValue> partyIdConds = EntityQuery.use(delegator).from("ProductPriceCond").where("inputParamEnumId",
-                        "PRIP_PARTY_ID", "condValue", partyId).cache(true).queryList();
+                Collection<GenericValue> partyIdConds = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.inputParamEnumId,
+                        x.PRIP_PARTY_ID, x.condValue, partyId).cache(true).queryList();
                 if (UtilValidate.isNotEmpty(partyIdConds)) {
                     for (GenericValue partyIdCond: partyIdConds) {
                         productPriceRuleIds.add(partyIdCond.getString(x.productPriceRuleId));
@@ -845,8 +859,8 @@ public class PriceServices {
             }
 
             // by currencyUomId
-            Collection<GenericValue> currencyUomIdConds = EntityQuery.use(delegator).from("ProductPriceCond").where("inputParamEnumId",
-                    "PRIP_CURRENCY_UOMID", "condValue", currencyUomId).cache(true).queryList();
+            Collection<GenericValue> currencyUomIdConds = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.inputParamEnumId,
+                    x.PRIP_CURRENCY_UOMID, x.condValue, currencyUomId).cache(true).queryList();
             if (UtilValidate.isNotEmpty(currencyUomIdConds)) {
                 for (GenericValue currencyUomIdCond: currencyUomIdConds) {
                     productPriceRuleIds.add(currencyUomIdCond.getString(x.productPriceRuleId));
@@ -855,13 +869,13 @@ public class PriceServices {
 
             productPriceRules = new LinkedList<>();
             for (String productPriceRuleId: productPriceRuleIds) {
-                GenericValue productPriceRule = EntityQuery.use(delegator).from("ProductPriceRule").where("productPriceRuleId", productPriceRuleId)
+                GenericValue productPriceRule = DaoQuery.use(delegator).from(x.ProductPriceRule).where(x.productPriceRuleId, productPriceRuleId)
                         .cache().queryOne();
                 if (productPriceRule == null) continue;
                 productPriceRules.add(productPriceRule);
             }
         } else {
-            productPriceRules = EntityQuery.use(delegator).from("ProductPriceRule").cache(true).queryList();
+            productPriceRules = DaoQuery.use(delegator).from(x.ProductPriceRule).cache(true).queryList();
             if (productPriceRules == null) productPriceRules = new LinkedList<>();
         }
 
@@ -915,7 +929,7 @@ public class PriceServices {
             // check all conditions
             boolean allTrue = true;
             StringBuilder condsDescription = new StringBuilder();
-            List<GenericValue> productPriceConds = EntityQuery.use(delegator).from("ProductPriceCond").where("productPriceRuleId",
+            List<GenericValue> productPriceConds = DaoQuery.use(delegator).from(x.ProductPriceCond).where(x.productPriceRuleId,
                     productPriceRuleId).cache(true).queryList();
             for (GenericValue productPriceCond: productPriceConds) {
 
@@ -928,7 +942,7 @@ public class PriceServices {
                 }
 
                 // add condsDescription string entry
-                condsDescription.append("[");
+                condsDescription.append(x.str_1e5c2f36);
                 GenericValue inputParamEnum = productPriceCond.getRelatedOne(x.InputParamEnumeration, true);
 
                 condsDescription.append(inputParamEnum.getString(x.enumCode));
@@ -938,28 +952,28 @@ public class PriceServices {
                 condsDescription.append(operatorEnum.getString(x.description));
                 // condsDescription.append(":");
                 condsDescription.append(productPriceCond.getString(x.condValue));
-                condsDescription.append("] ");
+                condsDescription.append(x.str_01af9139);
             }
 
             // add some info about the prices we are calculating from
-            condsDescription.append("[list:");
+            condsDescription.append(x.list);
             condsDescription.append(listPrice);
-            condsDescription.append(";avgCost:");
+            condsDescription.append(x.avgCost);
             condsDescription.append(averageCost);
-            condsDescription.append(";margin:");
+            condsDescription.append(x.margin);
             condsDescription.append(margin);
-            condsDescription.append("] ");
+            condsDescription.append(x.str_01af9139);
 
             boolean foundFlatOverride = false;
 
             // if all true, perform all actions
             if (allTrue) {
                 // check isSale
-                if ("Y".equals(productPriceRule.getString(x.isSale))) {
+                if (x.Y.equals(productPriceRule.getString(x.isSale))) {
                     isSale = true;
                 }
 
-                List<GenericValue> productPriceActions = EntityQuery.use(delegator).from("ProductPriceAction").where("productPriceRuleId",
+                List<GenericValue> productPriceActions = DaoQuery.use(delegator).from(x.ProductPriceAction).where(x.productPriceRuleId,
                         productPriceRuleId).cache(true).queryList();
                 for (GenericValue productPriceAction: productPriceActions) {
 
@@ -968,43 +982,43 @@ public class PriceServices {
                     // yeah, finally here, perform the action, ie, modify the price
                     BigDecimal modifyAmount = BigDecimal.ZERO;
 
-                    if ("PRICE_POD".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                    if (x.PRICE_POD.equals(productPriceAction.getString(x.productPriceActionTypeId))) {
                         if (productPriceAction.get(x.amount) != null) {
                             modifyAmount = defaultPrice.multiply(productPriceAction.getBigDecimal(x.amount).movePointLeft(2));
                             price = defaultPrice;
                         }
-                    } else if ("PRICE_POL".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                    } else if (x.PRICE_POL.equals(productPriceAction.getString(x.productPriceActionTypeId))) {
                         if (productPriceAction.get(x.amount) != null) {
                             modifyAmount = listPrice.multiply(productPriceAction.getBigDecimal(x.amount).movePointLeft(2));
                         }
-                    } else if ("PRICE_POAC".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                    } else if (x.PRICE_POAC.equals(productPriceAction.getString(x.productPriceActionTypeId))) {
                         if (productPriceAction.get(x.amount) != null) {
                             modifyAmount = averageCost.multiply(productPriceAction.getBigDecimal(x.amount).movePointLeft(2));
                         }
-                    } else if ("PRICE_POM".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                    } else if (x.PRICE_POM.equals(productPriceAction.getString(x.productPriceActionTypeId))) {
                         if (productPriceAction.get(x.amount) != null) {
                             modifyAmount = margin.multiply(productPriceAction.getBigDecimal(x.amount).movePointLeft(2));
                         }
-                    } else if ("PRICE_POWHS".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                    } else if (x.PRICE_POWHS.equals(productPriceAction.getString(x.productPriceActionTypeId))) {
                         if (productPriceAction.get(x.amount) != null && wholesalePrice != null) {
                             modifyAmount = wholesalePrice.multiply(productPriceAction.getBigDecimal(x.amount).movePointLeft(2));
                         }
-                    } else if ("PRICE_FOL".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                    } else if (x.PRICE_FOL.equals(productPriceAction.getString(x.productPriceActionTypeId))) {
                         if (productPriceAction.get(x.amount) != null) {
                             modifyAmount = productPriceAction.getBigDecimal(x.amount);
                         }
-                    } else if ("PRICE_FLAT".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                    } else if (x.PRICE_FLAT.equals(productPriceAction.getString(x.productPriceActionTypeId))) {
                         // this one is a bit different, break out of the loop because we now have our final price
                         foundFlatOverride = true;
                         if (productPriceAction.get(x.amount) != null) {
                             price = productPriceAction.getBigDecimal(x.amount);
                         } else {
-                            Debug.logInfo("ProductPriceAction had null amount, using default price: " + defaultPrice + " for product with id "
+                            Debug.logInfo(x.ProductPriceAction_had_null_amount_using_default_price + defaultPrice + x.for_product_with_id
                                     + productId, MODULE);
                             price = defaultPrice;
                             isSale = false;                // reverse isSale flag, as this sale rule was actually not applied
                         }
-                    } else if ("PRICE_PFLAT".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                    } else if (x.PRICE_PFLAT.equals(productPriceAction.getString(x.productPriceActionTypeId))) {
                         // this one is a bit different too, break out of the loop because we now have our final price
                         foundFlatOverride = true;
                         price = promoPrice;
@@ -1013,21 +1027,21 @@ public class PriceServices {
                         }
                         if (price.compareTo(BigDecimal.ZERO) == 0) {
                             if (defaultPrice.compareTo(BigDecimal.ZERO) != 0) {
-                                Debug.logInfo("PromoPrice and ProductPriceAction had null amount, using default price: " + defaultPrice
-                                        + " for product with id " + productId, MODULE);
+                                Debug.logInfo(x.PromoPrice_and_ProductPriceAction_had_null_amount_using_default_price + defaultPrice
+                                        + x.for_product_with_id + productId, MODULE);
                                 price = defaultPrice;
                             } else if (listPrice.compareTo(BigDecimal.ZERO) != 0) {
-                                Debug.logInfo("PromoPrice and ProductPriceAction had null amount and no default price was available, "
-                                        + "using list price: " + listPrice + " for product with id " + productId, MODULE);
+                                Debug.logInfo(x.PromoPrice_and_ProductPriceAction_had_null_amount_and_no_default_price_was_available
+                                        + x.using_list_price + listPrice + x.for_product_with_id + productId, MODULE);
                                 price = listPrice;
                             } else {
-                                Debug.logError("PromoPrice and ProductPriceAction had null amount and no default or list price was available, "
-                                        + "so price is set to zero for product with id " + productId, MODULE);
+                                Debug.logError(x.PromoPrice_and_ProductPriceAction_had_null_amount_and_no_default_or_list_price_was_available
+                                        + x.so_price_is_set_to_zero_for_product_with_id + productId, MODULE);
                                 price = BigDecimal.ZERO;
                             }
                             isSale = false;                // reverse isSale flag, as this sale rule was actually not applied
                         }
-                    } else if ("PRICE_WFLAT".equals(productPriceAction.getString(x.productPriceActionTypeId))) {
+                    } else if (x.PRICE_WFLAT.equals(productPriceAction.getString(x.productPriceActionTypeId))) {
                         // same as promo price but using the wholesale price instead
                         foundFlatOverride = true;
                         price = wholesalePrice;
@@ -1036,16 +1050,16 @@ public class PriceServices {
                         }
                         if (price.compareTo(BigDecimal.ZERO) == 0) {
                             if (defaultPrice.compareTo(BigDecimal.ZERO) != 0) {
-                                Debug.logInfo("WholesalePrice and ProductPriceAction had null amount, using default price: " + defaultPrice
-                                        + " for product with id " + productId, MODULE);
+                                Debug.logInfo(x.WholesalePrice_and_ProductPriceAction_had_null_amount_using_default_price + defaultPrice
+                                        + x.for_product_with_id + productId, MODULE);
                                 price = defaultPrice;
                             } else if (listPrice.compareTo(BigDecimal.ZERO) != 0) {
-                                Debug.logInfo("WholesalePrice and ProductPriceAction had null amount and no default price was available, "
-                                        + "using list price: " + listPrice + " for product with id " + productId, MODULE);
+                                Debug.logInfo(x.WholesalePrice_and_ProductPriceAction_had_null_amount_and_no_default_price_was_available
+                                        + x.using_list_price + listPrice + x.for_product_with_id + productId, MODULE);
                                 price = listPrice;
                             } else {
-                                Debug.logError("WholesalePrice and ProductPriceAction had null amount and no default or list price was available,"
-                                        + " so price is set to zero for product with id " + productId, MODULE);
+                                Debug.logError(x.WholesalePrice_and_ProductPriceAction_had_null_amount_and_no_default_or_list_price_was_available
+                                        + x.so_price_is_set_to_zero_for_product_with_id_ae0d57a2 + productId, MODULE);
                                 price = BigDecimal.ZERO;
                             }
                             isSale = false; // reverse isSale flag, as this sale rule was actually not applied
@@ -1057,12 +1071,12 @@ public class PriceServices {
 
 
                     priceInfoDescription.append(condsDescription.toString());
-                    priceInfoDescription.append("[");
-                    priceInfoDescription.append(UtilProperties.getMessage(RESOURCE, "ProductPriceConditionType", locale));
+                    priceInfoDescription.append(x.str_1e5c2f36);
+                    priceInfoDescription.append(UtilProperties.getMessage(RESOURCE, x.ProductPriceConditionType, locale));
                     priceInfoDescription.append(productPriceAction.getString(x.productPriceActionTypeId));
-                    priceInfoDescription.append("]");
+                    priceInfoDescription.append(x.str_4ff447b8);
 
-                    GenericValue orderItemPriceInfo = delegator.makeValue("OrderItemPriceInfo");
+                    GenericValue orderItemPriceInfo = delegator.makeValue(x.OrderItemPriceInfo);
 
                     orderItemPriceInfo.set(x.productPriceRuleId, productPriceAction.get(x.productPriceRuleId));
                     orderItemPriceInfo.set(x.productPriceActionSeqId, productPriceAction.get(x.productPriceActionSeqId));
@@ -1093,11 +1107,11 @@ public class PriceServices {
         }
 
         if (Debug.verboseOn()) {
-            Debug.logVerbose("Unchecked Calculated price: " + price, MODULE);
-            Debug.logVerbose("PriceInfo:", MODULE);
+            Debug.logVerbose(x.Unchecked_Calculated_price + price, MODULE);
+            Debug.logVerbose(x.PriceInfo, MODULE);
             for (GenericValue orderItemPriceInfo: orderItemPriceInfos) {
                 if (Debug.verboseOn()) {
-                    Debug.logVerbose(" --- " + orderItemPriceInfo, MODULE);
+                    Debug.logVerbose(x.str_b5e406cc + orderItemPriceInfo, MODULE);
                 }
             }
         }
@@ -1126,18 +1140,18 @@ public class PriceServices {
         }
 
         if (Debug.verboseOn()) {
-            Debug.logVerbose("Final Calculated price: " + price + ", rules: " + totalRules + ", conds: " + totalConds
-                    + ", actions: " + totalActions, MODULE);
+            Debug.logVerbose(x.Final_Calculated_price + price + x.rules + totalRules + x.conds + totalConds
+                    + x.actions + totalActions, MODULE);
         }
 
-        calcResults.put("basePrice", price);
-        calcResults.put("price", price);
-        calcResults.put("listPrice", listPrice);
-        calcResults.put("defaultPrice", defaultPrice);
-        calcResults.put("averageCost", averageCost);
-        calcResults.put("orderItemPriceInfos", orderItemPriceInfos);
-        calcResults.put("isSale", isSale);
-        calcResults.put("validPriceFound", validPriceFound);
+        calcResults.put(x.basePrice, price);
+        calcResults.put(x.price, price);
+        calcResults.put(x.listPrice, listPrice);
+        calcResults.put(x.defaultPrice, defaultPrice);
+        calcResults.put(x.averageCost, averageCost);
+        calcResults.put(x.orderItemPriceInfos, orderItemPriceInfos);
+        calcResults.put(x.isSale, isSale);
+        calcResults.put(x.validPriceFound, validPriceFound);
 
         return calcResults;
     }
@@ -1146,18 +1160,18 @@ public class PriceServices {
             String productStoreGroupId, String webSiteId, String partyId, BigDecimal quantity, BigDecimal listPrice,
             String currencyUomId, Delegator delegator, Timestamp nowTimestamp) throws GenericEntityException {
         if (Debug.verboseOn()) {
-            Debug.logVerbose("Checking price condition: " + productPriceCond, MODULE);
+            Debug.logVerbose(x.Checking_price_condition + productPriceCond, MODULE);
         }
         int compare = 0;
 
-        if ("PRIP_PRODUCT_ID".equals(productPriceCond.getString(x.inputParamEnumId))) {
+        if (x.PRIP_PRODUCT_ID.equals(productPriceCond.getString(x.inputParamEnumId))) {
             compare = UtilMisc.toList(productId, virtualProductId).contains(productPriceCond.getString(x.condValue)) ? 0 : 1;
-        } else if ("PRIP_PROD_CAT_ID".equals(productPriceCond.getString(x.inputParamEnumId))) {
+        } else if (x.PRIP_PROD_CAT_ID.equals(productPriceCond.getString(x.inputParamEnumId))) {
             // if a ProductCategoryMember exists for this productId and the specified productCategoryId
             String productCategoryId = productPriceCond.getString(x.condValue);
             // and from/thru date within range
-            List<GenericValue> productCategoryMembers = EntityQuery.use(delegator).from("ProductCategoryMember")
-                    .where("productId", productId, "productCategoryId", productCategoryId)
+            List<GenericValue> productCategoryMembers = DaoQuery.use(delegator).from(x.ProductCategoryMember)
+                    .where(x.productId, productId, x.productCategoryId, productCategoryId)
                     .cache(true)
                     .filterByDate(nowTimestamp)
                     .queryList();
@@ -1174,48 +1188,48 @@ public class PriceServices {
             // NOTE: we may want to parameterize this in the future, ie with an indicator on the ProductPriceCond entity
             if (compare == 1 && UtilValidate.isNotEmpty(virtualProductId)) {
                 // and from/thru date within range
-                List<GenericValue> virtualProductCategoryMembers = EntityQuery.use(delegator).from("ProductCategoryMember").where("productId",
-                        virtualProductId, "productCategoryId", productCategoryId).cache(true).filterByDate(nowTimestamp).queryList();
+                List<GenericValue> virtualProductCategoryMembers = DaoQuery.use(delegator).from(x.ProductCategoryMember).where(x.productId,
+                        virtualProductId, x.productCategoryId, productCategoryId).cache(true).filterByDate(nowTimestamp).queryList();
                 if (UtilValidate.isNotEmpty(virtualProductCategoryMembers)) {
                     // we found a member record? great, then this condition is satisfied
                     compare = 0;
                 }
             }
-        } else if ("PRIP_PROD_FEAT_ID".equals(productPriceCond.getString(x.inputParamEnumId))) {
+        } else if (x.PRIP_PROD_FEAT_ID.equals(productPriceCond.getString(x.inputParamEnumId))) {
             // NOTE: DEJ20070130 don't retry this condition with the virtualProductId as well; this breaks various things you might want to do
             // with price rules, like have different pricing for a variant products with a certain distinguishing feature
 
             // if a ProductFeatureAppl exists for this productId and the specified productFeatureId
             String productFeatureId = productPriceCond.getString(x.condValue);
             // and from/thru date within range
-            List<GenericValue> productFeatureAppls = EntityQuery.use(delegator).from("ProductFeatureAppl").where("productId", productId,
-                    "productFeatureId", productFeatureId).cache(true).filterByDate(nowTimestamp).queryList();
+            List<GenericValue> productFeatureAppls = DaoQuery.use(delegator).from(x.ProductFeatureAppl).where(x.productId, productId,
+                    x.productFeatureId, productFeatureId).cache(true).filterByDate(nowTimestamp).queryList();
             // then 0 (equals), otherwise 1 (not equals)
             if (UtilValidate.isNotEmpty(productFeatureAppls)) {
                 compare = 0;
             } else {
                 compare = 1;
             }
-        } else if ("PRIP_PROD_CLG_ID".equals(productPriceCond.getString(x.inputParamEnumId))) {
+        } else if (x.PRIP_PROD_CLG_ID.equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (UtilValidate.isNotEmpty(prodCatalogId)) {
                 compare = prodCatalogId.compareTo(productPriceCond.getString(x.condValue));
             } else {
                 // this shouldn't happen because if prodCatalogId is null no PRIP_PROD_CLG_ID prices will be in the list
                 compare = 1;
             }
-        } else if ("PRIP_PROD_SGRP_ID".equals(productPriceCond.getString(x.inputParamEnumId))) {
+        } else if (x.PRIP_PROD_SGRP_ID.equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (UtilValidate.isNotEmpty(productStoreGroupId)) {
                 compare = productStoreGroupId.compareTo(productPriceCond.getString(x.condValue));
             } else {
                 compare = 1;
             }
-        } else if ("PRIP_WEBSITE_ID".equals(productPriceCond.getString(x.inputParamEnumId))) {
+        } else if (x.PRIP_WEBSITE_ID.equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (UtilValidate.isNotEmpty(webSiteId)) {
                 compare = webSiteId.compareTo(productPriceCond.getString(x.condValue));
             } else {
                 compare = 1;
             }
-        } else if ("PRIP_QUANTITY".equals(productPriceCond.getString(x.inputParamEnumId))) {
+        } else if (x.PRIP_QUANTITY.equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (quantity == null) {
                 // if no quantity is passed in, assume all quantity conditions pass
                 // NOTE: setting compare = 0 won't do the trick here because the condition won't always be or include and equal
@@ -1223,13 +1237,13 @@ public class PriceServices {
             } else {
                 compare = quantity.compareTo(new BigDecimal(productPriceCond.getString(x.condValue)));
             }
-        } else if ("PRIP_PARTY_ID".equals(productPriceCond.getString(x.inputParamEnumId))) {
+        } else if (x.PRIP_PARTY_ID.equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (UtilValidate.isNotEmpty(partyId)) {
                 compare = partyId.compareTo(productPriceCond.getString(x.condValue));
             } else {
                 compare = 1;
             }
-        } else if ("PRIP_PARTY_GRP_MEM".equals(productPriceCond.getString(x.inputParamEnumId))) {
+        } else if (x.PRIP_PARTY_GRP_MEM.equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (UtilValidate.isEmpty(partyId)) {
                 compare = 1;
             } else {
@@ -1241,8 +1255,8 @@ public class PriceServices {
                     // partyRelationshipTypeId=GROUP_ROLLUP, the partyIdTo is
                     // the group member, so the partyIdFrom is the groupPartyId
                     // and from/thru date within range
-                    List<GenericValue> partyRelationshipList = EntityQuery.use(delegator).from("PartyRelationship").where("partyIdFrom", groupPartyId,
-                            "partyIdTo", partyId, "partyRelationshipTypeId", "GROUP_ROLLUP").cache(true).filterByDate(nowTimestamp).queryList();
+                    List<GenericValue> partyRelationshipList = DaoQuery.use(delegator).from(x.PartyRelationship).where(x.partyIdFrom, groupPartyId,
+                            x.partyIdTo, partyId, x.partyRelationshipTypeId, x.GROUP_ROLLUP).cache(true).filterByDate(nowTimestamp).queryList();
                     // then 0 (equals), otherwise 1 (not equals)
                     if (UtilValidate.isNotEmpty(partyRelationshipList)) {
                         compare = 0;
@@ -1251,15 +1265,15 @@ public class PriceServices {
                     }
                 }
             }
-        } else if ("PRIP_PARTY_CLASS".equals(productPriceCond.getString(x.inputParamEnumId))) {
+        } else if (x.PRIP_PARTY_CLASS.equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (UtilValidate.isEmpty(partyId)) {
                 compare = 1;
             } else {
                 String partyClassificationGroupId = productPriceCond.getString(x.condValue);
                 // find any PartyClassification
                 // and from/thru date within range
-                List<GenericValue> partyClassificationList = EntityQuery.use(delegator).from("PartyClassification").where("partyId", partyId,
-                        "partyClassificationGroupId", partyClassificationGroupId).cache(true).filterByDate(nowTimestamp).queryList();
+                List<GenericValue> partyClassificationList = DaoQuery.use(delegator).from(x.PartyClassification).where(x.partyId, partyId,
+                        x.partyClassificationGroupId, partyClassificationGroupId).cache(true).filterByDate(nowTimestamp).queryList();
                 // then 0 (equals), otherwise 1 (not equals)
                 if (UtilValidate.isNotEmpty(partyClassificationList)) {
                     compare = 0;
@@ -1267,10 +1281,10 @@ public class PriceServices {
                     compare = 1;
                 }
             }
-        } else if ("PRIP_ROLE_TYPE".equals(productPriceCond.getString(x.inputParamEnumId))) {
+        } else if (x.PRIP_ROLE_TYPE.equals(productPriceCond.getString(x.inputParamEnumId))) {
             if (partyId != null) {
                 // if a PartyRole exists for this partyId and the specified roleTypeId
-                GenericValue partyRole = EntityQuery.use(delegator).from("PartyRole").where("partyId", partyId, "roleTypeId",
+                GenericValue partyRole = DaoQuery.use(delegator).from(x.PartyRole).where(x.partyId, partyId, x.roleTypeId,
                         productPriceCond.getString(x.condValue)).cache(true).queryOne();
 
                 // then 0 (equals), otherwise 1 (not equals)
@@ -1282,37 +1296,37 @@ public class PriceServices {
             } else {
                 compare = 1;
             }
-        } else if ("PRIP_LIST_PRICE".equals(productPriceCond.getString(x.inputParamEnumId))) {
+        } else if (x.PRIP_LIST_PRICE.equals(productPriceCond.getString(x.inputParamEnumId))) {
             BigDecimal listPriceValue = listPrice;
 
             compare = listPriceValue.compareTo(new BigDecimal(productPriceCond.getString(x.condValue)));
-        } else if ("PRIP_CURRENCY_UOMID".equals(productPriceCond.getString(x.inputParamEnumId))) {
+        } else if (x.PRIP_CURRENCY_UOMID.equals(productPriceCond.getString(x.inputParamEnumId))) {
             compare = currencyUomId.compareTo(productPriceCond.getString(x.condValue));
         } else {
-            Debug.logWarning("An un-supported productPriceCond input parameter (lhs) was used: " + productPriceCond.getString(x.inputParamEnumId)
-                    + ", returning false, ie check failed", MODULE);
+            Debug.logWarning(x.An_un_supported_productPriceCond_input_parameter_lhs_was_used + productPriceCond.getString(x.inputParamEnumId)
+                    + x.returning_false_ie_check_failed, MODULE);
             return false;
         }
 
         if (Debug.verboseOn()) {
-            Debug.logVerbose("Price Condition compare done, compare=" + compare, MODULE);
+            Debug.logVerbose(x.Price_Condition_compare_done_compare + compare, MODULE);
         }
 
-        if ("PRC_EQ".equals(productPriceCond.getString(x.operatorEnumId))) {
+        if (x.PRC_EQ.equals(productPriceCond.getString(x.operatorEnumId))) {
             if (compare == 0) return true;
-        } else if ("PRC_NEQ".equals(productPriceCond.getString(x.operatorEnumId))) {
+        } else if (x.PRC_NEQ.equals(productPriceCond.getString(x.operatorEnumId))) {
             if (compare != 0) return true;
-        } else if ("PRC_LT".equals(productPriceCond.getString(x.operatorEnumId))) {
+        } else if (x.PRC_LT.equals(productPriceCond.getString(x.operatorEnumId))) {
             if (compare < 0) return true;
-        } else if ("PRC_LTE".equals(productPriceCond.getString(x.operatorEnumId))) {
+        } else if (x.PRC_LTE.equals(productPriceCond.getString(x.operatorEnumId))) {
             if (compare <= 0) return true;
-        } else if ("PRC_GT".equals(productPriceCond.getString(x.operatorEnumId))) {
+        } else if (x.PRC_GT.equals(productPriceCond.getString(x.operatorEnumId))) {
             if (compare > 0) return true;
-        } else if ("PRC_GTE".equals(productPriceCond.getString(x.operatorEnumId))) {
+        } else if (x.PRC_GTE.equals(productPriceCond.getString(x.operatorEnumId))) {
             if (compare >= 0) return true;
         } else {
-            Debug.logWarning("An un-supported productPriceCond condition was used: " + productPriceCond.getString(x.operatorEnumId)
-                    + ", returning false, ie check failed", MODULE);
+            Debug.logWarning(x.An_un_supported_productPriceCond_condition_was_used + productPriceCond.getString(x.operatorEnumId)
+                    + x.returning_false_ie_check_failed, MODULE);
             return false;
         }
         return false;
@@ -1320,8 +1334,8 @@ public class PriceServices {
 
     private static int checkConditionPartyHierarchy(Delegator delegator, Timestamp nowTimestamp, String groupPartyId, String partyId)
             throws GenericEntityException {
-        List<GenericValue> partyRelationshipList = EntityQuery.use(delegator).from("PartyRelationship").where("partyIdTo", partyId,
-                "partyRelationshipTypeId", "GROUP_ROLLUP").cache(true).filterByDate(nowTimestamp).queryList();
+        List<GenericValue> partyRelationshipList = DaoQuery.use(delegator).from(x.PartyRelationship).where(x.partyIdTo, partyId,
+                x.partyRelationshipTypeId, x.GROUP_ROLLUP).cache(true).filterByDate(nowTimestamp).queryList();
         for (GenericValue genericValue : partyRelationshipList) {
             String partyIdFrom = (String) genericValue.get(x.partyIdFrom);
             if (partyIdFrom.equals(groupPartyId)) {
@@ -1356,39 +1370,39 @@ public class PriceServices {
 
         // a) Get the Price from the Agreement* data model
         if (Debug.infoOn()) {
-            Debug.logInfo("Try to resolve purchase price from agreement " + agreementId, MODULE);
+            Debug.logInfo(x.Try_to_resolve_purchase_price_from_agreement + agreementId, MODULE);
         }
         if (UtilValidate.isNotEmpty(agreementId)) {
             //TODO Search before if agreement is associate to SupplierProduct.
             //confirm that agreement is price application on purchase type and contains a value for the product
             EntityCondition cond = EntityCondition.makeConditionMap(
-                    "agreementId", agreementId,
-                    "agreementItemTypeId", "AGREEMENT_PRICING_PR",
-                    "agreementTypeId", "PURCHASE_AGREEMENT",
-                    "productId", productId);
+                    x.agreementId, agreementId,
+                    x.agreementItemTypeId, x.AGREEMENT_PRICING_PR,
+                    x.agreementTypeId, x.PURCHASE_AGREEMENT,
+                    x.productId, productId);
             try {
-                List<GenericValue> agreementPrices = delegator.findList("AgreementItemAndProductAppl", cond,
-                        UtilMisc.toSet("price", "currencyUomId"), null, null, true);
+                List<GenericValue> agreementPrices = delegator.findList(x.AgreementItemAndProductAppl, cond,
+                        UtilMisc.toSet(x.price, x.currencyUomId), null, null, true);
                 if (UtilValidate.isNotEmpty(agreementPrices)) {
                     GenericValue priceFound = null;
                     //resolve price on given currency. If not define, try to convert a present price
-                    priceFound = EntityUtil.getFirst(EntityUtil.filterByAnd(agreementPrices, UtilMisc.toMap("currencyUomId", currencyUomId)));
+                    priceFound = EntityUtil.getFirst(EntityUtil.filterByAnd(agreementPrices, UtilMisc.toMap(x.currencyUomId, currencyUomId)));
                     if (Debug.infoOn()) {
-                        Debug.logInfo("             AgreementItem " + agreementPrices, MODULE);
-                        Debug.logInfo("             currencyUomId " + currencyUomId, MODULE);
-                        Debug.logInfo("             priceFound " + priceFound, MODULE);
+                        Debug.logInfo(x.AgreementItem_824a0b99 + agreementPrices, MODULE);
+                        Debug.logInfo(x.currencyUomId_229d064c + currencyUomId, MODULE);
+                        Debug.logInfo(x.priceFound + priceFound, MODULE);
                     }
                     if (priceFound == null) {
                         priceFound = EntityUtil.getFirst(agreementPrices);
                         try {
-                            Map<String, Object> priceConvertMap = UtilMisc.toMap("uomId", priceFound.getString(x.currencyUomId), "uomIdTo",
-                                    currencyUomId, "originalValue", priceFound.getBigDecimal(x.price), "defaultDecimalScale", 2L,
-                                    "defaultRoundingMode", "HalfUp");
-                            Map<String, Object> priceResults = dispatcher.runSync("convertUom", priceConvertMap);
-                            if (ServiceUtil.isError(priceResults) || (priceResults.get("convertedValue") == null)) {
-                                Debug.logWarning("Unable to convert " + priceFound + " for product  " + productId, MODULE);
+                            Map<String, Object> priceConvertMap = UtilMisc.toMap(x.uomId, priceFound.getString(x.currencyUomId), x.uomIdTo,
+                                    currencyUomId, x.originalValue, priceFound.getBigDecimal(x.price), x.defaultDecimalScale, 2L,
+                                    x.defaultRoundingMode, x.HalfUp);
+                            Map<String, Object> priceResults = dispatcher.runSync(x.convertUom, priceConvertMap);
+                            if (ServiceUtil.isError(priceResults) || (priceResults.get(x.convertedValue) == null)) {
+                                Debug.logWarning(x.Unable_to_convert + priceFound + x.for_product + productId, MODULE);
                             } else {
-                                price = (BigDecimal) priceResults.get("convertedValue");
+                                price = (BigDecimal) priceResults.get(x.convertedValue);
                                 validPriceFound = true;
                             }
                         } catch (GenericServiceException e) {
@@ -1400,14 +1414,14 @@ public class PriceServices {
                     }
                 }
                 if (validPriceFound) {
-                    GenericValue agreement = delegator.findOne("Agreement", true, UtilMisc.toMap("agreementId", agreementId));
+                    GenericValue agreement = delegator.findOne(x.Agreement, true, UtilMisc.toMap(x.agreementId, agreementId));
                     StringBuilder priceInfoDescription = new StringBuilder();
-                    priceInfoDescription.append(UtilProperties.getMessage(RESOURCE, "ProductAgreementUse", locale));
-                    priceInfoDescription.append("[");
+                    priceInfoDescription.append(UtilProperties.getMessage(RESOURCE, x.ProductAgreementUse, locale));
+                    priceInfoDescription.append(x.str_1e5c2f36);
                     priceInfoDescription.append(agreementId);
-                    priceInfoDescription.append("] ");
+                    priceInfoDescription.append(x.str_01af9139);
                     priceInfoDescription.append(agreement.get(x.description));
-                    GenericValue orderItemPriceInfo = delegator.makeValue("OrderItemPriceInfo");
+                    GenericValue orderItemPriceInfo = delegator.makeValue(x.OrderItemPriceInfo);
                     // make sure description is <= than 250 chars
                     String priceInfoDescriptionString = priceInfoDescription.toString();
                     if (priceInfoDescriptionString.length() > 250) {
@@ -1424,17 +1438,17 @@ public class PriceServices {
 
         // b) If no price can be found, get the lastPrice from the SupplierProduct entity
         if (!validPriceFound) {
-            Map<String, Object> priceContext = UtilMisc.toMap("currencyUomId", currencyUomId, "partyId", partyId, "productId", productId,
-                    "quantity", quantity, "agreementId", agreementId);
+            Map<String, Object> priceContext = UtilMisc.toMap(x.currencyUomId, currencyUomId, x.partyId, partyId, x.productId, productId,
+                    x.quantity, quantity, x.agreementId, agreementId);
             List<GenericValue> productSuppliers = null;
             try {
-                Map<String, Object> priceResult = dispatcher.runSync("getSuppliersForProduct", priceContext);
+                Map<String, Object> priceResult = dispatcher.runSync(x.getSuppliersForProduct, priceContext);
                 if (ServiceUtil.isError(priceResult)) {
                     String errMsg = ServiceUtil.getErrorMessage(priceResult);
                     Debug.logError(errMsg, MODULE);
                     return ServiceUtil.returnError(errMsg);
                 }
-                productSuppliers = UtilGenerics.cast(priceResult.get("supplierProducts"));
+                productSuppliers = UtilGenerics.cast(priceResult.get(x.supplierProducts));
             } catch (GenericServiceException gse) {
                 Debug.logError(gse, MODULE);
                 return ServiceUtil.returnError(gse.getMessage());
@@ -1447,14 +1461,14 @@ public class PriceServices {
                     }
                     // add a orderItemPriceInfo element too, without orderId or orderItemId
                     StringBuilder priceInfoDescription = new StringBuilder();
-                    priceInfoDescription.append(UtilProperties.getMessage(RESOURCE, "ProductSupplier", locale));
-                    priceInfoDescription.append(" [");
-                    priceInfoDescription.append(UtilProperties.getMessage(RESOURCE, "ProductSupplierMinimumOrderQuantity", locale));
+                    priceInfoDescription.append(UtilProperties.getMessage(RESOURCE, x.ProductSupplier, locale));
+                    priceInfoDescription.append(x.str_42cbdb3c);
+                    priceInfoDescription.append(UtilProperties.getMessage(RESOURCE, x.ProductSupplierMinimumOrderQuantity, locale));
                     priceInfoDescription.append(productSupplier.getBigDecimal(x.minimumOrderQuantity));
-                    priceInfoDescription.append(UtilProperties.getMessage(RESOURCE, "ProductSupplierLastPrice", locale));
+                    priceInfoDescription.append(UtilProperties.getMessage(RESOURCE, x.ProductSupplierLastPrice, locale));
                     priceInfoDescription.append(productSupplier.getBigDecimal(x.lastPrice));
-                    priceInfoDescription.append("]");
-                    GenericValue orderItemPriceInfo = delegator.makeValue("OrderItemPriceInfo");
+                    priceInfoDescription.append(x.str_4ff447b8);
+                    GenericValue orderItemPriceInfo = delegator.makeValue(x.OrderItemPriceInfo);
                     // make sure description is <= than 250 chars
                     String priceInfoDescriptionString = priceInfoDescription.toString();
                     if (priceInfoDescriptionString.length() > 250) {
@@ -1470,16 +1484,16 @@ public class PriceServices {
         if (!validPriceFound) {
             List<GenericValue> prices = null;
             try {
-                prices = EntityQuery.use(delegator).from("ProductPrice").where("productId", productId, "productPricePurposeId",
-                        "PURCHASE").orderBy("-fromDate").queryList();
+                prices = DaoQuery.use(delegator).from(x.ProductPrice).where(x.productId, productId, x.productPricePurposeId,
+                        x.PURCHASE).orderBy(x.fromDate_f5440273).queryList();
 
                 // if no prices are found; find the prices of the parent product
                 if (UtilValidate.isEmpty(prices)) {
                     GenericValue parentProduct = ProductWorker.getParentProduct(productId, delegator);
                     if (parentProduct != null) {
                         String parentProductId = parentProduct.getString(x.productId);
-                        prices = EntityQuery.use(delegator).from("ProductPrice").where("productId", parentProductId, "productPricePurposeId",
-                                "PURCHASE").orderBy("-fromDate").queryList();
+                        prices = DaoQuery.use(delegator).from(x.ProductPrice).where(x.productId, parentProductId, x.productPricePurposeId,
+                                x.PURCHASE).orderBy(x.fromDate_f5440273).queryList();
                     }
                 }
             } catch (GenericEntityException e) {
@@ -1491,13 +1505,13 @@ public class PriceServices {
             prices = EntityUtil.filterByDate(prices);
 
             // first check for the AVERAGE_COST price type
-            List<GenericValue> pricesToUse = EntityUtil.filterByAnd(prices, UtilMisc.toMap("productPriceTypeId", "AVERAGE_COST"));
+            List<GenericValue> pricesToUse = EntityUtil.filterByAnd(prices, UtilMisc.toMap(x.productPriceTypeId, x.AVERAGE_COST));
             if (UtilValidate.isEmpty(pricesToUse)) {
                 // next go with default price
-                pricesToUse = EntityUtil.filterByAnd(prices, UtilMisc.toMap("productPriceTypeId", "DEFAULT_PRICE"));
+                pricesToUse = EntityUtil.filterByAnd(prices, UtilMisc.toMap(x.productPriceTypeId, x.DEFAULT_PRICE));
                 if (UtilValidate.isEmpty(pricesToUse)) {
                     // finally use list price
-                    pricesToUse = EntityUtil.filterByAnd(prices, UtilMisc.toMap("productPriceTypeId", "LIST_PRICE"));
+                    pricesToUse = EntityUtil.filterByAnd(prices, UtilMisc.toMap(x.productPriceTypeId, x.LIST_PRICE));
                 }
             }
 
@@ -1509,9 +1523,234 @@ public class PriceServices {
             }
         }
 
-        result.put("price", price);
-        result.put("validPriceFound", validPriceFound);
-        result.put("orderItemPriceInfos", orderItemPriceInfos);
+        result.put(x.price, price);
+        result.put(x.validPriceFound, validPriceFound);
+        result.put(x.orderItemPriceInfos, orderItemPriceInfos);
         return result;
     }
+
+    private static final class DaoQuery {
+        private static final String DAO_CLASS_PREFIX = x.org_apache_ofbiz_persistence_dao;
+        private static final String DAO_CLASS_SUFFIX = x.Dao;
+
+        private final Delegator delegator;
+        private String entityName;
+        private final Map<String, Object> whereMap = new LinkedHashMap<>();
+        private final List<String> orderByFields = new ArrayList<>();
+        private boolean needDateFilter;
+        private Timestamp filterMoment;
+
+        private DaoQuery(Delegator delegator) {
+            this.delegator = Objects.requireNonNull(delegator, x.delegator_must_not_be_null);
+        }
+
+        static DaoQuery use(Delegator delegator) {
+            return new DaoQuery(delegator);
+        }
+
+        DaoQuery from(String entityName) {
+            this.entityName = entityName;
+            return this;
+        }
+
+        DaoQuery where(Object... fieldValuePairs) {
+            if (fieldValuePairs.length == 1 && fieldValuePairs[0] instanceof Map) {
+                @SuppressWarnings(x.unchecked)
+                Map<String, ? extends Object> map = (Map<String, ? extends Object>) fieldValuePairs[0];
+                return where(map);
+            }
+
+            if (fieldValuePairs.length % 2 != 0) {
+                throw new IllegalArgumentException(x.fieldValuePairs_must_be_key_value_pairs);
+            }
+
+            for (int i = 0; i < fieldValuePairs.length; i += 2) {
+                String fieldName = String.valueOf(fieldValuePairs[i]);
+                whereMap.put(fieldName, fieldValuePairs[i + 1]);
+            }
+            return this;
+        }
+
+        DaoQuery where(Map<String, ? extends Object> fields) {
+            if (fields != null) {
+                whereMap.putAll(fields);
+            }
+            return this;
+        }
+
+        DaoQuery orderBy(String... fields) {
+            if (fields != null) {
+                for (String field : fields) {
+                    if (UtilValidate.isNotEmpty(field)) {
+                        orderByFields.add(field);
+                    }
+                }
+            }
+            return this;
+        }
+
+        DaoQuery cache() {
+            return this;
+        }
+
+        DaoQuery cache(boolean ignored) {
+            return this;
+        }
+
+        DaoQuery filterByDate() {
+            this.needDateFilter = true;
+            this.filterMoment = null;
+            return this;
+        }
+
+        DaoQuery filterByDate(Timestamp moment) {
+            this.needDateFilter = true;
+            this.filterMoment = moment;
+            return this;
+        }
+
+        List<GenericValue> queryList() throws GenericEntityException {
+            if (UtilValidate.isEmpty(entityName)) {
+                throw new GenericEntityException(x.Entity_name_must_be_specified_before_query_execution);
+            }
+
+            if (x.AgreementItemAndProductAppl.equals(entityName)) {
+                return filterByDateIfNeeded(queryAgreementItemAndProductAppl());
+            }
+
+            Dao<?, ?, ?> dao = resolveDao(entityName);
+            Condition queryCondition = buildCondition();
+
+            try {
+                List<GenericValue> values = dao.query(queryCondition, (rs, labels) -> readGenericValues(rs, labels, entityName));
+                return filterByDateIfNeeded(values);
+            } catch (SQLException e) {
+                throw new GenericEntityException(x.Failed_to_query_entity_via_DAO + entityName, e);
+            }
+        }
+
+        GenericValue queryOne() throws GenericEntityException {
+            return EntityUtil.getFirst(queryList());
+        }
+
+        GenericValue queryFirst() throws GenericEntityException {
+            return EntityUtil.getFirst(queryList());
+        }
+
+        private Condition buildCondition() {
+            Condition whereCondition = buildWhereCondition();
+            if (orderByFields.isEmpty()) {
+                return whereCondition;
+            }
+
+            Criteria criteria = Filters.criteria();
+            if (!whereMap.isEmpty()) {
+                criteria.where(whereCondition);
+            }
+
+            Map<String, SortDirection> orders = new LinkedHashMap<>();
+            for (String orderByField : orderByFields) {
+                if (orderByField.startsWith(x.str_3bc15c8a)) {
+                    orders.put(orderByField.substring(1), SortDirection.DESC);
+                } else {
+                    orders.put(orderByField, SortDirection.ASC);
+                }
+            }
+            criteria.orderBy(orders);
+
+            return criteria;
+        }
+
+        private Condition buildWhereCondition() {
+            if (whereMap.isEmpty()) {
+                return Filters.alwaysTrue();
+            }
+
+            List<Condition> conditions = new ArrayList<>(whereMap.size());
+            for (Map.Entry<String, Object> entry : whereMap.entrySet()) {
+                if (entry.getValue() == null) {
+                    conditions.add(Filters.isNull(entry.getKey()));
+                } else {
+                    conditions.add(Filters.eq(entry.getKey(), entry.getValue()));
+                }
+            }
+
+            return Filters.and(conditions);
+        }
+
+        private List<GenericValue> filterByDateIfNeeded(List<GenericValue> values) {
+            if (!needDateFilter || UtilValidate.isEmpty(values)) {
+                return values;
+            }
+
+            if (filterMoment != null) {
+                return EntityUtil.filterByDate(values, filterMoment);
+            }
+
+            return EntityUtil.filterByDate(values, true);
+        }
+
+        private Dao<?, ?, ?> resolveDao(String entityName) throws GenericEntityException {
+            try {
+                @SuppressWarnings({ x.rawtypes, x.unchecked })
+                Class<Dao<?, ?, ?>> daoClass = (Class) Class.forName(DAO_CLASS_PREFIX + entityName + DAO_CLASS_SUFFIX);
+                @SuppressWarnings({ x.rawtypes, x.unchecked })
+                Dao<?, ?, ?> dao = (Dao<?, ?, ?>) DaoRegistry.getDao(delegator, entityName, (Class) daoClass);
+                return dao;
+            } catch (ClassNotFoundException e) {
+                throw new GenericEntityException(x.No_DAO_implementation_found_for_entity + entityName, e);
+            }
+        }
+
+        private List<GenericValue> queryAgreementItemAndProductAppl() throws GenericEntityException {
+            Object agreementId = whereMap.get(x.agreementId);
+            Object productId = whereMap.get(x.productId);
+            Object currencyUomId = whereMap.get(x.currencyUomId);
+
+            if (agreementId == null || productId == null) {
+                return new LinkedList<>();
+            }
+
+            List<GenericValue> productAppls = DaoQuery.use(delegator)
+                    .from(x.AgreementProductAppl)
+                    .where(x.agreementId, agreementId, x.productId, productId)
+                    .queryList();
+
+            List<GenericValue> results = new LinkedList<>();
+            for (GenericValue productAppl : productAppls) {
+                GenericValue agreementItem = DaoQuery.use(delegator)
+                        .from(x.AgreementItem)
+                        .where(x.agreementId, productAppl.getString(x.agreementId), x.agreementItemSeqId, productAppl.getString(x.agreementItemSeqId))
+                        .queryOne();
+
+                if (agreementItem == null) {
+                    continue;
+                }
+
+                Map<String, Object> mergedFields = new HashMap<>();
+                mergedFields.putAll(UtilGenerics.cast(productAppl));
+                mergedFields.putAll(UtilGenerics.cast(agreementItem));
+
+                GenericValue mergedValue = delegator.makeValue(x.AgreementItemAndProductAppl, mergedFields);
+                if (currencyUomId == null || currencyUomId.equals(mergedValue.get(x.currencyUomId))) {
+                    results.add(mergedValue);
+                }
+            }
+
+            return results;
+        }
+
+        private List<GenericValue> readGenericValues(ResultSet rs, List<String> labels, String entityName) throws SQLException {
+            List<GenericValue> results = new LinkedList<>();
+            while (rs.next()) {
+                Map<String, Object> fields = new HashMap<>();
+                for (int i = 0; i < labels.size(); i++) {
+                    fields.put(labels.get(i), rs.getObject(i + 1));
+                }
+                results.add(delegator.makeValue(entityName, fields));
+            }
+            return results;
+        }
+    }
 }
+

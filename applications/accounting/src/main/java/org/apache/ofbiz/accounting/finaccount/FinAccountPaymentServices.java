@@ -37,8 +37,9 @@ import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityOperator;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.UserLoginDao;
 import org.apache.ofbiz.order.finaccount.FinAccountHelper;
 import org.apache.ofbiz.order.order.OrderReadHelper;
 import org.apache.ofbiz.product.store.ProductStoreWorker;
@@ -57,7 +58,7 @@ import org.apache.ofbiz.model.FinAccountPaymentServicesContext;
 public class FinAccountPaymentServices {
 
     private static final String MODULE = FinAccountPaymentServices.class.getName();
-    private static final String RES_ERROR = "AccountingErrorUiLabels";
+    private static final String RES_ERROR = x.AccountingErrorUiLabels;
 
     // base payment integration services
     public static Map<String, Object> finAccountPreAuth(DispatchContext dctx, FinAccountPaymentServicesContext context) {
@@ -76,10 +77,10 @@ public class FinAccountPaymentServices {
             // check for an existing auth trans and cancel it
             GenericValue authTrans = PaymentGatewayServices.getAuthTransaction(paymentPref);
             if (authTrans != null) {
-                Map<String, Object> input = UtilMisc.toMap("userLogin", userLogin, "finAccountAuthId",
+                Map<String, Object> input = UtilMisc.toMap(x.userLogin, userLogin, x.finAccountAuthId,
                         authTrans.get(x.referenceNum));
                 try {
-                    Map<String, Object> result = dispatcher.runSync("expireFinAccountAuth", input);
+                    Map<String, Object> result = dispatcher.runSync(x.expireFinAccountAuth, input);
                     if (ServiceUtil.isError(result)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(result));
                     }
@@ -111,8 +112,8 @@ public class FinAccountPaymentServices {
         GenericValue finAccount;
         if (finAccountId != null) {
             try {
-                finAccount = EntityQuery.use(delegator).from("FinAccount").where("finAccountId", finAccountId)
-                        .queryOne();
+                UserLoginDao finAccountDao = DaoRegistry.getDao(delegator, x.FinAccount, UserLoginDao.class);
+                finAccount = finAccountDao.findOne(delegator, x.FinAccount, UtilMisc.toMap(x.finAccountId, finAccountId), false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
@@ -124,16 +125,16 @@ public class FinAccountPaymentServices {
                 } catch (GenericEntityException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "AccountingFinAccountCannotLocateItFromAccountCode", locale));
+                            x.AccountingFinAccountCannotLocateItFromAccountCode, locale));
                 }
             } else {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "AccountingFinAccountIdAndFinAccountCodeAreNull", locale));
+                        x.AccountingFinAccountIdAndFinAccountCodeAreNull, locale));
             }
         }
         if (finAccount == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountIdInvalid", locale));
+                    x.AccountingFinAccountIdInvalid, locale));
         }
 
         String finAccountTypeId = finAccount.getString(x.finAccountTypeId);
@@ -142,22 +143,23 @@ public class FinAccountPaymentServices {
 
         try {
             // fin the store requires a pin number; validate the PIN with the code
-            Map<String, Object> findProductStoreFinActSettingMap = UtilMisc.<String, Object>toMap("productStoreId",
-                    productStoreId, "finAccountTypeId", finAccountTypeId);
-            GenericValue finAccountSettings = EntityQuery.use(delegator).from("ProductStoreFinActSetting").where(
-                    findProductStoreFinActSettingMap).cache().queryOne();
+            Map<String, Object> findProductStoreFinActSettingMap = UtilMisc.<String, Object>toMap(x.productStoreId,
+                    productStoreId, x.finAccountTypeId, finAccountTypeId);
+            UserLoginDao productStoreFinActSettingDao = DaoRegistry.getDao(delegator, x.ProductStoreFinActSetting, UserLoginDao.class);
+            GenericValue finAccountSettings = productStoreFinActSettingDao.findOne(delegator, x.ProductStoreFinActSetting,
+                    findProductStoreFinActSettingMap, true);
 
             if (finAccountSettings == null) {
                 Debug.logWarning(
-                        "In finAccountPreAuth could not find ProductStoreFinActSetting record, values searched by: "
+                        x.In_finAccountPreAuth_could_not_find_ProductStoreFinActSetting_record_values_searched_by
                                 + findProductStoreFinActSettingMap, MODULE);
             }
             if (Debug.verboseOn()) {
-                Debug.logVerbose("In finAccountPreAuth finAccountSettings=" + finAccountSettings, MODULE);
+                Debug.logVerbose(x.In_finAccountPreAuth_finAccountSettings + finAccountSettings, MODULE);
             }
 
             BigDecimal minBalance = FinAccountHelper.getZero();
-            String allowAuthToNegative = "N";
+            String allowAuthToNegative = x.N;
 
             if (finAccountSettings != null) {
                 allowAuthToNegative = finAccountSettings.getString(x.allowAuthToNegative);
@@ -167,17 +169,17 @@ public class FinAccountPaymentServices {
                 }
 
                 // validate the PIN if the store requires it
-                if ("Y".equals(finAccountSettings.getString(x.requirePinCode))) {
+                if (x.Y.equals(finAccountSettings.getString(x.requirePinCode))) {
                     if (!FinAccountHelper.validatePin(delegator, finAccountCode, finAccountPin)) {
                         Map<String, Object> result = ServiceUtil.returnSuccess();
-                        result.put("authMessage", UtilProperties.getMessage(RES_ERROR,
-                                "AccountingFinAccountPinCodeCombinatorNotFound", locale));
-                        result.put("authResult", Boolean.FALSE);
-                        result.put("processAmount", amount);
-                        result.put("authFlag", "0");
-                        result.put("authCode", "A");
-                        result.put("authRefNum", "0");
-                        Debug.logWarning("Unable to auth FinAccount: " + result, MODULE);
+                        result.put(x.authMessage, UtilProperties.getMessage(RES_ERROR,
+                                x.AccountingFinAccountPinCodeCombinatorNotFound, locale));
+                        result.put(x.authResult, Boolean.FALSE);
+                        result.put(x.processAmount, amount);
+                        result.put(x.authFlag, x._0);
+                        result.put(x.authCode, x.A);
+                        result.put(x.authRefNum, x._0);
+                        Debug.logWarning(x.Unable_to_auth_FinAccount + result, MODULE);
                         return result;
                     }
                 }
@@ -187,44 +189,44 @@ public class FinAccountPaymentServices {
             if ((finAccount.getTimestamp(x.thruDate) != null) && (finAccount.getTimestamp(x.thruDate).before(
                     UtilDateTime.nowTimestamp()))) {
                 Map<String, Object> result = ServiceUtil.returnSuccess();
-                result.put("authMessage", UtilProperties.getMessage(RES_ERROR,
-                        "AccountingFinAccountExpired",
-                        UtilMisc.toMap("thruDate", finAccount.getTimestamp(x.thruDate)), locale));
-                result.put("authResult", Boolean.FALSE);
-                result.put("processAmount", amount);
-                result.put("authFlag", "0");
-                result.put("authCode", "A");
-                result.put("authRefNum", "0");
-                Debug.logWarning("Unable to auth FinAccount: " + result, MODULE);
+                result.put(x.authMessage, UtilProperties.getMessage(RES_ERROR,
+                        x.AccountingFinAccountExpired,
+                        UtilMisc.toMap(x.thruDate, finAccount.getTimestamp(x.thruDate)), locale));
+                result.put(x.authResult, Boolean.FALSE);
+                result.put(x.processAmount, amount);
+                result.put(x.authFlag, x._0);
+                result.put(x.authCode, x.A);
+                result.put(x.authRefNum, x._0);
+                Debug.logWarning(x.Unable_to_auth_FinAccount + result, MODULE);
                 return result;
             }
 
             // check for account being in bad standing somehow
-            if ("FNACT_NEGPENDREPL".equals(statusId) || "FNACT_MANFROZEN".equals(statusId) || "FNACT_CANCELLED".equals(
+            if (x.FNACT_NEGPENDREPL.equals(statusId) || x.FNACT_MANFROZEN.equals(statusId) || x.FNACT_CANCELLED.equals(
                     statusId)) {
                 // refresh the finaccount
                 finAccount.refresh();
                 statusId = finAccount.getString(x.statusId);
 
-                if ("FNACT_NEGPENDREPL".equals(statusId) || "FNACT_MANFROZEN".equals(statusId) || "FNACT_CANCELLED"
+                if (x.FNACT_NEGPENDREPL.equals(statusId) || x.FNACT_MANFROZEN.equals(statusId) || x.FNACT_CANCELLED
                         .equals(statusId)) {
                     Map<String, Object> result = ServiceUtil.returnSuccess();
-                    if ("FNACT_NEGPENDREPL".equals(statusId)) {
-                        result.put("authMessage", UtilProperties.getMessage(RES_ERROR,
-                                "AccountingFinAccountNegative", locale));
-                    } else if ("FNACT_MANFROZEN".equals(statusId)) {
-                        result.put("authMessage", UtilProperties.getMessage(RES_ERROR,
-                                "AccountingFinAccountFrozen", locale));
-                    } else if ("FNACT_CANCELLED".equals(statusId)) {
-                        result.put("authMessage", UtilProperties.getMessage(RES_ERROR,
-                                "AccountingFinAccountCancelled", locale));
+                    if (x.FNACT_NEGPENDREPL.equals(statusId)) {
+                        result.put(x.authMessage, UtilProperties.getMessage(RES_ERROR,
+                                x.AccountingFinAccountNegative, locale));
+                    } else if (x.FNACT_MANFROZEN.equals(statusId)) {
+                        result.put(x.authMessage, UtilProperties.getMessage(RES_ERROR,
+                                x.AccountingFinAccountFrozen, locale));
+                    } else if (x.FNACT_CANCELLED.equals(statusId)) {
+                        result.put(x.authMessage, UtilProperties.getMessage(RES_ERROR,
+                                x.AccountingFinAccountCancelled, locale));
                     }
-                    result.put("authResult", Boolean.FALSE);
-                    result.put("processAmount", amount);
-                    result.put("authFlag", "0");
-                    result.put("authCode", "A");
-                    result.put("authRefNum", "0");
-                    Debug.logWarning("Unable to auth FinAccount: " + result, MODULE);
+                    result.put(x.authResult, Boolean.FALSE);
+                    result.put(x.processAmount, amount);
+                    result.put(x.authFlag, x._0);
+                    result.put(x.authCode, x.A);
+                    result.put(x.authRefNum, x._0);
+                    Debug.logWarning(x.Unable_to_auth_FinAccount + result, MODULE);
                     return result;
                 }
             }
@@ -238,9 +240,9 @@ public class FinAccountPaymentServices {
                 BigDecimal availableBalanceOriginal = availableBalance;
                 availableBalance = availableBalance.setScale(FinAccountHelper.getDecimals(), FinAccountHelper.getRounding());
                 if (availableBalance.compareTo(availableBalanceOriginal) != 0) {
-                    Debug.logWarning("In finAccountPreAuth for finAccountId [" + finAccountId + "] availableBalance ["
-                            + availableBalanceOriginal + "] was different after rounding [" + availableBalance
-                            + "]; it should never have made it into the database this way, so check whatever put it there.",
+                    Debug.logWarning(x.In_finAccountPreAuth_for_finAccountId + finAccountId + x.availableBalance_6381e7a4
+                            + availableBalanceOriginal + x.was_different_after_rounding + availableBalance
+                            + x.it_should_never_have_made_it_into_the_database_this_way_so_check_whatever_put_it_there,
                             MODULE);
                 }
             }
@@ -253,10 +255,10 @@ public class FinAccountPaymentServices {
             // make sure to round and scale it to the same as availableBalance
             amount = amount.setScale(FinAccountHelper.getDecimals(), FinAccountHelper.getRounding());
 
-            Debug.logInfo("Allow auth to negative: " + allowAuthToNegative + " :: available: " + availableBalance + " comp: "
-                    + minBalance + " = " + availableBalance.compareTo(minBalance) + " :: req: " + amount, MODULE);
+            Debug.logInfo(x.Allow_auth_to_negative + allowAuthToNegative + x.available + availableBalance + x.comp
+                    + minBalance + x.str + availableBalance.compareTo(minBalance) + x.req + amount, MODULE);
             // check the available balance to see if we can auth this tx
-            if (("Y".equals(allowAuthToNegative) && availableBalance.compareTo(minBalance) > -1)
+            if ((x.Y.equals(allowAuthToNegative) && availableBalance.compareTo(minBalance) > -1)
                     || (availableBalance.compareTo(amount) > -1)) {
                 Timestamp thruDate;
 
@@ -266,39 +268,39 @@ public class FinAccountPaymentServices {
                     thruDate = UtilDateTime.getDayEnd(UtilDateTime.nowTimestamp(), 30L); // default 30 days for an auth
                 }
 
-                Map<String, Object> tmpResult = dispatcher.runSync("createFinAccountAuth", UtilMisc.<String, Object>toMap("finAccountId",
-                        finAccountId, "amount", amount, "thruDate", thruDate, "userLogin", userLogin));
+                Map<String, Object> tmpResult = dispatcher.runSync(x.createFinAccountAuth, UtilMisc.<String, Object>toMap(x.finAccountId,
+                        finAccountId, x.amount, amount, x.thruDate, thruDate, x.userLogin, userLogin));
 
                 if (ServiceUtil.isError(tmpResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(tmpResult));
                 }
-                refNum = (String) tmpResult.get("finAccountAuthId");
+                refNum = (String) tmpResult.get(x.finAccountAuthId);
                 processResult = Boolean.TRUE;
 
                 // refresh the account
                 finAccount.refresh();
             } else {
-                Debug.logWarning("Attempted to authorize [" + amount + "] against a balance of only ["
-                        + availableBalance + "] for finAccountId [" + finAccountId + "]", MODULE);
-                refNum = "0"; // a refNum is always required from authorization
-                authMessage = "Insufficient funds";
+                Debug.logWarning(x.Attempted_to_authorize + amount + x.against_a_balance_of_only
+                        + availableBalance + x.for_finAccountId + finAccountId + x.str_4ff447b8, MODULE);
+                refNum = x._0; // a refNum is always required from authorization
+                authMessage = x.Insufficient_funds;
                 processResult = Boolean.FALSE;
             }
 
-            result.put("processAmount", amount);
-            result.put("authMessage", authMessage);
-            result.put("authResult", processResult);
-            result.put("authFlag", "1");
-            result.put("authCode", "A");
-            result.put("authRefNum", refNum);
-            Debug.logInfo("FinAccont Auth: " + result, MODULE);
+            result.put(x.processAmount, amount);
+            result.put(x.authMessage, authMessage);
+            result.put(x.authResult, processResult);
+            result.put(x.authFlag, x._1);
+            result.put(x.authCode, x.A);
+            result.put(x.authRefNum, refNum);
+            Debug.logInfo(x.FinAccont_Auth + result, MODULE);
 
             return result;
         } catch (GenericEntityException | GenericServiceException ex) {
-            Debug.logError(ex, "Cannot authorize financial account", MODULE);
+            Debug.logError(ex, x.Cannot_authorize_financial_account, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountCannotBeAuthorized",
-                    UtilMisc.toMap("errorString", ex.getMessage()), locale));
+                    x.AccountingFinAccountCannotBeAuthorized,
+                    UtilMisc.toMap(x.errorString, ex.getMessage()), locale));
         }
     }
 
@@ -308,27 +310,27 @@ public class FinAccountPaymentServices {
         GenericValue paymentPref = (GenericValue) context.get(x.orderPaymentPreference);
         Locale locale = (Locale) context.get(x.locale);
 
-        String err = UtilProperties.getMessage(RES_ERROR, "AccountingFinAccountCannotBeExpired", locale);
+        String err = UtilProperties.getMessage(RES_ERROR, x.AccountingFinAccountCannotBeExpired, locale);
         try {
 
             // expire the related financial authorization transaction
             GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(paymentPref);
             if (authTransaction == null) {
                 return ServiceUtil.returnError(err + UtilProperties.getMessage(RES_ERROR,
-                        "AccountingFinAccountCannotFindAuthorization", locale));
+                        x.AccountingFinAccountCannotFindAuthorization, locale));
             }
 
-            Map<String, Object> input = UtilMisc.toMap("userLogin", userLogin, "finAccountAuthId", authTransaction.get(x.referenceNum));
-            Map<String, Object> serviceResults = dispatcher.runSync("expireFinAccountAuth", input);
+            Map<String, Object> input = UtilMisc.toMap(x.userLogin, userLogin, x.finAccountAuthId, authTransaction.get(x.referenceNum));
+            Map<String, Object> serviceResults = dispatcher.runSync(x.expireFinAccountAuth, input);
             // if there's an error, don't release
             if (ServiceUtil.isError(serviceResults)) {
                 return ServiceUtil.returnError(err + ServiceUtil.getErrorMessage(serviceResults));
             }
 
             Map<String, Object> result = ServiceUtil.returnSuccess();
-            result.put("releaseRefNum", authTransaction.getString(x.referenceNum));
-            result.put("releaseAmount", authTransaction.getBigDecimal(x.amount));
-            result.put("releaseResult", Boolean.TRUE);
+            result.put(x.releaseRefNum, authTransaction.getString(x.referenceNum));
+            result.put(x.releaseAmount, authTransaction.getBigDecimal(x.amount));
+            result.put(x.releaseResult, Boolean.TRUE);
 
             return result;
         } catch (GenericServiceException e) {
@@ -354,21 +356,21 @@ public class FinAccountPaymentServices {
         }
         if (authTrans == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountCannotCapture", locale));
+                    x.AccountingFinAccountCannotCapture, locale));
         }
 
         // get the auth record
         String finAccountAuthId = authTrans.getString(x.referenceNum);
         GenericValue finAccountAuth;
         try {
-            finAccountAuth = EntityQuery.use(delegator).from("FinAccountAuth").where("finAccountAuthId",
-                    finAccountAuthId).queryOne();
+            UserLoginDao finAccountAuthDao = DaoRegistry.getDao(delegator, x.FinAccountAuth, UserLoginDao.class);
+            finAccountAuth = finAccountAuthDao.findOne(delegator, x.FinAccountAuth, UtilMisc.toMap(x.finAccountAuthId, finAccountAuthId), false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
-        Debug.logInfo("Financial account capture [" + finAccountAuth.get(x.finAccountId) + "] for the amount of $"
-                + amount + " Tx #" + finAccountAuth.get(x.finAccountAuthId), MODULE);
+        Debug.logInfo(x.Financial_account_capture + finAccountAuth.get(x.finAccountId) + x.for_the_amount_of
+                + amount + x.Tx + finAccountAuth.get(x.finAccountAuthId), MODULE);
 
         // get the financial account
         GenericValue finAccount;
@@ -383,17 +385,17 @@ public class FinAccountPaymentServices {
         Timestamp authExpiration = finAccountAuth.getTimestamp(x.thruDate);
         if ((authExpiration != null) && (authExpiration.before(UtilDateTime.nowTimestamp()))) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountAuthorizationExpired",
-                    UtilMisc.toMap("paymentGatewayResponseId", authTrans.getString(x.paymentGatewayResponseId),
-                            "authExpiration", authExpiration), locale));
+                    x.AccountingFinAccountAuthorizationExpired,
+                    UtilMisc.toMap(x.paymentGatewayResponseId, authTrans.getString(x.paymentGatewayResponseId),
+                            x.authExpiration, authExpiration), locale));
         }
 
         // make sure the fin account itself has not expired
         if ((finAccount.getTimestamp(x.thruDate) != null) && (finAccount.getTimestamp(x.thruDate).before(UtilDateTime
                 .nowTimestamp()))) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountExpired",
-                    UtilMisc.toMap("thruDate", finAccount.getTimestamp(x.thruDate)), locale));
+                    x.AccountingFinAccountExpired,
+                    UtilMisc.toMap(x.thruDate, finAccount.getTimestamp(x.thruDate)), locale));
         }
         String finAccountId = finAccount.getString(x.finAccountId);
 
@@ -418,7 +420,7 @@ public class FinAccountPaymentServices {
         // should happen in same transaction to avoid conflict problems
         Map<String, Object> releaseResult;
         try {
-            releaseResult = dispatcher.runSync("expireFinAccountAuth", UtilMisc.<String, Object>toMap("userLogin", userLogin, "finAccountAuthId",
+            releaseResult = dispatcher.runSync(x.expireFinAccountAuth, UtilMisc.<String, Object>toMap(x.userLogin, userLogin, x.finAccountAuthId,
                     finAccountAuthId));
             if (ServiceUtil.isError(releaseResult)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(releaseResult));
@@ -430,20 +432,20 @@ public class FinAccountPaymentServices {
 
         // build the withdraw context
         Map<String, Object> withdrawCtx = new HashMap<>();
-        withdrawCtx.put("finAccountId", finAccountId);
-        withdrawCtx.put("productStoreId", productStoreId);
-        withdrawCtx.put("currency", currency);
-        withdrawCtx.put("partyId", partyId);
-        withdrawCtx.put("orderId", orderId);
-        withdrawCtx.put("amount", amount);
-        withdrawCtx.put("reasonEnumId", "FATR_PURCHASE");
-        withdrawCtx.put("requireBalance", Boolean.FALSE); // for captures; if auth passed, allow
-        withdrawCtx.put("userLogin", userLogin);
+        withdrawCtx.put(x.finAccountId, finAccountId);
+        withdrawCtx.put(x.productStoreId, productStoreId);
+        withdrawCtx.put(x.currency, currency);
+        withdrawCtx.put(x.partyId, partyId);
+        withdrawCtx.put(x.orderId, orderId);
+        withdrawCtx.put(x.amount, amount);
+        withdrawCtx.put(x.reasonEnumId, x.FATR_PURCHASE);
+        withdrawCtx.put(x.requireBalance, Boolean.FALSE); // for captures; if auth passed, allow
+        withdrawCtx.put(x.userLogin, userLogin);
 
         // call the withdraw service
         Map<String, Object> withdrawResp;
         try {
-            withdrawResp = dispatcher.runSync("finAccountWithdraw", withdrawCtx);
+            withdrawResp = dispatcher.runSync(x.finAccountWithdraw, withdrawCtx);
         } catch (GenericServiceException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -454,14 +456,14 @@ public class FinAccountPaymentServices {
 
         // create the capture response
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        Boolean processResult = (Boolean) withdrawResp.get("processResult");
-        BigDecimal withdrawAmount = (BigDecimal) withdrawResp.get("amount");
-        String referenceNum = (String) withdrawResp.get("referenceNum");
-        result.put("captureResult", processResult);
-        result.put("captureRefNum", referenceNum);
-        result.put("captureCode", "C");
-        result.put("captureFlag", "1");
-        result.put("captureAmount", withdrawAmount);
+        Boolean processResult = (Boolean) withdrawResp.get(x.processResult);
+        BigDecimal withdrawAmount = (BigDecimal) withdrawResp.get(x.amount);
+        String referenceNum = (String) withdrawResp.get(x.referenceNum);
+        result.put(x.captureResult, processResult);
+        result.put(x.captureRefNum, referenceNum);
+        result.put(x.captureCode, x.C);
+        result.put(x.captureFlag, x._1);
+        result.put(x.captureAmount, withdrawAmount);
 
         return result;
     }
@@ -499,24 +501,24 @@ public class FinAccountPaymentServices {
 
         if (finAccountId == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountNotFound", UtilMisc.toMap("finAccountId", ""), locale));
+                    x.AccountingFinAccountNotFound, UtilMisc.toMap(x.finAccountId, x.emptyString), locale));
         }
 
         // call the deposit service
         Map<String, Object> depositCtx = new HashMap<>();
-        depositCtx.put("finAccountId", finAccountId);
-        depositCtx.put("productStoreId", productStoreId);
-        depositCtx.put("isRefund", Boolean.TRUE);
-        depositCtx.put("currency", currency);
-        depositCtx.put("partyId", partyId);
-        depositCtx.put("orderId", orderId);
-        depositCtx.put("amount", amount);
-        depositCtx.put("reasonEnumId", "FATR_REFUND");
-        depositCtx.put("userLogin", userLogin);
+        depositCtx.put(x.finAccountId, finAccountId);
+        depositCtx.put(x.productStoreId, productStoreId);
+        depositCtx.put(x.isRefund, Boolean.TRUE);
+        depositCtx.put(x.currency, currency);
+        depositCtx.put(x.partyId, partyId);
+        depositCtx.put(x.orderId, orderId);
+        depositCtx.put(x.amount, amount);
+        depositCtx.put(x.reasonEnumId, x.FATR_REFUND);
+        depositCtx.put(x.userLogin, userLogin);
 
         Map<String, Object> depositResp;
         try {
-            depositResp = dispatcher.runSync("finAccountDeposit", depositCtx);
+            depositResp = dispatcher.runSync(x.finAccountDeposit, depositCtx);
         } catch (GenericServiceException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -527,14 +529,14 @@ public class FinAccountPaymentServices {
 
         // create the refund response
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        Boolean processResult = (Boolean) depositResp.get("processResult");
-        BigDecimal depositAmount = (BigDecimal) depositResp.get("amount");
-        String referenceNum = (String) depositResp.get("referenceNum");
-        result.put("refundResult", processResult);
-        result.put("refundRefNum", referenceNum);
-        result.put("refundCode", "R");
-        result.put("refundFlag", "1");
-        result.put("refundAmount", depositAmount);
+        Boolean processResult = (Boolean) depositResp.get(x.processResult);
+        BigDecimal depositAmount = (BigDecimal) depositResp.get(x.amount);
+        String referenceNum = (String) depositResp.get(x.referenceNum);
+        result.put(x.refundResult, processResult);
+        result.put(x.refundRefNum, referenceNum);
+        result.put(x.refundCode, x.R);
+        result.put(x.refundFlag, x._1);
+        result.put(x.refundAmount, depositAmount);
 
         return result;
     }
@@ -557,26 +559,27 @@ public class FinAccountPaymentServices {
             requireBalance = Boolean.TRUE;
         }
 
-        final String withdrawal = "WITHDRAWAL";
+        final String withdrawal = x.WITHDRAWAL;
 
         String partyId = (String) context.get(x.partyId);
         if (UtilValidate.isEmpty(partyId)) {
-            partyId = "_NA_";
+            partyId = x.NA;
         }
         String currencyUom = (String) context.get(x.currency);
         if (UtilValidate.isEmpty(currencyUom)) {
-            currencyUom = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
+            currencyUom = EntityUtilProperties.getPropertyValue(x.general, x.currency_uom_id_default, x.USD, delegator);
         }
 
         // validate the amount
         if (amount.compareTo(BigDecimal.ZERO) < 0) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountMustBePositive", locale));
+                    x.AccountingFinAccountMustBePositive, locale));
         }
 
         GenericValue finAccount;
         try {
-            finAccount = EntityQuery.use(delegator).from("FinAccount").where("finAccountId", finAccountId).queryOne();
+            UserLoginDao finAccountDao = DaoRegistry.getDao(delegator, x.FinAccount, UserLoginDao.class);
+            finAccount = finAccountDao.findOne(delegator, x.FinAccount, UtilMisc.toMap(x.finAccountId, finAccountId), false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -585,15 +588,15 @@ public class FinAccountPaymentServices {
         // verify we have a financial account
         if (finAccount == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountNotFound", UtilMisc.toMap("finAccountId", ""), locale));
+                    x.AccountingFinAccountNotFound, UtilMisc.toMap(x.finAccountId, x.emptyString), locale));
         }
 
         // make sure the fin account itself has not expired
         if ((finAccount.getTimestamp(x.thruDate) != null) && (finAccount.getTimestamp(x.thruDate).before(UtilDateTime
                 .nowTimestamp()))) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountExpired",
-                    UtilMisc.toMap("thruDate", finAccount.getTimestamp(x.thruDate)), locale));
+                    x.AccountingFinAccountExpired,
+                    UtilMisc.toMap(x.thruDate, finAccount.getTimestamp(x.thruDate)), locale));
         }
 
         // check the actual balance (excluding authorized amounts) and create the
@@ -609,7 +612,7 @@ public class FinAccountPaymentServices {
         if (requireBalance && previousBalance.compareTo(amount) < 0) {
             procResult = Boolean.FALSE;
             balance = previousBalance;
-            refNum = "N/A";
+            refNum = x.N_A;
         } else {
             try {
                 refNum = FinAccountPaymentServices.createFinAcctPaymentTransaction(delegator, dispatcher, userLogin,
@@ -631,11 +634,11 @@ public class FinAccountPaymentServices {
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("previousBalance", previousBalance);
-        result.put("balance", balance);
-        result.put("amount", amount);
-        result.put("processResult", procResult);
-        result.put("referenceNum", refNum);
+        result.put(x.previousBalance, previousBalance);
+        result.put(x.balance, balance);
+        result.put(x.amount, amount);
+        result.put(x.processResult, procResult);
+        result.put(x.referenceNum, refNum);
         return result;
     }
 
@@ -654,40 +657,41 @@ public class FinAccountPaymentServices {
         Boolean isRefund = (Boolean) context.get(x.isRefund);
         BigDecimal amount = (BigDecimal) context.get(x.amount);
 
-        final String deposit = isRefund == null || !isRefund ? "DEPOSIT" : "ADJUSTMENT";
+        final String deposit = isRefund == null || !isRefund ? x.DEPOSIT : x.ADJUSTMENT;
 
         String partyId = (String) context.get(x.partyId);
         if (UtilValidate.isEmpty(partyId)) {
-            partyId = "_NA_";
+            partyId = x.NA;
         }
         String currencyUom = (String) context.get(x.currency);
         if (UtilValidate.isEmpty(currencyUom)) {
-            currencyUom = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
+            currencyUom = EntityUtilProperties.getPropertyValue(x.general, x.currency_uom_id_default, x.USD, delegator);
         }
 
         GenericValue finAccount;
         try {
-            finAccount = EntityQuery.use(delegator).from("FinAccount").where("finAccountId", finAccountId).queryOne();
+            UserLoginDao finAccountDao = DaoRegistry.getDao(delegator, x.FinAccount, UserLoginDao.class);
+            finAccount = finAccountDao.findOne(delegator, x.FinAccount, UtilMisc.toMap(x.finAccountId, finAccountId), false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountNotFound", UtilMisc.toMap("finAccountId", finAccountId), locale));
+                    x.AccountingFinAccountNotFound, UtilMisc.toMap(x.finAccountId, finAccountId), locale));
         }
 
         // verify we have a financial account
         if (finAccount == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountNotFound", UtilMisc.toMap("finAccountId", ""), locale));
+                    x.AccountingFinAccountNotFound, UtilMisc.toMap(x.finAccountId, x.emptyString), locale));
         }
 
         // make sure the fin account itself has not expired
         if ((finAccount.getTimestamp(x.thruDate) != null) && (finAccount.getTimestamp(x.thruDate).before(UtilDateTime
                 .nowTimestamp()))) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountExpired",
-                    UtilMisc.toMap("thruDate", finAccount.getTimestamp(x.thruDate)), locale));
+                    x.AccountingFinAccountExpired,
+                    UtilMisc.toMap(x.thruDate, finAccount.getTimestamp(x.thruDate)), locale));
         }
-        Debug.logInfo("Deposit into financial account #" + finAccountId + " [" + amount + "]", MODULE);
+        Debug.logInfo(x.Deposit_into_financial_account + finAccountId + x.str_42cbdb3c + amount + x.str_4ff447b8, MODULE);
 
         // get the previous balance
         BigDecimal previousBalance = finAccount.getBigDecimal(x.actualBalance);
@@ -716,9 +720,9 @@ public class FinAccountPaymentServices {
                 // balance went below zero, set negative pending replenishment status so that no
                 // more auths or captures will go through until it is replenished
                 try {
-                    Map<String, Object> rollbackCtx = UtilMisc.toMap("userLogin", userLogin, "finAccountId",
-                            finAccountId, "statusId", "FNACT_NEGPENDREPL");
-                    dispatcher.addRollbackService("updateFinAccount", rollbackCtx, true);
+                    Map<String, Object> rollbackCtx = UtilMisc.toMap(x.userLogin, userLogin, x.finAccountId,
+                            finAccountId, x.statusId, x.FNACT_NEGPENDREPL);
+                    dispatcher.addRollbackService(x.updateFinAccount, rollbackCtx, true);
                 } catch (GenericServiceException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(e.getMessage());
@@ -727,11 +731,11 @@ public class FinAccountPaymentServices {
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("previousBalance", previousBalance);
-        result.put("balance", actualBalance);
-        result.put("amount", amount);
-        result.put("processResult", Boolean.TRUE);
-        result.put("referenceNum", refNum);
+        result.put(x.previousBalance, previousBalance);
+        result.put(x.balance, actualBalance);
+        result.put(x.amount, amount);
+        result.put(x.processResult, Boolean.TRUE);
+        result.put(x.referenceNum, refNum);
         return result;
     }
 
@@ -748,14 +752,15 @@ public class FinAccountPaymentServices {
         // lookup the FinAccount
         GenericValue finAccount;
         try {
-            finAccount = EntityQuery.use(delegator).from("FinAccount").where("finAccountId", finAccountId).queryOne();
+            UserLoginDao finAccountDao = DaoRegistry.getDao(delegator, x.FinAccount, UserLoginDao.class);
+            finAccount = finAccountDao.findOne(delegator, x.FinAccount, UtilMisc.toMap(x.finAccountId, finAccountId), false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
         if (finAccount == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountNotFound", UtilMisc.toMap("finAccountId", finAccountId), locale));
+                    x.AccountingFinAccountNotFound, UtilMisc.toMap(x.finAccountId, finAccountId), locale));
         }
         String currency = finAccount.getString(x.currencyUomId);
         String statusId = finAccount.getString(x.statusId);
@@ -769,7 +774,7 @@ public class FinAccountPaymentServices {
             return ServiceUtil.returnError(e.getMessage());
         }
         String replenishEnumId = finAccountType.getString(x.replenishEnumId);
-        if (!"FARP_AUTOMATIC".equals(replenishEnumId)) {
+        if (!x.FARP_AUTOMATIC.equals(replenishEnumId)) {
             // type does not support auto-replenish
             return ServiceUtil.returnSuccess();
         }
@@ -779,40 +784,40 @@ public class FinAccountPaymentServices {
             productStoreId = getLastProductStoreId(delegator, finAccountId);
             if (productStoreId == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "AccountingFinAccountCannotBeReplenish", locale));
+                        x.AccountingFinAccountCannotBeReplenish, locale));
             }
         }
 
         // get the product store settings
         GenericValue finAccountSettings;
-        Map<String, Object> psfasFindMap = UtilMisc.<String, Object>toMap("productStoreId", productStoreId,
-                "finAccountTypeId", finAccount.getString(x.finAccountTypeId));
+        Map<String, Object> psfasFindMap = UtilMisc.<String, Object>toMap(x.productStoreId, productStoreId,
+                x.finAccountTypeId, finAccount.getString(x.finAccountTypeId));
         try {
-            finAccountSettings = EntityQuery.use(delegator).from("ProductStoreFinActSetting").where(psfasFindMap)
-                    .cache().queryOne();
+            UserLoginDao productStoreFinActSettingDao = DaoRegistry.getDao(delegator, x.ProductStoreFinActSetting, UserLoginDao.class);
+            finAccountSettings = productStoreFinActSettingDao.findOne(delegator, x.ProductStoreFinActSetting, psfasFindMap, true);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
         if (finAccountSettings == null) {
-            Debug.logWarning("finAccountReplenish Warning: not replenishing FinAccount [" + finAccountId
-                    + "] because no ProductStoreFinActSetting record found for: " + psfasFindMap, MODULE);
+            Debug.logWarning(x.finAccountReplenish_Warning_not_replenishing_FinAccount + finAccountId
+                    + x.because_no_ProductStoreFinActSetting_record_found_for + psfasFindMap, MODULE);
             // no settings; don't replenish
             return ServiceUtil.returnSuccess();
         }
 
         BigDecimal replenishThreshold = finAccountSettings.getBigDecimal(x.replenishThreshold);
         if (replenishThreshold == null) {
-            Debug.logWarning("finAccountReplenish Warning: not replenishing FinAccount [" + finAccountId
-                    + "] because ProductStoreFinActSetting.replenishThreshold field was null for: " + psfasFindMap,
+            Debug.logWarning(x.finAccountReplenish_Warning_not_replenishing_FinAccount + finAccountId
+                    + x.because_ProductStoreFinActSetting_replenishThreshold_field_was_null_for + psfasFindMap,
                     MODULE);
             return ServiceUtil.returnSuccess();
         }
 
         BigDecimal replenishLevel = finAccount.getBigDecimal(x.replenishLevel);
         if (replenishLevel == null || replenishLevel.compareTo(BigDecimal.ZERO) == 0) {
-            Debug.logWarning("finAccountReplenish Warning: not replenishing FinAccount [" + finAccountId
-                    + "] because FinAccount.replenishLevel field was null or 0", MODULE);
+            Debug.logWarning(x.finAccountReplenish_Warning_not_replenishing_FinAccount + finAccountId
+                    + x.because_FinAccount_replenishLevel_field_was_null_or_0, MODULE);
             // no replenish level set; this account goes not support auto-replenish
             return ServiceUtil.returnSuccess();
         }
@@ -822,19 +827,19 @@ public class FinAccountPaymentServices {
 
         // see if we are within the threshold for replenishment
         if (balance.compareTo(replenishThreshold) > -1) {
-            Debug.logInfo("finAccountReplenish Info: Not replenishing FinAccount [" + finAccountId
-                    + "] because balance [" + balance + "] is greater than the replenishThreshold ["
-                    + replenishThreshold + "]", MODULE);
+            Debug.logInfo(x.finAccountReplenish_Info_Not_replenishing_FinAccount + finAccountId
+                    + x.because_balance + balance + x.is_greater_than_the_replenishThreshold
+                    + replenishThreshold + x.str_4ff447b8, MODULE);
             // not ready
             return ServiceUtil.returnSuccess();
         }
 
         // configure rollback service to set status to Negative Pending Replenishment
-        if ("FNACT_NEGPENDREPL".equals(statusId)) {
+        if (x.FNACT_NEGPENDREPL.equals(statusId)) {
             try {
-                Map<String, Object> rollbackCtx = UtilMisc.toMap("userLogin", userLogin, "finAccountId", finAccountId,
-                        "statusId", "FNACT_NEGPENDREPL");
-                dispatcher.addRollbackService("updateFinAccount", rollbackCtx, true);
+                Map<String, Object> rollbackCtx = UtilMisc.toMap(x.userLogin, userLogin, x.finAccountId, finAccountId,
+                        x.statusId, x.FNACT_NEGPENDREPL);
+                dispatcher.addRollbackService(x.updateFinAccount, rollbackCtx, true);
             } catch (GenericServiceException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
@@ -843,23 +848,23 @@ public class FinAccountPaymentServices {
 
         String replenishMethod = finAccountSettings.getString(x.replenishMethodEnumId);
         BigDecimal depositAmount;
-        if (replenishMethod == null || "FARP_TOP_OFF".equals(replenishMethod)) {
+        if (replenishMethod == null || x.FARP_TOP_OFF.equals(replenishMethod)) {
             // the deposit is level - balance (500 - (-10) = 510 || 500 - (10) = 490)
             depositAmount = replenishLevel.subtract(balance);
-        } else if ("FARP_REPLENISH_LEVEL".equals(replenishMethod)) {
+        } else if (x.FARP_REPLENISH_LEVEL.equals(replenishMethod)) {
             // the deposit is replenish-level itself
             depositAmount = replenishLevel;
         } else {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountUnknownReplenishMethod", locale));
+                    x.AccountingFinAccountUnknownReplenishMethod, locale));
         }
 
         // get the owner party
         String ownerPartyId = finAccount.getString(x.ownerPartyId);
         if (ownerPartyId == null) {
             // no owner cannot replenish; (not fatal, just not supported by this account)
-            Debug.logWarning("finAccountReplenish Warning: No owner attached to financial account [" + finAccountId
-                    + "] cannot auto-replenish", MODULE);
+            Debug.logWarning(x.finAccountReplenish_Warning_No_owner_attached_to_financial_account + finAccountId
+                    + x.cannot_auto_replenish, MODULE);
             return ServiceUtil.returnSuccess();
         }
 
@@ -867,40 +872,40 @@ public class FinAccountPaymentServices {
         String paymentMethodId = finAccount.getString(x.replenishPaymentId);
         if (paymentMethodId == null) {
             Debug.logWarning(
-                    "finAccountReplenish Warning: No payment method (replenishPaymentId) attached to financial account ["
-                            + finAccountId + "] cannot auto-replenish", MODULE);
+                    x.finAccountReplenish_Warning_No_payment_method_replenishPaymentId_attached_to_financial_account
+                            + finAccountId + x.cannot_auto_replenish, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountNoPaymentMethodAssociatedWithReplenishAccount", locale));
+                    x.AccountingFinAccountNoPaymentMethodAssociatedWithReplenishAccount, locale));
         }
 
         GenericValue paymentMethod;
         try {
-            paymentMethod = EntityQuery.use(delegator).from("PaymentMethod").where("paymentMethodId", paymentMethodId)
-                    .queryOne();
+            UserLoginDao paymentMethodDao = DaoRegistry.getDao(delegator, x.PaymentMethod, UserLoginDao.class);
+            paymentMethod = paymentMethodDao.findOne(delegator, x.PaymentMethod, UtilMisc.toMap(x.paymentMethodId, paymentMethodId), false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
         if (paymentMethod == null) {
             // no payment methods on file; cannot replenish
-            Debug.logWarning("finAccountReplenish Warning: No payment method found for ID [" + paymentMethodId
-                    + "] for party [" + ownerPartyId + "] cannot auto-replenish", MODULE);
+            Debug.logWarning(x.finAccountReplenish_Warning_No_payment_method_found_for_ID + paymentMethodId
+                    + x.for_party + ownerPartyId + x.cannot_auto_replenish, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountNoPaymentMethodAssociatedWithReplenishAccount", locale));
+                    x.AccountingFinAccountNoPaymentMethodAssociatedWithReplenishAccount, locale));
         }
 
         // hit the payment method for the amount to replenish
-        Map<String, BigDecimal> orderItemMap = UtilMisc.toMap("Auto-Replenishment FA #" + finAccountId, depositAmount);
+        Map<String, BigDecimal> orderItemMap = UtilMisc.toMap(x.Auto_Replenishment_FA + finAccountId, depositAmount);
         Map<String, Object> replOrderCtx = new HashMap<>();
-        replOrderCtx.put("productStoreId", productStoreId);
-        replOrderCtx.put("paymentMethodId", paymentMethod.getString(x.paymentMethodId));
-        replOrderCtx.put("currency", currency);
-        replOrderCtx.put("partyId", ownerPartyId);
-        replOrderCtx.put("itemMap", orderItemMap);
-        replOrderCtx.put("userLogin", userLogin);
+        replOrderCtx.put(x.productStoreId, productStoreId);
+        replOrderCtx.put(x.paymentMethodId, paymentMethod.getString(x.paymentMethodId));
+        replOrderCtx.put(x.currency, currency);
+        replOrderCtx.put(x.partyId, ownerPartyId);
+        replOrderCtx.put(x.itemMap, orderItemMap);
+        replOrderCtx.put(x.userLogin, userLogin);
         Map<String, Object> replResp;
         try {
-            replResp = dispatcher.runSync("createSimpleNonProductSalesOrder", replOrderCtx);
+            replResp = dispatcher.runSync(x.createSimpleNonProductSalesOrder, replOrderCtx);
         } catch (GenericServiceException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -908,21 +913,21 @@ public class FinAccountPaymentServices {
         if (ServiceUtil.isError(replResp)) {
             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(replResp));
         }
-        String orderId = (String) replResp.get("orderId");
+        String orderId = (String) replResp.get(x.orderId);
 
         // create the deposit
         Map<String, Object> depositCtx = new HashMap<>();
-        depositCtx.put("productStoreId", productStoreId);
-        depositCtx.put("finAccountId", finAccountId);
-        depositCtx.put("currency", currency);
-        depositCtx.put("partyId", ownerPartyId);
-        depositCtx.put("orderId", orderId);
-        depositCtx.put("orderItemSeqId", "00001"); // always one item on a replish order
-        depositCtx.put("amount", depositAmount);
-        depositCtx.put("reasonEnumId", "FATR_REPLENISH");
-        depositCtx.put("userLogin", userLogin);
+        depositCtx.put(x.productStoreId, productStoreId);
+        depositCtx.put(x.finAccountId, finAccountId);
+        depositCtx.put(x.currency, currency);
+        depositCtx.put(x.partyId, ownerPartyId);
+        depositCtx.put(x.orderId, orderId);
+        depositCtx.put(x.orderItemSeqId, x._00001); // always one item on a replish order
+        depositCtx.put(x.amount, depositAmount);
+        depositCtx.put(x.reasonEnumId, x.FATR_REPLENISH);
+        depositCtx.put(x.userLogin, userLogin);
         try {
-            Map<String, Object> depositResp = dispatcher.runSync("finAccountDeposit", depositCtx);
+            Map<String, Object> depositResp = dispatcher.runSync(x.finAccountDeposit, depositCtx);
             if (ServiceUtil.isError(depositResp)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(depositResp));
             }
@@ -932,10 +937,10 @@ public class FinAccountPaymentServices {
         }
 
         // say we are in good standing again
-        if ("FNACT_NEGPENDREPL".equals(statusId)) {
+        if (x.FNACT_NEGPENDREPL.equals(statusId)) {
             try {
-                Map<String, Object> ufaResp = dispatcher.runSync("updateFinAccount",
-                        UtilMisc.<String, Object>toMap("finAccountId", finAccountId, "statusId", "FNACT_ACTIVE", "userLogin", userLogin));
+                Map<String, Object> ufaResp = dispatcher.runSync(x.updateFinAccount,
+                        UtilMisc.<String, Object>toMap(x.finAccountId, finAccountId, x.statusId, x.FNACT_ACTIVE, x.userLogin, userLogin));
                 if (ServiceUtil.isError(ufaResp)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(ufaResp));
                 }
@@ -951,12 +956,13 @@ public class FinAccountPaymentServices {
     private static String getLastProductStoreId(Delegator delegator, String finAccountId) {
         GenericValue trans = null;
         try {
-            trans = EntityQuery.use(delegator).from("FinAccountTrans")
-                    .where(
-                            EntityCondition.makeCondition("finAccountTransTypeId", EntityOperator.EQUALS, "DEPOSIT"),
-                            EntityCondition.makeCondition("finAccountId", EntityOperator.EQUALS, finAccountId),
-                            EntityCondition.makeCondition("orderId", EntityOperator.NOT_EQUAL, null)).orderBy(
-                                    "-transactionDate").queryFirst();
+            UserLoginDao finAccountTransDao = DaoRegistry.getDao(delegator, x.FinAccountTrans, UserLoginDao.class);
+            EntityCondition condition = EntityCondition.makeCondition(UtilMisc.toList(
+                    EntityCondition.makeCondition(x.finAccountTransTypeId, EntityOperator.EQUALS, x.DEPOSIT),
+                    EntityCondition.makeCondition(x.finAccountId, EntityOperator.EQUALS, finAccountId),
+                    EntityCondition.makeCondition(x.orderId, EntityOperator.NOT_EQUAL, null)), EntityOperator.AND);
+            trans = finAccountTransDao.findFirstByCondition(delegator, x.FinAccountTrans, condition, null, UtilMisc.toList(x.transactionDate_5a2f7760),
+                    false);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
@@ -969,7 +975,9 @@ public class FinAccountPaymentServices {
 
         // none found; pick one from our set stores
         try {
-            GenericValue store = EntityQuery.use(delegator).from("ProductStore").orderBy("productStoreId").queryFirst();
+            UserLoginDao productStoreDao = DaoRegistry.getDao(delegator, x.ProductStore, UserLoginDao.class);
+            GenericValue store = productStoreDao.findFirstByCondition(delegator, x.ProductStore, null, null, UtilMisc.toList(x.productStoreId),
+                    false);
             if (store != null) {
                 return store.getString(x.productStoreId);
             }
@@ -986,10 +994,10 @@ public class FinAccountPaymentServices {
             String txType, String finAccountId, String reasonEnumId) throws GeneralException {
 
         final String coParty = ProductStoreWorker.getProductStorePayToPartyId(productStoreId, delegator);
-        final String paymentMethodType = "FIN_ACCOUNT";
+        final String paymentMethodType = x.FIN_ACCOUNT;
 
         if (UtilValidate.isEmpty(partyId)) {
-            partyId = "_NA_";
+            partyId = x.NA;
         }
 
         String paymentType;
@@ -998,48 +1006,48 @@ public class FinAccountPaymentServices {
         BigDecimal paymentAmount;
 
         // determine the payment type and which direction the parties should go
-        if ("DEPOSIT".equals(txType)) {
-            paymentType = "RECEIPT";
+        if (x.DEPOSIT.equals(txType)) {
+            paymentType = x.RECEIPT;
             partyIdFrom = partyId;
             partyIdTo = coParty;
             paymentAmount = amount;
-        } else if ("WITHDRAWAL".equals(txType)) {
-            paymentType = "DISBURSEMENT";
+        } else if (x.WITHDRAWAL.equals(txType)) {
+            paymentType = x.DISBURSEMENT;
             partyIdFrom = coParty;
             partyIdTo = partyId;
             paymentAmount = amount;
-        } else if ("ADJUSTMENT".equals(txType)) {
+        } else if (x.ADJUSTMENT.equals(txType)) {
             if (amount.compareTo(BigDecimal.ZERO) < 0) {
-                paymentType = "DISBURSEMENT";
+                paymentType = x.DISBURSEMENT;
                 partyIdFrom = coParty;
                 partyIdTo = partyId;
                 paymentAmount = amount.negate(); // must be positive
             } else {
-                paymentType = "RECEIPT";
+                paymentType = x.RECEIPT;
                 partyIdFrom = partyId;
                 partyIdTo = coParty;
                 paymentAmount = amount;
             }
         } else {
-            throw new GeneralException("Unable to create financial account transaction!");
+            throw new GeneralException(x.Unable_to_create_financial_account_transaction);
         }
 
         // payment amount should always be positive; adjustments may
         // create the payment for the transaction
-        Map<String, Object> paymentCtx = UtilMisc.<String, Object>toMap("paymentTypeId", paymentType);
-        paymentCtx.put("paymentMethodTypeId", paymentMethodType);
-        paymentCtx.put("partyIdTo", partyIdTo);
-        paymentCtx.put("partyIdFrom", partyIdFrom);
-        paymentCtx.put("statusId", "PMNT_RECEIVED");
-        paymentCtx.put("currencyUomId", currencyUom);
-        paymentCtx.put("amount", paymentAmount);
-        paymentCtx.put("userLogin", userLogin);
-        paymentCtx.put("paymentRefNum", Long.toString(UtilDateTime.nowTimestamp().getTime()));
+        Map<String, Object> paymentCtx = UtilMisc.<String, Object>toMap(x.paymentTypeId, paymentType);
+        paymentCtx.put(x.paymentMethodTypeId, paymentMethodType);
+        paymentCtx.put(x.partyIdTo, partyIdTo);
+        paymentCtx.put(x.partyIdFrom, partyIdFrom);
+        paymentCtx.put(x.statusId, x.PMNT_RECEIVED);
+        paymentCtx.put(x.currencyUomId, currencyUom);
+        paymentCtx.put(x.amount, paymentAmount);
+        paymentCtx.put(x.userLogin, userLogin);
+        paymentCtx.put(x.paymentRefNum, Long.toString(UtilDateTime.nowTimestamp().getTime()));
 
         String paymentId;
         Map<String, Object> payResult;
         try {
-            payResult = dispatcher.runSync("createPayment", paymentCtx);
+            payResult = dispatcher.runSync(x.createPayment, paymentCtx);
             if (ServiceUtil.isError(payResult)) {
                 throw new GeneralException(ServiceUtil.getErrorMessage(payResult));
             }
@@ -1047,27 +1055,27 @@ public class FinAccountPaymentServices {
             throw new GeneralException(e);
         }
         if (payResult == null) {
-            throw new GeneralException("Unknown error in creating financial account transaction!");
+            throw new GeneralException(x.Unknown_error_in_creating_financial_account_transaction);
         }
         if (ServiceUtil.isError(payResult)) {
             throw new GeneralException(ServiceUtil.getErrorMessage(payResult));
         }
-        paymentId = (String) payResult.get("paymentId");
+        paymentId = (String) payResult.get(x.paymentId);
 
         // create the initial transaction
-        Map<String, Object> transCtx = UtilMisc.<String, Object>toMap("finAccountTransTypeId", txType);
-        transCtx.put("finAccountId", finAccountId);
-        transCtx.put("partyId", partyId);
-        transCtx.put("orderId", orderId);
-        transCtx.put("orderItemSeqId", orderItemSeqId);
-        transCtx.put("reasonEnumId", reasonEnumId);
-        transCtx.put("amount", amount);
-        transCtx.put("userLogin", userLogin);
-        transCtx.put("paymentId", paymentId);
+        Map<String, Object> transCtx = UtilMisc.<String, Object>toMap(x.finAccountTransTypeId, txType);
+        transCtx.put(x.finAccountId, finAccountId);
+        transCtx.put(x.partyId, partyId);
+        transCtx.put(x.orderId, orderId);
+        transCtx.put(x.orderItemSeqId, orderItemSeqId);
+        transCtx.put(x.reasonEnumId, reasonEnumId);
+        transCtx.put(x.amount, amount);
+        transCtx.put(x.userLogin, userLogin);
+        transCtx.put(x.paymentId, paymentId);
 
         Map<String, Object> transResult;
         try {
-            transResult = dispatcher.runSync("createFinAccountTrans", transCtx);
+            transResult = dispatcher.runSync(x.createFinAccountTrans, transCtx);
             if (ServiceUtil.isError(transResult)) {
                 throw new GeneralException(ServiceUtil.getErrorMessage(transResult));
             }
@@ -1075,12 +1083,12 @@ public class FinAccountPaymentServices {
             throw new GeneralException(e);
         }
         if (transResult == null) {
-            throw new GeneralException("Unknown error in creating financial account transaction!");
+            throw new GeneralException(x.Unknown_error_in_creating_financial_account_transaction);
         }
         if (ServiceUtil.isError(transResult)) {
             throw new GeneralException(ServiceUtil.getErrorMessage(transResult));
         }
 
-        return (String) transResult.get("finAccountTransId");
+        return (String) transResult.get(x.finAccountTransId);
     }
 }

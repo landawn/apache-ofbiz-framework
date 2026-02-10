@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.ContactMechTypeEntity;
 
-public interface ContactMechTypeDao extends CrudDao<ContactMechTypeEntity, String, SQLBuilder.PSC, ContactMechTypeDao> {
+public interface ContactMechTypeDao extends CrudDao<ContactMechTypeEntity, String, SQLBuilder.PSC, ContactMechTypeDao> , DelegatorQueryDao{
 }

@@ -53,7 +53,6 @@ import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityFunction;
 import org.apache.ofbiz.entity.transaction.GenericTransactionException;
 import org.apache.ofbiz.entity.transaction.TransactionUtil;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.order.order.OrderReadHelper;
 import org.apache.ofbiz.order.shoppingcart.CartItemModifyException;
@@ -78,6 +77,8 @@ import com.paypal.sdk.profiles.ProfileFactory;
 import com.paypal.sdk.services.NVPCallerServices;
 
 
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.UserLoginDao;
 import org.apache.ofbiz.persistence.entity.x;
 import org.apache.ofbiz.model.ServiceContext;
 import org.apache.ofbiz.model.PayPalServicesContext;
@@ -87,7 +88,7 @@ import org.apache.ofbiz.model.PayPalServicesContext;
 public class PayPalServices {
 
     private static final String MODULE = PayPalServices.class.getName();
-    private static final String RESOURCE = "AccountingErrorUiLabels";
+    private static final String RESOURCE = x.AccountingErrorUiLabels;
 
     // Used to maintain a weak reference to the ShoppingCart for customers who have gone to PayPal to checkout
     // so that we can quickly grab the cart, perform shipment estimates and send the info back to PayPal.
@@ -101,43 +102,43 @@ public class PayPalServices {
         Locale locale = cart.getLocale();
         if (cart == null || cart.items().size() <= 0) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPayPalShoppingCartIsEmpty", locale));
+                    x.AccountingPayPalShoppingCartIsEmpty, locale));
         }
 
         GenericValue payPalConfig = getPaymentMethodGatewayPayPal(dctx, context, null);
         if (payPalConfig == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPayPalPaymentGatewayConfigCannotFind", locale));
+                    x.AccountingPayPalPaymentGatewayConfigCannotFind, locale));
         }
 
 
         NVPEncoder encoder = new NVPEncoder();
 
         // Set Express Checkout Request Parameters
-        encoder.add("METHOD", "SetExpressCheckout");
-        String token = (String) cart.getAttribute("payPalCheckoutToken");
+        encoder.add(x.METHOD, x.SetExpressCheckout);
+        String token = (String) cart.getAttribute(x.payPalCheckoutToken);
         if (UtilValidate.isNotEmpty(token)) {
-            encoder.add("TOKEN", token);
+            encoder.add(x.TOKEN, token);
         }
-        encoder.add("RETURNURL", payPalConfig.getString(x.returnUrl));
-        encoder.add("CANCELURL", payPalConfig.getString(x.cancelReturnUrl));
+        encoder.add(x.RETURNURL, payPalConfig.getString(x.returnUrl));
+        encoder.add(x.CANCELURL, payPalConfig.getString(x.cancelReturnUrl));
         if (!cart.shippingApplies()) {
-            encoder.add("NOSHIPPING", "1");
+            encoder.add(x.NOSHIPPING, x._1);
         } else {
-            encoder.add("CALLBACK", payPalConfig.getString(x.shippingCallbackUrl));
-            encoder.add("CALLBACKTIMEOUT", "6");
+            encoder.add(x.CALLBACK, payPalConfig.getString(x.shippingCallbackUrl));
+            encoder.add(x.CALLBACKTIMEOUT, x._6);
             // Default to no
-            String reqConfirmShipping = "Y".equals(payPalConfig.getString(x.requireConfirmedShipping)) ? "1" : "0";
-            encoder.add("REQCONFIRMSHIPPING", reqConfirmShipping);
+            String reqConfirmShipping = x.Y.equals(payPalConfig.getString(x.requireConfirmedShipping)) ? x._1 : x._0;
+            encoder.add(x.REQCONFIRMSHIPPING, reqConfirmShipping);
             // Default shipment method
-            encoder.add("L_SHIPPINGOPTIONISDEFAULT0", "true");
-            encoder.add("L_SHIPPINGOPTIONNAME0", "Calculated Offline");
-            encoder.add("L_SHIPPINGOPTIONAMOUNT0", "0.00");
+            encoder.add(x.L_SHIPPINGOPTIONISDEFAULT0, x._true);
+            encoder.add(x.L_SHIPPINGOPTIONNAME0, x.Calculated_Offline);
+            encoder.add(x.L_SHIPPINGOPTIONAMOUNT0, x._0_00);
         }
-        encoder.add("ALLOWNOTE", "1");
-        encoder.add("INSURANCEOPTIONOFFERED", "false");
+        encoder.add(x.ALLOWNOTE, x._1);
+        encoder.add(x.INSURANCEOPTIONOFFERED, x._false);
         if (UtilValidate.isNotEmpty(payPalConfig.getString(x.imageUrl)));
-        encoder.add("PAYMENTACTION", "Order");
+        encoder.add(x.PAYMENTACTION, x.Order_1d75774c);
 
         // Cart information
         try {
@@ -145,7 +146,7 @@ public class PayPalServices {
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPayPalErrorDuringRetrievingCartDetails", locale));
+                    x.AccountingPayPalErrorDuringRetrievingCartDetails, locale));
         }
 
         NVPDecoder decoder;
@@ -158,18 +159,18 @@ public class PayPalServices {
 
         Map<String, String> errorMessages = getErrorMessageMap(decoder);
         if (UtilValidate.isNotEmpty(errorMessages)) {
-            if (errorMessages.containsKey("10411")) {
+            if (errorMessages.containsKey(x._10411)) {
                 // Token has expired, get a new one
-                cart.setAttribute("payPalCheckoutToken", null);
+                cart.setAttribute(x.payPalCheckoutToken, null);
                 return PayPalServices.setExpressCheckout(dctx, context);
             }
             return ServiceUtil.returnError(UtilMisc.toList(errorMessages.values()));
         }
 
-        token = decoder.get("TOKEN");
-        cart.setAttribute("payPalCheckoutToken", token);
+        token = decoder.get(x.TOKEN);
+        cart.setAttribute(x.payPalCheckoutToken, token);
         TokenWrapper tokenWrapper = new TokenWrapper(token);
-        cart.setAttribute("payPalCheckoutTokenObj", tokenWrapper);
+        cart.setAttribute(x.payPalCheckoutTokenObj, tokenWrapper);
         PayPalServices.tokenCartMap.put(tokenWrapper, new WeakReference<>(cart));
         return ServiceUtil.returnSuccess();
     }
@@ -182,35 +183,36 @@ public class PayPalServices {
 
         Map<String, Object> paramMap = UtilHttp.getParameterMap(request);
 
-        String token = (String) paramMap.get("TOKEN");
+        String token = (String) paramMap.get(x.TOKEN);
         WeakReference<ShoppingCart> weakCart = tokenCartMap.get(new TokenWrapper(token));
         ShoppingCart cart = null;
         if (weakCart != null) {
             cart = weakCart.get();
         }
         if (cart == null) {
-            Debug.logError("Could locate the ShoppingCart for token " + token, MODULE);
+            Debug.logError(x.Could_locate_the_ShoppingCart_for_token + token, MODULE);
             return ServiceUtil.returnSuccess();
         }
         // Since most if not all of the shipping estimate codes requires a persisted contactMechId we'll create one and
         // then delete once we're done, now is not the time to worry about updating everything
         String contactMechId = null;
         Map<String, Object> inMap = new HashMap<>();
-        inMap.put("address1", paramMap.get("SHIPTOSTREET"));
-        inMap.put("address2", paramMap.get("SHIPTOSTREET2"));
-        inMap.put("city", paramMap.get("SHIPTOCITY"));
-        String countryGeoCode = (String) paramMap.get("SHIPTOCOUNTRY");
+        inMap.put(x.address1, paramMap.get(x.SHIPTOSTREET));
+        inMap.put(x.address2, paramMap.get(x.SHIPTOSTREET2));
+        inMap.put(x.city, paramMap.get(x.SHIPTOCITY));
+        String countryGeoCode = (String) paramMap.get(x.SHIPTOCOUNTRY);
         String countryGeoId = PayPalServices.getCountryGeoIdFromGeoCode(countryGeoCode, delegator);
         if (countryGeoId == null) {
             return ServiceUtil.returnSuccess();
         }
-        inMap.put("countryGeoId", countryGeoId);
-        inMap.put("stateProvinceGeoId", parseStateProvinceGeoId((String) paramMap.get("SHIPTOSTATE"), countryGeoId, delegator));
-        inMap.put("postalCode", paramMap.get("SHIPTOZIP"));
+        inMap.put(x.countryGeoId, countryGeoId);
+        inMap.put(x.stateProvinceGeoId, parseStateProvinceGeoId((String) paramMap.get(x.SHIPTOSTATE), countryGeoId, delegator));
+        inMap.put(x.postalCode, paramMap.get(x.SHIPTOZIP));
 
         try {
-            GenericValue userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", "system").cache().queryOne();
-            inMap.put("userLogin", userLogin);
+            GenericValue userLogin = DaoRegistry.getDao(delegator, x.UserLogin, UserLoginDao.class)
+                    .findOne(delegator, x.UserLogin, UtilMisc.toMap(x.userLoginId, x.system), true);
+            inMap.put(x.userLogin, userLogin);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
@@ -223,8 +225,8 @@ public class PayPalServices {
             Debug.logError(e1, MODULE);
         }
         try {
-            Map<String, Object> outMap = dispatcher.runSync("createPostalAddress", inMap);
-            contactMechId = (String) outMap.get("contactMechId");
+            Map<String, Object> outMap = dispatcher.runSync(x.createPostalAddress, inMap);
+            contactMechId = (String) outMap.get(x.contactMechId);
         } catch (GenericServiceException e) {
             Debug.logError(e.getMessage(), MODULE);
             return ServiceUtil.returnSuccess();
@@ -242,7 +244,7 @@ public class PayPalServices {
         ShippingEstimateWrapper estWrapper = new ShippingEstimateWrapper(dispatcher, cart, 0);
         int line = 0;
         NVPEncoder encoder = new NVPEncoder();
-        encoder.add("METHOD", "CallbackResponse");
+        encoder.add(x.METHOD, x.CallbackResponse);
 
         for (GenericValue shipMethod : estWrapper.getShippingMethods()) {
             BigDecimal estimate = estWrapper.getShippingEstimate(shipMethod);
@@ -258,12 +260,12 @@ public class PayPalServices {
                 Debug.logError(e, MODULE);
                 continue;
             }
-            String estimateLabel = shipMethod.getString(x.partyId) + " - " + shipMethod.getString(x.description);
-            encoder.add("L_SHIPINGPOPTIONLABEL" + line, estimateLabel);
-            encoder.add("L_SHIPPINGOPTIONAMOUNT" + line, estimate.setScale(2, RoundingMode.HALF_UP).toPlainString());
+            String estimateLabel = shipMethod.getString(x.partyId) + x.str_fc02e199 + shipMethod.getString(x.description);
+            encoder.add(x.L_SHIPINGPOPTIONLABEL + line, estimateLabel);
+            encoder.add(x.L_SHIPPINGOPTIONAMOUNT + line, estimate.setScale(2, RoundingMode.HALF_UP).toPlainString());
             // Just make this first one default for now
-            encoder.add("L_SHIPPINGOPTIONISDEFAULT" + line, line == 0 ? "true" : "false");
-            encoder.add("L_TAXAMT" + line, cart.getTotalSalesTax().setScale(2, RoundingMode.HALF_UP).toPlainString());
+            encoder.add(x.L_SHIPPINGOPTIONISDEFAULT + line, line == 0 ? x._true : x._false);
+            encoder.add(x.L_TAXAMT + line, cart.getTotalSalesTax().setScale(2, RoundingMode.HALF_UP).toPlainString());
             line++;
         }
         String responseMsg = null;
@@ -274,7 +276,7 @@ public class PayPalServices {
         }
         if (responseMsg != null) {
             try {
-                response.setContentLength(responseMsg.getBytes("UTF-8").length);
+                response.setContentLength(responseMsg.getBytes(x.UTF_8).length);
             } catch (UnsupportedEncodingException e) {
                 Debug.logError(e, MODULE);
             }
@@ -288,9 +290,11 @@ public class PayPalServices {
 
         // Remove the temporary ship address
         try {
-            GenericValue postalAddress = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId", contactMechId).queryOne();
+            GenericValue postalAddress = DaoRegistry.getDao(delegator, x.PostalAddress, UserLoginDao.class)
+                    .findOne(delegator, x.PostalAddress, UtilMisc.toMap(x.contactMechId, contactMechId), false);
             postalAddress.remove();
-            GenericValue contactMech = EntityQuery.use(delegator).from("ContactMech").where("contactMechId", contactMechId).queryOne();
+            GenericValue contactMech = DaoRegistry.getDao(delegator, x.ContactMech, UserLoginDao.class)
+                    .findOne(delegator, x.ContactMech, UtilMisc.toMap(x.contactMechId, contactMechId), false);
             contactMech.remove();
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
@@ -300,15 +304,15 @@ public class PayPalServices {
     }
 
     private static Map<String, String> getErrorMessageMap(NVPDecoder decoder) {
-        String ack = decoder.get("ACK");
+        String ack = decoder.get(x.ACK);
         Map<String, String> result = null;
-        if (!"Success".equals(ack)) {
+        if (!x.Success.equals(ack)) {
             result = new HashMap<String, Object>();
             int i = 0;
-            while (UtilValidate.isNotEmpty(decoder.get("L_ERRORCODE" + i))) {
-                String errorCode = decoder.get("L_ERRORCODE" + i);
-                String longMsg = decoder.get("L_LONGMESSAGE" + i);
-                result.put(errorCode, "PayPal Response Error: [" + errorCode + "]" + longMsg);
+            while (UtilValidate.isNotEmpty(decoder.get(x.L_ERRORCODE + i))) {
+                String errorCode = decoder.get(x.L_ERRORCODE + i);
+                String longMsg = decoder.get(x.L_LONGMESSAGE + i);
+                result.put(errorCode, x.PayPal_Response_Error + errorCode + x.str_4ff447b8 + longMsg);
                 i++;
             }
         }
@@ -316,37 +320,37 @@ public class PayPalServices {
     }
 
     private static void addCartDetails(NVPEncoder encoder, ShoppingCart cart) throws GenericEntityException {
-        encoder.add("CURRENCYCODE", cart.getCurrency());
+        encoder.add(x.CURRENCYCODE, cart.getCurrency());
         int line = 0;
         for (ShoppingCartItem item : cart.items()) {
-            encoder.add("L_NUMBER" + line, item.getProductId());
-            encoder.add("L_NAME" + line, item.getName());
-            encoder.add("L_AMT" + line, item.getBasePrice().setScale(2, RoundingMode.HALF_UP).toPlainString());
-            encoder.add("L_QTY" + line, item.getQuantity().toBigInteger().toString());
+            encoder.add(x.L_NUMBER + line, item.getProductId());
+            encoder.add(x.L_NAME + line, item.getName());
+            encoder.add(x.L_AMT + line, item.getBasePrice().setScale(2, RoundingMode.HALF_UP).toPlainString());
+            encoder.add(x.L_QTY + line, item.getQuantity().toBigInteger().toString());
             line++;
             BigDecimal otherAdjustments = item.getOtherAdjustments();
             if (otherAdjustments.compareTo(BigDecimal.ZERO) != 0) {
-                encoder.add("L_NUMBER" + line, item.getProductId());
-                encoder.add("L_NAME" + line, item.getName() + " Adjustments");
-                encoder.add("L_AMT" + line, otherAdjustments.setScale(2, RoundingMode.HALF_UP).toPlainString());
-                encoder.add("L_QTY" + line, "1");
+                encoder.add(x.L_NUMBER + line, item.getProductId());
+                encoder.add(x.L_NAME + line, item.getName() + x.Adjustments);
+                encoder.add(x.L_AMT + line, otherAdjustments.setScale(2, RoundingMode.HALF_UP).toPlainString());
+                encoder.add(x.L_QTY + line, x._1);
                 line++;
             }
         }
         BigDecimal otherAdjustments = cart.getOrderOtherAdjustmentTotal();
         if (otherAdjustments.compareTo(BigDecimal.ZERO) != 0) {
-            encoder.add("L_NUMBER" + line, "N/A");
-            encoder.add("L_NAME" + line, "Order Adjustments");
-            encoder.add("L_AMT" + line, otherAdjustments.setScale(2, RoundingMode.HALF_UP).toPlainString());
-            encoder.add("L_QTY" + line, "1");
+            encoder.add(x.L_NUMBER + line, x.N_A);
+            encoder.add(x.L_NAME + line, x.Order_Adjustments);
+            encoder.add(x.L_AMT + line, otherAdjustments.setScale(2, RoundingMode.HALF_UP).toPlainString());
+            encoder.add(x.L_QTY + line, x._1);
             line++;
         }
-        encoder.add("ITEMAMT", cart.getSubTotal().add(otherAdjustments).setScale(2).toPlainString());
-        encoder.add("SHIPPINGAMT", "0.00");
-        encoder.add("TAXAMT", "0.00");
-        encoder.add("AMT", cart.getSubTotal().add(otherAdjustments).setScale(2).toPlainString());
+        encoder.add(x.ITEMAMT, cart.getSubTotal().add(otherAdjustments).setScale(2).toPlainString());
+        encoder.add(x.SHIPPINGAMT, x._0_00);
+        encoder.add(x.TAXAMT, x._0_00);
+        encoder.add(x.AMT, cart.getSubTotal().add(otherAdjustments).setScale(2).toPlainString());
         //NOTE: The docs say this is optional but then won't work without it
-        encoder.add("MAXAMT", cart.getSubTotal().add(otherAdjustments).setScale(2).toPlainString());
+        encoder.add(x.MAXAMT, cart.getSubTotal().add(otherAdjustments).setScale(2).toPlainString());
     }
 
     public static Map<String, Object> getExpressCheckout(DispatchContext dctx, PayPalServicesContext context) {
@@ -358,17 +362,17 @@ public class PayPalServices {
         GenericValue payPalConfig = getPaymentMethodGatewayPayPal(dctx, context, null);
         if (payPalConfig == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPayPalPaymentGatewayConfigCannotFind", locale));
+                    x.AccountingPayPalPaymentGatewayConfigCannotFind, locale));
         }
 
         NVPEncoder encoder = new NVPEncoder();
-        encoder.add("METHOD", "GetExpressCheckoutDetails");
-        String token = (String) cart.getAttribute("payPalCheckoutToken");
+        encoder.add(x.METHOD, x.GetExpressCheckoutDetails);
+        String token = (String) cart.getAttribute(x.payPalCheckoutToken);
         if (UtilValidate.isNotEmpty(token)) {
-            encoder.add("TOKEN", token);
+            encoder.add(x.TOKEN, token);
         } else {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPayPalTokenNotFound", locale));
+                    x.AccountingPayPalTokenNotFound, locale));
         }
 
         NVPDecoder decoder;
@@ -379,13 +383,14 @@ public class PayPalServices {
             return ServiceUtil.returnError(e.getMessage());
         }
 
-        if (UtilValidate.isNotEmpty(decoder.get("NOTE"))) {
-            cart.addOrderNote(decoder.get("NOTE"));
+        if (UtilValidate.isNotEmpty(decoder.get(x.NOTE))) {
+            cart.addOrderNote(decoder.get(x.NOTE));
         }
 
         if (cart.getUserLogin() == null) {
             try {
-                GenericValue userLogin = EntityQuery.use(delegator).from("UserLogin").where("userLoginId", "anonymous").queryOne();
+                GenericValue userLogin = DaoRegistry.getDao(delegator, x.UserLogin, UserLoginDao.class)
+                        .findOne(delegator, x.UserLogin, UtilMisc.toMap(x.userLoginId, x.anonymous), false);
                 try {
                     cart.setUserLogin(userLogin, dispatcher);
                 } catch (CartItemModifyException e) {
@@ -397,18 +402,19 @@ public class PayPalServices {
                 return ServiceUtil.returnError(e.getMessage());
             }
         }
-        boolean anon = "anonymous".equals(cart.getUserLogin().getString("userLoginId"));
+        boolean anon = x.anonymous.equals(cart.getUserLogin().getString(x.userLoginId));
         // Even if anon, a party could already have been created
         String partyId = cart.getOrderPartyId();
         if (partyId == null && anon) {
             // Check nothing has been set on the anon userLogin either
-            partyId = cart.getUserLogin() != null ? cart.getUserLogin().getString("partyId") : null;
+            partyId = cart.getUserLogin() != null ? cart.getUserLogin().getString(x.partyId) : null;
             cart.setOrderPartyId(partyId);
         }
         if (partyId != null) {
             GenericValue party = null;
             try {
-                party = EntityQuery.use(delegator).from("Party").where("partyId", partyId).queryOne();
+                party = DaoRegistry.getDao(delegator, x.Party, UserLoginDao.class)
+                        .findOne(delegator, x.Party, UtilMisc.toMap(x.partyId, partyId), false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
@@ -423,22 +429,22 @@ public class PayPalServices {
         boolean newParty = false;
         if (partyId == null) {
             newParty = true;
-            inMap.put("userLogin", cart.getUserLogin());
-            inMap.put("personalTitle", decoder.get("SALUTATION"));
-            inMap.put("firstName", decoder.get("FIRSTNAME"));
-            inMap.put("middleName", decoder.get("MIDDLENAME"));
-            inMap.put("lastName", decoder.get("LASTNAME"));
-            inMap.put("suffix", decoder.get("SUFFIX"));
+            inMap.put(x.userLogin, cart.getUserLogin());
+            inMap.put(x.personalTitle, decoder.get(x.SALUTATION));
+            inMap.put(x.firstName, decoder.get(x.FIRSTNAME));
+            inMap.put(x.middleName, decoder.get(x.MIDDLENAME));
+            inMap.put(x.lastName, decoder.get(x.LASTNAME));
+            inMap.put(x.suffix, decoder.get(x.SUFFIX));
             try {
-                outMap = dispatcher.runSync("createPerson", inMap);
-                partyId = (String) outMap.get("partyId");
+                outMap = dispatcher.runSync(x.createPerson, inMap);
+                partyId = (String) outMap.get(x.partyId);
                 cart.setOrderPartyId(partyId);
-                cart.getUserLogin().setString("partyId", partyId);
+                cart.getUserLogin().setString(x.partyId, partyId);
                 inMap.clear();
-                inMap.put("userLogin", cart.getUserLogin());
-                inMap.put("partyId", partyId);
-                inMap.put("roleTypeId", "CUSTOMER");
-                dispatcher.runSync("createPartyRole", inMap);
+                inMap.put(x.userLogin, cart.getUserLogin());
+                inMap.put(x.partyId, partyId);
+                inMap.put(x.roleTypeId, x.CUSTOMER_340f7cf7);
+                dispatcher.runSync(x.createPartyRole, inMap);
             } catch (GenericServiceException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
@@ -446,26 +452,29 @@ public class PayPalServices {
         }
         // Create a new email address if necessary
         String emailContactMechId = null;
-        String emailContactPurposeTypeId = "PRIMARY_EMAIL";
-        String emailAddress = decoder.get("EMAIL");
+        String emailContactPurposeTypeId = x.PRIMARY_EMAIL;
+        String emailAddress = decoder.get(x.EMAIL);
         if (!newParty) {
             EntityCondition cond = EntityCondition.makeCondition(UtilMisc.toList(
-                    EntityCondition.makeCondition(UtilMisc.toMap("partyId", partyId, "contactMechTypeId", "EMAIL_ADDRESS")),
-                    EntityCondition.makeCondition(EntityFunction.upperField("infoString"), EntityComparisonOperator.EQUALS, EntityFunction.upper(emailAddress))));
+                    EntityCondition.makeCondition(UtilMisc.toMap(x.partyId, partyId, x.contactMechTypeId, x.EMAIL_ADDRESS)),
+                    EntityCondition.makeCondition(EntityFunction.upperField(x.infoString), EntityComparisonOperator.EQUALS, EntityFunction.upper(emailAddress))));
             try {
-                GenericValue matchingEmail = EntityQuery.use(delegator).from("PartyAndContactMech").where(cond).orderBy("fromDate").filterByDate().queryFirst();
+                GenericValue matchingEmail = DaoRegistry.getDao(delegator, x.PartyAndContactMech, UserLoginDao.class)
+                        .findFirstByCondition(delegator, x.PartyAndContactMech,
+                                EntityCondition.makeCondition(cond, EntityUtil.getFilterByDateExpr()), null, UtilMisc.toList(x.fromDate), false);
                 if (matchingEmail != null) {
                     emailContactMechId = matchingEmail.getString(x.contactMechId);
                 } else {
                     // No email found so we'll need to create one but first check if it should be PRIMARY or just BILLING
-                    long primaryEmails = EntityQuery.use(delegator)
-                            .from("PartyContactWithPurpose")
-                            .where("partyId", partyId,
-                                    "contactMechTypeId", "EMAIL_ADDRESS",
-                                    "contactMechPurposeTypeId", "PRIMARY_EMAIL")
-                            .filterByDate("contactFromDate", "contactThruDate", "purposeFromDate", "purposeThruDate")
-                            .queryCount();
-                    if (primaryEmails > 0) emailContactPurposeTypeId = "BILLING_EMAIL";
+                    EntityCondition primaryEmailCond = EntityCondition.makeCondition(UtilMisc.toList(
+                            EntityCondition.makeCondition(UtilMisc.toMap(x.partyId, partyId,
+                                    x.contactMechTypeId, x.EMAIL_ADDRESS,
+                                    x.contactMechPurposeTypeId, x.PRIMARY_EMAIL)),
+                            EntityUtil.getFilterByDateExpr(x.contactFromDate, x.contactThruDate),
+                            EntityUtil.getFilterByDateExpr(x.purposeFromDate, x.purposeThruDate)));
+                    long primaryEmails = DaoRegistry.getDao(delegator, x.PartyContactWithPurpose, UserLoginDao.class)
+                            .countByCondition(delegator, x.PartyContactWithPurpose, primaryEmailCond, null, null);
+                    if (primaryEmails > 0) emailContactPurposeTypeId = x.BILLING_EMAIL;
                 }
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
@@ -473,46 +482,46 @@ public class PayPalServices {
         }
         if (emailContactMechId == null) {
             inMap.clear();
-            inMap.put("userLogin", cart.getUserLogin());
-            inMap.put("contactMechPurposeTypeId", emailContactPurposeTypeId);
-            inMap.put("emailAddress", emailAddress);
-            inMap.put("partyId", partyId);
-            inMap.put("roleTypeId", "CUSTOMER");
-            inMap.put("verified", "Y");  // Going to assume PayPal has taken care of this for us
-            inMap.put("fromDate", UtilDateTime.nowTimestamp());
+            inMap.put(x.userLogin, cart.getUserLogin());
+            inMap.put(x.contactMechPurposeTypeId, emailContactPurposeTypeId);
+            inMap.put(x.emailAddress, emailAddress);
+            inMap.put(x.partyId, partyId);
+            inMap.put(x.roleTypeId, x.CUSTOMER_340f7cf7);
+            inMap.put(x.verified, x.Y);  // Going to assume PayPal has taken care of this for us
+            inMap.put(x.fromDate, UtilDateTime.nowTimestamp());
             try {
-                outMap = dispatcher.runSync("createPartyEmailAddress", inMap);
-                emailContactMechId = (String) outMap.get("contactMechId");
+                outMap = dispatcher.runSync(x.createPartyEmailAddress, inMap);
+                emailContactMechId = (String) outMap.get(x.contactMechId);
             } catch (GenericServiceException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
             }
         }
-        cart.addContactMechId("ORDER_EMAIL", emailContactMechId);
+        cart.addContactMechId(x.ORDER_EMAIL, emailContactMechId);
 
         // Phone number
-        String phoneNumber = decoder.get("PHONENUM");
+        String phoneNumber = decoder.get(x.PHONENUM);
         String phoneContactId = null;
         if (phoneNumber != null) {
             inMap.clear();
-            if (phoneNumber.startsWith("+")) {
+            if (phoneNumber.startsWith(x.str_a979ef10)) {
                 // International, format is +XXX XXXXXXXX which we'll split into countryCode + contactNumber
-                String[] phoneNumbers = phoneNumber.split(" ");
-                inMap.put("countryCode", StringUtil.removeNonNumeric(phoneNumbers[0]));
-                inMap.put("contactNumber", phoneNumbers[1]);
+                String[] phoneNumbers = phoneNumber.split(x.str_b858cb28);
+                inMap.put(x.countryCode, StringUtil.removeNonNumeric(phoneNumbers[0]));
+                inMap.put(x.contactNumber, phoneNumbers[1]);
             } else {
                 // U.S., format is XXX-XXX-XXXX which we'll split into areaCode + contactNumber
-                inMap.put("countryCode", "1");
-                String[] phoneNumbers = phoneNumber.split("-");
-                inMap.put("areaCode", phoneNumbers[0]);
-                inMap.put("contactNumber", phoneNumbers[1] + phoneNumbers[2]);
+                inMap.put(x.countryCode, x._1);
+                String[] phoneNumbers = phoneNumber.split(x.str_3bc15c8a);
+                inMap.put(x.areaCode, phoneNumbers[0]);
+                inMap.put(x.contactNumber, phoneNumbers[1] + phoneNumbers[2]);
             }
-            inMap.put("userLogin", cart.getUserLogin());
-            inMap.put("partyId", partyId);
+            inMap.put(x.userLogin, cart.getUserLogin());
+            inMap.put(x.partyId, partyId);
             try {
-                outMap = dispatcher.runSync("createUpdatePartyTelecomNumber", inMap);
-                phoneContactId = (String) outMap.get("contactMechId");
-                cart.addContactMechId("PHONE_BILLING", phoneContactId);
+                outMap = dispatcher.runSync(x.createUpdatePartyTelecomNumber, inMap);
+                phoneContactId = (String) outMap.get(x.contactMechId);
+                cart.addContactMechId(x.PHONE_BILLING, phoneContactId);
             } catch (GenericServiceException e) {
                 Debug.logError(e, MODULE);
             }
@@ -521,35 +530,36 @@ public class PayPalServices {
         String postalContactId = null;
         boolean needsShippingPurpose = true;
         // if the cart for some reason already has a billing address, we'll leave it be
-        boolean needsBillingPurpose = (cart.getContactMechId("BILLING_LOCATION") == null);
+        boolean needsBillingPurpose = (cart.getContactMechId(x.BILLING_LOCATION) == null);
         Map<String, Object> postalMap = new HashMap<>();
-        postalMap.put("toName", decoder.get("SHIPTONAME"));
-        postalMap.put("address1", decoder.get("SHIPTOSTREET"));
-        postalMap.put("address2", decoder.get("SHIPTOSTREET2"));
-        postalMap.put("city", decoder.get("SHIPTOCITY"));
-        String countryGeoId = PayPalServices.getCountryGeoIdFromGeoCode(decoder.get("SHIPTOCOUNTRYCODE"), delegator);
-        postalMap.put("countryGeoId", countryGeoId);
-        postalMap.put("stateProvinceGeoId", parseStateProvinceGeoId(decoder.get("SHIPTOSTATE"), countryGeoId, delegator));
-        postalMap.put("postalCode", decoder.get("SHIPTOZIP"));
+        postalMap.put(x.toName, decoder.get(x.SHIPTONAME));
+        postalMap.put(x.address1, decoder.get(x.SHIPTOSTREET));
+        postalMap.put(x.address2, decoder.get(x.SHIPTOSTREET2));
+        postalMap.put(x.city, decoder.get(x.SHIPTOCITY));
+        String countryGeoId = PayPalServices.getCountryGeoIdFromGeoCode(decoder.get(x.SHIPTOCOUNTRYCODE), delegator);
+        postalMap.put(x.countryGeoId, countryGeoId);
+        postalMap.put(x.stateProvinceGeoId, parseStateProvinceGeoId(decoder.get(x.SHIPTOSTATE), countryGeoId, delegator));
+        postalMap.put(x.postalCode, decoder.get(x.SHIPTOZIP));
         if (!newParty) {
             // We want an exact match only
             EntityCondition cond = EntityCondition.makeCondition(UtilMisc.toList(
                     EntityCondition.makeCondition(postalMap),
-                    EntityCondition.makeCondition(UtilMisc.toMap("attnName", null, "directions", null, "postalCodeExt", null, "postalCodeGeoId", null)),
-                    EntityCondition.makeCondition("partyId", partyId)));
+                    EntityCondition.makeCondition(UtilMisc.toMap(x.attnName, null, x.directions, null, x.postalCodeExt, null, x.postalCodeGeoId, null)),
+                    EntityCondition.makeCondition(x.partyId, partyId)));
             try {
-                GenericValue postalMatch = EntityQuery.use(delegator).from("PartyAndPostalAddress")
-                        .where(cond).orderBy("fromDate").filterByDate().queryFirst();
+                GenericValue postalMatch = DaoRegistry.getDao(delegator, x.PartyAndPostalAddress, UserLoginDao.class)
+                        .findFirstByCondition(delegator, x.PartyAndPostalAddress,
+                                EntityCondition.makeCondition(cond, EntityUtil.getFilterByDateExpr()), null, UtilMisc.toList(x.fromDate), false);
                 if (postalMatch != null) {
                     postalContactId = postalMatch.getString(x.contactMechId);
-                    List<GenericValue> postalPurposes = EntityQuery.use(delegator).from("PartyContactMechPurpose")
-                            .where("partyId", partyId, "contactMechId", postalContactId)
-                            .filterByDate().queryList();
-                    List<Object> purposeStrings = EntityUtil.getFieldListFromEntityList(postalPurposes, "contactMechPurposeTypeId", false);
-                    if (UtilValidate.isNotEmpty(purposeStrings) && purposeStrings.contains("SHIPPING_LOCATION")) {
+                    List<GenericValue> postalPurposes = DaoRegistry.getDao(delegator, x.PartyContactMechPurpose, UserLoginDao.class)
+                            .findListByWhere(delegator, x.PartyContactMechPurpose,
+                                    UtilMisc.toMap(x.partyId, partyId, x.contactMechId, postalContactId), null, null, false, true);
+                    List<Object> purposeStrings = EntityUtil.getFieldListFromEntityList(postalPurposes, x.contactMechPurposeTypeId, false);
+                    if (UtilValidate.isNotEmpty(purposeStrings) && purposeStrings.contains(x.SHIPPING_LOCATION)) {
                         needsShippingPurpose = false;
                     }
-                    if (needsBillingPurpose && UtilValidate.isNotEmpty(purposeStrings) && purposeStrings.contains("BILLING_LOCATION")) {
+                    if (needsBillingPurpose && UtilValidate.isNotEmpty(purposeStrings) && purposeStrings.contains(x.BILLING_LOCATION)) {
                         needsBillingPurpose = false;
                     }
                 }
@@ -558,11 +568,11 @@ public class PayPalServices {
             }
         }
         if (postalContactId == null) {
-            postalMap.put("userLogin", cart.getUserLogin());
-            postalMap.put("fromDate", UtilDateTime.nowTimestamp());
+            postalMap.put(x.userLogin, cart.getUserLogin());
+            postalMap.put(x.fromDate, UtilDateTime.nowTimestamp());
             try {
-                outMap = dispatcher.runSync("createPartyPostalAddress", postalMap);
-                postalContactId = (String) outMap.get("contactMechId");
+                outMap = dispatcher.runSync(x.createPartyPostalAddress, postalMap);
+                postalContactId = (String) outMap.get(x.contactMechId);
             } catch (GenericServiceException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
@@ -570,17 +580,17 @@ public class PayPalServices {
         }
         if (needsShippingPurpose || needsBillingPurpose) {
             inMap.clear();
-            inMap.put("userLogin", cart.getUserLogin());
-            inMap.put("contactMechId", postalContactId);
-            inMap.put("partyId", partyId);
+            inMap.put(x.userLogin, cart.getUserLogin());
+            inMap.put(x.contactMechId, postalContactId);
+            inMap.put(x.partyId, partyId);
             try {
                 if (needsShippingPurpose) {
-                    inMap.put("contactMechPurposeTypeId", "SHIPPING_LOCATION");
-                    dispatcher.runSync("createPartyContactMechPurpose", inMap);
+                    inMap.put(x.contactMechPurposeTypeId, x.SHIPPING_LOCATION);
+                    dispatcher.runSync(x.createPartyContactMechPurpose, inMap);
                 }
                 if (needsBillingPurpose) {
-                    inMap.put("contactMechPurposeTypeId", "BILLING_LOCATION");
-                    dispatcher.runSync("createPartyContactMechPurpose", inMap);
+                    inMap.put(x.contactMechPurposeTypeId, x.BILLING_LOCATION);
+                    dispatcher.runSync(x.createPartyContactMechPurpose, inMap);
                 }
             } catch (GenericServiceException e) {
                 // Not the end of the world, we'll carry on
@@ -590,22 +600,22 @@ public class PayPalServices {
 
         // Load the selected shipping method - thanks to PayPal's less than sane API all we've to work with is the shipping option label
         // that was shown to the customer
-        String shipMethod = decoder.get("SHIPPINGOPTIONNAME");
-        if ("Calculated Offline".equals(shipMethod)) {
-            cart.setAllCarrierPartyId("_NA_");
-            cart.setAllShipmentMethodTypeId("NO_SHIPPING");
+        String shipMethod = decoder.get(x.SHIPPINGOPTIONNAME);
+        if (x.Calculated_Offline.equals(shipMethod)) {
+            cart.setAllCarrierPartyId(x.NA);
+            cart.setAllShipmentMethodTypeId(x.NO_SHIPPING);
         } else {
-            String[] shipMethodSplit = shipMethod.split(" - ");
+            String[] shipMethodSplit = shipMethod.split(x.str_fc02e199);
             cart.setAllCarrierPartyId(shipMethodSplit[0]);
-            String shippingMethodTypeDesc = StringUtils.join(shipMethodSplit, " - ", 1, shipMethodSplit.length);
+            String shippingMethodTypeDesc = StringUtils.join(shipMethodSplit, x.str_fc02e199, 1, shipMethodSplit.length);
             try {
-                GenericValue shipmentMethod = EntityQuery.use(delegator)
-                        .from("ProductStoreShipmentMethView")
-                        .where("productStoreId", cart.getProductStoreId(),
-                                "partyId", shipMethodSplit[0],
-                                "roleTypeId", "CARRIER",
-                                "description", shippingMethodTypeDesc)
-                        .queryFirst();
+                GenericValue shipmentMethod = DaoRegistry.getDao(delegator, x.ProductStoreShipmentMethView, UserLoginDao.class)
+                        .findFirstByWhere(delegator, x.ProductStoreShipmentMethView,
+                                UtilMisc.toMap(x.productStoreId, cart.getProductStoreId(),
+                                        x.partyId, shipMethodSplit[0],
+                                        x.roleTypeId, x.CARRIER,
+                                        x.description, shippingMethodTypeDesc),
+                                null, null, false);
                 cart.setAllShipmentMethodTypeId(shipmentMethod.getString(x.shipmentMethodTypeId));
             } catch (GenericEntityException e1) {
                 Debug.logError(e1, MODULE);
@@ -626,7 +636,7 @@ public class PayPalServices {
             return ServiceUtil.returnError((String) result.get(ModelService.ERROR_MESSAGE));
         }
 
-        BigDecimal shippingTotal = (BigDecimal) result.get("shippingTotal");
+        BigDecimal shippingTotal = (BigDecimal) result.get(x.shippingTotal);
         if (shippingTotal == null) {
             shippingTotal = BigDecimal.ZERO;
         }
@@ -641,21 +651,21 @@ public class PayPalServices {
 
         // Create the PayPal payment method
         inMap.clear();
-        inMap.put("userLogin", cart.getUserLogin());
-        inMap.put("partyId", partyId);
-        inMap.put("contactMechId", postalContactId);
-        inMap.put("fromDate", UtilDateTime.nowTimestamp());
-        inMap.put("payerId", decoder.get("PAYERID"));
-        inMap.put("expressCheckoutToken", token);
-        inMap.put("payerStatus", decoder.get("PAYERSTATUS"));
+        inMap.put(x.userLogin, cart.getUserLogin());
+        inMap.put(x.partyId, partyId);
+        inMap.put(x.contactMechId, postalContactId);
+        inMap.put(x.fromDate, UtilDateTime.nowTimestamp());
+        inMap.put(x.payerId, decoder.get(x.PAYERID));
+        inMap.put(x.expressCheckoutToken, token);
+        inMap.put(x.payerStatus, decoder.get(x.PAYERSTATUS));
 
         try {
-            outMap = dispatcher.runSync("createPayPalPaymentMethod", inMap);
+            outMap = dispatcher.runSync(x.createPayPalPaymentMethod, inMap);
         } catch (GenericServiceException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
-        String paymentMethodId = (String) outMap.get("paymentMethodId");
+        String paymentMethodId = (String) outMap.get(x.paymentMethodId);
 
         cart.clearPayments();
         BigDecimal maxAmount = cart.getGrandTotal().setScale(2, RoundingMode.HALF_UP);
@@ -688,20 +698,20 @@ public class PayPalServices {
         BigDecimal processAmount = paymentPref.getBigDecimal(x.maxAmount);
 
         NVPEncoder encoder = new NVPEncoder();
-        encoder.add("METHOD", "DoExpressCheckoutPayment");
-        encoder.add("TOKEN", payPalPaymentMethod.getString(x.expressCheckoutToken));
-        encoder.add("PAYMENTACTION", "Order");
-        encoder.add("PAYERID", payPalPaymentMethod.getString(x.payerId));
+        encoder.add(x.METHOD, x.DoExpressCheckoutPayment);
+        encoder.add(x.TOKEN, payPalPaymentMethod.getString(x.expressCheckoutToken));
+        encoder.add(x.PAYMENTACTION, x.Order_1d75774c);
+        encoder.add(x.PAYERID, payPalPaymentMethod.getString(x.payerId));
         // set the amount
-        encoder.add("AMT", processAmount.setScale(2).toPlainString());
-        encoder.add("CURRENCYCODE", orh.getCurrency());
+        encoder.add(x.AMT, processAmount.setScale(2).toPlainString());
+        encoder.add(x.CURRENCYCODE, orh.getCurrency());
         BigDecimal grandTotal = orh.getOrderGrandTotal();
         BigDecimal shippingTotal = orh.getShippingTotal().setScale(2, RoundingMode.HALF_UP);
         BigDecimal taxTotal = orh.getTaxTotal().setScale(2, RoundingMode.HALF_UP);
         BigDecimal subTotal = grandTotal.subtract(shippingTotal).subtract(taxTotal).setScale(2, RoundingMode.HALF_UP);
-        encoder.add("ITEMAMT", subTotal.toPlainString());
-        encoder.add("SHIPPINGAMT", shippingTotal.toPlainString());
-        encoder.add("TAXAMT", taxTotal.toPlainString());
+        encoder.add(x.ITEMAMT, subTotal.toPlainString());
+        encoder.add(x.SHIPPINGAMT, shippingTotal.toPlainString());
+        encoder.add(x.TAXAMT, taxTotal.toPlainString());
 
         NVPDecoder decoder = null;
         try {
@@ -712,12 +722,12 @@ public class PayPalServices {
         }
         if (decoder == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPayPalUnknownError", locale));
+                    x.AccountingPayPalUnknownError, locale));
         }
 
         Map<String, String> errorMessages = getErrorMessageMap(decoder);
         if (UtilValidate.isNotEmpty(errorMessages)) {
-            if (errorMessages.containsKey("10417")) {
+            if (errorMessages.containsKey(x._10417)) {
                 // "The transaction cannot complete successfully, Instruct the customer to use an alternative payment method"
                 // I've only encountered this once and there's no indication of the cause so the temporary solution is to try again
                 boolean retry = context.get(x._RETRY_) == null || (Boolean) context.get(x._RETRY_);
@@ -730,13 +740,13 @@ public class PayPalServices {
         }
 
         Map<String, Object> inMap = new HashMap<>();
-        inMap.put("userLogin", userLogin);
-        inMap.put("paymentMethodId", payPalPaymentMethod.get(x.paymentMethodId));
-        inMap.put("transactionId", decoder.get("TRANSACTIONID"));
+        inMap.put(x.userLogin, userLogin);
+        inMap.put(x.paymentMethodId, payPalPaymentMethod.get(x.paymentMethodId));
+        inMap.put(x.transactionId, decoder.get(x.TRANSACTIONID));
 
         Map<String, Object> outMap = null;
         try {
-            outMap = dispatcher.runSync("updatePayPalPaymentMethod", inMap);
+            outMap = dispatcher.runSync(x.updatePayPalPaymentMethod, inMap);
         } catch (GenericServiceException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -758,15 +768,15 @@ public class PayPalServices {
         Locale locale = (Locale) context.get(x.locale);
 
         NVPEncoder encoder = new NVPEncoder();
-        encoder.add("METHOD", "DoAuthorization");
-        encoder.add("TRANSACTIONID", payPalPaymentMethod.getString(x.transactionId));
-        encoder.add("AMT", processAmount.setScale(2, RoundingMode.HALF_UP).toPlainString());
-        encoder.add("TRANSACTIONENTITY", "Order");
+        encoder.add(x.METHOD, x.DoAuthorization);
+        encoder.add(x.TRANSACTIONID, payPalPaymentMethod.getString(x.transactionId));
+        encoder.add(x.AMT, processAmount.setScale(2, RoundingMode.HALF_UP).toPlainString());
+        encoder.add(x.TRANSACTIONENTITY, x.Order_1d75774c);
         String currency = (String) context.get(x.currency);
         if (currency == null) {
             currency = orh.getCurrency();
         }
-        encoder.add("CURRENCYCODE", currency);
+        encoder.add(x.CURRENCYCODE, currency);
 
         NVPDecoder decoder = null;
         try {
@@ -778,27 +788,27 @@ public class PayPalServices {
 
         if (decoder == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPayPalUnknownError", locale));
+                    x.AccountingPayPalUnknownError, locale));
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Map<String, String> errors = getErrorMessageMap(decoder);
         if (UtilValidate.isNotEmpty(errors)) {
-            result.put("authResult", false);
-            result.put("authRefNum", "N/A");
-            result.put("processAmount", BigDecimal.ZERO);
+            result.put(x.authResult, false);
+            result.put(x.authRefNum, x.N_A);
+            result.put(x.processAmount, BigDecimal.ZERO);
             if (errors.size() == 1) {
                 Map.Entry<String, String> error = errors.entrySet().iterator().next();
-                result.put("authCode", error.getKey());
-                result.put("authMessage", error.getValue());
+                result.put(x.authCode, error.getKey());
+                result.put(x.authMessage, error.getValue());
             } else {
-                result.put("authMessage", "Multiple errors occurred, please refer to the gateway response messages");
-                result.put("internalRespMsgs", errors);
+                result.put(x.authMessage, x.Multiple_errors_occurred_please_refer_to_the_gateway_response_messages);
+                result.put(x.internalRespMsgs, errors);
             }
         } else {
-            result.put("authResult", true);
-            result.put("processAmount", new BigDecimal(decoder.get("AMT")));
-            result.put("authRefNum", decoder.get("TRANSACTIONID"));
+            result.put(x.authResult, true);
+            result.put(x.processAmount, new BigDecimal(decoder.get(x.AMT)));
+            result.put(x.authRefNum, decoder.get(x.TRANSACTIONID));
         }
         //TODO: Look into possible PAYMENTSTATUS and PENDINGREASON return codes, it is unclear what should be checked for this type of transaction
         return result;
@@ -815,11 +825,11 @@ public class PayPalServices {
         }
 
         NVPEncoder encoder = new NVPEncoder();
-        encoder.add("METHOD", "DoCapture");
-        encoder.add("AUTHORIZATIONID", authTrans.getString(x.referenceNum));
-        encoder.add("AMT", captureAmount.setScale(2, RoundingMode.HALF_UP).toPlainString());
-        encoder.add("CURRENCYCODE", authTrans.getString(x.currencyUomId));
-        encoder.add("COMPLETETYPE", "NotComplete");
+        encoder.add(x.METHOD, x.DoCapture);
+        encoder.add(x.AUTHORIZATIONID, authTrans.getString(x.referenceNum));
+        encoder.add(x.AMT, captureAmount.setScale(2, RoundingMode.HALF_UP).toPlainString());
+        encoder.add(x.CURRENCYCODE, authTrans.getString(x.currencyUomId));
+        encoder.add(x.COMPLETETYPE, x.NotComplete);
 
         NVPDecoder decoder = null;
         try {
@@ -831,27 +841,27 @@ public class PayPalServices {
 
         if (decoder == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPayPalUnknownError", locale));
+                    x.AccountingPayPalUnknownError, locale));
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Map<String, String> errors = getErrorMessageMap(decoder);
         if (UtilValidate.isNotEmpty(errors)) {
-            result.put("captureResult", false);
-            result.put("captureRefNum", "N/A");
-            result.put("captureAmount", BigDecimal.ZERO);
+            result.put(x.captureResult, false);
+            result.put(x.captureRefNum, x.N_A);
+            result.put(x.captureAmount, BigDecimal.ZERO);
             if (errors.size() == 1) {
                 Map.Entry<String, String> error = errors.entrySet().iterator().next();
-                result.put("captureCode", error.getKey());
-                result.put("captureMessage", error.getValue());
+                result.put(x.captureCode, error.getKey());
+                result.put(x.captureMessage, error.getValue());
             } else {
-                result.put("captureMessage", "Multiple errors occurred, please refer to the gateway response messages");
-                result.put("internalRespMsgs", errors);
+                result.put(x.captureMessage, x.Multiple_errors_occurred_please_refer_to_the_gateway_response_messages);
+                result.put(x.internalRespMsgs, errors);
             }
         } else {
-            result.put("captureResult", true);
-            result.put("captureAmount", new BigDecimal(decoder.get("AMT")));
-            result.put("captureRefNum", decoder.get("TRANSACTIONID"));
+            result.put(x.captureResult, true);
+            result.put(x.captureAmount, new BigDecimal(decoder.get(x.AMT)));
+            result.put(x.captureRefNum, decoder.get(x.TRANSACTIONID));
         }
         //TODO: Look into possible PAYMENTSTATUS and PENDINGREASON return codes, it is unclear what should be checked for this type of transaction
         return result;
@@ -862,13 +872,13 @@ public class PayPalServices {
         Locale locale = (Locale) context.get(x.locale);
         if (payPalConfig == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPayPalPaymentGatewayConfigCannotFind", locale));
+                    x.AccountingPayPalPaymentGatewayConfigCannotFind, locale));
         }
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         GenericValue authTrans = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         NVPEncoder encoder = new NVPEncoder();
-        encoder.add("METHOD", "DoVoid");
-        encoder.add("AUTHORIZATIONID", authTrans.getString(x.referenceNum));
+        encoder.add(x.METHOD, x.DoVoid);
+        encoder.add(x.AUTHORIZATIONID, authTrans.getString(x.referenceNum));
         NVPDecoder decoder = null;
         try {
             decoder = sendNVPRequest(payPalConfig, encoder);
@@ -879,29 +889,29 @@ public class PayPalServices {
 
         if (decoder == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPayPalUnknownError", locale));
+                    x.AccountingPayPalUnknownError, locale));
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Map<String, String> errors = getErrorMessageMap(decoder);
         if (UtilValidate.isNotEmpty(errors)) {
-            result.put("releaseResult", false);
-            result.put("releaseRefNum", authTrans.getString(x.referenceNum));
-            result.put("releaseAmount", BigDecimal.ZERO);
+            result.put(x.releaseResult, false);
+            result.put(x.releaseRefNum, authTrans.getString(x.referenceNum));
+            result.put(x.releaseAmount, BigDecimal.ZERO);
             if (errors.size() == 1) {
                 Map.Entry<String, String> error = errors.entrySet().iterator().next();
-                result.put("releaseCode", error.getKey());
-                result.put("releaseMessage", error.getValue());
+                result.put(x.releaseCode, error.getKey());
+                result.put(x.releaseMessage, error.getValue());
             } else {
-                result.put("releaseMessage", "Multiple errors occurred, please refer to the gateway response messages");
-                result.put("internalRespMsgs", errors);
+                result.put(x.releaseMessage, x.Multiple_errors_occurred_please_refer_to_the_gateway_response_messages);
+                result.put(x.internalRespMsgs, errors);
             }
         } else {
-            result.put("releaseResult", true);
+            result.put(x.releaseResult, true);
             // PayPal voids the entire order amount minus any captures, that's a little difficult to figure out here
             // so until further testing proves we should do otherwise I'm just going to return requested void amount
-            result.put("releaseAmount", context.get(x.releaseAmount));
-            result.put("releaseRefNum", decoder.get("AUTHORIZATIONID"));
+            result.put(x.releaseAmount, context.get(x.releaseAmount));
+            result.put(x.releaseRefNum, decoder.get(x.AUTHORIZATIONID));
         }
         return result;
     }
@@ -911,18 +921,18 @@ public class PayPalServices {
         GenericValue payPalConfig = getPaymentMethodGatewayPayPal(dctx, context, null);
         if (payPalConfig == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPayPalPaymentGatewayConfigCannotFind", locale));
+                    x.AccountingPayPalPaymentGatewayConfigCannotFind, locale));
         }
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         GenericValue captureTrans = PaymentGatewayServices.getCaptureTransaction(orderPaymentPreference);
         BigDecimal refundAmount = (BigDecimal) context.get(x.refundAmount);
         NVPEncoder encoder = new NVPEncoder();
-        encoder.add("METHOD", "RefundTransaction");
-        encoder.add("TRANSACTIONID", captureTrans.getString(x.referenceNum));
-        encoder.add("REFUNDTYPE", "Partial");
-        encoder.add("CURRENCYCODE", captureTrans.getString(x.currencyUomId));
-        encoder.add("AMT", refundAmount.setScale(2, RoundingMode.HALF_UP).toPlainString());
-        encoder.add("NOTE", "Order #" + orderPaymentPreference.getString(x.orderId));
+        encoder.add(x.METHOD, x.RefundTransaction);
+        encoder.add(x.TRANSACTIONID, captureTrans.getString(x.referenceNum));
+        encoder.add(x.REFUNDTYPE, x.Partial);
+        encoder.add(x.CURRENCYCODE, captureTrans.getString(x.currencyUomId));
+        encoder.add(x.AMT, refundAmount.setScale(2, RoundingMode.HALF_UP).toPlainString());
+        encoder.add(x.NOTE, x.Order_f1e486fe + orderPaymentPreference.getString(x.orderId));
         NVPDecoder decoder = null;
         try {
             decoder = sendNVPRequest(payPalConfig, encoder);
@@ -933,27 +943,27 @@ public class PayPalServices {
 
         if (decoder == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPayPalUnknownError", locale));
+                    x.AccountingPayPalUnknownError, locale));
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
         Map<String, String> errors = getErrorMessageMap(decoder);
         if (UtilValidate.isNotEmpty(errors)) {
-            result.put("refundResult", false);
-            result.put("refundRefNum", captureTrans.getString(x.referenceNum));
-            result.put("refundAmount", BigDecimal.ZERO);
+            result.put(x.refundResult, false);
+            result.put(x.refundRefNum, captureTrans.getString(x.referenceNum));
+            result.put(x.refundAmount, BigDecimal.ZERO);
             if (errors.size() == 1) {
                 Map.Entry<String, String> error = errors.entrySet().iterator().next();
-                result.put("refundCode", error.getKey());
-                result.put("refundMessage", error.getValue());
+                result.put(x.refundCode, error.getKey());
+                result.put(x.refundMessage, error.getValue());
             } else {
-                result.put("refundMessage", "Multiple errors occurred, please refer to the gateway response messages");
-                result.put("internalRespMsgs", errors);
+                result.put(x.refundMessage, x.Multiple_errors_occurred_please_refer_to_the_gateway_response_messages);
+                result.put(x.internalRespMsgs, errors);
             }
         } else {
-            result.put("refundResult", true);
-            result.put("refundAmount", new BigDecimal(decoder.get("GROSSREFUNDAMT")));
-            result.put("refundRefNum", decoder.get("REFUNDTRANSACTIONID"));
+            result.put(x.refundResult, true);
+            result.put(x.refundAmount, new BigDecimal(decoder.get(x.GROSSREFUNDAMT)));
+            result.put(x.refundRefNum, decoder.get(x.REFUNDTRANSACTIONID));
         }
         return result;
     }
@@ -976,7 +986,7 @@ public class PayPalServices {
                 }
             }
             if (productStoreId != null) {
-                GenericValue payPalPaymentSetting = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStoreId, "EXT_PAYPAL", paymentServiceTypeEnumId, true);
+                GenericValue payPalPaymentSetting = ProductStoreWorker.getProductStorePaymentSetting(delegator, productStoreId, x.EXT_PAYPAL, paymentServiceTypeEnumId, true);
                 if (payPalPaymentSetting != null) {
                     paymentGatewayConfigId = payPalPaymentSetting.getString(x.paymentGatewayConfigId);
                 }
@@ -984,7 +994,9 @@ public class PayPalServices {
         }
         if (paymentGatewayConfigId != null) {
             try {
-                payPalGatewayConfig = EntityQuery.use(delegator).from("PaymentGatewayPayPal").where("paymentGatewayConfigId", paymentGatewayConfigId).cache().queryOne();
+                payPalGatewayConfig = DaoRegistry.getDao(delegator, x.PaymentGatewayPayPal, UserLoginDao.class)
+                        .findOne(delegator, x.PaymentGatewayPayPal,
+                                UtilMisc.toMap(x.paymentGatewayConfigId, paymentGatewayConfigId), true);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
@@ -1010,8 +1022,8 @@ public class PayPalServices {
 
         NVPDecoder decoder = new NVPDecoder();
         decoder.decode(responseMessage);
-        if (!"Success".equals(decoder.get("ACK"))) {
-            Debug.logError("A response other than success was received from PayPal: " + responseMessage, MODULE);
+        if (!x.Success.equals(decoder.get(x.ACK))) {
+            Debug.logError(x.A_response_other_than_success_was_received_from_PayPal + responseMessage, MODULE);
         }
 
         return decoder;
@@ -1020,8 +1032,9 @@ public class PayPalServices {
     private static String getCountryGeoIdFromGeoCode(String geoCode, Delegator delegator) {
         String geoId = null;
         try {
-            GenericValue countryGeo = EntityQuery.use(delegator).from("Geo")
-                    .where("geoTypeId", "COUNTRY", "geoCode", geoCode).cache().queryFirst();
+            GenericValue countryGeo = DaoRegistry.getDao(delegator, x.Geo, UserLoginDao.class)
+                    .findFirstByWhere(delegator, x.Geo,
+                            UtilMisc.toMap(x.geoTypeId, x.COUNTRY, x.geoCode, geoCode), null, null, true);
             if (countryGeo != null) {
                 geoId = countryGeo.getString(x.geoId);
             }
@@ -1032,21 +1045,22 @@ public class PayPalServices {
     }
 
     private static String parseStateProvinceGeoId(String payPalShipToState, String countryGeoId, Delegator delegator) {
-        String lookupField = "geoName";
+        String lookupField = x.geoName;
         List<EntityCondition> conditionList = new LinkedList<>();
-        conditionList.add(EntityCondition.makeCondition("geoAssocTypeId", "REGIONS"));
-        if ("USA".equals(countryGeoId) || "CAN".equals(countryGeoId)) {
+        conditionList.add(EntityCondition.makeCondition(x.geoAssocTypeId, x.REGIONS));
+        if (x.USA.equals(countryGeoId) || x.CAN.equals(countryGeoId)) {
             // PayPal returns two letter code for US and Canadian States/Provinces
-            String geoTypeId = "USA".equals(countryGeoId) ? "STATE" : "PROVINCE";
-            conditionList.add(EntityCondition.makeCondition("geoTypeId", geoTypeId));
-            lookupField = "geoCode";
+            String geoTypeId = x.USA.equals(countryGeoId) ? x.STATE : x.PROVINCE;
+            conditionList.add(EntityCondition.makeCondition(x.geoTypeId, geoTypeId));
+            lookupField = x.geoCode;
         }
-        conditionList.add(EntityCondition.makeCondition("geoIdFrom", countryGeoId));
+        conditionList.add(EntityCondition.makeCondition(x.geoIdFrom, countryGeoId));
         conditionList.add(EntityCondition.makeCondition(lookupField, payPalShipToState));
         EntityCondition cond = EntityCondition.makeCondition(conditionList);
         GenericValue geoAssocAndGeoTo = null;
         try {
-            geoAssocAndGeoTo = EntityQuery.use(delegator).from("GeoAssocAndGeoTo").where(cond).cache().queryFirst();
+            geoAssocAndGeoTo = DaoRegistry.getDao(delegator, x.GeoAssocAndGeoTo, UserLoginDao.class)
+                    .findFirstByCondition(delegator, x.GeoAssocAndGeoTo, cond, null, null, true);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
         }
@@ -1056,7 +1070,7 @@ public class PayPalServices {
         return null;
     }
 
-    @SuppressWarnings("serial")
+    @SuppressWarnings(x.serial)
     public static class TokenWrapper implements Serializable {
         String theString;
         public TokenWrapper(String theString) {

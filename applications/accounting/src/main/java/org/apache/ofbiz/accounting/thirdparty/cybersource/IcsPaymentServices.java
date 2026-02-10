@@ -40,12 +40,16 @@ import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.PaymentGatewayCyberSourceDao;
+import org.apache.ofbiz.persistence.entity.PaymentGatewayCyberSourceEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
 
 import com.cybersource.ws.client.Client;
 import com.cybersource.ws.client.ClientException;
 import com.cybersource.ws.client.FaultException;
+import com.landawn.abacus.util.Beans;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -57,9 +61,9 @@ import org.apache.ofbiz.model.IcsPaymentServicesContext;
 public class IcsPaymentServices {
 
     private static final String MODULE = IcsPaymentServices.class.getName();
-    private static final String RESOURCE = "AccountingUiLabels";
-    private static final int DECIMALS = UtilNumber.getBigDecimalScale("invoice.decimals");
-    private static final RoundingMode ROUNDING = UtilNumber.getRoundingMode("invoice.rounding");
+    private static final String RESOURCE = x.AccountingUiLabels;
+    private static final int DECIMALS = UtilNumber.getBigDecimalScale(x.invoice_decimals);
+    private static final RoundingMode ROUNDING = UtilNumber.getRoundingMode(x.invoice_rounding);
 
     // load the JSSE properties
     static {
@@ -73,25 +77,25 @@ public class IcsPaymentServices {
         Properties props = buildCsProperties(context, delegator);
         if (props == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorGettingPaymentGatewayConfig", locale));
+                    x.AccountingCyberSourceErrorGettingPaymentGatewayConfig, locale));
         }
 
         Map<String, Object> request = buildAuthRequest(context, delegator);
-        request.put("merchantID", props.get("merchantID"));
+        request.put(x.merchantID, props.get(x.merchantID));
 
         // transmit the request
         Map<String, Object> reply;
         try {
             reply = UtilGenerics.cast(Client.runTransaction(request, props));
         } catch (FaultException e) {
-            Debug.logError(e, "ERROR: Fault from CyberSource", MODULE);
-            Debug.logError(e, "Fault : " + e.getFaultString(), MODULE);
+            Debug.logError(e, x.ERROR_Fault_from_CyberSource, MODULE);
+            Debug.logError(e, x.Fault + e.getFaultString(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorCommunicateWithCyberSource", locale));
+                    x.AccountingCyberSourceErrorCommunicateWithCyberSource, locale));
         } catch (ClientException e) {
-            Debug.logError(e, "ERROR: CyberSource Client exception : " + e.getMessage(), MODULE);
+            Debug.logError(e, x.ERROR_CyberSource_Client_exception + e.getMessage(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorCommunicateWithCyberSource", locale));
+                    x.AccountingCyberSourceErrorCommunicateWithCyberSource, locale));
         }
         // process the reply
         Map<String, Object> result = ServiceUtil.returnSuccess();
@@ -114,30 +118,30 @@ public class IcsPaymentServices {
         }
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPaymentTransactionAuthorizationNotFoundCannotCapture", locale));
+                    x.AccountingPaymentTransactionAuthorizationNotFoundCannotCapture, locale));
         }
         // generate the request/properties
         Properties props = buildCsProperties(context, delegator);
         if (props == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorGettingPaymentGatewayConfig", locale));
+                    x.AccountingCyberSourceErrorGettingPaymentGatewayConfig, locale));
         }
 
         Map<String, Object> request = buildCaptureRequest(context, authTransaction, delegator);
-        request.put("merchantID", props.get("merchantID"));
+        request.put(x.merchantID, props.get(x.merchantID));
 
         // transmit the request
         Map<String, Object> reply;
         try {
             reply = UtilGenerics.cast(Client.runTransaction(request, props));
         } catch (FaultException e) {
-            Debug.logError(e, "ERROR: Fault from CyberSource", MODULE);
+            Debug.logError(e, x.ERROR_Fault_from_CyberSource, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorCommunicateWithCyberSource", locale));
+                    x.AccountingCyberSourceErrorCommunicateWithCyberSource, locale));
         } catch (ClientException e) {
-            Debug.logError(e, "ERROR: CyberSource Client exception : " + e.getMessage(), MODULE);
+            Debug.logError(e, x.ERROR_CyberSource_Client_exception + e.getMessage(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorCommunicateWithCyberSource", locale));
+                    x.AccountingCyberSourceErrorCommunicateWithCyberSource, locale));
         }
         // process the reply
         Map<String, Object> result = ServiceUtil.returnSuccess();
@@ -152,31 +156,31 @@ public class IcsPaymentServices {
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPaymentTransactionAuthorizationNotFoundCannotRelease", locale));
+                    x.AccountingPaymentTransactionAuthorizationNotFoundCannotRelease, locale));
         }
 
         // generate the request/properties
         Properties props = buildCsProperties(context, delegator);
         if (props == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorGettingPaymentGatewayConfig", locale));
+                    x.AccountingCyberSourceErrorGettingPaymentGatewayConfig, locale));
         }
 
         Map<String, Object> request = buildReleaseRequest(context, authTransaction);
-        request.put("merchantID", props.get("merchantID"));
+        request.put(x.merchantID, props.get(x.merchantID));
 
         // transmit the request
         Map<String, Object> reply;
         try {
             reply = UtilGenerics.cast(Client.runTransaction(request, props));
         } catch (FaultException e) {
-            Debug.logError(e, "ERROR: Fault from CyberSource", MODULE);
+            Debug.logError(e, x.ERROR_Fault_from_CyberSource, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorCommunicateWithCyberSource", locale));
+                    x.AccountingCyberSourceErrorCommunicateWithCyberSource, locale));
         } catch (ClientException e) {
-            Debug.logError(e, "ERROR: CyberSource Client exception : " + e.getMessage(), MODULE);
+            Debug.logError(e, x.ERROR_CyberSource_Client_exception + e.getMessage(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorCommunicateWithCyberSource", locale));
+                    x.AccountingCyberSourceErrorCommunicateWithCyberSource, locale));
         }
         // process the reply
         Map<String, Object> result = ServiceUtil.returnSuccess();
@@ -191,31 +195,31 @@ public class IcsPaymentServices {
         GenericValue authTransaction = PaymentGatewayServices.getAuthTransaction(orderPaymentPreference);
         if (authTransaction == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingPaymentTransactionAuthorizationNotFoundCannotRefund", locale));
+                    x.AccountingPaymentTransactionAuthorizationNotFoundCannotRefund, locale));
         }
 
         // generate the request/properties
         Properties props = buildCsProperties(context, delegator);
         if (props == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorGettingPaymentGatewayConfig", locale));
+                    x.AccountingCyberSourceErrorGettingPaymentGatewayConfig, locale));
         }
 
         Map<String, Object> request = buildRefundRequest(context, authTransaction, delegator);
-        request.put("merchantID", props.get("merchantID"));
+        request.put(x.merchantID, props.get(x.merchantID));
 
         // transmit the request
         Map<String, Object> reply;
         try {
             reply = UtilGenerics.cast(Client.runTransaction(request, props));
         } catch (FaultException e) {
-            Debug.logError(e, "ERROR: Fault from CyberSource", MODULE);
+            Debug.logError(e, x.ERROR_Fault_from_CyberSource, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorCommunicateWithCyberSource", locale));
+                    x.AccountingCyberSourceErrorCommunicateWithCyberSource, locale));
         } catch (ClientException e) {
-            Debug.logError(e, "ERROR: CyberSource Client exception : " + e.getMessage(), MODULE);
+            Debug.logError(e, x.ERROR_CyberSource_Client_exception + e.getMessage(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorCommunicateWithCyberSource", locale));
+                    x.AccountingCyberSourceErrorCommunicateWithCyberSource, locale));
         }
 
         // process the reply
@@ -231,24 +235,24 @@ public class IcsPaymentServices {
         Properties props = buildCsProperties(context, delegator);
         if (props == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorGettingPaymentGatewayConfig", locale));
+                    x.AccountingCyberSourceErrorGettingPaymentGatewayConfig, locale));
         }
 
         Map<String, Object> request = buildCreditRequest(context);
-        request.put("merchantID", props.get("merchantID"));
+        request.put(x.merchantID, props.get(x.merchantID));
 
         // transmit the request
         Map<String, Object> reply;
         try {
             reply = UtilGenerics.cast(Client.runTransaction(request, props));
         } catch (FaultException e) {
-            Debug.logError(e, "ERROR: Fault from CyberSource", MODULE);
+            Debug.logError(e, x.ERROR_Fault_from_CyberSource, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorCommunicateWithCyberSource", locale));
+                    x.AccountingCyberSourceErrorCommunicateWithCyberSource, locale));
         } catch (ClientException e) {
-            Debug.logError(e, "ERROR: CyberSource Client exception : " + e.getMessage(), MODULE);
+            Debug.logError(e, x.ERROR_CyberSource_Client_exception + e.getMessage(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "AccountingCyberSourceErrorCommunicateWithCyberSource", locale));
+                    x.AccountingCyberSourceErrorCommunicateWithCyberSource, locale));
         }
 
         // process the reply
@@ -261,40 +265,40 @@ public class IcsPaymentServices {
         String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
         String configString = (String) context.get(x.paymentConfig);
         if (configString == null) {
-            configString = "payment.properties";
+            configString = x.payment_properties;
         }
-        String merchantId = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "merchantId", configString, "payment.cybersource.merchantID");
-        String targetApi = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "apiVersion", configString, "payment.cybersource.api.version");
-        String production = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "production", configString, "payment.cybersource.production");
-        String enableLog = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "logEnabled", configString, "payment.cybersource.log");
-        String logSize = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "logSize", configString, "payment.cybersource.log.size");
-        String logFile = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "logFile", configString, "payment.cybersource.log.file");
-        String logDir = FlexibleStringExpander.expandString(getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "logDir", configString, "payment.cybersource.log.dir"), context);
-        String keysDir = FlexibleStringExpander.expandString(getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "keysDir", configString, "payment.cybersource.keysDir"), context);
-        String keysFile = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "keysFile", configString, "payment.cybersource.keysFile");
+        String merchantId = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.merchantId, configString, x.payment_cybersource_merchantID);
+        String targetApi = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.apiVersion, configString, x.payment_cybersource_api_version);
+        String production = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.production, configString, x.payment_cybersource_production);
+        String enableLog = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.logEnabled, configString, x.payment_cybersource_log);
+        String logSize = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.logSize, configString, x.payment_cybersource_log_size);
+        String logFile = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.logFile, configString, x.payment_cybersource_log_file);
+        String logDir = FlexibleStringExpander.expandString(getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.logDir, configString, x.payment_cybersource_log_dir), context);
+        String keysDir = FlexibleStringExpander.expandString(getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.keysDir, configString, x.payment_cybersource_keysDir), context);
+        String keysFile = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.keysFile, configString, x.payment_cybersource_keysFile);
         // some property checking
         if (UtilValidate.isEmpty(merchantId)) {
-            Debug.logWarning("The merchantId property is not configured", MODULE);
+            Debug.logWarning(x.The_merchantId_property_is_not_configured, MODULE);
             return null;
         }
         if (UtilValidate.isEmpty(keysDir)) {
-            Debug.logWarning("The keysDir property is not configured", MODULE);
+            Debug.logWarning(x.The_keysDir_property_is_not_configured, MODULE);
             return null;
         }
         // create some properties for CS Client
         Properties props = new Properties();
-        props.put("merchantID", merchantId);
-        props.put("keysDirectory", keysDir);
-        props.put("targetAPIVersion", targetApi);
-        props.put("sendToProduction", production);
-        props.put("enableLog", enableLog);
-        props.put("logDirectory", logDir);
-        props.put("logFilename", logFile);
-        props.put("logMaximumSize", logSize);
+        props.put(x.merchantID, merchantId);
+        props.put(x.keysDirectory, keysDir);
+        props.put(x.targetAPIVersion, targetApi);
+        props.put(x.sendToProduction, production);
+        props.put(x.enableLog, enableLog);
+        props.put(x.logDirectory, logDir);
+        props.put(x.logFilename, logFile);
+        props.put(x.logMaximumSize, logSize);
         if (UtilValidate.isNotEmpty(keysFile)) {
-            props.put("alternateKeyFilename", keysFile);
+            props.put(x.alternateKeyFilename, keysFile);
         }
-        Debug.logInfo("Created CyberSource Properties : " + props, MODULE);
+        Debug.logInfo(x.Created_CyberSource_Properties + props, MODULE);
         return props;
     }
 
@@ -303,18 +307,18 @@ public class IcsPaymentServices {
         String configString = (String) context.get(x.paymentConfig);
         String currency = (String) context.get(x.currency);
         if (configString == null) {
-            configString = "payment.properties";
+            configString = x.payment_properties;
         }
         // make the request map
-        String capture = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "autoBill", configString, "payment.cybersource.autoBill", "false");
+        String capture = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.autoBill, configString, x.payment_cybersource_autoBill, x._false);
         String orderId = (String) context.get(x.orderId);
         Map<String, Object> request = new HashMap<>();
-        request.put("ccAuthService_run", "true");              // run auth service
-        request.put("ccCaptureService_run", capture);          // run capture service (i.e. sale)
-        request.put("merchantReferenceCode", orderId);         // set the order ref number
-        request.put("purchaseTotals_currency", currency);      // set the order currency
+        request.put(x.ccAuthService_run, x._true);              // run auth service
+        request.put(x.ccCaptureService_run, capture);          // run capture service (i.e. sale)
+        request.put(x.merchantReferenceCode, orderId);         // set the order ref number
+        request.put(x.purchaseTotals_currency, currency);      // set the order currency
         appendFullBillingInfo(request, context);               // add in all address info
-        appendItemLineInfo(request, context, "processAmount"); // add in the item info
+        appendItemLineInfo(request, context, x.processAmount); // add in the item info
         appendAvsRules(request, context, delegator);           // add in the AVS flags and decline codes
         return request;
     }
@@ -325,23 +329,23 @@ public class IcsPaymentServices {
         String configString = (String) context.get(x.paymentConfig);
         String currency = (String) context.get(x.currency);
         if (configString == null) {
-            configString = "payment.properties";
+            configString = x.payment_properties;
         }
-        String merchantDesc = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "merchantDescr", configString, "payment.cybersource.merchantDescr", null);
-        String merchantCont = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "merchantContact", configString, "payment.cybersource.merchantContact", null);
+        String merchantDesc = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.merchantDescr, configString, x.payment_cybersource_merchantDescr, null);
+        String merchantCont = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.merchantContact, configString, x.payment_cybersource_merchantContact, null);
         Map<String, Object> request = new HashMap<>();
-        request.put("ccCaptureService_run", "true");
-        request.put("ccCaptureService_authRequestID", authTransaction.getString(x.referenceNum));
-        request.put("item_0_unitPrice", getAmountString(context, "captureAmount"));
-        request.put("merchantReferenceCode", orderPaymentPreference.getString(x.orderId));
-        request.put("purchaseTotals_currency", currency);
+        request.put(x.ccCaptureService_run, x._true);
+        request.put(x.ccCaptureService_authRequestID, authTransaction.getString(x.referenceNum));
+        request.put(x.item_0_unitPrice, getAmountString(context, x.captureAmount));
+        request.put(x.merchantReferenceCode, orderPaymentPreference.getString(x.orderId));
+        request.put(x.purchaseTotals_currency, currency);
 
         // TODO: add support for verbal authorizations
         if (merchantDesc != null) {
-            request.put("invoiceHeader_merchantDescriptor", merchantDesc);        // merchant description
+            request.put(x.invoiceHeader_merchantDescriptor, merchantDesc);        // merchant description
         }
         if (merchantCont != null) {
-            request.put("invoiceHeader_merchantDescriptorContact", merchantCont); // merchant contact info
+            request.put(x.invoiceHeader_merchantDescriptorContact, merchantCont); // merchant contact info
         }
         return request;
     }
@@ -350,11 +354,11 @@ public class IcsPaymentServices {
         Map<String, Object> request = new HashMap<>();
         GenericValue orderPaymentPreference = (GenericValue) context.get(x.orderPaymentPreference);
         String currency = (String) context.get(x.currency);
-        request.put("ccAuthReversalService_run", "true");
-        request.put("ccAuthReversalService_authRequestID", authTransaction.getString(x.referenceNum));
-        request.put("item_0_unitPrice", getAmountString(context, "releaseAmount"));
-        request.put("merchantReferenceCode", orderPaymentPreference.getString(x.orderId));
-        request.put("purchaseTotals_currency", currency);
+        request.put(x.ccAuthReversalService_run, x._true);
+        request.put(x.ccAuthReversalService_authRequestID, authTransaction.getString(x.referenceNum));
+        request.put(x.item_0_unitPrice, getAmountString(context, x.releaseAmount));
+        request.put(x.merchantReferenceCode, orderPaymentPreference.getString(x.orderId));
+        request.put(x.purchaseTotals_currency, currency);
         return request;
     }
 
@@ -363,22 +367,22 @@ public class IcsPaymentServices {
         String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
         String configString = (String) context.get(x.paymentConfig);
         if (configString == null) {
-            configString = "payment.properties";
+            configString = x.payment_properties;
         }
         String currency = (String) context.get(x.currency);
-        String merchantDesc = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "merchantDescr", configString, "payment.cybersource.merchantDescr", null);
-        String merchantCont = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "merchantContact", configString, "payment.cybersource.merchantContact", null);
+        String merchantDesc = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.merchantDescr, configString, x.payment_cybersource_merchantDescr, null);
+        String merchantCont = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.merchantContact, configString, x.payment_cybersource_merchantContact, null);
         Map<String, Object> request = new HashMap<>();
-        request.put("ccCreditService_run", "true");
-        request.put("ccCreditService_captureRequestID", authTransaction.getString(x.referenceNum));
-        request.put("item_0_unitPrice", getAmountString(context, "refundAmount"));
-        request.put("merchantReferenceCode", orderPaymentPreference.getString(x.orderId));
-        request.put("purchaseTotals_currency", currency);
+        request.put(x.ccCreditService_run, x._true);
+        request.put(x.ccCreditService_captureRequestID, authTransaction.getString(x.referenceNum));
+        request.put(x.item_0_unitPrice, getAmountString(context, x.refundAmount));
+        request.put(x.merchantReferenceCode, orderPaymentPreference.getString(x.orderId));
+        request.put(x.purchaseTotals_currency, currency);
         if (merchantDesc != null) {
-            request.put("invoiceHeader_merchantDescriptor", merchantDesc);        // merchant description
+            request.put(x.invoiceHeader_merchantDescriptor, merchantDesc);        // merchant description
         }
         if (merchantCont != null) {
-            request.put("invoiceHeader_merchantDescriptorContact", merchantCont); // merchant contact info
+            request.put(x.invoiceHeader_merchantDescriptorContact, merchantCont); // merchant contact info
         }
         return request;
     }
@@ -386,10 +390,10 @@ public class IcsPaymentServices {
     private static Map<String, Object> buildCreditRequest(IcsPaymentServicesContext context) {
         String refCode = (String) context.get(x.referenceCode);
         Map<String, Object> request = new HashMap<>();
-        request.put("ccCreditService_run", "true");            // run credit service
-        request.put("merchantReferenceCode", refCode);         // set the ref number could be order id
+        request.put(x.ccCreditService_run, x._true);            // run credit service
+        request.put(x.merchantReferenceCode, refCode);         // set the ref number could be order id
         appendFullBillingInfo(request, context);               // add in all address info
-        appendItemLineInfo(request, context, "creditAmount");  // add in the item info
+        appendItemLineInfo(request, context, x.creditAmount);  // add in the item info
         return request;
     }
 
@@ -397,15 +401,15 @@ public class IcsPaymentServices {
         String paymentGatewayConfigId = (String) context.get(x.paymentGatewayConfigId);
         String configString = (String) context.get(x.paymentConfig);
         if (configString == null) {
-            configString = "payment.properties";
+            configString = x.payment_properties;
         }
-        String avsCodes = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "avsDeclineCodes", configString, "payment.cybersource.avsDeclineCodes", null);
+        String avsCodes = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.avsDeclineCodes, configString, x.payment_cybersource_avsDeclineCodes, null);
         GenericValue party = (GenericValue) context.get(x.billToParty);
         if (party != null) {
             GenericValue avsOverride = null;
             try {
-                avsOverride = party.getDelegator().findOne("PartyIcsAvsOverride",
-                        UtilMisc.toMap("partyId", party.getString(x.partyId)), false);
+                avsOverride = party.getDelegator().findOne(x.PartyIcsAvsOverride,
+                        UtilMisc.toMap(x.partyId, party.getString(x.partyId)), false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
             }
@@ -417,77 +421,77 @@ public class IcsPaymentServices {
             }
         }
         if (UtilValidate.isNotEmpty(avsCodes)) {
-            request.put("businessRules_declineAVSFlags", avsCodes);
+            request.put(x.businessRules_declineAVSFlags, avsCodes);
         }
-        String avsIgnore = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, "ignoreAvs", configString, "payment.cybersource.ignoreAvs", "false");
-        request.put("businessRules_ignoreAVS", avsIgnore);
+        String avsIgnore = getPaymentGatewayConfigValue(delegator, paymentGatewayConfigId, x.ignoreAvs, configString, x.payment_cybersource_ignoreAvs, x._false);
+        request.put(x.businessRules_ignoreAVS, avsIgnore);
     }
 
     private static void appendFullBillingInfo(Map<String, Object> request, IcsPaymentServicesContext context) {
         // contact info
         GenericValue email = (GenericValue) context.get(x.billToEmail);
         if (email != null) {
-            request.put("billTo_email", email.getString(x.infoString));
+            request.put(x.billTo_email, email.getString(x.infoString));
         } else {
-            Debug.logWarning("Email not defined; Cybersource will fail.", MODULE);
+            Debug.logWarning(x.Email_not_defined_Cybersource_will_fail, MODULE);
         }
         // phone number seems to not be used; possibly only for reporting.
 
         // CC payment info
         GenericValue creditCard = (GenericValue) context.get(x.creditCard);
         if (creditCard != null) {
-            List<String> expDateList = StringUtil.split(creditCard.getString(x.expireDate), "/");
-            request.put("billTo_firstName", creditCard.getString(x.firstNameOnCard));
-            request.put("billTo_lastName", creditCard.getString(x.lastNameOnCard));
-            request.put("card_accountNumber", creditCard.getString(x.cardNumber));
-            request.put("card_expirationMonth", expDateList.get(0));
-            request.put("card_expirationYear", expDateList.get(1));
+            List<String> expDateList = StringUtil.split(creditCard.getString(x.expireDate), x.str_42099b4a);
+            request.put(x.billTo_firstName, creditCard.getString(x.firstNameOnCard));
+            request.put(x.billTo_lastName, creditCard.getString(x.lastNameOnCard));
+            request.put(x.card_accountNumber, creditCard.getString(x.cardNumber));
+            request.put(x.card_expirationMonth, expDateList.get(0));
+            request.put(x.card_expirationYear, expDateList.get(1));
         } else {
-            Debug.logWarning("CreditCard not defined; Cybersource will fail.", MODULE);
+            Debug.logWarning(x.CreditCard_not_defined_Cybersource_will_fail, MODULE);
         }
         // CCV info
         String cvNum = (String) context.get(x.cardSecurityCode);
-        String cvSet = UtilValidate.isEmpty(cvNum) ? "1" : "0";
-        request.put("card_cvIndicator", cvSet);
-        if ("1".equals(cvNum)) {
-            request.put("card_cvNumber", cvNum);
+        String cvSet = UtilValidate.isEmpty(cvNum) ? x._1 : x._0;
+        request.put(x.card_cvIndicator, cvSet);
+        if (x._1.equals(cvNum)) {
+            request.put(x.card_cvNumber, cvNum);
         }
         // payment contact info
         GenericValue billingAddress = (GenericValue) context.get(x.billingAddress);
 
         if (billingAddress != null) {
-            request.put("billTo_street1", billingAddress.getString(x.address1));
+            request.put(x.billTo_street1, billingAddress.getString(x.address1));
             if (billingAddress.get(x.address2) != null) {
-                request.put("billTo_street2", billingAddress.getString(x.address2));
+                request.put(x.billTo_street2, billingAddress.getString(x.address2));
             }
-            request.put("billTo_city", billingAddress.getString(x.city));
-            String bCountry = billingAddress.get(x.countryGeoId) != null ? billingAddress.getString(x.countryGeoId) : "USA";
-            request.put("billTo_country", bCountry);
-            request.put("billTo_postalCode", billingAddress.getString(x.postalCode));
+            request.put(x.billTo_city, billingAddress.getString(x.city));
+            String bCountry = billingAddress.get(x.countryGeoId) != null ? billingAddress.getString(x.countryGeoId) : x.USA;
+            request.put(x.billTo_country, bCountry);
+            request.put(x.billTo_postalCode, billingAddress.getString(x.postalCode));
             if (billingAddress.get(x.stateProvinceGeoId) != null) {
-                request.put("billTo_state", billingAddress.getString(x.stateProvinceGeoId));
+                request.put(x.billTo_state, billingAddress.getString(x.stateProvinceGeoId));
             }
         } else {
-            Debug.logWarning("BillingAddress not defined; Cybersource will fail.", MODULE);
+            Debug.logWarning(x.BillingAddress_not_defined_Cybersource_will_fail, MODULE);
         }
         // order shipping information
         GenericValue shippingAddress = (GenericValue) context.get(x.shippingAddress);
         if (shippingAddress != null) {
             if (creditCard != null) {
                 // TODO: this is just a kludge since we don't have a firstName and lastName on the PostalAddress entity, that needs to be done
-                request.put("shipTo_firstName", creditCard.getString(x.firstNameOnCard));
-                request.put("shipTo_lastName", creditCard.getString(x.lastNameOnCard));
+                request.put(x.shipTo_firstName, creditCard.getString(x.firstNameOnCard));
+                request.put(x.shipTo_lastName, creditCard.getString(x.lastNameOnCard));
             }
-            request.put("shipTo_street1", shippingAddress.getString(x.address1));
+            request.put(x.shipTo_street1, shippingAddress.getString(x.address1));
             if (shippingAddress.get(x.address2) != null) {
-                request.put("shipTo_street2", shippingAddress.getString(x.address2));
+                request.put(x.shipTo_street2, shippingAddress.getString(x.address2));
             }
-            request.put("shipTo_city", shippingAddress.getString(x.city));
-            String sCountry = shippingAddress.get(x.countryGeoId) != null ? shippingAddress.getString(x.countryGeoId) : "USA";
-            request.put("shipTo_country", sCountry);
-            request.put("shipTo_postalCode", shippingAddress.getString(x.postalCode));
+            request.put(x.shipTo_city, shippingAddress.getString(x.city));
+            String sCountry = shippingAddress.get(x.countryGeoId) != null ? shippingAddress.getString(x.countryGeoId) : x.USA;
+            request.put(x.shipTo_country, sCountry);
+            request.put(x.shipTo_postalCode, shippingAddress.getString(x.postalCode));
             if (shippingAddress.get(x.stateProvinceGeoId) != null) {
-                request.put("shipTo_state", shippingAddress.getString(x.stateProvinceGeoId));
+                request.put(x.shipTo_state, shippingAddress.getString(x.stateProvinceGeoId));
             }
         }
     }
@@ -496,9 +500,9 @@ public class IcsPaymentServices {
         // send over a line item total offer w/ the total for billing; don't trust CyberSource for calc
         String currency = (String) context.get(x.currency);
         int lineNumber = 0;
-        request.put("item_" + lineNumber + "_unitPrice", getAmountString(context, amountField));
+        request.put(x.item_c6b5f3a0 + lineNumber + x.unitPrice_12c8439f, getAmountString(context, amountField));
         // the currency
-        request.put("purchaseTotals_currency", currency);
+        request.put(x.purchaseTotals_currency, currency);
         // create the offers (one for each line item)
         List<GenericValue> orderItems = UtilGenerics.cast(context.get(x.orderItems));
         if (orderItems != null) {
@@ -509,25 +513,25 @@ public class IcsPaymentServices {
                 try {
                     product = item.getRelatedOne(x.Product, false);
                 } catch (GenericEntityException e) {
-                    Debug.logError(e, "ERROR: Unable to get Product from OrderItem, not passing info to CyberSource");
+                    Debug.logError(e, x.ERROR_Unable_to_get_Product_from_OrderItem_not_passing_info_to_CyberSource);
                 }
                 if (product != null) {
-                    request.put("item_" + lineNumber + "_productName", product.getString(x.productName));
-                    request.put("item_" + lineNumber + "_productSKU", product.getString(x.productId));
+                    request.put(x.item_c6b5f3a0 + lineNumber + x.productName_771d826c, product.getString(x.productName));
+                    request.put(x.item_c6b5f3a0 + lineNumber + x.productSKU, product.getString(x.productId));
                 } else {
                     // no product; just send the item description -- non product items
-                    request.put("item_" + lineNumber + "_productName", item.getString(x.description));
+                    request.put(x.item_c6b5f3a0 + lineNumber + x.productName_771d826c, item.getString(x.description));
                 }
                 // get the quantity..
                 BigDecimal quantity = item.getBigDecimal(x.quantity);
                 // test quantity if INT pass as is; if not pass as 1
                 if (quantity.scale() > 0) {
-                    request.put("item_" + lineNumber + "_quantity", "1");
+                    request.put(x.item_c6b5f3a0 + lineNumber + x.quantity_4bcd23fb, x._1);
                 } else {
-                    request.put("", Integer.toString(quantity.intValue()));
+                    request.put(x.emptyString, Integer.toString(quantity.intValue()));
                 }
                 // set the amount to 0.0000 -- we will send a total too.
-                request.put("item_" + lineNumber + "_unitPrice", "0.0000");
+                request.put(x.item_c6b5f3a0 + lineNumber + x.unitPrice_12c8439f, x._0_0000);
             }
         }
     }
@@ -539,151 +543,152 @@ public class IcsPaymentServices {
 
     private static void processAuthResult(Map<String, Object> reply, Map<String, Object> result, Delegator delegator) {
         String decision = getDecision(reply);
-        String checkModeStatus = EntityUtilProperties.getPropertyValue("payment", "payment.cybersource.ignoreStatus", delegator);
-        if ("ACCEPT".equalsIgnoreCase(decision)) {
-            result.put("authCode", reply.get("ccAuthReply_authorizationCode"));
-            result.put("authResult", Boolean.TRUE);
+        String checkModeStatus = EntityUtilProperties.getPropertyValue(x.payment, x.payment_cybersource_ignoreStatus, delegator);
+        if (x.ACCEPT.equalsIgnoreCase(decision)) {
+            result.put(x.authCode, reply.get(x.ccAuthReply_authorizationCode));
+            result.put(x.authResult, Boolean.TRUE);
         } else {
-            result.put("authCode", decision);
-            if ("N".equals(checkModeStatus)) {
-                result.put("authResult", Boolean.FALSE);
+            result.put(x.authCode, decision);
+            if (x.N.equals(checkModeStatus)) {
+                result.put(x.authResult, Boolean.FALSE);
             } else {
-                result.put("authResult", Boolean.TRUE);
+                result.put(x.authResult, Boolean.TRUE);
             }
             // TODO: based on reasonCode populate the following flags as applicable: resultDeclined, resultNsf, resultBadExpire, resultBadCardNumber
         }
 
-        if (reply.get("ccAuthReply_amount") != null) {
-            result.put("processAmount", new BigDecimal((String) reply.get("ccAuthReply_amount")));
+        if (reply.get(x.ccAuthReply_amount) != null) {
+            result.put(x.processAmount, new BigDecimal((String) reply.get(x.ccAuthReply_amount)));
         } else {
-            result.put("processAmount", BigDecimal.ZERO);
+            result.put(x.processAmount, BigDecimal.ZERO);
         }
-        result.put("authRefNum", reply.get("requestID"));
-        result.put("authFlag", reply.get("ccAuthReply_reasonCode"));
-        result.put("authMessage", reply.get("ccAuthReply_processorResponse"));
-        result.put("cvCode", reply.get("ccAuthReply_cvCode"));
-        result.put("avsCode", reply.get("ccAuthReply_avsCode"));
-        result.put("scoreCode", reply.get("ccAuthReply_authFactorCode"));
-        result.put("captureRefNum", reply.get("requestID"));
-        if (UtilValidate.isNotEmpty(reply.get("ccCaptureReply_reconciliationID"))) {
-            if ("ACCEPT".equalsIgnoreCase(decision)) {
-                result.put("captureResult", Boolean.TRUE);
+        result.put(x.authRefNum, reply.get(x.requestID));
+        result.put(x.authFlag, reply.get(x.ccAuthReply_reasonCode));
+        result.put(x.authMessage, reply.get(x.ccAuthReply_processorResponse));
+        result.put(x.cvCode, reply.get(x.ccAuthReply_cvCode));
+        result.put(x.avsCode, reply.get(x.ccAuthReply_avsCode));
+        result.put(x.scoreCode, reply.get(x.ccAuthReply_authFactorCode));
+        result.put(x.captureRefNum, reply.get(x.requestID));
+        if (UtilValidate.isNotEmpty(reply.get(x.ccCaptureReply_reconciliationID))) {
+            if (x.ACCEPT.equalsIgnoreCase(decision)) {
+                result.put(x.captureResult, Boolean.TRUE);
             } else {
-                result.put("captureResult", Boolean.FALSE);
+                result.put(x.captureResult, Boolean.FALSE);
             }
-            result.put("captureCode", reply.get("ccCaptureReply_reconciliationID"));
-            result.put("captureFlag", reply.get("ccCaptureReply_reasonCode"));
-            result.put("captureMessage", reply.get("decision"));
+            result.put(x.captureCode, reply.get(x.ccCaptureReply_reconciliationID));
+            result.put(x.captureFlag, reply.get(x.ccCaptureReply_reasonCode));
+            result.put(x.captureMessage, reply.get(x.decision));
         }
         if (Debug.infoOn())
-            Debug.logInfo("CC [Cybersource] authorization result : " + result, MODULE);
+            Debug.logInfo(x.CC_Cybersource_authorization_result + result, MODULE);
     }
 
     private static void processCaptureResult(Map<String, Object> reply, Map<String, Object> result) {
         String decision = getDecision(reply);
-        if ("ACCEPT".equalsIgnoreCase(decision)) {
-            result.put("captureResult", Boolean.TRUE);
+        if (x.ACCEPT.equalsIgnoreCase(decision)) {
+            result.put(x.captureResult, Boolean.TRUE);
         } else {
-            result.put("captureResult", Boolean.FALSE);
+            result.put(x.captureResult, Boolean.FALSE);
         }
-        if (reply.get("ccCaptureReply_amount") != null) {
-            result.put("captureAmount", new BigDecimal((String) reply.get("ccCaptureReply_amount")));
+        if (reply.get(x.ccCaptureReply_amount) != null) {
+            result.put(x.captureAmount, new BigDecimal((String) reply.get(x.ccCaptureReply_amount)));
         } else {
-            result.put("captureAmount", BigDecimal.ZERO);
+            result.put(x.captureAmount, BigDecimal.ZERO);
         }
-        result.put("captureRefNum", reply.get("requestID"));
-        result.put("captureCode", reply.get("ccCaptureReply_reconciliationID"));
-        result.put("captureFlag", reply.get("ccCaptureReply_reasonCode"));
-        result.put("captureMessage", reply.get("decision"));
+        result.put(x.captureRefNum, reply.get(x.requestID));
+        result.put(x.captureCode, reply.get(x.ccCaptureReply_reconciliationID));
+        result.put(x.captureFlag, reply.get(x.ccCaptureReply_reasonCode));
+        result.put(x.captureMessage, reply.get(x.decision));
         if (Debug.infoOn())
-            Debug.logInfo("CC [Cybersource] capture result : " + result, MODULE);
+            Debug.logInfo(x.CC_Cybersource_capture_result + result, MODULE);
     }
 
     private static void processReleaseResult(Map<String, Object> reply, Map<String, Object> result) {
         String decision = getDecision(reply);
-        if ("ACCEPT".equalsIgnoreCase(decision)) {
-            result.put("releaseResult", Boolean.TRUE);
+        if (x.ACCEPT.equalsIgnoreCase(decision)) {
+            result.put(x.releaseResult, Boolean.TRUE);
         } else {
-            result.put("releaseResult", Boolean.FALSE);
+            result.put(x.releaseResult, Boolean.FALSE);
         }
-        if (reply.get("ccAuthReversalReply_amount") != null) {
-            result.put("releaseAmount", new BigDecimal((String) reply.get("ccAuthReversalReply_amount")));
+        if (reply.get(x.ccAuthReversalReply_amount) != null) {
+            result.put(x.releaseAmount, new BigDecimal((String) reply.get(x.ccAuthReversalReply_amount)));
         } else {
-            result.put("releaseAmount", BigDecimal.ZERO);
+            result.put(x.releaseAmount, BigDecimal.ZERO);
         }
-        result.put("releaseRefNum", reply.get("requestID"));
-        result.put("releaseCode", reply.get("ccAuthReversalReply_reasonCode"));
-        result.put("releaseFlag", reply.get("reasonCode"));
-        result.put("releaseMessage", reply.get("decision"));
+        result.put(x.releaseRefNum, reply.get(x.requestID));
+        result.put(x.releaseCode, reply.get(x.ccAuthReversalReply_reasonCode));
+        result.put(x.releaseFlag, reply.get(x.reasonCode));
+        result.put(x.releaseMessage, reply.get(x.decision));
         if (Debug.infoOn())
-            Debug.logInfo("CC [Cybersource] release result : " + result, MODULE);
+            Debug.logInfo(x.CC_Cybersource_release_result + result, MODULE);
     }
 
     private static void processRefundResult(Map<String, Object> reply, Map<String, Object> result) {
         String decision = getDecision(reply);
-        if ("ACCEPT".equalsIgnoreCase(decision)) {
-            result.put("refundResult", Boolean.TRUE);
+        if (x.ACCEPT.equalsIgnoreCase(decision)) {
+            result.put(x.refundResult, Boolean.TRUE);
         } else {
-            result.put("refundResult", Boolean.FALSE);
+            result.put(x.refundResult, Boolean.FALSE);
         }
-        if (reply.get("ccCreditReply_amount") != null) {
-            result.put("refundAmount", new BigDecimal((String) reply.get("ccCreditReply_amount")));
+        if (reply.get(x.ccCreditReply_amount) != null) {
+            result.put(x.refundAmount, new BigDecimal((String) reply.get(x.ccCreditReply_amount)));
         } else {
-            result.put("refundAmount", BigDecimal.ZERO);
+            result.put(x.refundAmount, BigDecimal.ZERO);
         }
-        result.put("refundRefNum", reply.get("requestID"));
-        result.put("refundCode", reply.get("ccCreditReply_reconciliationID"));
-        result.put("refundFlag", reply.get("ccCreditReply_reasonCode"));
-        result.put("refundMessage", reply.get("decision"));
+        result.put(x.refundRefNum, reply.get(x.requestID));
+        result.put(x.refundCode, reply.get(x.ccCreditReply_reconciliationID));
+        result.put(x.refundFlag, reply.get(x.ccCreditReply_reasonCode));
+        result.put(x.refundMessage, reply.get(x.decision));
         if (Debug.infoOn())
-            Debug.logInfo("CC [Cybersource] refund result : " + result, MODULE);
+            Debug.logInfo(x.CC_Cybersource_refund_result + result, MODULE);
     }
 
     private static void processCreditResult(Map<String, Object> reply, Map<String, Object> result) {
-        String decision = (String) reply.get("decision");
-        if ("ACCEPT".equalsIgnoreCase(decision)) {
-            result.put("creditResult", Boolean.TRUE);
+        String decision = (String) reply.get(x.decision);
+        if (x.ACCEPT.equalsIgnoreCase(decision)) {
+            result.put(x.creditResult, Boolean.TRUE);
         } else {
-            result.put("creditResult", Boolean.FALSE);
+            result.put(x.creditResult, Boolean.FALSE);
         }
 
-        if (reply.get("ccCreditReply_amount") != null) {
-            result.put("creditAmount", new BigDecimal((String) reply.get("ccCreditReply_amount")));
+        if (reply.get(x.ccCreditReply_amount) != null) {
+            result.put(x.creditAmount, new BigDecimal((String) reply.get(x.ccCreditReply_amount)));
         } else {
-            result.put("creditAmount", BigDecimal.ZERO);
+            result.put(x.creditAmount, BigDecimal.ZERO);
         }
 
-        result.put("creditRefNum", reply.get("requestID"));
-        result.put("creditCode", reply.get("ccCreditReply_reconciliationID"));
-        result.put("creditFlag", reply.get("ccCreditReply_reasonCode"));
-        result.put("creditMessage", reply.get("decision"));
+        result.put(x.creditRefNum, reply.get(x.requestID));
+        result.put(x.creditCode, reply.get(x.ccCreditReply_reconciliationID));
+        result.put(x.creditFlag, reply.get(x.ccCreditReply_reasonCode));
+        result.put(x.creditMessage, reply.get(x.decision));
         if (Debug.infoOn())
-            Debug.logInfo("CC [Cybersource] credit result : " + result, MODULE);
+            Debug.logInfo(x.CC_Cybersource_credit_result + result, MODULE);
     }
 
     private static String getDecision(Map<String, Object> reply) {
-        String decision = (String) reply.get("decision");
-        String reasonCode = (String) reply.get("reasonCode");
-        if (!"ACCEPT".equalsIgnoreCase(decision)) {
-            Debug.logInfo("CyberSource : " + decision + " (" + reasonCode + ")", MODULE);
-            Debug.logInfo("Reply Dump : " + reply, MODULE);
+        String decision = (String) reply.get(x.decision);
+        String reasonCode = (String) reply.get(x.reasonCode);
+        if (!x.ACCEPT.equalsIgnoreCase(decision)) {
+            Debug.logInfo(x.CyberSource + decision + x.str_d21048c5 + reasonCode + x.str_e7064f0b, MODULE);
+            Debug.logInfo(x.Reply_Dump + reply, MODULE);
         }
         return decision;
     }
 
     private static String getPaymentGatewayConfigValue(Delegator delegator, String paymentGatewayConfigId, String paymentGatewayConfigParameterName,
                                                        String resource, String parameterName) {
-        String returnValue = "";
+        String returnValue = x.emptyString;
         if (UtilValidate.isNotEmpty(paymentGatewayConfigId)) {
             try {
-                GenericValue cyberSource = EntityQuery.use(delegator).from("PaymentGatewayCyberSource").where("paymentGatewayConfigId", paymentGatewayConfigId).queryOne();
+                PaymentGatewayCyberSourceDao cyberSourceDao = DaoRegistry.getDao(delegator, x.PaymentGatewayCyberSource, PaymentGatewayCyberSourceDao.class);
+                PaymentGatewayCyberSourceEntity cyberSource = cyberSourceDao.get(paymentGatewayConfigId).orElse(null);
                 if (cyberSource != null) {
-                    Object cyberSourceField = cyberSource.get(paymentGatewayConfigParameterName);
+                    Object cyberSourceField = Beans.getPropValue(cyberSource, paymentGatewayConfigParameterName, true);
                     if (cyberSourceField != null) {
                         returnValue = cyberSourceField.toString().trim();
                     }
                 }
-            } catch (GenericEntityException e) {
+            } catch (Exception e) {
                 Debug.logError(e, MODULE);
             }
         } else {

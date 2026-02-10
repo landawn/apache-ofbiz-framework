@@ -18,6 +18,7 @@
  *******************************************************************************/
 package org.apache.ofbiz.shipment.picklist;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -27,13 +28,17 @@ import org.apache.ofbiz.base.util.GeneralException;
 import org.apache.ofbiz.base.util.UtilGenerics;
 import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.entity.Delegator;
-import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.condition.EntityCondition;
-import org.apache.ofbiz.entity.condition.EntityOperator;
-import org.apache.ofbiz.entity.util.EntityQuery;
+import org.apache.ofbiz.entity.util.EntityUtil;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.OrderHeaderDao;
+import org.apache.ofbiz.persistence.dao.PicklistItemDao;
+import org.apache.ofbiz.persistence.entity.OrderHeaderEntity;
+import org.apache.ofbiz.persistence.entity.PicklistItemEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.util.Beans;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -53,54 +58,55 @@ public class PickListServices {
         if (orderHeaderList == null) {
             // convert the ID list to headers
             if (orderIdList != null) {
-                List<EntityCondition> conditionList1 = new LinkedList<>();
-                List<EntityCondition> conditionList2 = new LinkedList<>();
-
-                // we are only concerned about approved sales orders
-                conditionList2.add(EntityCondition.makeCondition("statusId", EntityOperator.EQUALS, "ORDER_APPROVED"));
-                conditionList2.add(EntityCondition.makeCondition("orderTypeId", EntityOperator.EQUALS, "SALES_ORDER"));
-
-                // build the expression list from the IDs
-                for (String orderId: orderIdList) {
-                    conditionList1.add(EntityCondition.makeCondition("orderId", EntityOperator.EQUALS, orderId));
-                }
-
-                // create the conditions
-                EntityCondition idCond = EntityCondition.makeCondition(conditionList1, EntityOperator.OR);
-                conditionList2.add(idCond);
-
-                // run the query
                 try {
-                    orderHeaderList = EntityQuery.use(delegator).from("OrderHeader")
-                            .where(conditionList2)
-                            .orderBy("orderDate")
-                            .queryList();
-                } catch (GenericEntityException e) {
+                    OrderHeaderDao orderHeaderDao = DaoRegistry.getDao(delegator, x.OrderHeader, OrderHeaderDao.class);
+                    Map<String, GenericValue> matchedOrderHeaders = new LinkedHashMap<>();
+                    for (String orderId : orderIdList) {
+                        if (matchedOrderHeaders.containsKey(orderId)) {
+                            continue;
+                        }
+
+                        OrderHeaderEntity orderHeaderEntity = orderHeaderDao.get(orderId).orElse(null);
+                        if (orderHeaderEntity == null
+                                || !x.ORDER_APPROVED.equals(orderHeaderEntity.getStatusId())
+                                || !x.SALES_ORDER.equals(orderHeaderEntity.getOrderTypeId())) {
+                            continue;
+                        }
+
+                        matchedOrderHeaders.put(orderId, delegator.makeValue(x.OrderHeader, Beans.beanToMap(orderHeaderEntity)));
+                    }
+
+                    orderHeaderList = EntityUtil.orderBy(new LinkedList<>(matchedOrderHeaders.values()), UtilMisc.toList(x.orderDate));
+                } catch (Exception e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(e.getMessage());
                 }
-                Debug.logInfo("Recieved orderIdList  - " + orderIdList, MODULE);
-                Debug.logInfo("Found orderHeaderList - " + orderHeaderList, MODULE);
+                Debug.logInfo(x.Recieved_orderIdList + orderIdList, MODULE);
+                Debug.logInfo(x.Found_orderHeaderList + orderHeaderList, MODULE);
             }
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("orderHeaderList", orderHeaderList);
+        result.put(x.orderHeaderList, orderHeaderList);
         return result;
     }
 
     public static boolean isBinComplete(Delegator delegator, String picklistBinId) throws GeneralException {
         try {
-            EntityCondition cond = EntityCondition.makeCondition(
-                    EntityCondition.makeCondition("itemStatusId", EntityOperator.NOT_IN, UtilMisc.toList("PICKITEM_COMPLETED", "PICKITEM_CANCELLED")),
-                    EntityCondition.makeCondition("picklistBinId", picklistBinId));
-            long picklistItemCount = EntityQuery.use(delegator).from("PicklistItem").where(cond).queryCount();
+            PicklistItemDao picklistItemDao = DaoRegistry.getDao(delegator, x.PicklistItem, PicklistItemDao.class);
+            long picklistItemCount = 0L;
+            for (PicklistItemEntity picklistItemEntity : picklistItemDao.list(Filters.eq(x.picklistBinId, picklistBinId))) {
+                String itemStatusId = picklistItemEntity.getItemStatusId();
+                if (!x.PICKITEM_COMPLETED.equals(itemStatusId) && !x.PICKITEM_CANCELLED.equals(itemStatusId)) {
+                    picklistItemCount++;
+                }
+            }
             if (picklistItemCount != 0) {
                 return false;
             }
-        } catch (GenericEntityException e) {
+        } catch (Exception e) {
             Debug.logError(e, MODULE);
-            throw e;
+            throw new GeneralException(e);
         }
 
         return true;

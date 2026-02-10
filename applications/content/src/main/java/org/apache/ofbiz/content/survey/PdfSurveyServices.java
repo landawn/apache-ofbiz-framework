@@ -43,7 +43,20 @@ import org.apache.ofbiz.content.data.DataResourceWorker;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
+import org.apache.ofbiz.entity.util.EntityUtil;
+import org.apache.ofbiz.persistence.dao.ContentDao;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.SurveyDao;
+import org.apache.ofbiz.persistence.dao.SurveyQuestionApplDao;
+import org.apache.ofbiz.persistence.dao.SurveyQuestionDao;
+import org.apache.ofbiz.persistence.dao.SurveyResponseAnswerDao;
+import org.apache.ofbiz.persistence.dao.SurveyResponseDao;
+import org.apache.ofbiz.persistence.entity.ContentEntity;
+import org.apache.ofbiz.persistence.entity.SurveyEntity;
+import org.apache.ofbiz.persistence.entity.SurveyQuestionApplEntity;
+import org.apache.ofbiz.persistence.entity.SurveyQuestionEntity;
+import org.apache.ofbiz.persistence.entity.SurveyResponseAnswerEntity;
+import org.apache.ofbiz.persistence.entity.SurveyResponseEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
@@ -61,6 +74,8 @@ import com.lowagie.text.pdf.PdfObject;
 import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.PdfStamper;
 import com.lowagie.text.pdf.PdfWriter;
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.util.Beans;
 
 
 
@@ -74,7 +89,7 @@ import org.apache.ofbiz.model.PdfSurveyServicesContext;
 public class PdfSurveyServices {
 
     private static final String MODULE = PdfSurveyServices.class.getName();
-    private static final String RESOURCE = "ContentUiLabels";
+    private static final String RESOURCE = x.ContentUiLabels;
 
     /**
      */
@@ -98,54 +113,54 @@ public class PdfSurveyServices {
             GenericValue survey = null;
             surveyId = (String) context.get(x.surveyId);
             if (UtilValidate.isEmpty(surveyId)) {
-                survey = delegator.makeValue("Survey", UtilMisc.toMap("surveyName", surveyName));
+                survey = delegator.makeValue(x.Survey, UtilMisc.toMap(x.surveyName, surveyName));
                 survey.set(x.surveyId, surveyId);
-                survey.set(x.allowMultiple, "Y");
-                survey.set(x.allowUpdate, "Y");
+                survey.set(x.allowMultiple, x.Y);
+                survey.set(x.allowUpdate, x.Y);
                 survey = delegator.createSetNextSeqId(survey);
                 surveyId = survey.getString(x.surveyId);
             }
 
             // create a SurveyQuestionCategory to put the questions in
-            Map<String, Object> createCategoryResultMap = dispatcher.runSync("createSurveyQuestionCategory",
-                    UtilMisc.<String, Object>toMap("description", "From AcroForm in Content [" + contentId + "] for Survey [" + surveyId
-                            + "]", "userLogin", userLogin));
+            Map<String, Object> createCategoryResultMap = dispatcher.runSync(x.createSurveyQuestionCategory,
+                    UtilMisc.<String, Object>toMap(x.description, x.From_AcroForm_in_Content + contentId + x.for_Survey + surveyId
+                            + x.str_4ff447b8, x.userLogin, userLogin));
             if (ServiceUtil.isError(createCategoryResultMap)) {
                 pdfStamper.close();
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(createCategoryResultMap));
             }
-            String surveyQuestionCategoryId = (String) createCategoryResultMap.get("surveyQuestionCategoryId");
+            String surveyQuestionCategoryId = (String) createCategoryResultMap.get(x.surveyQuestionCategoryId);
 
             pdfStamper.setFormFlattening(true);
             for (String fieldName : acroFieldMap.keySet()) {
                 AcroFields.Item item = acroFields.getFieldItem(fieldName);
                 int type = acroFields.getFieldType(fieldName);
                 String value = acroFields.getField(fieldName);
-                Debug.logInfo("fieldName:" + fieldName + "; item: " + item + "; value: " + value, MODULE);
+                Debug.logInfo(x.fieldName_c17d781f + fieldName + x.item_3f775015 + item + x.value_9d5e20d1 + value, MODULE);
 
-                GenericValue surveyQuestion = delegator.makeValue("SurveyQuestion", UtilMisc.toMap("question", fieldName));
-                String surveyQuestionId = delegator.getNextSeqId("SurveyQuestion");
+                GenericValue surveyQuestion = delegator.makeValue(x.SurveyQuestion, UtilMisc.toMap(x.question, fieldName));
+                String surveyQuestionId = delegator.getNextSeqId(x.SurveyQuestion);
                 surveyQuestion.set(x.surveyQuestionId, surveyQuestionId);
                 surveyQuestion.set(x.surveyQuestionCategoryId, surveyQuestionCategoryId);
 
                 if (type == AcroFields.FIELD_TYPE_TEXT) {
-                    surveyQuestion.set(x.surveyQuestionTypeId, "TEXT_SHORT");
+                    surveyQuestion.set(x.surveyQuestionTypeId, x.TEXT_SHORT);
                 } else if (type == AcroFields.FIELD_TYPE_RADIOBUTTON) {
-                    surveyQuestion.set(x.surveyQuestionTypeId, "OPTION");
+                    surveyQuestion.set(x.surveyQuestionTypeId, x.OPTION);
                 } else if (type == AcroFields.FIELD_TYPE_LIST || type == AcroFields.FIELD_TYPE_COMBO) {
-                    surveyQuestion.set(x.surveyQuestionTypeId, "OPTION");
+                    surveyQuestion.set(x.surveyQuestionTypeId, x.OPTION);
                     // TODO: handle these specially with the acroFields.getListOptionDisplay (and getListOptionExport?)
                 } else {
-                    surveyQuestion.set(x.surveyQuestionTypeId, "TEXT_SHORT");
-                    Debug.logWarning("Building Survey from PDF, fieldName=[" + fieldName + "]: don't know how to handle field type: "
-                            + type + "; defaulting to short text", MODULE);
+                    surveyQuestion.set(x.surveyQuestionTypeId, x.TEXT_SHORT);
+                    Debug.logWarning(x.Building_Survey_from_PDF_fieldName + fieldName + x.don_t_know_how_to_handle_field_type
+                            + type + x.defaulting_to_short_text, MODULE);
                 }
 
                 // ==== create a good sequenceNum based on tab order or if no tab order then the page location
 
                 Integer tabPage = item.getPage(0);
                 Integer tabOrder = item.getTabOrder(0);
-                Debug.logInfo("tabPage=" + tabPage + ", tabOrder=" + tabOrder, MODULE);
+                Debug.logInfo(x.tabPage + tabPage + x.tabOrder + tabOrder, MODULE);
 
                 //array of float  multiple of 5. For each of this groups the values are: [page, llx, lly, urx, ury]
                 float[] fieldPositions = acroFields.getFieldPositions(fieldName);
@@ -154,17 +169,17 @@ public class PdfSurveyServices {
                 float fieldLly = fieldPositions[2];
                 float fieldUrx = fieldPositions[3];
                 float fieldUry = fieldPositions[4];
-                Debug.logInfo("fieldPage=" + fieldPage + ", fieldLlx=" + fieldLlx + ", fieldLly=" + fieldLly + ", fieldUrx="
-                        + fieldUrx + ", fieldUry=" + fieldUry, MODULE);
+                Debug.logInfo(x.fieldPage + fieldPage + x.fieldLlx + fieldLlx + x.fieldLly + fieldLly + x.fieldUrx
+                        + fieldUrx + x.fieldUry + fieldUry, MODULE);
 
                 Long sequenceNum = null;
                 if (tabPage != null && tabOrder != null) {
                     sequenceNum = (long) (tabPage * 1000 + tabOrder);
-                    Debug.logInfo("tabPage=" + tabPage + ", tabOrder=" + tabOrder + ", sequenceNum=" + sequenceNum, MODULE);
+                    Debug.logInfo(x.tabPage + tabPage + x.tabOrder + tabOrder + x.sequenceNum_441f482e + sequenceNum, MODULE);
                 } else if (fieldPositions.length > 0) {
                     sequenceNum = (long) fieldPage * 10000 + (long) fieldLly * 1000 + (long) fieldLlx;
-                    Debug.logInfo("fieldPage=" + fieldPage + ", fieldLlx=" + fieldLlx + ", fieldLly=" + fieldLly + ", fieldUrx="
-                            + fieldUrx + ", fieldUry=" + fieldUry + ", sequenceNum=" + sequenceNum, MODULE);
+                    Debug.logInfo(x.fieldPage + fieldPage + x.fieldLlx + fieldLlx + x.fieldLly + fieldLly + x.fieldUrx
+                            + fieldUrx + x.fieldUry + fieldUry + x.sequenceNum_441f482e + sequenceNum, MODULE);
                 }
 
                 // TODO: need to find something better to put into these fields...
@@ -181,13 +196,13 @@ public class PdfSurveyServices {
                     for (PdfName dictKeyName : dictKeys) {
                         PdfObject dictObject = dict.get(dictKeyName);
 
-                        if ("/Type".equals(dictKeyName.toString())) {
+                        if (x.Type_33f3450a.equals(dictKeyName.toString())) {
                             typeValue = dictObject;
-                        } else if ("/TU".equals(dictKeyName.toString())) {
+                        } else if (x.TU.equals(dictKeyName.toString())) {
                             tuValue = dictObject;
                         }
                     }
-                    if (tuValue != null && typeValue != null && "/Annot".equals(typeValue.toString())) {
+                    if (tuValue != null && typeValue != null && x.Annot.equals(typeValue.toString())) {
                         annotation = tuValue.toString();
                     }
                 }
@@ -199,8 +214,8 @@ public class PdfSurveyServices {
                     surveyQuestion.set(x.question, fieldName);
                 }
 
-                GenericValue surveyQuestionAppl = delegator.makeValue("SurveyQuestionAppl",
-                        UtilMisc.toMap("surveyId", surveyId, "surveyQuestionId", surveyQuestionId));
+                GenericValue surveyQuestionAppl = delegator.makeValue(x.SurveyQuestionAppl,
+                        UtilMisc.toMap(x.surveyId, surveyId, x.surveyQuestionId, surveyQuestionId));
                 surveyQuestionAppl.set(x.fromDate, nowTimestamp);
                 surveyQuestionAppl.set(x.externalFieldRef, fieldName);
 
@@ -213,18 +228,18 @@ public class PdfSurveyServices {
             }
             pdfStamper.close();
             if (UtilValidate.isNotEmpty(contentId)) {
-                survey = EntityQuery.use(delegator).from("Survey").where("surveyId", surveyId).queryOne();
+                survey = getSurveyValue(delegator, surveyId);
                 survey.set(x.acroFormContentId, contentId);
                 survey.store();
             }
         } catch (GeneralException | DocumentException | IOException e) {
-            Debug.logError(e, "Error generating PDF: " + e.toString(), MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentPDFGeneratingError",
-                    UtilMisc.toMap("errorString", e.toString()), locale));
+            Debug.logError(e, x.Error_generating_PDF + e.toString(), MODULE);
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentPDFGeneratingError,
+                    UtilMisc.toMap(x.errorString, e.toString()), locale));
         }
 
         Map<String, Object> results = ServiceUtil.returnSuccess();
-        results.put("surveyId", surveyId);
+        results.put(x.surveyId, surveyId);
         return results;
     }
 
@@ -239,15 +254,14 @@ public class PdfSurveyServices {
             String surveyId = (String) context.get(x.surveyId);
             surveyResponseId = (String) context.get(x.surveyResponseId);
             if (UtilValidate.isNotEmpty(surveyResponseId)) {
-                GenericValue surveyResponse = EntityQuery.use(delegator).from("SurveyResponse")
-                        .where("surveyResponseId", surveyResponseId).queryOne();
+                GenericValue surveyResponse = getSurveyResponseValue(delegator, surveyResponseId);
                 if (surveyResponse != null) {
                     surveyId = surveyResponse.getString(x.surveyId);
                 }
             } else {
-                surveyResponseId = delegator.getNextSeqId("SurveyResponse");
-                GenericValue surveyResponse = delegator.makeValue("SurveyResponse",
-                        UtilMisc.toMap("surveyResponseId", surveyResponseId, "surveyId", surveyId, "partyId", partyId));
+                surveyResponseId = delegator.getNextSeqId(x.SurveyResponse);
+                GenericValue surveyResponse = delegator.makeValue(x.SurveyResponse,
+                        UtilMisc.toMap(x.surveyResponseId, surveyResponseId, x.surveyId, surveyId, x.partyId, partyId));
                 surveyResponse.set(x.responseDate, UtilDateTime.nowTimestamp());
                 surveyResponse.set(x.lastModifiedDate, UtilDateTime.nowTimestamp());
                 surveyResponse.create();
@@ -263,19 +277,18 @@ public class PdfSurveyServices {
             for (String fieldName : hm.keySet()) {
                 // AcroFields.Item item = fs.getFieldItem(fieldName);
                 String value = fs.getField(fieldName);
-                GenericValue surveyQuestionAndAppl = EntityQuery.use(delegator).from("SurveyQuestionAndAppl")
-                        .where("surveyId", surveyId, "externalFieldRef", fieldName).queryFirst();
+                GenericValue surveyQuestionAndAppl = getSurveyQuestionAndApplValue(delegator, surveyId, fieldName);
                 if (surveyQuestionAndAppl == null) {
-                    Debug.logInfo("No question found for surveyId:" + surveyId + " and externalFieldRef:" + fieldName,
+                    Debug.logInfo(x.No_question_found_for_surveyId + surveyId + x.and_externalFieldRef + fieldName,
                             MODULE);
                     continue;
                 }
 
                 String surveyQuestionId = (String) surveyQuestionAndAppl.get(x.surveyQuestionId);
                 String surveyQuestionTypeId = (String) surveyQuestionAndAppl.get(x.surveyQuestionTypeId);
-                GenericValue surveyResponseAnswer = delegator.makeValue("SurveyResponseAnswer",
-                        UtilMisc.toMap("surveyResponseId", surveyResponseId, "surveyQuestionId", surveyQuestionId));
-                if (surveyQuestionTypeId == null || "TEXT_SHORT".equals(surveyQuestionTypeId)) {
+                GenericValue surveyResponseAnswer = delegator.makeValue(x.SurveyResponseAnswer,
+                        UtilMisc.toMap(x.surveyResponseId, surveyResponseId, x.surveyQuestionId, surveyQuestionId));
+                if (surveyQuestionTypeId == null || x.TEXT_SHORT.equals(surveyQuestionTypeId)) {
                     surveyResponseAnswer.set(x.textResponse, value);
                 }
 
@@ -283,13 +296,13 @@ public class PdfSurveyServices {
             }
             s.close();
         } catch (GeneralException | DocumentException | IOException e) {
-            Debug.logError(e, "Error generating PDF: " + e.toString(), MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentPDFGeneratingError",
-                    UtilMisc.toMap("errorString", e.toString()), locale));
+            Debug.logError(e, x.Error_generating_PDF + e.toString(), MODULE);
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentPDFGeneratingError,
+                    UtilMisc.toMap(x.errorString, e.toString()), locale));
         }
 
         Map<String, Object> results = ServiceUtil.returnSuccess();
-        results.put("surveyResponseId", surveyResponseId);
+        results.put(x.surveyResponseId, surveyResponseId);
         return results;
     }
 
@@ -318,7 +331,7 @@ public class PdfSurveyServices {
         }
 
         Map<String, Object> results = ServiceUtil.returnSuccess();
-        results.put("acroFieldMap", acroFieldMap);
+        results.put(x.acroFieldMap, acroFieldMap);
         return results;
     }
 
@@ -361,7 +374,7 @@ public class PdfSurveyServices {
             s.close();
             baos.close();
             ByteBuffer outByteBuffer = ByteBuffer.wrap(baos.toByteArray());
-            results.put("outByteBuffer", outByteBuffer);
+            results.put(x.outByteBuffer, outByteBuffer);
         } catch (DocumentException | IOException | GeneralException e) {
             Debug.logError(e, MODULE);
             results = ServiceUtil.returnError(e.getMessage());
@@ -383,14 +396,13 @@ public class PdfSurveyServices {
         Document document = new Document();
         try {
             if (UtilValidate.isNotEmpty(surveyResponseId)) {
-                GenericValue surveyResponse = EntityQuery.use(delegator).from("SurveyResponse").where("surveyResponseId",
-                        surveyResponseId).queryOne();
+                GenericValue surveyResponse = getSurveyResponseValue(delegator, surveyResponseId);
                 if (surveyResponse != null) {
                     surveyId = surveyResponse.getString(x.surveyId);
                 }
             }
             if (UtilValidate.isNotEmpty(surveyId) && UtilValidate.isEmpty(contentId)) {
-                GenericValue survey = EntityQuery.use(delegator).from("Survey").where("surveyId", surveyId).queryOne();
+                GenericValue survey = getSurveyValue(delegator, surveyId);
                 if (survey != null) {
                     String acroFormContentId = survey.getString(x.acroFormContentId);
                     if (UtilValidate.isNotEmpty(acroFormContentId)) {
@@ -402,37 +414,35 @@ public class PdfSurveyServices {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             PdfWriter.getInstance(document, baos);
 
-            List<GenericValue> responses = EntityQuery.use(delegator).from("SurveyResponseAnswer").where("surveyResponseId",
-                    surveyResponseId).queryList();
+            List<GenericValue> responses = getSurveyResponseAnswerValues(delegator, surveyResponseId);
             for (GenericValue surveyResponseAnswer : responses) {
                 String value = null;
                 String surveyQuestionId = (String) surveyResponseAnswer.get(x.surveyQuestionId);
-                GenericValue surveyQuestion = EntityQuery.use(delegator).from("SurveyQuestion").where("surveyQuestionId",
-                        surveyQuestionId).queryOne();
+                GenericValue surveyQuestion = getSurveyQuestionValue(delegator, surveyQuestionId);
                 String questionType = surveyQuestion.getString(x.surveyQuestionTypeId);
                 // DEJ20060227 this isn't used, if needed in the future should get from SurveyQuestionAppl.externalFieldRef
                 // String fieldName = surveyQuestion.getString("description");
-                if ("OPTION".equals(questionType)) {
+                if (x.OPTION.equals(questionType)) {
                     value = surveyResponseAnswer.getString(x.surveyOptionSeqId);
-                } else if ("BOOLEAN".equals(questionType)) {
+                } else if (x.BOOLEAN.equals(questionType)) {
                     value = surveyResponseAnswer.getString(x.booleanResponse);
-                } else if ("NUMBER_LONG".equals(questionType) || "NUMBER_CURRENCY".equals(questionType) || "NUMBER_FLOAT".equals(questionType)) {
+                } else if (x.NUMBER_LONG.equals(questionType) || x.NUMBER_CURRENCY.equals(questionType) || x.NUMBER_FLOAT.equals(questionType)) {
                     Double num = surveyResponseAnswer.getDouble(x.numericResponse);
                     if (num != null) {
                         value = num.toString();
                     }
-                } else if ("SEPERATOR_LINE".equals(questionType) || "SEPERATOR_TEXT".equals(questionType)) {
+                } else if (x.SEPERATOR_LINE.equals(questionType) || x.SEPERATOR_TEXT.equals(questionType)) {
                     // not really a question; ignore completely, adding log statement to avoid checkstyle
-                    Debug.logInfo("Not really a question; ignore completely. Question type:" + questionType, MODULE);
+                    Debug.logInfo(x.Not_really_a_question_ignore_completely_Question_type + questionType, MODULE);
                 } else {
                     value = surveyResponseAnswer.getString(x.textResponse);
                 }
-                Chunk chunk = new Chunk(surveyQuestion.getString(x.question) + ": " + value);
+                Chunk chunk = new Chunk(surveyQuestion.getString(x.question) + x.str_ceca32e9 + value);
                 Paragraph p = new Paragraph(chunk);
                 document.add(p);
             }
             ByteBuffer outByteBuffer = ByteBuffer.wrap(baos.toByteArray());
-            results.put("outByteBuffer", outByteBuffer);
+            results.put(x.outByteBuffer, outByteBuffer);
         } catch (GenericEntityException | DocumentException e) {
             Debug.logError(e, MODULE);
             results = ServiceUtil.returnError(e.getMessage());
@@ -451,15 +461,13 @@ public class PdfSurveyServices {
         List<Object> qAndA = new LinkedList<>();
 
         try {
-            List<GenericValue> responses = EntityQuery.use(delegator).from("SurveyResponseAnswer").where("surveyResponseId",
-                    surveyResponseId).queryList();
+            List<GenericValue> responses = getSurveyResponseAnswerValues(delegator, surveyResponseId);
             for (GenericValue surveyResponseAnswer : responses) {
                 String surveyQuestionId = (String) surveyResponseAnswer.get(x.surveyQuestionId);
-                GenericValue surveyQuestion = EntityQuery.use(delegator).from("SurveyQuestion").where("surveyQuestionId",
-                        surveyQuestionId).queryOne();
-                qAndA.add(UtilMisc.toMap("question", surveyQuestion, "response", surveyResponseAnswer));
+                GenericValue surveyQuestion = getSurveyQuestionValue(delegator, surveyQuestionId);
+                qAndA.add(UtilMisc.toMap(x.question, surveyQuestion, x.response, surveyResponseAnswer));
             }
-            results.put("questionsAndAnswers", qAndA);
+            results.put(x.questionsAndAnswers, qAndA);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             results = ServiceUtil.returnError(e.getMessage());
@@ -482,49 +490,42 @@ public class PdfSurveyServices {
         try {
             String surveyId = null;
             if (UtilValidate.isNotEmpty(surveyResponseId)) {
-                GenericValue surveyResponse = EntityQuery.use(delegator).from("SurveyResponse").where("surveyResponseId",
-                        surveyResponseId).queryOne();
+                GenericValue surveyResponse = getSurveyResponseValue(delegator, surveyResponseId);
                 if (surveyResponse != null) {
                     surveyId = surveyResponse.getString(x.surveyId);
                 }
             }
 
             if (UtilValidate.isNotEmpty(surveyId)) {
-                GenericValue survey = EntityQuery.use(delegator).from("Survey").where("surveyId", surveyId).queryOne();
+                GenericValue survey = getSurveyValue(delegator, surveyId);
                 if (survey != null) {
                     acroFormContentId = survey.getString(x.acroFormContentId);
                 }
             }
 
-            List<GenericValue> responses = EntityQuery.use(delegator).from("SurveyResponseAnswer").where("surveyResponseId",
-                    surveyResponseId).queryList();
+            List<GenericValue> responses = getSurveyResponseAnswerValues(delegator, surveyResponseId);
             for (GenericValue surveyResponseAnswer : responses) {
                 String value = null;
                 String surveyQuestionId = (String) surveyResponseAnswer.get(x.surveyQuestionId);
 
-                GenericValue surveyQuestion = EntityQuery.use(delegator).from("SurveyQuestion").where("surveyQuestionId",
-                        surveyQuestionId).cache().queryOne();
+                GenericValue surveyQuestion = getSurveyQuestionValue(delegator, surveyQuestionId);
 
-                GenericValue surveyQuestionAppl = EntityQuery.use(delegator).from("SurveyQuestionAppl")
-                        .where("surveyId", surveyId,
-                                "surveyQuestionId", surveyQuestionId)
-                        .orderBy("-fromDate")
-                        .filterByDate().cache().queryFirst();
+                GenericValue surveyQuestionAppl = getCurrentSurveyQuestionApplValue(delegator, surveyId, surveyQuestionId);
 
                 String questionType = surveyQuestion.getString(x.surveyQuestionTypeId);
                 String fieldName = surveyQuestionAppl.getString(x.externalFieldRef);
-                if ("OPTION".equals(questionType)) {
+                if (x.OPTION.equals(questionType)) {
                     value = surveyResponseAnswer.getString(x.surveyOptionSeqId);
-                } else if ("BOOLEAN".equals(questionType)) {
+                } else if (x.BOOLEAN.equals(questionType)) {
                     value = surveyResponseAnswer.getString(x.booleanResponse);
-                } else if ("NUMBER_LONG".equals(questionType) || "NUMBER_CURRENCY".equals(questionType) || "NUMBER_FLOAT".equals(questionType)) {
+                } else if (x.NUMBER_LONG.equals(questionType) || x.NUMBER_CURRENCY.equals(questionType) || x.NUMBER_FLOAT.equals(questionType)) {
                     Double num = surveyResponseAnswer.getDouble(x.numericResponse);
                     if (num != null) {
                         value = num.toString();
                     }
-                } else if ("SEPERATOR_LINE".equals(questionType) || "SEPERATOR_TEXT".equals(questionType)) {
+                } else if (x.SEPERATOR_LINE.equals(questionType) || x.SEPERATOR_TEXT.equals(questionType)) {
                     // not really a question; ignore completely, adding log to ignore checkstyle issue
-                    Debug.logInfo("Not really a question; ignore completely. Question type:" + questionType, MODULE);
+                    Debug.logInfo(x.Not_really_a_question_ignore_completely_Question_type + questionType, MODULE);
                 } else {
                     value = surveyResponseAnswer.getString(x.textResponse);
                 }
@@ -536,29 +537,134 @@ public class PdfSurveyServices {
         }
 
         try {
-            ModelService modelService = dispatcher.getDispatchContext().getModelService("setAcroFields");
+            ModelService modelService = dispatcher.getDispatchContext().getModelService(x.setAcroFields);
             Map<String, Object> ctx = modelService.makeValid(context, ModelService.IN_PARAM);
-            ctx.put("acroFieldMap", acroFieldMap);
-            ctx.put("contentId", acroFormContentId);
-            Map<String, Object> map = dispatcher.runSync("setAcroFields", ctx);
+            ctx.put(x.acroFieldMap, acroFieldMap);
+            ctx.put(x.contentId, acroFormContentId);
+            Map<String, Object> map = dispatcher.runSync(x.setAcroFields, ctx);
             if (ServiceUtil.isError(map)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(map));
             }
             String pdfFileNameOut = (String) context.get(x.pdfFileNameOut);
-            ByteBuffer outByteBuffer = (ByteBuffer) map.get("outByteBuffer");
-            results.put("outByteBuffer", outByteBuffer);
+            ByteBuffer outByteBuffer = (ByteBuffer) map.get(x.outByteBuffer);
+            results.put(x.outByteBuffer, outByteBuffer);
             if (UtilValidate.isNotEmpty(pdfFileNameOut)) {
                 FileOutputStream fos = new FileOutputStream(pdfFileNameOut);
                 fos.write(outByteBuffer.array());
                 fos.close();
             }
         } catch (IOException | GenericServiceException e) {
-            Debug.logError(e, "Error generating PDF: " + e.toString(), MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ContentPDFGeneratingError",
-                    UtilMisc.toMap("errorString", e.toString()), locale));
+            Debug.logError(e, x.Error_generating_PDF + e.toString(), MODULE);
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ContentPDFGeneratingError,
+                    UtilMisc.toMap(x.errorString, e.toString()), locale));
         }
 
         return results;
+    }
+
+    private static GenericValue getSurveyValue(Delegator delegator, String surveyId) throws GenericEntityException {
+        SurveyDao surveyDao = DaoRegistry.getDao(delegator, x.Survey, SurveyDao.class);
+        try {
+            SurveyEntity surveyEntity = surveyDao.get(surveyId).orElse(null);
+            return surveyEntity == null ? null : delegator.makeValue(x.Survey, Beans.beanToMap(surveyEntity));
+        } catch (java.sql.SQLException e) {
+            throw new GenericEntityException(e);
+        }
+    }
+
+    private static GenericValue getSurveyResponseValue(Delegator delegator, String surveyResponseId) throws GenericEntityException {
+        SurveyResponseDao surveyResponseDao = DaoRegistry.getDao(delegator, x.SurveyResponse, SurveyResponseDao.class);
+        try {
+            SurveyResponseEntity surveyResponseEntity = surveyResponseDao.get(surveyResponseId).orElse(null);
+            return surveyResponseEntity == null ? null : delegator.makeValue(x.SurveyResponse, Beans.beanToMap(surveyResponseEntity));
+        } catch (java.sql.SQLException e) {
+            throw new GenericEntityException(e);
+        }
+    }
+
+    private static List<GenericValue> getSurveyResponseAnswerValues(Delegator delegator, String surveyResponseId)
+            throws GenericEntityException {
+        SurveyResponseAnswerDao surveyResponseAnswerDao = DaoRegistry.getDao(delegator, x.SurveyResponseAnswer, SurveyResponseAnswerDao.class);
+        List<SurveyResponseAnswerEntity> surveyResponseAnswerEntities;
+        try {
+            surveyResponseAnswerEntities = surveyResponseAnswerDao.list(Filters.eq(x.surveyResponseId, surveyResponseId));
+        } catch (java.sql.SQLException e) {
+            throw new GenericEntityException(e);
+        }
+        List<GenericValue> values = new LinkedList<>();
+        for (SurveyResponseAnswerEntity surveyResponseAnswerEntity : surveyResponseAnswerEntities) {
+            values.add(delegator.makeValue(x.SurveyResponseAnswer, Beans.beanToMap(surveyResponseAnswerEntity)));
+        }
+        return values;
+    }
+
+    private static GenericValue getSurveyQuestionValue(Delegator delegator, String surveyQuestionId) throws GenericEntityException {
+        SurveyQuestionDao surveyQuestionDao = DaoRegistry.getDao(delegator, x.SurveyQuestion, SurveyQuestionDao.class);
+        try {
+            SurveyQuestionEntity surveyQuestionEntity = surveyQuestionDao.get(surveyQuestionId).orElse(null);
+            return surveyQuestionEntity == null ? null : delegator.makeValue(x.SurveyQuestion, Beans.beanToMap(surveyQuestionEntity));
+        } catch (java.sql.SQLException e) {
+            throw new GenericEntityException(e);
+        }
+    }
+
+    private static GenericValue getCurrentSurveyQuestionApplValue(Delegator delegator, String surveyId, String surveyQuestionId)
+            throws GenericEntityException {
+        SurveyQuestionApplDao surveyQuestionApplDao = DaoRegistry.getDao(delegator, x.SurveyQuestionAppl, SurveyQuestionApplDao.class);
+        List<SurveyQuestionApplEntity> surveyQuestionApplEntities;
+        try {
+            surveyQuestionApplEntities = surveyQuestionApplDao.list(Filters.and(
+                    Filters.eq(x.surveyId, surveyId),
+                    Filters.eq(x.surveyQuestionId, surveyQuestionId)));
+        } catch (java.sql.SQLException e) {
+            throw new GenericEntityException(e);
+        }
+        List<GenericValue> values = new LinkedList<>();
+        for (SurveyQuestionApplEntity surveyQuestionApplEntity : surveyQuestionApplEntities) {
+            values.add(delegator.makeValue(x.SurveyQuestionAppl, Beans.beanToMap(surveyQuestionApplEntity)));
+        }
+        values = EntityUtil.filterByDate(values);
+        values = EntityUtil.orderBy(values, UtilMisc.toList(x.fromDate_f5440273));
+        return EntityUtil.getFirst(values);
+    }
+
+    private static GenericValue getSurveyQuestionAndApplValue(Delegator delegator, String surveyId, String externalFieldRef)
+            throws GenericEntityException {
+        SurveyQuestionApplDao surveyQuestionApplDao = DaoRegistry.getDao(delegator, x.SurveyQuestionAppl, SurveyQuestionApplDao.class);
+        SurveyQuestionDao surveyQuestionDao = DaoRegistry.getDao(delegator, x.SurveyQuestion, SurveyQuestionDao.class);
+        SurveyQuestionApplEntity surveyQuestionApplEntity;
+        try {
+            surveyQuestionApplEntity = surveyQuestionApplDao.list(Filters.and(
+                    Filters.eq(x.surveyId, surveyId),
+                    Filters.eq(x.externalFieldRef, externalFieldRef))).stream().findFirst().orElse(null);
+        } catch (java.sql.SQLException e) {
+            throw new GenericEntityException(e);
+        }
+        if (surveyQuestionApplEntity == null) {
+            return null;
+        }
+
+        Map<String, Object> merged = new HashMap<>(Beans.beanToMap(surveyQuestionApplEntity));
+        SurveyQuestionEntity surveyQuestionEntity;
+        try {
+            surveyQuestionEntity = surveyQuestionDao.get(surveyQuestionApplEntity.getSurveyQuestionId()).orElse(null);
+        } catch (java.sql.SQLException e) {
+            throw new GenericEntityException(e);
+        }
+        if (surveyQuestionEntity != null) {
+            merged.putAll(Beans.beanToMap(surveyQuestionEntity));
+        }
+        return delegator.makeValue(x.SurveyQuestionAndAppl, merged);
+    }
+
+    private static GenericValue getContentValue(Delegator delegator, String contentId) throws GenericEntityException {
+        ContentDao contentDao = DaoRegistry.getDao(delegator, x.Content, ContentDao.class);
+        try {
+            ContentEntity contentEntity = contentDao.get(contentId).orElse(null);
+            return contentEntity == null ? null : delegator.makeValue(x.Content, Beans.beanToMap(contentEntity));
+        } catch (java.sql.SQLException e) {
+            throw new GenericEntityException(e);
+        }
     }
 
     public static ByteBuffer getInputByteBuffer(PdfSurveyServicesContext context, Delegator delegator) throws GeneralException {
@@ -584,7 +690,7 @@ public class PdfSurveyServices {
                     String https = (String) context.get(x.https);
                     String webSiteId = (String) context.get(x.webSiteId);
                     String rootDir = (String) context.get(x.rootDir);
-                    GenericValue content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).cache().queryOne();
+                    GenericValue content = getContentValue(delegator, contentId);
                     String dataResourceId = content.getString(x.dataResourceId);
                     inputByteBuffer = DataResourceWorker.getContentAsByteBuffer(delegator, dataResourceId, https, webSiteId, locale, rootDir);
                 } catch (GenericEntityException | IOException e) {
@@ -595,3 +701,4 @@ public class PdfSurveyServices {
         return inputByteBuffer;
     }
 }
+

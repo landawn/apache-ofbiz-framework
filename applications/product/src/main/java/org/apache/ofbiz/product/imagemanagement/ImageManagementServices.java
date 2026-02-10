@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -50,9 +51,17 @@ import org.apache.ofbiz.common.image.ImageTransform;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
+import org.apache.ofbiz.persistence.dao.ContentAssocDao;
+import org.apache.ofbiz.persistence.dao.ContentDao;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.FileExtensionDao;
+import org.apache.ofbiz.persistence.dao.ProductContentDao;
+import org.apache.ofbiz.persistence.entity.ContentAssocEntity;
+import org.apache.ofbiz.persistence.entity.ContentEntity;
+import org.apache.ofbiz.persistence.entity.FileExtensionEntity;
+import org.apache.ofbiz.persistence.entity.ProductContentEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
@@ -60,6 +69,9 @@ import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.jdom2.JDOMException;
 
+
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.util.Beans;
 
 import org.apache.ofbiz.persistence.entity.x;
 import org.apache.ofbiz.model.ServiceContext;
@@ -70,8 +82,8 @@ import org.apache.ofbiz.model.ImageManagementServicesContext;
 public class ImageManagementServices {
 
     private static final String MODULE = ImageManagementServices.class.getName();
-    private static final String RES_ERROR = "ProductErrorUiLabels";
-    private static final String RESOURCE = "ProductUiLabels";
+    private static final String RES_ERROR = x.ProductErrorUiLabels;
+    private static final String RESOURCE = x.ProductUiLabels;
     private static int imageCount = 0;
     private static String imagePath;
 
@@ -91,17 +103,17 @@ public class ImageManagementServices {
         Locale locale = (Locale) context.get(x.locale);
 
         if (UtilValidate.isNotEmpty(uploadFileName)) {
-            Debug.logInfo("================== This is about file: " + uploadFileName + " ==================", MODULE);
-            String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                    "image.management.path", delegator), context);
-            String imageServerUrl = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                    "image.management.url", delegator), context);
+            Debug.logInfo(x.This_is_about_file + uploadFileName + x.str_67b192f2, MODULE);
+            String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                    x.image_management_path, delegator), context);
+            String imageServerUrl = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                    x.image_management_url, delegator), context);
             String rootTargetDirectory = imageServerPath;
             File rootTargetDir = new File(rootTargetDirectory);
             if (!rootTargetDir.exists()) {
                 boolean created = rootTargetDir.mkdirs();
                 if (!created) {
-                    String errMsg = UtilProperties.getMessage(RES_ERROR, "ProductCannotCreateTheTargetDirectory", locale);
+                    String errMsg = UtilProperties.getMessage(RES_ERROR, x.ProductCannotCreateTheTargetDirectory, locale);
                     Debug.logFatal(errMsg, MODULE);
                     return ServiceUtil.returnError(errMsg);
                 }
@@ -113,11 +125,11 @@ public class ImageManagementServices {
             }
 
             Map<String, Object> contentCtx = new HashMap<>();
-            contentCtx.put("contentTypeId", "DOCUMENT");
-            contentCtx.put("userLogin", userLogin);
+            contentCtx.put(x.contentTypeId, x.DOCUMENT);
+            contentCtx.put(x.userLogin, userLogin);
             Map<String, Object> contentResult;
             try {
-                contentResult = dispatcher.runSync("createContent", contentCtx);
+                contentResult = dispatcher.runSync(x.createContent, contentCtx);
                 if (ServiceUtil.isError(contentResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(contentResult));
                 }
@@ -126,39 +138,39 @@ public class ImageManagementServices {
                 return ServiceUtil.returnError(e.getMessage());
             }
 
-            String contentId = (String) contentResult.get("contentId");
-            result.put("contentFrameId", contentId);
-            result.put("contentId", contentId);
+            String contentId = (String) contentResult.get(x.contentId);
+            result.put(x.contentFrameId, contentId);
+            result.put(x.contentId, contentId);
 
             String fileContentType = (String) context.get(x._uploadedFile_contentType);
-            if ("image/pjpeg".equals(fileContentType)) {
-                fileContentType = "image/jpeg";
-            } else if ("image/x-png".equals(fileContentType)) {
-                fileContentType = "image/png";
+            if (x.image_pjpeg.equals(fileContentType)) {
+                fileContentType = x.image_jpeg;
+            } else if (x.image_x_png.equals(fileContentType)) {
+                fileContentType = x.image_png;
             }
 
             // Create folder product id.
-            String targetDirectory = imageServerPath + "/" + productId;
+            String targetDirectory = imageServerPath + x.str_42099b4a + productId;
             File targetDir = new File(targetDirectory);
             if (!targetDir.exists()) {
                 boolean created = targetDir.mkdirs();
                 if (!created) {
-                    String errMsg = "Cannot create the target directory";
+                    String errMsg = x.Cannot_create_the_target_directory;
                     Debug.logFatal(errMsg, MODULE);
                     return ServiceUtil.returnError(errMsg);
                 }
             }
 
-            String fileToCheck = imageServerPath + "/" + productId + "/" + uploadFileName;
+            String fileToCheck = imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + uploadFileName;
             File file = new File(fileToCheck);
             String imageName = null;
-            imagePath = imageServerPath + "/" + productId + "/" + uploadFileName;
+            imagePath = imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + uploadFileName;
             file = checkExistsImage(file);
             if (UtilValidate.isNotEmpty(file)) {
                 imageName = file.getPath();
                 imageName = imageName.substring(imageName.lastIndexOf(File.separator) + 1);
             } else {
-                imageName = "";
+                imageName = x.emptyString;
             }
 
             if (UtilValidate.isEmpty(imageResize)) {
@@ -166,27 +178,27 @@ public class ImageManagementServices {
                     Path tempFile = Files.createTempFile(null, null);
                     Files.write(tempFile, imageData.array(), StandardOpenOption.APPEND);
                     // Check if a webshell is not uploaded
-                    if (!org.apache.ofbiz.security.SecuredUpload.isValidFile(tempFile.toString(), "Image", delegator)) {
-                        String errorMessage = UtilProperties.getMessage("SecurityUiLabels", "SupportedImageFormats", locale);
+                    if (!org.apache.ofbiz.security.SecuredUpload.isValidFile(tempFile.toString(), x.Image, delegator)) {
+                        String errorMessage = UtilProperties.getMessage(x.SecurityUiLabels, x.SupportedImageFormats, locale);
                         return ServiceUtil.returnError(errorMessage);
                     }
                     File tempFileToDelete = new File(tempFile.toString());
                     tempFileToDelete.deleteOnExit();
                     // Create image file original to folder product id.
-                    RandomAccessFile out = new RandomAccessFile(file, "rw");
+                    RandomAccessFile out = new RandomAccessFile(file, x.rw);
                     out.write(imageData.array());
                     out.close();
                 } catch (FileNotFoundException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "ProductImageViewUnableWriteFile", UtilMisc.toMap("fileName", file.getAbsolutePath()), locale));
+                            x.ProductImageViewUnableWriteFile, UtilMisc.toMap(x.fileName, file.getAbsolutePath()), locale));
                 } catch (IOException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "ProductImageViewUnableWriteBinaryData", UtilMisc.toMap("fileName", file.getAbsolutePath()), locale));
+                            x.ProductImageViewUnableWriteBinaryData, UtilMisc.toMap(x.fileName, file.getAbsolutePath()), locale));
                 }
             } else { // Scale Image in different sizes
-                fileToCheck = imageServerPath + "/" + productId + "/" + imageName;
+                fileToCheck = imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + imageName;
                 File fileOriginal = new File(fileToCheck);
                 fileOriginal = checkExistsImage(fileOriginal);
 
@@ -194,23 +206,23 @@ public class ImageManagementServices {
                     Path tempFile = Files.createTempFile(null, null);
                     Files.write(tempFile, imageData.array(), StandardOpenOption.APPEND);
                     // Check if a webshell is not uploaded
-                    if (!org.apache.ofbiz.security.SecuredUpload.isValidFile(tempFile.toString(), "Image", delegator)) {
-                        String errorMessage = UtilProperties.getMessage("SecurityUiLabels", "SupportedImageFormats", locale);
+                    if (!org.apache.ofbiz.security.SecuredUpload.isValidFile(tempFile.toString(), x.Image, delegator)) {
+                        String errorMessage = UtilProperties.getMessage(x.SecurityUiLabels, x.SupportedImageFormats, locale);
                         return ServiceUtil.returnError(errorMessage);
                     }
                     File tempFileToDelete = new File(tempFile.toString());
                     tempFileToDelete.deleteOnExit();
-                    RandomAccessFile outFile = new RandomAccessFile(fileOriginal, "rw");
+                    RandomAccessFile outFile = new RandomAccessFile(fileOriginal, x.rw);
                     outFile.write(imageData.array());
                     outFile.close();
                 } catch (FileNotFoundException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "ProductImageViewUnableWriteFile", UtilMisc.toMap("fileName", fileOriginal.getAbsolutePath()), locale));
+                            x.ProductImageViewUnableWriteFile, UtilMisc.toMap(x.fileName, fileOriginal.getAbsolutePath()), locale));
                 } catch (IOException e) {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "ProductImageViewUnableWriteBinaryData", UtilMisc.toMap("fileName", fileOriginal.getAbsolutePath()), locale));
+                            x.ProductImageViewUnableWriteBinaryData, UtilMisc.toMap(x.fileName, fileOriginal.getAbsolutePath()), locale));
                 }
 
                 Map<String, Object> resultResize = new HashMap<>();
@@ -218,35 +230,35 @@ public class ImageManagementServices {
                     resultResize.putAll(scaleImageMangementInAllSize(dctx, context, imageName, sizeType, productId));
                 } catch (IOException e) {
                     String errMsg = UtilProperties.getMessage(RES_ERROR,
-                            "ProductScaleAdditionalImageInAllDifferentSizesIsImpossible", UtilMisc.toMap("errorString", e.toString()), locale);
+                            x.ProductScaleAdditionalImageInAllDifferentSizesIsImpossible, UtilMisc.toMap(x.errorString, e.toString()), locale);
                     Debug.logError(e, errMsg, MODULE);
                     return ServiceUtil.returnError(errMsg);
                 } catch (JDOMException e) {
                     String errMsg = UtilProperties.getMessage(RES_ERROR,
-                            "ProductErrorsOccurInParsingImageProperties.xml", UtilMisc.toMap("errorString", e .toString()), locale);
+                            x.ProductErrorsOccurInParsingImageProperties_xml, UtilMisc.toMap(x.errorString, e .toString()), locale);
                     Debug.logError(e, errMsg, MODULE);
                     return ServiceUtil.returnError(errMsg);
                 }
             }
 
             Map<String, Object> contentThumbnail = createContentThumbnail(dctx, context, userLogin, imageData, productId, imageName);
-            String filenameToUseThumb = (String) contentThumbnail.get("filenameToUseThumb");
-            String contentIdThumb = (String) contentThumbnail.get("contentIdThumb");
+            String filenameToUseThumb = (String) contentThumbnail.get(x.filenameToUseThumb);
+            String contentIdThumb = (String) contentThumbnail.get(x.contentIdThumb);
 
-            String imageUrl = imageServerUrl + "/" + productId + "/" + imageName;
-            String imageUrlThumb = imageServerUrl + "/" + productId + "/" + filenameToUseThumb;
+            String imageUrl = imageServerUrl + x.str_42099b4a + productId + x.str_42099b4a + imageName;
+            String imageUrlThumb = imageServerUrl + x.str_42099b4a + productId + x.str_42099b4a + filenameToUseThumb;
 
             createContentAndDataResource(dctx, userLogin, imageName, imageUrl, contentId, fileContentType);
             createContentAndDataResource(dctx, userLogin, filenameToUseThumb, imageUrlThumb, contentIdThumb, fileContentType);
 
             Map<String, Object> createContentAssocMap = new HashMap<>();
-            createContentAssocMap.put("contentAssocTypeId", "IMAGE_THUMBNAIL");
-            createContentAssocMap.put("contentId", contentId);
-            createContentAssocMap.put("contentIdTo", contentIdThumb);
-            createContentAssocMap.put("userLogin", userLogin);
-            createContentAssocMap.put("mapKey", "100");
+            createContentAssocMap.put(x.contentAssocTypeId, x.IMAGE_THUMBNAIL);
+            createContentAssocMap.put(x.contentId, contentId);
+            createContentAssocMap.put(x.contentIdTo, contentIdThumb);
+            createContentAssocMap.put(x.userLogin, userLogin);
+            createContentAssocMap.put(x.mapKey, x._100);
             try {
-                Map<String, Object> serviceResult = dispatcher.runSync("createContentAssoc", createContentAssocMap);
+                Map<String, Object> serviceResult = dispatcher.runSync(x.createContentAssoc, createContentAssocMap);
                 if (ServiceUtil.isError(serviceResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                 }
@@ -256,14 +268,14 @@ public class ImageManagementServices {
             }
 
             Map<String, Object> productContentCtx = new HashMap<>();
-            productContentCtx.put("productId", productId);
-            productContentCtx.put("productContentTypeId", productContentTypeId);
-            productContentCtx.put("fromDate", UtilDateTime.nowTimestamp());
-            productContentCtx.put("userLogin", userLogin);
-            productContentCtx.put("contentId", contentId);
-            productContentCtx.put("statusId", "IM_PENDING");
+            productContentCtx.put(x.productId, productId);
+            productContentCtx.put(x.productContentTypeId, productContentTypeId);
+            productContentCtx.put(x.fromDate, UtilDateTime.nowTimestamp());
+            productContentCtx.put(x.userLogin, userLogin);
+            productContentCtx.put(x.contentId, contentId);
+            productContentCtx.put(x.statusId, x.IM_PENDING);
             try {
-                Map<String, Object> serviceResult = dispatcher.runSync("createProductContent", productContentCtx);
+                Map<String, Object> serviceResult = dispatcher.runSync(x.createProductContent, productContentCtx);
                 if (ServiceUtil.isError(serviceResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                 }
@@ -273,10 +285,10 @@ public class ImageManagementServices {
             }
 
             Map<String, Object> contentApprovalCtx = new HashMap<>();
-            contentApprovalCtx.put("contentId", contentId);
-            contentApprovalCtx.put("userLogin", userLogin);
+            contentApprovalCtx.put(x.contentId, contentId);
+            contentApprovalCtx.put(x.userLogin, userLogin);
             try {
-                Map<String, Object> serviceResult = dispatcher.runSync("createImageContentApproval", contentApprovalCtx);
+                Map<String, Object> serviceResult = dispatcher.runSync(x.createImageContentApproval, contentApprovalCtx);
                 if (ServiceUtil.isError(serviceResult)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                 }
@@ -285,14 +297,14 @@ public class ImageManagementServices {
                 return ServiceUtil.returnError(e.getMessage());
             }
 
-            String autoApproveImage = EntityUtilProperties.getPropertyValue("catalog", "image.management.autoApproveImage", delegator);
-            if ("Y".equals(autoApproveImage)) {
+            String autoApproveImage = EntityUtilProperties.getPropertyValue(x.catalog, x.image_management_autoApproveImage, delegator);
+            if (x.Y.equals(autoApproveImage)) {
                 Map<String, Object> autoApproveCtx = new HashMap<>();
-                autoApproveCtx.put("contentId", contentId);
-                autoApproveCtx.put("userLogin", userLogin);
-                autoApproveCtx.put("checkStatusId", "IM_APPROVED");
+                autoApproveCtx.put(x.contentId, contentId);
+                autoApproveCtx.put(x.userLogin, userLogin);
+                autoApproveCtx.put(x.checkStatusId, x.IM_APPROVED);
                 try {
-                    Map<String, Object> serviceResult = dispatcher.runSync("updateStatusImageManagement", autoApproveCtx);
+                    Map<String, Object> serviceResult = dispatcher.runSync(x.updateStatusImageManagement, autoApproveCtx);
                     if (ServiceUtil.isError(serviceResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                     }
@@ -313,11 +325,11 @@ public class ImageManagementServices {
 
         try {
             if (UtilValidate.isNotEmpty(contentId)) {
-                String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                        "image.management.path", delegator), context);
-                File file = new File(imageServerPath + "/" + productId + "/" + dataResourceName);
+                String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                        x.image_management_path, delegator), context);
+                File file = new File(imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + dataResourceName);
                 if (!file.delete()) {
-                    Debug.logError("File :" + file.getName() + ", couldn't be deleted", MODULE);
+                    Debug.logError(x.File_8c120fff + file.getName() + x.couldn_t_be_deleted, MODULE);
                 }
             }
         } catch (Exception e) {
@@ -336,7 +348,7 @@ public class ImageManagementServices {
         if (UtilValidate.isNotEmpty(resizeType)) {
             sizeTypeList = UtilMisc.toList(resizeType);
         } else {
-            sizeTypeList = UtilMisc.toList("small", "100x75", "150x112", "320x240", "640x480", "800x600", "1024x768", "1280x1024", "1600x1200");
+            sizeTypeList = UtilMisc.toList(x.small, x._100x75, x._150x112, x._320x240, x._640x480, x._800x600, x._1024x768, x._1280x1024, x._1600x1200);
         }
 
         int index;
@@ -352,13 +364,13 @@ public class ImageManagementServices {
         Map<String, Object> result = new HashMap<>();
 
         /* ImageProperties.xml */
-        String fileName = "component://product/config/ImageProperties.xml";
+        String fileName = x.component_product_config_ImageProperties_xml;
         String imgPropertyFullPath = FlexibleLocation.resolveLocation(fileName).getFile();
         resultXMLMap.putAll(ImageTransform.getXMLValue(imgPropertyFullPath, locale));
-        if (resultXMLMap.containsKey("responseMessage") && "success".equals(resultXMLMap.get("responseMessage"))) {
-            imgPropertyMap.putAll(UtilGenerics.<Map<String, Map<String, String>>>cast(resultXMLMap.get("xml")));
+        if (resultXMLMap.containsKey(x.responseMessage) && x.success.equals(resultXMLMap.get(x.responseMessage))) {
+            imgPropertyMap.putAll(UtilGenerics.<Map<String, Map<String, String>>>cast(resultXMLMap.get(x.xml)));
         } else {
-            String errMsg = UtilProperties.getMessage(RES_ERROR, "ScaleImage.unable_to_parse", locale) + " : ImageProperties.xml";
+            String errMsg = UtilProperties.getMessage(RES_ERROR, x.ScaleImage_unable_to_parse, locale) + x.ImageProperties_xml;
             Debug.logError(errMsg, MODULE);
             result.put(ModelService.ERROR_MESSAGE, errMsg);
             return result;
@@ -369,24 +381,24 @@ public class ImageManagementServices {
         index = filenameToUse.lastIndexOf('.');
         String imgExtension = filenameToUse.substring(index + 1);
         // paths
-        String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                "image.management.path", dctx.getDelegator()), context);
-        String imageServerUrl = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                "image.management.url", dctx.getDelegator()), context);
+        String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                x.image_management_path, dctx.getDelegator()), context);
+        String imageServerUrl = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                x.image_management_url, dctx.getDelegator()), context);
 
 
         /* get original BUFFERED IMAGE */
-        resultBufImgMap.putAll(ImageTransform.getBufferedImage(imageServerPath + "/" + productId + "/" + filenameToUse, locale));
+        resultBufImgMap.putAll(ImageTransform.getBufferedImage(imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + filenameToUse, locale));
 
-        if (resultBufImgMap.containsKey("responseMessage") && "success".equals(resultBufImgMap.get("responseMessage"))) {
-            bufImg = (BufferedImage) resultBufImgMap.get("bufferedImage");
+        if (resultBufImgMap.containsKey(x.responseMessage) && x.success.equals(resultBufImgMap.get(x.responseMessage))) {
+            bufImg = (BufferedImage) resultBufImgMap.get(x.bufferedImage);
 
             // get Dimensions
             imgHeight = bufImg.getHeight();
             imgWidth = bufImg.getWidth();
             if (imgHeight == 0.0 || imgWidth == 0.0) {
-                String errMsg = UtilProperties.getMessage(RES_ERROR, "ScaleImage.one_current_image_dimension_is_null", locale) + " : imgHeight = "
-                        + imgHeight + " ; imgWidth = " + imgWidth;
+                String errMsg = UtilProperties.getMessage(RES_ERROR, x.ScaleImage_one_current_image_dimension_is_null, locale) + x.imgHeight
+                        + imgHeight + x.imgWidth + imgWidth;
                 Debug.logError(errMsg, MODULE);
                 result.put(ModelService.ERROR_MESSAGE, errMsg);
                 return result;
@@ -396,18 +408,18 @@ public class ImageManagementServices {
             for (String sizeType : sizeTypeList) {
                 resultScaleImgMap.putAll(ImageTransform.scaleImage(bufImg, imgHeight, imgWidth, imgPropertyMap, sizeType, locale));
 
-                if (resultScaleImgMap.containsKey("responseMessage") && "success".equals(resultScaleImgMap.get("responseMessage"))) {
-                    bufNewImg = (BufferedImage) resultScaleImgMap.get("bufferedImage");
+                if (resultScaleImgMap.containsKey(x.responseMessage) && x.success.equals(resultScaleImgMap.get(x.responseMessage))) {
+                    bufNewImg = (BufferedImage) resultScaleImgMap.get(x.bufferedImage);
 
                     // write the New Scaled Image
 
-                    String targetDirectory = imageServerPath + "/" + productId;
+                    String targetDirectory = imageServerPath + x.str_42099b4a + productId;
                     File targetDir = new File(targetDirectory);
                     if (!targetDir.exists()) {
                         boolean created = targetDir.mkdirs();
                         if (!created) {
-                            String errMsg = UtilProperties.getMessage(RES_ERROR, "ScaleImage.unable_to_create_target_directory", locale)
-                                    + " - " + targetDirectory;
+                            String errMsg = UtilProperties.getMessage(RES_ERROR, x.ScaleImage_unable_to_create_target_directory, locale)
+                                    + x.str_fc02e199 + targetDirectory;
                             Debug.logFatal(errMsg, MODULE);
                             return ServiceUtil.returnError(errMsg);
                         }
@@ -415,38 +427,38 @@ public class ImageManagementServices {
 
                     // write new image
                     try {
-                        ImageIO.write(bufNewImg, imgExtension, new File(imageServerPath + "/" + productId + "/" + filenameToUse));
-                        File deleteFile = new File(imageServerPath + "/" + filenameToUse);
+                        ImageIO.write(bufNewImg, imgExtension, new File(imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + filenameToUse));
+                        File deleteFile = new File(imageServerPath + x.str_42099b4a + filenameToUse);
                         if (!deleteFile.delete()) {
-                            Debug.logError("File :" + deleteFile.getName() + ", couldn't be deleted", MODULE);
+                            Debug.logError(x.File_8c120fff + deleteFile.getName() + x.couldn_t_be_deleted, MODULE);
                         }
                     } catch (IllegalArgumentException e) {
-                        String errMsg = UtilProperties.getMessage(RES_ERROR, "ScaleImage.one_parameter_is_null", locale) + e.toString();
+                        String errMsg = UtilProperties.getMessage(RES_ERROR, x.ScaleImage_one_parameter_is_null, locale) + e.toString();
                         Debug.logError(errMsg, MODULE);
                         result.put(ModelService.ERROR_MESSAGE, errMsg);
                         return result;
                     } catch (IOException e) {
-                        String errMsg = UtilProperties.getMessage(RES_ERROR, "ScaleImage.error_occurs_during_writing", locale) + e.toString();
+                        String errMsg = UtilProperties.getMessage(RES_ERROR, x.ScaleImage_error_occurs_during_writing, locale) + e.toString();
                         Debug.logError(errMsg, MODULE);
                         result.put(ModelService.ERROR_MESSAGE, errMsg);
                         return result;
                     }
 
                     /* write Return Result */
-                    String imageUrl = imageServerUrl + "/" + productId + "/" + filenameToUse;
+                    String imageUrl = imageServerUrl + x.str_42099b4a + productId + x.str_42099b4a + filenameToUse;
                     imgUrlMap.put(sizeType, imageUrl);
 
                 } // scaleImgMap
             } // sizeIter
 
-            result.put("responseMessage", "success");
-            result.put("imageUrlMap", imgUrlMap);
-            result.put("original", resultBufImgMap);
+            result.put(x.responseMessage, x.success);
+            result.put(x.imageUrlMap, imgUrlMap);
+            result.put(x.original, resultBufImgMap);
             return result;
 
         }
-        String errMsg = UtilProperties.getMessage(RES_ERROR, "ScaleImage.unable_to_scale_original_image", locale)
-                + " : " + filenameToUse;
+        String errMsg = UtilProperties.getMessage(RES_ERROR, x.ScaleImage_unable_to_scale_original_image, locale)
+                + x.str_d98411eb + filenameToUse;
         Debug.logError(errMsg, MODULE);
         result.put(ModelService.ERROR_MESSAGE, errMsg);
         return ServiceUtil.returnError(errMsg);
@@ -460,16 +472,16 @@ public class ImageManagementServices {
 
         Map<String, Object> dataResourceCtx = new HashMap<>();
 
-        dataResourceCtx.put("objectInfo", imageUrl);
-        dataResourceCtx.put("dataResourceName", filenameToUse);
-        dataResourceCtx.put("userLogin", userLogin);
-        dataResourceCtx.put("dataResourceTypeId", "IMAGE_OBJECT");
-        dataResourceCtx.put("mimeTypeId", fileContentType);
-        dataResourceCtx.put("isPublic", "Y");
+        dataResourceCtx.put(x.objectInfo, imageUrl);
+        dataResourceCtx.put(x.dataResourceName, filenameToUse);
+        dataResourceCtx.put(x.userLogin, userLogin);
+        dataResourceCtx.put(x.dataResourceTypeId, x.IMAGE_OBJECT);
+        dataResourceCtx.put(x.mimeTypeId, fileContentType);
+        dataResourceCtx.put(x.isPublic, x.Y);
 
         Map<String, Object> dataResourceResult;
         try {
-            dataResourceResult = dispatcher.runSync("createDataResource", dataResourceCtx);
+            dataResourceResult = dispatcher.runSync(x.createDataResource, dataResourceCtx);
             if (ServiceUtil.isError(dataResourceResult)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(dataResourceResult));
             }
@@ -478,17 +490,17 @@ public class ImageManagementServices {
             return ServiceUtil.returnError(e.getMessage());
         }
 
-        String dataResourceId = (String) dataResourceResult.get("dataResourceId");
-        result.put("dataResourceFrameId", dataResourceId);
-        result.put("dataResourceId", dataResourceId);
+        String dataResourceId = (String) dataResourceResult.get(x.dataResourceId);
+        result.put(x.dataResourceFrameId, dataResourceId);
+        result.put(x.dataResourceId, dataResourceId);
 
         Map<String, Object> contentUp = new HashMap<>();
-        contentUp.put("contentId", contentId);
-        contentUp.put("dataResourceId", dataResourceResult.get("dataResourceId"));
-        contentUp.put("contentName", filenameToUse);
-        contentUp.put("userLogin", userLogin);
+        contentUp.put(x.contentId, contentId);
+        contentUp.put(x.dataResourceId, dataResourceResult.get(x.dataResourceId));
+        contentUp.put(x.contentName, filenameToUse);
+        contentUp.put(x.userLogin, userLogin);
         try {
-            Map<String, Object> serviceResult = dispatcher.runSync("updateContent", contentUp);
+            Map<String, Object> serviceResult = dispatcher.runSync(x.updateContent, contentUp);
             if (ServiceUtil.isError(serviceResult)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
             }
@@ -499,8 +511,10 @@ public class ImageManagementServices {
 
         GenericValue content = null;
         try {
-            content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).queryOne();
-        } catch (GenericEntityException e) {
+            ContentDao contentDao = DaoRegistry.getDao(delegator, x.Content, ContentDao.class);
+            ContentEntity contentEntity = contentDao.get(contentId).orElse(null);
+            content = contentEntity == null ? null : delegator.makeValue(x.Content, Beans.beanToMap(contentEntity));
+        } catch (Exception e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
@@ -515,9 +529,9 @@ public class ImageManagementServices {
             }
 
             if (dataResource != null) {
-                dataResourceCtx.put("dataResourceId", dataResource.getString(x.dataResourceId));
+                dataResourceCtx.put(x.dataResourceId, dataResource.getString(x.dataResourceId));
                 try {
-                    Map<String, Object> serviceResult = dispatcher.runSync("updateDataResource", dataResourceCtx);
+                    Map<String, Object> serviceResult = dispatcher.runSync(x.updateDataResource, dataResourceCtx);
                     if (ServiceUtil.isError(serviceResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                     }
@@ -536,18 +550,18 @@ public class ImageManagementServices {
         LocalDispatcher dispatcher = dctx.getDispatcher();
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
-        String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                "image.management.path", delegator), context);
-        String nameOfThumb = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                "image.management.nameofthumbnail", delegator), context);
+        String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                x.image_management_path, delegator), context);
+        String nameOfThumb = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                x.image_management_nameofthumbnail, delegator), context);
 
         // Create content for thumbnail
         Map<String, Object> contentThumb = new HashMap<>();
-        contentThumb.put("contentTypeId", "DOCUMENT");
-        contentThumb.put("userLogin", userLogin);
+        contentThumb.put(x.contentTypeId, x.DOCUMENT);
+        contentThumb.put(x.userLogin, userLogin);
         Map<String, Object> contentThumbResult;
         try {
-            contentThumbResult = dispatcher.runSync("createContent", contentThumb);
+            contentThumbResult = dispatcher.runSync(x.createContent, contentThumb);
             if (ServiceUtil.isError(contentThumbResult)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(contentThumbResult));
             }
@@ -556,55 +570,60 @@ public class ImageManagementServices {
             return ServiceUtil.returnError(e.getMessage());
         }
 
-        String contentIdThumb = (String) contentThumbResult.get("contentId");
-        result.put("contentIdThumb", contentIdThumb);
+        String contentIdThumb = (String) contentThumbResult.get(x.contentId);
+        result.put(x.contentIdThumb, contentIdThumb);
         String filenameToUseThumb = imageName.substring(0, imageName.indexOf('.')) + nameOfThumb;
         String fileContentType = (String) context.get(x._uploadedFile_contentType);
-        if ("image/pjpeg".equals(fileContentType)) {
-            fileContentType = "image/jpeg";
-        } else if ("image/x-png".equals(fileContentType)) {
-            fileContentType = "image/png";
+        if (x.image_pjpeg.equals(fileContentType)) {
+            fileContentType = x.image_jpeg;
+        } else if (x.image_x_png.equals(fileContentType)) {
+            fileContentType = x.image_png;
         }
 
         List<GenericValue> fileExtensionThumb;
         try {
-            fileExtensionThumb = EntityQuery.use(delegator).from("FileExtension").where("mimeTypeId", fileContentType).queryList();
-        } catch (GenericEntityException e) {
+            FileExtensionDao fileExtensionDao = DaoRegistry.getDao(delegator, x.FileExtension, FileExtensionDao.class);
+            List<FileExtensionEntity> fileExtensionEntities = fileExtensionDao.list(Filters.eq(x.mimeTypeId, fileContentType));
+            fileExtensionThumb = new LinkedList<>();
+            for (FileExtensionEntity fileExtensionEntity : fileExtensionEntities) {
+                fileExtensionThumb.add(delegator.makeValue(x.FileExtension, Beans.beanToMap(fileExtensionEntity)));
+            }
+        } catch (Exception e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
 
         GenericValue extensionThumb = EntityUtil.getFirst(fileExtensionThumb);
         if (extensionThumb != null) {
-            filenameToUseThumb += "." + extensionThumb.getString(x.fileExtensionId);
+            filenameToUseThumb += x.str_3a52ce78 + extensionThumb.getString(x.fileExtensionId);
         }
-        result.put("filenameToUseThumb", filenameToUseThumb);
+        result.put(x.filenameToUseThumb, filenameToUseThumb);
         // Create image file thumbnail to folder product id.
-        String fileToCheck = imageServerPath + "/" + productId + "/" + filenameToUseThumb;
+        String fileToCheck = imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + filenameToUseThumb;
         File fileOriginalThumb = new File(fileToCheck);
         try {
             Path tempFile = Files.createTempFile(null, null);
             Files.write(tempFile, imageData.array(), StandardOpenOption.APPEND);
             // Check if a webshell is not uploaded
-            if (!org.apache.ofbiz.security.SecuredUpload.isValidFile(tempFile.toString(), "Image", delegator)) {
-                String errorMessage = UtilProperties.getMessage("SecurityUiLabels", "SupportedImageFormats", locale);
+            if (!org.apache.ofbiz.security.SecuredUpload.isValidFile(tempFile.toString(), x.Image, delegator)) {
+                String errorMessage = UtilProperties.getMessage(x.SecurityUiLabels, x.SupportedImageFormats, locale);
                 return ServiceUtil.returnError(errorMessage);
             }
             File tempFileToDelete = new File(tempFile.toString());
             tempFileToDelete.deleteOnExit();
-            RandomAccessFile outFileThumb = new RandomAccessFile(fileOriginalThumb, "rw");
+            RandomAccessFile outFileThumb = new RandomAccessFile(fileOriginalThumb, x.rw);
             outFileThumb.write(imageData.array());
             outFileThumb.close();
         } catch (FileNotFoundException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "ProductImageViewUnableWriteFile",
-                    UtilMisc.toMap("fileName", fileOriginalThumb.getAbsolutePath()), locale));
+                    x.ProductImageViewUnableWriteFile,
+                    UtilMisc.toMap(x.fileName, fileOriginalThumb.getAbsolutePath()), locale));
         } catch (IOException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "ProductImageViewUnableWriteBinaryData",
-                    UtilMisc.toMap("fileName", fileOriginalThumb.getAbsolutePath()), locale));
+                    x.ProductImageViewUnableWriteBinaryData,
+                    UtilMisc.toMap(x.fileName, fileOriginalThumb.getAbsolutePath()), locale));
         }
 
         return result;
@@ -653,8 +672,8 @@ public class ImageManagementServices {
 
         bufNewImg = ImageTransform.toBufferedImage(newImg, bufImgType);
 
-        result.put("bufferedImage", bufNewImg);
-        result.put("scaleFactor", scaleFactor);
+        result.put(x.bufferedImage, bufNewImg);
+        result.put(x.scaleFactor, scaleFactor);
         return result;
     }
 
@@ -667,7 +686,7 @@ public class ImageManagementServices {
         imageCount++;
         String filePath = imagePath.substring(0, imagePath.lastIndexOf('.'));
         String type = imagePath.substring(imagePath.lastIndexOf('.') + 1);
-        file = new File(filePath + "(" + imageCount + ")." + type);
+        file = new File(filePath + x.str_28ed3a79 + imageCount + x.str_d4191940 + type);
         return checkExistsImage(file);
     }
 
@@ -714,8 +733,8 @@ public class ImageManagementServices {
 
         bufNewImg = ImageTransform.toBufferedImage(newImg, bufImgType);
 
-        result.put("bufferedImage", bufNewImg);
-        result.put("scaleFactor", scaleFactor);
+        result.put(x.bufferedImage, bufNewImg);
+        result.put(x.scaleFactor, scaleFactor);
         return result;
     }
 
@@ -724,40 +743,40 @@ public class ImageManagementServices {
         Delegator delegator = dispatcher.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
-        String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                "image.management.path", delegator), context);
-        String imageServerUrl = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                "image.management.url", delegator), context);
+        String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                x.image_management_path, delegator), context);
+        String imageServerUrl = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                x.image_management_url, delegator), context);
         String productId = (String) context.get(x.productId);
         String contentId = (String) context.get(x.contentId);
         String dataResourceName = (String) context.get(x.dataResourceName);
         String width = (String) context.get(x.sizeWidth);
-        String imageType = ".jpg";
+        String imageType = x.jpg;
         int resizeWidth = Integer.parseInt(width);
         int resizeHeight = resizeWidth;
 
         try {
-            BufferedImage bufImg = ImageIO.read(new File(imageServerPath + "/" + productId + "/" + dataResourceName));
+            BufferedImage bufImg = ImageIO.read(new File(imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + dataResourceName));
             double imgHeight = bufImg.getHeight();
             double imgWidth = bufImg.getWidth();
             if (dataResourceName.lastIndexOf('.') > 0 && dataResourceName.lastIndexOf('.') < dataResourceName.length()) {
                 imageType = dataResourceName.substring(dataResourceName.lastIndexOf('.'));
             }
 
-            String filenameToUse = dataResourceName.substring(0, dataResourceName.length() - 4) + "-" + resizeWidth + imageType;
+            String filenameToUse = dataResourceName.substring(0, dataResourceName.length() - 4) + x.str_3bc15c8a + resizeWidth + imageType;
 
             if (dataResourceName.length() > 3) {
                 String mimeType = dataResourceName.substring(dataResourceName.length() - 3, dataResourceName.length());
                 Map<String, Object> resultResize = resizeImage(bufImg, imgHeight, imgWidth, resizeHeight, resizeWidth);
-                ImageIO.write((RenderedImage) resultResize.get("bufferedImage"), mimeType, new File(imageServerPath
-                        + "/" + productId + "/" + filenameToUse));
+                ImageIO.write((RenderedImage) resultResize.get(x.bufferedImage), mimeType, new File(imageServerPath
+                        + x.str_42099b4a + productId + x.str_42099b4a + filenameToUse));
 
                 Map<String, Object> contentThumb = new HashMap<>();
-                contentThumb.put("contentTypeId", "DOCUMENT");
-                contentThumb.put("userLogin", userLogin);
+                contentThumb.put(x.contentTypeId, x.DOCUMENT);
+                contentThumb.put(x.userLogin, userLogin);
                 Map<String, Object> contentThumbResult;
                 try {
-                    contentThumbResult = dispatcher.runSync("createContent", contentThumb);
+                    contentThumbResult = dispatcher.runSync(x.createContent, contentThumb);
                     if (ServiceUtil.isError(contentThumbResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(contentThumbResult));
                     }
@@ -766,18 +785,18 @@ public class ImageManagementServices {
                     return ServiceUtil.returnError(e.getMessage());
                 }
 
-                String contentIdThumb = (String) contentThumbResult.get("contentId");
-                String imageUrlThumb = imageServerUrl + "/" + productId + "/" + filenameToUse;
-                createContentAndDataResource(dctx, userLogin, filenameToUse, imageUrlThumb, contentIdThumb, "image/jpeg");
+                String contentIdThumb = (String) contentThumbResult.get(x.contentId);
+                String imageUrlThumb = imageServerUrl + x.str_42099b4a + productId + x.str_42099b4a + filenameToUse;
+                createContentAndDataResource(dctx, userLogin, filenameToUse, imageUrlThumb, contentIdThumb, x.image_jpeg);
 
                 Map<String, Object> createContentAssocMap = new HashMap<>();
-                createContentAssocMap.put("contentAssocTypeId", "IMAGE_THUMBNAIL");
-                createContentAssocMap.put("contentId", contentId);
-                createContentAssocMap.put("contentIdTo", contentIdThumb);
-                createContentAssocMap.put("userLogin", userLogin);
-                createContentAssocMap.put("mapKey", width);
+                createContentAssocMap.put(x.contentAssocTypeId, x.IMAGE_THUMBNAIL);
+                createContentAssocMap.put(x.contentId, contentId);
+                createContentAssocMap.put(x.contentIdTo, contentIdThumb);
+                createContentAssocMap.put(x.userLogin, userLogin);
+                createContentAssocMap.put(x.mapKey, width);
                 try {
-                    Map<String, Object> serviceResult = dispatcher.runSync("createContentAssoc", createContentAssocMap);
+                    Map<String, Object> serviceResult = dispatcher.runSync(x.createContentAssoc, createContentAssocMap);
                     if (ServiceUtil.isError(serviceResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                     }
@@ -790,15 +809,15 @@ public class ImageManagementServices {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
-        String successMsg = UtilProperties.getMessage(RESOURCE, "ProductCreateNewThumbnailSizeSuccessful", locale);
+        String successMsg = UtilProperties.getMessage(RESOURCE, x.ProductCreateNewThumbnailSizeSuccessful, locale);
         return ServiceUtil.returnSuccess(successMsg);
     }
 
     public static Map<String, Object> resizeImageOfProduct(DispatchContext dctx, ImageManagementServicesContext context) {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
-        String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                "image.management.path", delegator), context);
+        String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                x.image_management_path, delegator), context);
         String productId = (String) context.get(x.productId);
         String dataResourceName = (String) context.get(x.dataResourceName);
         String width = (String) context.get(x.resizeWidth);
@@ -806,19 +825,19 @@ public class ImageManagementServices {
         int resizeHeight = resizeWidth;
 
         try {
-            BufferedImage bufImg = ImageIO.read(new File(imageServerPath + "/" + productId + "/" + dataResourceName));
+            BufferedImage bufImg = ImageIO.read(new File(imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + dataResourceName));
             double imgHeight = bufImg.getHeight();
             double imgWidth = bufImg.getWidth();
             String filenameToUse = dataResourceName;
             String mimeType = dataResourceName.substring(dataResourceName.length() - 3, dataResourceName.length());
             Map<String, Object> resultResize = resizeImage(bufImg, imgHeight, imgWidth, resizeHeight, resizeWidth);
-            ImageIO.write((RenderedImage) resultResize.get("bufferedImage"), mimeType, new File(imageServerPath + "/"
-                    + productId + "/" + filenameToUse));
+            ImageIO.write((RenderedImage) resultResize.get(x.bufferedImage), mimeType, new File(imageServerPath + x.str_42099b4a
+                    + productId + x.str_42099b4a + filenameToUse));
         } catch (Exception e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
-        String successMsg = UtilProperties.getMessage(RESOURCE, "ProductResizeImagesSuccessful", locale);
+        String successMsg = UtilProperties.getMessage(RESOURCE, x.ProductResizeImagesSuccessful, locale);
         return ServiceUtil.returnSuccess(successMsg);
     }
 
@@ -827,38 +846,57 @@ public class ImageManagementServices {
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
-        String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                "image.management.path", delegator), context);
-        String imageServerUrl = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue("catalog",
-                "image.management.url", delegator), context);
+        String imageServerPath = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                x.image_management_path, delegator), context);
+        String imageServerUrl = FlexibleStringExpander.expandString(EntityUtilProperties.getPropertyValue(x.catalog,
+                x.image_management_url, delegator), context);
         String productId = (String) context.get(x.productId);
         String contentId = (String) context.get(x.contentId);
         String filenameToUse = (String) context.get(x.drDataResourceName);
         String imageType = filenameToUse.substring(filenameToUse.lastIndexOf('.'));
         String imgExtension = filenameToUse.substring(filenameToUse.length() - 3, filenameToUse.length());
-        String imageUrl = imageServerUrl + "/" + productId + "/" + filenameToUse;
+        String imageUrl = imageServerUrl + x.str_42099b4a + productId + x.str_42099b4a + filenameToUse;
 
         try {
-            GenericValue productContent = EntityQuery.use(delegator).from("ProductContentAndInfo").where("productId", productId, "contentId",
-                    contentId, "productContentTypeId", "IMAGE").queryFirst();
+            ProductContentDao productContentDao = DaoRegistry.getDao(delegator, x.ProductContent, ProductContentDao.class);
+            ContentDao contentDao = DaoRegistry.getDao(delegator, x.Content, ContentDao.class);
+            ContentAssocDao contentAssocDao = DaoRegistry.getDao(delegator, x.ContentAssoc, ContentAssocDao.class);
+
+            List<ProductContentEntity> productContentEntities = productContentDao.list(Filters.and(
+                    Filters.eq(x.productId, productId),
+                    Filters.eq(x.contentId, contentId),
+                    Filters.eq(x.productContentTypeId, x.IMAGE)));
+            GenericValue productContent = productContentEntities.isEmpty() ? null
+                    : delegator.makeValue(x.ProductContent, Beans.beanToMap(productContentEntities.get(0)));
+            if (productContent != null) {
+                ContentEntity productContentEntity = contentDao.get(contentId).orElse(null);
+                GenericValue productContentValue = productContentEntity == null ? null
+                        : delegator.makeValue(x.Content, Beans.beanToMap(productContentEntity));
+                if (productContentValue != null) {
+                    GenericValue productContentDataResource = productContentValue.getRelatedOne(x.DataResource, false);
+                    if (productContentDataResource != null) {
+                        productContent.put(x.drDataResourceName, productContentDataResource.get(x.dataResourceName));
+                    }
+                }
+            }
             String dataResourceName = (String) productContent.get(x.drDataResourceName);
             String mimeType = filenameToUse.substring(filenameToUse.lastIndexOf('.'));
 
             if (imageType.equals(mimeType)) {
-                BufferedImage bufImg = ImageIO.read(new File(imageServerPath + "/" + productId + "/" + dataResourceName));
-                ImageIO.write(bufImg, imgExtension, new File(imageServerPath + "/" + productId + "/" + filenameToUse));
+                BufferedImage bufImg = ImageIO.read(new File(imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + dataResourceName));
+                ImageIO.write(bufImg, imgExtension, new File(imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + filenameToUse));
 
-                File file = new File(imageServerPath + "/" + productId + "/" + dataResourceName);
+                File file = new File(imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + dataResourceName);
                 if (!file.delete()) {
-                    Debug.logError("File :" + file.getName() + ", couldn't be deleted", MODULE);
+                    Debug.logError(x.File_8c120fff + file.getName() + x.couldn_t_be_deleted, MODULE);
                 }
 
                 Map<String, Object> contentUp = new HashMap<>();
-                contentUp.put("contentId", contentId);
-                contentUp.put("contentName", filenameToUse);
-                contentUp.put("userLogin", userLogin);
+                contentUp.put(x.contentId, contentId);
+                contentUp.put(x.contentName, filenameToUse);
+                contentUp.put(x.userLogin, userLogin);
                 try {
-                    Map<String, Object> serviceResult = dispatcher.runSync("updateContent", contentUp);
+                    Map<String, Object> serviceResult = dispatcher.runSync(x.updateContent, contentUp);
                     if (ServiceUtil.isError(serviceResult)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                     }
@@ -866,13 +904,8 @@ public class ImageManagementServices {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(e.getMessage());
                 }
-                GenericValue content = null;
-                try {
-                    content = EntityQuery.use(delegator).from("Content").where("contentId", contentId).queryOne();
-                } catch (GenericEntityException e) {
-                    Debug.logError(e, MODULE);
-                    return ServiceUtil.returnError(e.getMessage());
-                }
+                ContentEntity contentEntity = contentDao.get(contentId).orElse(null);
+                GenericValue content = contentEntity == null ? null : delegator.makeValue(x.Content, Beans.beanToMap(contentEntity));
                 if (content != null) {
                     GenericValue dataResource = null;
                     try {
@@ -884,12 +917,12 @@ public class ImageManagementServices {
 
                     if (dataResource != null) {
                         Map<String, Object> dataResourceCtx = new HashMap<>();
-                        dataResourceCtx.put("dataResourceId", dataResource.getString(x.dataResourceId));
-                        dataResourceCtx.put("objectInfo", imageUrl);
-                        dataResourceCtx.put("dataResourceName", filenameToUse);
-                        dataResourceCtx.put("userLogin", userLogin);
+                        dataResourceCtx.put(x.dataResourceId, dataResource.getString(x.dataResourceId));
+                        dataResourceCtx.put(x.objectInfo, imageUrl);
+                        dataResourceCtx.put(x.dataResourceName, filenameToUse);
+                        dataResourceCtx.put(x.userLogin, userLogin);
                         try {
-                            Map<String, Object> serviceResult = dispatcher.runSync("updateDataResource", dataResourceCtx);
+                            Map<String, Object> serviceResult = dispatcher.runSync(x.updateDataResource, dataResourceCtx);
                             if (ServiceUtil.isError(serviceResult)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                             }
@@ -900,35 +933,51 @@ public class ImageManagementServices {
                     }
                 }
 
-                List<GenericValue> contentAssocList = EntityQuery.use(delegator).from("ContentAssoc").where("contentId", contentId,
-                        "contentAssocTypeId", "IMAGE_THUMBNAIL").queryList();
+                List<ContentAssocEntity> contentAssocEntities = contentAssocDao.list(Filters.and(
+                        Filters.eq(x.contentId, contentId),
+                        Filters.eq(x.contentAssocTypeId, x.IMAGE_THUMBNAIL)));
+                List<GenericValue> contentAssocList = new LinkedList<>();
+                for (ContentAssocEntity contentAssocEntity : contentAssocEntities) {
+                    contentAssocList.add(delegator.makeValue(x.ContentAssoc, Beans.beanToMap(contentAssocEntity)));
+                }
                 if (!contentAssocList.isEmpty()) {
                     for (int i = 0; i < contentAssocList.size(); i++) {
                         GenericValue contentAssoc = contentAssocList.get(i);
 
-                        List<GenericValue> dataResourceAssocList = EntityQuery.use(delegator).from("ContentDataResourceView")
-                                .where("contentId", contentAssoc.get(x.contentIdTo)).queryList();
+                        List<GenericValue> dataResourceAssocList = new LinkedList<>();
+                        ContentEntity contentAssocContentEntity = contentDao.get((String) contentAssoc.get(x.contentIdTo)).orElse(null);
+                        GenericValue contentAssocContent = contentAssocContentEntity == null ? null
+                                : delegator.makeValue(x.Content, Beans.beanToMap(contentAssocContentEntity));
+                        if (contentAssocContent != null) {
+                            GenericValue contentAssocDataResource = contentAssocContent.getRelatedOne(x.DataResource, false);
+                            if (contentAssocDataResource != null) {
+                                GenericValue contentDataResourceView = delegator.makeValue(x.ContentDataResourceView);
+                                contentDataResourceView.put(x.contentId, contentAssoc.get(x.contentIdTo));
+                                contentDataResourceView.put(x.drDataResourceName, contentAssocDataResource.get(x.dataResourceName));
+                                dataResourceAssocList.add(contentDataResourceView);
+                            }
+                        }
                         GenericValue dataResourceAssoc = EntityUtil.getFirst(dataResourceAssocList);
 
                         String drDataResourceNameAssoc = (String) dataResourceAssoc.get(x.drDataResourceName);
-                        String filenameToUseAssoc = filenameToUse.substring(0, filenameToUse.length() - 4) + "-" + contentAssoc.get(x.mapKey)
+                        String filenameToUseAssoc = filenameToUse.substring(0, filenameToUse.length() - 4) + x.str_3bc15c8a + contentAssoc.get(x.mapKey)
                                 + imageType;
-                        String imageUrlAssoc = imageServerUrl + "/" + productId + "/" + filenameToUseAssoc;
+                        String imageUrlAssoc = imageServerUrl + x.str_42099b4a + productId + x.str_42099b4a + filenameToUseAssoc;
 
-                        BufferedImage bufImgAssoc = ImageIO.read(new File(imageServerPath + "/" + productId + "/" + drDataResourceNameAssoc));
-                        ImageIO.write(bufImgAssoc, imgExtension, new File(imageServerPath + "/" + productId + "/" + filenameToUseAssoc));
+                        BufferedImage bufImgAssoc = ImageIO.read(new File(imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + drDataResourceNameAssoc));
+                        ImageIO.write(bufImgAssoc, imgExtension, new File(imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + filenameToUseAssoc));
 
-                        File fileAssoc = new File(imageServerPath + "/" + productId + "/" + drDataResourceNameAssoc);
+                        File fileAssoc = new File(imageServerPath + x.str_42099b4a + productId + x.str_42099b4a + drDataResourceNameAssoc);
                         if (!fileAssoc.delete()) {
-                            Debug.logError("File :" + fileAssoc.getName() + ", couldn't be deleted", MODULE);
+                            Debug.logError(x.File_8c120fff + fileAssoc.getName() + x.couldn_t_be_deleted, MODULE);
                         }
 
                         Map<String, Object> contentAssocMap = new HashMap<>();
-                        contentAssocMap.put("contentId", contentAssoc.get(x.contentIdTo));
-                        contentAssocMap.put("contentName", filenameToUseAssoc);
-                        contentAssocMap.put("userLogin", userLogin);
+                        contentAssocMap.put(x.contentId, contentAssoc.get(x.contentIdTo));
+                        contentAssocMap.put(x.contentName, filenameToUseAssoc);
+                        contentAssocMap.put(x.userLogin, userLogin);
                         try {
-                            Map<String, Object> serviceResult = dispatcher.runSync("updateContent", contentAssocMap);
+                            Map<String, Object> serviceResult = dispatcher.runSync(x.updateContent, contentAssocMap);
                             if (ServiceUtil.isError(serviceResult)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                             }
@@ -936,14 +985,9 @@ public class ImageManagementServices {
                             Debug.logError(e, MODULE);
                             return ServiceUtil.returnError(e.getMessage());
                         }
-                        GenericValue contentAssocUp = null;
-                        try {
-                            contentAssocUp = EntityQuery.use(delegator).from("Content").where("contentId", contentAssoc.get(x.contentIdTo))
-                                    .queryOne();
-                        } catch (GenericEntityException e) {
-                            Debug.logError(e, MODULE);
-                            return ServiceUtil.returnError(e.getMessage());
-                        }
+                        ContentEntity contentAssocUpEntity = contentDao.get((String) contentAssoc.get(x.contentIdTo)).orElse(null);
+                        GenericValue contentAssocUp = contentAssocUpEntity == null ? null
+                                : delegator.makeValue(x.Content, Beans.beanToMap(contentAssocUpEntity));
                         if (contentAssocUp != null) {
                             GenericValue dataResourceAssocUp = null;
                             try {
@@ -955,12 +999,12 @@ public class ImageManagementServices {
 
                             if (dataResourceAssocUp != null) {
                                 Map<String, Object> dataResourceAssocMap = new HashMap<>();
-                                dataResourceAssocMap.put("dataResourceId", dataResourceAssocUp.getString(x.dataResourceId));
-                                dataResourceAssocMap.put("objectInfo", imageUrlAssoc);
-                                dataResourceAssocMap.put("dataResourceName", filenameToUseAssoc);
-                                dataResourceAssocMap.put("userLogin", userLogin);
+                                dataResourceAssocMap.put(x.dataResourceId, dataResourceAssocUp.getString(x.dataResourceId));
+                                dataResourceAssocMap.put(x.objectInfo, imageUrlAssoc);
+                                dataResourceAssocMap.put(x.dataResourceName, filenameToUseAssoc);
+                                dataResourceAssocMap.put(x.userLogin, userLogin);
                                 try {
-                                    Map<String, Object> serviceResult = dispatcher.runSync("updateDataResource", dataResourceAssocMap);
+                                    Map<String, Object> serviceResult = dispatcher.runSync(x.updateDataResource, dataResourceAssocMap);
                                     if (ServiceUtil.isError(serviceResult)) {
                                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResult));
                                     }
@@ -973,11 +1017,11 @@ public class ImageManagementServices {
                     }
                 }
             }
-        } catch (IOException | IllegalArgumentException | GenericEntityException e) {
+        } catch (Exception e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
-        String successMsg = UtilProperties.getMessage(RESOURCE, "ProductRenameImageSuccessfully.", locale);
+        String successMsg = UtilProperties.getMessage(RESOURCE, x.ProductRenameImageSuccessfully, locale);
         return ServiceUtil.returnSuccess(successMsg);
     }
 }

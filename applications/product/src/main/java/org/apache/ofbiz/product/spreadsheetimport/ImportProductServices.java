@@ -50,7 +50,7 @@ import org.apache.ofbiz.model.ImportProductServicesContext;
 public class ImportProductServices {
 
     private static final String MODULE = ImportProductServices.class.getName();
-    private static final String RESOURCE = "ProductUiLabels";
+    private static final String RESOURCE = x.ProductUiLabels;
 
     /**
      * This method is responsible to import spreadsheet data into "Product" and
@@ -69,7 +69,7 @@ public class ImportProductServices {
         Locale locale = (Locale) context.get(x.locale);
         // System.getProperty("user.dir") returns the path upto ofbiz home
         // directory
-        String path = System.getProperty("user.dir") + "/spreadsheet";
+        String path = System.getProperty(x.user_dir) + x.spreadsheet;
         List<File> fileItems = new LinkedList<>();
 
         if (UtilValidate.isNotEmpty(path)) {
@@ -79,25 +79,25 @@ public class ImportProductServices {
                 // loop for all the containing xls file in the spreadsheet
                 // directory
                 if (files == null) {
-                    return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "FileFilesIsNull", locale));
+                    return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.FileFilesIsNull, locale));
                 }
                 for (File file : files) {
-                    if (file.getName().toUpperCase(Locale.getDefault()).endsWith("XLS")) {
+                    if (file.getName().toUpperCase(Locale.getDefault()).endsWith(x.XLS)) {
                         fileItems.add(file);
                     }
                 }
             } else {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                        "ProductProductImportDirectoryNotFound", locale));
+                        x.ProductProductImportDirectoryNotFound, locale));
             }
         } else {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "ProductProductImportPathNotSpecified", locale));
+                    x.ProductProductImportPathNotSpecified, locale));
         }
 
         if (fileItems.size() < 1) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "ProductProductImportPathNoSpreadsheetExists", locale) + path);
+                    x.ProductProductImportPathNoSpreadsheetExists, locale) + path);
         }
 
         for (File item: fileItems) {
@@ -110,9 +110,9 @@ public class ImportProductServices {
                 fs = new POIFSFileSystem(new FileInputStream(item));
                 wb = new HSSFWorkbook(fs);
             } catch (IOException e) {
-                Debug.logError("Unable to read or create workbook from file", MODULE);
+                Debug.logError(x.Unable_to_read_or_create_workbook_from_file, MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                        "ProductProductImportCannotCreateWorkbookFromFile", locale));
+                        x.ProductProductImportCannotCreateWorkbookFromFile, locale));
             }
 
             // get first sheet
@@ -138,41 +138,41 @@ public class ImportProductServices {
                     // too.
                     boolean productExists = ImportProductHelper.checkProductExists(productId, delegator);
 
-                    if (!"".equalsIgnoreCase(productId.trim()) && !productExists) {
+                    if (!x.emptyString.equalsIgnoreCase(productId.trim()) && !productExists) {
                         products.add(ImportProductHelper.prepareProduct(productId));
                         if (quantityOnHand.compareTo(BigDecimal.ZERO) >= 0) {
                             inventoryItems.add(ImportProductHelper.prepareInventoryItem(productId, quantityOnHand,
-                                    delegator.getNextSeqId("InventoryItem")));
+                                    delegator.getNextSeqId(x.InventoryItem)));
                         } else {
                             inventoryItems.add(ImportProductHelper.prepareInventoryItem(productId, BigDecimal.ZERO, delegator
-                                    .getNextSeqId("InventoryItem")));
+                                    .getNextSeqId(x.InventoryItem)));
                         }
                     }
                     int rowNum = row.getRowNum() + 1;
-                    if (!row.toString().trim().equalsIgnoreCase("") && productExists) {
-                        Debug.logWarning("Row number " + rowNum + " not imported from " + item.getName(), MODULE);
+                    if (!row.toString().trim().equalsIgnoreCase(x.emptyString) && productExists) {
+                        Debug.logWarning(x.Row_number + rowNum + x.not_imported_from + item.getName(), MODULE);
                     }
                 }
             }
             // create and store values in "Product" and "InventoryItem" entity
             // in database
             for (int j = 0; j < products.size(); j++) {
-                GenericValue productGV = delegator.makeValue("Product", products.get(j));
-                GenericValue inventoryItemGV = delegator.makeValue("InventoryItem", inventoryItems.get(j));
+                GenericValue productGV = delegator.makeValue(x.Product, products.get(j));
+                GenericValue inventoryItemGV = delegator.makeValue(x.InventoryItem, inventoryItems.get(j));
                 if (!ImportProductHelper.checkProductExists(productGV.getString(x.productId), delegator)) {
                     try {
                         delegator.create(productGV);
                         delegator.create(inventoryItemGV);
                     } catch (GenericEntityException e) {
-                        Debug.logError("Cannot store product", MODULE);
+                        Debug.logError(x.Cannot_store_product, MODULE);
                         return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                                "ProductProductImportCannotStoreProduct", locale));
+                                x.ProductProductImportCannotStoreProduct, locale));
                     }
                 }
             }
             int uploadedProducts = products.size() + 1;
             if (!products.isEmpty()) {
-                Debug.logInfo("Uploaded " + uploadedProducts + " products from file " + item.getName(), MODULE);
+                Debug.logInfo(x.Uploaded + uploadedProducts + x.products_from_file + item.getName(), MODULE);
             }
         }
         return ServiceUtil.returnSuccess();

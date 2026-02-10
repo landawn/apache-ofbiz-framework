@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.ContactListPartyStatusEntity;
 
-public interface ContactListPartyStatusDao extends CrudDao<ContactListPartyStatusEntity, ContactListPartyStatusEntity, SQLBuilder.PSC, ContactListPartyStatusDao> {
+public interface ContactListPartyStatusDao extends CrudDao<ContactListPartyStatusEntity, ContactListPartyStatusEntity, SQLBuilder.PSC, ContactListPartyStatusDao>, DelegatorQueryDao {
 }

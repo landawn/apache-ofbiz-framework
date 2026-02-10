@@ -19,6 +19,8 @@
 package org.apache.ofbiz.common.telecom;
 
 import static org.apache.ofbiz.base.util.UtilGenerics.checkCollection;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,13 +30,18 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.ProductStoreTelecomSettingDao;
+import org.apache.ofbiz.persistence.entity.ProductStoreTelecomSettingEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.query.condition.Condition;
+import com.landawn.abacus.util.Beans;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -56,15 +63,15 @@ public class TelecomServices {
         String telecomGatewayConfigId = (String) context.get(x.telecomGatewayConfigId);
         List<String> numbers = checkCollection(context.get(x.numbers), String.class);
         String message = (String) context.get(x.message);
-        String telecomEnabled = EntityUtilProperties.getPropertyValue("general", "telecom.notifications.enabled", delegator);
-        if (!"Y".equals(telecomEnabled)) {
-            Debug.logImportant("Telecom message not sent to " + numbers.toString()
-                    + " because telecom.notifications.enabled property is set to N or empty", MODULE);
-            return ServiceUtil.returnSuccess("Telecom message not sent to " + numbers.toString()
-                    + " because sms.notifications.enabled property is set to N or empty");
+        String telecomEnabled = EntityUtilProperties.getPropertyValue(x.general, x.telecom_notifications_enabled, delegator);
+        if (!x.Y.equals(telecomEnabled)) {
+            Debug.logImportant(x.Telecom_message_not_sent_to + numbers.toString()
+                    + x.because_telecom_notifications_enabled_property_is_set_to_N_or_empty, MODULE);
+            return ServiceUtil.returnSuccess(x.Telecom_message_not_sent_to + numbers.toString()
+                    + x.because_sms_notifications_enabled_property_is_set_to_N_or_empty);
         }
 
-        String redirectNumber = EntityUtilProperties.getPropertyValue("general", "telecom.notifications.redirectTo", delegator);
+        String redirectNumber = EntityUtilProperties.getPropertyValue(x.general, x.telecom_notifications_redirectTo, delegator);
         if (UtilValidate.isNotEmpty(redirectNumber)) {
             numbers.clear();
             numbers.add(redirectNumber);
@@ -72,34 +79,45 @@ public class TelecomServices {
 
         try {
             Map<String, Object> createCommEventCtx = new HashMap<>();
-            createCommEventCtx = ctx.makeValidContext("createCommunicationEvent", ModelService.IN_PARAM, context);
-            createCommEventCtx.put("content", message);
-            createCommEventCtx.put("communicationEventTypeId", "PHONE_COMMUNICATION");
-            createCommEventCtx.put("fromString", EntityUtilProperties.getPropertyValue("general", "defaultFromTelecomAddress", delegator));
-            createCommEventCtx.put("subject", telecomMsgTypeEnumId);
-            createCommEventCtx.put("toString", numbers.toString());
-            Map<String, Object> createCommEventResult = dispatcher.runSync("createCommunicationEvent", createCommEventCtx);
+            createCommEventCtx = ctx.makeValidContext(x.createCommunicationEvent, ModelService.IN_PARAM, context);
+            createCommEventCtx.put(x.content, message);
+            createCommEventCtx.put(x.communicationEventTypeId, x.PHONE_COMMUNICATION);
+            createCommEventCtx.put(x.fromString, EntityUtilProperties.getPropertyValue(x.general, x.defaultFromTelecomAddress, delegator));
+            createCommEventCtx.put(x.subject, telecomMsgTypeEnumId);
+            createCommEventCtx.put(x.toString, numbers.toString());
+            Map<String, Object> createCommEventResult = dispatcher.runSync(x.createCommunicationEvent, createCommEventCtx);
             if (!ServiceUtil.isSuccess(createCommEventResult)) {
                 Debug.logError(ServiceUtil.getErrorMessage(createCommEventResult), MODULE);
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(createCommEventResult));
             }
-            String communicationEventId = (String) createCommEventResult.get("communicationEventId");
+            String communicationEventId = (String) createCommEventResult.get(x.communicationEventId);
 
             Map<String, Object> conditions = new HashMap<>();
-            conditions.put("productStoreId", productStoreId);
-            conditions.put("telecomMsgTypeEnumId", telecomMsgTypeEnumId);
-            conditions.put("telecomMethodTypeId", telecomMethodTypeId);
-            GenericValue productStoreTelecomSetting = EntityQuery.use(delegator).from("ProductStoreTelecomSetting").where(conditions).queryOne();
+            conditions.put(x.productStoreId, productStoreId);
+            conditions.put(x.telecomMsgTypeEnumId, telecomMsgTypeEnumId);
+            conditions.put(x.telecomMethodTypeId, telecomMethodTypeId);
+            List<Condition> conditionList = new ArrayList<>(conditions.size());
+            for (Map.Entry<String, Object> entry : conditions.entrySet()) {
+                conditionList.add(Filters.eq(entry.getKey(), entry.getValue()));
+            }
+            ProductStoreTelecomSettingDao productStoreTelecomSettingDao = DaoRegistry.getDao(delegator, x.ProductStoreTelecomSetting,
+                    ProductStoreTelecomSettingDao.class);
+            ProductStoreTelecomSettingEntity productStoreTelecomSettingEntity =
+                    productStoreTelecomSettingDao.list(Filters.and(conditionList)).stream().findFirst().orElse(null);
+            GenericValue productStoreTelecomSetting = null;
+            if (productStoreTelecomSettingEntity != null) {
+                productStoreTelecomSetting = delegator.makeValue(x.ProductStoreTelecomSetting, Beans.beanToMap(productStoreTelecomSettingEntity));
+            }
             if (productStoreTelecomSetting != null) {
                 GenericValue customMethod = productStoreTelecomSetting.getRelatedOne(x.CustomMethod, false);
                 if (UtilValidate.isNotEmpty(customMethod.getString(x.customMethodName))) {
                     Map<String, Object> serviceCtx = new HashMap<>();
-                    serviceCtx.put("numbers", numbers);
-                    serviceCtx.put("message", message);
+                    serviceCtx.put(x.numbers, numbers);
+                    serviceCtx.put(x.message, message);
                     if (telecomGatewayConfigId != null) {
-                        serviceCtx.put("configId", telecomGatewayConfigId);
+                        serviceCtx.put(x.configId, telecomGatewayConfigId);
                     }
-                    serviceCtx.put("userLogin", userLogin);
+                    serviceCtx.put(x.userLogin, userLogin);
                     Map<String, Object> customMethodResult = dispatcher.runSync(customMethod.getString(x.customMethodName), serviceCtx);
                     if (ServiceUtil.isError(customMethodResult) || ServiceUtil.isFailure(customMethodResult)) {
                         String errorMessage = ServiceUtil.getErrorMessage(customMethodResult);
@@ -108,18 +126,18 @@ public class TelecomServices {
                     }
 
                     createCommEventCtx.clear();
-                    createCommEventCtx.put("communicationEventId", communicationEventId);
-                    if (UtilValidate.isNotEmpty(createCommEventResult.get("response"))) {
-                        createCommEventCtx.put("note", customMethodResult.get("response"));
+                    createCommEventCtx.put(x.communicationEventId, communicationEventId);
+                    if (UtilValidate.isNotEmpty(createCommEventResult.get(x.response))) {
+                        createCommEventCtx.put(x.note, customMethodResult.get(x.response));
                     }
-                    createCommEventCtx.put("statusId", "COM_COMPLETE");
-                    createCommEventCtx.put("userLogin", userLogin);
-                    dispatcher.runSync("updateCommunicationEvent", createCommEventCtx);
+                    createCommEventCtx.put(x.statusId, x.COM_COMPLETE);
+                    createCommEventCtx.put(x.userLogin, userLogin);
+                    dispatcher.runSync(x.updateCommunicationEvent, createCommEventCtx);
                 }
             } else {
-                return ServiceUtil.returnError("Not sending SMS as no ProductStoreEmailSetting found for the passed inputs.");
+                return ServiceUtil.returnError(x.Not_sending_SMS_as_no_ProductStoreEmailSetting_found_for_the_passed_inputs);
             }
-        } catch (GenericEntityException | GenericServiceException e) {
+        } catch (GenericEntityException | GenericServiceException | SQLException e) {
             Debug.logError(e.getMessage(), MODULE);
             return ServiceUtil.returnError(e.getMessage());
         }
@@ -127,3 +145,4 @@ public class TelecomServices {
         return results;
     }
 }
+

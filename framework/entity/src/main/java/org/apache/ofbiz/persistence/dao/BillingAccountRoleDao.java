@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.BillingAccountRoleEntity;
 
-public interface BillingAccountRoleDao extends CrudDao<BillingAccountRoleEntity, BillingAccountRoleEntity, SQLBuilder.PSC, BillingAccountRoleDao> {
+public interface BillingAccountRoleDao extends CrudDao<BillingAccountRoleEntity, BillingAccountRoleEntity, SQLBuilder.PSC, BillingAccountRoleDao>, DelegatorQueryDao {
 }

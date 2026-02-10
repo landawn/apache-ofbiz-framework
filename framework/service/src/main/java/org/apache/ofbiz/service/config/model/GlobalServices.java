@@ -21,6 +21,7 @@ package org.apache.ofbiz.service.config.model;
 import org.apache.ofbiz.base.lang.ThreadSafe;
 import org.apache.ofbiz.service.config.ServiceConfigException;
 import org.w3c.dom.Element;
+import org.apache.ofbiz.persistence.entity.x;
 
 /**
  * An object that models the <code>&lt;global-services&gt;</code> element.
@@ -32,14 +33,14 @@ public final class GlobalServices {
     private final String location;
 
     GlobalServices(Element globalServicesElement) throws ServiceConfigException {
-        String loader = globalServicesElement.getAttribute("loader").intern();
+        String loader = globalServicesElement.getAttribute(x.loader).intern();
         if (loader.isEmpty()) {
-            throw new ServiceConfigException("<global-services> element loader attribute is empty");
+            throw new ServiceConfigException(x.global_services_element_loader_attribute_is_empty);
         }
         this.loader = loader;
-        String location = globalServicesElement.getAttribute("location").intern();
+        String location = globalServicesElement.getAttribute(x.location).intern();
         if (location.isEmpty()) {
-            throw new ServiceConfigException("<global-services> element location attribute is empty");
+            throw new ServiceConfigException(x.global_services_element_location_attribute_is_empty);
         }
         this.location = location;
     }

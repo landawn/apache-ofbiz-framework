@@ -52,8 +52,9 @@ import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.model.ModelEntity;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.SequenceValueItemDao;
 import org.apache.ofbiz.entity.transaction.TransactionUtil;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
@@ -61,6 +62,7 @@ import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceSynchronization;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.ofbiz.service.mail.MimeMessageWrapper;
+import com.landawn.abacus.query.Filters;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -72,7 +74,7 @@ import org.apache.ofbiz.model.CommonServicesContext;
 public class CommonServices {
 
     private static final String MODULE = CommonServices.class.getName();
-    private static final String RESOURCE = "CommonUiLabels";
+    private static final String RESOURCE = x.CommonUiLabels;
 
     /**
      * Generic Test Service
@@ -88,17 +90,17 @@ public class CommonServices {
                 Object cKey = entry.getKey();
                 Object value = entry.getValue();
 
-                Debug.logInfo("---- SVC-CONTEXT: " + cKey + " => " + value, MODULE);
+                Debug.logInfo(x.SVC_CONTEXT + cKey + x.str_d8705abf + value, MODULE);
             }
         }
-        if (!context.containsKey("message")) {
-            response.put("resp", "no message found");
+        if (!context.containsKey(x.message)) {
+            response.put(x.resp, x.no_message_found);
         } else {
-            Debug.logInfo("-----SERVICE TEST----- : " + (String) context.get(x.message), MODULE);
-            response.put("resp", "service done");
+            Debug.logInfo(x.SERVICE_TEST + (String) context.get(x.message), MODULE);
+            response.put(x.resp, x.service_done);
         }
 
-        Debug.logInfo("----- SVC: " + dctx.getName() + " -----", MODULE);
+        Debug.logInfo(x.SVC + dctx.getName() + x.str_e0851ade, MODULE);
         return response;
     }
 
@@ -114,13 +116,13 @@ public class CommonServices {
 
         List<GenericValue> testingNodes = new LinkedList<>();
         for (int i = 0; i < 3; i++) {
-            GenericValue testingNode = delegator.makeValue("TestingNode");
-            testingNode.put("testingNodeId", "TESTING_NODE" + i);
-            testingNode.put("description", "Testing Node " + i);
-            testingNode.put("createdStamp", UtilDateTime.nowTimestamp());
+            GenericValue testingNode = delegator.makeValue(x.TestingNode);
+            testingNode.put(x.testingNodeId, x.TESTING_NODE + i);
+            testingNode.put(x.description, x.Testing_Node + i);
+            testingNode.put(x.createdStamp, UtilDateTime.nowTimestamp());
             testingNodes.add(testingNode);
         }
-        response.put("testingNodes", testingNodes);
+        response.put(x.testingNodes, testingNodes);
         return response;
     }
 
@@ -129,7 +131,7 @@ public class CommonServices {
         if (duration == null) {
             duration = 30000L;
         }
-        Debug.logInfo("-----SERVICE BLOCKING----- : " + duration / 1000d + " seconds", MODULE);
+        Debug.logInfo(x.SERVICE_BLOCKING + duration / 1000d + x.seconds, MODULE);
         try {
             Thread.sleep(duration);
         } catch (InterruptedException e) {
@@ -139,17 +141,17 @@ public class CommonServices {
 
     public static Map<String, Object> testRollbackListener(DispatchContext dctx, CommonServicesContext context) {
         try {
-            ServiceSynchronization.registerRollbackService(dctx, "testScv", null, context, false, false);
+            ServiceSynchronization.registerRollbackService(dctx, x.testScv, null, context, false, false);
         } catch (GenericServiceException e) {
             Debug.logError(e, MODULE);
         }
         Locale locale = (Locale) context.get(x.locale);
-        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonTestRollingBack", locale));
+        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonTestRollingBack, locale));
     }
 
     public static Map<String, Object> testCommitListener(DispatchContext dctx, CommonServicesContext context) {
         try {
-            ServiceSynchronization.registerCommitService(dctx, "testScv", null, context, false, false);
+            ServiceSynchronization.registerCommitService(dctx, x.testScv, null, context, false, false);
         } catch (GenericServiceException e) {
             Debug.logError(e, MODULE);
         }
@@ -169,7 +171,7 @@ public class CommonServices {
         String partyId = (String) context.get(x.partyId);
         String noteName = (String) context.get(x.noteName);
         String note = (String) context.get(x.note);
-        String noteId = delegator.getNextSeqId("NoteData");
+        String noteId = delegator.getNextSeqId(x.NoteData);
         Locale locale = (Locale) context.get(x.locale);
         if (noteDate == null) {
             noteDate = UtilDateTime.nowTimestamp();
@@ -183,21 +185,21 @@ public class CommonServices {
             }
         }
 
-        Map<String, Object> fields = UtilMisc.toMap("noteId", noteId, "noteName", noteName, "noteInfo", note,
-                "noteParty", partyId, "noteDateTime", noteDate);
+        Map<String, Object> fields = UtilMisc.toMap(x.noteId, noteId, x.noteName, noteName, x.noteInfo, note,
+                x.noteParty, partyId, x.noteDateTime, noteDate);
 
         try {
-            GenericValue newValue = delegator.makeValue("NoteData", fields);
+            GenericValue newValue = delegator.makeValue(x.NoteData, fields);
 
             delegator.create(newValue);
         } catch (GenericEntityException e) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonNoteCannotBeUpdated",
-                    UtilMisc.toMap("errorString", e.getMessage()), locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonNoteCannotBeUpdated,
+                    UtilMisc.toMap(x.errorString, e.getMessage()), locale));
         }
         Map<String, Object> result = ServiceUtil.returnSuccess();
 
-        result.put("noteId", noteId);
-        result.put("partyId", partyId);
+        result.put(x.noteId, noteId);
+        result.put(x.partyId, partyId);
         return result;
     }
 
@@ -208,13 +210,13 @@ public class CommonServices {
      *@return Map with the result of the service, the output parameters
      */
     public static Map<String, Object> adjustDebugLevels(DispatchContext dctc, CommonServicesContext context) {
-        Debug.set(Debug.FATAL, "Y".equalsIgnoreCase((String) context.get(x.fatal)));
-        Debug.set(Debug.ERROR, "Y".equalsIgnoreCase((String) context.get(x.error)));
-        Debug.set(Debug.WARNING, "Y".equalsIgnoreCase((String) context.get(x.warning)));
-        Debug.set(Debug.IMPORTANT, "Y".equalsIgnoreCase((String) context.get(x.important)));
-        Debug.set(Debug.INFO, "Y".equalsIgnoreCase((String) context.get(x.info)));
-        Debug.set(Debug.TIMING, "Y".equalsIgnoreCase((String) context.get(x.timing)));
-        Debug.set(Debug.VERBOSE, "Y".equalsIgnoreCase((String) context.get(x.verbose)));
+        Debug.set(Debug.FATAL, x.Y.equalsIgnoreCase((String) context.get(x.fatal)));
+        Debug.set(Debug.ERROR, x.Y.equalsIgnoreCase((String) context.get(x.error)));
+        Debug.set(Debug.WARNING, x.Y.equalsIgnoreCase((String) context.get(x.warning)));
+        Debug.set(Debug.IMPORTANT, x.Y.equalsIgnoreCase((String) context.get(x.important)));
+        Debug.set(Debug.INFO, x.Y.equalsIgnoreCase((String) context.get(x.info)));
+        Debug.set(Debug.TIMING, x.Y.equalsIgnoreCase((String) context.get(x.timing)));
+        Debug.set(Debug.VERBOSE, x.Y.equalsIgnoreCase((String) context.get(x.verbose)));
 
         return ServiceUtil.returnSuccess();
     }
@@ -240,7 +242,7 @@ public class CommonServices {
      */
     public static Map<String, Object> returnErrorService(DispatchContext dctx, CommonServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
-        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonServiceReturnError", locale));
+        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonServiceReturnError, locale));
     }
 
     /**
@@ -248,7 +250,7 @@ public class CommonServices {
      */
     public static Map<String, Object> conditionTrueService(DispatchContext dctx, CommonServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("conditionReply", Boolean.TRUE);
+        result.put(x.conditionReply, Boolean.TRUE);
         return result;
     }
 
@@ -257,7 +259,7 @@ public class CommonServices {
      */
     public static Map<String, Object> conditionFalseService(DispatchContext dctx, CommonServicesContext context) {
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("conditionReply", Boolean.FALSE);
+        result.put(x.conditionReply, Boolean.FALSE);
         return result;
     }
 
@@ -267,15 +269,15 @@ public class CommonServices {
         Locale locale = (Locale) context.get(x.locale);
 
         // attempt to create a DataSource entity w/ an invalid dataSourceTypeId
-        GenericValue newEntity = delegator.makeValue("DataSource");
-        newEntity.set(x.dataSourceId, "ENTITY_FAIL_TEST");
-        newEntity.set(x.dataSourceTypeId, "ENTITY_FAIL_TEST");
-        newEntity.set(x.description, "Entity Fail Test - Delete me if I am here");
+        GenericValue newEntity = delegator.makeValue(x.DataSource);
+        newEntity.set(x.dataSourceId, x.ENTITY_FAIL_TEST);
+        newEntity.set(x.dataSourceTypeId, x.ENTITY_FAIL_TEST);
+        newEntity.set(x.description, x.Entity_Fail_Test_Delete_me_if_I_am_here);
         try {
             delegator.create(newEntity);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonEntityTestFailure", locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonEntityTestFailure, locale));
         }
 
         return ServiceUtil.returnSuccess();
@@ -286,17 +288,17 @@ public class CommonServices {
         Delegator delegator = dctx.getDelegator();
         Set<ModelEntity> set = new TreeSet<>();
 
-        set.add(delegator.getModelEntity("Person"));
-        set.add(delegator.getModelEntity("PartyRole"));
-        set.add(delegator.getModelEntity("Party"));
-        set.add(delegator.getModelEntity("ContactMech"));
-        set.add(delegator.getModelEntity("PartyContactMech"));
-        set.add(delegator.getModelEntity("OrderHeader"));
-        set.add(delegator.getModelEntity("OrderItem"));
-        set.add(delegator.getModelEntity("OrderContactMech"));
-        set.add(delegator.getModelEntity("OrderRole"));
-        set.add(delegator.getModelEntity("Product"));
-        set.add(delegator.getModelEntity("RoleType"));
+        set.add(delegator.getModelEntity(x.Person));
+        set.add(delegator.getModelEntity(x.PartyRole));
+        set.add(delegator.getModelEntity(x.Party));
+        set.add(delegator.getModelEntity(x.ContactMech));
+        set.add(delegator.getModelEntity(x.PartyContactMech));
+        set.add(delegator.getModelEntity(x.OrderHeader));
+        set.add(delegator.getModelEntity(x.OrderItem));
+        set.add(delegator.getModelEntity(x.OrderContactMech));
+        set.add(delegator.getModelEntity(x.OrderRole));
+        set.add(delegator.getModelEntity(x.Product));
+        set.add(delegator.getModelEntity(x.RoleType));
 
         for (ModelEntity modelEntity: set) {
             Debug.logInfo(modelEntity.getEntityName(), MODULE);
@@ -309,21 +311,21 @@ public class CommonServices {
         int count = (Integer) context.get(x.count);
 
         for (int i = 0; i < count; i++) {
-            GenericValue v = delegator.makeValue("Visit");
-            String seqId = delegator.getNextSeqId("Visit");
+            GenericValue v = delegator.makeValue(x.Visit);
+            String seqId = delegator.getNextSeqId(x.Visit);
 
             v.set(x.visitId, seqId);
-            v.set(x.userCreated, "N");
-            v.set(x.sessionId, "NA-" + seqId);
-            v.set(x.serverIpAddress, "127.0.0.1");
-            v.set(x.serverHostName, "localhost");
-            v.set(x.webappName, "webtools");
-            v.set(x.initialLocale, "en_US");
-            v.set(x.initialRequest, "https://localhost:8443/webtools/control/main");
-            v.set(x.initialReferrer, "https://localhost:8443/webtools/control/main");
-            v.set(x.initialUserAgent, "Mozilla/5.0 (Macintosh; U; PPC Mac OS X; en-us) AppleWebKit/124 (KHTML, like Gecko) Safari/125.1");
-            v.set(x.clientIpAddress, "127.0.0.1");
-            v.set(x.clientHostName, "localhost");
+            v.set(x.userCreated, x.N);
+            v.set(x.sessionId, x.NA_97a00357 + seqId);
+            v.set(x.serverIpAddress, x._127_0_0_1);
+            v.set(x.serverHostName, x.localhost);
+            v.set(x.webappName, x.webtools);
+            v.set(x.initialLocale, x.en_US_fa73905e);
+            v.set(x.initialRequest, x.https_localhost_8443_webtools_control_main);
+            v.set(x.initialReferrer, x.https_localhost_8443_webtools_control_main);
+            v.set(x.initialUserAgent, x.Mozilla_5_0_Macintosh_U_PPC_Mac_OS_X_en_us_AppleWebKit_124_KHTML_like_Gecko_Safari_125_1);
+            v.set(x.clientIpAddress, x._127_0_0_1);
+            v.set(x.clientHostName, x.localhost);
             v.set(x.fromDate, UtilDateTime.nowTimestamp());
 
             try {
@@ -341,10 +343,10 @@ public class CommonServices {
             if (UtilValidate.isNotEmpty(TransactionUtil.DEBUG_RES_MAP)) {
                 TransactionUtil.logRunningTx();
             } else {
-                Debug.logInfo("No running transaction to display.", MODULE);
+                Debug.logInfo(x.No_running_transaction_to_display, MODULE);
             }
         } else {
-            Debug.logInfo("Debug resources is disabled.", MODULE);
+            Debug.logInfo(x.Debug_resources_is_disabled, MODULE);
         }
 
         return ServiceUtil.returnSuccess();
@@ -355,15 +357,15 @@ public class CommonServices {
         ByteBuffer buffer2 = (ByteBuffer) context.get(x.byteBuffer2);
         String fileName1 = (String) context.get(x.saveAsFileName1);
         String fileName2 = (String) context.get(x.saveAsFileName2);
-        String ofbizHome = System.getProperty("ofbiz.home");
-        String outputPath1 = ofbizHome + (fileName1.startsWith("/") ? fileName1 : "/" + fileName1);
-        String outputPath2 = ofbizHome + (fileName2.startsWith("/") ? fileName2 : "/" + fileName2);
+        String ofbizHome = System.getProperty(x.ofbiz_home);
+        String outputPath1 = ofbizHome + (fileName1.startsWith(x.str_42099b4a) ? fileName1 : x.str_42099b4a + fileName1);
+        String outputPath2 = ofbizHome + (fileName2.startsWith(x.str_42099b4a) ? fileName2 : x.str_42099b4a + fileName2);
         RandomAccessFile file1 = null;
         RandomAccessFile file2 = null;
 
         try {
-            file1 = new RandomAccessFile(outputPath1, "rw");
-            file2 = new RandomAccessFile(outputPath2, "rw");
+            file1 = new RandomAccessFile(outputPath1, x.rw);
+            file2 = new RandomAccessFile(outputPath2, x.rw);
             file1.write(buffer1.array());
             file2.write(buffer2.array());
         } catch (IOException e) {
@@ -389,17 +391,17 @@ public class CommonServices {
         String contentType = (String) context.get(x._uploadFile_contentType);
 
         Map<String, Object> createCtx = new LinkedHashMap<>();
-        createCtx.put("binData", array);
-        createCtx.put("dataResourceTypeId", "OFBIZ_FILE");
-        createCtx.put("dataResourceName", fileName);
-        createCtx.put("dataCategoryId", "PERSONAL");
-        createCtx.put("statusId", "CTNT_PUBLISHED");
-        createCtx.put("mimeTypeId", contentType);
-        createCtx.put("userLogin", userLogin);
+        createCtx.put(x.binData, array);
+        createCtx.put(x.dataResourceTypeId, x.OFBIZ_FILE);
+        createCtx.put(x.dataResourceName, fileName);
+        createCtx.put(x.dataCategoryId, x.PERSONAL);
+        createCtx.put(x.statusId, x.CTNT_PUBLISHED);
+        createCtx.put(x.mimeTypeId, contentType);
+        createCtx.put(x.userLogin, userLogin);
 
         Map<String, Object> createResp = null;
         try {
-            createResp = dispatcher.runSync("createFile", createCtx);
+            createResp = dispatcher.runSync(x.createFile, createCtx);
         } catch (GenericServiceException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -408,20 +410,20 @@ public class CommonServices {
             return ServiceUtil.returnError(ServiceUtil.getErrorMessage(createResp));
         }
 
-        GenericValue dataResource = (GenericValue) createResp.get("dataResource");
+        GenericValue dataResource = (GenericValue) createResp.get(x.dataResource);
         if (dataResource != null) {
             Map<String, Object> contentCtx = new LinkedHashMap<>();
-            contentCtx.put("dataResourceId", dataResource.getString(x.dataResourceId));
-            contentCtx.put("localeString", ((Locale) context.get(x.locale)).toString());
-            contentCtx.put("contentTypeId", "DOCUMENT");
-            contentCtx.put("mimeTypeId", contentType);
-            contentCtx.put("contentName", fileName);
-            contentCtx.put("statusId", "CTNT_PUBLISHED");
-            contentCtx.put("userLogin", userLogin);
+            contentCtx.put(x.dataResourceId, dataResource.getString(x.dataResourceId));
+            contentCtx.put(x.localeString, ((Locale) context.get(x.locale)).toString());
+            contentCtx.put(x.contentTypeId, x.DOCUMENT);
+            contentCtx.put(x.mimeTypeId, contentType);
+            contentCtx.put(x.contentName, fileName);
+            contentCtx.put(x.statusId, x.CTNT_PUBLISHED);
+            contentCtx.put(x.userLogin, userLogin);
 
             Map<String, Object> contentResp = null;
             try {
-                contentResp = dispatcher.runSync("createContent", contentCtx);
+                contentResp = dispatcher.runSync(x.createContent, contentCtx);
             } catch (GenericServiceException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
@@ -439,17 +441,17 @@ public class CommonServices {
         MimeMessage message = wrapper.getMessage();
         try {
             if (message.getAllRecipients() != null) {
-                Debug.logInfo("To: " + UtilMisc.toListArray(message.getAllRecipients()), MODULE);
+                Debug.logInfo(x.To_52cea31d + UtilMisc.toListArray(message.getAllRecipients()), MODULE);
             }
             if (message.getFrom() != null) {
-                Debug.logInfo("From: " + UtilMisc.toListArray(message.getFrom()), MODULE);
+                Debug.logInfo(x.From_b4f579b4 + UtilMisc.toListArray(message.getFrom()), MODULE);
             }
-            Debug.logInfo("Subject: " + message.getSubject(), MODULE);
+            Debug.logInfo(x.Subject_27b6d84a + message.getSubject(), MODULE);
             if (message.getSentDate() != null) {
-                Debug.logInfo("Sent: " + message.getSentDate().toString(), MODULE);
+                Debug.logInfo(x.Sent + message.getSentDate().toString(), MODULE);
             }
             if (message.getReceivedDate() != null) {
-                Debug.logInfo("Received: " + message.getReceivedDate().toString(), MODULE);
+                Debug.logInfo(x.Received + message.getReceivedDate().toString(), MODULE);
             }
         } catch (Exception e) {
             Debug.logError(e, MODULE);
@@ -466,7 +468,7 @@ public class CommonServices {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
                 Writer writer = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
             while ((line = reader.readLine()) != null) {
-                Debug.logInfo("Read line: " + line, MODULE);
+                Debug.logInfo(x.Read_line + line, MODULE);
                 writer.write(line);
             }
         } catch (IOException e) {
@@ -475,7 +477,7 @@ public class CommonServices {
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("contentType", "text/plain");
+        result.put(x.contentType, x.text_plain);
         return result;
     }
 
@@ -484,23 +486,24 @@ public class CommonServices {
         String message = (String) context.get(x.message);
         Locale locale = (Locale) context.get(x.locale);
         if (message == null) {
-            message = "PONG";
+            message = x.PONG;
         }
 
         long count;
         try {
-            count = EntityQuery.use(delegator).from("SequenceValueItem").queryCount();
-        } catch (GenericEntityException e) {
+            SequenceValueItemDao sequenceValueItemDao = DaoRegistry.getDao(delegator, x.SequenceValueItem, SequenceValueItemDao.class);
+            count = sequenceValueItemDao.count(Filters.alwaysTrue());
+        } catch (Exception e) {
             Debug.logError(e.getMessage(), MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonPingDatasourceCannotConnect", locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonPingDatasourceCannotConnect, locale));
         }
 
         if (count != 0L) {
             Map<String, Object> result = ServiceUtil.returnSuccess();
-            result.put("message", message);
+            result.put(x.message, message);
             return result;
         }
-        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonPingDatasourceInvalidCount", locale));
+        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonPingDatasourceInvalidCount, locale));
     }
 
     public static Map<String, Object> getAllMetrics(DispatchContext dctx, CommonServicesContext context) {
@@ -508,30 +511,31 @@ public class CommonServices {
         Collection<Metrics> metricsList = MetricsFactory.getMetrics();
         for (Metrics metrics : metricsList) {
             Map<String, Object> metricsMap = new LinkedHashMap<>();
-            metricsMap.put("name", metrics.getName());
-            metricsMap.put("serviceRate", metrics.getServiceRate());
-            metricsMap.put("threshold", metrics.getThreshold());
-            metricsMap.put("totalEvents", metrics.getTotalEvents());
+            metricsMap.put(x.name, metrics.getName());
+            metricsMap.put(x.serviceRate, metrics.getServiceRate());
+            metricsMap.put(x.threshold, metrics.getThreshold());
+            metricsMap.put(x.totalEvents, metrics.getTotalEvents());
             metricsMapList.add(metricsMap);
         }
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("metricsList", metricsMapList);
+        result.put(x.metricsList, metricsMapList);
         return result;
     }
 
     public static Map<String, Object> resetMetric(DispatchContext dctx, CommonServicesContext context) {
         String originalName = (String) context.get(x.name);
         Locale locale = (Locale) context.get(x.locale);
-        String name = UtilCodec.getDecoder("url").decode(originalName);
+        String name = UtilCodec.getDecoder(x.url).decode(originalName);
         if (name == null) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonExceptionThrownWhileDecodingMetric",
-                    UtilMisc.toMap("originalName", originalName), locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonExceptionThrownWhileDecodingMetric,
+                    UtilMisc.toMap(x.originalName, originalName), locale));
         }
         Metrics metric = MetricsFactory.getMetric(name);
         if (metric != null) {
             metric.reset();
             return ServiceUtil.returnSuccess();
         }
-        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "CommonMetricNotFound", UtilMisc.toMap("name", name), locale));
+        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.CommonMetricNotFound, UtilMisc.toMap(x.name, name), locale));
     }
 }
+

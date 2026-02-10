@@ -34,6 +34,20 @@ Notes:
 - Do NOT delete the generated scripts after the task completes.
 
 
+
+===========================================================================================================
+
+Scan all xxxServices classes and replace all string literals in these classes with the corresponding fields defined in x.java.
+
+Use only x.fieldName in the code (do not prefix with a package name). Ensure that x is properly imported in the class header.
+If a referenced string literal does not exist in x.java, add a new field under the following comment: "// === Manually added fields ==="
+
+
+Notes:
+- x must remain lowercase; do not rename x.java to X.java.
+- Save all generated scripts under folder: ./tools/ai_generated_scripts/.
+- Do NOT delete the generated scripts after the task completes.
+
 ===========================================================================================================
 
 Follow the steps below strictly:
@@ -57,5 +71,20 @@ Notes:
 	
 ===========================================================================================================
 
+Refactor all xxxServices classes to remove all usages of EntityQuery and replace
+them with direct calls to the corresponding DAO implementations.
 
+DAO instances must be obtained using DaoRegistry.getDao(...).
+
+Example:
+AgreementDao agreementDao =
+    DaoRegistry.getDao(delegator, "Agreement", AgreementDao.class);
+
+Requirements:
+- Replace every EntityQuery usage with a direct call to a DAO method.
+- If the required functionality is missing from a DAO, add it as a default
+  method to the DAO interface.
+- Do NOT use DAO wrapper classes.
+
+===========================================================================================================
 

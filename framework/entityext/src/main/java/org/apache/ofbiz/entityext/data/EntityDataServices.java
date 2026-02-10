@@ -28,6 +28,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -49,8 +52,9 @@ import org.apache.ofbiz.entity.datasource.GenericHelperInfo;
 import org.apache.ofbiz.entity.jdbc.DatabaseUtil;
 import org.apache.ofbiz.entity.model.ModelEntity;
 import org.apache.ofbiz.entity.model.ModelField;
-import org.apache.ofbiz.entity.util.EntityListIterator;
-import org.apache.ofbiz.entity.util.EntityQuery;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.EntityKeyStoreDao;
+import org.apache.ofbiz.persistence.entity.EntityKeyStoreEntity;
 import org.apache.ofbiz.security.Security;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
@@ -58,6 +62,10 @@ import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
 import org.apache.shiro.crypto.cipher.AesCipherService;
 
+import com.landawn.abacus.jdbc.dao.Dao;
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.query.condition.Condition;
+import com.landawn.abacus.util.Beans;
 
 import org.apache.ofbiz.persistence.entity.x;
 import org.apache.ofbiz.model.ServiceContext;
@@ -68,12 +76,14 @@ import org.apache.ofbiz.model.EntityDataServicesContext;
  */
 public class EntityDataServices {
 
+    private static final String DAO_CLASS_PREFIX = x.org_apache_ofbiz_persistence_dao;
+    private static final String DAO_CLASS_SUFFIX = x.Dao;
     private static final String MODULE = EntityDataServices.class.getName();
-    private static final String RESOURCE = "EntityExtUiLabels";
+    private static final String RESOURCE = x.EntityExtUiLabels;
 
     public static Map<String, Object> exportDelimitedToDirectory(DispatchContext dctx, EntityDataServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
-        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtThisServiceIsNotYetImplemented", locale));
+        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtThisServiceIsNotYetImplemented, locale));
     }
 
     public static Map<String, Object> importDelimitedFromDirectory(DispatchContext dctx, EntityDataServicesContext context) {
@@ -83,33 +93,33 @@ public class EntityDataServices {
 
         // check permission
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
-        if (!security.hasPermission("ENTITY_MAINT", userLogin)) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale));
+        if (!security.hasPermission(x.ENTITY_MAINT, userLogin)) {
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtServicePermissionNotGranted, locale));
         }
 
         // get the directory & delimiter
         String rootDirectory = (String) context.get(x.rootDirectory);
         URL rootDirectoryUrl = UtilURL.fromResource(rootDirectory);
         if (rootDirectoryUrl == null) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtUnableToLocateRootDirectory",
-                    UtilMisc.toMap("rootDirectory", rootDirectory), locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtUnableToLocateRootDirectory,
+                    UtilMisc.toMap(x.rootDirectory, rootDirectory), locale));
         }
 
         String delimiter = (String) context.get(x.delimiter);
         if (delimiter == null) {
             // default delimiter is tab
-            delimiter = "\t";
+            delimiter = x.str_ac9231da;
         }
 
         File root = null;
         try {
             root = new File(new URI(rootDirectoryUrl.toExternalForm()));
         } catch (URISyntaxException e) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtUnableToLocateRootDirectoryURI", locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtUnableToLocateRootDirectoryURI, locale));
         }
 
         if (!root.exists() || !root.isDirectory() || !root.canRead()) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtRootDirectoryDoesNotExists", locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtRootDirectoryDoesNotExists, locale));
         }
 
         // get the file list
@@ -117,15 +127,15 @@ public class EntityDataServices {
         if (UtilValidate.isNotEmpty(files)) {
             for (File file: files) {
                 try {
-                    Map<String, Object> serviceCtx = UtilMisc.toMap("file", file, "delimiter", delimiter, "userLogin", userLogin);
-                    dispatcher.runSyncIgnore("importDelimitedEntityFile", serviceCtx);
+                    Map<String, Object> serviceCtx = UtilMisc.toMap(x.file, file, x.delimiter, delimiter, x.userLogin, userLogin);
+                    dispatcher.runSyncIgnore(x.importDelimitedEntityFile, serviceCtx);
                 } catch (GenericServiceException e) {
                     Debug.logError(e, MODULE);
                 }
             }
         } else {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtNoFileAvailableInTheRootDirectory",
-                    UtilMisc.toMap("rootDirectory", rootDirectory), locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtNoFileAvailableInTheRootDirectory,
+                    UtilMisc.toMap(x.rootDirectory, rootDirectory), locale));
         }
 
         return ServiceUtil.returnSuccess();
@@ -138,14 +148,14 @@ public class EntityDataServices {
 
         // check permission
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
-        if (!security.hasPermission("ENTITY_MAINT", userLogin)) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale));
+        if (!security.hasPermission(x.ENTITY_MAINT, userLogin)) {
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtServicePermissionNotGranted, locale));
         }
 
         String delimiter = (String) context.get(x.delimiter);
         if (delimiter == null) {
             // default delimiter is tab
-            delimiter = "\t";
+            delimiter = x.str_ac9231da;
         }
 
         long startTime = System.currentTimeMillis();
@@ -157,20 +167,20 @@ public class EntityDataServices {
         } catch (GeneralException e) {
             return ServiceUtil.returnError(e.getMessage());
         } catch (FileNotFoundException e) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtFileNotFound", UtilMisc.toMap("fileName",
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtFileNotFound, UtilMisc.toMap(x.fileName,
                     file.getName()), locale));
         } catch (IOException e) {
             Debug.logError(e, MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtProblemReadingFile",
-                    UtilMisc.toMap("fileName", file.getName()), locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtProblemReadingFile,
+                    UtilMisc.toMap(x.fileName, file.getName()), locale));
         }
 
         long endTime = System.currentTimeMillis();
         long runTime = endTime - startTime;
 
-        Debug.logInfo("Imported/Updated [" + records + "] from : " + file.getAbsolutePath() + " [" + runTime + "ms]", MODULE);
+        Debug.logInfo(x.Imported_Updated + records + x._from_4414a702 + file.getAbsolutePath() + x.str_42cbdb3c + runTime + x.ms, MODULE);
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("records", records);
+        result.put(x.records, records);
         return result;
     }
 
@@ -178,8 +188,8 @@ public class EntityDataServices {
         List<File> fileList = new LinkedList<>();
 
         // check for a file list file
-        File listFile = new File(root, "FILELIST.txt");
-        Debug.logInfo("Checking file list - " + listFile.getPath(), MODULE);
+        File listFile = new File(root, x.FILELIST_txt);
+        Debug.logInfo(x.Checking_file_list + listFile.getPath(), MODULE);
         if (listFile.exists()) {
             BufferedReader reader = null;
             try {
@@ -208,19 +218,19 @@ public class EntityDataServices {
                 } catch (IOException e) {
                     Debug.logError(e, MODULE);
                 }
-                Debug.logInfo("Read file list : " + fileList.size() + " entities.", MODULE);
+                Debug.logInfo(x.Read_file_list + fileList.size() + x.entities, MODULE);
             }
         } else {
             File[] files = root.listFiles();
             if (files != null) {
                 for (File file : files) {
                     String fileName = file.getName();
-                    if (!fileName.startsWith("_") && fileName.endsWith(".txt")) {
+                    if (!fileName.startsWith(x.str_53a0acfa) && fileName.endsWith(x.txt)) {
                         fileList.add(file);
                     }
                 }
             }
-            Debug.logInfo("No file list found; using directory order : " + fileList.size() + " entities.", MODULE);
+            Debug.logInfo(x.No_file_list_found_using_directory_order + fileList.size() + x.entities, MODULE);
         }
 
         return fileList;
@@ -230,7 +240,7 @@ public class EntityDataServices {
         String filePath = file.getPath().replace('\\', '/');
 
         String[] header = null;
-        File headerFile = new File(FileUtil.getFile(filePath.substring(0, filePath.lastIndexOf('/'))), "_" + file.getName());
+        File headerFile = new File(FileUtil.getFile(filePath.substring(0, filePath.lastIndexOf('/'))), x.str_53a0acfa + file.getName());
 
         if (headerFile.exists()) {
             try (
@@ -270,7 +280,7 @@ public class EntityDataServices {
             String fields[] = line.split(delimiter);
             //Debug.logInfo("Split record", MODULE);
             if (fields.length < 1) {
-                exception = new GeneralException("Illegal number of fields [" + file.getName() + " / " + lineNumber);
+                exception = new GeneralException(x.Illegal_number_of_fields + file.getName() + x.str_0d0c4ddd + lineNumber);
                 break;
             }
 
@@ -280,7 +290,7 @@ public class EntityDataServices {
             //Debug.logInfo("Stored record", MODULE);
 
             if (lineNumber % 500 == 0 || lineNumber == 1) {
-                Debug.logInfo("Records Stored [" + file.getName() + "]: " + lineNumber, MODULE);
+                Debug.logInfo(x.Records_Stored + file.getName() + x.str_89222ecc + lineNumber, MODULE);
                 //Debug.logInfo("Last record : " + newValue, MODULE);
             }
 
@@ -338,8 +348,8 @@ public class EntityDataServices {
 
         // check permission
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
-        if (!security.hasPermission("ENTITY_MAINT", userLogin)) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale));
+        if (!security.hasPermission(x.ENTITY_MAINT, userLogin)) {
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtServicePermissionNotGranted, locale));
         }
 
         String groupName = (String) context.get(x.groupName);
@@ -353,79 +363,79 @@ public class EntityDataServices {
         try {
             modelEntities = delegator.getModelEntityMapByGroup(groupName);
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Error getting list of entities in group: " + e.toString(), MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtErrorGettingListOfEntityInGroup",
-                    UtilMisc.toMap("errorString", e.toString()), locale));
+            Debug.logError(e, x.Error_getting_list_of_entities_in_group + e.toString(), MODULE);
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtErrorGettingListOfEntityInGroup,
+                    UtilMisc.toMap(x.errorString, e.toString()), locale));
         }
 
         // step 1 - remove FK indices
-        Debug.logImportant("Removing all foreign key indices", MODULE);
+        Debug.logImportant(x.Removing_all_foreign_key_indices, MODULE);
         for (ModelEntity modelEntity: modelEntities.values()) {
             dbUtil.deleteForeignKeyIndices(modelEntity, messages);
         }
 
         // step 2 - remove FKs
-        Debug.logImportant("Removing all foreign keys", MODULE);
+        Debug.logImportant(x.Removing_all_foreign_keys, MODULE);
         for (ModelEntity modelEntity: modelEntities.values()) {
             dbUtil.deleteForeignKeys(modelEntity, modelEntities, messages);
         }
 
         // step 3 - remove PKs
-        Debug.logImportant("Removing all primary keys", MODULE);
+        Debug.logImportant(x.Removing_all_primary_keys, MODULE);
         for (ModelEntity modelEntity: modelEntities.values()) {
             dbUtil.deletePrimaryKey(modelEntity, messages);
         }
 
         // step 4 - remove declared indices
-        Debug.logImportant("Removing all declared indices", MODULE);
+        Debug.logImportant(x.Removing_all_declared_indices, MODULE);
         for (ModelEntity modelEntity: modelEntities.values()) {
             dbUtil.deleteDeclaredIndices(modelEntity, messages);
         }
 
         // step 5 - repair field sizes
         if (fixSizes) {
-            Debug.logImportant("Updating column field size changes", MODULE);
+            Debug.logImportant(x.Updating_column_field_size_changes, MODULE);
             List<String> fieldsWrongSize = new LinkedList<>();
             dbUtil.checkDb(modelEntities, fieldsWrongSize, messages, true, true, true, true);
             if (!fieldsWrongSize.isEmpty()) {
                 dbUtil.repairColumnSizeChanges(modelEntities, fieldsWrongSize, messages);
             } else {
-                String thisMsg = "No field sizes to update";
+                String thisMsg = x.No_field_sizes_to_update;
                 messages.add(thisMsg);
                 Debug.logImportant(thisMsg, MODULE);
             }
         }
 
         // step 6 - create PKs
-        Debug.logImportant("Creating all primary keys", MODULE);
+        Debug.logImportant(x.Creating_all_primary_keys, MODULE);
         for (ModelEntity modelEntity: modelEntities.values()) {
             dbUtil.createPrimaryKey(modelEntity, messages);
         }
 
         // step 7 - create FK indices
-        Debug.logImportant("Creating all foreign key indices", MODULE);
+        Debug.logImportant(x.Creating_all_foreign_key_indices, MODULE);
         for (ModelEntity modelEntity: modelEntities.values()) {
             dbUtil.createForeignKeyIndices(modelEntity, messages);
         }
 
         // step 8 - create FKs
-        Debug.logImportant("Creating all foreign keys", MODULE);
+        Debug.logImportant(x.Creating_all_foreign_keys, MODULE);
         for (ModelEntity modelEntity: modelEntities.values()) {
             dbUtil.createForeignKeys(modelEntity, modelEntities, messages);
         }
 
         // step 8 - create FKs
-        Debug.logImportant("Creating all declared indices", MODULE);
+        Debug.logImportant(x.Creating_all_declared_indices, MODULE);
         for (ModelEntity modelEntity: modelEntities.values()) {
             dbUtil.createDeclaredIndices(modelEntity, messages);
         }
 
         // step 8 - checkdb
-        Debug.logImportant("Running DB check with add missing enabled", MODULE);
+        Debug.logImportant(x.Running_DB_check_with_add_missing_enabled, MODULE);
         dbUtil.checkDb(modelEntities, messages, true);
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("messages", messages);
+        result.put(x.messages, messages);
         return result;
     }
 
@@ -435,12 +445,9 @@ public class EntityDataServices {
         String fieldName = (String) context.get(x.fieldName);
         Locale locale = (Locale) context.get(x.locale);
 
-        try (EntityListIterator eli = EntityQuery.use(delegator)
-                .from(entityName)
-                .queryIterator()) {
-
-            GenericValue currentValue;
-            while ((currentValue = eli.next()) != null) {
+        try {
+            List<GenericValue> rows = queryByCondition(delegator, entityName, Filters.alwaysTrue());
+            for (GenericValue currentValue : rows) {
                 byte[] bytes = currentValue.getBytes(fieldName);
                 if (bytes != null) {
                     currentValue.setBytes(fieldName, bytes);
@@ -448,9 +455,9 @@ public class EntityDataServices {
                 }
             }
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Error unwrapping ByteWrapper records: " + e.toString(), MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtErrorUnwrappingRecords",
-                    UtilMisc.toMap("errorString", e.toString()), locale));
+            Debug.logError(e, x.Error_unwrapping_ByteWrapper_records + e.toString(), MODULE);
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtErrorUnwrappingRecords,
+                    UtilMisc.toMap(x.errorString, e.toString()), locale));
         }
 
         return ServiceUtil.returnSuccess();
@@ -463,23 +470,25 @@ public class EntityDataServices {
 
         // check permission
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
-        if (!security.hasPermission("ENTITY_MAINT", userLogin)) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale));
+        if (!security.hasPermission(x.ENTITY_MAINT, userLogin)) {
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtServicePermissionNotGranted, locale));
         }
         String oldKey = (String) context.get(x.oldKey);
         String newKey = (String) context.get(x.newKey);
         AesCipherService cipherService = new AesCipherService();
         try {
-            List<GenericValue> rows = EntityQuery.use(delegator).from("EntityKeyStore").queryList();
-            for (GenericValue row: rows) {
+            EntityKeyStoreDao entityKeyStoreDao = DaoRegistry.getDao(delegator, x.EntityKeyStore, EntityKeyStoreDao.class);
+            List<EntityKeyStoreEntity> entityKeyStoreEntities = entityKeyStoreDao.list(Filters.alwaysTrue());
+            for (EntityKeyStoreEntity entityKeyStoreEntity : entityKeyStoreEntities) {
+                GenericValue row = delegator.makeValue(x.EntityKeyStore, Beans.beanToMap(entityKeyStoreEntity));
                 byte[] keyBytes = Base64.decodeBase64(row.getString(x.keyText));
-                Debug.logInfo("Processing entry " + row.getString(x.keyName) + " with key: " + row.getString(x.keyText), MODULE);
+                Debug.logInfo(x.Processing_entry + row.getString(x.keyName) + x.with_key + row.getString(x.keyText), MODULE);
                 if (oldKey != null) {
-                    Debug.logInfo("Decrypting with old key: " + oldKey, MODULE);
+                    Debug.logInfo(x.Decrypting_with_old_key + oldKey, MODULE);
                     try {
                         keyBytes = cipherService.decrypt(keyBytes, Base64.decodeBase64(oldKey)).getClonedBytes();
                     } catch (Exception e) {
-                        Debug.logInfo("Failed to decrypt with Shiro cipher; trying with old cipher", MODULE);
+                        Debug.logInfo(x.Failed_to_decrypt_with_Shiro_cipher_trying_with_old_cipher, MODULE);
                         try {
                             keyBytes = DesCrypt.decrypt(DesCrypt.getDesKey(Base64.decodeBase64(oldKey)), keyBytes);
                         } catch (Exception e1) {
@@ -490,16 +499,16 @@ public class EntityDataServices {
                 }
                 String newKeyText;
                 if (newKey != null) {
-                    Debug.logInfo("Encrypting with new key: " + oldKey, MODULE);
+                    Debug.logInfo(x.Encrypting_with_new_key + oldKey, MODULE);
                     newKeyText = cipherService.encrypt(keyBytes, Base64.decodeBase64(newKey)).toBase64();
                 } else {
                     newKeyText = Base64.encodeBase64String(keyBytes);
                 }
-                Debug.logInfo("Storing new encrypted value: " + newKeyText, MODULE);
+                Debug.logInfo(x.Storing_new_encrypted_value + newKeyText, MODULE);
                 row.setString(x.keyText, newKeyText);
                 row.store();
             }
-        } catch (GenericEntityException gee) {
+        } catch (Exception gee) {
             Debug.logError(gee, MODULE);
             return ServiceUtil.returnError(gee.getMessage());
         }
@@ -514,8 +523,8 @@ public class EntityDataServices {
 
         // check permission
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
-        if (!security.hasPermission("ENTITY_MAINT", userLogin)) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtServicePermissionNotGranted", locale));
+        if (!security.hasPermission(x.ENTITY_MAINT, userLogin)) {
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtServicePermissionNotGranted, locale));
         }
 
         String groupName = (String) context.get(x.groupName);
@@ -524,9 +533,9 @@ public class EntityDataServices {
         try {
             modelEntities = delegator.getModelEntityMapByGroup(groupName);
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Error getting list of entities in group: " + e.toString(), MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtErrorGettingListOfEntityInGroup",
-                    UtilMisc.toMap("errorString", e.toString()), locale));
+            Debug.logError(e, x.Error_getting_list_of_entities_in_group + e.toString(), MODULE);
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtErrorGettingListOfEntityInGroup,
+                    UtilMisc.toMap(x.errorString, e.toString()), locale));
         }
 
         for (ModelEntity modelEntity: modelEntities.values()) {
@@ -534,7 +543,7 @@ public class EntityDataServices {
             for (ModelField field: fields) {
                 if (field.getEncryptMethod().isEncrypted()) {
                     try {
-                        List<GenericValue> rows = EntityQuery.use(delegator).from(modelEntity.getEntityName()).select(field.getName()).queryList();
+                        List<GenericValue> rows = queryByCondition(delegator, modelEntity.getEntityName(), Filters.alwaysTrue());
                         for (GenericValue row: rows) {
                             row.setString(field.getName(), row.getString(field.getName()));
                             row.store();
@@ -546,5 +555,38 @@ public class EntityDataServices {
             }
         }
         return ServiceUtil.returnSuccess();
+    }
+
+    private static List<GenericValue> queryByCondition(Delegator delegator, String entityName, Condition condition)
+            throws GenericEntityException {
+        try {
+            Dao<?, ?, ?> dao = resolveDao(delegator, entityName);
+            return dao.query(condition, (rs, labels) -> toGenericValues(rs, labels, delegator, entityName));
+        } catch (SQLException e) {
+            throw new GenericEntityException(x.Failed_to_query_entity_via_DAO + entityName, e);
+        }
+    }
+
+    private static List<GenericValue> toGenericValues(ResultSet rs, List<String> labels, Delegator delegator, String entityName)
+            throws SQLException {
+        List<GenericValue> rows = new LinkedList<>();
+        while (rs.next()) {
+            Map<String, Object> fields = new HashMap<>();
+            for (int i = 0; i < labels.size(); i++) {
+                fields.put(labels.get(i), rs.getObject(i + 1));
+            }
+            rows.add(delegator.makeValue(entityName, fields));
+        }
+        return rows;
+    }
+
+    @SuppressWarnings({ x.rawtypes, x.unchecked })
+    private static Dao<?, ?, ?> resolveDao(Delegator delegator, String entityName) throws GenericEntityException {
+        try {
+            Class<Dao<?, ?, ?>> daoClass = (Class) Class.forName(DAO_CLASS_PREFIX + entityName + DAO_CLASS_SUFFIX);
+            return (Dao<?, ?, ?>) DaoRegistry.getDao(delegator, entityName, (Class) daoClass);
+        } catch (ClassNotFoundException e) {
+            throw new GenericEntityException(x.No_DAO_implementation_found_for_entity + entityName, e);
+        }
     }
 }

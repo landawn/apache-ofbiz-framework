@@ -40,8 +40,10 @@ import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
+import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.UserLoginDao;
 import org.apache.ofbiz.security.Security;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
@@ -62,8 +64,8 @@ import org.apache.ofbiz.model.ContactMechServicesContext;
 public class ContactMechServices {
 
     private static final String MODULE = ContactMechServices.class.getName();
-    private static final String RESOURCE = "PartyUiLabels";
-    private static final String RES_ERROR = "PartyErrorUiLabels";
+    private static final String RESOURCE = x.PartyUiLabels;
+    private static final String RES_ERROR = x.PartyErrorUiLabels;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -83,7 +85,7 @@ public class ContactMechServices {
         Timestamp now = UtilDateTime.nowTimestamp();
         List<GenericValue> toBeStored = new LinkedList<>();
 
-        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, "PARTYMGR", "_PCM_CREATE");
+        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, x.PARTYMGR, x.PCM_CREATE);
 
         if (!result.isEmpty()) {
             return result;
@@ -93,28 +95,28 @@ public class ContactMechServices {
 
         String newCmId = null;
         try {
-            newCmId = delegator.getNextSeqId("ContactMech");
+            newCmId = delegator.getNextSeqId(x.ContactMech);
         } catch (IllegalArgumentException e) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_create_contact_info_id_generation_failure", locale));
+                    x.contactmechservices_could_not_create_contact_info_id_generation_failure, locale));
         }
 
-        GenericValue tempContactMech = delegator.makeValue("ContactMech", UtilMisc.toMap("contactMechId", newCmId,
-                "contactMechTypeId", contactMechTypeId));
+        GenericValue tempContactMech = delegator.makeValue(x.ContactMech, UtilMisc.toMap(x.contactMechId, newCmId,
+                x.contactMechTypeId, contactMechTypeId));
         toBeStored.add(tempContactMech);
 
-        if (!"_NA_".equals(partyId)) {
-            toBeStored.add(delegator.makeValue("PartyContactMech", UtilMisc.toMap("partyId", partyId, "contactMechId", newCmId,
-                    "fromDate", now, "roleTypeId", context.get(x.roleTypeId), "allowSolicitation", context.get(x.allowSolicitation),
-                    "extension", context.get(x.extension))));
+        if (!x.NA.equals(partyId)) {
+            toBeStored.add(delegator.makeValue(x.PartyContactMech, UtilMisc.toMap(x.partyId, partyId, x.contactMechId, newCmId,
+                    x.fromDate, now, x.roleTypeId, context.get(x.roleTypeId), x.allowSolicitation, context.get(x.allowSolicitation),
+                    x.extension, context.get(x.extension))));
         }
 
-        if ("POSTAL_ADDRESS".equals(contactMechTypeId)) {
+        if (x.POSTAL_ADDRESS.equals(contactMechTypeId)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.service_createContactMech_not_be_used_for_POSTAL_ADDRESS", locale));
-        } else if ("TELECOM_NUMBER".equals(contactMechTypeId)) {
+                    x.contactmechservices_service_createContactMech_not_be_used_for_POSTAL_ADDRESS, locale));
+        } else if (x.TELECOM_NUMBER.equals(contactMechTypeId)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.service_createContactMech_not_be_used_for_TELECOM_NUMBER", locale));
+                    x.contactmechservices_service_createContactMech_not_be_used_for_TELECOM_NUMBER, locale));
         } else {
             tempContactMech.set(x.infoString, context.get(x.infoString));
         }
@@ -124,11 +126,11 @@ public class ContactMechServices {
         } catch (GenericEntityException e) {
             Debug.logWarning(e.toString(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_create_contact_info_write",
-                    UtilMisc.toMap("errMessage", e.getMessage()), locale));
+                    x.contactmechservices_could_not_create_contact_info_write,
+                    UtilMisc.toMap(x.errMessage, e.getMessage()), locale));
         }
 
-        result.put("contactMechId", newCmId);
+        result.put(x.contactMechId, newCmId);
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
     }
@@ -150,7 +152,7 @@ public class ContactMechServices {
         List<GenericValue> toBeStored = new LinkedList<>();
         boolean isModified = false;
 
-        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, "PARTYMGR", "_PCM_UPDATE");
+        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, x.PARTYMGR, x.PCM_UPDATE);
 
         if (!result.isEmpty()) {
             return result;
@@ -158,10 +160,10 @@ public class ContactMechServices {
 
         String newCmId = null;
         try {
-            newCmId = delegator.getNextSeqId("ContactMech");
+            newCmId = delegator.getNextSeqId(x.ContactMech);
         } catch (IllegalArgumentException e) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_change_contact_info_id_generation_failure", locale));
+                    x.contactmechservices_could_not_change_contact_info_id_generation_failure, locale));
         }
 
         String contactMechId = (String) context.get(x.contactMechId);
@@ -169,23 +171,23 @@ public class ContactMechServices {
         GenericValue partyContactMech = null;
 
         try {
-            contactMech = EntityQuery.use(delegator).from("ContactMech").where("contactMechId", contactMechId).queryOne();
+            UserLoginDao contactMechDao = DaoRegistry.getDao(delegator, x.ContactMech, UserLoginDao.class);
+            contactMech = contactMechDao.findOne(delegator, x.ContactMech, UtilMisc.toMap(x.contactMechId, contactMechId), false);
         } catch (GenericEntityException e) {
             Debug.logWarning(e.getMessage(), MODULE);
             contactMech = null;
         }
 
-        if (!"_NA_".equals(partyId)) {
+        if (!x.NA.equals(partyId)) {
             // try to find a PartyContactMech with a valid date range
             try {
-                partyContactMech = EntityQuery.use(delegator).from("PartyContactMech")
-                        .where("partyId", partyId, "contactMechId", contactMechId)
-                        .orderBy("fromDate")
-                        .filterByDate()
-                        .queryFirst();
+                UserLoginDao partyContactMechDao = DaoRegistry.getDao(delegator, x.PartyContactMech, UserLoginDao.class);
+                List<GenericValue> partyContactMechs = partyContactMechDao.findByAnd(delegator, x.PartyContactMech,
+                        UtilMisc.toMap(x.partyId, partyId, x.contactMechId, contactMechId), UtilMisc.toList(x.fromDate), false);
+                partyContactMech = EntityUtil.getFirst(EntityUtil.filterByDate(partyContactMechs, true));
                 if (partyContactMech == null) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "contactmechservices.cannot_update_specified_contact_info_not_corresponds", locale));
+                            x.contactmechservices_cannot_update_specified_contact_info_not_corresponds, locale));
                 }
                 toBeStored.add(partyContactMech);
             } catch (GenericEntityException e) {
@@ -195,7 +197,7 @@ public class ContactMechServices {
         }
         if (contactMech == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_find_specified_contact_info_read", locale));
+                    x.contactmechservices_could_not_find_specified_contact_info_read, locale));
         }
 
         String contactMechTypeId = contactMech.getString(x.contactMechTypeId);
@@ -204,12 +206,12 @@ public class ContactMechServices {
         GenericValue newContactMech = GenericValue.create(contactMech);
         GenericValue newPartyContactMech = GenericValue.create(partyContactMech);
 
-        if ("POSTAL_ADDRESS".equals(contactMechTypeId)) {
+        if (x.POSTAL_ADDRESS.equals(contactMechTypeId)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.service_updateContactMech_not_be_used_for_POSTAL_ADDRESS", locale));
-        } else if ("TELECOM_NUMBER".equals(contactMechTypeId)) {
+                    x.contactmechservices_service_updateContactMech_not_be_used_for_POSTAL_ADDRESS, locale));
+        } else if (x.TELECOM_NUMBER.equals(contactMechTypeId)) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.service_updateContactMech_not_be_used_for_TELECOM_NUMBER", locale));
+                    x.contactmechservices_service_updateContactMech_not_be_used_for_TELECOM_NUMBER, locale));
         } else {
             newContactMech.set(x.infoString, context.get(x.infoString));
         }
@@ -246,8 +248,8 @@ public class ContactMechServices {
             } catch (GenericEntityException e) {
                 Debug.logWarning(e.toString(), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "contactmechservices.could_not_change_contact_info_read",
-                        UtilMisc.toMap("errMessage", e.getMessage()), locale));
+                        x.contactmechservices_could_not_change_contact_info_read,
+                        UtilMisc.toMap(x.errMessage, e.getMessage()), locale));
             }
 
             partyContactMech.set(x.thruDate, now);
@@ -256,18 +258,18 @@ public class ContactMechServices {
             } catch (GenericEntityException e) {
                 Debug.logWarning(e.toString(), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "contactmechservices.could_not_change_contact_info_write",
-                        UtilMisc.toMap("errMessage", e.getMessage()), locale));
+                        x.contactmechservices_could_not_change_contact_info_write,
+                        UtilMisc.toMap(x.errMessage, e.getMessage()), locale));
             }
         } else {
-            result.put("newContactMechId", contactMechId);
+            result.put(x.newContactMechId, contactMechId);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
             result.put(ModelService.SUCCESS_MESSAGE, UtilProperties.getMessage(RES_ERROR,
-                       "contactmechservices.no_changes_made_not_updating", locale));
+                       x.contactmechservices_no_changes_made_not_updating, locale));
             return result;
         }
 
-        result.put("newContactMechId", newCmId);
+        result.put(x.newContactMechId, newCmId);
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
     }
@@ -286,7 +288,7 @@ public class ContactMechServices {
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
         Locale locale = (Locale) context.get(x.locale);
 
-        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, "PARTYMGR", "_PCM_DELETE");
+        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, x.PARTYMGR, x.PCM_DELETE);
 
         if (!result.isEmpty()) {
             return result;
@@ -298,21 +300,20 @@ public class ContactMechServices {
 
         try {
             // try to find a PartyContactMech with a valid date range
-            partyContactMech = EntityQuery.use(delegator).from("PartyContactMech")
-                    .where("partyId", partyId, "contactMechId", contactMechId)
-                    .orderBy("fromDate")
-                    .filterByDate()
-                    .queryFirst();
+            UserLoginDao partyContactMechDao = DaoRegistry.getDao(delegator, x.PartyContactMech, UserLoginDao.class);
+            List<GenericValue> partyContactMechs = partyContactMechDao.findByAnd(delegator, x.PartyContactMech,
+                    UtilMisc.toMap(x.partyId, partyId, x.contactMechId, contactMechId), UtilMisc.toList(x.fromDate), false);
+            partyContactMech = EntityUtil.getFirst(EntityUtil.filterByDate(partyContactMechs, true));
         } catch (GenericEntityException e) {
             Debug.logWarning(e.toString(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_delete_contact_info_read",
-                    UtilMisc.toMap("errMessage", e.getMessage()), locale));
+                    x.contactmechservices_could_not_delete_contact_info_read,
+                    UtilMisc.toMap(x.errMessage, e.getMessage()), locale));
         }
 
         if (partyContactMech == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_delete_contact_info_no_contact_found", locale));
+                    x.contactmechservices_could_not_delete_contact_info_no_contact_found, locale));
         }
 
         partyContactMech.set(x.thruDate, UtilDateTime.nowTimestamp());
@@ -321,7 +322,7 @@ public class ContactMechServices {
         } catch (GenericEntityException e) {
             Debug.logWarning(e.toString(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_delete_contact_info_write", locale));
+                    x.contactmechservices_could_not_delete_contact_info_write, locale));
         }
 
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
@@ -347,35 +348,35 @@ public class ContactMechServices {
         Timestamp now = UtilDateTime.nowTimestamp();
         List<GenericValue> toBeStored = new LinkedList<>();
 
-        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, "PARTYMGR", "_PCM_CREATE");
+        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, x.PARTYMGR, x.PCM_CREATE);
 
         if (!result.isEmpty()) {
             return result;
         }
 
-        String contactMechTypeId = "POSTAL_ADDRESS";
+        String contactMechTypeId = x.POSTAL_ADDRESS;
 
         String newCmId = null;
         try {
-            newCmId = delegator.getNextSeqId("ContactMech");
+            newCmId = delegator.getNextSeqId(x.ContactMech);
         } catch (IllegalArgumentException e) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_create_contact_info_id_generation_failure", locale));
+                    x.contactmechservices_could_not_create_contact_info_id_generation_failure, locale));
         }
 
-        GenericValue tempContactMech = delegator.makeValue("ContactMech", UtilMisc.toMap("contactMechId", newCmId,
-                "contactMechTypeId", contactMechTypeId));
+        GenericValue tempContactMech = delegator.makeValue(x.ContactMech, UtilMisc.toMap(x.contactMechId, newCmId,
+                x.contactMechTypeId, contactMechTypeId));
         toBeStored.add(tempContactMech);
 
         // don't create a PartyContactMech if there is no party; we define no party as sending _NA_ as partyId
-        if (!"_NA_".equals(partyId)) {
-            toBeStored.add(delegator.makeValue("PartyContactMech",
-                    UtilMisc.toMap("partyId", partyId, "contactMechId", newCmId,
-                        "fromDate", now, "roleTypeId", context.get(x.roleTypeId), "allowSolicitation",
-                        context.get(x.allowSolicitation), "extension", context.get(x.extension))));
+        if (!x.NA.equals(partyId)) {
+            toBeStored.add(delegator.makeValue(x.PartyContactMech,
+                    UtilMisc.toMap(x.partyId, partyId, x.contactMechId, newCmId,
+                        x.fromDate, now, x.roleTypeId, context.get(x.roleTypeId), x.allowSolicitation,
+                        context.get(x.allowSolicitation), x.extension, context.get(x.extension))));
         }
 
-        GenericValue newAddr = delegator.makeValue("PostalAddress");
+        GenericValue newAddr = delegator.makeValue(x.PostalAddress);
 
         newAddr.set(x.contactMechId, newCmId);
         newAddr.set(x.toName, context.get(x.toName));
@@ -396,11 +397,11 @@ public class ContactMechServices {
         } catch (GenericEntityException e) {
             Debug.logWarning(e.toString(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_create_contact_info_write",
-                    UtilMisc.toMap("errMessage", e.getMessage()), locale));
+                    x.contactmechservices_could_not_create_contact_info_write,
+                    UtilMisc.toMap(x.errMessage, e.getMessage()), locale));
         }
 
-        result.put("contactMechId", newCmId);
+        result.put(x.contactMechId, newCmId);
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
     }
@@ -422,7 +423,7 @@ public class ContactMechServices {
         List<GenericValue> toBeStored = new LinkedList<>();
         boolean isModified = false;
 
-        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, "PARTYMGR", "_PCM_UPDATE");
+        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, x.PARTYMGR, x.PCM_UPDATE);
 
         if (!result.isEmpty()) {
             return result;
@@ -430,10 +431,10 @@ public class ContactMechServices {
 
         String newCmId = null;
         try {
-            newCmId = delegator.getNextSeqId("ContactMech");
+            newCmId = delegator.getNextSeqId(x.ContactMech);
         } catch (IllegalArgumentException e) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_change_contact_info_id_generation_failure", locale));
+                    x.contactmechservices_could_not_change_contact_info_id_generation_failure, locale));
         }
 
         String contactMechId = (String) context.get(x.contactMechId);
@@ -441,23 +442,23 @@ public class ContactMechServices {
         GenericValue partyContactMech = null;
 
         try {
-            contactMech = EntityQuery.use(delegator).from("ContactMech").where("contactMechId", contactMechId).queryOne();
+            UserLoginDao contactMechDao = DaoRegistry.getDao(delegator, x.ContactMech, UserLoginDao.class);
+            contactMech = contactMechDao.findOne(delegator, x.ContactMech, UtilMisc.toMap(x.contactMechId, contactMechId), false);
         } catch (GenericEntityException e) {
             Debug.logWarning(e.getMessage(), MODULE);
             contactMech = null;
         }
 
-        if (!"_NA_".equals(partyId)) {
+        if (!x.NA.equals(partyId)) {
             // try to find a PartyContactMech with a valid date range
             try {
-                partyContactMech = EntityQuery.use(delegator).from("PartyContactMech")
-                        .where("partyId", partyId, "contactMechId", contactMechId)
-                        .orderBy("fromDate")
-                        .filterByDate()
-                        .queryFirst();
+                UserLoginDao partyContactMechDao = DaoRegistry.getDao(delegator, x.PartyContactMech, UserLoginDao.class);
+                List<GenericValue> partyContactMechs = partyContactMechDao.findByAnd(delegator, x.PartyContactMech,
+                        UtilMisc.toMap(x.partyId, partyId, x.contactMechId, contactMechId), UtilMisc.toList(x.fromDate), false);
+                partyContactMech = EntityUtil.getFirst(EntityUtil.filterByDate(partyContactMechs, true));
                 if (partyContactMech == null) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "contactmechservices.cannot_update_specified_contact_info_not_corresponds", locale));
+                            x.contactmechservices_cannot_update_specified_contact_info_not_corresponds, locale));
                 }
                 toBeStored.add(partyContactMech);
             } catch (GenericEntityException e) {
@@ -467,7 +468,7 @@ public class ContactMechServices {
         }
         if (contactMech == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_find_specified_contact_info_read", locale));
+                    x.contactmechservices_could_not_find_specified_contact_info_read, locale));
         }
 
         // never change a contact mech, just create a new one with the changes
@@ -478,10 +479,11 @@ public class ContactMechServices {
         }
         GenericValue relatedEntityToSet = null;
 
-        if ("POSTAL_ADDRESS".equals(contactMech.getString(x.contactMechTypeId))) {
+        if (x.POSTAL_ADDRESS.equals(contactMech.getString(x.contactMechTypeId))) {
             GenericValue addr;
             try {
-                addr = EntityQuery.use(delegator).from("PostalAddress").where("contactMechId", contactMechId).queryOne();
+                UserLoginDao postalAddressDao = DaoRegistry.getDao(delegator, x.PostalAddress, UserLoginDao.class);
+                addr = postalAddressDao.findOne(delegator, x.PostalAddress, UtilMisc.toMap(x.contactMechId, contactMechId), false);
             } catch (GenericEntityException e) {
                 Debug.logWarning(e.toString(), MODULE);
                 addr = null;
@@ -504,8 +506,8 @@ public class ContactMechServices {
             relatedEntityToSet.set(x.contactMechId, newCmId);
         } else {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_update_contact_as_POSTAL_ADDRESS_specified",
-                    UtilMisc.toMap("contactMechTypeId", contactMech.getString(x.contactMechTypeId)), locale));
+                    x.contactmechservices_could_not_update_contact_as_POSTAL_ADDRESS_specified,
+                    UtilMisc.toMap(x.contactMechTypeId, contactMech.getString(x.contactMechTypeId)), locale));
         }
 
         if (newPartyContactMech != null) {
@@ -547,8 +549,8 @@ public class ContactMechServices {
                 } catch (GenericEntityException e) {
                     Debug.logWarning(e.toString(), MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "contactmechservices.could_not_change_contact_info_read",
-                            UtilMisc.toMap("errMessage", e.getMessage()), locale));
+                            x.contactmechservices_could_not_change_contact_info_read,
+                            UtilMisc.toMap(x.errMessage, e.getMessage()), locale));
                 }
 
                 partyContactMech.set(x.thruDate, now);
@@ -559,18 +561,18 @@ public class ContactMechServices {
             } catch (GenericEntityException e) {
                 Debug.logWarning(e.toString(), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "contactmechservices.could_not_change_contact_info_write",
-                        UtilMisc.toMap("errMessage", e.getMessage()), locale));
+                        x.contactmechservices_could_not_change_contact_info_write,
+                        UtilMisc.toMap(x.errMessage, e.getMessage()), locale));
             }
         } else {
-            result.put("newContactMechId", contactMechId);
+            result.put(x.newContactMechId, contactMechId);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
             result.put(ModelService.SUCCESS_MESSAGE, UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.no_changes_made_not_updating", locale));
+                    x.contactmechservices_no_changes_made_not_updating, locale));
             return result;
         }
 
-        result.put("newContactMechId", newCmId);
+        result.put(x.newContactMechId, newCmId);
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
     }
@@ -594,43 +596,43 @@ public class ContactMechServices {
         Timestamp now = UtilDateTime.nowTimestamp();
         List<GenericValue> toBeStored = new LinkedList<>();
 
-        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, "PARTYMGR", "_PCM_CREATE");
+        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, x.PARTYMGR, x.PCM_CREATE);
 
         if (!result.isEmpty()) {
             return result;
         }
 
-        String contactMechTypeId = "TELECOM_NUMBER";
+        String contactMechTypeId = x.TELECOM_NUMBER;
 
         String newCmId = null;
         try {
-            newCmId = delegator.getNextSeqId("ContactMech");
+            newCmId = delegator.getNextSeqId(x.ContactMech);
         } catch (IllegalArgumentException e) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_create_contact_info_id_generation_failure", locale));
+                    x.contactmechservices_could_not_create_contact_info_id_generation_failure, locale));
         }
 
-        GenericValue tempContactMech = delegator.makeValue("ContactMech", UtilMisc.toMap("contactMechId", newCmId,
-                "contactMechTypeId", contactMechTypeId));
+        GenericValue tempContactMech = delegator.makeValue(x.ContactMech, UtilMisc.toMap(x.contactMechId, newCmId,
+                x.contactMechTypeId, contactMechTypeId));
         toBeStored.add(tempContactMech);
 
-        toBeStored.add(delegator.makeValue("PartyContactMech", UtilMisc.toMap("partyId", partyId, "contactMechId", newCmId,
-                    "fromDate", now, "roleTypeId", context.get(x.roleTypeId), "allowSolicitation", context.get(x.allowSolicitation),
-                "extension", context.get(x.extension))));
+        toBeStored.add(delegator.makeValue(x.PartyContactMech, UtilMisc.toMap(x.partyId, partyId, x.contactMechId, newCmId,
+                    x.fromDate, now, x.roleTypeId, context.get(x.roleTypeId), x.allowSolicitation, context.get(x.allowSolicitation),
+                x.extension, context.get(x.extension))));
 
-        toBeStored.add(delegator.makeValue("TelecomNumber", UtilMisc.toMap("contactMechId", newCmId,
-                    "countryCode", context.get(x.countryCode), "areaCode", context.get(x.areaCode), "contactNumber", context.get(x.contactNumber))));
+        toBeStored.add(delegator.makeValue(x.TelecomNumber, UtilMisc.toMap(x.contactMechId, newCmId,
+                    x.countryCode, context.get(x.countryCode), x.areaCode, context.get(x.areaCode), x.contactNumber, context.get(x.contactNumber))));
 
         try {
             delegator.storeAll(toBeStored);
         } catch (GenericEntityException e) {
             Debug.logWarning(e.toString(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_create_contact_info_write",
-                    UtilMisc.toMap("errMessage", e.getMessage()), locale));
+                    x.contactmechservices_could_not_create_contact_info_write,
+                    UtilMisc.toMap(x.errMessage, e.getMessage()), locale));
         }
 
-        result.put("contactMechId", newCmId);
+        result.put(x.contactMechId, newCmId);
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
     }
@@ -652,7 +654,7 @@ public class ContactMechServices {
         List<GenericValue> toBeStored = new LinkedList<>();
         boolean isModified = false;
 
-        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, "PARTYMGR", "_PCM_UPDATE");
+        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, x.PARTYMGR, x.PCM_UPDATE);
 
         if (!result.isEmpty()) {
             return result;
@@ -660,10 +662,10 @@ public class ContactMechServices {
 
         String newCmId = null;
         try {
-            newCmId = delegator.getNextSeqId("ContactMech");
+            newCmId = delegator.getNextSeqId(x.ContactMech);
         } catch (IllegalArgumentException e) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_change_contact_info_id_generation_failure", locale));
+                    x.contactmechservices_could_not_change_contact_info_id_generation_failure, locale));
         }
 
         String contactMechId = (String) context.get(x.contactMechId);
@@ -671,24 +673,24 @@ public class ContactMechServices {
         GenericValue partyContactMech = null;
 
         try {
-            contactMech = EntityQuery.use(delegator).from("ContactMech").where("contactMechId", contactMechId).queryOne();
+            UserLoginDao contactMechDao = DaoRegistry.getDao(delegator, x.ContactMech, UserLoginDao.class);
+            contactMech = contactMechDao.findOne(delegator, x.ContactMech, UtilMisc.toMap(x.contactMechId, contactMechId), false);
             // try to find a PartyContactMech with a valid date range
-            partyContactMech = EntityQuery.use(delegator).from("PartyContactMech")
-                    .where("partyId", partyId, "contactMechId", contactMechId)
-                    .orderBy("fromDate")
-                    .filterByDate()
-                    .queryFirst();
+            UserLoginDao partyContactMechDao = DaoRegistry.getDao(delegator, x.PartyContactMech, UserLoginDao.class);
+            List<GenericValue> partyContactMechs = partyContactMechDao.findByAnd(delegator, x.PartyContactMech,
+                    UtilMisc.toMap(x.partyId, partyId, x.contactMechId, contactMechId), UtilMisc.toList(x.fromDate), false);
+            partyContactMech = EntityUtil.getFirst(EntityUtil.filterByDate(partyContactMechs, true));
         } catch (GenericEntityException e) {
             Debug.logWarning(e.getMessage(), MODULE);
             contactMech = null;
         }
         if (contactMech == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_find_specified_contact_info_read", locale));
+                    x.contactmechservices_could_not_find_specified_contact_info_read, locale));
         }
         if (partyContactMech == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.cannot_update_specified_contact_info_not_corresponds", locale));
+                    x.contactmechservices_cannot_update_specified_contact_info_not_corresponds, locale));
         }
         toBeStored.add(partyContactMech);
 
@@ -697,10 +699,11 @@ public class ContactMechServices {
         GenericValue newPartyContactMech = GenericValue.create(partyContactMech);
         GenericValue relatedEntityToSet = null;
 
-        if ("TELECOM_NUMBER".equals(contactMech.getString(x.contactMechTypeId))) {
+        if (x.TELECOM_NUMBER.equals(contactMech.getString(x.contactMechTypeId))) {
             GenericValue telNum;
             try {
-                telNum = EntityQuery.use(delegator).from("TelecomNumber").where("contactMechId", contactMechId).queryOne();
+                UserLoginDao telecomNumberDao = DaoRegistry.getDao(delegator, x.TelecomNumber, UserLoginDao.class);
+                telNum = telecomNumberDao.findOne(delegator, x.TelecomNumber, UtilMisc.toMap(x.contactMechId, contactMechId), false);
             } catch (GenericEntityException e) {
                 Debug.logWarning(e.toString(), MODULE);
                 telNum = null;
@@ -717,8 +720,8 @@ public class ContactMechServices {
             newPartyContactMech.set(x.extension, context.get(x.extension));
         } else {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_update_contact_as_TELECOM_NUMBER_specified",
-                    UtilMisc.toMap("contactMechTypeId", contactMech.getString(x.contactMechTypeId)), locale));
+                    x.contactmechservices_could_not_update_contact_as_TELECOM_NUMBER_specified,
+                    UtilMisc.toMap(x.contactMechTypeId, contactMech.getString(x.contactMechTypeId)), locale));
         }
 
         newPartyContactMech.set(x.roleTypeId, context.get(x.roleTypeId));
@@ -755,8 +758,8 @@ public class ContactMechServices {
             } catch (GenericEntityException e) {
                 Debug.logWarning(e.toString(), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "contactmechservices.could_not_change_contact_info_read",
-                        UtilMisc.toMap("errMessage", e.getMessage()), locale));
+                        x.contactmechservices_could_not_change_contact_info_read,
+                        UtilMisc.toMap(x.errMessage, e.getMessage()), locale));
             }
 
             partyContactMech.set(x.thruDate, now);
@@ -765,18 +768,18 @@ public class ContactMechServices {
             } catch (GenericEntityException e) {
                 Debug.logWarning(e.toString(), MODULE);
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "contactmechservices.could_not_change_contact_info_write",
-                        UtilMisc.toMap("errMessage", e.getMessage()), locale));
+                        x.contactmechservices_could_not_change_contact_info_write,
+                        UtilMisc.toMap(x.errMessage, e.getMessage()), locale));
             }
         } else {
-            result.put("newContactMechId", contactMechId);
+            result.put(x.newContactMechId, contactMechId);
             result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
             result.put(ModelService.SUCCESS_MESSAGE, UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.no_changes_made_not_updating", locale));
+                    x.contactmechservices_no_changes_made_not_updating, locale));
             return result;
         }
 
-        result.put("newContactMechId", newCmId);
+        result.put(x.newContactMechId, newCmId);
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
     }
@@ -794,9 +797,9 @@ public class ContactMechServices {
     public static Map<String, Object> createEmailAddress(DispatchContext ctx, ContactMechServicesContext context) {
         ContactMechServicesContext newContext = new ContactMechServicesContext(UtilMisc.makeMapWritable(context));
 
-        newContext.put("infoString", newContext.get("emailAddress"));
-        newContext.remove("emailAddress");
-        newContext.put("contactMechTypeId", "EMAIL_ADDRESS");
+        newContext.put(x.infoString, newContext.get(x.emailAddress));
+        newContext.remove(x.emailAddress);
+        newContext.put(x.contactMechTypeId, x.EMAIL_ADDRESS);
 
         return createContactMech(ctx, newContext);
     }
@@ -811,8 +814,8 @@ public class ContactMechServices {
     public static Map<String, Object> updateEmailAddress(DispatchContext ctx, ContactMechServicesContext context) {
         ContactMechServicesContext newContext = new ContactMechServicesContext(UtilMisc.makeMapWritable(context));
 
-        newContext.put("infoString", newContext.get("emailAddress"));
-        newContext.remove("emailAddress");
+        newContext.put(x.infoString, newContext.get(x.emailAddress));
+        newContext.remove(x.emailAddress);
         return updateContactMech(ctx, newContext);
     }
 
@@ -832,7 +835,7 @@ public class ContactMechServices {
         Security security = ctx.getSecurity();
         GenericValue userLogin = (GenericValue) context.get(x.userLogin);
 
-        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, "PARTYMGR", "_PCM_CREATE");
+        String partyId = ServiceUtil.getPartyIdCheckSecurity(userLogin, security, context, result, x.PARTYMGR, x.PCM_CREATE);
         String errMsg = null;
         Locale locale = (Locale) context.get(x.locale);
 
@@ -847,10 +850,16 @@ public class ContactMechServices {
 
         GenericValue tempVal;
         try {
-            tempVal = EntityQuery.use(delegator).from("PartyContactWithPurpose")
-                    .where("partyId", partyId, "contactMechId", contactMechId, "contactMechPurposeTypeId", contactMechPurposeTypeId)
-                    .filterByDate("contactFromDate", "contactThruDate", "purposeFromDate", "purposeThruDate")
-                    .queryFirst();
+            UserLoginDao partyContactWithPurposeDao = DaoRegistry.getDao(delegator, x.PartyContactWithPurpose, UserLoginDao.class);
+            List<GenericValue> partyContactWithPurposes = partyContactWithPurposeDao.findByAnd(delegator, x.PartyContactWithPurpose,
+                    UtilMisc.toMap(x.partyId, partyId, x.contactMechId, contactMechId, x.contactMechPurposeTypeId, contactMechPurposeTypeId),
+                    null, false);
+            Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
+            partyContactWithPurposes = EntityUtil.filterByDate(partyContactWithPurposes, nowTimestamp, x.contactFromDate, x.contactThruDate,
+                    true);
+            partyContactWithPurposes = EntityUtil.filterByDate(partyContactWithPurposes, nowTimestamp, x.purposeFromDate, x.purposeThruDate,
+                    true);
+            tempVal = EntityUtil.getFirst(partyContactWithPurposes);
         } catch (GenericEntityException e) {
             Debug.logWarning(e.getMessage(), MODULE);
             tempVal = null;
@@ -863,25 +872,25 @@ public class ContactMechServices {
         if (tempVal != null) {
             // exists already with valid date, show warning
             errMsg = UtilProperties.getMessage(RES_ERROR,
-                       "contactmechservices.could_not_create_new_purpose_already_exists", locale);
-            errMsg += ": " + tempVal.getPrimaryKey().toString();
+                       x.contactmechservices_could_not_create_new_purpose_already_exists, locale);
+            errMsg += x.str_ceca32e9 + tempVal.getPrimaryKey().toString();
             return ServiceUtil.returnError(errMsg);
         }
         // no entry with a valid date range exists, create new with open thruDate
-        GenericValue newPartyContactMechPurpose = delegator.makeValue("PartyContactMechPurpose",
-                UtilMisc.toMap("partyId", partyId, "contactMechId", contactMechId, "contactMechPurposeTypeId", contactMechPurposeTypeId,
-                    "fromDate", fromDate));
+        GenericValue newPartyContactMechPurpose = delegator.makeValue(x.PartyContactMechPurpose,
+                UtilMisc.toMap(x.partyId, partyId, x.contactMechId, contactMechId, x.contactMechPurposeTypeId, contactMechPurposeTypeId,
+                    x.fromDate, fromDate));
 
         try {
             delegator.create(newPartyContactMechPurpose);
         } catch (GenericEntityException e) {
             Debug.logWarning(e.getMessage(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "contactmechservices.could_not_add_purpose_write",
-                    UtilMisc.toMap("errMessage", e.getMessage()), locale));
+                    x.contactmechservices_could_not_add_purpose_write,
+                    UtilMisc.toMap(x.errMessage, e.getMessage()), locale));
         }
 
-        result.put("fromDate", fromDate);
+        result.put(x.fromDate, fromDate);
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;
     }
@@ -903,14 +912,14 @@ public class ContactMechServices {
                 partyId = userLogin.getString(x.partyId);
             } else {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                        "PartyCannotGetPartyContactMech", locale));
+                        x.PartyCannotGetPartyContactMech, locale));
             }
         }
         Boolean bShowOld = (Boolean) context.get(x.showOld);
         boolean showOld = Boolean.TRUE.equals(bShowOld);
         String contactMechTypeId = (String) context.get(x.contactMechTypeId);
         List<Map<String, Object>> valueMaps = ContactMechWorker.getPartyContactMechValueMaps(delegator, partyId, showOld, contactMechTypeId);
-        result.put("valueMaps", valueMaps);
+        result.put(x.valueMaps, valueMaps);
         return result;
     }
 
@@ -932,27 +941,27 @@ public class ContactMechServices {
 
             // loop through results
             for (Map<String, Object> thisMap: valueMaps) {
-                GenericValue contactMech = (GenericValue) thisMap.get("contactMech");
-                GenericValue partyContactMech = (GenericValue) thisMap.get("partyContactMech");
-                List<GenericValue> partyContactMechPurposes = UtilGenerics.cast(thisMap.get("partyContactMechPurposes"));
+                GenericValue contactMech = (GenericValue) thisMap.get(x.contactMech);
+                GenericValue partyContactMech = (GenericValue) thisMap.get(x.partyContactMech);
+                List<GenericValue> partyContactMechPurposes = UtilGenerics.cast(thisMap.get(x.partyContactMechPurposes));
 
                 // get the contactMechId
                 String contactMechId = contactMech.getString(x.contactMechId);
 
                 // create a new party contact mech for the partyIdTo
-                Map<String, Object> serviceResults = dispatcher.runSync("createPartyContactMech", UtilMisc.<String, Object>toMap("partyId",
-                        partyIdTo, "userLogin", userLogin, "contactMechId", contactMechId, "contactMechTypeId",
-                        contactMech.getString(x.contactMechTypeId), "fromDate", UtilDateTime.nowTimestamp(), "allowSolicitation",
-                        partyContactMech.getString(x.allowSolicitation), "extension", partyContactMech.getString(x.extension)));
+                Map<String, Object> serviceResults = dispatcher.runSync(x.createPartyContactMech, UtilMisc.<String, Object>toMap(x.partyId,
+                        partyIdTo, x.userLogin, userLogin, x.contactMechId, contactMechId, x.contactMechTypeId,
+                        contactMech.getString(x.contactMechTypeId), x.fromDate, UtilDateTime.nowTimestamp(), x.allowSolicitation,
+                        partyContactMech.getString(x.allowSolicitation), x.extension, partyContactMech.getString(x.extension)));
                 if (ServiceUtil.isError(serviceResults)) {
                     return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResults));
                 }
 
                 // loop through purposes and copy each as a new purpose for the partyIdTo
                 for (GenericValue purpose: partyContactMechPurposes) {
-                    Map<String, Object> input = UtilMisc.toMap("partyId", partyIdTo, "contactMechId", contactMechId, "userLogin", userLogin);
-                    input.put("contactMechPurposeTypeId", purpose.getString(x.contactMechPurposeTypeId));
-                    serviceResults = dispatcher.runSync("createPartyContactMechPurpose", input);
+                    Map<String, Object> input = UtilMisc.toMap(x.partyId, partyIdTo, x.contactMechId, contactMechId, x.userLogin, userLogin);
+                    input.put(x.contactMechPurposeTypeId, purpose.getString(x.contactMechPurposeTypeId));
+                    serviceResults = dispatcher.runSync(x.createPartyContactMechPurpose, input);
                     if (ServiceUtil.isError(serviceResults)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(serviceResults));
                     }
@@ -961,8 +970,8 @@ public class ContactMechServices {
         } catch (GenericServiceException e) {
             Debug.logError(e, e.getMessage(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE,
-                    "PartyCannotCopyPartyContactMech",
-                    UtilMisc.toMap("errorString", e.getMessage()), locale));
+                    x.PartyCannotCopyPartyContactMech,
+                    UtilMisc.toMap(x.errorString, e.getMessage()), locale));
         }
         return ServiceUtil.returnSuccess();
     }
@@ -975,7 +984,7 @@ public class ContactMechServices {
         String emailAddress = (String) context.get(x.emailAddress);
         String verifyHash = null;
 
-        String expireTime = EntityUtilProperties.getPropertyValue("security", "email_verification.expire.hours", delegator);
+        String expireTime = EntityUtilProperties.getPropertyValue(x.security, x.email_verification_expire_hours, delegator);
         Integer expTime = Integer.valueOf(expireTime);
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.HOUR, expTime);
@@ -985,16 +994,18 @@ public class ContactMechServices {
         synchronized (ContactMechServices.class) {
             while (true) {
                 Long random = SECURE_RANDOM.nextLong();
-                verifyHash = HashCrypt.digestHash("MD5", Long.toString(random).getBytes(StandardCharsets.UTF_8));
+                verifyHash = HashCrypt.digestHash(x.MD5, Long.toString(random).getBytes(StandardCharsets.UTF_8));
                 List<GenericValue> emailAddVerifications = null;
                 try {
-                    emailAddVerifications = EntityQuery.use(delegator).from("EmailAddressVerification").where("verifyHash", verifyHash).queryList();
+                    UserLoginDao emailAddressVerificationDao = DaoRegistry.getDao(delegator, x.EmailAddressVerification, UserLoginDao.class);
+                    emailAddVerifications = emailAddressVerificationDao.findByAnd(delegator, x.EmailAddressVerification,
+                            UtilMisc.toMap(x.verifyHash, verifyHash), null, false);
                 } catch (GenericEntityException e) {
                     Debug.logError(e.getMessage(), MODULE);
                     return ServiceUtil.returnError(e.getMessage());
                 }
                 if (UtilValidate.isEmpty(emailAddVerifications)) {
-                    GenericValue emailAddressVerification = delegator.makeValue("EmailAddressVerification");
+                    GenericValue emailAddressVerification = delegator.makeValue(x.EmailAddressVerification);
                     emailAddressVerification.set(x.emailAddress, emailAddress);
                     emailAddressVerification.set(x.verifyHash, verifyHash);
                     emailAddressVerification.set(x.expireDate, expireDate);
@@ -1010,7 +1021,7 @@ public class ContactMechServices {
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("verifyHash", verifyHash);
+        result.put(x.verifyHash, verifyHash);
         return result;
     }
 

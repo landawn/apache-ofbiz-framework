@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.ShipmentReceiptEntity;
 
-public interface ShipmentReceiptDao extends CrudDao<ShipmentReceiptEntity, String, SQLBuilder.PSC, ShipmentReceiptDao> {
+public interface ShipmentReceiptDao extends CrudDao<ShipmentReceiptEntity, String, SQLBuilder.PSC, ShipmentReceiptDao>, DelegatorQueryDao {
 }

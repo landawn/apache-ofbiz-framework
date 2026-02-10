@@ -21,6 +21,8 @@ package org.apache.ofbiz.entityext.synchronization;
 import static org.apache.ofbiz.base.util.UtilGenerics.checkCollection;
 import java.io.IOException;
 import java.net.URL;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -50,7 +52,9 @@ import org.apache.ofbiz.entity.condition.EntityOperator;
 import org.apache.ofbiz.entity.model.ModelEntity;
 import org.apache.ofbiz.entity.serialize.SerializeException;
 import org.apache.ofbiz.entity.serialize.XmlSerializer;
-import org.apache.ofbiz.entity.util.EntityQuery;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.EntitySyncDao;
+import org.apache.ofbiz.persistence.entity.EntitySyncEntity;
 import org.apache.ofbiz.entityext.synchronization.EntitySyncContext.SyncAbortException;
 import org.apache.ofbiz.entityext.synchronization.EntitySyncContext.SyncErrorException;
 import org.apache.ofbiz.service.DispatchContext;
@@ -61,6 +65,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
+import com.landawn.abacus.jdbc.dao.Dao;
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.query.condition.Condition;
 import com.ibm.icu.util.Calendar;
 
 
@@ -72,8 +79,10 @@ import org.apache.ofbiz.model.EntitySyncServicesContext;
  */
 public class EntitySyncServices {
 
+    private static final String DAO_CLASS_PREFIX = x.org_apache_ofbiz_persistence_dao;
+    private static final String DAO_CLASS_SUFFIX = x.Dao;
     private static final String MODULE = EntitySyncServices.class.getName();
-    private static final String RESOURCE = "EntityExtUiLabels";
+    private static final String RESOURCE = x.EntityExtUiLabels;
 
     /**
      * Run an Entity Sync (checks to see if other already running, etc)
@@ -86,8 +95,8 @@ public class EntitySyncServices {
         EntitySyncContext esc = null;
         try {
             esc = new EntitySyncContext(dctx, context);
-            if ("Y".equals(esc.getEntitySync().get("forPullOnly"))) {
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtCannotDoEntitySyncPush", locale));
+            if (x.Y.equals(esc.getEntitySync().get(x.forPullOnly))) {
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtCannotDoEntitySyncPush, locale));
             }
 
             esc.runPushStartRunning();
@@ -144,8 +153,8 @@ public class EntitySyncServices {
         if (UtilValidate.isNotEmpty(overrideDelegatorName)) {
             delegator = DelegatorFactory.getDelegator(overrideDelegatorName);
             if (delegator == null) {
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtCannotFindDelegator",
-                        UtilMisc.toMap("overrideDelegatorName", overrideDelegatorName), locale));
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtCannotFindDelegator,
+                        UtilMisc.toMap(x.overrideDelegatorName, overrideDelegatorName), locale));
             }
         }
         //LocalDispatcher dispatcher = dctx.getDispatcher();
@@ -157,8 +166,8 @@ public class EntitySyncServices {
         List<GenericEntity> keysToRemove = UtilGenerics.cast(context.get(x.keysToRemove));
 
         if (Debug.infoOn()) {
-            Debug.logInfo("Running storeEntitySyncData (" + entitySyncId + ") - [" + valuesToCreate.size() + "] to create; [" + valuesToStore.size()
-                    + "] to store; [" + keysToRemove.size() + "] to remove.", MODULE);
+            Debug.logInfo(x.Running_storeEntitySyncData + entitySyncId + x.str_1518af21 + valuesToCreate.size() + x.to_create + valuesToStore.size()
+                    + x.to_store + keysToRemove.size() + x.to_remove, MODULE);
         }
         try {
             long toCreateInserted = 0;
@@ -183,10 +192,7 @@ public class EntitySyncServices {
                 // check to make sure all foreign keys are created; if not create dummy values as place holders
                 valueToCreate.checkFks(true);
 
-                GenericValue existingValue = EntityQuery.use(delegator)
-                                                        .from(valueToCreate.getEntityName())
-                                                        .where(valueToCreate.getPrimaryKey())
-                                                        .queryOne();
+                GenericValue existingValue = queryOneByPrimaryKey(delegator, valueToCreate.getEntityName(), valueToCreate.getPrimaryKey());
                 if (existingValue == null) {
                     delegator.create(valueToCreate);
                     toCreateInserted++;
@@ -213,10 +219,7 @@ public class EntitySyncServices {
                 // check to make sure all foreign keys are created; if not create dummy values as place holders
                 valueToStore.checkFks(true);
 
-                GenericValue existingValue = EntityQuery.use(delegator)
-                                                        .from(valueToStore.getEntityName())
-                                                        .where(valueToStore.getPrimaryKey())
-                                                        .queryOne();
+                GenericValue existingValue = queryOneByPrimaryKey(delegator, valueToStore.getEntityName(), valueToStore.getPrimaryKey());
                 if (existingValue == null) {
                     delegator.create(valueToStore);
                     toStoreInserted++;
@@ -253,27 +256,27 @@ public class EntitySyncServices {
             }
 
             Map<String, Object> result = ServiceUtil.returnSuccess();
-            result.put("toCreateInserted", toCreateInserted);
-            result.put("toCreateUpdated", toCreateUpdated);
-            result.put("toCreateNotUpdated", toCreateNotUpdated);
-            result.put("toStoreInserted", toStoreInserted);
-            result.put("toStoreUpdated", toStoreUpdated);
-            result.put("toStoreNotUpdated", toStoreNotUpdated);
-            result.put("toRemoveDeleted", toRemoveDeleted);
-            result.put("toRemoveAlreadyDeleted", toRemoveAlreadyDeleted);
+            result.put(x.toCreateInserted, toCreateInserted);
+            result.put(x.toCreateUpdated, toCreateUpdated);
+            result.put(x.toCreateNotUpdated, toCreateNotUpdated);
+            result.put(x.toStoreInserted, toStoreInserted);
+            result.put(x.toStoreUpdated, toStoreUpdated);
+            result.put(x.toStoreNotUpdated, toStoreNotUpdated);
+            result.put(x.toRemoveDeleted, toRemoveDeleted);
+            result.put(x.toRemoveAlreadyDeleted, toRemoveAlreadyDeleted);
             if (Debug.infoOn()) {
-                Debug.logInfo("Finisching storeEntitySyncData (" + entitySyncId + ") - [" + keysToRemove.size() + "] to remove. Actually removed: "
-                        + toRemoveDeleted + " already removed: " + toRemoveAlreadyDeleted, MODULE);
+                Debug.logInfo(x.Finisching_storeEntitySyncData + entitySyncId + x.str_1518af21 + keysToRemove.size() + x.to_remove_Actually_removed
+                        + toRemoveDeleted + x.already_removed + toRemoveAlreadyDeleted, MODULE);
             }
             return result;
         } catch (GenericEntityException e) {
-            Debug.logError(e, "Exception saving Entity Sync Data for entitySyncId [" + entitySyncId + "]: " + e.toString(), MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtExceptionSavingEntitySyncData",
-                    UtilMisc.toMap("entitySyncId", entitySyncId, "errorString", e.toString()), locale));
+            Debug.logError(e, x.Exception_saving_Entity_Sync_Data_for_entitySyncId + entitySyncId + x.str_89222ecc + e.toString(), MODULE);
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtExceptionSavingEntitySyncData,
+                    UtilMisc.toMap(x.entitySyncId, entitySyncId, x.errorString, e.toString()), locale));
         } catch (Throwable t) {
-            Debug.logError(t, "Error saving Entity Sync Data for entitySyncId [" + entitySyncId + "]: " + t.toString(), MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtErrorSavingEntitySyncData",
-                    UtilMisc.toMap("entitySyncId", entitySyncId, "errorString", t.toString()), locale));
+            Debug.logError(t, x.Error_saving_Entity_Sync_Data_for_entitySyncId + entitySyncId + x.str_89222ecc + t.toString(), MODULE);
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtErrorSavingEntitySyncData,
+                    UtilMisc.toMap(x.entitySyncId, entitySyncId, x.errorString, t.toString()), locale));
         }
     }
 
@@ -289,7 +292,7 @@ public class EntitySyncServices {
         String entitySyncId = (String) context.get(x.entitySyncId);
         String remotePullAndReportEntitySyncDataName = (String) context.get(x.remotePullAndReportEntitySyncDataName);
 
-        Debug.logInfo("Running runPullEntitySync for entitySyncId=" + context.get(x.entitySyncId), MODULE);
+        Debug.logInfo(x.Running_runPullEntitySync_for_entitySyncId + context.get(x.entitySyncId), MODULE);
 
         // loop until no data is returned to store
         boolean gotMoreData = true;
@@ -309,85 +312,85 @@ public class EntitySyncServices {
 
             // call pullAndReportEntitySyncData, initially with no results, then with results from last loop
             Map<String, Object> remoteCallContext = new HashMap<>();
-            remoteCallContext.put("entitySyncId", entitySyncId);
-            remoteCallContext.put("delegatorName", context.get(x.remoteDelegatorName));
-            remoteCallContext.put("userLogin", context.get(x.userLogin));
+            remoteCallContext.put(x.entitySyncId, entitySyncId);
+            remoteCallContext.put(x.delegatorName, context.get(x.remoteDelegatorName));
+            remoteCallContext.put(x.userLogin, context.get(x.userLogin));
 
-            remoteCallContext.put("startDate", startDate);
-            remoteCallContext.put("toCreateInserted", toCreateInserted);
-            remoteCallContext.put("toCreateUpdated", toCreateUpdated);
-            remoteCallContext.put("toCreateNotUpdated", toCreateNotUpdated);
-            remoteCallContext.put("toStoreInserted", toStoreInserted);
-            remoteCallContext.put("toStoreUpdated", toStoreUpdated);
-            remoteCallContext.put("toStoreNotUpdated", toStoreNotUpdated);
-            remoteCallContext.put("toRemoveDeleted", toRemoveDeleted);
-            remoteCallContext.put("toRemoveAlreadyDeleted", toRemoveAlreadyDeleted);
+            remoteCallContext.put(x.startDate, startDate);
+            remoteCallContext.put(x.toCreateInserted, toCreateInserted);
+            remoteCallContext.put(x.toCreateUpdated, toCreateUpdated);
+            remoteCallContext.put(x.toCreateNotUpdated, toCreateNotUpdated);
+            remoteCallContext.put(x.toStoreInserted, toStoreInserted);
+            remoteCallContext.put(x.toStoreUpdated, toStoreUpdated);
+            remoteCallContext.put(x.toStoreNotUpdated, toStoreNotUpdated);
+            remoteCallContext.put(x.toRemoveDeleted, toRemoveDeleted);
+            remoteCallContext.put(x.toRemoveAlreadyDeleted, toRemoveAlreadyDeleted);
 
             try {
                 Map<String, Object> result = dispatcher.runSync(remotePullAndReportEntitySyncDataName, remoteCallContext);
                 if (ServiceUtil.isError(result)) {
-                    return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtErrorCallingRemotePull",
-                            UtilMisc.toMap("remotePullAndReportEntitySyncDataName", remotePullAndReportEntitySyncDataName), locale), null, null,
+                    return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtErrorCallingRemotePull,
+                            UtilMisc.toMap(x.remotePullAndReportEntitySyncDataName, remotePullAndReportEntitySyncDataName), locale), null, null,
                             result);
                 }
 
-                startDate = (Timestamp) result.get("startDate");
+                startDate = (Timestamp) result.get(x.startDate);
 
                 try {
                     // store data returned, get results (just call storeEntitySyncData locally, get the numbers back and boom shakalaka)
 
                     // anything to store locally?
-                    if (startDate != null && (UtilValidate.isNotEmpty(result.get("valuesToCreate"))
-                            || UtilValidate.isNotEmpty(result.get("valuesToStore"))
-                            || UtilValidate.isNotEmpty(result.get("keysToRemove")))) {
+                    if (startDate != null && (UtilValidate.isNotEmpty(result.get(x.valuesToCreate))
+                            || UtilValidate.isNotEmpty(result.get(x.valuesToStore))
+                            || UtilValidate.isNotEmpty(result.get(x.keysToRemove)))) {
 
                         // yep, we got more data
                         gotMoreData = true;
 
                         // at least one of the is not empty, make sure none of them are null now too...
-                        List<GenericValue> valuesToCreate = checkCollection(result.get("valuesToCreate"), GenericValue.class);
+                        List<GenericValue> valuesToCreate = checkCollection(result.get(x.valuesToCreate), GenericValue.class);
                         if (valuesToCreate == null) valuesToCreate = Collections.emptyList();
-                        List<GenericValue> valuesToStore = checkCollection(result.get("valuesToStore"), GenericValue.class);
+                        List<GenericValue> valuesToStore = checkCollection(result.get(x.valuesToStore), GenericValue.class);
                         if (valuesToStore == null) valuesToStore = Collections.emptyList();
-                        List<GenericEntity> keysToRemove = checkCollection(result.get("keysToRemove"), GenericEntity.class);
+                        List<GenericEntity> keysToRemove = checkCollection(result.get(x.keysToRemove), GenericEntity.class);
                         if (keysToRemove == null) keysToRemove = Collections.emptyList();
 
-                        Map<String, Object> callLocalStoreContext = UtilMisc.toMap("entitySyncId", entitySyncId, "delegatorName",
+                        Map<String, Object> callLocalStoreContext = UtilMisc.toMap(x.entitySyncId, entitySyncId, x.delegatorName,
                                 context.get(x.localDelegatorName),
-                                "valuesToCreate", valuesToCreate, "valuesToStore", valuesToStore,
-                                "keysToRemove", keysToRemove);
+                                x.valuesToCreate, valuesToCreate, x.valuesToStore, valuesToStore,
+                                x.keysToRemove, keysToRemove);
 
-                        callLocalStoreContext.put("userLogin", context.get(x.userLogin));
-                        Map<String, Object> storeResult = dispatcher.runSync("storeEntitySyncData", callLocalStoreContext);
+                        callLocalStoreContext.put(x.userLogin, context.get(x.userLogin));
+                        Map<String, Object> storeResult = dispatcher.runSync(x.storeEntitySyncData, callLocalStoreContext);
                         if (ServiceUtil.isError(storeResult)) {
-                            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtErrorCallingService", locale),
+                            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtErrorCallingService, locale),
                                     null, null, storeResult);
                         }
 
                         // get results for next pass
-                        toCreateInserted = (Long) storeResult.get("toCreateInserted");
-                        toCreateUpdated = (Long) storeResult.get("toCreateUpdated");
-                        toCreateNotUpdated = (Long) storeResult.get("toCreateNotUpdated");
-                        toStoreInserted = (Long) storeResult.get("toStoreInserted");
-                        toStoreUpdated = (Long) storeResult.get("toStoreUpdated");
-                        toStoreNotUpdated = (Long) storeResult.get("toStoreNotUpdated");
-                        toRemoveDeleted = (Long) storeResult.get("toRemoveDeleted");
-                        toRemoveAlreadyDeleted = (Long) storeResult.get("toRemoveAlreadyDeleted");
+                        toCreateInserted = (Long) storeResult.get(x.toCreateInserted);
+                        toCreateUpdated = (Long) storeResult.get(x.toCreateUpdated);
+                        toCreateNotUpdated = (Long) storeResult.get(x.toCreateNotUpdated);
+                        toStoreInserted = (Long) storeResult.get(x.toStoreInserted);
+                        toStoreUpdated = (Long) storeResult.get(x.toStoreUpdated);
+                        toStoreNotUpdated = (Long) storeResult.get(x.toStoreNotUpdated);
+                        toRemoveDeleted = (Long) storeResult.get(x.toRemoveDeleted);
+                        toRemoveAlreadyDeleted = (Long) storeResult.get(x.toRemoveAlreadyDeleted);
                     }
                 } catch (GenericServiceException e) {
-                    Debug.logError(e, "Error calling service to store data locally: " + e.toString(), MODULE);
-                    return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtErrorCallingService", locale) + e.toString());
+                    Debug.logError(e, x.Error_calling_service_to_store_data_locally + e.toString(), MODULE);
+                    return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtErrorCallingService, locale) + e.toString());
                 }
             } catch (GenericServiceException e) {
-                Debug.logError(e, "Exception calling remote pull and report EntitySync service with name: " + remotePullAndReportEntitySyncDataName
-                        + "; " + e.toString(), MODULE);
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtErrorCallingRemotePull",
-                        UtilMisc.toMap("remotePullAndReportEntitySyncDataName", remotePullAndReportEntitySyncDataName), locale) + e.toString());
+                Debug.logError(e, x.Exception_calling_remote_pull_and_report_EntitySync_service_with_name + remotePullAndReportEntitySyncDataName
+                        + x.str_d2d58684 + e.toString(), MODULE);
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtErrorCallingRemotePull,
+                        UtilMisc.toMap(x.remotePullAndReportEntitySyncDataName, remotePullAndReportEntitySyncDataName), locale) + e.toString());
             } catch (Throwable t) {
-                Debug.logError(t, "Error calling remote pull and report EntitySync service with name: " + remotePullAndReportEntitySyncDataName
-                        + "; " + t.toString(), MODULE);
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtErrorCallingRemotePull",
-                        UtilMisc.toMap("remotePullAndReportEntitySyncDataName", remotePullAndReportEntitySyncDataName), locale) + t.toString());
+                Debug.logError(t, x.Error_calling_remote_pull_and_report_EntitySync_service_with_name + remotePullAndReportEntitySyncDataName
+                        + x.str_d2d58684 + t.toString(), MODULE);
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtErrorCallingRemotePull,
+                        UtilMisc.toMap(x.remotePullAndReportEntitySyncDataName, remotePullAndReportEntitySyncDataName), locale) + t.toString());
             }
         }
 
@@ -406,11 +409,11 @@ public class EntitySyncServices {
         try {
             esc = new EntitySyncContext(dctx, context);
 
-            Debug.logInfo("Doing pullAndReportEntitySyncData for entitySyncId=" + esc.getEntitySyncId() + ", currentRunStartTime="
-                    + esc.getCurrentRunStartTime() + ", currentRunEndTime=" + esc.getCurrentRunEndTime(), MODULE);
+            Debug.logInfo(x.Doing_pullAndReportEntitySyncData_for_entitySyncId + esc.getEntitySyncId() + x.currentRunStartTime
+                    + esc.getCurrentRunStartTime() + x.currentRunEndTime + esc.getCurrentRunEndTime(), MODULE);
 
-            if ("Y".equals(esc.getEntitySync().get("forPushOnly"))) {
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtCannotDoEntitySyncPush", locale));
+            if (x.Y.equals(esc.getEntitySync().get(x.forPushOnly))) {
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtCannotDoEntitySyncPush, locale));
             }
 
             // Part 1: if any results are passed, store the results for the given startDate, update EntitySync, etc
@@ -443,17 +446,17 @@ public class EntitySyncServices {
                 esc.setTotalRowCounts(valuesToCreate, valuesToStore, keysToRemove);
 
                 if (Debug.infoOn()) {
-                    Debug.logInfo("Service pullAndReportEntitySyncData returning - [" + valuesToCreate.size() + "] to create; ["
-                            + valuesToStore.size() + "] to store; [" + keysToRemove.size() + "] to remove; [" + esc.getTotalRowsPerSplit()
-                            + "] total rows per split.", MODULE);
+                    Debug.logInfo(x.Service_pullAndReportEntitySyncData_returning + valuesToCreate.size() + x.to_create
+                            + valuesToStore.size() + x.to_store + keysToRemove.size() + x.to_remove_269fed4b + esc.getTotalRowsPerSplit()
+                            + x.total_rows_per_split, MODULE);
                 }
                 if (esc.getTotalRowsPerSplit() > 0) {
                     // stop if we found some data, otherwise look and try again
                     Map<String, Object> result = ServiceUtil.returnSuccess();
-                    result.put("startDate", esc.getStartDate());
-                    result.put("valuesToCreate", valuesToCreate);
-                    result.put("valuesToStore", valuesToStore);
-                    result.put("keysToRemove", keysToRemove);
+                    result.put(x.startDate, esc.getStartDate());
+                    result.put(x.valuesToCreate, valuesToCreate);
+                    result.put(x.valuesToStore, valuesToStore);
+                    result.put(x.keysToRemove, keysToRemove);
                     return result;
                 } else {
                     // save the progress to EntitySync and EntitySyncHistory, and move on...
@@ -482,11 +485,11 @@ public class EntitySyncServices {
         try {
             esc = new EntitySyncContext(dctx, context);
 
-            Debug.logInfo("Doing runManualEntitySync for entitySyncId=" + esc.getEntitySyncId() + ", currentRunStartTime="
-                    + esc.getCurrentRunStartTime() + ", currentRunEndTime=" + esc.getCurrentRunEndTime(), MODULE);
-            Document mainDoc = UtilXml.makeEmptyXmlDocument("xml-entity-synchronization");
+            Debug.logInfo(x.Doing_runManualEntitySync_for_entitySyncId + esc.getEntitySyncId() + x.currentRunStartTime
+                    + esc.getCurrentRunStartTime() + x.currentRunEndTime + esc.getCurrentRunEndTime(), MODULE);
+            Document mainDoc = UtilXml.makeEmptyXmlDocument(x.xml_entity_synchronization);
             Element docElement = mainDoc.getDocumentElement();
-            docElement.setAttribute("xml:lang", "en-US");
+            docElement.setAttribute(x.xml_lang, x.en_US);
             esc.runOfflineStartRunning();
 
             // increment starting time to run until now
@@ -504,19 +507,19 @@ public class EntitySyncServices {
 
                 if (currentRows > 0) {
                     // create the XML document
-                    Element syncElement = UtilXml.addChildElement(docElement, "entity-sync", mainDoc);
-                    syncElement.setAttribute("entitySyncId", esc.getEntitySyncId());
-                    syncElement.setAttribute("lastSuccessfulSynchTime", esc.getCurrentRunEndTime().toString());
+                    Element syncElement = UtilXml.addChildElement(docElement, x.entity_sync, mainDoc);
+                    syncElement.setAttribute(x.entitySyncId, esc.getEntitySyncId());
+                    syncElement.setAttribute(x.lastSuccessfulSynchTime, esc.getCurrentRunEndTime().toString());
 
                     // serialize the list data for XML storage
                     try {
-                        UtilXml.addChildElementValue(syncElement, "values-to-create", XmlSerializer.serialize(valuesToCreate), mainDoc);
-                        UtilXml.addChildElementValue(syncElement, "values-to-store", XmlSerializer.serialize(valuesToStore), mainDoc);
-                        UtilXml.addChildElementValue(syncElement, "keys-to-remove", XmlSerializer.serialize(keysToRemove), mainDoc);
+                        UtilXml.addChildElementValue(syncElement, x.values_to_create, XmlSerializer.serialize(valuesToCreate), mainDoc);
+                        UtilXml.addChildElementValue(syncElement, x.values_to_store, XmlSerializer.serialize(valuesToStore), mainDoc);
+                        UtilXml.addChildElementValue(syncElement, x.keys_to_remove, XmlSerializer.serialize(keysToRemove), mainDoc);
                     } catch (SerializeException e) {
-                        throw new EntitySyncContext.SyncOtherErrorException("List serialization problem", e);
+                        throw new EntitySyncContext.SyncOtherErrorException(x.List_serialization_problem, e);
                     } catch (IOException e) {
-                        throw new EntitySyncContext.SyncOtherErrorException("XML writing problem", e);
+                        throw new EntitySyncContext.SyncOtherErrorException(x.XML_writing_problem, e);
                     }
                 }
 
@@ -528,8 +531,8 @@ public class EntitySyncServices {
             if (totalRowsExported > 0) {
                 // check the file name; use a default if none is passed in
                 if (UtilValidate.isEmpty(fileName)) {
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-                    fileName = "offline_entitySync-" + esc.getEntitySyncId() + "-" + sdf.format(new Date()) + ".xml";
+                    SimpleDateFormat sdf = new SimpleDateFormat(x.yyyyMMddHHmmss);
+                    fileName = x.offline_entitySync + esc.getEntitySyncId() + x.str_3bc15c8a + sdf.format(new Date()) + x.xml_657e4752;
                 }
 
                 // write the XML file
@@ -539,7 +542,7 @@ public class EntitySyncServices {
                     throw new EntitySyncContext.SyncOtherErrorException(e);
                 }
             } else {
-                Debug.logInfo("No rows to write; no data exported.", MODULE);
+                Debug.logInfo(x.No_rows_to_write_no_data_exported, MODULE);
             }
 
             // save the final results
@@ -569,19 +572,19 @@ public class EntitySyncServices {
                 Debug.logError(e, MODULE);
             }
             if (xmlSyncDoc == null) {
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtEntitySyncXMLDocumentIsNotValid",
-                        UtilMisc.toMap("fileName", fileName), locale));
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtEntitySyncXMLDocumentIsNotValid,
+                        UtilMisc.toMap(x.fileName, fileName), locale));
             }
 
             List<? extends Element> syncElements = UtilXml.childElementList(xmlSyncDoc.getDocumentElement());
             if (syncElements != null) {
                 for (Element entitySync: syncElements) {
-                    String entitySyncId = entitySync.getAttribute("entitySyncId");
-                    String startTime = entitySync.getAttribute("lastSuccessfulSynchTime");
+                    String entitySyncId = entitySync.getAttribute(x.entitySyncId);
+                    String startTime = entitySync.getAttribute(x.lastSuccessfulSynchTime);
 
-                    String createString = UtilXml.childElementValue(entitySync, "values-to-create");
-                    String storeString = UtilXml.childElementValue(entitySync, "values-to-store");
-                    String removeString = UtilXml.childElementValue(entitySync, "keys-to-remove");
+                    String createString = UtilXml.childElementValue(entitySync, x.values_to_create);
+                    String storeString = UtilXml.childElementValue(entitySync, x.values_to_store);
+                    String removeString = UtilXml.childElementValue(entitySync, x.keys_to_remove);
 
                     // de-serialize the value lists
                     try {
@@ -589,25 +592,25 @@ public class EntitySyncServices {
                         List<GenericValue> valuesToStore = checkCollection(XmlSerializer.deserialize(storeString, delegator), GenericValue.class);
                         List<GenericEntity> keysToRemove = checkCollection(XmlSerializer.deserialize(removeString, delegator), GenericEntity.class);
 
-                        Map<String, Object> storeContext = UtilMisc.toMap("entitySyncId", entitySyncId, "valuesToCreate", valuesToCreate,
-                                "valuesToStore", valuesToStore, "keysToRemove", keysToRemove, "userLogin", userLogin);
+                        Map<String, Object> storeContext = UtilMisc.toMap(x.entitySyncId, entitySyncId, x.valuesToCreate, valuesToCreate,
+                                x.valuesToStore, valuesToStore, x.keysToRemove, keysToRemove, x.userLogin, userLogin);
 
                         // store the value(s)
-                        Map<String, Object> storeResult = dispatcher.runSync("storeEntitySyncData", storeContext);
+                        Map<String, Object> storeResult = dispatcher.runSync(x.storeEntitySyncData, storeContext);
                         if (ServiceUtil.isError(storeResult)) {
                             throw new GenericServiceException(ServiceUtil.getErrorMessage(storeResult));
                         }
 
                         // TODO create a response document to send back to the initial sync machine
                     } catch (GenericServiceException | IOException | ParserConfigurationException | SAXException | SerializeException gse) {
-                        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtUnableToLoadXMLDocument",
-                                UtilMisc.toMap("entitySyncId", entitySyncId, "startTime", startTime, "errorString", gse.getMessage()), locale));
+                        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtUnableToLoadXMLDocument,
+                                UtilMisc.toMap(x.entitySyncId, entitySyncId, x.startTime, startTime, x.errorString, gse.getMessage()), locale));
                     }
                 }
             }
         } else {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtOfflineXMLFileNotFound",
-                    UtilMisc.toMap("fileName", fileName), locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtOfflineXMLFileNotFound,
+                    UtilMisc.toMap(x.fileName, fileName), locale));
         }
 
         return ServiceUtil.returnSuccess();
@@ -615,7 +618,7 @@ public class EntitySyncServices {
 
     public static Map<String, Object> updateOfflineEntitySync(DispatchContext dctx, EntitySyncServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
-        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtThisServiceIsNotYetImplemented", locale));
+        return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtThisServiceIsNotYetImplemented, locale));
     }
 
     /**
@@ -625,7 +628,7 @@ public class EntitySyncServices {
      *@return Map with the result of the service, the output parameters
      */
     public static Map<String, Object> cleanSyncRemoveInfo(DispatchContext dctx, EntitySyncServicesContext context) {
-        Debug.logInfo("Running cleanSyncRemoveInfo", MODULE);
+        Debug.logInfo(x.Running_cleanSyncRemoveInfo, MODULE);
         Delegator delegator = dctx.getDelegator();
         Locale locale = (Locale) context.get(x.locale);
 
@@ -634,9 +637,10 @@ public class EntitySyncServices {
             // if none found default to 10 days (240 hours)
             double keepRemoveInfoHours = 24;
 
-            List<GenericValue> entitySyncRemoveList = EntityQuery.use(delegator).from("EntitySync").queryList();
-            for (GenericValue entitySyncRemove: entitySyncRemoveList) {
-                Double curKrih = entitySyncRemove.getDouble(x.keepRemoveInfoHours);
+            EntitySyncDao entitySyncDao = DaoRegistry.getDao(delegator, x.EntitySync, EntitySyncDao.class);
+            List<EntitySyncEntity> entitySyncList = entitySyncDao.list(Filters.alwaysTrue());
+            for (EntitySyncEntity entitySync : entitySyncList) {
+                Double curKrih = entitySync.getKeepRemoveInfoHours();
                 if (curKrih != null) {
                     double curKrihVal = curKrih;
                     if (curKrihVal > keepRemoveInfoHours) {
@@ -653,15 +657,61 @@ public class EntitySyncServices {
             nowCal.add(Calendar.SECOND, -keepSeconds);
             Timestamp keepAfterStamp = new Timestamp(nowCal.getTimeInMillis());
 
-            int numRemoved = delegator.removeByCondition("EntitySyncRemove", EntityCondition.makeCondition(ModelEntity.STAMP_TX_FIELD,
+            int numRemoved = delegator.removeByCondition(x.EntitySyncRemove, EntityCondition.makeCondition(ModelEntity.STAMP_TX_FIELD,
                     EntityOperator.LESS_THAN, keepAfterStamp));
-            Debug.logInfo("In cleanSyncRemoveInfo removed [" + numRemoved + "] values with TX timestamp before [" + keepAfterStamp + "]", MODULE);
+            Debug.logInfo(x.In_cleanSyncRemoveInfo_removed + numRemoved + x.values_with_TX_timestamp_before + keepAfterStamp + x.str_4ff447b8, MODULE);
 
             return ServiceUtil.returnSuccess();
-        } catch (GenericEntityException e) {
-            Debug.logError(e, "Error cleaning out EntitySyncRemove info: " + e.toString(), MODULE);
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "EntityExtErrorCleaningEntitySyncRemove",
-                    UtilMisc.toMap("errorString", e.toString()), locale));
+        } catch (Exception e) {
+            Debug.logError(e, x.Error_cleaning_out_EntitySyncRemove_info + e.toString(), MODULE);
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.EntityExtErrorCleaningEntitySyncRemove,
+                    UtilMisc.toMap(x.errorString, e.toString()), locale));
+        }
+    }
+
+    private static GenericValue queryOneByPrimaryKey(Delegator delegator, String entityName, Map<String, ? extends Object> primaryKey)
+            throws GenericEntityException {
+        try {
+            Dao<?, ?, ?> dao = resolveDao(delegator, entityName);
+            List<GenericValue> rows = dao.query(buildPkCondition(primaryKey), (rs, labels) -> toGenericValues(rs, labels, delegator, entityName));
+            return rows.isEmpty() ? null : rows.get(0);
+        } catch (SQLException e) {
+            throw new GenericEntityException(x.Failed_to_query_entity_via_DAO + entityName, e);
+        }
+    }
+
+    private static Condition buildPkCondition(Map<String, ? extends Object> primaryKey) {
+        List<Condition> conditions = new ArrayList<>(primaryKey.size());
+        for (Map.Entry<String, ? extends Object> entry : primaryKey.entrySet()) {
+            if (entry.getValue() == null) {
+                conditions.add(Filters.isNull(entry.getKey()));
+            } else {
+                conditions.add(Filters.eq(entry.getKey(), entry.getValue()));
+            }
+        }
+        return conditions.isEmpty() ? Filters.alwaysTrue() : Filters.and(conditions);
+    }
+
+    private static List<GenericValue> toGenericValues(ResultSet rs, List<String> labels, Delegator delegator, String entityName)
+            throws SQLException {
+        List<GenericValue> rows = new ArrayList<>();
+        while (rs.next()) {
+            Map<String, Object> fields = new HashMap<>();
+            for (int i = 0; i < labels.size(); i++) {
+                fields.put(labels.get(i), rs.getObject(i + 1));
+            }
+            rows.add(delegator.makeValue(entityName, fields));
+        }
+        return rows;
+    }
+
+    @SuppressWarnings({ x.rawtypes, x.unchecked })
+    private static Dao<?, ?, ?> resolveDao(Delegator delegator, String entityName) throws GenericEntityException {
+        try {
+            Class<Dao<?, ?, ?>> daoClass = (Class) Class.forName(DAO_CLASS_PREFIX + entityName + DAO_CLASS_SUFFIX);
+            return (Dao<?, ?, ?>) DaoRegistry.getDao(delegator, entityName, (Class) daoClass);
+        } catch (ClassNotFoundException e) {
+            throw new GenericEntityException(x.No_DAO_implementation_found_for_entity + entityName, e);
         }
     }
 }

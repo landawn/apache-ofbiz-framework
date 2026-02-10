@@ -50,10 +50,10 @@ public class GeoServices {
         double c = 2 * Math.atan(Math.sqrt(a) / Math.sqrt(1 - a));
         double distance = c * RADIUS_OF_EARTH; // Distance in Kilometers
         Locale locale = (Locale) context.get(x.locale);
-        if ("IMPERIAL".equals(GeoWorker.getMeasurementSystem(locale))) {
+        if (x.IMPERIAL.equals(GeoWorker.getMeasurementSystem(locale))) {
             distance = distance * MILES_PER_KILOMETER; // Distance in Miles
         }
-        serviceResponse.put("distance", distance);
+        serviceResponse.put(x.distance, distance);
         return serviceResponse;
     }
 }

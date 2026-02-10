@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.CommunicationEventRoleEntity;
 
-public interface CommunicationEventRoleDao extends CrudDao<CommunicationEventRoleEntity, CommunicationEventRoleEntity, SQLBuilder.PSC, CommunicationEventRoleDao> {
+public interface CommunicationEventRoleDao extends CrudDao<CommunicationEventRoleEntity, CommunicationEventRoleEntity, SQLBuilder.PSC, CommunicationEventRoleDao>, DelegatorQueryDao {
 }

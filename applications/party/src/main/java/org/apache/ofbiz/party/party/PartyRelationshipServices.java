@@ -19,6 +19,7 @@
 
 package org.apache.ofbiz.party.party;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -30,14 +31,19 @@ import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilProperties;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
-import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.PartyRelationshipDao;
+import org.apache.ofbiz.persistence.dao.PartyRoleDao;
+import org.apache.ofbiz.persistence.entity.PartyRelationshipEntity;
+import org.apache.ofbiz.persistence.entity.PartyRoleEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.util.Beans;
 
 
 
@@ -50,7 +56,7 @@ import org.apache.ofbiz.model.PartyRelationshipServicesContext;
 public class PartyRelationshipServices {
 
     private static final String MODULE = PartyRelationshipServices.class.getName();
-    private static final String RES_ERROR = "PartyErrorUiLabels";
+    private static final String RES_ERROR = x.PartyErrorUiLabels;
 
     /** Creates and updates a PartyRelationship creating related PartyRoles if needed.
      *  A side of the relationship is checked to maintain history
@@ -73,49 +79,67 @@ public class PartyRelationshipServices {
                 String roleTypeIdFrom = (String) context.get(x.roleTypeIdFrom);
                 String roleTypeIdTo = (String) context.get(x.roleTypeIdTo);
                 String partyRelationshipTypeId = (String) context.get(x.partyRelationshipTypeId);
+                PartyRoleDao partyRoleDao = DaoRegistry.getDao(delegator, x.PartyRole, PartyRoleDao.class);
+                PartyRelationshipDao partyRelationshipDao = DaoRegistry.getDao(delegator, x.PartyRelationship, PartyRelationshipDao.class);
+                Timestamp nowTimestamp = UtilDateTime.nowTimestamp();
 
                 // Before creating the partyRelationShip, create the partyRoles if they don't exist
                 GenericValue partyToRole = null;
-                partyToRole = EntityQuery.use(delegator).from("PartyRole").where("partyId", partyIdTo, "roleTypeId", roleTypeIdTo).queryOne();
+                PartyRoleEntity partyToRoleEntity = partyRoleDao.list(Filters.and(Filters.eq(x.partyId, partyIdTo), Filters.eq(x.roleTypeId, roleTypeIdTo)))
+                        .stream().findFirst().orElse(null);
+                if (partyToRoleEntity != null) {
+                    partyToRole = delegator.makeValue(x.PartyRole, Beans.beanToMap(partyToRoleEntity));
+                }
                 if (partyToRole == null) {
-                    partyToRole = delegator.makeValue("PartyRole", UtilMisc.toMap("partyId", partyIdTo, "roleTypeId", roleTypeIdTo));
+                    partyToRole = delegator.makeValue(x.PartyRole, UtilMisc.toMap(x.partyId, partyIdTo, x.roleTypeId, roleTypeIdTo));
                     partyToRole.create();
                 }
 
                 GenericValue partyFromRole = null;
-                partyFromRole = EntityQuery.use(delegator).from("PartyRole").where("partyId", partyIdFrom, "roleTypeId", roleTypeIdFrom).queryOne();
+                PartyRoleEntity partyFromRoleEntity = partyRoleDao.list(Filters.and(Filters.eq(x.partyId, partyIdFrom), Filters.eq(x.roleTypeId, roleTypeIdFrom)))
+                        .stream().findFirst().orElse(null);
+                if (partyFromRoleEntity != null) {
+                    partyFromRole = delegator.makeValue(x.PartyRole, Beans.beanToMap(partyFromRoleEntity));
+                }
                 if (partyFromRole == null) {
-                    partyFromRole = delegator.makeValue("PartyRole", UtilMisc.toMap("partyId", partyIdFrom, "roleTypeId", roleTypeIdFrom));
+                    partyFromRole = delegator.makeValue(x.PartyRole, UtilMisc.toMap(x.partyId, partyIdFrom, x.roleTypeId, roleTypeIdFrom));
                     partyFromRole.create();
                 }
 
                 // Check if there is already a partyRelationship of that type with another party from the side indicated
-                String sideChecked = partyIdFrom.equals(partyId) ? "partyIdFrom" : "partyIdTo";
+                String sideChecked = partyIdFrom.equals(partyId) ? x.partyIdFrom : x.partyIdTo;
                 // We consider the last one (in time) as sole active (we try to maintain a unique relationship and keep changes history)
-                GenericValue oldPartyRelationShip = EntityQuery.use(delegator).from("PartyRelationship")
-                        .where(sideChecked, partyId, "roleTypeIdFrom", roleTypeIdFrom, "roleTypeIdTo", roleTypeIdTo, "partyRelationshipTypeId",
-                                partyRelationshipTypeId).filterByDate().queryFirst();
+                PartyRelationshipEntity oldPartyRelationShipEntity = partyRelationshipDao
+                        .list(Filters.and(Filters.eq(sideChecked, partyId), Filters.eq(x.roleTypeIdFrom, roleTypeIdFrom), Filters.eq(x.roleTypeIdTo, roleTypeIdTo),
+                                Filters.eq(x.partyRelationshipTypeId, partyRelationshipTypeId)))
+                        .stream()
+                        .filter(relationShip -> (relationShip.getFromDate() == null || !relationShip.getFromDate().after(nowTimestamp))
+                                && (relationShip.getThruDate() == null || relationShip.getThruDate().after(nowTimestamp)))
+                        .findFirst()
+                        .orElse(null);
+                GenericValue oldPartyRelationShip = oldPartyRelationShipEntity == null ? null
+                        : delegator.makeValue(x.PartyRelationship, Beans.beanToMap(oldPartyRelationShipEntity));
                 if (oldPartyRelationShip != null) {
-                    oldPartyRelationShip.setFields(UtilMisc.toMap("thruDate", UtilDateTime.nowTimestamp())); // Current becomes inactive
+                    oldPartyRelationShip.setFields(UtilMisc.toMap(x.thruDate, nowTimestamp)); // Current becomes inactive
                     oldPartyRelationShip.store();
                 }
                 try {
-                    Map<String, Object> resultMap = dispatcher.runSync("createPartyRelationship", context); // Create new one
+                    Map<String, Object> resultMap = dispatcher.runSync(x.createPartyRelationship, context); // Create new one
                     if (ServiceUtil.isError(resultMap)) {
                         return ServiceUtil.returnError(ServiceUtil.getErrorMessage(resultMap));
                     }
                 } catch (GenericServiceException e) {
                     Debug.logWarning(e.getMessage(), MODULE);
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "partyrelationshipservices.could_not_create_party_role_write",
-                            UtilMisc.toMap("errorString", e.getMessage()), locale));
+                            x.partyrelationshipservices_could_not_create_party_role_write,
+                            UtilMisc.toMap(x.errorString, e.getMessage()), locale));
                 }
             }
-        } catch (GenericEntityException e) {
+        } catch (Exception e) {
             Debug.logWarning(e.getMessage(), MODULE);
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "partyrelationshipservices.could_not_create_party_role_write",
-                    UtilMisc.toMap("errorString", e.getMessage()), locale));
+                    x.partyrelationshipservices_could_not_create_party_role_write,
+                    UtilMisc.toMap(x.errorString, e.getMessage()), locale));
         }
         result.put(ModelService.RESPONSE_MESSAGE, ModelService.RESPOND_SUCCESS);
         return result;

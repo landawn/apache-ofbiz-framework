@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.OrderItemRoleEntity;
 
-public interface OrderItemRoleDao extends CrudDao<OrderItemRoleEntity, OrderItemRoleEntity, SQLBuilder.PSC, OrderItemRoleDao> {
+public interface OrderItemRoleDao extends CrudDao<OrderItemRoleEntity, OrderItemRoleEntity, SQLBuilder.PSC, OrderItemRoleDao>, DelegatorQueryDao {
 }

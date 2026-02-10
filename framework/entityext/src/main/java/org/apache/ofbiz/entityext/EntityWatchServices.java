@@ -53,7 +53,7 @@ public class EntityWatchServices {
         try {
             currentValue = dctx.getDelegator().findOne(newValue.getEntityName(), newValue.getPrimaryKey(), false);
         } catch (GenericEntityException e) {
-            String errMsg = "Error finding currentValue for primary key [" + newValue.getPrimaryKey() + "]: " + e.toString();
+            String errMsg = x.Error_finding_currentValue_for_primary_key + newValue.getPrimaryKey() + x.str_89222ecc + e.toString();
             Debug.logError(e, errMsg, MODULE);
         }
 
@@ -74,15 +74,15 @@ public class EntityWatchServices {
                 }
 
                 if (changed) {
-                    String errMsg = "Watching entity [" + currentValue.getEntityName() + "] field [" + fieldName + "] value changed from ["
-                            + currentFieldValue + "] to [" + newFieldValue + "] for pk [" + newValue.getPrimaryKey() + "]";
+                    String errMsg = x.Watching_entity + currentValue.getEntityName() + x.field + fieldName + x.value_changed_from
+                            + currentFieldValue + x.to_23757279 + newFieldValue + x.for_pk + newValue.getPrimaryKey() + x.str_4ff447b8;
                     Debug.logInfo(new Exception(errMsg), errMsg, MODULE);
                 }
             } else {
                 // watch the whole entity
                 if (!currentValue.equals(newValue)) {
-                    String errMsg = "Watching entity [" + currentValue.getEntityName() + "] values changed from [" + currentValue + "] to ["
-                            + newValue + "] for pk [" + newValue.getPrimaryKey() + "]";
+                    String errMsg = x.Watching_entity + currentValue.getEntityName() + x.values_changed_from + currentValue + x.to_23757279
+                            + newValue + x.for_pk + newValue.getPrimaryKey() + x.str_4ff447b8;
                     Debug.logInfo(new Exception(errMsg), errMsg, MODULE);
                 }
             }
@@ -90,13 +90,13 @@ public class EntityWatchServices {
             if (UtilValidate.isNotEmpty(fieldName)) {
                 // just watch the field
                 Object newFieldValue = newValue.get(fieldName);
-                String errMsg = "Watching entity [" + newValue.getEntityName() + "] field [" + fieldName + "] value changed from [null] to ["
-                        + newFieldValue + "] for pk [" + newValue.getPrimaryKey() + "]";
+                String errMsg = x.Watching_entity + newValue.getEntityName() + x.field + fieldName + x.value_changed_from_null_to
+                        + newFieldValue + x.for_pk + newValue.getPrimaryKey() + x.str_4ff447b8;
                 Debug.logInfo(new Exception(errMsg), errMsg, MODULE);
             } else {
                 // watch the whole entity
-                String errMsg = "Watching entity [" + newValue.getEntityName() + "] values changed from [null] to [" + newValue + "] for pk ["
-                        + newValue.getPrimaryKey() + "]";
+                String errMsg = x.Watching_entity + newValue.getEntityName() + x.values_changed_from_null_to + newValue + x.for_pk
+                        + newValue.getPrimaryKey() + x.str_4ff447b8;
                 Debug.logInfo(new Exception(errMsg), errMsg, MODULE);
             }
         }

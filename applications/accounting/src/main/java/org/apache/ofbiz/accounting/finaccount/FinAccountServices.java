@@ -38,8 +38,11 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityExpr;
 import org.apache.ofbiz.entity.condition.EntityOperator;
+import org.apache.ofbiz.entity.util.EntityFindOptions;
 import org.apache.ofbiz.entity.util.EntityListIterator;
-import org.apache.ofbiz.entity.util.EntityQuery;
+import org.apache.ofbiz.entity.util.EntityUtil;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.UserLoginDao;
 import org.apache.ofbiz.order.finaccount.FinAccountHelper;
 import org.apache.ofbiz.product.store.ProductStoreWorker;
 import org.apache.ofbiz.service.DispatchContext;
@@ -55,7 +58,7 @@ import org.apache.ofbiz.model.FinAccountServicesContext;
 public class FinAccountServices {
 
     private static final String MODULE = FinAccountServices.class.getName();
-    private static final String RES_ERROR = "AccountingErrorUiLabels";
+    private static final String RES_ERROR = x.AccountingErrorUiLabels;
 
     public static Map<String, Object> createAccountAndCredit(DispatchContext dctx, FinAccountServicesContext context) {
         Delegator delegator = dctx.getDelegator();
@@ -67,13 +70,13 @@ public class FinAccountServices {
 
         // check the type
         if (finAccountTypeId == null) {
-            finAccountTypeId = "SVCCRED_ACCOUNT";
+            finAccountTypeId = x.SVCCRED_ACCOUNT;
         }
         if (accountName == null) {
-            if ("SVCCRED_ACCOUNT".equals(finAccountTypeId)) {
-                accountName = "Customer Service Credit Account";
+            if (x.SVCCRED_ACCOUNT.equals(finAccountTypeId)) {
+                accountName = x.Customer_Service_Credit_Account;
             } else {
-                accountName = "Financial Account";
+                accountName = x.Financial_Account;
             }
         }
 
@@ -81,7 +84,7 @@ public class FinAccountServices {
         try {
             // find the most recent (active) service credit account for the specified party
             String partyId = (String) context.get(x.partyId);
-            Map<String, String> lookupMap = UtilMisc.toMap("finAccountTypeId", finAccountTypeId, "ownerPartyId",
+            Map<String, String> lookupMap = UtilMisc.toMap(x.finAccountTypeId, finAccountTypeId, x.ownerPartyId,
                     partyId);
 
             // if a productStoreId is present, restrict the accounts returned using the
@@ -90,39 +93,39 @@ public class FinAccountServices {
             if (UtilValidate.isNotEmpty(productStoreId)) {
                 String payToPartyId = ProductStoreWorker.getProductStorePayToPartyId(productStoreId, delegator);
                 if (UtilValidate.isNotEmpty(payToPartyId)) {
-                    lookupMap.put("organizationPartyId", payToPartyId);
+                    lookupMap.put(x.organizationPartyId, payToPartyId);
                 }
             }
 
             // if a currencyUomId is present, use it to restrict the accounts returned
             String currencyUomId = (String) context.get(x.currencyUomId);
             if (UtilValidate.isNotEmpty(currencyUomId)) {
-                lookupMap.put("currencyUomId", currencyUomId);
+                lookupMap.put(x.currencyUomId, currencyUomId);
             }
 
             // check for an existing account
             GenericValue creditAccount;
+            UserLoginDao finAccountDao = DaoRegistry.getDao(delegator, x.FinAccount, UserLoginDao.class);
             if (finAccountId != null) {
-                creditAccount = EntityQuery.use(delegator).from("FinAccount").where("finAccountId", finAccountId)
-                        .queryOne();
+                creditAccount = finAccountDao.findOne(delegator, x.FinAccount, UtilMisc.toMap(x.finAccountId, finAccountId), false);
             } else {
-                creditAccount = EntityQuery.use(delegator).from("FinAccount").where(lookupMap).orderBy("-fromDate")
-                        .filterByDate().queryFirst();
+                List<GenericValue> finAccounts = finAccountDao.findByAnd(delegator, x.FinAccount, lookupMap, UtilMisc.toList(x.fromDate_f5440273), false);
+                creditAccount = EntityUtil.getFirst(EntityUtil.filterByDate(finAccounts, true));
             }
 
             if (creditAccount == null) {
                 // create a new service credit account
-                String createAccountServiceName = "createFinAccount";
+                String createAccountServiceName = x.createFinAccount;
                 if (UtilValidate.isNotEmpty(productStoreId)) {
-                    createAccountServiceName = "createFinAccountForStore";
+                    createAccountServiceName = x.createFinAccountForStore;
                 }
                 // automatically set the parameters
                 ModelService createAccountService = dctx.getModelService(createAccountServiceName);
                 Map<String, Object> createAccountContext = createAccountService.makeValid(context, ModelService.IN_PARAM);
-                createAccountContext.put("finAccountTypeId", finAccountTypeId);
-                createAccountContext.put("finAccountName", accountName);
-                createAccountContext.put("ownerPartyId", partyId);
-                createAccountContext.put("userLogin", userLogin);
+                createAccountContext.put(x.finAccountTypeId, finAccountTypeId);
+                createAccountContext.put(x.finAccountName, accountName);
+                createAccountContext.put(x.ownerPartyId, partyId);
+                createAccountContext.put(x.userLogin, userLogin);
 
                 Map<String, Object> createAccountResult = dispatcher.runSync(createAccountServiceName, createAccountContext);
                 if (ServiceUtil.isError(createAccountResult) || ServiceUtil.isFailure(createAccountResult)) {
@@ -130,21 +133,20 @@ public class FinAccountServices {
                 }
 
                 if (createAccountResult != null) {
-                    String creditAccountId = (String) createAccountResult.get("finAccountId");
+                    String creditAccountId = (String) createAccountResult.get(x.finAccountId);
                     if (UtilValidate.isNotEmpty(creditAccountId)) {
-                        creditAccount = EntityQuery.use(delegator).from("FinAccount").where("finAccountId",
-                                creditAccountId).queryOne();
+                        creditAccount = finAccountDao.findOne(delegator, x.FinAccount, UtilMisc.toMap(x.finAccountId, creditAccountId), false);
 
                         // create the owner role
                         Map<String, Object> roleCtx = new HashMap<>();
-                        roleCtx.put("partyId", partyId);
-                        roleCtx.put("roleTypeId", "OWNER");
-                        roleCtx.put("finAccountId", creditAccountId);
-                        roleCtx.put("userLogin", userLogin);
-                        roleCtx.put("fromDate", UtilDateTime.nowTimestamp());
+                        roleCtx.put(x.partyId, partyId);
+                        roleCtx.put(x.roleTypeId, x.OWNER);
+                        roleCtx.put(x.finAccountId, creditAccountId);
+                        roleCtx.put(x.userLogin, userLogin);
+                        roleCtx.put(x.fromDate, UtilDateTime.nowTimestamp());
                         Map<String, Object> roleResp;
                         try {
-                            roleResp = dispatcher.runSync("createFinAccountRole", roleCtx);
+                            roleResp = dispatcher.runSync(x.createFinAccountRole, roleCtx);
                         } catch (GenericServiceException e) {
                             return ServiceUtil.returnError(e.getMessage());
                         }
@@ -156,21 +158,21 @@ public class FinAccountServices {
                 }
                 if (creditAccount == null) {
                     return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                            "AccountingFinAccountCannotCreditAccount", locale));
+                            x.AccountingFinAccountCannotCreditAccount, locale));
                 }
             }
 
             // create the credit transaction
             Map<String, Object> transactionMap = new HashMap<>();
-            transactionMap.put("finAccountTransTypeId", "ADJUSTMENT");
-            transactionMap.put("finAccountId", creditAccount.getString(x.finAccountId));
-            transactionMap.put("partyId", partyId);
-            transactionMap.put("amount", context.get(x.amount));
-            transactionMap.put("reasonEnumId", context.get(x.reasonEnumId));
-            transactionMap.put("comments", context.get(x.comments));
-            transactionMap.put("userLogin", userLogin);
+            transactionMap.put(x.finAccountTransTypeId, x.ADJUSTMENT);
+            transactionMap.put(x.finAccountId, creditAccount.getString(x.finAccountId));
+            transactionMap.put(x.partyId, partyId);
+            transactionMap.put(x.amount, context.get(x.amount));
+            transactionMap.put(x.reasonEnumId, context.get(x.reasonEnumId));
+            transactionMap.put(x.comments, context.get(x.comments));
+            transactionMap.put(x.userLogin, userLogin);
 
-            Map<String, Object> creditTransResult = dispatcher.runSync("createFinAccountTrans", transactionMap);
+            Map<String, Object> creditTransResult = dispatcher.runSync(x.createFinAccountTrans, transactionMap);
             if (ServiceUtil.isError(creditTransResult) || ServiceUtil.isFailure(creditTransResult)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(creditTransResult));
             }
@@ -179,7 +181,7 @@ public class FinAccountServices {
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("finAccountId", finAccountId);
+        result.put(x.finAccountId, finAccountId);
         return result;
     }
 
@@ -194,12 +196,13 @@ public class FinAccountServices {
 
         try {
             // get the product store id and use it to generate a unique fin account code
-            GenericValue productStoreFinAccountSetting = EntityQuery.use(delegator).from("ProductStoreFinActSetting")
-                    .where("productStoreId", productStoreId, "finAccountTypeId", finAccountTypeId).cache().queryOne();
+            UserLoginDao productStoreFinActSettingDao = DaoRegistry.getDao(delegator, x.ProductStoreFinActSetting, UserLoginDao.class);
+            GenericValue productStoreFinAccountSetting = productStoreFinActSettingDao.findOne(delegator, x.ProductStoreFinActSetting,
+                    UtilMisc.toMap(x.productStoreId, productStoreId, x.finAccountTypeId, finAccountTypeId), true);
             if (productStoreFinAccountSetting == null) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "AccountingFinAccountSetting",
-                        UtilMisc.toMap("productStoreId", productStoreId, "finAccountTypeId", finAccountTypeId),
+                        x.AccountingFinAccountSetting,
+                        UtilMisc.toMap(x.productStoreId, productStoreId, x.finAccountTypeId, finAccountTypeId),
                         locale));
             }
 
@@ -209,7 +212,7 @@ public class FinAccountServices {
             String requirePinCode = productStoreFinAccountSetting.getString(x.requirePinCode);
 
             // automatically set the parameters for the create fin account service
-            ModelService createService = dctx.getModelService("createFinAccount");
+            ModelService createService = dctx.getModelService(x.createFinAccount);
             Map<String, Object> inContext = createService.makeValid(context, ModelService.IN_PARAM);
             Timestamp now = UtilDateTime.nowTimestamp();
 
@@ -217,34 +220,34 @@ public class FinAccountServices {
             String finAccountCode = null;
             if (UtilValidate.isNotEmpty(accountCodeLength)) {
                 finAccountCode = FinAccountHelper.getNewFinAccountCode(accountCodeLength.intValue(), delegator);
-                inContext.put("finAccountCode", finAccountCode);
+                inContext.put(x.finAccountCode, finAccountCode);
             }
 
             // with pin codes, the account code becomes the ID and the pin becomes the code
-            if ("Y".equalsIgnoreCase(requirePinCode)) {
+            if (x.Y.equalsIgnoreCase(requirePinCode)) {
                 String pinCode = FinAccountHelper.getNewFinAccountCode(pinCodeLength.intValue(), delegator);
-                inContext.put("finAccountPin", pinCode);
+                inContext.put(x.finAccountPin, pinCode);
             }
 
             // set the dates/userlogin
             if (UtilValidate.isNotEmpty(accountValidDays)) {
-                inContext.put("thruDate", UtilDateTime.getDayEnd(now, accountValidDays));
+                inContext.put(x.thruDate, UtilDateTime.getDayEnd(now, accountValidDays));
             }
-            inContext.put("fromDate", now);
-            inContext.put("userLogin", userLogin);
+            inContext.put(x.fromDate, now);
+            inContext.put(x.userLogin, userLogin);
 
             // product store payToPartyId
             String payToPartyId = ProductStoreWorker.getProductStorePayToPartyId(productStoreId, delegator);
-            inContext.put("organizationPartyId", payToPartyId);
-            inContext.put("currencyUomId", productStore.get(x.defaultCurrencyUomId));
+            inContext.put(x.organizationPartyId, payToPartyId);
+            inContext.put(x.currencyUomId, productStore.get(x.defaultCurrencyUomId));
 
-            Map<String, Object> createResult = dispatcher.runSync("createFinAccount", inContext);
+            Map<String, Object> createResult = dispatcher.runSync(x.createFinAccount, inContext);
             if (ServiceUtil.isError(createResult)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(createResult));
             }
             Map<String, Object> result = ServiceUtil.returnSuccess();
-            result.put("finAccountId", createResult.get("finAccountId"));
-            result.put("finAccountCode", finAccountCode);
+            result.put(x.finAccountId, createResult.get(x.finAccountId));
+            result.put(x.finAccountCode, finAccountCode);
             return result;
         } catch (GenericEntityException | GenericServiceException ex) {
             return ServiceUtil.returnError(ex.getMessage());
@@ -267,8 +270,8 @@ public class FinAccountServices {
             }
         } else {
             try {
-                finAccount = EntityQuery.use(delegator).from("FinAccount").where("finAccountId", finAccountId)
-                        .queryOne();
+                UserLoginDao finAccountDao = DaoRegistry.getDao(delegator, x.FinAccount, UserLoginDao.class);
+                finAccount = finAccountDao.findOne(delegator, x.FinAccount, UtilMisc.toMap(x.finAccountId, finAccountId), false);
             } catch (GenericEntityException e) {
                 Debug.logError(e, MODULE);
                 return ServiceUtil.returnError(e.getMessage());
@@ -276,7 +279,7 @@ public class FinAccountServices {
         }
         if (finAccount == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountNotFound", UtilMisc.toMap("finAccountId", finAccountId), locale));
+                    x.AccountingFinAccountNotFound, UtilMisc.toMap(x.finAccountId, finAccountId), locale));
         }
 
         // get the balance
@@ -290,13 +293,13 @@ public class FinAccountServices {
         }
 
         String statusId = finAccount.getString(x.statusId);
-        Debug.logInfo("FinAccount Balance [" + balance + "] Available [" + availableBalance + "] - Status: " + statusId,
+        Debug.logInfo(x.FinAccount_Balance + balance + x.Available + availableBalance + x.Status + statusId,
                 MODULE);
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("availableBalance", availableBalance);
-        result.put("balance", balance);
-        result.put("statusId", statusId);
+        result.put(x.availableBalance, availableBalance);
+        result.put(x.balance, balance);
+        result.put(x.statusId, statusId);
         return result;
     }
 
@@ -307,12 +310,13 @@ public class FinAccountServices {
 
         if (finAccountId == null) {
             return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                    "AccountingFinAccountNotFound", UtilMisc.toMap("finAccountId", ""), locale));
+                    x.AccountingFinAccountNotFound, UtilMisc.toMap(x.finAccountId, x.emptyString), locale));
         }
 
         GenericValue finAccount;
         try {
-            finAccount = EntityQuery.use(delegator).from("FinAccount").where("finAccountId", finAccountId).queryOne();
+            UserLoginDao finAccountDao = DaoRegistry.getDao(delegator, x.FinAccount, UserLoginDao.class);
+            finAccount = finAccountDao.findOne(delegator, x.FinAccount, UtilMisc.toMap(x.finAccountId, finAccountId), false);
         } catch (GenericEntityException ex) {
             return ServiceUtil.returnError(ex.getMessage());
         }
@@ -320,7 +324,7 @@ public class FinAccountServices {
         if (finAccount != null) {
             String statusId = finAccount.getString(x.statusId);
             if (statusId == null) {
-                statusId = "FNACT_ACTIVE";
+                statusId = x.FNACT_ACTIVE;
             }
 
             BigDecimal balance = finAccount.getBigDecimal(x.actualBalance);
@@ -328,16 +332,16 @@ public class FinAccountServices {
                 balance = FinAccountHelper.getZero();
             }
 
-            Debug.logInfo("Account #" + finAccountId + " Balance: " + balance + " Status: " + statusId, MODULE);
+            Debug.logInfo(x.Account + finAccountId + x.Balance + balance + x.Status_a82f3e48 + statusId, MODULE);
 
-            if ("FNACT_ACTIVE".equals(statusId) && balance.compareTo(FinAccountHelper.getZero()) < 1) {
-                finAccount.set(x.statusId, "FNACT_MANFROZEN");
-                Debug.logInfo("Financial account [" + finAccountId + "] has passed its threshold [" + balance
-                        + "] (Frozen)", MODULE);
-            } else if ("FNACT_MANFROZEN".equals(statusId) && balance.compareTo(FinAccountHelper.getZero()) > 0) {
-                finAccount.set(x.statusId, "FNACT_ACTIVE");
-                Debug.logInfo("Financial account [" + finAccountId + "] has been made current [" + balance
-                        + "] (Un-Frozen)", MODULE);
+            if (x.FNACT_ACTIVE.equals(statusId) && balance.compareTo(FinAccountHelper.getZero()) < 1) {
+                finAccount.set(x.statusId, x.FNACT_MANFROZEN);
+                Debug.logInfo(x.Financial_account + finAccountId + x.has_passed_its_threshold + balance
+                        + x.Frozen, MODULE);
+            } else if (x.FNACT_MANFROZEN.equals(statusId) && balance.compareTo(FinAccountHelper.getZero()) > 0) {
+                finAccount.set(x.statusId, x.FNACT_ACTIVE);
+                Debug.logInfo(x.Financial_account + finAccountId + x.has_been_made_current + balance
+                        + x.Un_Frozen, MODULE);
             }
             try {
                 finAccount.store();
@@ -359,16 +363,17 @@ public class FinAccountServices {
 
         GenericValue finAccount;
         try {
-            finAccount = EntityQuery.use(delegator).from("FinAccount").where("finAccountId", finAccountId).queryOne();
+            UserLoginDao finAccountDao = DaoRegistry.getDao(delegator, x.FinAccount, UserLoginDao.class);
+            finAccount = finAccountDao.findOne(delegator, x.FinAccount, UtilMisc.toMap(x.finAccountId, finAccountId), false);
         } catch (GenericEntityException e) {
             return ServiceUtil.returnError(e.getMessage());
         }
 
         if (finAccount != null) {
             // check to make sure the account is refundable
-            if (!"Y".equals(finAccount.getString(x.isRefundable))) {
+            if (!x.Y.equals(finAccount.getString(x.isRefundable))) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "AccountingFinAccountIsNotRefundable", locale));
+                        x.AccountingFinAccountIsNotRefundable, locale));
             }
 
             // get the actual and available balance
@@ -379,7 +384,7 @@ public class FinAccountServices {
             // be settled first
             if (actualBalance.compareTo(availableBalance) != 0) {
                 return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR,
-                        "AccountingFinAccountCannotBeRefunded", locale));
+                        x.AccountingFinAccountCannotBeRefunded, locale));
             }
 
             // now we make sure there is something to refund
@@ -387,13 +392,16 @@ public class FinAccountServices {
                 BigDecimal remainingBalance = new BigDecimal(actualBalance.toString());
                 BigDecimal refundAmount = BigDecimal.ZERO;
 
-                List<EntityExpr> exprs = UtilMisc.toList(EntityCondition.makeCondition("finAccountTransTypeId",
-                        EntityOperator.EQUALS, "DEPOSIT"),
-                        EntityCondition.makeCondition("finAccountId", EntityOperator.EQUALS, finAccountId));
+                List<EntityExpr> exprs = UtilMisc.toList(EntityCondition.makeCondition(x.finAccountTransTypeId,
+                        EntityOperator.EQUALS, x.DEPOSIT),
+                        EntityCondition.makeCondition(x.finAccountId, EntityOperator.EQUALS, finAccountId));
                 EntityCondition condition = EntityCondition.makeCondition(exprs, EntityOperator.AND);
 
-                try (EntityListIterator eli = EntityQuery.use(delegator).from("FinAccountTrans").where(condition)
-                        .orderBy("-transactionDate").queryIterator()) {
+                UserLoginDao finAccountTransDao = DaoRegistry.getDao(delegator, x.FinAccountTrans, UserLoginDao.class);
+                EntityFindOptions findOptions = new EntityFindOptions(true, EntityFindOptions.TYPE_SCROLL_INSENSITIVE,
+                        EntityFindOptions.CONCUR_READ_ONLY, true);
+                try (EntityListIterator eli = finAccountTransDao.findIteratorByCondition(delegator, x.FinAccountTrans, condition, null,
+                        UtilMisc.toList(x.transactionDate_5a2f7760), findOptions)) {
                     GenericValue trans;
                     while (remainingBalance.compareTo(FinAccountHelper.getZero()) < 0 && (trans = eli.next()) != null) {
                         String orderId = trans.getString(x.orderId);
@@ -401,12 +409,13 @@ public class FinAccountServices {
 
                         // make sure there is an order available to refund
                         if (orderId != null && orderItemSeqId != null) {
-                            GenericValue orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId",
-                                    orderId).queryOne();
+                            UserLoginDao orderHeaderDao = DaoRegistry.getDao(delegator, x.OrderHeader, UserLoginDao.class);
+                            GenericValue orderHeader = orderHeaderDao.findOne(delegator, x.OrderHeader, UtilMisc.toMap(x.orderId, orderId), false);
                             GenericValue productStore = orderHeader.getRelatedOne(x.ProductStore, false);
-                            GenericValue orderItem = EntityQuery.use(delegator).from("OrderItem").where("orderId",
-                                    orderId, "orderItemSeqId", orderItemSeqId).queryOne();
-                            if (!"ITEM_CANCELLED".equals(orderItem.getString(x.statusId))) {
+                            UserLoginDao orderItemDao = DaoRegistry.getDao(delegator, x.OrderItem, UserLoginDao.class);
+                            GenericValue orderItem = orderItemDao.findOne(delegator, x.OrderItem,
+                                    UtilMisc.toMap(x.orderId, orderId, x.orderItemSeqId, orderItemSeqId), false);
+                            if (!x.ITEM_CANCELLED.equals(orderItem.getString(x.statusId))) {
 
                                 // make sure the item hasn't already been returned
                                 List<GenericValue> returnItems = orderItem.getRelated(x.ReturnItem, null, null, false);
@@ -420,74 +429,75 @@ public class FinAccountServices {
                                     refundAmount = refundAmount.add(refAmt);
 
                                     // create the return header
-                                    Map<String, Object> rhCtx = UtilMisc.toMap("returnHeaderTypeId", "CUSTOMER_RETURN",
-                                            "fromPartyId", finAccount.getString(x.ownerPartyId), "toPartyId",
-                                            productStore.getString(x.payToPartyId), "userLogin", userLogin);
-                                    Map<String, Object> rhResp = dispatcher.runSync("createReturnHeader", rhCtx);
+                                    Map<String, Object> rhCtx = UtilMisc.toMap(x.returnHeaderTypeId, x.CUSTOMER_RETURN,
+                                            x.fromPartyId, finAccount.getString(x.ownerPartyId), x.toPartyId,
+                                            productStore.getString(x.payToPartyId), x.userLogin, userLogin);
+                                    Map<String, Object> rhResp = dispatcher.runSync(x.createReturnHeader, rhCtx);
                                     if (ServiceUtil.isError(rhResp)) {
                                         throw new GeneralException(ServiceUtil.getErrorMessage(rhResp));
                                     }
-                                    String returnId = (String) rhResp.get("returnId");
+                                    String returnId = (String) rhResp.get(x.returnId);
 
                                     // create the return item
                                     Map<String, Object> returnItemCtx = new HashMap<>();
-                                    returnItemCtx.put("returnId", returnId);
-                                    returnItemCtx.put("orderId", orderId);
-                                    returnItemCtx.put("description", orderItem.getString(x.itemDescription));
-                                    returnItemCtx.put("orderItemSeqId", orderItemSeqId);
-                                    returnItemCtx.put("returnQuantity", BigDecimal.ONE);
-                                    returnItemCtx.put("receivedQuantity", BigDecimal.ONE);
-                                    returnItemCtx.put("returnPrice", refAmt);
-                                    returnItemCtx.put("returnReasonId", "RTN_NOT_WANT");
-                                    returnItemCtx.put("returnTypeId", "RTN_REFUND"); // refund return
-                                    returnItemCtx.put("returnItemTypeId", "RET_NPROD_ITEM");
-                                    returnItemCtx.put("userLogin", userLogin);
+                                    returnItemCtx.put(x.returnId, returnId);
+                                    returnItemCtx.put(x.orderId, orderId);
+                                    returnItemCtx.put(x.description, orderItem.getString(x.itemDescription));
+                                    returnItemCtx.put(x.orderItemSeqId, orderItemSeqId);
+                                    returnItemCtx.put(x.returnQuantity, BigDecimal.ONE);
+                                    returnItemCtx.put(x.receivedQuantity, BigDecimal.ONE);
+                                    returnItemCtx.put(x.returnPrice, refAmt);
+                                    returnItemCtx.put(x.returnReasonId, x.RTN_NOT_WANT);
+                                    returnItemCtx.put(x.returnTypeId, x.RTN_REFUND); // refund return
+                                    returnItemCtx.put(x.returnItemTypeId, x.RET_NPROD_ITEM);
+                                    returnItemCtx.put(x.userLogin, userLogin);
 
-                                    Map<String, Object> retItResp = dispatcher.runSync("createReturnItem",
+                                    Map<String, Object> retItResp = dispatcher.runSync(x.createReturnItem,
                                             returnItemCtx);
                                     if (ServiceUtil.isError(retItResp)) {
                                         throw new GeneralException(ServiceUtil.getErrorMessage(retItResp));
                                     }
-                                    String returnItemSeqId = (String) retItResp.get("returnItemSeqId");
+                                    String returnItemSeqId = (String) retItResp.get(x.returnItemSeqId);
 
                                     // approve the return
-                                    Map<String, Object> appRet = UtilMisc.toMap("statusId", "RETURN_ACCEPTED",
-                                            "returnId", returnId, "userLogin", userLogin);
-                                    Map<String, Object> appResp = dispatcher.runSync("updateReturnHeader", appRet);
+                                    Map<String, Object> appRet = UtilMisc.toMap(x.statusId, x.RETURN_ACCEPTED,
+                                            x.returnId, returnId, x.userLogin, userLogin);
+                                    Map<String, Object> appResp = dispatcher.runSync(x.updateReturnHeader, appRet);
                                     if (ServiceUtil.isError(appResp)) {
                                         throw new GeneralException(ServiceUtil.getErrorMessage(appResp));
                                     }
 
                                     // "receive" the return - should trigger the refund
-                                    Map<String, Object> recRet = UtilMisc.toMap("statusId", "RETURN_RECEIVED",
-                                            "returnId", returnId, "userLogin", userLogin);
-                                    Map<String, Object> recResp = dispatcher.runSync("updateReturnHeader", recRet);
+                                    Map<String, Object> recRet = UtilMisc.toMap(x.statusId, x.RETURN_RECEIVED,
+                                            x.returnId, returnId, x.userLogin, userLogin);
+                                    Map<String, Object> recResp = dispatcher.runSync(x.updateReturnHeader, recRet);
                                     if (ServiceUtil.isError(recResp)) {
                                         throw new GeneralException(ServiceUtil.getErrorMessage(recResp));
                                     }
 
                                     // get the return item
-                                    GenericValue returnItem = EntityQuery.use(delegator).from("ReturnItem").where(
-                                            "returnId", returnId, "returnItemSeqId", returnItemSeqId).queryOne();
+                                    UserLoginDao returnItemDao = DaoRegistry.getDao(delegator, x.ReturnItem, UserLoginDao.class);
+                                    GenericValue returnItem = returnItemDao.findOne(delegator, x.ReturnItem,
+                                            UtilMisc.toMap(x.returnId, returnId, x.returnItemSeqId, returnItemSeqId), false);
                                     GenericValue response = returnItem.getRelatedOne(x.ReturnItemResponse, false);
                                     if (response == null) {
-                                        throw new GeneralException("No return response found for: " + returnItem
+                                        throw new GeneralException(x.No_return_response_found_for + returnItem
                                                 .getPrimaryKey());
                                     }
                                     String paymentId = response.getString(x.paymentId);
 
                                     // create the adjustment transaction
                                     Map<String, Object> txCtx = new HashMap<>();
-                                    txCtx.put("finAccountTransTypeId", "ADJUSTMENT");
-                                    txCtx.put("finAccountId", finAccountId);
-                                    txCtx.put("orderId", orderId);
-                                    txCtx.put("orderItemSeqId", orderItemSeqId);
-                                    txCtx.put("paymentId", paymentId);
-                                    txCtx.put("amount", refAmt.negate());
-                                    txCtx.put("partyId", finAccount.getString(x.ownerPartyId));
-                                    txCtx.put("userLogin", userLogin);
+                                    txCtx.put(x.finAccountTransTypeId, x.ADJUSTMENT);
+                                    txCtx.put(x.finAccountId, finAccountId);
+                                    txCtx.put(x.orderId, orderId);
+                                    txCtx.put(x.orderItemSeqId, orderItemSeqId);
+                                    txCtx.put(x.paymentId, paymentId);
+                                    txCtx.put(x.amount, refAmt.negate());
+                                    txCtx.put(x.partyId, finAccount.getString(x.ownerPartyId));
+                                    txCtx.put(x.userLogin, userLogin);
 
-                                    Map<String, Object> txResp = dispatcher.runSync("createFinAccountTrans", txCtx);
+                                    Map<String, Object> txResp = dispatcher.runSync(x.createFinAccountTrans, txCtx);
                                     if (ServiceUtil.isError(txResp)) {
                                         throw new GeneralException(ServiceUtil.getErrorMessage(txResp));
                                     }
@@ -503,7 +513,7 @@ public class FinAccountServices {
                 // check to make sure we balanced out
                 if (remainingBalance.compareTo(FinAccountHelper.getZero()) == 1) {
                     result = ServiceUtil.returnSuccess(UtilProperties.getMessage(RES_ERROR,
-                            "AccountingFinAccountPartiallyRefunded", locale));
+                            x.AccountingFinAccountPartiallyRefunded, locale));
                 }
             }
         }

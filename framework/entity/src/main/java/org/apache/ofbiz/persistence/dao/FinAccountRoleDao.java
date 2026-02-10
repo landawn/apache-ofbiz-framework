@@ -4,5 +4,5 @@ import com.landawn.abacus.jdbc.dao.CrudDao;
 import com.landawn.abacus.query.SQLBuilder;
 import org.apache.ofbiz.persistence.entity.FinAccountRoleEntity;
 
-public interface FinAccountRoleDao extends CrudDao<FinAccountRoleEntity, FinAccountRoleEntity, SQLBuilder.PSC, FinAccountRoleDao> {
+public interface FinAccountRoleDao extends CrudDao<FinAccountRoleEntity, FinAccountRoleEntity, SQLBuilder.PSC, FinAccountRoleDao>, DelegatorQueryDao {
 }

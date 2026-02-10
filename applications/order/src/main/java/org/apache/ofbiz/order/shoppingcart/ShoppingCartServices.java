@@ -20,6 +20,7 @@ package org.apache.ofbiz.order.shoppingcart;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -43,19 +44,44 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityExpr;
 import org.apache.ofbiz.entity.condition.EntityOperator;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityTypeUtil;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
 import org.apache.ofbiz.order.order.OrderReadHelper;
 import org.apache.ofbiz.order.shoppingcart.ShoppingCart.CartShipInfo;
 import org.apache.ofbiz.order.shoppingcart.ShoppingCart.CartShipInfo.CartShipItemInfo;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.OrderAttributeDao;
+import org.apache.ofbiz.persistence.dao.OrderHeaderDao;
+import org.apache.ofbiz.persistence.dao.OrderItemAttributeDao;
+import org.apache.ofbiz.persistence.dao.OrderItemContactMechDao;
+import org.apache.ofbiz.persistence.dao.OrderPaymentPreferenceDao;
+import org.apache.ofbiz.persistence.dao.ProductAssocDao;
+import org.apache.ofbiz.persistence.dao.ProductDao;
+import org.apache.ofbiz.persistence.dao.QuoteDao;
+import org.apache.ofbiz.persistence.dao.ShoppingListDao;
+import org.apache.ofbiz.persistence.dao.SurveyResponseAnswerDao;
+import org.apache.ofbiz.persistence.dao.VendorProductDao;
+import org.apache.ofbiz.persistence.dao.WorkEffortDao;
+import org.apache.ofbiz.persistence.entity.OrderAttributeEntity;
+import org.apache.ofbiz.persistence.entity.OrderHeaderEntity;
+import org.apache.ofbiz.persistence.entity.OrderItemAttributeEntity;
+import org.apache.ofbiz.persistence.entity.OrderItemContactMechEntity;
+import org.apache.ofbiz.persistence.entity.OrderPaymentPreferenceEntity;
+import org.apache.ofbiz.persistence.entity.ProductAssocEntity;
+import org.apache.ofbiz.persistence.entity.ProductEntity;
+import org.apache.ofbiz.persistence.entity.QuoteEntity;
+import org.apache.ofbiz.persistence.entity.ShoppingListEntity;
+import org.apache.ofbiz.persistence.entity.VendorProductEntity;
+import org.apache.ofbiz.persistence.entity.WorkEffortEntity;
 import org.apache.ofbiz.product.config.ProductConfigWorker;
 import org.apache.ofbiz.product.config.ProductConfigWrapper;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.util.Beans;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -68,7 +94,20 @@ public class ShoppingCartServices {
 
     private static final MathContext GEN_ROUNDING = new MathContext(10);
     private static final String MODULE = ShoppingCartServices.class.getName();
-    private static final String RES_ERROR = "OrderErrorUiLabels";
+    private static final String RES_ERROR = x.OrderErrorUiLabels;
+
+    @FunctionalInterface
+    private interface SqlSupplier<T> {
+        T get() throws SQLException;
+    }
+
+    private static <T> T withSqlException(String operation, SqlSupplier<T> supplier) throws GenericEntityException {
+        try {
+            return supplier.get();
+        } catch (SQLException e) {
+            throw new GenericEntityException(x.Failed_to + operation, e);
+        }
+    }
 
     public static Map<String, Object> assignItemShipGroup(DispatchContext dctx, ShoppingCartServicesContext context) {
         ShoppingCart cart = (ShoppingCart) context.get(x.shoppingCart);
@@ -82,7 +121,7 @@ public class ShoppingCartServices {
             clearEmptyGroups = Boolean.TRUE;
         }
 
-        Debug.logInfo("From Group - " + fromGroupIndex + " To Group - " + toGroupIndex + "Item - " + itemIndex + "(" + quantity + ")", MODULE);
+        Debug.logInfo(x.From_Group + fromGroupIndex + x.To_Group + toGroupIndex + x.Item + itemIndex + x.str_28ed3a79 + quantity + x.str_e7064f0b, MODULE);
         if (fromGroupIndex.equals(toGroupIndex)) {
             // nothing to do
             return ServiceUtil.returnSuccess();
@@ -90,7 +129,7 @@ public class ShoppingCartServices {
 
         cart.positionItemToGroup(itemIndex, quantity,
                 fromGroupIndex, toGroupIndex, clearEmptyGroups);
-        Debug.logInfo("Called cart.positionItemToGroup()", MODULE);
+        Debug.logInfo(x.Called_cart_positionItemToGroup, MODULE);
 
         return ServiceUtil.returnSuccess();
     }
@@ -135,7 +174,7 @@ public class ShoppingCartServices {
                 cart.setIsGift(idx, isGift);
             }
         } else {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderCartShipGroupNotFound", UtilMisc.toMap("groupIndex",
+            return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderCartShipGroupNotFound, UtilMisc.toMap(x.groupIndex,
                     groupIndex), locale));
         }
         return ServiceUtil.returnSuccess();
@@ -144,7 +183,7 @@ public class ShoppingCartServices {
     public static Map<String, Object> setPaymentOptions(DispatchContext dctx, ShoppingCartServicesContext context) {
         Locale locale = (Locale) context.get(x.locale);
 
-        return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, "OrderServiceNotYetImplemented", locale));
+        return ServiceUtil.returnError(UtilProperties.getMessage(RES_ERROR, x.OrderServiceNotYetImplemented, locale));
     }
 
     public static Map<String, Object> setOtherOptions(DispatchContext dctx, ShoppingCartServicesContext context) {
@@ -187,10 +226,9 @@ public class ShoppingCartServices {
         // get the order header
         GenericValue orderHeader = null;
         try {
-            orderHeader = EntityQuery.use(delegator).from("OrderHeader").where("orderId", orderId).queryOne();
+            orderHeader = getOrderHeaderValue(delegator, orderId);
             orderTerms = orderHeader.getRelated(x.OrderTerm, null, null, false);
-            orderContactMechs = EntityQuery.use(delegator).select("orderId", "contactMechId", "contactMechPurposeTypeId").from(
-                    "OrderAndPartyContactMech").where("orderId", orderId).filterByDate("contactFromDate", "contactThruDate").distinct().queryList();
+            orderContactMechs = listOrderAndPartyContactMechValues(delegator, orderId);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -210,7 +248,7 @@ public class ShoppingCartServices {
         cart.setOrderType(orderTypeId);
         cart.setChannelType(orderHeader.getString(x.salesChannelEnumId));
         cart.setInternalCode(orderHeader.getString(x.internalCode));
-        if ("Y".equals(createAsNewOrder)) {
+        if (x.Y.equals(createAsNewOrder)) {
             cart.setOrderDate(UtilDateTime.nowTimestamp());
         } else {
             cart.setOrderDate(orderHeader.getTimestamp(x.orderDate));
@@ -259,7 +297,7 @@ public class ShoppingCartServices {
         // load order attributes
         List<GenericValue> orderAttributesList = null;
         try {
-            orderAttributesList = EntityQuery.use(delegator).from("OrderAttribute").where("orderId", orderId).queryList();
+            orderAttributesList = listOrderAttributeValues(delegator, orderId);
             if (UtilValidate.isNotEmpty(orderAttributesList)) {
                 for (GenericValue orderAttr : orderAttributesList) {
                     String name = orderAttr.getString(x.attrName);
@@ -275,12 +313,12 @@ public class ShoppingCartServices {
         // load the payment infos
         List<GenericValue> orderPaymentPrefs = null;
         try {
-            List<EntityExpr> exprs = UtilMisc.toList(EntityCondition.makeCondition("orderId", EntityOperator.EQUALS, orderId));
-            exprs.add(EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "PAYMENT_RECEIVED"));
-            exprs.add(EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "PAYMENT_CANCELLED"));
-            exprs.add(EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "PAYMENT_DECLINED"));
-            exprs.add(EntityCondition.makeCondition("statusId", EntityOperator.NOT_EQUAL, "PAYMENT_SETTLED"));
-            orderPaymentPrefs = EntityQuery.use(delegator).from("OrderPaymentPreference").where(exprs).queryList();
+            List<EntityExpr> exprs = UtilMisc.toList(EntityCondition.makeCondition(x.orderId, EntityOperator.EQUALS, orderId));
+            exprs.add(EntityCondition.makeCondition(x.statusId, EntityOperator.NOT_EQUAL, x.PAYMENT_RECEIVED));
+            exprs.add(EntityCondition.makeCondition(x.statusId, EntityOperator.NOT_EQUAL, x.PAYMENT_CANCELLED));
+            exprs.add(EntityCondition.makeCondition(x.statusId, EntityOperator.NOT_EQUAL, x.PAYMENT_DECLINED));
+            exprs.add(EntityCondition.makeCondition(x.statusId, EntityOperator.NOT_EQUAL, x.PAYMENT_SETTLED));
+            orderPaymentPrefs = listOpenOrderPaymentPreferenceValues(delegator, orderId);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -298,22 +336,22 @@ public class ShoppingCartServices {
 
                 ShoppingCart.CartPaymentInfo cpi = null;
 
-                if ((overflow == null || !"Y".equals(overflow)) && oppi.hasNext()) {
+                if ((overflow == null || !x.Y.equals(overflow)) && oppi.hasNext()) {
                     cpi = cart.addPaymentAmount(paymentId, maxAmount);
-                    Debug.logInfo("Added Payment: " + paymentId + " / " + maxAmount, MODULE);
+                    Debug.logInfo(x.Added_Payment + paymentId + x.str_0d0c4ddd + maxAmount, MODULE);
                 } else {
                     cpi = cart.addPayment(paymentId);
-                    Debug.logInfo("Added Payment: " + paymentId + " / [no max]", MODULE);
+                    Debug.logInfo(x.Added_Payment + paymentId + x.no_max, MODULE);
                 }
                 // for finance account the finAccountId needs to be set
-                if ("FIN_ACCOUNT".equals(paymentId)) {
+                if (x.FIN_ACCOUNT.equals(paymentId)) {
                     cpi.setFinAccountId(opp.getString(x.finAccountId));
                 }
                 // set the billing account and amount
                 cart.setBillingAccount(orderHeader.getString(x.billingAccountId), orh.getBillingAccountMaxAmount());
             }
         } else {
-            Debug.logInfo("No payment preferences found for order #" + orderId, MODULE);
+            Debug.logInfo(x.No_payment_preferences_found_for_order + orderId, MODULE);
         }
         // set the order term
         if (UtilValidate.isNotEmpty(orderTerms)) {
@@ -362,12 +400,12 @@ public class ShoppingCartServices {
         List<GenericValue> orderItems = orh.getOrderItems();
         long nextItemSeq = 0;
         if (UtilValidate.isNotEmpty(orderItems)) {
-            Pattern pattern = Pattern.compile("\\P{Digit}");
+            Pattern pattern = Pattern.compile(x.P_Digit);
             for (GenericValue item : orderItems) {
                 // get the next item sequence id
                 String orderItemSeqId = item.getString(x.orderItemSeqId);
                 Matcher pmatcher = pattern.matcher(orderItemSeqId);
-                orderItemSeqId = pmatcher.replaceAll("");
+                orderItemSeqId = pmatcher.replaceAll(x.emptyString);
                 // get product Id
                 String productId = item.getString(x.productId);
                 GenericValue product = null;
@@ -382,25 +420,24 @@ public class ShoppingCartServices {
                     Debug.logError(e, MODULE);
                     return ServiceUtil.returnError(e.getMessage());
                 }
-                if ("ITEM_REJECTED".equals(item.getString(x.statusId)) || "ITEM_CANCELLED".equals(item.getString(x.statusId))) {
+                if (x.ITEM_REJECTED.equals(item.getString(x.statusId)) || x.ITEM_CANCELLED.equals(item.getString(x.statusId))) {
                     continue;
                 }
                 try {
-                    product = EntityQuery.use(delegator).from("Product").where("productId", productId).queryOne();
-                    if ("DIGITAL_GOOD".equals(product.getString(x.productTypeId))) {
+                    product = getProductValue(delegator, productId);
+                    if (x.DIGITAL_GOOD.equals(product.getString(x.productTypeId))) {
                         Map<String, Object> surveyResponseMap = new HashMap<>();
                         Map<String, Object> answers = new HashMap<>();
-                        List<GenericValue> surveyResponseAndAnswers = EntityQuery.use(delegator).from("SurveyResponseAndAnswer").where("orderId",
-                                orderId, "orderItemSeqId", orderItemSeqId).queryList();
+                        List<GenericValue> surveyResponseAndAnswers = listSurveyResponseAndAnswerValues(delegator, orderId, orderItemSeqId);
                         if (UtilValidate.isNotEmpty(surveyResponseAndAnswers)) {
-                            String surveyId = EntityUtil.getFirst(surveyResponseAndAnswers).getString("surveyId");
+                            String surveyId = EntityUtil.getFirst(surveyResponseAndAnswers).getString(x.surveyId);
                             for (GenericValue surveyResponseAndAnswer : surveyResponseAndAnswers) {
                                 answers.put((surveyResponseAndAnswer.get(x.surveyQuestionId).toString()),
                                         surveyResponseAndAnswer.get(x.textResponse));
                             }
-                            surveyResponseMap.put("answers", answers);
-                            surveyResponseMap.put("surveyId", surveyId);
-                            surveyResponseResult = dispatcher.runSync("createSurveyResponse", surveyResponseMap);
+                            surveyResponseMap.put(x.answers, answers);
+                            surveyResponseMap.put(x.surveyId, surveyId);
+                            surveyResponseResult = dispatcher.runSync(x.createSurveyResponse, surveyResponseMap);
                             if (ServiceUtil.isError(surveyResponseResult)) {
                                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(surveyResponseResult));
                             }
@@ -412,7 +449,7 @@ public class ShoppingCartServices {
                 }
 
                 // do not include PROMO items
-                if (!includePromoItems && item.get(x.isPromo) != null && "Y".equals(item.getString(x.isPromo))) {
+                if (!includePromoItems && item.get(x.isPromo) != null && x.Y.equals(item.getString(x.isPromo))) {
                     continue;
                 }
 
@@ -423,7 +460,7 @@ public class ShoppingCartServices {
                 }
                 //BigDecimal quantity = item.getBigDecimal("quantity");
                 BigDecimal quantity = BigDecimal.ZERO;
-                if ("ITEM_COMPLETED".equals(item.getString(x.statusId)) && "N".equals(createAsNewOrder)) {
+                if (x.ITEM_COMPLETED.equals(item.getString(x.statusId)) && x.N.equals(createAsNewOrder)) {
                     quantity = item.getBigDecimal(x.quantity);
                 } else {
                     quantity = OrderReadHelper.getOrderItemQuantity(item);
@@ -433,7 +470,7 @@ public class ShoppingCartServices {
                 }
 
                 BigDecimal unitPrice = null;
-                if ("Y".equals(item.getString(x.isModifiedPrice))) {
+                if (x.Y.equals(item.getString(x.isModifiedPrice))) {
                     unitPrice = item.getBigDecimal(x.unitPrice);
                 }
 
@@ -464,12 +501,12 @@ public class ShoppingCartServices {
                     String workEffortId = orh.getCurrentOrderItemWorkEffort(item);
                     if (workEffortId != null) {
                         try {
-                            workEffort = EntityQuery.use(delegator).from("WorkEffort").where("workEffortId", workEffortId).queryOne();
+                            workEffort = getWorkEffortValue(delegator, workEffortId);
                         } catch (GenericEntityException e) {
                             Debug.logError(e, MODULE);
                         }
                     }
-                    if (workEffort != null && "ASSET_USAGE".equals(workEffort.getString(x.workEffortTypeId))) {
+                    if (workEffort != null && x.ASSET_USAGE.equals(workEffort.getString(x.workEffortTypeId))) {
                         reservStart = workEffort.getTimestamp(x.estimatedStartDate);
                         reservLength = OrderReadHelper.getWorkEffortRentalLength(workEffort);
                         reservPersons = workEffort.getBigDecimal(x.reservPersons);
@@ -482,13 +519,10 @@ public class ShoppingCartServices {
                     ProductConfigWrapper configWrapper = null;
                     String configId = null;
                     try {
-                        product = EntityQuery.use(delegator).from("Product").where("productId", productId).queryOne();
-                        if (EntityTypeUtil.hasParentType(delegator, "ProductType", "productTypeId", product.getString(x.productTypeId),
-                                "parentTypeId", "AGGREGATED")) {
-                            GenericValue productAssoc = EntityQuery.use(delegator).from("ProductAssoc")
-                                    .where("productAssocTypeId", "PRODUCT_CONF", "productIdTo", product.getString(x.productId))
-                                    .filterByDate()
-                                    .queryFirst();
+                        product = getProductValue(delegator, productId);
+                        if (EntityTypeUtil.hasParentType(delegator, x.ProductType, x.productTypeId, product.getString(x.productTypeId),
+                                x.parentTypeId, x.AGGREGATED)) {
+                            GenericValue productAssoc = getCurrentProductAssocValue(delegator, product.getString(x.productId));
                             if (productAssoc != null) {
                                 productId = productAssoc.getString(x.productId);
                                 configId = product.getString(x.configId);
@@ -515,7 +549,7 @@ public class ShoppingCartServices {
 
                 // flag the item w/ the orderItemSeqId so we can reference it
                 ShoppingCartItem cartItem = cart.findCartItem(itemIndex);
-                cartItem.setIsPromo(item.get(x.isPromo) != null && "Y".equals(item.getString(x.isPromo)));
+                cartItem.setIsPromo(item.get(x.isPromo) != null && x.Y.equals(item.getString(x.isPromo)));
                 cartItem.setOrderItemSeqId(item.getString(x.orderItemSeqId));
 
                 try {
@@ -526,7 +560,7 @@ public class ShoppingCartServices {
                 }
                 // attach surveyResponseId for each item
                 if (UtilValidate.isNotEmpty(surveyResponseResult)) {
-                    cartItem.setAttribute("surveyResponses", UtilMisc.toList(surveyResponseResult.get("surveyResponseId")));
+                    cartItem.setAttribute(x.surveyResponses, UtilMisc.toList(surveyResponseResult.get(x.surveyResponseId)));
                 }
                 // attach addition item information
                 cartItem.setStatusId(item.getString(x.statusId));
@@ -540,7 +574,7 @@ public class ShoppingCartServices {
                 cartItem.setShipAfterDate(item.getTimestamp(x.shipAfterDate));
                 cartItem.setReserveAfterDate(item.getTimestamp(x.reserveAfterDate));
                 cartItem.setShoppingList(item.getString(x.shoppingListId), item.getString(x.shoppingListItemSeqId));
-                cartItem.setIsModifiedPrice("Y".equals(item.getString(x.isModifiedPrice)));
+                cartItem.setIsModifiedPrice(x.Y.equals(item.getString(x.isModifiedPrice)));
                 cartItem.setName(item.getString(x.itemDescription));
                 cartItem.setExternalId(item.getString(x.externalId));
                 cartItem.setListPrice(item.getBigDecimal(x.unitListPrice));
@@ -549,8 +583,7 @@ public class ShoppingCartServices {
                 // load order item attributes
                 List<GenericValue> orderItemAttributesList = null;
                 try {
-                    orderItemAttributesList = EntityQuery.use(delegator).from("OrderItemAttribute").where("orderId", orderId, "orderItemSeqId",
-                            orderItemSeqId).queryList();
+                    orderItemAttributesList = listOrderItemAttributeValues(delegator, orderId, orderItemSeqId);
                     if (UtilValidate.isNotEmpty(orderItemAttributesList)) {
                         for (GenericValue orderItemAttr : orderItemAttributesList) {
                             String name = orderItemAttr.getString(x.attrName);
@@ -566,8 +599,7 @@ public class ShoppingCartServices {
                 // load order item contact mechs
                 List<GenericValue> orderItemContactMechList = null;
                 try {
-                    orderItemContactMechList = EntityQuery.use(delegator).from("OrderItemContactMech").where("orderId", orderId, "orderItemSeqId",
-                            orderItemSeqId).queryList();
+                    orderItemContactMechList = listOrderItemContactMechValues(delegator, orderId, orderItemSeqId);
                     if (UtilValidate.isNotEmpty(orderItemContactMechList)) {
                         for (GenericValue orderItemContactMech : orderItemContactMechList) {
                             String contactMechPurposeTypeId = orderItemContactMech.getString(x.contactMechPurposeTypeId);
@@ -599,7 +631,7 @@ public class ShoppingCartServices {
                 int itemIndex = 0;
                 for (GenericValue item : orderItems) {
                     // if rejected or cancelled ignore, just like above otherwise all indexes will be off by one!
-                    if ("ITEM_REJECTED".equals(item.getString(x.statusId)) || "ITEM_CANCELLED".equals(item.getString(x.statusId))) {
+                    if (x.ITEM_REJECTED.equals(item.getString(x.statusId)) || x.ITEM_CANCELLED.equals(item.getString(x.statusId))) {
                         continue;
                     }
 
@@ -607,7 +639,7 @@ public class ShoppingCartServices {
                     // set the item's ship group info
                     List<GenericValue> shipGroupAssocs = orh.getOrderItemShipGroupAssocs(item);
                     if (UtilValidate.isNotEmpty(shipGroupAssocs)) {
-                        shipGroupAssocs = EntityUtil.orderBy(shipGroupAssocs, UtilMisc.toList("-shipGroupSeqId"));
+                        shipGroupAssocs = EntityUtil.orderBy(shipGroupAssocs, UtilMisc.toList(x.shipGroupSeqId_1a229e35));
                     }
                     for (int g = 0; g < shipGroupAssocs.size(); g++) {
                         GenericValue sgAssoc = shipGroupAssocs.get(g);
@@ -632,25 +664,25 @@ public class ShoppingCartServices {
                         if (cartItem == null || cartItem.getQuantity() == null
                                 || BigDecimal.ZERO.equals(cartItem.getQuantity())
                                 || shipGroupQty.equals(cartItem.getQuantity())) {
-                            Debug.logInfo("In loadCartFromOrder not adding item [" + item.getString(x.orderItemSeqId)
-                                    + "] to ship group with index [" + itemIndex + "]; group quantity is [" + shipGroupQty
-                                    + "] item quantity is [" + (cartItem != null ? cartItem.getQuantity() : "no cart item")
-                                    + "] cartShipGroupIndex is [" + cartShipGroupIndex + "], csi.shipItemInfo.size(): "
+                            Debug.logInfo(x.In_loadCartFromOrder_not_adding_item + item.getString(x.orderItemSeqId)
+                                    + x.to_ship_group_with_index + itemIndex + x.group_quantity_is + shipGroupQty
+                                    + x.item_quantity_is + (cartItem != null ? cartItem.getQuantity() : x.no_cart_item)
+                                    + x.cartShipGroupIndex_is + cartShipGroupIndex + x.csi_shipItemInfo_size
                                     + (cartShipGroupIndex < 0 ? 0 : csi.getShipItemInfo().size()), MODULE);
                         } else {
                             cart.setItemShipGroupQty(itemIndex, shipGroupQty, cartShipGroupIndex);
                         }
 
-                        List<GenericValue> shipGroupItemAdjustments = EntityUtil.filterByAnd(orderItemAdjustments, UtilMisc.toMap("shipGroupSeqId",
+                        List<GenericValue> shipGroupItemAdjustments = EntityUtil.filterByAnd(orderItemAdjustments, UtilMisc.toMap(x.shipGroupSeqId,
                                 cartShipGroupIndexStr));
                         if (cartItem == null || cartShipGroupIndex < 0) {
-                            Debug.logWarning("In loadCartFromOrder could not find cart item for itemIndex=" + itemIndex + ", for orderId="
+                            Debug.logWarning(x.In_loadCartFromOrder_could_not_find_cart_item_for_itemIndex + itemIndex + x.for_orderId
                                     + orderId, MODULE);
                         } else {
                             CartShipItemInfo cartShipItemInfo = csi.getShipItemInfo(cartItem);
                             if (cartShipItemInfo == null) {
-                                Debug.logWarning("In loadCartFromOrder could not find CartShipItemInfo for itemIndex=" + itemIndex + ", for "
-                                        + "orderId=" + orderId, MODULE);
+                                Debug.logWarning(x.In_loadCartFromOrder_could_not_find_CartShipItemInfo_for_itemIndex + itemIndex + x._for
+                                        + x.orderId_59b511c9 + orderId, MODULE);
                             } else {
                                 List<GenericValue> itemTaxAdj = cartShipItemInfo.getItemTaxAdj();
                                 for (GenericValue shipGroupItemAdjustment : shipGroupItemAdjustments) {
@@ -695,7 +727,7 @@ public class ShoppingCartServices {
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("shoppingCart", cart);
+        result.put(x.shoppingCart, cart);
         return result;
     }
 
@@ -708,12 +740,12 @@ public class ShoppingCartServices {
         String applyQuoteAdjustmentsString = (String) context.get(x.applyQuoteAdjustments);
         Locale locale = (Locale) context.get(x.locale);
 
-        boolean applyQuoteAdjustments = applyQuoteAdjustmentsString == null || "true".equals(applyQuoteAdjustmentsString);
+        boolean applyQuoteAdjustments = applyQuoteAdjustmentsString == null || x._true.equals(applyQuoteAdjustmentsString);
 
         // get the quote header
         GenericValue quote = null;
         try {
-            quote = EntityQuery.use(delegator).from("Quote").where("quoteId", quoteId).queryOne();
+            quote = getQuoteValue(delegator, quoteId);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -726,8 +758,8 @@ public class ShoppingCartServices {
         // create the cart
         ShoppingCart cart = new ShoppingCart(delegator, productStoreId, locale, currency);
         // set shopping cart type
-        if ("PURCHASE_QUOTE".equals(quote.getString(x.quoteTypeId))) {
-            cart.setOrderType("PURCHASE_ORDER");
+        if (x.PURCHASE_QUOTE.equals(quote.getString(x.quoteTypeId))) {
+            cart.setOrderType(x.PURCHASE_ORDER);
             cart.setBillFromVendorPartyId(quote.getString(x.partyId));
         }
         try {
@@ -747,7 +779,7 @@ public class ShoppingCartServices {
         List<GenericValue> quoteAttributes = null;
         List<GenericValue> quoteTerms = null;
         try {
-            quoteItems = quote.getRelated(x.QuoteItem, null, UtilMisc.toList("quoteItemSeqId"), false);
+            quoteItems = quote.getRelated(x.QuoteItem, null, UtilMisc.toList(x.quoteItemSeqId), false);
             quoteAdjs = quote.getRelated(x.QuoteAdjustment, null, null, false);
             quoteRoles = quote.getRelated(x.QuoteRole, null, null, false);
             quoteAttributes = quote.getRelated(x.QuoteAttribute, null, null, false);
@@ -762,15 +794,15 @@ public class ShoppingCartServices {
             for (GenericValue quoteRole : quoteRoles) {
                 String quoteRoleTypeId = quoteRole.getString(x.roleTypeId);
                 String quoteRolePartyId = quoteRole.getString(x.partyId);
-                if ("PLACING_CUSTOMER".equals(quoteRoleTypeId)) {
+                if (x.PLACING_CUSTOMER.equals(quoteRoleTypeId)) {
                     cart.setPlacingCustomerPartyId(quoteRolePartyId);
-                } else if ("BILL_TO_CUSTOMER".equals(quoteRoleTypeId)) {
+                } else if (x.BILL_TO_CUSTOMER.equals(quoteRoleTypeId)) {
                     cart.setBillToCustomerPartyId(quoteRolePartyId);
-                } else if ("SHIP_TO_CUSTOMER".equals(quoteRoleTypeId)) {
+                } else if (x.SHIP_TO_CUSTOMER.equals(quoteRoleTypeId)) {
                     cart.setShipToCustomerPartyId(quoteRolePartyId);
-                } else if ("END_USER_CUSTOMER".equals(quoteRoleTypeId)) {
+                } else if (x.END_USER_CUSTOMER.equals(quoteRoleTypeId)) {
                     cart.setEndUserCustomerPartyId(quoteRolePartyId);
-                } else if ("BILL_FROM_VENDOR".equals(quoteRoleTypeId)) {
+                } else if (x.BILL_FROM_VENDOR.equals(quoteRoleTypeId)) {
                     cart.setBillFromVendorPartyId(quoteRolePartyId);
                 } else {
                     cart.addAdditionalPartyRole(quoteRolePartyId, quoteRoleTypeId);
@@ -815,42 +847,42 @@ public class ShoppingCartServices {
                         orderAdjs);
             }
             // convert quote adjustments to order adjustments
-            GenericValue orderAdj = delegator.makeValue("OrderAdjustment");
-            orderAdj.put("orderAdjustmentId", quoteAdj.get(x.quoteAdjustmentId));
-            orderAdj.put("orderAdjustmentTypeId", quoteAdj.get(x.quoteAdjustmentTypeId));
-            orderAdj.put("orderItemSeqId", quoteAdj.get(x.quoteItemSeqId));
-            orderAdj.put("comments", quoteAdj.get(x.comments));
-            orderAdj.put("description", quoteAdj.get(x.description));
-            orderAdj.put("amount", quoteAdj.get(x.amount));
-            orderAdj.put("productPromoId", quoteAdj.get(x.productPromoId));
-            orderAdj.put("productPromoRuleId", quoteAdj.get(x.productPromoRuleId));
-            orderAdj.put("productPromoActionSeqId", quoteAdj.get(x.productPromoActionSeqId));
-            orderAdj.put("productFeatureId", quoteAdj.get(x.productFeatureId));
-            orderAdj.put("correspondingProductId", quoteAdj.get(x.correspondingProductId));
-            orderAdj.put("sourceReferenceId", quoteAdj.get(x.sourceReferenceId));
-            orderAdj.put("sourcePercentage", quoteAdj.get(x.sourcePercentage));
-            orderAdj.put("customerReferenceId", quoteAdj.get(x.customerReferenceId));
-            orderAdj.put("primaryGeoId", quoteAdj.get(x.primaryGeoId));
-            orderAdj.put("secondaryGeoId", quoteAdj.get(x.secondaryGeoId));
-            orderAdj.put("exemptAmount", quoteAdj.get(x.exemptAmount));
-            orderAdj.put("taxAuthGeoId", quoteAdj.get(x.taxAuthGeoId));
-            orderAdj.put("taxAuthPartyId", quoteAdj.get(x.taxAuthPartyId));
-            orderAdj.put("overrideGlAccountId", quoteAdj.get(x.overrideGlAccountId));
-            orderAdj.put("includeInTax", quoteAdj.get(x.includeInTax));
-            orderAdj.put("includeInShipping", quoteAdj.get(x.includeInShipping));
-            orderAdj.put("createdDate", quoteAdj.get(x.createdDate));
-            orderAdj.put("createdByUserLogin", quoteAdj.get(x.createdByUserLogin));
+            GenericValue orderAdj = delegator.makeValue(x.OrderAdjustment);
+            orderAdj.put(x.orderAdjustmentId, quoteAdj.get(x.quoteAdjustmentId));
+            orderAdj.put(x.orderAdjustmentTypeId, quoteAdj.get(x.quoteAdjustmentTypeId));
+            orderAdj.put(x.orderItemSeqId, quoteAdj.get(x.quoteItemSeqId));
+            orderAdj.put(x.comments, quoteAdj.get(x.comments));
+            orderAdj.put(x.description, quoteAdj.get(x.description));
+            orderAdj.put(x.amount, quoteAdj.get(x.amount));
+            orderAdj.put(x.productPromoId, quoteAdj.get(x.productPromoId));
+            orderAdj.put(x.productPromoRuleId, quoteAdj.get(x.productPromoRuleId));
+            orderAdj.put(x.productPromoActionSeqId, quoteAdj.get(x.productPromoActionSeqId));
+            orderAdj.put(x.productFeatureId, quoteAdj.get(x.productFeatureId));
+            orderAdj.put(x.correspondingProductId, quoteAdj.get(x.correspondingProductId));
+            orderAdj.put(x.sourceReferenceId, quoteAdj.get(x.sourceReferenceId));
+            orderAdj.put(x.sourcePercentage, quoteAdj.get(x.sourcePercentage));
+            orderAdj.put(x.customerReferenceId, quoteAdj.get(x.customerReferenceId));
+            orderAdj.put(x.primaryGeoId, quoteAdj.get(x.primaryGeoId));
+            orderAdj.put(x.secondaryGeoId, quoteAdj.get(x.secondaryGeoId));
+            orderAdj.put(x.exemptAmount, quoteAdj.get(x.exemptAmount));
+            orderAdj.put(x.taxAuthGeoId, quoteAdj.get(x.taxAuthGeoId));
+            orderAdj.put(x.taxAuthPartyId, quoteAdj.get(x.taxAuthPartyId));
+            orderAdj.put(x.overrideGlAccountId, quoteAdj.get(x.overrideGlAccountId));
+            orderAdj.put(x.includeInTax, quoteAdj.get(x.includeInTax));
+            orderAdj.put(x.includeInShipping, quoteAdj.get(x.includeInShipping));
+            orderAdj.put(x.createdDate, quoteAdj.get(x.createdDate));
+            orderAdj.put(x.createdByUserLogin, quoteAdj.get(x.createdByUserLogin));
             orderAdjs.add(orderAdj);
         }
 
         long nextItemSeq = 0;
         if (UtilValidate.isNotEmpty(quoteItems)) {
-            Pattern pattern = Pattern.compile("\\P{Digit}");
+            Pattern pattern = Pattern.compile(x.P_Digit);
             for (GenericValue quoteItem : quoteItems) {
                 // get the next item sequence id
                 String orderItemSeqId = quoteItem.getString(x.quoteItemSeqId);
                 Matcher pmatcher = pattern.matcher(orderItemSeqId);
-                orderItemSeqId = pmatcher.replaceAll("");
+                orderItemSeqId = pmatcher.replaceAll(x.emptyString);
                 try {
                     long seq = Long.parseLong(orderItemSeqId);
                     if (seq > nextItemSeq) {
@@ -861,7 +893,7 @@ public class ShoppingCartServices {
                     return ServiceUtil.returnError(e.getMessage());
                 }
 
-                boolean isPromo = quoteItem.get(x.isPromo) != null && "Y".equals(quoteItem.getString(x.isPromo));
+                boolean isPromo = quoteItem.get(x.isPromo) != null && x.Y.equals(quoteItem.getString(x.isPromo));
                 if (isPromo && !applyQuoteAdjustments) {
                     // do not include PROMO items
                     continue;
@@ -995,18 +1027,18 @@ public class ShoppingCartServices {
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("shoppingCart", cart);
+        result.put(x.shoppingCart, cart);
         return result;
     }
 
     private static boolean isTaxAdjustment(GenericValue cartAdj) {
         String adjType = cartAdj.getString(x.orderAdjustmentTypeId);
-        return "SALES_TAX".equals(adjType) || "VAT_TAX".equals(adjType) || "VAT_PRICE_CORRECT".equals(adjType);
+        return x.SALES_TAX.equals(adjType) || x.VAT_TAX.equals(adjType) || x.VAT_PRICE_CORRECT.equals(adjType);
     }
 
     private static boolean isPromoAdjustment(GenericValue cartAdj) {
         String adjType = cartAdj.getString(x.orderAdjustmentTypeId);
-        return "PROMOTION_ADJUSTMENT".equals(adjType);
+        return x.PROMOTION_ADJUSTMENT.equals(adjType);
     }
 
     public static Map<String, Object> loadCartFromShoppingList(DispatchContext dctx, ShoppingCartServicesContext context) {
@@ -1021,7 +1053,7 @@ public class ShoppingCartServices {
         // get the shopping list header
         GenericValue shoppingList = null;
         try {
-            shoppingList = EntityQuery.use(delegator).from("ShoppingList").where("shoppingListId", shoppingListId).queryOne();
+            shoppingList = getShoppingListValue(delegator, shoppingListId);
         } catch (GenericEntityException e) {
             Debug.logError(e, MODULE);
             return ServiceUtil.returnError(e.getMessage());
@@ -1044,7 +1076,7 @@ public class ShoppingCartServices {
         }
         // If we still have no currency, use the default from general.properties.  Failing that, use USD
         if (currency == null) {
-            currency = EntityUtilProperties.getPropertyValue("general", "currency.uom.id.default", "USD", delegator);
+            currency = EntityUtilProperties.getPropertyValue(x.general, x.currency_uom_id_default, x.USD, delegator);
         }
 
         // create the cart
@@ -1074,12 +1106,12 @@ public class ShoppingCartServices {
 
         long nextItemSeq = 0;
         if (UtilValidate.isNotEmpty(shoppingListItems)) {
-            Pattern pattern = Pattern.compile("\\P{Digit}");
+            Pattern pattern = Pattern.compile(x.P_Digit);
             for (GenericValue shoppingListItem : shoppingListItems) {
                 // get the next item sequence id
                 String orderItemSeqId = shoppingListItem.getString(x.shoppingListItemSeqId);
                 Matcher pmatcher = pattern.matcher(orderItemSeqId);
-                orderItemSeqId = pmatcher.replaceAll("");
+                orderItemSeqId = pmatcher.replaceAll(x.emptyString);
                 try {
                     long seq = Long.parseLong(orderItemSeqId);
                     if (seq > nextItemSeq) {
@@ -1141,7 +1173,7 @@ public class ShoppingCartServices {
         }
 
         Map<String, Object> result = ServiceUtil.returnSuccess();
-        result.put("shoppingCart", cart);
+        result.put(x.shoppingCart, cart);
         return result;
     }
 
@@ -1151,38 +1183,38 @@ public class ShoppingCartServices {
         ShoppingCart shoppingCart = (ShoppingCart) context.get(x.shoppingCart);
         if (shoppingCart != null) {
             String isoCode = shoppingCart.getCurrency();
-            result.put("totalQuantity", shoppingCart.getTotalQuantity());
-            result.put("currencyIsoCode", isoCode);
-            result.put("subTotal", shoppingCart.getSubTotal());
-            result.put("subTotalCurrencyFormatted", org.apache.ofbiz.base.util.UtilFormatOut.formatCurrency(shoppingCart.getSubTotal(), isoCode,
+            result.put(x.totalQuantity, shoppingCart.getTotalQuantity());
+            result.put(x.currencyIsoCode, isoCode);
+            result.put(x.subTotal, shoppingCart.getSubTotal());
+            result.put(x.subTotalCurrencyFormatted, org.apache.ofbiz.base.util.UtilFormatOut.formatCurrency(shoppingCart.getSubTotal(), isoCode,
                     locale));
-            result.put("totalShipping", shoppingCart.getTotalShipping());
-            result.put("totalShippingCurrencyFormatted", org.apache.ofbiz.base.util.UtilFormatOut.formatCurrency(shoppingCart.getTotalShipping(),
+            result.put(x.totalShipping, shoppingCart.getTotalShipping());
+            result.put(x.totalShippingCurrencyFormatted, org.apache.ofbiz.base.util.UtilFormatOut.formatCurrency(shoppingCart.getTotalShipping(),
                     isoCode, locale));
-            result.put("totalSalesTax", shoppingCart.getTotalSalesTax());
-            result.put("totalSalesTaxCurrencyFormatted", org.apache.ofbiz.base.util.UtilFormatOut.formatCurrency(shoppingCart.getTotalSalesTax(),
+            result.put(x.totalSalesTax, shoppingCart.getTotalSalesTax());
+            result.put(x.totalSalesTaxCurrencyFormatted, org.apache.ofbiz.base.util.UtilFormatOut.formatCurrency(shoppingCart.getTotalSalesTax(),
                     isoCode, locale));
-            result.put("displayGrandTotal", shoppingCart.getDisplayGrandTotal());
-            result.put("displayGrandTotalCurrencyFormatted",
+            result.put(x.displayGrandTotal, shoppingCart.getDisplayGrandTotal());
+            result.put(x.displayGrandTotalCurrencyFormatted,
                     org.apache.ofbiz.base.util.UtilFormatOut.formatCurrency(shoppingCart.getDisplayGrandTotal(), isoCode, locale));
             BigDecimal orderAdjustmentsTotal =
                     OrderReadHelper.calcOrderAdjustments(OrderReadHelper.getOrderHeaderAdjustments(shoppingCart.getAdjustments(), null),
                             shoppingCart.getSubTotal(), true, true, true);
-            result.put("displayOrderAdjustmentsTotalCurrencyFormatted",
+            result.put(x.displayOrderAdjustmentsTotalCurrencyFormatted,
                     org.apache.ofbiz.base.util.UtilFormatOut.formatCurrency(orderAdjustmentsTotal, isoCode, locale));
             Map<String, Object> cartItemData = new HashMap<>();
             for (ShoppingCartItem cartLine : shoppingCart) {
                 int cartLineIndex = shoppingCart.getItemIndex(cartLine);
-                cartItemData.put("displayItemQty_" + cartLineIndex, cartLine.getQuantity());
-                cartItemData.put("displayItemPrice_" + cartLineIndex,
+                cartItemData.put(x.displayItemQty + cartLineIndex, cartLine.getQuantity());
+                cartItemData.put(x.displayItemPrice + cartLineIndex,
                         org.apache.ofbiz.base.util.UtilFormatOut.formatCurrency(cartLine.getDisplayPrice(), isoCode, locale));
-                cartItemData.put("displayItemSubTotal_" + cartLineIndex, cartLine.getDisplayItemSubTotal());
-                cartItemData.put("displayItemSubTotalCurrencyFormatted_" + cartLineIndex,
+                cartItemData.put(x.displayItemSubTotal + cartLineIndex, cartLine.getDisplayItemSubTotal());
+                cartItemData.put(x.displayItemSubTotalCurrencyFormatted + cartLineIndex,
                         org.apache.ofbiz.base.util.UtilFormatOut.formatCurrency(cartLine.getDisplayItemSubTotal(), isoCode, locale));
-                cartItemData.put("displayItemAdjustment_" + cartLineIndex,
+                cartItemData.put(x.displayItemAdjustment + cartLineIndex,
                         org.apache.ofbiz.base.util.UtilFormatOut.formatCurrency(cartLine.getOtherAdjustments(), isoCode, locale));
             }
-            result.put("cartItemData", cartItemData);
+            result.put(x.cartItemData, cartItemData);
         }
         return result;
     }
@@ -1196,7 +1228,7 @@ public class ShoppingCartServices {
             if (!items.isEmpty()) {
                 ShoppingCartItem item = items.get(0);
                 int itemIndex = shoppingCart.getItemIndex(item);
-                result.put("itemIndex", String.valueOf(itemIndex));
+                result.put(x.itemIndex, String.valueOf(itemIndex));
             }
         }
         return result;
@@ -1218,7 +1250,7 @@ public class ShoppingCartServices {
         ShoppingCart cart = (ShoppingCart) context.get(x.shoppingCart);
         Map<String, Object> result = ServiceUtil.returnSuccess();
         try {
-            Map<String, Object> resp = dispatcher.runSync("resetShipGroupItems", context);
+            Map<String, Object> resp = dispatcher.runSync(x.resetShipGroupItems, context);
             if (ServiceUtil.isError(resp)) {
                 return ServiceUtil.returnError(ServiceUtil.getErrorMessage(resp));
             }
@@ -1235,22 +1267,21 @@ public class ShoppingCartServices {
             }
             int index = 0;
             try {
-                vendorProduct = EntityQuery.use(delegator).from("VendorProduct").where("productId", productId, "productStoreGroupId", "_NA_")
-                        .queryFirst();
+                vendorProduct = getVendorProductValue(delegator, productId);
             } catch (GenericEntityException e) {
                 Debug.logError(e.toString(), MODULE);
             }
 
             if (UtilValidate.isEmpty(vendorProduct)) {
-                if (vendorMap.containsKey("_NA_")) {
-                    index = (Integer) vendorMap.get("_NA_");
+                if (vendorMap.containsKey(x.NA)) {
+                    index = (Integer) vendorMap.get(x.NA);
                     cart.positionItemToGroup(item, item.getQuantity(), 0, index, true);
                 } else {
                     index = cart.addShipInfo();
-                    vendorMap.put("_NA_", index);
+                    vendorMap.put(x.NA, index);
 
                     ShoppingCart.CartShipInfo info = cart.getShipInfo(index);
-                    info.setVendorPartyId("_NA_");
+                    info.setVendorPartyId(x.NA);
                     info.setShipGroupSeqId(UtilFormatOut.formatPaddedNumber(index, 5));
                     cart.positionItemToGroup(item, item.getQuantity(), 0, index, true);
                 }
@@ -1273,4 +1304,131 @@ public class ShoppingCartServices {
         }
         return result;
     }
+
+    private static GenericValue getOrderHeaderValue(Delegator delegator, String orderId) throws GenericEntityException {
+        OrderHeaderDao orderHeaderDao = DaoRegistry.getDao(delegator, x.OrderHeader, OrderHeaderDao.class);
+        OrderHeaderEntity orderHeaderEntity = withSqlException(x.load_OrderHeader_for_orderId + orderId + x.str_4ff447b8,
+                () -> orderHeaderDao.get(orderId).orElse(null));
+        return orderHeaderEntity == null ? null : delegator.makeValue(x.OrderHeader, Beans.beanToMap(orderHeaderEntity));
+    }
+
+    private static List<GenericValue> listOrderAndPartyContactMechValues(Delegator delegator, String orderId)
+            throws GenericEntityException {
+        OrderHeaderDao orderHeaderDao = DaoRegistry.getDao(delegator, x.OrderHeader, OrderHeaderDao.class);
+        return orderHeaderDao.listOrderAndPartyContactMech(delegator, orderId);
+    }
+
+    private static List<GenericValue> listOrderAttributeValues(Delegator delegator, String orderId) throws GenericEntityException {
+        OrderAttributeDao orderAttributeDao = DaoRegistry.getDao(delegator, x.OrderAttribute, OrderAttributeDao.class);
+        List<OrderAttributeEntity> orderAttributeEntities = withSqlException(x.list_OrderAttribute_for_orderId + orderId + x.str_4ff447b8,
+                () -> orderAttributeDao.list(Filters.eq(x.orderId, orderId)));
+        List<GenericValue> values = new LinkedList<>();
+        for (OrderAttributeEntity orderAttributeEntity : orderAttributeEntities) {
+            values.add(delegator.makeValue(x.OrderAttribute, Beans.beanToMap(orderAttributeEntity)));
+        }
+        return values;
+    }
+
+    private static List<GenericValue> listOpenOrderPaymentPreferenceValues(Delegator delegator, String orderId) throws GenericEntityException {
+        OrderPaymentPreferenceDao orderPaymentPreferenceDao = DaoRegistry.getDao(delegator, x.OrderPaymentPreference,
+                OrderPaymentPreferenceDao.class);
+        List<OrderPaymentPreferenceEntity> orderPaymentPreferenceEntities = withSqlException(
+                x.list_open_OrderPaymentPreference_for_orderId + orderId + x.str_4ff447b8, () -> orderPaymentPreferenceDao.list(Filters.and(
+                        Filters.eq(x.orderId, orderId),
+                        Filters.ne(x.statusId, x.PAYMENT_RECEIVED),
+                        Filters.ne(x.statusId, x.PAYMENT_CANCELLED),
+                        Filters.ne(x.statusId, x.PAYMENT_DECLINED),
+                        Filters.ne(x.statusId, x.PAYMENT_SETTLED))));
+        List<GenericValue> values = new LinkedList<>();
+        for (OrderPaymentPreferenceEntity orderPaymentPreferenceEntity : orderPaymentPreferenceEntities) {
+            values.add(delegator.makeValue(x.OrderPaymentPreference, Beans.beanToMap(orderPaymentPreferenceEntity)));
+        }
+        return values;
+    }
+
+    private static GenericValue getProductValue(Delegator delegator, String productId) throws GenericEntityException {
+        ProductDao productDao = DaoRegistry.getDao(delegator, x.Product, ProductDao.class);
+        ProductEntity productEntity = withSqlException(x.load_Product_for_productId + productId + x.str_4ff447b8,
+                () -> productDao.get(productId).orElse(null));
+        return productEntity == null ? null : delegator.makeValue(x.Product, Beans.beanToMap(productEntity));
+    }
+
+    private static List<GenericValue> listSurveyResponseAndAnswerValues(Delegator delegator, String orderId, String orderItemSeqId)
+            throws GenericEntityException {
+        SurveyResponseAnswerDao surveyResponseAnswerDao = DaoRegistry.getDao(delegator, x.SurveyResponseAnswer, SurveyResponseAnswerDao.class);
+        return surveyResponseAnswerDao.listSurveyResponseAndAnswer(delegator, orderId, orderItemSeqId);
+    }
+
+    private static GenericValue getWorkEffortValue(Delegator delegator, String workEffortId) throws GenericEntityException {
+        WorkEffortDao workEffortDao = DaoRegistry.getDao(delegator, x.WorkEffort, WorkEffortDao.class);
+        WorkEffortEntity workEffortEntity = withSqlException(x.load_WorkEffort_for_workEffortId + workEffortId + x.str_4ff447b8,
+                () -> workEffortDao.get(workEffortId).orElse(null));
+        return workEffortEntity == null ? null : delegator.makeValue(x.WorkEffort, Beans.beanToMap(workEffortEntity));
+    }
+
+    private static GenericValue getCurrentProductAssocValue(Delegator delegator, String productIdTo) throws GenericEntityException {
+        ProductAssocDao productAssocDao = DaoRegistry.getDao(delegator, x.ProductAssoc, ProductAssocDao.class);
+        List<ProductAssocEntity> productAssocEntities = withSqlException(x.list_ProductAssoc_for_productIdTo + productIdTo + x.str_4ff447b8,
+                () -> productAssocDao.list(Filters.and(
+                Filters.eq(x.productAssocTypeId, x.PRODUCT_CONF),
+                Filters.eq(x.productIdTo, productIdTo))));
+        List<GenericValue> values = new LinkedList<>();
+        for (ProductAssocEntity productAssocEntity : productAssocEntities) {
+            values.add(delegator.makeValue(x.ProductAssoc, Beans.beanToMap(productAssocEntity)));
+        }
+        values = EntityUtil.filterByDate(values);
+        return EntityUtil.getFirst(values);
+    }
+
+    private static List<GenericValue> listOrderItemAttributeValues(Delegator delegator, String orderId, String orderItemSeqId)
+            throws GenericEntityException {
+        OrderItemAttributeDao orderItemAttributeDao = DaoRegistry.getDao(delegator, x.OrderItemAttribute, OrderItemAttributeDao.class);
+        List<OrderItemAttributeEntity> orderItemAttributeEntities = withSqlException(x.list_OrderItemAttribute_for_order + orderId
+                + x.and_item + orderItemSeqId + x.str_4ff447b8, () -> orderItemAttributeDao.list(Filters.and(
+                Filters.eq(x.orderId, orderId),
+                Filters.eq(x.orderItemSeqId, orderItemSeqId))));
+        List<GenericValue> values = new LinkedList<>();
+        for (OrderItemAttributeEntity orderItemAttributeEntity : orderItemAttributeEntities) {
+            values.add(delegator.makeValue(x.OrderItemAttribute, Beans.beanToMap(orderItemAttributeEntity)));
+        }
+        return values;
+    }
+
+    private static List<GenericValue> listOrderItemContactMechValues(Delegator delegator, String orderId, String orderItemSeqId)
+            throws GenericEntityException {
+        OrderItemContactMechDao orderItemContactMechDao = DaoRegistry.getDao(delegator, x.OrderItemContactMech, OrderItemContactMechDao.class);
+        List<OrderItemContactMechEntity> orderItemContactMechEntities = withSqlException(x.list_OrderItemContactMech_for_order + orderId
+                + x.and_item + orderItemSeqId + x.str_4ff447b8, () -> orderItemContactMechDao.list(Filters.and(
+                Filters.eq(x.orderId, orderId),
+                Filters.eq(x.orderItemSeqId, orderItemSeqId))));
+        List<GenericValue> values = new LinkedList<>();
+        for (OrderItemContactMechEntity orderItemContactMechEntity : orderItemContactMechEntities) {
+            values.add(delegator.makeValue(x.OrderItemContactMech, Beans.beanToMap(orderItemContactMechEntity)));
+        }
+        return values;
+    }
+
+    private static GenericValue getQuoteValue(Delegator delegator, String quoteId) throws GenericEntityException {
+        QuoteDao quoteDao = DaoRegistry.getDao(delegator, x.Quote, QuoteDao.class);
+        QuoteEntity quoteEntity = withSqlException(x.load_Quote_for_quoteId + quoteId + x.str_4ff447b8,
+                () -> quoteDao.get(quoteId).orElse(null));
+        return quoteEntity == null ? null : delegator.makeValue(x.Quote, Beans.beanToMap(quoteEntity));
+    }
+
+    private static GenericValue getShoppingListValue(Delegator delegator, String shoppingListId) throws GenericEntityException {
+        ShoppingListDao shoppingListDao = DaoRegistry.getDao(delegator, x.ShoppingList, ShoppingListDao.class);
+        ShoppingListEntity shoppingListEntity = withSqlException(x.load_ShoppingList_for_shoppingListId + shoppingListId + x.str_4ff447b8,
+                () -> shoppingListDao.get(shoppingListId).orElse(null));
+        return shoppingListEntity == null ? null : delegator.makeValue(x.ShoppingList, Beans.beanToMap(shoppingListEntity));
+    }
+
+    private static GenericValue getVendorProductValue(Delegator delegator, String productId) throws GenericEntityException {
+        VendorProductDao vendorProductDao = DaoRegistry.getDao(delegator, x.VendorProduct, VendorProductDao.class);
+        VendorProductEntity vendorProductEntity = withSqlException(x.load_VendorProduct_for_productId + productId + x.str_4ff447b8,
+                () -> vendorProductDao.list(Filters.and(
+                Filters.eq(x.productId, productId),
+                Filters.eq(x.productStoreGroupId, x.NA))).stream().findFirst().orElse(null));
+        return vendorProductEntity == null ? null : delegator.makeValue(x.VendorProduct, Beans.beanToMap(vendorProductEntity));
+    }
 }
+

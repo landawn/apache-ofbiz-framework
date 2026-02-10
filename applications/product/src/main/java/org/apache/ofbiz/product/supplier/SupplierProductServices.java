@@ -34,11 +34,14 @@ import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.condition.EntityOperator;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.ProductDao;
+import org.apache.ofbiz.persistence.entity.ProductEntity;
 import org.apache.ofbiz.product.product.ProductWorker;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.ServiceUtil;
+import com.landawn.abacus.util.Beans;
 
 
 import org.apache.ofbiz.persistence.entity.x;
@@ -50,7 +53,7 @@ import org.apache.ofbiz.model.SupplierProductServicesContext;
 public class SupplierProductServices {
 
     private static final String MODULE = SupplierProductServices.class.getName();
-    private static final String RESOURCE = "ProductUiLabels";
+    private static final String RESOURCE = x.ProductUiLabels;
 
     /*
      * Parameters: productId, partyId, currencyUomId, quantity
@@ -70,58 +73,64 @@ public class SupplierProductServices {
         String agreementId = (String) context.get(x.agreementId);
 
         try {
-            product = EntityQuery.use(delegator).from("Product").where("productId", productId).cache().queryOne();
+            ProductDao productDao = DaoRegistry.getDao(delegator, x.Product, ProductDao.class);
+            ProductEntity productEntity = productDao.get(productId).orElse(null);
+            if (productEntity != null) {
+                product = delegator.makeValue(x.Product, Beans.beanToMap(productEntity));
+            }
             if (product == null) {
                 results = ServiceUtil.returnSuccess();
-                results.put("supplierProducts", null);
+                results.put(x.supplierProducts, null);
                 return results;
             }
             List<GenericValue> supplierProducts = product.getRelated(x.SupplierProduct, null, null, true);
 
             // if there were no related SupplierProduct entities and the item is a variant, then get the SupplierProducts of the
             // virtual parent product
-            if (supplierProducts.isEmpty() && product.getString(x.isVariant) != null && "Y".equals(product.getString(x.isVariant))) {
+            if (supplierProducts.isEmpty() && product.getString(x.isVariant) != null && x.Y.equals(product.getString(x.isVariant))) {
                 String virtualProductId = ProductWorker.getVariantVirtualId(product);
-                GenericValue virtualProduct = EntityQuery.use(delegator).from("Product").where("productId", virtualProductId).cache().queryOne();
+                ProductEntity virtualProductEntity = productDao.get(virtualProductId).orElse(null);
+                GenericValue virtualProduct = virtualProductEntity == null ? null
+                        : delegator.makeValue(x.Product, Beans.beanToMap(virtualProductEntity));
                 if (virtualProduct != null) {
                     supplierProducts = virtualProduct.getRelated(x.SupplierProduct, null, null, true);
                 }
             }
             if (agreementId != null) {
-                supplierProducts = EntityUtil.filterByAnd(supplierProducts, UtilMisc.toMap("agreementId", agreementId));
+                supplierProducts = EntityUtil.filterByAnd(supplierProducts, UtilMisc.toMap(x.agreementId, agreementId));
 
             }
             // filter the list by date
-            supplierProducts = EntityUtil.filterByDate(supplierProducts, UtilDateTime.nowTimestamp(), "availableFromDate", "availableThruDate", true);
+            supplierProducts = EntityUtil.filterByDate(supplierProducts, UtilDateTime.nowTimestamp(), x.availableFromDate, x.availableThruDate, true);
 
             // filter the list down by the partyId if one is provided
             if (partyId != null) {
-                supplierProducts = EntityUtil.filterByAnd(supplierProducts, UtilMisc.toMap("partyId", partyId));
+                supplierProducts = EntityUtil.filterByAnd(supplierProducts, UtilMisc.toMap(x.partyId, partyId));
             }
 
             // filter the list down by the currencyUomId if one is provided
             if (currencyUomId != null) {
-                supplierProducts = EntityUtil.filterByAnd(supplierProducts, UtilMisc.toMap("currencyUomId", currencyUomId));
+                supplierProducts = EntityUtil.filterByAnd(supplierProducts, UtilMisc.toMap(x.currencyUomId, currencyUomId));
             }
 
             // filter the list down by the minimumOrderQuantity if one is provided
             if (quantity != null) {
                 //minimumOrderQuantity
-                supplierProducts = EntityUtil.filterByCondition(supplierProducts, EntityCondition.makeCondition("minimumOrderQuantity",
+                supplierProducts = EntityUtil.filterByCondition(supplierProducts, EntityCondition.makeCondition(x.minimumOrderQuantity,
                         EntityOperator.LESS_THAN_EQUAL_TO, quantity));
             }
 
             // filter the list down by the canDropShip if one is provided
             if (canDropShip != null) {
-                supplierProducts = EntityUtil.filterByAnd(supplierProducts, UtilMisc.toMap("canDropShip", canDropShip));
+                supplierProducts = EntityUtil.filterByAnd(supplierProducts, UtilMisc.toMap(x.canDropShip, canDropShip));
             }
 
             //sort resulting list of SupplierProduct entities by price in ASCENDING order
-            supplierProducts = EntityUtil.orderBy(supplierProducts, UtilMisc.toList("lastPrice ASC"));
+            supplierProducts = EntityUtil.orderBy(supplierProducts, UtilMisc.toList(x.lastPrice_ASC));
 
             results = ServiceUtil.returnSuccess();
-            results.put("supplierProducts", supplierProducts);
-        } catch (GenericEntityException ex) {
+            results.put(x.supplierProducts, supplierProducts);
+        } catch (Exception ex) {
             Debug.logError(ex, ex.getMessage(), MODULE);
             return ServiceUtil.returnError(ex.getMessage());
         }
@@ -144,23 +153,23 @@ public class SupplierProductServices {
                 // substitue description and idCode
                 for (GenericValue nextFeature: features) {
                     List<GenericValue> supplierFeatures = EntityUtil.filterByAnd(nextFeature.getRelated(x.SupplierProductFeature, null, null, false),
-                                                                   UtilMisc.toMap("partyId", partyId));
+                                                                   UtilMisc.toMap(x.partyId, partyId));
                     GenericValue supplierFeature = null;
 
                     if ((supplierFeatures != null) && (!supplierFeatures.isEmpty())) {
                         supplierFeature = supplierFeatures.get(0);
                         if (supplierFeature.get(x.description) != null) {
-                            nextFeature.put("description", supplierFeature.get(x.description));
+                            nextFeature.put(x.description, supplierFeature.get(x.description));
                         }
                         if (supplierFeature.get(x.idCode) != null) {
-                            nextFeature.put("idCode", supplierFeature.get(x.idCode));
+                            nextFeature.put(x.idCode, supplierFeature.get(x.idCode));
                         }
                         // TODO: later, do some kind of uom/quantity conoversion with the UomConversion entity
                     }
                 }
             }
             results = ServiceUtil.returnSuccess();
-            results.put("convertedProductFeatures", features);
+            results.put(x.convertedProductFeatures, features);
         } catch (GenericEntityException ex) {
             Debug.logError(ex, ex.getMessage(), MODULE);
             return ServiceUtil.returnError(ex.getMessage());

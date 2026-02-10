@@ -18,6 +18,8 @@
  *******************************************************************************/
 package org.apache.ofbiz.product.feature;
 
+import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -33,16 +35,25 @@ import org.apache.ofbiz.base.util.UtilMisc;
 import org.apache.ofbiz.base.util.UtilProperties;
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
-import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
-import org.apache.ofbiz.entity.util.EntityQuery;
 import org.apache.ofbiz.entity.util.EntityUtil;
+import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.dao.ProductAssocDao;
+import org.apache.ofbiz.persistence.dao.ProductFeatureApplDao;
+import org.apache.ofbiz.persistence.dao.ProductFeatureDao;
+import org.apache.ofbiz.persistence.dao.ProductFeatureGroupApplDao;
+import org.apache.ofbiz.persistence.entity.ProductAssocEntity;
+import org.apache.ofbiz.persistence.entity.ProductFeatureApplEntity;
+import org.apache.ofbiz.persistence.entity.ProductFeatureEntity;
+import org.apache.ofbiz.persistence.entity.ProductFeatureGroupApplEntity;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
 import org.apache.ofbiz.service.ServiceUtil;
 
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.util.Beans;
 
 import org.apache.ofbiz.persistence.entity.x;
 import org.apache.ofbiz.model.ServiceContext;
@@ -54,7 +65,7 @@ import org.apache.ofbiz.model.ProductFeatureServicesContext;
 public class ProductFeatureServices {
 
     private static final String MODULE = ProductFeatureServices.class.getName();
-    private static final String RESOURCE = "ProductUiLabels";
+    private static final String RESOURCE = x.ProductUiLabels;
 
     /*
      * Parameters: productFeatureCategoryId, productFeatureGroupId, productId, productFeatureApplTypeId
@@ -76,33 +87,78 @@ public class ProductFeatureServices {
         String valueToSearch = (String) context.get(x.productFeatureCategoryId);
         String productFeatureApplTypeId = (String) context.get(x.productFeatureApplTypeId);
 
-        String entityToSearch = "ProductFeature";
-        String fieldToSearch = "productFeatureCategoryId";
-        List<String> orderBy = UtilMisc.toList("productFeatureTypeId", "description");
+        String entityToSearch = x.ProductFeature;
+        String fieldToSearch = x.productFeatureCategoryId;
+        List<String> orderBy = UtilMisc.toList(x.productFeatureTypeId, x.description);
 
         if (valueToSearch == null && context.get(x.productFeatureGroupId) != null) {
-            entityToSearch = "ProductFeatureGroupAndAppl";
-            fieldToSearch = "productFeatureGroupId";
+            entityToSearch = x.ProductFeatureGroupAndAppl;
+            fieldToSearch = x.productFeatureGroupId;
             valueToSearch = (String) context.get(x.productFeatureGroupId);
             // use same orderBy as with a productFeatureCategoryId search
         } else if (valueToSearch == null && context.get(x.productId) != null) {
-            entityToSearch = "ProductFeatureAndAppl";
-            fieldToSearch = "productId";
+            entityToSearch = x.ProductFeatureAndAppl;
+            fieldToSearch = x.productId;
             valueToSearch = (String) context.get(x.productId);
-            orderBy = UtilMisc.toList("sequenceNum", "productFeatureApplTypeId", "productFeatureTypeId", "description");
+            orderBy = UtilMisc.toList(x.sequenceNum, x.productFeatureApplTypeId, x.productFeatureTypeId, x.description);
         }
 
         if (valueToSearch == null) {
-            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ProductFeatureByType", locale));
+            return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ProductFeatureByType, locale));
         }
 
         try {
-            // get all product features in this feature category
-            List<GenericValue> allFeatures = EntityQuery.use(delegator).from(entityToSearch).where(fieldToSearch, valueToSearch)
-                    .orderBy(orderBy).queryList();
+            ProductFeatureDao productFeatureDao = DaoRegistry.getDao(delegator, x.ProductFeature, ProductFeatureDao.class);
+            List<GenericValue> allFeatures = new LinkedList<>();
 
-            if ("ProductFeatureAndAppl".equals(entityToSearch) && productFeatureApplTypeId != null) {
-                allFeatures = EntityUtil.filterByAnd(allFeatures, UtilMisc.toMap("productFeatureApplTypeId", productFeatureApplTypeId));
+            if (x.ProductFeature.equals(entityToSearch)) {
+                List<ProductFeatureEntity> productFeatureEntities = productFeatureDao.list(Filters.eq(fieldToSearch, valueToSearch));
+                for (ProductFeatureEntity productFeatureEntity : productFeatureEntities) {
+                    allFeatures.add(delegator.makeValue(x.ProductFeature, Beans.beanToMap(productFeatureEntity)));
+                }
+            } else if (x.ProductFeatureGroupAndAppl.equals(entityToSearch)) {
+                ProductFeatureGroupApplDao productFeatureGroupApplDao = DaoRegistry.getDao(delegator, x.ProductFeatureGroupAppl,
+                        ProductFeatureGroupApplDao.class);
+                List<ProductFeatureGroupApplEntity> productFeatureGroupApplEntities = productFeatureGroupApplDao
+                        .list(Filters.eq(fieldToSearch, valueToSearch));
+                Map<String, ProductFeatureEntity> featureById = new HashMap<>();
+                for (ProductFeatureGroupApplEntity productFeatureGroupApplEntity : productFeatureGroupApplEntities) {
+                    String featureId = productFeatureGroupApplEntity.getProductFeatureId();
+                    ProductFeatureEntity productFeatureEntity = featureById.get(featureId);
+                    if (productFeatureEntity == null && !featureById.containsKey(featureId)) {
+                        productFeatureEntity = productFeatureDao.get(featureId).orElse(null);
+                        featureById.put(featureId, productFeatureEntity);
+                    }
+                    if (productFeatureEntity == null) {
+                        continue;
+                    }
+                    Map<String, Object> mergedFields = new HashMap<>(Beans.beanToMap(productFeatureEntity));
+                    mergedFields.putAll(Beans.beanToMap(productFeatureGroupApplEntity));
+                    allFeatures.add(delegator.makeValue(x.ProductFeatureGroupAndAppl, mergedFields));
+                }
+            } else if (x.ProductFeatureAndAppl.equals(entityToSearch)) {
+                ProductFeatureApplDao productFeatureApplDao = DaoRegistry.getDao(delegator, x.ProductFeatureAppl, ProductFeatureApplDao.class);
+                List<ProductFeatureApplEntity> productFeatureApplEntities = productFeatureApplDao.list(Filters.eq(fieldToSearch, valueToSearch));
+                Map<String, ProductFeatureEntity> featureById = new HashMap<>();
+                for (ProductFeatureApplEntity productFeatureApplEntity : productFeatureApplEntities) {
+                    String featureId = productFeatureApplEntity.getProductFeatureId();
+                    ProductFeatureEntity productFeatureEntity = featureById.get(featureId);
+                    if (productFeatureEntity == null && !featureById.containsKey(featureId)) {
+                        productFeatureEntity = productFeatureDao.get(featureId).orElse(null);
+                        featureById.put(featureId, productFeatureEntity);
+                    }
+                    if (productFeatureEntity == null) {
+                        continue;
+                    }
+                    Map<String, Object> mergedFields = new HashMap<>(Beans.beanToMap(productFeatureEntity));
+                    mergedFields.putAll(Beans.beanToMap(productFeatureApplEntity));
+                    allFeatures.add(delegator.makeValue(x.ProductFeatureAndAppl, mergedFields));
+                }
+            }
+            allFeatures.sort(createOrderComparator(orderBy));
+
+            if (x.ProductFeatureAndAppl.equals(entityToSearch) && productFeatureApplTypeId != null) {
+                allFeatures = EntityUtil.filterByAnd(allFeatures, UtilMisc.toMap(x.productFeatureApplTypeId, productFeatureApplTypeId));
             }
 
             List<String> featureTypes = new LinkedList<>();
@@ -121,9 +177,9 @@ public class ProductFeatureServices {
             }
 
             results = ServiceUtil.returnSuccess();
-            results.put("productFeatureTypes", featureTypes);
-            results.put("productFeaturesByType", featuresByType);
-        } catch (GenericEntityException ex) {
+            results.put(x.productFeatureTypes, featureTypes);
+            results.put(x.productFeaturesByType, featuresByType);
+        } catch (Exception ex) {
             Debug.logError(ex, ex.getMessage(), MODULE);
             return ServiceUtil.returnError(ex.getMessage());
         }
@@ -148,19 +204,34 @@ public class ProductFeatureServices {
              * see if it has every single feature in the list of productFeatureAppls as a STANDARD_FEATURE.  If so, then
              * it qualifies and add it to the list of existingVariantProductIds.
              */
-            List<GenericValue> productAssocs = EntityQuery.use(delegator).from("ProductAssoc").where("productId", productId, "productAssocTypeId",
-                    "PRODUCT_VARIANT").filterByDate().queryList();
+            ProductAssocDao productAssocDao = DaoRegistry.getDao(delegator, x.ProductAssoc, ProductAssocDao.class);
+            ProductFeatureApplDao productFeatureApplDao = DaoRegistry.getDao(delegator, x.ProductFeatureAppl, ProductFeatureApplDao.class);
+            List<ProductAssocEntity> productAssocEntities = productAssocDao.list(Filters.and(
+                    Filters.eq(x.productId, productId),
+                    Filters.eq(x.productAssocTypeId, x.PRODUCT_VARIANT)));
+            List<GenericValue> productAssocs = new LinkedList<>();
+            for (ProductAssocEntity productAssocEntity : productAssocEntities) {
+                productAssocs.add(delegator.makeValue(x.ProductAssoc, Beans.beanToMap(productAssocEntity)));
+            }
+            productAssocs = EntityUtil.filterByDate(productAssocs);
             for (GenericValue productAssoc: productAssocs) {
 
                 //for each associated product, if it has all standard features, display it's productId
                 boolean hasAllFeatures = true;
                 for (String productFeatureAndAppl: curProductFeatureAndAppls) {
-                    Map<String, String> findByMap = UtilMisc.toMap("productId", productAssoc.getString(x.productIdTo),
-                            "productFeatureId", productFeatureAndAppl,
-                            "productFeatureApplTypeId", "STANDARD_FEATURE");
+                    Map<String, String> findByMap = UtilMisc.toMap(x.productId, productAssoc.getString(x.productIdTo),
+                            x.productFeatureId, productFeatureAndAppl,
+                            x.productFeatureApplTypeId, x.STANDARD_FEATURE);
 
-                    List<GenericValue> standardProductFeatureAndAppls = EntityQuery.use(delegator).from("ProductFeatureAppl").where(findByMap)
-                            .filterByDate().queryList();
+                    List<ProductFeatureApplEntity> standardProductFeatureAndApplEntities = productFeatureApplDao.list(Filters.and(
+                            Filters.eq(x.productId, findByMap.get(x.productId)),
+                            Filters.eq(x.productFeatureId, findByMap.get(x.productFeatureId)),
+                            Filters.eq(x.productFeatureApplTypeId, findByMap.get(x.productFeatureApplTypeId))));
+                    List<GenericValue> standardProductFeatureAndAppls = new LinkedList<>();
+                    for (ProductFeatureApplEntity productFeatureApplEntity : standardProductFeatureAndApplEntities) {
+                        standardProductFeatureAndAppls.add(delegator.makeValue(x.ProductFeatureAppl, Beans.beanToMap(productFeatureApplEntity)));
+                    }
+                    standardProductFeatureAndAppls = EntityUtil.filterByDate(standardProductFeatureAndAppls);
                     if (UtilValidate.isEmpty(standardProductFeatureAndAppls)) {
                         hasAllFeatures = false;
                         break;
@@ -172,12 +243,56 @@ public class ProductFeatureServices {
                 }
             }
             results = ServiceUtil.returnSuccess();
-            results.put("variantProductIds", existingVariantProductIds);
-        } catch (GenericEntityException ex) {
+            results.put(x.variantProductIds, existingVariantProductIds);
+        } catch (Exception ex) {
             Debug.logError(ex, ex.getMessage(), MODULE);
             return ServiceUtil.returnError(ex.getMessage());
         }
         return results;
+    }
+
+    private static Comparator<GenericValue> createOrderComparator(List<String> orderBy) {
+        return (left, right) -> {
+            for (String orderByField : orderBy) {
+                boolean descending = false;
+                String fieldName = orderByField;
+                if (orderByField.startsWith(x.str_3bc15c8a)) {
+                    descending = true;
+                    fieldName = orderByField.substring(1);
+                }
+
+                int cmp = compareFieldValues(left.get(fieldName), right.get(fieldName));
+                if (cmp != 0) {
+                    return descending ? -cmp : cmp;
+                }
+            }
+
+            return 0;
+        };
+    }
+
+    private static int compareFieldValues(Object left, Object right) {
+        if (left == right) {
+            return 0;
+        }
+        if (left == null) {
+            return -1;
+        }
+        if (right == null) {
+            return 1;
+        }
+        if (left instanceof String && right instanceof String) {
+            return ((String) left).compareTo((String) right);
+        }
+        if (left instanceof BigDecimal && right instanceof BigDecimal) {
+            return ((BigDecimal) left).compareTo((BigDecimal) right);
+        }
+        if (left instanceof Comparable && right instanceof Comparable && left.getClass().isAssignableFrom(right.getClass())) {
+            @SuppressWarnings(x.unchecked)
+            Comparable<Object> comparableLeft = (Comparable<Object>) left;
+            return comparableLeft.compareTo(right);
+        }
+        return left.toString().compareTo(right.toString());
     }
 
     /*
@@ -193,11 +308,11 @@ public class ProductFeatureServices {
         String productId = (String) context.get(x.productId);
 
         try {
-            Map<String, Object> featuresResults = dispatcher.runSync("getProductFeaturesByType", UtilMisc.toMap("productId", productId));
+            Map<String, Object> featuresResults = dispatcher.runSync(x.getProductFeaturesByType, UtilMisc.toMap(x.productId, productId));
             Map<String, List<GenericValue>> features;
 
             if (featuresResults.get(ModelService.RESPONSE_MESSAGE).equals(ModelService.RESPOND_SUCCESS)) {
-                features = UtilGenerics.cast(featuresResults.get("productFeaturesByType"));
+                features = UtilGenerics.cast(featuresResults.get(x.productFeaturesByType));
             } else {
                 return ServiceUtil.returnError((String) featuresResults.get(ModelService.ERROR_MESSAGE_LIST));
             }
@@ -226,42 +341,42 @@ public class ProductFeatureServices {
                 // existing list of features and id code or from scratch.
                 if (combinations.isEmpty()) {
                     for (GenericValue currentFeature: currentFeatures) {
-                        if ("SELECTABLE_FEATURE".equals(currentFeature.getString(x.productFeatureApplTypeId))) {
+                        if (x.SELECTABLE_FEATURE.equals(currentFeature.getString(x.productFeatureApplTypeId))) {
                             Map<String, Object> newCombination = new HashMap<>();
                             List<GenericValue> newFeatures = new LinkedList<>();
                             List<String> newFeatureIds = new LinkedList<>();
                             if (currentFeature.getString(x.idCode) != null) {
-                                newCombination.put("defaultVariantProductId", productId + currentFeature.getString(x.idCode));
+                                newCombination.put(x.defaultVariantProductId, productId + currentFeature.getString(x.idCode));
                             } else {
-                                newCombination.put("defaultVariantProductId", productId);
+                                newCombination.put(x.defaultVariantProductId, productId);
                             }
                             newFeatures.add(currentFeature);
                             newFeatureIds.add(currentFeature.getString(x.productFeatureId));
-                            newCombination.put("curProductFeatureAndAppls", newFeatures);
-                            newCombination.put("curProductFeatureIds", newFeatureIds);
+                            newCombination.put(x.curProductFeatureAndAppls, newFeatures);
+                            newCombination.put(x.curProductFeatureIds, newFeatureIds);
                             newCombinations.add(newCombination);
                         }
                     }
                 } else {
                     for (Map<String, Object> combination: combinations) {
                         for (GenericValue currentFeature: currentFeatures) {
-                            if ("SELECTABLE_FEATURE".equals(currentFeature.getString(x.productFeatureApplTypeId))) {
+                            if (x.SELECTABLE_FEATURE.equals(currentFeature.getString(x.productFeatureApplTypeId))) {
                                 Map<String, Object> newCombination = new HashMap<>();
                                 // .clone() is important, or you'll keep adding to the same List for all the variants
                                 // have to cast twice: once from get() and once from clone()
                                 List<GenericValue> newFeatures = UtilMisc.makeListWritable(UtilGenerics.cast(combination
-                                        .get("curProductFeatureAndAppls")));
-                                List<String> newFeatureIds = UtilMisc.makeListWritable(UtilGenerics.cast(combination.get("curProductFeatureIds")));
+                                        .get(x.curProductFeatureAndAppls)));
+                                List<String> newFeatureIds = UtilMisc.makeListWritable(UtilGenerics.cast(combination.get(x.curProductFeatureIds)));
                                 if (currentFeature.getString(x.idCode) != null) {
-                                    newCombination.put("defaultVariantProductId", combination.get("defaultVariantProductId")
+                                    newCombination.put(x.defaultVariantProductId, combination.get(x.defaultVariantProductId)
                                             + currentFeature.getString(x.idCode));
                                 } else {
-                                    newCombination.put("defaultVariantProductId", combination.get("defaultVariantProductId"));
+                                    newCombination.put(x.defaultVariantProductId, combination.get(x.defaultVariantProductId));
                                 }
                                 newFeatures.add(currentFeature);
                                 newFeatureIds.add(currentFeature.getString(x.productFeatureId));
-                                newCombination.put("curProductFeatureAndAppls", newFeatures);
-                                newCombination.put("curProductFeatureIds", newFeatureIds);
+                                newCombination.put(x.curProductFeatureAndAppls, newFeatures);
+                                newCombination.put(x.curProductFeatureIds, newFeatureIds);
                                 newCombinations.add(newCombination);
                             }
                         }
@@ -279,18 +394,18 @@ public class ProductFeatureServices {
             // now figure out which of these combinations already have productIds associated with them
             for (Map<String, Object> combination: oldCombinations) {
                 // Verify if the default code is already used, if so add a numeric suffix
-                if (defaultVariantProductIds.contains(combination.get("defaultVariantProductId"))) {
-                    combination.put("defaultVariantProductId", combination.get("defaultVariantProductId") + "-" + (defaultCodeCounter < 10 ? "0"
-                            + defaultCodeCounter : "" + defaultCodeCounter));
+                if (defaultVariantProductIds.contains(combination.get(x.defaultVariantProductId))) {
+                    combination.put(x.defaultVariantProductId, combination.get(x.defaultVariantProductId) + x.str_3bc15c8a + (defaultCodeCounter < 10 ? x._0
+                            + defaultCodeCounter : x.emptyString + defaultCodeCounter));
                     defaultCodeCounter++;
                 }
-                defaultVariantProductIds.add((String) combination.get("defaultVariantProductId"));
-                results = dispatcher.runSync("getAllExistingVariants", UtilMisc.toMap("productId", productId,
-                                             "productFeatureAppls", combination.get("curProductFeatureIds")));
-                combination.put("existingVariantProductIds", results.get("variantProductIds"));
+                defaultVariantProductIds.add((String) combination.get(x.defaultVariantProductId));
+                results = dispatcher.runSync(x.getAllExistingVariants, UtilMisc.toMap(x.productId, productId,
+                                             x.productFeatureAppls, combination.get(x.curProductFeatureIds)));
+                combination.put(x.existingVariantProductIds, results.get(x.variantProductIds));
             }
             results = ServiceUtil.returnSuccess();
-            results.put("featureCombinations", oldCombinations);
+            results.put(x.featureCombinations, oldCombinations);
         } catch (GenericServiceException ex) {
             Debug.logError(ex, ex.getMessage(), MODULE);
             return ServiceUtil.returnError(ex.getMessage());
@@ -314,13 +429,13 @@ public class ProductFeatureServices {
         // get all the product members of the product category
         Map<String, Object> result;
         try {
-            result = dispatcher.runSync("getProductCategoryMembers", UtilMisc.toMap("categoryId", productCategoryId));
+            result = dispatcher.runSync(x.getProductCategoryMembers, UtilMisc.toMap(x.categoryId, productCategoryId));
         } catch (GenericServiceException ex) {
-            Debug.logError("Cannot get category memebers for " + productCategoryId + " due to error: " + ex.getMessage(), MODULE);
+            Debug.logError(x.Cannot_get_category_memebers_for + productCategoryId + x.due_to_error + ex.getMessage(), MODULE);
             return ServiceUtil.returnError(ex.getMessage());
         }
 
-        List<GenericValue> memberProducts = UtilGenerics.cast(result.get("categoryMembers"));
+        List<GenericValue> memberProducts = UtilGenerics.cast(result.get(x.categoryMembers));
         if ((memberProducts != null) && (!memberProducts.isEmpty())) {
             // construct a Map of productFeatureTypeId -> productFeatureId from the productFeatures List
             Map<String, String> featuresByType = new HashMap<>();
@@ -333,31 +448,31 @@ public class ProductFeatureServices {
                 // find variants for each member product of the category
 
                 try {
-                    result = dispatcher.runSync("getProductVariant", UtilMisc.toMap("productId", memberProduct.getString(x.productId),
-                            "selectedFeatures", featuresByType));
+                    result = dispatcher.runSync(x.getProductVariant, UtilMisc.toMap(x.productId, memberProduct.getString(x.productId),
+                            x.selectedFeatures, featuresByType));
                 } catch (GenericServiceException ex) {
-                    Debug.logError("Cannot get product variants for " + memberProduct.getString(x.productId) + " due to error: "
+                    Debug.logError(x.Cannot_get_product_variants_for + memberProduct.getString(x.productId) + x.due_to_error
                             + ex.getMessage(), MODULE);
                     return ServiceUtil.returnError(ex.getMessage());
                 }
 
-                List<GenericValue> variantProducts = UtilGenerics.cast(result.get("products"));
+                List<GenericValue> variantProducts = UtilGenerics.cast(result.get(x.products));
                 if ((variantProducts != null) && (!variantProducts.isEmpty())) {
                     products.addAll(variantProducts);
                 } else {
-                    Debug.logWarning("Product " + memberProduct.getString(x.productId) + " did not have any variants for the given features", MODULE);
+                    Debug.logWarning(x.Product_c553701d + memberProduct.getString(x.productId) + x.did_not_have_any_variants_for_the_given_features, MODULE);
                 }
             }
 
             if (products.isEmpty()) {
-                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, "ProductCategoryNoVariants", locale));
+                return ServiceUtil.returnError(UtilProperties.getMessage(RESOURCE, x.ProductCategoryNoVariants, locale));
             } else {
                 results = ServiceUtil.returnSuccess();
-                results.put("products", products);
+                results.put(x.products, products);
             }
 
         } else {
-            Debug.logWarning("No products found in " + productCategoryId, MODULE);
+            Debug.logWarning(x.No_products_found_in + productCategoryId, MODULE);
         }
 
         return results;
