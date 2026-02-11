@@ -18,10 +18,13 @@
  */
 package org.apache.ofbiz.spring.web;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-import org.apache.ofbiz.base.start.Start;
+import org.apache.ofbiz.base.start.Config;
+import org.apache.ofbiz.base.start.OfbizRuntime;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -40,8 +43,12 @@ public class SystemStatusController {
 
     @GetMapping("/status")
     public Map<String, Object> status() {
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("serverState", Start.getInstance().getCurrentState().toString());
+        final OfbizRuntime runtime = OfbizRuntime.getInstance();
+        final Config config = runtime.getConfig();
+        final Map<String, Object> result = new LinkedHashMap<>();
+        result.put("started", runtime.isStarted());
+        result.put("serverState", runtime.getCurrentState().toString());
+        result.put("loaders", config == null ? List.of() : new ArrayList<>(config.getLoaders()));
         return result;
     }
 }

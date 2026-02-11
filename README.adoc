@@ -166,13 +166,19 @@ ________________________________________________________________________________
 [[visit-ofbiz-through-your-browser]]
 === Visit OFBiz through your browser:
 
-https://localhost:8443/ordermgr[Order Back Office interface]
+http://localhost:8080/[Spring Web frontend]
 
-https://localhost:8443/accounting[Accounting Back Office interface]
+http://localhost:8080/api/system/status[System status API]
 
-https://localhost:8443/webtools[Administrator interface]
+http://localhost:8080/api/services[Exported services API]
 
-You can log in with the user *admin* and password *ofbiz*.
+http://localhost:8080/api/services/all[All services catalog API]
+
+`POST /api/services/{serviceName}/invoke` invokes any exported service.
+
+`POST /api/services/all/{serviceName}/invoke` invokes any service; non-exported services require `X-UserLoginId` (or `userLoginId`).
+
+Use `http://` for port `8080`. If `https://localhost:8080` is used, Tomcat can log `Invalid character found in method name` because TLS bytes were sent to a plain HTTP connector.
 
 // end::quickstart[]
 

@@ -32,6 +32,6 @@ under the License.
         <property name="port" value="1099"/>
     </container>
     <!-- load the administration server -->
-    <container name="admin-container" loaders="main" class="org.apache.ofbiz.base.container.AdminServerContainer"/>
+    <container name="admin-container" loaders="main,spring" class="org.apache.ofbiz.base.container.AdminServerContainer"/>
 
 </ofbiz-component>

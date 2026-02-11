@@ -118,7 +118,7 @@ ext.gradlew = os.contains('windows') ? 'gradlew.bat' : './gradlew'
 ext.pluginsDir = "${rootDir}/plugins"
 
 application {
-    mainClass = 'org.apache.ofbiz.base.start.Start'
+    mainClass = 'org.apache.ofbiz.spring.OfbizSpringBootApplication'
     applicationDefaultJvmArgs = project.hasProperty('jvmArgs')
             ? jvmArgs.tokenize()
             : ['-Xms128M','-Xmx1024M',
@@ -137,6 +137,14 @@ task runSpringBoot(type: JavaExec, dependsOn: classes) {
     if (project.hasProperty('springArgs')) {
         args springArgs.tokenize()
     }
+}
+
+task runLegacyOfbiz(type: JavaExec, dependsOn: classes) {
+    group = 'OFBiz Server'
+    description = 'Run OFBiz with the legacy startup entry point'
+    mainClass = 'org.apache.ofbiz.base.start.Start'
+    classpath = sourceSets.main.runtimeClasspath
+    jvmArgs application.applicationDefaultJvmArgs
 }
 
 distributions.main.contents.from(rootDir) {
