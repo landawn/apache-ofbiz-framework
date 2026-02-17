@@ -27,7 +27,6 @@ import java.util.TimeZone;
 
 import org.apache.ofbiz.base.util.UtilValidate;
 import org.apache.ofbiz.entity.Delegator;
-import org.apache.ofbiz.entity.DelegatorFactory;
 import org.apache.ofbiz.entity.GenericEntityException;
 import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.util.EntityQuery;
@@ -35,26 +34,34 @@ import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ModelService;
-import org.apache.ofbiz.service.ServiceContainer;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 
 /**
  * Spring wrapper around OFBiz service dispatcher.
+ * <p>
+ * Marked {@link Lazy} because the injected Delegator and LocalDispatcher beans
+ * depend on the OFBiz runtime being fully started (via SmartLifecycle).
  */
 @Component
+@Lazy
 public class OfbizServiceFacade {
-    private static final String DEFAULT_DELEGATOR = "default";
-    private static final String DISPATCHER_NAME = "spring-dispatcher";
+    private final Delegator delegator;
+    private final LocalDispatcher dispatcher;
+
+    public OfbizServiceFacade(Delegator delegator, LocalDispatcher dispatcher) {
+        this.delegator = delegator;
+        this.dispatcher = dispatcher;
+    }
 
     public LocalDispatcher getDispatcher() {
-        final Delegator delegator = DelegatorFactory.getDelegator(DEFAULT_DELEGATOR);
-        return ServiceContainer.getLocalDispatcher(DISPATCHER_NAME, delegator);
+        return dispatcher;
     }
 
     public DispatchContext getDispatchContext() {
-        return getDispatcher().getDispatchContext();
+        return dispatcher.getDispatchContext();
     }
 
     public Map<String, Object> invokeService(

@@ -18,21 +18,37 @@
  */
 package org.apache.ofbiz.spring;
 
+import java.util.Arrays;
+
 import org.apache.ofbiz.base.start.OfbizRuntime;
 import org.apache.ofbiz.base.start.StartupException;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 /**
  * Starts/stops OFBiz containers under Spring Boot lifecycle management.
+ * <p>
+ * Supports Spring Boot profiles to select the OFBiz loader mode:
+ * <ul>
+ *   <li>{@code loaddata} profile → sets {@code ofbiz.start.loaders=load-data}</li>
+ *   <li>{@code test} profile → sets {@code ofbiz.start.loaders=test}</li>
+ *   <li>default → uses {@code spring} loader</li>
+ * </ul>
  */
 @Component
 public class OfbizRuntimeLifecycle implements SmartLifecycle {
     private volatile boolean running;
+    private final Environment environment;
+
+    public OfbizRuntimeLifecycle(Environment environment) {
+        this.environment = environment;
+    }
 
     @Override
     public void start() {
         try {
+            applyProfileOverrides();
             OfbizRuntime.getInstance().start();
             running = true;
         } catch (StartupException e) {
@@ -65,5 +81,25 @@ public class OfbizRuntimeLifecycle implements SmartLifecycle {
     @Override
     public int getPhase() {
         return Integer.MIN_VALUE;
+    }
+
+    /**
+     * Maps active Spring Boot profiles to OFBiz loader system properties.
+     */
+    private void applyProfileOverrides() {
+        String ofbizHome = environment.getProperty("ofbiz.home", ".");
+        System.setProperty("ofbiz.home", ofbizHome);
+
+        String[] profiles = environment.getActiveProfiles();
+        if (Arrays.asList(profiles).contains("loaddata")) {
+            System.setProperty("ofbiz.start.loaders", "load-data");
+        } else if (Arrays.asList(profiles).contains("test")) {
+            System.setProperty("ofbiz.start.loaders", "test");
+        }
+        // Also pick up ofbiz.start.loaders from application.yml if set
+        String loaders = environment.getProperty("ofbiz.start.loaders");
+        if (loaders != null && !loaders.isEmpty()) {
+            System.setProperty("ofbiz.start.loaders", loaders);
+        }
     }
 }

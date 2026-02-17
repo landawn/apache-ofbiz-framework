@@ -139,13 +139,8 @@ task runSpringBoot(type: JavaExec, dependsOn: classes) {
     }
 }
 
-task runLegacyOfbiz(type: JavaExec, dependsOn: classes) {
-    group = 'OFBiz Server'
-    description = 'Run OFBiz with the legacy startup entry point'
-    mainClass = 'org.apache.ofbiz.base.start.Start'
-    classpath = sourceSets.main.runtimeClasspath
-    jvmArgs application.applicationDefaultJvmArgs
-}
+// Legacy runLegacyOfbiz task removed — Spring Boot is now the sole entry point.
+// Use 'runSpringBoot' or the 'ofbiz' rule-based tasks instead.
 
 distributions.main.contents.from(rootDir) {
     include 'framework/**', 'applications/**', 'themes/**', 'plugins/**'
@@ -425,20 +420,70 @@ task testIntegration(group: ofbizServer) {
 task terminateOfbiz(group: ofbizServer,
     description: 'Force termination of any running OFBiz servers, only use if \"--shutdown\" command fails') {
     doLast {
-        if (os.contains('windows')) {
-            Runtime.getRuntime().exec("wmic process where \"CommandLine Like \'%org.apache.ofbiz.base.start.Start%\'\" Call Terminate")
-        } else {
-            def processOutput = new ByteArrayOutputStream()
-            exec {
-                commandLine 'ps', 'ax'
-                standardOutput = processOutput
+        def projectPath = rootDir.absolutePath.toLowerCase()
+        def ofbizMainClasses = [
+            'org.apache.ofbiz.base.start.Start',
+            'org.apache.ofbiz.spring.OfbizSpringBootApplication'
+        ]
+
+        def isOfbizProcess = { String commandLine ->
+            if (!commandLine) {
+                return false
             }
-            processOutput.toString().split(System.lineSeparator()).each { line ->
-                if (line ==~ /.*org\.apache\.ofbiz\.base\.start\.Start.*/) {
-                    exec { commandLine 'kill', '-9', line.tokenize().first() }
+            def commandLineLower = commandLine.toLowerCase()
+            return commandLineLower.contains(projectPath)
+                && ofbizMainClasses.any { commandLineLower.contains(it.toLowerCase()) }
+        }
+
+        def terminatedPids = []
+        java.lang.ProcessHandle.allProcesses().forEach { process ->
+            def commandLine = process.info().commandLine().orElse('').trim()
+            if (!commandLine) {
+                def command = process.info().command().orElse('')
+                def arguments = process.info().arguments().orElse([] as String[]).join(' ')
+                commandLine = "${command} ${arguments}".trim()
+            }
+            if (isOfbizProcess(commandLine)) {
+                logger.lifecycle("Terminating OFBiz process pid=${process.pid()}: ${commandLine}")
+                if (!process.destroy()) {
+                    process.destroyForcibly()
+                }
+                terminatedPids << process.pid()
+            }
+        }
+
+        if (os.contains('windows')) {
+            // Fallback for Windows where ProcessHandle may not expose full command lines for all JVMs.
+            def escapedRootPath = rootDir.absolutePath.replace("'", "''")
+            def psScript = """
+\$projectPath = '${escapedRootPath}'.ToLowerInvariant()
+Get-CimInstance Win32_Process | Where-Object {
+    \$cmd = \$_.CommandLine
+    if (-not \$cmd) { return \$false }
+    \$cmdLower = \$cmd.ToLowerInvariant()
+    return \$cmdLower.Contains(\$projectPath) -and (
+        \$cmdLower.Contains('org.apache.ofbiz.base.start.start') -or
+        \$cmdLower.Contains('org.apache.ofbiz.spring.ofbizspringbootapplication')
+    )
+} | ForEach-Object {
+    Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue
+}
+"""
+            exec {
+                commandLine 'powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', psScript
+                ignoreExitValue true
+            }
+        }
+
+        // Give the OS a brief window to release file locks (notably on Windows).
+        terminatedPids.each { pid ->
+            java.lang.ProcessHandle.of(pid).ifPresent { process ->
+                for (int i = 0; i < 50 && process.isAlive(); i++) {
+                    Thread.sleep(100)
                 }
             }
         }
+        Thread.sleep(500)
     }
 }
 
@@ -1011,9 +1056,10 @@ task cleanFooterFiles(group: cleanupGroup, description: 'clean generated footer 
  * run whenever the task cleanAll executes (dependency matched by regex)
  */
 def cleanTasks = tasks.findAll { it.name ==~ /^clean.+/ }
-task cleanAll(group: cleanupGroup, dependsOn: [cleanTasks, clean]) {
+task cleanAll(group: cleanupGroup, dependsOn: [terminateOfbiz, cleanTasks, clean]) {
     description 'Execute all cleaning tasks.'
 }
+clean.mustRunAfter terminateOfbiz
 
 /* ========================================================
  * Rules-based OFBiz server commands

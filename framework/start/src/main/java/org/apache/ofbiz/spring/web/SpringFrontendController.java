@@ -22,12 +22,28 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
- * Routes browser entry points to the Spring frontend.
+ * Routes legacy OFBiz browser entry points to the Spring frontend.
  */
 @Controller
 public class SpringFrontendController {
 
-    @GetMapping({"/ordermgr", "/accounting", "/webtools"})
+    @GetMapping({
+            "/accounting", "/accounting/**",
+            "/ap", "/ap/**",
+            "/ar", "/ar/**",
+            "/catalog", "/catalog/**",
+            "/content", "/content/**",
+            "/control", "/control/**",
+            "/facility", "/facility/**",
+            "/humanres", "/humanres/**",
+            "/manufacturing", "/manufacturing/**",
+            "/marketing", "/marketing/**",
+            "/ordermgr", "/ordermgr/**",
+            "/ofbizsetup", "/ofbizsetup/**",
+            "/partymgr", "/partymgr/**",
+            "/sfa", "/sfa/**",
+            "/webtools", "/webtools/**",
+            "/workeffort", "/workeffort/**"})
     public String redirectLegacyFrontendUrls() {
         return "redirect:/";
     }

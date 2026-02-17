@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(git -C \"C:\\\\Users\\\\haiyangl\\\\Landawn\\\\apache-ofbiz-framework\" log --oneline -10)",
+      "Bash(git -C \"C:\\\\Users\\\\haiyangl\\\\Landawn\\\\apache-ofbiz-framework\" branch -a)",
+      "Bash(xargs:*)",
+      "Bash(find:*)",
+      "Bash(findstr:*)",
+      "Bash(jar tf:*)",
+      "Bash(./gradlew compileJava:*)",
+      "Bash(while read f)",
+      "Bash(do jar tf:*)",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash(__NEW_LINE_91f98343119088dc__ echo \"\")"
+    ]
+  }
+}

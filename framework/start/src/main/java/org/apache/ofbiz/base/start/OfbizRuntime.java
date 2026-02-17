@@ -51,9 +51,9 @@ public final class OfbizRuntime {
         if (started.get()) {
             return;
         }
-        if (System.getProperty("ofbiz.start.loaders") == null) {
-            System.setProperty("ofbiz.start.loaders", "spring");
-        }
+        // Always use "spring" loader — Spring Boot manages the web server.
+        // Data-loading and test modes override this via Spring Boot profiles.
+        System.setProperty("ofbiz.start.loaders", System.getProperty("ofbiz.start.loaders", "spring"));
         if (System.getProperty("ofbiz.admin.port") == null) {
             System.setProperty("ofbiz.admin.port", "0");
         }

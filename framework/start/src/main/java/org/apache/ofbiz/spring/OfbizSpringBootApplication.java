@@ -25,6 +25,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class OfbizSpringBootApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(OfbizSpringBootApplication.class, args);
+        SpringApplication application = new SpringApplication(OfbizSpringBootApplication.class);
+        application.addInitializers(context -> {
+            String ofbizHome = context.getEnvironment().getProperty("ofbiz.home", System.getProperty("ofbiz.home", "."));
+            System.setProperty("ofbiz.home", ofbizHome);
+        });
+        application.run(args);
     }
 }

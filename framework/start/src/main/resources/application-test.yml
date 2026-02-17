@@ -1,0 +1,5 @@
+# Spring Boot profile for OFBiz test execution mode.
+# Usage: --spring.profiles.active=test
+ofbiz:
+  start:
+    loaders: test

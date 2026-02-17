@@ -1,0 +1,5 @@
+# Spring Boot profile for OFBiz data loading mode.
+# Usage: --spring.profiles.active=loaddata
+ofbiz:
+  start:
+    loaders: load-data

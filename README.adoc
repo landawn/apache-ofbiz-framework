@@ -178,6 +178,9 @@ http://localhost:8080/api/services/all[All services catalog API]
 
 `POST /api/services/all/{serviceName}/invoke` invokes any service; non-exported services require `X-UserLoginId` (or `userLoginId`).
 
+Legacy OFBiz child-webapp deployment is disabled by default (`ofbiz.spring.legacy-webapps.enabled=false`).
+Set `ofbiz.spring.legacy-webapps.enabled=true` if you need the transitional Tomcat child-context behavior.
+
 Use `http://` for port `8080`. If `https://localhost:8080` is used, Tomcat can log `Invalid character found in method name` because TLS bytes were sent to a plain HTTP connector.
 
 // end::quickstart[]

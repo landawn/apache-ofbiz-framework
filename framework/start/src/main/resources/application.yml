@@ -4,6 +4,24 @@ server:
 spring:
   application:
     name: ofbiz-spring-web
+  main:
+    lazy-initialization: true
+
+# OFBiz configuration
+ofbiz:
+  home: .
+  spring:
+    legacy-webapps:
+      enabled: true
+  admin:
+    host: 127.0.0.1
+    port: 0
+  log:
+    dir: runtime/logs
+  entity:
+    delegator: default
+  start:
+    loaders: spring
 
 logging:
   level:
