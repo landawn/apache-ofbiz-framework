@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.EmplPositionFulfillmentEntity;
 
-public interface EmplPositionFulfillmentDao extends CrudDao<EmplPositionFulfillmentEntity, EmplPositionFulfillmentEntity, SQLBuilder.PSC, EmplPositionFulfillmentDao> {
+public interface EmplPositionFulfillmentDao extends CrudDao<EmplPositionFulfillmentEntity, EmplPositionFulfillmentEntity, SqlBuilder.PSC, EmplPositionFulfillmentDao> {
 }

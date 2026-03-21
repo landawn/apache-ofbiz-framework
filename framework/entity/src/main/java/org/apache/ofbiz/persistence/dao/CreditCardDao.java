@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.CreditCardEntity;
 
-public interface CreditCardDao extends CrudDao<CreditCardEntity, String, SQLBuilder.PSC, CreditCardDao> {
+public interface CreditCardDao extends CrudDao<CreditCardEntity, String, SqlBuilder.PSC, CreditCardDao> {
 }

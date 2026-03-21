@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.AgreementItemTypeAttrEntity;
 
-public interface AgreementItemTypeAttrDao extends CrudDao<AgreementItemTypeAttrEntity, AgreementItemTypeAttrEntity, SQLBuilder.PSC, AgreementItemTypeAttrDao> {
+public interface AgreementItemTypeAttrDao extends CrudDao<AgreementItemTypeAttrEntity, AgreementItemTypeAttrEntity, SqlBuilder.PSC, AgreementItemTypeAttrDao> {
 }

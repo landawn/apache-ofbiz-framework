@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.PortalPortletEntity;
 
-public interface PortalPortletDao extends CrudDao<PortalPortletEntity, String, SQLBuilder.PSC, PortalPortletDao> {
+public interface PortalPortletDao extends CrudDao<PortalPortletEntity, String, SqlBuilder.PSC, PortalPortletDao> {
 }

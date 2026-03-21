@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.FixedAssetTypeEntity;
 
-public interface FixedAssetTypeDao extends CrudDao<FixedAssetTypeEntity, String, SQLBuilder.PSC, FixedAssetTypeDao> {
+public interface FixedAssetTypeDao extends CrudDao<FixedAssetTypeEntity, String, SqlBuilder.PSC, FixedAssetTypeDao> {
 }

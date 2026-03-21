@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.FinAccountTypeGlAccountEntity;
 
-public interface FinAccountTypeGlAccountDao extends CrudDao<FinAccountTypeGlAccountEntity, FinAccountTypeGlAccountEntity, SQLBuilder.PSC, FinAccountTypeGlAccountDao> {
+public interface FinAccountTypeGlAccountDao extends CrudDao<FinAccountTypeGlAccountEntity, FinAccountTypeGlAccountEntity, SqlBuilder.PSC, FinAccountTypeGlAccountDao> {
 }

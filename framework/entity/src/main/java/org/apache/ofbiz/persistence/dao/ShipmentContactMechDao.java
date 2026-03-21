@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.ShipmentContactMechEntity;
 
-public interface ShipmentContactMechDao extends CrudDao<ShipmentContactMechEntity, ShipmentContactMechEntity, SQLBuilder.PSC, ShipmentContactMechDao> {
+public interface ShipmentContactMechDao extends CrudDao<ShipmentContactMechEntity, ShipmentContactMechEntity, SqlBuilder.PSC, ShipmentContactMechDao> {
 }

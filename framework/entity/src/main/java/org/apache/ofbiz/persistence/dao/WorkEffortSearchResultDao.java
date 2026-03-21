@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.WorkEffortSearchResultEntity;
 
-public interface WorkEffortSearchResultDao extends CrudDao<WorkEffortSearchResultEntity, String, SQLBuilder.PSC, WorkEffortSearchResultDao> {
+public interface WorkEffortSearchResultDao extends CrudDao<WorkEffortSearchResultEntity, String, SqlBuilder.PSC, WorkEffortSearchResultDao> {
 }

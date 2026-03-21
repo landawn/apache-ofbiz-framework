@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.CountryTeleCodeEntity;
 
-public interface CountryTeleCodeDao extends CrudDao<CountryTeleCodeEntity, String, SQLBuilder.PSC, CountryTeleCodeDao> {
+public interface CountryTeleCodeDao extends CrudDao<CountryTeleCodeEntity, String, SqlBuilder.PSC, CountryTeleCodeDao> {
 }

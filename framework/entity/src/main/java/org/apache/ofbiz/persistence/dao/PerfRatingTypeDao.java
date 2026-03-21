@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.PerfRatingTypeEntity;
 
-public interface PerfRatingTypeDao extends CrudDao<PerfRatingTypeEntity, String, SQLBuilder.PSC, PerfRatingTypeDao> {
+public interface PerfRatingTypeDao extends CrudDao<PerfRatingTypeEntity, String, SqlBuilder.PSC, PerfRatingTypeDao> {
 }

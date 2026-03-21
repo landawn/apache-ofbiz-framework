@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.PaymentGatewayConfigTypeEntity;
 
-public interface PaymentGatewayConfigTypeDao extends CrudDao<PaymentGatewayConfigTypeEntity, String, SQLBuilder.PSC, PaymentGatewayConfigTypeDao> {
+public interface PaymentGatewayConfigTypeDao extends CrudDao<PaymentGatewayConfigTypeEntity, String, SqlBuilder.PSC, PaymentGatewayConfigTypeDao> {
 }

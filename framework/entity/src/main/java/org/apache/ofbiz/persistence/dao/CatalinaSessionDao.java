@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.CatalinaSessionEntity;
 
-public interface CatalinaSessionDao extends CrudDao<CatalinaSessionEntity, String, SQLBuilder.PSC, CatalinaSessionDao> {
+public interface CatalinaSessionDao extends CrudDao<CatalinaSessionEntity, String, SqlBuilder.PSC, CatalinaSessionDao> {
 }

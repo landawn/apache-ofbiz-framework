@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.EnumerationTypeEntity;
 
-public interface EnumerationTypeDao extends CrudDao<EnumerationTypeEntity, String, SQLBuilder.PSC, EnumerationTypeDao> {
+public interface EnumerationTypeDao extends CrudDao<EnumerationTypeEntity, String, SqlBuilder.PSC, EnumerationTypeDao> {
 }

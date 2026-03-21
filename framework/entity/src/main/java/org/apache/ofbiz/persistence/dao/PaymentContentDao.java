@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.PaymentContentEntity;
 
-public interface PaymentContentDao extends CrudDao<PaymentContentEntity, PaymentContentEntity, SQLBuilder.PSC, PaymentContentDao> {
+public interface PaymentContentDao extends CrudDao<PaymentContentEntity, PaymentContentEntity, SqlBuilder.PSC, PaymentContentDao> {
 }

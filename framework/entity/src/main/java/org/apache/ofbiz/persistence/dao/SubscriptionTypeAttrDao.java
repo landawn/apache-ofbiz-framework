@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.SubscriptionTypeAttrEntity;
 
-public interface SubscriptionTypeAttrDao extends CrudDao<SubscriptionTypeAttrEntity, SubscriptionTypeAttrEntity, SQLBuilder.PSC, SubscriptionTypeAttrDao> {
+public interface SubscriptionTypeAttrDao extends CrudDao<SubscriptionTypeAttrEntity, SubscriptionTypeAttrEntity, SqlBuilder.PSC, SubscriptionTypeAttrDao> {
 }

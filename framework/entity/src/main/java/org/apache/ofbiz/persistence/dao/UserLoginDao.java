@@ -1,10 +1,10 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.UserLoginEntity;
 
-public interface UserLoginDao extends CrudDao<UserLoginEntity, String, SQLBuilder.PSC, UserLoginDao>, DelegatorQueryDao {
+public interface UserLoginDao extends CrudDao<UserLoginEntity, String, SqlBuilder.PSC, UserLoginDao>, DelegatorQueryDao {
     private static java.util.Set<String> asSet(java.util.Collection<String> fieldsToSelect) {
         if (fieldsToSelect == null) {
             return null;

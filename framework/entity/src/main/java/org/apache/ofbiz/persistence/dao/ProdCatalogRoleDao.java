@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.ProdCatalogRoleEntity;
 
-public interface ProdCatalogRoleDao extends CrudDao<ProdCatalogRoleEntity, ProdCatalogRoleEntity, SQLBuilder.PSC, ProdCatalogRoleDao> {
+public interface ProdCatalogRoleDao extends CrudDao<ProdCatalogRoleEntity, ProdCatalogRoleEntity, SqlBuilder.PSC, ProdCatalogRoleDao> {
 }

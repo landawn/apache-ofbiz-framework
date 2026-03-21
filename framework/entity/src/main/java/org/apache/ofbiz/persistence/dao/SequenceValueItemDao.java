@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.SequenceValueItemEntity;
 
-public interface SequenceValueItemDao extends CrudDao<SequenceValueItemEntity, String, SQLBuilder.PSC, SequenceValueItemDao> {
+public interface SequenceValueItemDao extends CrudDao<SequenceValueItemEntity, String, SqlBuilder.PSC, SequenceValueItemDao> {
 }

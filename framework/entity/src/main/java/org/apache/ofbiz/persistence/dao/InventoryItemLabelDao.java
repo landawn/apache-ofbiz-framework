@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.InventoryItemLabelEntity;
 
-public interface InventoryItemLabelDao extends CrudDao<InventoryItemLabelEntity, String, SQLBuilder.PSC, InventoryItemLabelDao> {
+public interface InventoryItemLabelDao extends CrudDao<InventoryItemLabelEntity, String, SqlBuilder.PSC, InventoryItemLabelDao> {
 }

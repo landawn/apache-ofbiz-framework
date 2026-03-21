@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.ValidResponsibilityEntity;
 
-public interface ValidResponsibilityDao extends CrudDao<ValidResponsibilityEntity, ValidResponsibilityEntity, SQLBuilder.PSC, ValidResponsibilityDao> {
+public interface ValidResponsibilityDao extends CrudDao<ValidResponsibilityEntity, ValidResponsibilityEntity, SqlBuilder.PSC, ValidResponsibilityDao> {
 }

@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.VisualThemeResourceEntity;
 
-public interface VisualThemeResourceDao extends CrudDao<VisualThemeResourceEntity, VisualThemeResourceEntity, SQLBuilder.PSC, VisualThemeResourceDao> {
+public interface VisualThemeResourceDao extends CrudDao<VisualThemeResourceEntity, VisualThemeResourceEntity, SqlBuilder.PSC, VisualThemeResourceDao> {
 }

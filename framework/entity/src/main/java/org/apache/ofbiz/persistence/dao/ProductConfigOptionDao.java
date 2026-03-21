@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.ProductConfigOptionEntity;
 
-public interface ProductConfigOptionDao extends CrudDao<ProductConfigOptionEntity, ProductConfigOptionEntity, SQLBuilder.PSC, ProductConfigOptionDao> {
+public interface ProductConfigOptionDao extends CrudDao<ProductConfigOptionEntity, ProductConfigOptionEntity, SqlBuilder.PSC, ProductConfigOptionDao> {
 }

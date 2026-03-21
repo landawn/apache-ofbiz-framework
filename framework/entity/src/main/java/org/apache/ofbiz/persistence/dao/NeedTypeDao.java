@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.NeedTypeEntity;
 
-public interface NeedTypeDao extends CrudDao<NeedTypeEntity, String, SQLBuilder.PSC, NeedTypeDao> {
+public interface NeedTypeDao extends CrudDao<NeedTypeEntity, String, SqlBuilder.PSC, NeedTypeDao> {
 }

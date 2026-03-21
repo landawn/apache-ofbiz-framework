@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.ProductEntity;
 
-public interface ProductDao extends CrudDao<ProductEntity, String, SQLBuilder.PSC, ProductDao>, DelegatorQueryDao {
+public interface ProductDao extends CrudDao<ProductEntity, String, SqlBuilder.PSC, ProductDao>, DelegatorQueryDao {
 }

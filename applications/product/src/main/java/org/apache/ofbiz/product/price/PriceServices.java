@@ -34,12 +34,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
 
-import com.landawn.abacus.jdbc.dao.Dao;
-import com.landawn.abacus.query.Filters;
-import com.landawn.abacus.query.SortDirection;
-import com.landawn.abacus.query.condition.Condition;
-import com.landawn.abacus.query.condition.Criteria;
-
 import org.apache.ofbiz.base.util.Debug;
 import org.apache.ofbiz.base.util.UtilDateTime;
 import org.apache.ofbiz.base.util.UtilGenerics;
@@ -53,17 +47,23 @@ import org.apache.ofbiz.entity.GenericValue;
 import org.apache.ofbiz.entity.condition.EntityCondition;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.entity.util.EntityUtilProperties;
+import org.apache.ofbiz.model.CalculateProductPriceContext;
+import org.apache.ofbiz.model.CalculatePurchasePriceContext;
 import org.apache.ofbiz.persistence.dao.DaoRegistry;
+import org.apache.ofbiz.persistence.entity.ProductEntity;
+import org.apache.ofbiz.persistence.entity.UserLoginEntity;
+import org.apache.ofbiz.persistence.entity.x;
 import org.apache.ofbiz.product.product.ProductWorker;
 import org.apache.ofbiz.service.DispatchContext;
 import org.apache.ofbiz.service.GenericServiceException;
 import org.apache.ofbiz.service.LocalDispatcher;
 import org.apache.ofbiz.service.ServiceUtil;
-import org.apache.ofbiz.model.CalculateProductPriceContext;
-import org.apache.ofbiz.model.CalculatePurchasePriceContext;
-import org.apache.ofbiz.persistence.entity.ProductEntity;
-import org.apache.ofbiz.persistence.entity.UserLoginEntity;
-import org.apache.ofbiz.persistence.entity.x;
+
+import com.landawn.abacus.jdbc.dao.Dao;
+import com.landawn.abacus.query.Filters;
+import com.landawn.abacus.query.SortDirection;
+import com.landawn.abacus.query.condition.Condition;
+import com.landawn.abacus.query.condition.Criteria;
 /**
  * PriceServices - Workers and Services class for product price related functionality
  */
@@ -1643,9 +1643,9 @@ public class PriceServices {
                 return whereCondition;
             }
 
-            Criteria criteria = Filters.criteria();
+            Criteria.Builder criteriaBuilder = Criteria.builder();
             if (!whereMap.isEmpty()) {
-                criteria.where(whereCondition);
+                criteriaBuilder.where(whereCondition);
             }
 
             Map<String, SortDirection> orders = new LinkedHashMap<>();
@@ -1656,9 +1656,9 @@ public class PriceServices {
                     orders.put(orderByField, SortDirection.ASC);
                 }
             }
-            criteria.orderBy(orders);
+            criteriaBuilder.orderBy(orders);
 
-            return criteria;
+            return criteriaBuilder.build();
         }
 
         private Condition buildWhereCondition() {

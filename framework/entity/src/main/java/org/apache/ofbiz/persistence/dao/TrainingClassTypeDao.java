@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.TrainingClassTypeEntity;
 
-public interface TrainingClassTypeDao extends CrudDao<TrainingClassTypeEntity, String, SQLBuilder.PSC, TrainingClassTypeDao> {
+public interface TrainingClassTypeDao extends CrudDao<TrainingClassTypeEntity, String, SqlBuilder.PSC, TrainingClassTypeDao> {
 }

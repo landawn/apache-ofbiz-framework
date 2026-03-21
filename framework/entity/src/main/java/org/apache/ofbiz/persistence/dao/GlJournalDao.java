@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.GlJournalEntity;
 
-public interface GlJournalDao extends CrudDao<GlJournalEntity, String, SQLBuilder.PSC, GlJournalDao> {
+public interface GlJournalDao extends CrudDao<GlJournalEntity, String, SqlBuilder.PSC, GlJournalDao> {
 }

@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.PartyRelationshipTypeEntity;
 
-public interface PartyRelationshipTypeDao extends CrudDao<PartyRelationshipTypeEntity, String, SQLBuilder.PSC, PartyRelationshipTypeDao> {
+public interface PartyRelationshipTypeDao extends CrudDao<PartyRelationshipTypeEntity, String, SqlBuilder.PSC, PartyRelationshipTypeDao> {
 }

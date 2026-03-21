@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.BillingAccountEntity;
 
-public interface BillingAccountDao extends CrudDao<BillingAccountEntity, String, SQLBuilder.PSC, BillingAccountDao>, DelegatorQueryDao {
+public interface BillingAccountDao extends CrudDao<BillingAccountEntity, String, SqlBuilder.PSC, BillingAccountDao>, DelegatorQueryDao {
 }

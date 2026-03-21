@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.WebSiteEntity;
 
-public interface WebSiteDao extends CrudDao<WebSiteEntity, String, SQLBuilder.PSC, WebSiteDao>, DelegatorQueryDao {
+public interface WebSiteDao extends CrudDao<WebSiteEntity, String, SqlBuilder.PSC, WebSiteDao>, DelegatorQueryDao {
 }

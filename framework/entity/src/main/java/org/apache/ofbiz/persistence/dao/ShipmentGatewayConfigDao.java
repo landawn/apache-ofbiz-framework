@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.ShipmentGatewayConfigEntity;
 
-public interface ShipmentGatewayConfigDao extends CrudDao<ShipmentGatewayConfigEntity, String, SQLBuilder.PSC, ShipmentGatewayConfigDao> {
+public interface ShipmentGatewayConfigDao extends CrudDao<ShipmentGatewayConfigEntity, String, SqlBuilder.PSC, ShipmentGatewayConfigDao> {
 }

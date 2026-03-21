@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.CartAbandonedLineEntity;
 
-public interface CartAbandonedLineDao extends CrudDao<CartAbandonedLineEntity, CartAbandonedLineEntity, SQLBuilder.PSC, CartAbandonedLineDao> {
+public interface CartAbandonedLineDao extends CrudDao<CartAbandonedLineEntity, CartAbandonedLineEntity, SqlBuilder.PSC, CartAbandonedLineDao> {
 }

@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.CustRequestTypeEntity;
 
-public interface CustRequestTypeDao extends CrudDao<CustRequestTypeEntity, String, SQLBuilder.PSC, CustRequestTypeDao> {
+public interface CustRequestTypeDao extends CrudDao<CustRequestTypeEntity, String, SqlBuilder.PSC, CustRequestTypeDao> {
 }

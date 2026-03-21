@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.AgreementGeographicalApplicEntity;
 
-public interface AgreementGeographicalApplicDao extends CrudDao<AgreementGeographicalApplicEntity, AgreementGeographicalApplicEntity, SQLBuilder.PSC, AgreementGeographicalApplicDao> {
+public interface AgreementGeographicalApplicDao extends CrudDao<AgreementGeographicalApplicEntity, AgreementGeographicalApplicEntity, SqlBuilder.PSC, AgreementGeographicalApplicDao> {
 }

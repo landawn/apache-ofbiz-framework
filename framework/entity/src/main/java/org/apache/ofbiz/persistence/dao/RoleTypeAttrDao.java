@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.RoleTypeAttrEntity;
 
-public interface RoleTypeAttrDao extends CrudDao<RoleTypeAttrEntity, RoleTypeAttrEntity, SQLBuilder.PSC, RoleTypeAttrDao> {
+public interface RoleTypeAttrDao extends CrudDao<RoleTypeAttrEntity, RoleTypeAttrEntity, SqlBuilder.PSC, RoleTypeAttrDao> {
 }

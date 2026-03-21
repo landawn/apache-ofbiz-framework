@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.CommunicationEventWorkEffEntity;
 
-public interface CommunicationEventWorkEffDao extends CrudDao<CommunicationEventWorkEffEntity, CommunicationEventWorkEffEntity, SQLBuilder.PSC, CommunicationEventWorkEffDao> {
+public interface CommunicationEventWorkEffDao extends CrudDao<CommunicationEventWorkEffEntity, CommunicationEventWorkEffEntity, SqlBuilder.PSC, CommunicationEventWorkEffDao> {
 }

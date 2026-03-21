@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.SegmentGroupTypeEntity;
 
-public interface SegmentGroupTypeDao extends CrudDao<SegmentGroupTypeEntity, String, SQLBuilder.PSC, SegmentGroupTypeDao> {
+public interface SegmentGroupTypeDao extends CrudDao<SegmentGroupTypeEntity, String, SqlBuilder.PSC, SegmentGroupTypeDao> {
 }

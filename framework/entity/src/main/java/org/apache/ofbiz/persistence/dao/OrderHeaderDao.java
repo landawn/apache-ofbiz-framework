@@ -1,7 +1,7 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -19,7 +19,7 @@ import org.apache.ofbiz.entity.util.EntityListIterator;
 import org.apache.ofbiz.entity.util.EntityUtil;
 import org.apache.ofbiz.persistence.entity.OrderHeaderEntity;
 
-public interface OrderHeaderDao extends CrudDao<OrderHeaderEntity, String, SQLBuilder.PSC, OrderHeaderDao>, DelegatorQueryDao {
+public interface OrderHeaderDao extends CrudDao<OrderHeaderEntity, String, SqlBuilder.PSC, OrderHeaderDao>, DelegatorQueryDao {
     default PagedList<GenericValue> queryPagedList(Delegator delegator, DynamicViewEntity dynamicViewEntity,
             EntityCondition whereCondition, Collection<String> fieldsToSelect, List<String> orderBy, int viewIndex, int viewSize)
             throws GenericEntityException {

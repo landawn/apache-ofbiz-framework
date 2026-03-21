@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.SurveyEntity;
 
-public interface SurveyDao extends CrudDao<SurveyEntity, String, SQLBuilder.PSC, SurveyDao> {
+public interface SurveyDao extends CrudDao<SurveyEntity, String, SqlBuilder.PSC, SurveyDao> {
 }

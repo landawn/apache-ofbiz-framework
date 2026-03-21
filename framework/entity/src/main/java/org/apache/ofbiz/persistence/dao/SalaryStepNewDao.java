@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.SalaryStepNewEntity;
 
-public interface SalaryStepNewDao extends CrudDao<SalaryStepNewEntity, SalaryStepNewEntity, SQLBuilder.PSC, SalaryStepNewDao> {
+public interface SalaryStepNewDao extends CrudDao<SalaryStepNewEntity, SalaryStepNewEntity, SqlBuilder.PSC, SalaryStepNewDao> {
 }

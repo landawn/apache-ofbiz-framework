@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.PicklistStatusEntity;
 
-public interface PicklistStatusDao extends CrudDao<PicklistStatusEntity, PicklistStatusEntity, SQLBuilder.PSC, PicklistStatusDao> {
+public interface PicklistStatusDao extends CrudDao<PicklistStatusEntity, PicklistStatusEntity, SqlBuilder.PSC, PicklistStatusDao> {
 }

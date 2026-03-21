@@ -1,8 +1,8 @@
 package org.apache.ofbiz.persistence.dao;
 
 import com.landawn.abacus.jdbc.dao.CrudDao;
-import com.landawn.abacus.query.SQLBuilder;
+import com.landawn.abacus.query.SqlBuilder;
 import org.apache.ofbiz.persistence.entity.UserLoginHistoryEntity;
 
-public interface UserLoginHistoryDao extends CrudDao<UserLoginHistoryEntity, UserLoginHistoryEntity, SQLBuilder.PSC, UserLoginHistoryDao> {
+public interface UserLoginHistoryDao extends CrudDao<UserLoginHistoryEntity, UserLoginHistoryEntity, SqlBuilder.PSC, UserLoginHistoryDao> {
 }
