@@ -2,9 +2,9 @@ Migrate the project to Spring Boot and Spring Web, and refactor the persistence 
 
 Dependencies to include:
 - org.springframework.boot:spring-boot-starter-web:4.0.2
-- org.springframework:spring-core:7.0.3
-- com.landawn:abacus-common:7.3.0
-- com.landawn:abacus-jdbc:4.3.0
+- org.springframework:spring-core:7.0.7
+- com.landawn.abacus:abacus-common:7.7.2
+- com.landawn.abacus:abacus-jdbc:4.7.2
 
 Requirements:
 1. Rewrite the project using Spring Boot with Spring Web.
