@@ -593,6 +593,20 @@ public class CatalinaContainer implements Container {
         context.setDefaultWebXml(System.getProperty("ofbiz.home") + "/framework/catalina/config/web.xml");
         Tomcat.initWebappDefaults(context);
 
+        // Register the centralized API access-log filter on every OFBiz webapp. Done
+        // programmatically here (instead of via the default web.xml) because embedded
+        // Tomcat's default-web.xml merge path does not reliably pick up filter mappings
+        // for runtime-created StandardContexts. See AccessLogFilter for JSON request/response
+        // and curl emission; routed to the org.apache.ofbiz.access logger.
+        FilterDef accessLogDef = new FilterDef();
+        accessLogDef.setFilterName("AccessLogFilter");
+        accessLogDef.setFilterClass("org.apache.ofbiz.webapp.access.AccessLogFilter");
+        context.addFilterDef(accessLogDef);
+        FilterMap accessLogMap = new FilterMap();
+        accessLogMap.setFilterName("AccessLogFilter");
+        accessLogMap.addURLPattern("/*");
+        context.addFilterMapBefore(accessLogMap);
+
         String location = getWebappRootLocation(appInfo);
         boolean contextIsDistributable = isContextDistributable(configuration, appInfo);
 

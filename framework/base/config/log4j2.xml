@@ -67,6 +67,27 @@ under the License.
             <AppenderRef ref="stdout"/>
             <AppenderRef ref="error"/>
         </Async>
+
+        <!--
+            Centralized API access log written by org.apache.ofbiz.webapp.access.AccessLogFilter.
+            Three lines per request (request JSON / response JSON / curl). The pattern is just
+            %m%n so the log file is pure JSON-lines (no timestamp/level/thread prefix).
+            DirectWriteRolloverStrategy keeps the active file named api_<today>.log instead of
+            renaming on rollover.
+        -->
+        <!--
+            Path is intentionally one level up: OFBiz launches from apache-ofbiz-framework/,
+            but the desired log location is the parent ofbiz-abacus/logs/apache-ofbiz-framework/.
+        -->
+        <RollingFile name="apiAccessLog"
+                filePattern="../logs/apache-ofbiz-framework/api_%d{yyyy_MM_dd}.log">
+            <PatternLayout pattern="%m%n" charset="UTF-8"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <OnStartupTriggeringPolicy/>
+            </Policies>
+            <DirectWriteRolloverStrategy/>
+        </RollingFile>
     </Appenders>
 
     <Loggers>
@@ -74,6 +95,12 @@ under the License.
         <logger name="org.apache.ofbiz" level="all"/>
         <logger name="org.apache.ofbiz.base.converter.Converters" level="warn"/>
         <logger name="freemarker" level="warn"/>
+
+        <!-- Per-request access log; goes to api_<date>.log AND stdout, not to ofbiz.log -->
+        <logger name="org.apache.ofbiz.access" level="info" additivity="false">
+            <AppenderRef ref="apiAccessLog"/>
+            <AppenderRef ref="stdout"/>
+        </logger>
 
         <Root level="all">
             <AppenderRef ref="async"/>
